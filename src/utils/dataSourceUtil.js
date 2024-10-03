@@ -1,12 +1,8 @@
-const isGitHubPages = process.env.NODE_ENV === 'production' && process.env.PUBLIC_URL.includes('github.io');
+// src/utils/dataSourceUtil.js
 
-const getDataUrl = (filename) => {
-  if (isGitHubPages) {
-    // Replace 'yourusername' and 'your-repo-name' with actual values
-    return `https://raw.githubusercontent.com/yourusername/your-repo-name/main/data/${filename}`;
-  } else {
-    return `${process.env.PUBLIC_URL}/data/${filename}`;
-  }
-};
-
-export { getDataUrl };
+/**
+ * Constructs the full path for a given data file, accommodating nested directories.
+ * @param {string} relativePath - The relative path to the data file from the 'data/' directory (e.g., 'ecm/ecm_analysis_results.json').
+ * @returns {string} - The full URL to the data file.
+ */
+export const getDataPath = (relativePath) => `${process.env.PUBLIC_URL}/data/${relativePath}`;
