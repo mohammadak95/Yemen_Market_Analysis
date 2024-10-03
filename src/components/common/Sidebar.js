@@ -1,44 +1,57 @@
+// Sidebar.js
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import styled from 'styled-components';
-import { useTranslation } from 'react-i18next';
+import { styled } from '@mui/system';
+import ThemeToggle from './ThemeToggle';
 
-const SidebarContainer = styled.div`
+const SidebarContainer = styled('aside')`
   width: 250px;
   height: 100vh;
-  background-color: ${props => props.theme.sidebarBackground};
-  color: ${props => props.theme.sidebarText};
-  padding: 20px;
+  background-color: ${props => props.theme.sidebarBackground || '#fff'};
+  color: ${props => props.theme.sidebarText || '#333'};
   position: fixed;
   left: 0;
   top: 0;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-in-out;
 `;
 
-const NavItem = styled(NavLink)`
-  display: block;
-  padding: 10px;
-  color: ${props => props.theme.sidebarText};
+const NavLinks = styled('nav')`
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+`;
+
+const StyledNavLink = styled(NavLink)`
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  font-size: 1rem;
+  color: ${props => props.theme.sidebarText || '#333'};
   text-decoration: none;
-  &.active {
-    background-color: ${props => props.theme.sidebarActiveBackground};
-  }
-  &:hover {
-    background-color: ${props => props.theme.sidebarHoverBackground};
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 5px;
+
+  &:hover, &.active {
+    background-color: ${props => props.theme.sidebarActiveBackground || '#f0f0f0'};
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const Sidebar = () => {
-  const { t } = useTranslation();
-
+const Sidebar = ({ isOpen }) => {
   return (
-    <SidebarContainer>
-      <h2>{t('sidebar.title')}</h2>
-      <nav>
-        <NavItem exact to="/">{t('sidebar.dashboard')}</NavItem>
-        <NavItem to="/ecm">{t('sidebar.ecm')}</NavItem>
-        <NavItem to="/price-diff">{t('sidebar.priceDiff')}</NavItem>
-        <NavItem to="/spatial">{t('sidebar.spatial')}</NavItem>
-      </nav>
+    <SidebarContainer isOpen={isOpen}>
+      <NavLinks>
+        <StyledNavLink exact to="/">Dashboard</StyledNavLink>
+        <StyledNavLink to="/ecm">ECM Analysis</StyledNavLink>
+        <StyledNavLink to="/price-diff">Price Differential</StyledNavLink>
+        <StyledNavLink to="/spatial">Spatial Analysis</StyledNavLink>
+      </NavLinks>
+      <ThemeToggle />
     </SidebarContainer>
   );
 };

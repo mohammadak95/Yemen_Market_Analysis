@@ -1,24 +1,32 @@
+// ThemeToggle.js
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import styled from 'styled-components';
+import { styled } from '@mui/system';
+import Switch from '@mui/material/Switch';
 import { toggleTheme } from '../../features/themeSlice';
 
-const ToggleButton = styled.button`
-  background-color: ${props => props.theme.buttonBackground};
-  color: ${props => props.theme.buttonText};
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
+const ToggleWrapper = styled('div')`
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const ThemeToggle = () => {
   const dispatch = useDispatch();
   const isDarkMode = useSelector(state => state.theme.isDarkMode);
 
+  const handleToggle = () => {
+    dispatch(toggleTheme());
+  };
+
   return (
-    <ToggleButton onClick={() => dispatch(toggleTheme())}>
-      {isDarkMode ? '☀️' : '🌙'}
-    </ToggleButton>
+    <ToggleWrapper>
+      <Switch 
+        checked={isDarkMode} 
+        onChange={handleToggle} 
+        color="default"
+      />
+    </ToggleWrapper>
   );
 };
 

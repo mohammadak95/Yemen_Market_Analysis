@@ -1,8 +1,8 @@
+// Footer.js (updated)
 import React from 'react';
-import styled from 'styled-components';
-import { useTranslation } from 'react-i18next';
+import { styled } from '@mui/system';
 
-const FooterContainer = styled.footer`
+const FooterContainer = styled('footer')`
   background-color: ${props => props.theme.primaryBackground};
   color: ${props => props.theme.text};
   padding: 1rem;
@@ -10,11 +10,9 @@ const FooterContainer = styled.footer`
 `;
 
 const Footer = () => {
-  const { t } = useTranslation();
-
   return (
     <FooterContainer>
-      <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
+      <p>© {new Date().getFullYear()} Your Company</p>
     </FooterContainer>
   );
 };

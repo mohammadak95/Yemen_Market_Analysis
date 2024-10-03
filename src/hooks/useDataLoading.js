@@ -15,8 +15,17 @@ const useDataLoading = (relativePath) => {
         }
         const result = await response.json();
         setData(result);
+        // Store the data in localStorage for offline use
+        localStorage.setItem(`data_${relativePath}`, JSON.stringify(result));
       } catch (e) {
-        setError(e.message);
+        console.error("Error fetching data:", e);
+        // If fetching fails, try to load from localStorage
+        const storedData = localStorage.getItem(`data_${relativePath}`);
+        if (storedData) {
+          setData(JSON.parse(storedData));
+        } else {
+          setError(e.message);
+        }
       } finally {
         setLoading(false);
       }

@@ -1,32 +1,36 @@
+// Dashboard.js
 import React from 'react';
 import { Link } from 'react-router-dom';
-import styled from 'styled-components';
+import { styled } from '@mui/system';
 
-const DashboardContainer = styled.div`
-  padding: 20px;
+const DashboardContainer = styled('div')`
+  padding: 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
 `;
 
-const DashboardLink = styled(Link)`
-  display: block;
-  margin-bottom: 10px;
-  padding: 10px;
-  background-color: #f0f0f0;
+const Card = styled(Link)`
+  padding: 20px;
+  background-color: #fff;
   color: #333;
-  text-decoration: none;
-  border-radius: 5px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    background-color: #e0e0e0;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   }
 `;
 
 const Dashboard = () => {
   return (
     <DashboardContainer>
-      <h1>Yemen Market Analysis Dashboard</h1>
-      <DashboardLink to="/ecm">ECM Analysis</DashboardLink>
-      <DashboardLink to="/price-diff">Price Differential Analysis</DashboardLink>
-      <DashboardLink to="/spatial">Spatial Analysis</DashboardLink>
+      <Card to="/ecm">ECM Analysis</Card>
+      <Card to="/price-diff">Price Differential Analysis</Card>
+      <Card to="/spatial">Spatial Analysis</Card>
     </DashboardContainer>
   );
 };
