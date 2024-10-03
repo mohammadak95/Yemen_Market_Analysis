@@ -1,6 +1,6 @@
-// src/components/ecm-analysis/SummaryTable.js
 import React from 'react';
 import styled from 'styled-components';
+import PropTypes from 'prop-types';
 
 const Table = styled.table`
   width: 100%;
@@ -22,7 +22,7 @@ const Table = styled.table`
   }
 `;
 
-const SummaryTable = React.memo(({ data }) => (
+const SummaryTable = ({ data }) => (
   <Table>
     <thead>
       <tr>
@@ -43,6 +43,16 @@ const SummaryTable = React.memo(({ data }) => (
       </tr>
     </tbody>
   </Table>
-));
+);
+
+SummaryTable.propTypes = {
+  data: PropTypes.shape({
+    commodity: PropTypes.string.isRequired,
+    regime: PropTypes.string.isRequired,
+    aic: PropTypes.number.isRequired,
+    bic: PropTypes.number.isRequired,
+    hqic: PropTypes.number.isRequired,
+  }).isRequired,
+};
 
 export default SummaryTable;

@@ -1,14 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export const fetchData = createAsyncThunk(
-  'slice/fetchData',
-  async (arg, thunkAPI) => {
+  'priceDiff/fetchData',
+  async () => {
     // Fetch data here
+    // If you need to use thunkAPI, add it as a parameter: async (_, thunkAPI) => { ... }
   }
 );
 
-const sliceName = createSlice({
-  name: 'sliceName',
+const priceDiffSlice = createSlice({
+  name: 'priceDiff',
   initialState: {
     data: null,
     status: 'idle',
@@ -33,4 +34,8 @@ const sliceName = createSlice({
   }
 });
 
-export const { actions, reducer } = sliceName;
+export const { actions } = priceDiffSlice;
+
+// Export the reducer as both a named export and default export
+export const priceDiffReducer = priceDiffSlice.reducer;
+export default priceDiffSlice.reducer;

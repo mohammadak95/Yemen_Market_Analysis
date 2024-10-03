@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 import themeReducer from '../features/themeSlice';
-import { reducer as ecmReducer } from '../features/ecmSlice';
-import { reducer as priceDiffReducer } from '../features/priceDiffSlice';
-import { reducer as spatialReducer } from '../features/spatialSlice';
+import ecmReducer from '../features/ecmSlice';
+import priceDiffReducer from '../features/priceDiffSlice';
+import spatialReducer from '../features/spatialSlice';
 
 export const store = configureStore({
   reducer: {

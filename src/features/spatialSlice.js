@@ -1,14 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export const fetchData = createAsyncThunk(
-  'slice/fetchData',
-  async (arg, thunkAPI) => {
+  'spatial/fetchData',
+  async () => {
     // Fetch data here
+    // If you need to use thunkAPI, add it as a parameter: async (_, thunkAPI) => { ... }
   }
 );
 
-const sliceName = createSlice({
-  name: 'sliceName',
+const spatialSlice = createSlice({
+  name: 'spatial',
   initialState: {
     data: null,
     status: 'idle',
@@ -33,4 +34,8 @@ const sliceName = createSlice({
   }
 });
 
-export const { actions, reducer } = sliceName;
+export const { actions } = spatialSlice;
+
+// Export the reducer as both a named export and default export
+export const spatialReducer = spatialSlice.reducer;
+export default spatialSlice.reducer;

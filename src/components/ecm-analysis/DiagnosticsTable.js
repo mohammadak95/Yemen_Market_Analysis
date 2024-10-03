@@ -1,6 +1,6 @@
-// src/components/ecm-analysis/DiagnosticsTable.js
 import React from 'react';
 import styled from 'styled-components';
+import PropTypes from 'prop-types';
 
 const Table = styled.table`
   width: 100%;
@@ -22,7 +22,7 @@ const Table = styled.table`
   }
 `;
 
-const DiagnosticsTable = React.memo(({ diagnostics }) => (
+const DiagnosticsTable = ({ diagnostics }) => (
   <Table>
     <thead>
       <tr>
@@ -46,6 +46,18 @@ const DiagnosticsTable = React.memo(({ diagnostics }) => (
       ))}
     </tbody>
   </Table>
-));
+);
+
+DiagnosticsTable.propTypes = {
+  diagnostics: PropTypes.shape({
+    breusch_godfrey_stat: PropTypes.number.isRequired,
+    breusch_godfrey_pvalue: PropTypes.number.isRequired,
+    arch_test_stat: PropTypes.number.isRequired,
+    arch_test_pvalue: PropTypes.number.isRequired,
+    jarque_bera_stat: PropTypes.number.isRequired,
+    jarque_bera_pvalue: PropTypes.number.isRequired,
+    durbin_watson_stat: PropTypes.number.isRequired,
+  }).isRequired,
+};
 
 export default DiagnosticsTable;

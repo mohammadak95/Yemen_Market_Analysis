@@ -1,5 +1,4 @@
 // src/features/ecmSlice.js
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getDataPath } from '../utils/dataSourceUtil';
 
@@ -8,12 +7,12 @@ export const fetchData = createAsyncThunk(
   'ecm/fetchData',
   async (_, thunkAPI) => {
     try {
-      const response = await fetch(getDataPath('ecm/ecm_analysis_results.json')); // Adjust the path as needed
+      const response = await fetch(getDataPath('ecm/ecm_analysis_results.json'));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      return data; // Ensure the data shape matches your initialState
+      return data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
@@ -34,21 +33,24 @@ const ecmSlice = createSlice({
     builder
       .addCase(fetchData.pending, (state) => {
         state.status = 'loading';
-        state.error = null; // Reset previous errors
+        state.error = null;
       })
       .addCase(fetchData.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.data = action.payload; // Ensure payload matches expected data structure
+        state.data = action.payload;
       })
       .addCase(fetchData.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload || action.error.message; // Capture error message
+        state.error = action.payload || action.error.message;
       });
   }
 });
 
-// Export the reducer to be included in the store
-export default ecmSlice.reducer;
+// Export the actions
+export const { actions } = ecmSlice;
 
-// If you have synchronous actions, export them as well
-// export const { someAction } = ecmSlice.actions;
+// Export the reducer as a named export
+export const ecmReducer = ecmSlice.reducer;
+
+// Export the reducer as the default export
+export default ecmSlice.reducer;

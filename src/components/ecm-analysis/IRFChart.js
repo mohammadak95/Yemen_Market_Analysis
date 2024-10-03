@@ -1,7 +1,7 @@
-// src/components/ecm-analysis/IRFChart.js
 import React, { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import styled from 'styled-components';
+import PropTypes from 'prop-types';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,17 +12,15 @@ import {
   Legend,
 } from 'chart.js';
 
-// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
-// Styled container for the chart
 const ChartContainer = styled.div`
   width: 100%;
   height: 400px;
   margin-bottom: 20px;
 `;
 
-const IRFChart = React.memo(({ irfData }) => {
+const IRFChart = ({ irfData }) => {
   const data = useMemo(() => {
     const labels = irfData.irf.map((_, index) => `T${index + 1}`);
     return {
@@ -66,6 +64,12 @@ const IRFChart = React.memo(({ irfData }) => {
       <Line data={data} options={options} />
     </ChartContainer>
   );
-});
+};
+
+IRFChart.propTypes = {
+  irfData: PropTypes.shape({
+    irf: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number))).isRequired,
+  }).isRequired,
+};
 
 export default IRFChart;

@@ -1,8 +1,8 @@
-// src/components/ecm-analysis/DownloadReportButton.js
 import React from 'react';
 import styled from 'styled-components';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import PropTypes from 'prop-types';
 
 const Button = styled.button`
   background-color: #1976d2;
@@ -44,6 +44,12 @@ const DownloadReportButton = ({ summaryRef, diagnosticsRef, commodity }) => {
   };
 
   return <Button onClick={handleDownload}>Download Report</Button>;
+};
+
+DownloadReportButton.propTypes = {
+  summaryRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
+  diagnosticsRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
+  commodity: PropTypes.string.isRequired,
 };
 
 export default DownloadReportButton;
