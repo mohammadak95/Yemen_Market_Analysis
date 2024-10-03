@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import App from './App';
-import './index.css';
-import { unregister } from './serviceWorker'; // Import this if it exists
+import './index.css'; // Import this if it exists
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

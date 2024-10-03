@@ -1,4 +1,9 @@
-const isGitHubPages = process.env.PUBLIC_URL.includes('github.io');
+// src/utils/dataSourceUtil.js
+
+const ENV = process.env.NODE_ENV; // 'development' | 'production' | 'test'
+const PUBLIC_URL = process.env.PUBLIC_URL || '';
+
+const isGitHubPages = PUBLIC_URL.includes('github.io');
 const isOffline = !navigator.onLine;
 
 export const getDataPath = (relativePath) => {
@@ -7,9 +12,12 @@ export const getDataPath = (relativePath) => {
     return `/results/${relativePath}`;
   } else if (isGitHubPages) {
     // For GitHub Pages deployment
-    return `${process.env.PUBLIC_URL}/results/${relativePath}`;
+    return `${PUBLIC_URL}/results/${relativePath}`;
+  } else if (ENV === 'development') {
+    // For online development, use a different base URL (e.g., local server)
+    return `http://localhost:5000/results/${relativePath}`; // Adjust as needed
   } else {
-    // For online development
+    // For production or other deployments, use the base URL without PUBLIC_URL
     return `/results/${relativePath}`;
   }
 };

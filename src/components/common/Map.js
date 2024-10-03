@@ -1,5 +1,5 @@
-// src/components/common/Map.js
 import React from 'react';
+import PropTypes from 'prop-types';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 
 const Map = ({ geoJsonData }) => {
@@ -9,6 +9,10 @@ const Map = ({ geoJsonData }) => {
       <GeoJSON data={geoJsonData} />
     </MapContainer>
   );
+};
+
+Map.propTypes = {
+  geoJsonData: PropTypes.object.isRequired,
 };
 
 export default Map;

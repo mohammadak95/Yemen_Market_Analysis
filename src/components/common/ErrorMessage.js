@@ -1,19 +1,12 @@
+// src/components/common/ErrorMessage.jsx
 import React from 'react';
-import styled from 'styled-components';
-
-const ErrorContainer = styled.div`
-  background-color: ${props => props.theme.errorBackground};
-  color: ${props => props.theme.errorText};
-  padding: 20px;
-  border-radius: 5px;
-  margin: 20px 0;
-`;
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 
 const ErrorMessage = ({ message }) => (
-  <ErrorContainer>
-    <h3>Error</h3>
-    <p>{message}</p>
-  </ErrorContainer>
+  <Box m={2}>
+    <Alert severity="error">{message}</Alert>
+  </Box>
 );
 
 export default ErrorMessage;

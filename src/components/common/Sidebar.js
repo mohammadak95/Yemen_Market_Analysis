@@ -1,8 +1,10 @@
 // Sidebar.js
 import React from 'react';
+import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 import { styled } from '@mui/system';
 import ThemeToggle from './ThemeToggle';
+
 
 const SidebarContainer = styled('aside')`
   width: 250px;
@@ -54,6 +56,10 @@ const Sidebar = ({ isOpen }) => {
       <ThemeToggle />
     </SidebarContainer>
   );
+};
+
+Sidebar.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
 };
 
 export default Sidebar;

@@ -26,5 +26,8 @@ yarn-error.log*
 Miniforge3-MacOSX-arm64.sh
 .venv
 .vscode
-cache
+/cache
 build_dashboard.txt
+/node_modules
+
+/.git
