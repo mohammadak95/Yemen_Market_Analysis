@@ -30,7 +30,28 @@ module.exports = {
       // CSS Files
       {
         test: /\.css$/i,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1, // Ensures that `postcss-loader` is applied before `css-loader`'s `@import` handling
+              modules: {
+                auto: true, // Enable CSS modules for files matching /\.module\.\w+$/i
+              },
+            },
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  require('autoprefixer'), // Add other PostCSS plugins if needed
+                ],
+              },
+            },
+          },
+        ],
       },
       // Images and Assets
       {
