@@ -1,9 +1,7 @@
-// src/components/ecm-analysis/ECMAnalysis.js
 import React from 'react';
 import useDataLoading from '../../hooks/useDataLoading';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErrorMessage from '../common/ErrorMessage';
-import LineChart from '../common/LineChart';
 
 const ECMAnalysis = () => {
   const { data, loading, error } = useDataLoading('ecm/ecm_analysis_results.json');
@@ -11,11 +9,11 @@ const ECMAnalysis = () => {
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error.message} />;
 
+  // Render your ECM analysis component here using the data
   return (
     <div>
-      <h2>Error Correction Model Analysis</h2>
-      <LineChart data={data} />
-      {/* Additional visualization components */}
+      <h2>ECM Analysis</h2>
+      {/* Add your ECM analysis visualization components here */}
     </div>
   );
 };

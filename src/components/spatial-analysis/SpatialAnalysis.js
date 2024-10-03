@@ -1,4 +1,3 @@
-// src/components/spatial-analysis/SpatialAnalysis.js
 import React from 'react';
 import useDataLoading from '../../hooks/useDataLoading';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -16,8 +15,7 @@ const SpatialAnalysis = () => {
   return (
     <div>
       <h2>Spatial Analysis</h2>
-      <Map spatialResults={spatialResults} spatialWeights={spatialWeights} />
-      {/* Additional visualization components */}
+      {spatialResults && spatialWeights && <Map spatialResults={spatialResults} spatialWeights={spatialWeights} />}
     </div>
   );
 };

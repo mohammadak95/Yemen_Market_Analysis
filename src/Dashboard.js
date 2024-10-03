@@ -10,10 +10,14 @@ const DashboardLink = styled(Link)`
   display: block;
   margin-bottom: 10px;
   padding: 10px;
-  background-color: ${props => props.theme.secondaryBackground};
-  color: ${props => props.theme.text};
+  background-color: #f0f0f0;
+  color: #333;
   text-decoration: none;
   border-radius: 5px;
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
 `;
 
 const Dashboard = () => {

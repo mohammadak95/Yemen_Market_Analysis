@@ -9,7 +9,7 @@ import Sidebar from './components/common/Sidebar';
 import ECMAnalysis from './components/ecm-analysis/ECMAnalysis';
 import PriceDifferentialAnalysis from './components/price-differential-analysis/PriceDifferentialAnalysis';
 import SpatialAnalysis from './components/spatial-analysis/SpatialAnalysis';
-import Dashboard from './components/Dashboard';
+import Dashboard from './Dashboard';
 import NotFound from './components/common/NotFound';
 import styled from 'styled-components';
 

@@ -1,9 +1,8 @@
-// src/components/price-differential-analysis/PriceDifferentialAnalysis.js
 import React from 'react';
 import useDataLoading from '../../hooks/useDataLoading';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErrorMessage from '../common/ErrorMessage';
-import BarChart from '../common/BarChart';
+import LineChart from '../common/LineChart';
 
 const PriceDifferentialAnalysis = () => {
   const { data, loading, error } = useDataLoading('price_diff_results/price_differential_results.json');
@@ -14,8 +13,8 @@ const PriceDifferentialAnalysis = () => {
   return (
     <div>
       <h2>Price Differential Analysis</h2>
-      <BarChart data={data} />
-      {/* Additional visualization components */}
+      {data && <LineChart data={data} />}
+      {/* Add more visualization components as needed */}
     </div>
   );
 };

@@ -2,8 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const sourceDir = path.join(__dirname, '../data');
-const destDir = path.join(__dirname, '../public/data');
+const sourceDir = path.join(__dirname, '../results');
+const destDir = path.join(__dirname, '../build/results');
 
 /**
  * Recursively copies all files and directories from the source to the destination.
@@ -31,7 +31,7 @@ const copyRecursiveSync = (source, destination) => {
 };
 
 /**
- * Copies the entire 'data/' directory to 'public/data/' for deployment.
+ * Copies the entire 'results/' directory to 'build/results/' for deployment.
  */
 const prepareData = () => {
   copyRecursiveSync(sourceDir, destDir);

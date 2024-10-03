@@ -1,14 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export const fetchData = createAsyncThunk(
-  'slice/fetchData',
+  'ecm/fetchData',
   async (arg, thunkAPI) => {
     // Fetch data here
   }
 );
 
-const sliceName = createSlice({
-  name: 'sliceName',
+const ecmSlice = createSlice({
+  name: 'ecm',
   initialState: {
     data: null,
     status: 'idle',
@@ -33,4 +33,4 @@ const sliceName = createSlice({
   }
 });
 
-export const { actions, reducer } = sliceName;
+export const { actions, reducer } = ecmSlice;

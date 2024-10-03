@@ -7,46 +7,25 @@ const useDataLoading = (relativePath) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadData = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetch(getDataPath(relativePath));
         if (!response.ok) {
-          throw new Error(`Failed to fetch ${relativePath}: ${response.statusText}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const contentType = response.headers.get('content-type');
-        let result;
-        if (contentType.includes('application/json')) {
-          result = await response.json();
-        } else if (contentType.includes('text/csv')) {
-          const text = await response.text();
-          result = parseCSV(text);
-        } else {
-          throw new Error(`Unsupported content type: ${contentType}`);
-        }
+        const result = await response.json();
         setData(result);
-      } catch (err) {
-        setError(err);
+      } catch (e) {
+        setError(e.message);
       } finally {
         setLoading(false);
       }
     };
-    loadData();
+
+    fetchData();
   }, [relativePath]);
 
   return { data, loading, error };
-};
-
-const parseCSV = (csvText) => {
-  const lines = csvText.trim().split('\n');
-  const headers = lines[0].split(',').map((header) => header.trim());
-
-  return lines.slice(1).map((line) => {
-    const values = line.split(',').map((value) => value.trim());
-    return headers.reduce((entry, header, index) => {
-      entry[header] = values[index];
-      return entry;
-    }, {});
-  });
 };
 
 export default useDataLoading;
