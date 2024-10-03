@@ -53,6 +53,9 @@
     "postcss-loader": "^7.3.4",
     "react-scripts": "^5.0.1"
   },
+  "engines": {
+  "node": ">=20.0.0"
+},
   "eslintConfig": {
     "extends": [
       "react-app",
