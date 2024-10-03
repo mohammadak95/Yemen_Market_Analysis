@@ -1,0 +1,512 @@
+2024-10-03 11:19:07,163 - INFO - Loading GeoJSON data from project/data/processed/unified_data.geojson.
+2024-10-03 11:19:07,769 - DEBUG - Converted 'date' to datetime.
+2024-10-03 11:19:07,770 - INFO - 'region_id' column assigned using 'admin1'.
+2024-10-03 11:19:07,782 - INFO - Duplicate rows dropped.
+2024-10-03 11:19:07,782 - INFO - GeoJSON data loaded with 21355 records.
+2024-10-03 11:19:07,782 - INFO - Resampling data to 'M' frequency.
+2024-10-03 11:19:07,998 - INFO - Data resampled to 'M' frequency.
+2024-10-03 11:19:08,019 - INFO - Unified regime created with 987 records.
+2024-10-03 11:19:08,020 - INFO - Total records after adding unified regime: 1974.
+2024-10-03 11:19:08,056 - INFO - Total records after expanding for commodities and regimes: 106596.
+2024-10-03 11:19:10,401 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,401 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,403 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,403 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,409 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,412 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,412 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,435 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,435 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,437 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,438 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,439 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,441 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,442 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,462 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,462 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,466 - INFO - Spatial analysis completed for 'beans (kidney red)' in 'south' regime.
+2024-10-03 11:19:10,468 - INFO - Spatial analysis completed for 'beans (kidney red)' in 'north' regime.
+2024-10-03 11:19:10,528 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,528 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,530 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,531 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,532 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,533 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,533 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,579 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,580 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,582 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,583 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,583 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,585 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,585 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,604 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,610 - INFO - Spatial analysis completed for 'beans (kidney red)' in 'unified' regime.
+2024-10-03 11:19:10,618 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,618 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,620 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,621 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,621 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,622 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,622 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,636 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,642 - INFO - Spatial analysis completed for 'beans (white)' in 'north' regime.
+2024-10-03 11:19:10,647 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,652 - INFO - Spatial analysis completed for 'beans (white)' in 'south' regime.
+2024-10-03 11:19:10,713 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,713 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,715 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,716 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,716 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,717 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,718 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,764 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,764 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,766 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,766 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,767 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,768 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,769 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,774 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,782 - INFO - Spatial analysis completed for 'beans (white)' in 'unified' regime.
+2024-10-03 11:19:10,797 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,797 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,799 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,800 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,801 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,802 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,802 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,816 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,821 - INFO - Spatial analysis completed for 'eggs' in 'north' regime.
+2024-10-03 11:19:10,822 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,826 - INFO - Spatial analysis completed for 'eggs' in 'south' regime.
+2024-10-03 11:19:10,892 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,892 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,893 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,894 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,895 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,896 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,896 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,950 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,950 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,954 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,955 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:10,956 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,957 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,959 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,959 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:10,962 - INFO - Spatial analysis completed for 'eggs' in 'unified' regime.
+2024-10-03 11:19:10,990 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:10,990 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:10,992 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:10,992 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:10,993 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:10,994 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:10,994 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,013 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,017 - INFO - Spatial analysis completed for 'exchange rate (unofficial)' in 'south' regime.
+2024-10-03 11:19:11,019 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,026 - INFO - Spatial analysis completed for 'exchange rate (unofficial)' in 'north' regime.
+2024-10-03 11:19:11,083 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,083 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,085 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,086 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,087 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,088 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,088 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,128 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,129 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,130 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,131 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,131 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,132 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,133 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,147 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,153 - INFO - Spatial analysis completed for 'exchange rate (unofficial)' in 'unified' regime.
+2024-10-03 11:19:11,167 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,168 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,170 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,170 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,171 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,172 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,172 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,181 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,186 - INFO - Spatial analysis completed for 'fuel (diesel)' in 'north' regime.
+2024-10-03 11:19:11,192 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,195 - INFO - Spatial analysis completed for 'fuel (diesel)' in 'south' regime.
+2024-10-03 11:19:11,259 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,259 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,260 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,261 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,262 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,262 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,263 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,301 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,301 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,303 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,303 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,304 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,305 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,305 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,320 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,326 - INFO - Spatial analysis completed for 'fuel (diesel)' in 'unified' regime.
+2024-10-03 11:19:11,335 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,335 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,340 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,342 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,344 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,345 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,346 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,360 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,366 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,368 - INFO - Spatial analysis completed for 'fuel (gas)' in 'north' regime.
+2024-10-03 11:19:11,371 - INFO - Spatial analysis completed for 'fuel (gas)' in 'south' regime.
+2024-10-03 11:19:11,432 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,432 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,434 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,435 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,435 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,436 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,437 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,481 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,481 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,483 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,483 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,484 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,485 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,485 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,518 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,519 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,520 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,520 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,521 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,522 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,522 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,536 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,545 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,546 - INFO - Spatial analysis completed for 'fuel (petrol-gasoline)' in 'north' regime.
+2024-10-03 11:19:11,552 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,552 - INFO - Spatial analysis completed for 'fuel (gas)' in 'unified' regime.
+2024-10-03 11:19:11,557 - INFO - Spatial analysis completed for 'fuel (petrol-gasoline)' in 'south' regime.
+2024-10-03 11:19:11,625 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,626 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,627 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,628 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,629 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,630 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,630 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,691 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,691 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,692 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,693 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,694 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,695 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,695 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,744 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,758 - INFO - Spatial analysis completed for 'fuel (petrol-gasoline)' in 'unified' regime.
+2024-10-03 11:19:11,771 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,771 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,773 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,774 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,775 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,776 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,776 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,798 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,802 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,804 - INFO - Spatial analysis completed for 'lentils' in 'north' regime.
+2024-10-03 11:19:11,808 - INFO - Spatial analysis completed for 'lentils' in 'south' regime.
+2024-10-03 11:19:11,830 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,830 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,832 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,832 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,833 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,834 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,834 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,889 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,894 - INFO - Spatial analysis completed for 'lentils' in 'unified' regime.
+2024-10-03 11:19:11,926 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,927 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,928 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,929 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,929 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,930 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,930 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,934 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:11,934 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:11,936 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:11,937 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:11,937 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:11,938 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:11,938 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:11,959 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,961 - INFO - Spatial analysis completed for 'milling cost (wheat)' in 'south' regime.
+2024-10-03 11:19:11,975 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:11,980 - INFO - Spatial analysis completed for 'milling cost (wheat)' in 'north' regime.
+2024-10-03 11:19:12,029 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,029 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,031 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,032 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,034 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,036 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,036 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,095 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,096 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,097 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,098 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,098 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,099 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,099 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,104 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,111 - INFO - Spatial analysis completed for 'milling cost (wheat)' in 'unified' regime.
+2024-10-03 11:19:12,143 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,143 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,145 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,145 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,146 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,146 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,147 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,147 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,151 - INFO - Spatial analysis completed for 'oil (vegetable)' in 'north' regime.
+2024-10-03 11:19:12,167 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,171 - INFO - Spatial analysis completed for 'oil (vegetable)' in 'south' regime.
+2024-10-03 11:19:12,234 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,235 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,236 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,237 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,238 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,239 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,239 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,295 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,301 - INFO - Spatial analysis completed for 'oil (vegetable)' in 'unified' regime.
+2024-10-03 11:19:12,324 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,324 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,325 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,326 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,326 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,327 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,328 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,330 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,330 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,331 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,332 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,333 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,334 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,334 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,353 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,358 - INFO - Spatial analysis completed for 'onions' in 'south' regime.
+2024-10-03 11:19:12,375 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,380 - INFO - Spatial analysis completed for 'onions' in 'north' regime.
+2024-10-03 11:19:12,419 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,419 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,421 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,421 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,422 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,423 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,423 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,462 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,462 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,464 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,464 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,465 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,466 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,466 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,479 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,485 - INFO - Spatial analysis completed for 'onions' in 'unified' regime.
+2024-10-03 11:19:12,499 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,499 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,501 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,501 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,502 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,503 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,503 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,512 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,517 - INFO - Spatial analysis completed for 'potatoes' in 'north' regime.
+2024-10-03 11:19:12,523 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,527 - INFO - Spatial analysis completed for 'potatoes' in 'south' regime.
+2024-10-03 11:19:12,591 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,592 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,593 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,594 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,594 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,595 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,595 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,636 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,636 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,638 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,639 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,640 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,641 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,641 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,655 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,661 - INFO - Spatial analysis completed for 'potatoes' in 'unified' regime.
+2024-10-03 11:19:12,687 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,691 - INFO - Spatial analysis completed for 'rice (imported)' in 'north' regime.
+2024-10-03 11:19:12,710 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,711 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,714 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,715 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,717 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,719 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,719 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,739 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,743 - INFO - Spatial analysis completed for 'rice (imported)' in 'south' regime.
+2024-10-03 11:19:12,769 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,769 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,771 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,771 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,772 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,773 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,773 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,828 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,833 - INFO - Spatial analysis completed for 'rice (imported)' in 'unified' regime.
+2024-10-03 11:19:12,833 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,833 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,836 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,837 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,837 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,838 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,838 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,870 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,870 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,872 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,873 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,873 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,874 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,874 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:12,882 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,888 - INFO - Spatial analysis completed for 'salt' in 'north' regime.
+2024-10-03 11:19:12,895 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:12,898 - INFO - Spatial analysis completed for 'salt' in 'south' regime.
+2024-10-03 11:19:12,967 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:12,967 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:12,968 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:12,969 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:12,970 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:12,971 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:12,971 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,022 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,023 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,025 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,026 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,026 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,027 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,028 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,036 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,042 - INFO - Spatial analysis completed for 'salt' in 'unified' regime.
+2024-10-03 11:19:13,061 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,061 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,063 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,063 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,064 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,065 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,066 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,075 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,080 - INFO - Spatial analysis completed for 'sugar' in 'north' regime.
+2024-10-03 11:19:13,085 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,090 - INFO - Spatial analysis completed for 'sugar' in 'south' regime.
+2024-10-03 11:19:13,152 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,153 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,154 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,154 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,155 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,156 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,156 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,202 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,203 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,204 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,205 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,205 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,206 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,206 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,212 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,218 - INFO - Spatial analysis completed for 'sugar' in 'unified' regime.
+2024-10-03 11:19:13,238 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,238 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,240 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,240 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,241 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,242 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,242 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,253 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,258 - INFO - Spatial analysis completed for 'tomatoes' in 'north' regime.
+2024-10-03 11:19:13,262 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,267 - INFO - Spatial analysis completed for 'tomatoes' in 'south' regime.
+2024-10-03 11:19:13,326 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,327 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,328 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,329 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,329 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,330 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,330 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,374 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,374 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,377 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,379 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,380 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,382 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,382 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,459 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,459 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,463 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,465 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,467 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,469 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,469 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,476 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,476 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,480 - INFO - Spatial analysis completed for 'wheat' in 'north' regime.
+2024-10-03 11:19:13,481 - INFO - Spatial analysis completed for 'tomatoes' in 'unified' regime.
+2024-10-03 11:19:13,491 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,494 - INFO - Spatial analysis completed for 'wheat' in 'south' regime.
+2024-10-03 11:19:13,568 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,569 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,570 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,571 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,572 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,573 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,573 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,615 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,615 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,617 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,618 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,619 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,620 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,620 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,655 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,655 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,657 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,657 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,658 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,659 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,659 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,665 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,670 - INFO - Spatial analysis completed for 'wheat flour' in 'north' regime.
+2024-10-03 11:19:13,674 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,678 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,679 - INFO - Spatial analysis completed for 'wheat' in 'unified' regime.
+2024-10-03 11:19:13,682 - INFO - Spatial analysis completed for 'wheat flour' in 'south' regime.
+2024-10-03 11:19:13,767 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:13,767 - DEBUG - Spatial lag calculated for variable 'usdprice'.
+2024-10-03 11:19:13,768 - DEBUG - Missing values imputed using median strategy.
+2024-10-03 11:19:13,769 - DEBUG - Features standardized using StandardScaler.
+2024-10-03 11:19:13,769 - DEBUG - Ridge regression model fitted successfully.
+2024-10-03 11:19:13,770 - DEBUG - P-values calculated for Ridge regression coefficients.
+2024-10-03 11:19:13,770 - DEBUG - Single predictor detected. VIF set to 1.0.
+2024-10-03 11:19:13,820 - DEBUG - Moran's I calculated for residual.
+2024-10-03 11:19:13,825 - INFO - Spatial analysis completed for 'wheat flour' in 'unified' regime.
+2024-10-03 11:19:14,444 - WARNING - There are 53298 duplicate residual entries after aggregation.
+2024-10-03 11:19:14,444 - INFO - Residual aggregated and merged back to GeoDataFrame.
+2024-10-03 11:19:14,444 - INFO - Simplifying geometries to reduce GeoJSON size.
+2024-10-03 11:19:14,485 - INFO - Geometries simplified successfully.
+2024-10-03 11:19:14,485 - INFO - Optimizing data types for memory efficiency.
+2024-10-03 11:19:14,498 - INFO - Data types optimized successfully.
+2024-10-03 11:19:14,498 - INFO - Selecting essential columns for the final GeoJSON.
+2024-10-03 11:19:14,501 - INFO - Essential columns selected.
+2024-10-03 11:19:14,502 - INFO - Saving enhanced GeoJSON to 'project/data/processed/enhanced_unified_data_with_residual.geojson'.
+2024-10-03 11:19:15,700 - INFO - Created 106,596 records
+2024-10-03 11:19:15,701 - INFO - Enhanced GeoJSON saved successfully.
+2024-10-03 11:19:19,391 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-03 11:19:29,985 - INFO - Spatial weights saved to results/spatial_weights/spatial_weights.json.
+2024-10-03 11:20:02,606 - INFO - Flow map saved to results/network_data/flow_maps.csv.
+2024-10-03 11:20:02,644 - INFO - Average prices saved to results/choropleth_data/average_prices.csv.
+2024-10-03 11:20:03,136 - INFO - Results saved to results/spatial_analysis_results.json.
