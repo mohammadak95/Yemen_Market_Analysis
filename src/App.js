@@ -1,4 +1,3 @@
-// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
@@ -11,7 +10,7 @@ import ECMAnalysis from './components/ecm-analysis/ECMAnalysis';
 import PriceDifferentialAnalysis from './components/price-differential-analysis/PriceDifferentialAnalysis';
 import SpatialAnalysis from './components/spatial-analysis/SpatialAnalysis';
 import Dashboard from './components/Dashboard';
-import NotFound from './components/common/NotFound'; // Ensure this component exists
+import NotFound from './components/common/NotFound';
 import styled from 'styled-components';
 
 const AppContainer = styled.div`
@@ -19,7 +18,7 @@ const AppContainer = styled.div`
 `;
 
 const MainContent = styled.main`
-  margin-left: 250px; /* Width of the sidebar */
+  margin-left: 250px;
   width: calc(100% - 250px);
   padding: 20px;
 `;
