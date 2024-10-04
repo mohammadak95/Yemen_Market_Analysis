@@ -1,204 +1,97 @@
-# Yemen Market Analysis Dashboard - Repository Structure and File Guide
+Based on the provided repository map and our previous discussions, I'll update the key file content to accurately reflect your project structure and important files. Here's the updated key file content:
 
-This document provides a detailed overview of the repository structure and explains the purpose of each key file in the Yemen Market Analysis Dashboard project. It includes guidelines on managing dependencies, handling environment-specific configurations, and maintaining project security.
+```markdown
+# Yemen Market Analysis Dashboard - Repository Structure and Key Files Guide
 
-## Repository Structure
+## Repository Structure Overview
 
-```
-yemen-market-analysis/
-├── .github/
-│   └── workflows/
-│       ├── ci-cd.yml
-│       └── deploy.yml
-├── project/
-│   ├── config/
-│   │   └── config.yaml
-│   ├── data/
-│   │   ├── processed/
-│   │   │   ├── enhanced_unified_data_with_residual.geojson
-│   │   │   ├── enhanced_unified_data_with_residuals.geojson
-│   │   │   ├── unified_data.geojson
-│   │   │   └── unified_data.json
-│   │   └── weights/
-│   │       └── global_spatial_weights.pkl
-│   ├── ecm_analysis/
-│   │   ├── ecm_analysis.py
-│   │   └── ecm_analysis_v2.py
-│   ├── price_differential_analysis/
-│   │   ├── price_differential_model.py
-│   │   └── price_differential_model_v2.py
-│   ├── spatial_analysis/
-│   │   ├── data_preparation_for_spatial_chart.py
-│   │   └── spatial_model.py
-│   └── utils/
-│       ├── common_utils.py
-│       └── data_utils.py
-├── public/
-│   ├── favicon.ico
-│   ├── index.html
-│   ├── logo192.png
-│   ├── logo512.png
-│   ├── manifest.json
-│   └── robots.txt
-├── results/
-│   ├── choropleth_data/
-│   ├── ecm/
-│   ├── logs/
-│   ├── network_data/
-│   ├── price_diff_results/
-│   ├── residuals_data/
-│   ├── spatial_weights/
-│   └── time_series_data/
-├── scripts/
-│   └── prepareData.js
-├── src/
-│   ├── components/
-│   │   ├── common/
-│   │   ├── ecm-analysis/
-│   │   ├── price-differential-analysis/
-│   │   └── spatial-analysis/
-│   ├── features/
-│   ├── hooks/
-│   ├── services/
-│   ├── store/
-│   ├── styles/
-│   └── utils/
-├── .babelrc
-├── .env
-├── .eslintrc.js
-├── .gitattributes
-├── .gitignore
-├── .nvmrc
-├── config-overrides.js
-├── LICENSE
-├── README.md
-├── map_git_repo.py
-├── package.json
-├── package-lock.json
-├── requirements.txt
-└── webpack.config.js
-```
+The project is organized into several key directories:
+
+- `.github/workflows/`: Contains CI/CD and deployment configuration files.
+- `data/`: Stores raw data files (if any).
+- `external_data/`: Contains external datasets, including Natural Earth data.
+- `project/`: Houses the Python backend code for data analysis.
+- `public/`: Stores static assets for the React application.
+- `results/`: Contains output data from various analyses.
+- `scripts/`: Includes utility scripts like data preparation.
+- `src/`: Contains the React application source code.
 
 ## Key Files and Their Purposes
 
 ### Root Directory
 
-- **`.babelrc`**: Babel configuration file for JavaScript transpilation.
-- **`.env`**: Contains environment variables (e.g., API endpoints).
-- **`.eslintrc.js`**: ESLint configuration for maintaining code quality.
-- **`.gitattributes`**: Specifies attributes for pathnames in Git.
-- **`.gitignore`**: Specifies files and directories that Git should ignore.
-- **`.nvmrc`**: Specifies the Node.js version for the project.
-- **`config-overrides.js`**: Configuration overrides for Create React App.
-- **`LICENSE`**: The license file for the project.
-- **`README.md`**: Provides an overview of the project and setup instructions.
-- **`map_git_repo.py`**: Python script to generate a tree structure of the Git repository.
-- **`package.json`**: Defines project dependencies, scripts, and metadata.
-- **`requirements.txt`**: Lists Python dependencies for the project.
-- **`webpack.config.js`**: Webpack configuration file for bundling the application.
+- `.babelrc`: Babel configuration for JavaScript transpilation.
+- `.env`: Environment variables configuration.
+- `.eslintrc.js`: ESLint configuration for code quality.
+- `.gitattributes`: Git attributes specification.
+- `.gitignore`: Specifies intentionally untracked files to ignore.
+- `.nvmrc`: Specifies the Node.js version for the project.
+- `config-overrides.js`: Configuration overrides for Create React App.
+- `LICENSE`: Project license information.
+- `README.md`: Project overview and setup instructions.
+- `map_git_repo.py`: Python script to generate the repository structure.
+- `package.json`: Defines project dependencies and scripts.
+- `requirements.txt`: Lists Python dependencies.
+- `webpack.config.js`: Webpack configuration for bundling.
 
 ### `project/` Directory
 
-- **`config/config.yaml`**: Configuration file for the Python backend.
-- **`data/`**: Contains processed data and spatial weights.
-- **`ecm_analysis/`**: Contains scripts for Error Correction Model analysis.
-- **`price_differential_analysis/`**: Contains scripts for Price Differential analysis.
-- **`spatial_analysis/`**: Contains scripts for Spatial analysis and data preparation.
-- **`utils/`**: Contains utility functions for data processing and common operations.
+- `config/config.yaml`: Configuration for the Python backend.
+- `data/processed/`: Contains processed GeoJSON and JSON data files.
+- `ecm_analysis/`: Scripts for Error Correction Model analysis.
+- `price_diffrential_analysis/`: Scripts for Price Differential analysis.
+- `spatial_analysis/`: Scripts for Spatial analysis and data preparation.
+- `utils/`: Utility functions for data processing.
 
 ### `public/` Directory
 
-Contains static assets for the React application.
+Contains static assets for the React application, including `index.html`, favicon, and manifest.
 
 ### `results/` Directory
 
-Stores output data from various analyses, including choropleth data, ECM results, logs, network data, price differential results, residuals data, spatial weights, and time series data.
+Stores output data from various analyses:
+- `choropleth_data/`: CSV files for choropleth visualizations.
+- `ecm/`: JSON results from ECM analysis.
+- `network_data/`: CSV files for network visualizations.
+- `price_diff_results/`: JSON results from price differential analysis.
+- `spatial_weights/`: JSON file with spatial weights information.
+- `time_series_data/`: CSV files with time series data.
 
 ### `scripts/` Directory
 
-- **`prepareData.js`**: Script to prepare data for the frontend.
+- `prepareData.js`: Script to prepare data for the frontend.
 
 ### `src/` Directory
 
-Contains the React application source code, including components, features (Redux slices), hooks, services, store configuration, styles, and utility functions.
+React application source code:
+- `components/`: React components organized by feature.
+- `features/`: Redux slices for state management.
+- `hooks/`: Custom React hooks.
+- `services/`: API and i18n service configurations.
+- `store/`: Redux store configuration.
+- `styles/`: Global styles and theme configuration.
+- `utils/`: Utility functions for the frontend.
 
-## Key Functions and Their Purposes
+## Key Functions and Components
 
-### ECM Analysis (`ecm_analysis_v2.py`)
+### Backend (Python)
 
-- **`load_data()`**: Loads and preprocesses data from GeoJSON files.
-- **`run_stationarity_tests()`**: Performs stationarity tests on time series data.
-- **`run_cointegration_tests()`**: Conducts cointegration tests between variables.
-- **`estimate_ecm()`**: Estimates the Error Correction Model.
-- **`compute_model_criteria()`**: Calculates model selection criteria (AIC, BIC, HQIC).
-- **`compute_granger_causality()`**: Performs Granger causality tests.
-- **`run_spatial_autocorrelation()`**: Conducts spatial autocorrelation tests on residuals.
-- **`run_diagnostics()`**: Performs diagnostic tests on the ECM results.
-- **`compute_irfs()`**: Computes Impulse Response Functions.
-- **`run_ecm_analysis()`**: Orchestrates the entire ECM analysis process.
+- ECM Analysis: `load_data()`, `run_stationarity_tests()`, `estimate_ecm()`, etc.
+- Price Differential Analysis: `prepare_market_data()`, `analyze_market_pair()`, etc.
+- Spatial Analysis: `load_geojson()`, `create_spatial_weights()`, `run_spatial_analysis()`, etc.
 
-### Price Differential Analysis (`price_differential_model_v2.py`)
+### Frontend (React)
 
-- **`load_data()`**: Loads data from GeoJSON files and preprocesses it.
-- **`prepare_market_data()`**: Prepares market data for analysis.
-- **`run_stationarity_tests()`**: Conducts stationarity tests on price differentials.
-- **`calculate_price_differential()`**: Calculates price differentials between markets.
-- **`analyze_market_pair()`**: Analyzes a pair of markets for price differentials.
-- **`run_price_differential_model()`**: Runs the price differential model with various estimation methods.
-
-### Spatial Analysis (`spatial_model.py`)
-
-- **`load_geojson()`**: Loads GeoJSON data and assigns region identifiers.
-- **`create_unified_regime()`**: Creates a unified exchange rate regime.
-- **`create_spatial_weights()`**: Creates a spatial weights matrix.
-- **`calculate_spatial_lag()`**: Calculates the spatial lag of a specified variable.
-- **`run_ridge_regression()`**: Performs Ridge regression on spatial data.
-- **`calculate_moran()`**: Calculates Moran's I statistic for spatial autocorrelation.
-- **`run_spatial_analysis()`**: Orchestrates the spatial analysis process.
-
-### Data Preparation (`data_preparation_for_spatial_chart.py`)
-
-- **`load_geojson_data()`**: Loads and preprocesses GeoJSON data.
-- **`prepare_unique_regions_gdf()`**: Creates a GeoDataFrame with unique regions.
-- **`export_spatial_weights()`**: Exports spatial weights matrix as JSON.
-- **`prepare_choropleth_data()`**: Prepares data for choropleth maps.
-- **`prepare_time_series_data()`**: Prepares time series data for prices and conflict intensity.
-- **`generate_network_data()`**: Generates flow maps using spatial weights.
-
-## React Components
-
-- **`ECMAnalysis`**: Renders the ECM Analysis dashboard.
-- **`PriceDifferentialAnalysis`**: Renders the Price Differential Analysis dashboard.
-- **`SpatialAnalysis`**: Renders the Spatial Analysis dashboard.
-- **`Dashboard`**: Main dashboard component.
-- **`Header`, `Footer`, `Sidebar`**: Common layout components.
-- **`LoadingSpinner`, `ErrorMessage`**: Utility components for handling loading states and errors.
-- **`Map`**: Renders geospatial visualizations.
-- **`LineChart`**: Renders line charts for time series data.
-
-## Redux Slices
-
-- **`ecmSlice`**: Manages state for ECM analysis.
-- **`priceDiffSlice`**: Manages state for Price Differential analysis.
-- **`spatialSlice`**: Manages state for Spatial analysis.
-- **`themeSlice`**: Manages application theme state.
-
-## Custom Hooks
-
-- **`useDataLoading`**: Custom hook for loading data from API or local files.
-
-## Services
-
-- **`api.js`**: Contains functions for making API calls.
-- **`i18n.js`**: Sets up internationalization for the application.
-
-## Utility Functions
-
-- **`dataSourceUtil.js`**: Utility for managing data sources between local development and production.
+- Main Components: `ECMAnalysis`, `PriceDifferentialAnalysis`, `SpatialAnalysis`, `Dashboard`
+- Common Components: `Header`, `Footer`, `Sidebar`, `Map`, `LineChart`
+- Redux Slices: `ecmSlice`, `priceDiffSlice`, `spatialSlice`, `themeSlice`
+- Custom Hooks: `useDataLoading`
 
 ## Development and Deployment
 
-- **CI/CD Workflow** (`.github/workflows/ci-cd.yml`): Defines the continuous integration and deployment process.
-- **Deployment Workflow** (`.github/workflows/deploy.yml`): Specifies the deployment process to GitHub Pages.
+- CI/CD: Configured in `.github/workflows/ci-cd.yml`
+- Deployment: GitHub Pages deployment configured in `.github/workflows/deploy.yml`
+- Local Development: Use `npm run dev` to start the development server
+- Build: Use `npm run build` to create a production build
+- Data Preparation: `npm run prepare-data` copies necessary data to the build directory
 
-This updated structure reflects a more comprehensive and organized approach to your Yemen Market Analysis Dashboard project, integrating both the Python backend for data analysis and the React frontend for visualization and user interaction.
