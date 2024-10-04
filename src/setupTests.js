@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom';
 import 'jest-styled-components';
 
+
 // Mock styled-components
 jest.mock('styled-components', () => {
   const originalModule = jest.requireActual('styled-components');

@@ -1,12 +1,139 @@
-Based on the provided repository map and our previous discussions, I'll update the key file content to accurately reflect your project structure and important files. Here's the updated key file content:
-
-```markdown
 # Yemen Market Analysis Dashboard - Repository Structure and Key Files Guide
+
+(.venv) mohammmadalakkaoui@mohammmads-macbook-air-3 Yemen_Market_Analysis % /Users/mohammmadalakkaoui/Docu
+ments/GitHub/Yemen_Market_Analysis/.venv/bin/python /Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Marke
+t_Analysis/map_git_repo.py
+├── .babelrc
+├── .env
+├── .eslintrc.js
+├── .gitattributes
+├── .github
+│   └── workflows
+│       ├── ci-cd.yml
+│       └── deploy.yml
+├── .gitignore
+├── .nvmrc
+├── LICENSE
+├── README.md
+├── config-overrides.js
+├── data
+├── external_data
+│   └── naturalearth_lowres
+│       ├── ne_110m_admin_0_countries.VERSION.txt
+│       ├── ne_110m_admin_0_countries.cpg
+│       ├── ne_110m_admin_0_countries.dbf
+│       ├── ne_110m_admin_0_countries.prj
+│       ├── ne_110m_admin_0_countries.shp
+│       └── ne_110m_admin_0_countries.shx
+├── key_file.txt
+├── map_git_repo.py
+├── package-lock.json
+├── package.json
+├── project
+│   ├── config
+│   │   └── config.yaml
+│   ├── data
+│   │   ├── processed
+│   │   │   ├── enhanced_unified_data_with_residual.geojson
+│   │   │   ├── enhanced_unified_data_with_residuals.geojson
+│   │   │   ├── unified_data.geojson
+│   │   │   └── unified_data.json
+│   │   └── weights
+│   │       └── global_spatial_weights.pkl
+│   ├── ecm_analysis
+│   │   ├── ecm_analysis.py
+│   │   └── ecm_analysis_v2.py
+│   ├── price_diffrential_analysis
+│   │   ├── price_differential_model.py
+│   │   └── price_differential_model_v2.py
+│   ├── spatial_analysis
+│   │   ├── data_prepration_for_spatial_chart.py
+│   │   └── spatial_model.py
+│   └── utils
+│       ├── common_utils.py
+│       └── data_utils.py
+├── public
+│   ├── favicon.ico
+│   ├── index.html
+│   ├── logo192.png
+│   ├── logo512.png
+│   ├── manifest.json
+│   └── robots.txt
+├── requirements.txt
+├── results
+│   ├── choropleth_data
+│   │   ├── average_prices.csv
+│   │   ├── conflict_intensity.csv
+│   │   ├── price_changes.csv
+│   │   └── residuals.csv
+│   ├── ecm
+│   │   └── ecm_analysis_results.json
+│   ├── network_data
+│   │   └── flow_maps.csv
+│   ├── price_diff_results
+│   │   └── price_differential_results.json
+│   ├── residuals_data
+│   ├── spatial_analysis_results.json
+│   ├── spatial_weights
+│   │   └── spatial_weights.json
+│   └── time_series_data
+│       ├── conflict_intensity_time_series.csv
+│       └── prices_time_series.csv
+├── scripts
+│   └── prepareData.js
+├── src
+│   ├── App.js
+│   ├── Dashboard.js
+│   ├── Dashboard.test.js
+│   ├── components
+│   │   ├── common
+│   │   │   ├── ErrorBoundary.js
+│   │   │   ├── ErrorMessage.js
+│   │   │   ├── Footer.js
+│   │   │   ├── Header.js
+│   │   │   ├── LineChart.js
+│   │   │   ├── LoadingSpinner.js
+│   │   │   ├── Map.js
+│   │   │   ├── NotFound.js
+│   │   │   ├── Sidebar.js
+│   │   │   └── ThemeToggle.js
+│   │   ├── ecm-analysis
+│   │   │   ├── DiagnosticsTable.js
+│   │   │   ├── DownloadReportButton.js
+│   │   │   ├── ECMAnalysis.js
+│   │   │   ├── IRFChart.js
+│   │   │   └── SummaryTable.js
+│   │   ├── price-differential-analysis
+│   │   │   └── PriceDifferentialAnalysis.js
+│   │   └── spatial-analysis
+│   │       └── SpatialAnalysis.js
+│   ├── features
+│   │   ├── ecmSlice.js
+│   │   ├── priceDiffSlice.js
+│   │   ├── spatialSlice.js
+│   │   └── themeSlice.js
+│   ├── hooks
+│   │   └── useDataLoading.js
+│   ├── index.css
+│   ├── index.js
+│   ├── services
+│   │   ├── api.js
+│   │   └── i18n.js
+│   ├── setupTests.js
+│   ├── store
+│   │   └── index.js
+│   ├── styles
+│   │   ├── GlobalStyle.js
+│   │   └── theme.js
+│   └── utils
+│       ├── dataPath.js
+│       └── dataSourceUtil.js
+└── webpack.config.js
+
 
 ## Repository Structure Overview
 
 The project is organized into several key directories:
-
 - `.github/workflows/`: Contains CI/CD and deployment configuration files.
 - `data/`: Stores raw data files (if any).
 - `external_data/`: Contains external datasets, including Natural Earth data.
@@ -19,8 +146,7 @@ The project is organized into several key directories:
 ## Key Files and Their Purposes
 
 ### Root Directory
-
-- `.babelrc`: Babel configuration for JavaScript transpilation.
+- `.babelrc`: Babel configuration for JavaScript transpilation, including styled-components plugin.
 - `.env`: Environment variables configuration.
 - `.eslintrc.js`: ESLint configuration for code quality.
 - `.gitattributes`: Git attributes specification.
@@ -30,25 +156,23 @@ The project is organized into several key directories:
 - `LICENSE`: Project license information.
 - `README.md`: Project overview and setup instructions.
 - `map_git_repo.py`: Python script to generate the repository structure.
-- `package.json`: Defines project dependencies and scripts.
+- `package.json`: Defines project dependencies, scripts, and Jest configuration.
 - `requirements.txt`: Lists Python dependencies.
 - `webpack.config.js`: Webpack configuration for bundling.
+- `jest.config.js`: Configuration for Jest testing framework.
 
 ### `project/` Directory
-
 - `config/config.yaml`: Configuration for the Python backend.
 - `data/processed/`: Contains processed GeoJSON and JSON data files.
 - `ecm_analysis/`: Scripts for Error Correction Model analysis.
-- `price_diffrential_analysis/`: Scripts for Price Differential analysis.
+- `price_differential_analysis/`: Scripts for Price Differential analysis.
 - `spatial_analysis/`: Scripts for Spatial analysis and data preparation.
 - `utils/`: Utility functions for data processing.
 
 ### `public/` Directory
-
 Contains static assets for the React application, including `index.html`, favicon, and manifest.
 
 ### `results/` Directory
-
 Stores output data from various analyses:
 - `choropleth_data/`: CSV files for choropleth visualizations.
 - `ecm/`: JSON results from ECM analysis.
@@ -58,11 +182,9 @@ Stores output data from various analyses:
 - `time_series_data/`: CSV files with time series data.
 
 ### `scripts/` Directory
-
 - `prepareData.js`: Script to prepare data for the frontend.
 
 ### `src/` Directory
-
 React application source code:
 - `components/`: React components organized by feature.
 - `features/`: Redux slices for state management.
@@ -71,17 +193,16 @@ React application source code:
 - `store/`: Redux store configuration.
 - `styles/`: Global styles and theme configuration.
 - `utils/`: Utility functions for the frontend.
+- `setupTests.js`: Configuration for test environment, including jest-dom and jest-styled-components.
 
 ## Key Functions and Components
 
 ### Backend (Python)
-
 - ECM Analysis: `load_data()`, `run_stationarity_tests()`, `estimate_ecm()`, etc.
 - Price Differential Analysis: `prepare_market_data()`, `analyze_market_pair()`, etc.
 - Spatial Analysis: `load_geojson()`, `create_spatial_weights()`, `run_spatial_analysis()`, etc.
 
 ### Frontend (React)
-
 - Main Components: `ECMAnalysis`, `PriceDifferentialAnalysis`, `SpatialAnalysis`, `Dashboard`
 - Common Components: `Header`, `Footer`, `Sidebar`, `Map`, `LineChart`
 - Redux Slices: `ecmSlice`, `priceDiffSlice`, `spatialSlice`, `themeSlice`
@@ -90,8 +211,18 @@ React application source code:
 ## Development and Deployment
 
 - CI/CD: Configured in `.github/workflows/ci-cd.yml`
-- Deployment: GitHub Pages deployment configured in `.github/workflows/deploy.yml`
+  - Includes steps for installation, testing (with --passWithNoTests option), building, and deployment
+- Deployment: GitHub Pages deployment configured in `.github/workflows/ci-cd.yml`
 - Local Development: Use `npm run dev` to start the development server
 - Build: Use `npm run build` to create a production build
 - Data Preparation: `npm run prepare-data` copies necessary data to the build directory
+- Testing: Use `npm test` to run tests (currently set to pass even with no tests)
 
+## Additional Notes
+
+- Styled-components: The project uses styled-components for CSS-in-JS styling.
+- Jest Configuration: The project includes custom Jest configuration in `package.json` to properly handle styled-components in tests.
+- Babel Configuration: The `.babelrc` file includes configuration for styled-components plugin.
+- GitHub Actions: The CI/CD workflow is set up with permissions to write to the repository for deployment purposes.
+
+Remember to regularly update dependencies, fix and improve tests, and maintain comprehensive documentation as the project evolves.

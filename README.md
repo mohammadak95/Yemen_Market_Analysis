@@ -1,70 +1,99 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Yemen Market Analysis Dashboard
+
+This project is a comprehensive market analysis dashboard for Yemen, combining React for the frontend and Python for data analysis. It provides insights into commodity prices, conflict intensity, and market dynamics across different regions of Yemen.
+
+## Features
+
+- **Interactive Dashboard**: Multi-commodity and multi-regime selection with dynamic charts.
+- **Data Visualizations**: Time series charts, choropleth maps, flow maps, and market connectivity graphs.
+- **Econometric Analyses**: 
+  - Error Correction Model (ECM)
+  - Price Differentials Analysis
+  - Spatial Analysis
+- **Educational Components**: Methodology explanation and glossary of terms.
+- **Dual Development Setup**: Supports both local development and GitHub Pages deployment.
+- **Responsive Design**: Optimized for desktop and mobile viewing.
+- **Dark Mode**: Toggle between light and dark themes.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (version 20 or later)
+- Python 3.8+
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/Yemen_Market_Analysis.git
+   ```
+2. Install JavaScript dependencies:
+   ```
+   npm install
+   ```
+3. Install Python dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
 
 ## Available Scripts
 
 In the project directory, you can run:
 
-### `npm start`
+### `npm start` or `npm run dev`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Runs the app in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner in interactive watch mode.
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Builds the app for production to the `build` folder.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### `npm run prepare-data`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Prepares and copies necessary data for the frontend.
 
-### `npm run eject`
+### `npm run deploy`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Deploys the application to GitHub Pages.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Dual Development and Deployment
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+This project supports both local development and GitHub Pages deployment:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **Local Development**: Use `npm start` to run the app locally. Data is served from the `results/` directory.
+- **GitHub Pages Deployment**: The `npm run deploy` script builds the app and deploys it to GitHub Pages. The `prepareData.js` script ensures all necessary data is copied to the `build/` directory for deployment.
 
-## Learn More
+## Project Structure
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- `/src`: React application source code
+- `/project`: Python backend for data analysis
+- `/results`: Output data from various analyses
+- `/public`: Static assets
+- `/scripts`: Utility scripts including data preparation
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Data Analysis Components
 
-### Code Splitting
+- **ECM Analysis**: Analyzes cointegration and error correction in price data.
+- **Price Differential Analysis**: Examines price differentials between markets.
+- **Spatial Analysis**: Investigates spatial relationships in market data.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Contributing
 
-### Analyzing the Bundle Size
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## License
 
-### Making a Progressive Web App
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Acknowledgments
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Data sources
+- Libraries and frameworks used
+- Any other contributors or inspirations
