@@ -1,5 +1,4 @@
 // src/components/ecm-analysis/ECMAnalysis.js
-
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchData } from '../../features/ecmSlice';
@@ -46,7 +45,7 @@ const Section = styled.section`
 const ECMAnalysis = () => {
   const dispatch = useDispatch();
   const { data: ecmData, status, error } = useSelector((state) => state.ecm);
-  const [selectedCommodity, setSelectedCommodity] = useState('beans (kidney red)');
+  const [selectedCommodity, setSelectedCommodity] = useState('');
 
   // Refs for capturing sections
   const summaryRef = useRef(null);
@@ -59,14 +58,21 @@ const ECMAnalysis = () => {
     }
   }, [dispatch, status]);
 
-  // Handle loading and error states
-  if (status === 'loading') return <LoadingSpinner />;
-  if (status === 'failed') return <ErrorMessage message={error} />;
+  // Set initial selected commodity when data is loaded
+  useEffect(() => {
+    if (ecmData && ecmData.length > 0 && !selectedCommodity) {
+      setSelectedCommodity(ecmData[0].commodity);
+    }
+  }, [ecmData, selectedCommodity]);
 
   // Find the selected commodity's data
   const selectedData = useMemo(() => {
     return ecmData?.find(item => item.commodity === selectedCommodity);
   }, [ecmData, selectedCommodity]);
+
+  if (status === 'loading') return <LoadingSpinner />;
+  if (status === 'failed') return <ErrorMessage message={error} />;
+  if (!ecmData || ecmData.length === 0) return <div>No ECM data available.</div>;
 
   return (
     <Container>
@@ -79,7 +85,7 @@ const ECMAnalysis = () => {
           value={selectedCommodity}
           onChange={(e) => setSelectedCommodity(e.target.value)}
         >
-          {ecmData?.map((item) => (
+          {ecmData.map((item) => (
             <option key={item.commodity} value={item.commodity}>
               {item.commodity}
             </option>
