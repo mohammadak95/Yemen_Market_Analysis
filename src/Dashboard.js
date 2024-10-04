@@ -1,4 +1,4 @@
-// src/components/dashboard/Dashboard.js
+// src/components/Dashboard.js
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
