@@ -2,15 +2,21 @@
 import '@testing-library/jest-dom';
 import 'jest-styled-components';
 
-
 // Mock styled-components
 jest.mock('styled-components', () => {
-  const originalModule = jest.requireActual('styled-components');
+  const styled = {
+    div: () => 'div',
+    a: () => 'a',
+    // Add other HTML elements as needed
+  };
+  styled.default = styled;
   return {
-    ...originalModule,
+    ...jest.requireActual('styled-components'),
+    styled,
     keyframes: () => 'keyframe-mock',
   };
 });
+
 
 // Mock react-router-dom
 jest.mock('react-router-dom', () => ({
@@ -24,6 +30,3 @@ jest.mock('react-icons/fa', () => ({
   FaDollarSign: () => <span data-testid="dollar-icon" />,
   FaMapMarkedAlt: () => <span data-testid="map-icon" />,
 }));
-
-// Suppress console errors during tests
-console.error = () => {};
