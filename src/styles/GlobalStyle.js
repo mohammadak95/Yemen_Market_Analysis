@@ -1,30 +1,23 @@
 // src/styles/GlobalStyle.js
-import { createGlobalStyle } from 'styled-components';
+import { Global, css } from '@emotion/react';
 
-const GlobalStyle = createGlobalStyle`
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    background-color: ${props => props.theme.backgroundColor};
-    color: ${props => props.theme.textColor};
-    line-height: 1.5;
-    font-size: 16px;
-    margin: 0;
-    padding: 0;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    margin-bottom: 0.5em;
-    color: ${props => props.theme.headingColor};
-  }
-
-  select, input, button {
-    font-family: inherit;
-    font-size: inherit;
-  }
-`;
+const GlobalStyle = () => (
+  <Global
+    styles={(theme) => css`
+      html, body, #root {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: ${theme.palette.background.default};
+        color: ${theme.palette.text.primary};
+        font-family: ${theme.typography.fontFamily};
+      }
+      a {
+        color: ${theme.palette.primary.main};
+      }
+      /* Add any other global styles here */
+    `}
+  />
+);
 
 export default GlobalStyle;

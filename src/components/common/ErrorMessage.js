@@ -1,20 +1,13 @@
 // src/components/common/ErrorMessage.js
-import React from 'react';
-import styled from 'styled-components';
-import PropTypes from 'prop-types';
 
-const ErrorContainer = styled.div`
-  background-color: ${props => props.theme.accentColor};
-  color: white;
-  padding: 1rem;
-  border-radius: 4px;
-  margin: 1rem 0;
-`;
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Alert } from '@mui/material';
 
 const ErrorMessage = ({ message }) => (
-  <ErrorContainer>
+  <Alert severity="error">
     <strong>Error:</strong> {message}
-  </ErrorContainer>
+  </Alert>
 );
 
 ErrorMessage.propTypes = {

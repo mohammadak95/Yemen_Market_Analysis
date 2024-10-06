@@ -1,7 +1,8 @@
-//src/components/common/RegimeSelector.js
+// src/components/common/RegimeSelector.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 const RegimeSelector = ({ regimes, selectedRegime, onSelectRegime }) => {
   if (!regimes || regimes.length === 0) {
@@ -9,21 +10,25 @@ const RegimeSelector = ({ regimes, selectedRegime, onSelectRegime }) => {
   }
 
   return (
-    <div>
-      <label htmlFor="regime-select">Select Regime: </label>
-      <select 
+    <FormControl fullWidth variant="outlined" margin="normal">
+      <InputLabel id="regime-label">Regime</InputLabel>
+      <Select
+        labelId="regime-label"
         id="regime-select"
-        value={selectedRegime} 
+        value={selectedRegime}
         onChange={(e) => onSelectRegime(e.target.value)}
+        label="Regime"
       >
-        <option value="">Select a regime</option>
+        <MenuItem value="">
+          <em>Select a regime</em>
+        </MenuItem>
         {regimes.map((regime) => (
-          <option key={regime} value={regime}>
+          <MenuItem key={regime} value={regime}>
             {regime}
-          </option>
+          </MenuItem>
         ))}
-      </select>
-    </div>
+      </Select>
+    </FormControl>
   );
 };
 

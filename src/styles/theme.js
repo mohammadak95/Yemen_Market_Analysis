@@ -1,24 +1,45 @@
 // src/styles/theme.js
-export const lightTheme = {
-  backgroundColor: '#f5f5f5',
-  textColor: '#333333',
-  headingColor: '#1a1a1a',
-  primaryColor: '#3498db',
-  secondaryColor: '#2ecc71',
-  accentColor: '#e74c3c',
-  borderColor: '#dddddd',
-  sidebarBackground: '#ffffff',
-  chartBackground: '#ffffff',
-};
 
-export const darkTheme = {
-  backgroundColor: '#121212',
-  textColor: '#e0e0e0',
-  headingColor: '#ffffff',
-  primaryColor: '#3498db',
-  secondaryColor: '#2ecc71',
-  accentColor: '#e74c3c',
-  borderColor: '#333333',
-  sidebarBackground: '#1e1e1e',
-  chartBackground: '#1e1e1e',
-};
+import { createTheme } from '@mui/material/styles';
+
+export const lightTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1976d2', // Customize as needed
+    },
+    secondary: {
+      main: '#9c27b0', // Customize as needed
+    },
+    error: {
+      main: '#d32f2f',
+    },
+    background: {
+      default: '#f5f5f5',
+    },
+  },
+  typography: {
+    fontFamily: 'Roboto, sans-serif',
+  },
+});
+
+export const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#90caf9', // Customize as needed
+    },
+    secondary: {
+      main: '#ce93d8', // Customize as needed
+    },
+    error: {
+      main: '#ef5350',
+    },
+    background: {
+      default: '#303030',
+    },
+  },
+  typography: {
+    fontFamily: 'Roboto, sans-serif',
+  },
+});

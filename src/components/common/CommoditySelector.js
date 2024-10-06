@@ -1,7 +1,8 @@
-//src/components/common/CommoditySelector.js
+// src/components/common/CommoditySelector.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   if (!commodities || commodities.length === 0) {
@@ -9,21 +10,25 @@ const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }
   }
 
   return (
-    <div>
-      <label htmlFor="commodity-select">Select Commodity: </label>
-      <select 
+    <FormControl fullWidth variant="outlined" margin="normal">
+      <InputLabel id="commodity-label">Commodity</InputLabel>
+      <Select
+        labelId="commodity-label"
         id="commodity-select"
-        value={selectedCommodity} 
+        value={selectedCommodity}
         onChange={(e) => onSelectCommodity(e.target.value)}
+        label="Commodity"
       >
-        <option value="">Select a commodity</option>
+        <MenuItem value="">
+          <em>Select a commodity</em>
+        </MenuItem>
         {commodities.map((commodity) => (
-          <option key={commodity} value={commodity}>
+          <MenuItem key={commodity} value={commodity}>
             {commodity}
-          </option>
+          </MenuItem>
         ))}
-      </select>
-    </div>
+      </Select>
+    </FormControl>
   );
 };
 
