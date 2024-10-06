@@ -1,0 +1,388 @@
+Methodology
+
+The Yemen Market Analysis project employs a comprehensive methodological framework that integrates advanced econometric and spatial analysis techniques to examine the influence of conflict intensity on commodity prices across different regions of Yemen. This section delineates the systematic approach undertaken, encompassing data preprocessing, econometric modeling, spatial analysis, and data preparation for visualization. The methodology leverages robust statistical models, spatial econometric techniques, and parallel processing to ensure rigorous and scalable analyses.
+
+1. Data Collection and Preprocessing
+
+1.1. Data Loading
+
+The analysis begins with the acquisition of spatial and temporal data encapsulated in GeoJSON files. The primary dataset, unified_data.geojson, contains detailed records of commodity prices, conflict intensity, and other relevant variables across multiple regions and time periods in Yemen.
+
+	•	Loading Mechanism: Utilizes GeoPandas to read GeoJSON files, ensuring efficient handling of geospatial data.
+
+import geopandas as gpd
+gdf = gpd.read_file('unified_data.geojson')
+
+
+	•	Configuration Management: Employs a YAML configuration file (config.yaml) to manage file paths, directories, and analysis parameters, promoting flexibility and scalability.
+
+directories:
+  data_dir: 'project/data/'
+  processed_data_dir: 'project/data/processed/'
+  results_dir: 'results/'
+  logs_dir: 'results/logs/'
+  external_data_dir: 'external_data/'
+
+files:
+  spatial_geojson: 'project/data/processed/unified_data.geojson'
+  enhanced_geojson: 'project/data/processed/enhanced_unified_data_with_residuals.geojson'
+  spatial_analysis_results: 'results/spatial_analysis_results.json'
+  ecm_results: 'results/ecm/ecm_analysis_results.json'
+  spatial_weights_json: 'results/spatial_weights/spatial_weights.json'
+  naturalearth_lowres: 'external_data/naturalearth_lowres/ne_110m_admin_0_countries.shp'
+
+parameters:
+  frequency: 'M'
+  initial_k: 5
+  max_k: 20
+  min_common_dates: 20
+  lag_periods: 2
+  cointegration_max_lags: 5
+  granger_max_lags: 4
+  distance_threshold: 200
+  regimes_to_unify: ['north', 'south']
+  new_regime_name: 'unified'
+  exchange_rate_regime_column: 'exchange_rate_regime'
+  region_identifier: 'admin1'
+  time_column: 'date'
+  lag_variable: 'usdprice'
+  commodities: ['commodity1', 'commodity2']
+  exchange_rate_regimes: ['north', 'south', 'unified']
+  stationarity_significance_level: 0.05
+  cointegration_significance_level: 0.05
+  ridge_alpha: 1.0
+  max_epochs: 1000
+  learning_rate: 0.01
+  min_regions: 5
+  spatial_weights:
+    threshold_multiplier: 1
+  min_neighbors: 2
+
+logging:
+  level: 'INFO'
+  format: '%(asctime)s - %(levelname)s - %(message)s'
+
+
+
+1.2. Data Cleaning and Transformation
+
+	•	Duplicate Removal: Eliminates duplicate records to maintain data integrity.
+
+gdf.drop_duplicates(inplace=True)
+
+
+	•	Missing Values Handling: Addresses missing values through imputation strategies, such as replacing with median values, to prevent skewed analyses.
+
+from sklearn.impute import SimpleImputer
+imputer = SimpleImputer(strategy='median')
+gdf['usdprice'] = imputer.fit_transform(gdf[['usdprice']])
+
+
+	•	Date Processing: Converts date columns to datetime objects to facilitate time-series analyses.
+
+gdf['date'] = pd.to_datetime(gdf['date'], errors='coerce')
+
+
+	•	Categorical Data Encoding: Transforms categorical variables (e.g., commodity, exchange_rate_regime) into suitable formats for modeling, including the creation of dummy variables.
+
+gdf = pd.get_dummies(gdf, columns=['exchange_rate_regime'], drop_first=True)
+
+
+	•	Regime Unification: Consolidates specified exchange rate regimes into a unified category (unified) to streamline analyses across different economic conditions.
+
+gdf.loc[gdf['exchange_rate_regime'].isin(['north', 'south']), 'exchange_rate_regime'] = 'unified'
+
+
+
+1.3. Data Resampling and Alignment
+
+	•	Frequency Alignment: Resamples the dataset to a consistent temporal frequency (e.g., monthly) to ensure uniformity across time-series analyses.
+
+gdf.set_index('date', inplace=True)
+gdf = gdf.groupby('region_id').resample('M').mean().reset_index()
+
+
+	•	Grouping: Aggregates data by commodity and exchange_rate_regime to facilitate targeted analyses within specific market conditions.
+
+grouped_data = gdf.groupby(['commodity', 'exchange_rate_regime'])
+
+
+
+2. Econometric Modeling
+
+The project integrates multiple econometric models to dissect the relationship between conflict intensity and commodity prices.
+
+2.1. Error Correction Model (ECM)
+
+The ECM framework captures both short-term dynamics and long-term equilibrium relationships between variables, enabling the analysis of how deviations from equilibrium are corrected over time.
+
+	•	Model Specification: The ECM is derived from the Vector Error Correction Model (VECM), which is suitable for multivariate time series data exhibiting cointegration.
+Vector Error Correction Model (VECM) Equation:
+￼
+Where:
+	•	￼ denotes the first difference operator.
+	•	￼ is a vector of endogenous variables (e.g., usdprice, conflict_intensity).
+	•	￼ captures the long-term equilibrium relationships.
+	•	￼ are short-term adjustment coefficients.
+	•	￼ is the error term.
+	•	Stationarity Tests: Conducts Augmented Dickey-Fuller (ADF) and Kwiatkowski-Phillips-Schmidt-Shin (KPSS) tests to ascertain the stationarity of time series data.
+￼
+￼
+	•	ADF Hypotheses:
+	•	￼: Unit root present (non-stationary).
+	•	￼: No unit root (stationary).
+	•	KPSS Hypotheses:
+	•	￼: Stationary.
+	•	￼: Non-stationary.
+	•	Cointegration Analysis: Utilizes the Engle-Granger method to detect cointegrated relationships, indicating a long-term equilibrium between commodity prices and conflict intensity.
+Engle-Granger Cointegration Test:
+	1.	Step 1: Regress ￼ on ￼:
+￼
+	2.	Step 2: Test the residuals ￼ for stationarity using the ADF test.
+	•	￼: Residuals have a unit root (no cointegration).
+	•	￼: Residuals are stationary (cointegrated).
+	•	Model Estimation: Implements Vector Error Correction Models (VECM) using Statsmodels, selecting optimal lag orders based on Akaike Information Criterion (AIC).
+￼
+Where:
+	•	￼ is the number of parameters.
+	•	￼ is the maximized value of the likelihood function.
+	•	Diagnostics: Performs a suite of diagnostic tests to validate the ECM.
+	•	Breusch-Godfrey Test for Autocorrelation:
+￼
+	•	ARCH Test for Heteroskedasticity:
+￼
+	•	Jarque-Bera Test for Normality:
+￼
+	•	Durbin-Watson Test for Residual Autocorrelation:
+￼
+Where ￼ is the autocorrelation coefficient.
+	•	Impulse Response Functions (IRFs): Generates IRFs to assess the impact of shocks in conflict intensity on commodity prices over time.
+￼
+Where:
+	•	￼ measures the response of variable ￼ at horizon ￼ to a shock in variable ￼ at time 0.
+	•	Spatial Autocorrelation: Evaluates Moran’s I to detect spatial dependencies in the residuals, ensuring the validity of the model.
+\[
+I = \frac{N}{\sum_{i=1}^{N} \sum_{j=1}^{N} w_{ij}}} \cdot \frac{\sum_{i=1}^{N} \sum_{j=1}^{N} w_{ij}(y_i - \overline{y})(y_j - \overline{y})}{\sum_{i=1}^{N} (y_i - \overline{y})^2}
+\]
+Where:
+	•	￼ is the number of spatial units.
+	•	￼ is the spatial weight between units ￼ and ￼.
+	•	￼ is the residual for unit ￼.
+
+2.2. Price Differential Model
+
+This model examines the price disparities between different markets, considering the influence of conflict intensity and geographic factors.
+
+	•	Price Differential Calculation: Computes log price differentials between market pairs to analyze relative price movements.
+￼
+Where:
+	•	￼ is the price of commodity ￼ in market ￼.
+	•	￼ is the price of commodity ￼ in market ￼.
+	•	Correlation Analysis: Assesses Pearson correlations between conflict intensities across markets to understand inter-market conflict dynamics.
+￼
+	•	Regression Models:
+	•	Ordinary Least Squares (OLS): Estimates the relationship between price differentials and predictors with clustered standard errors to account for intra-group correlations.
+￼
+Where:
+	•	￼ is the intercept.
+	•	￼ and ￼ are coefficients for distance and conflict correlation, respectively.
+	•	￼ captures fixed effects for entities.
+	•	￼ is the error term.
+	•	Fixed Effects (FE) Model: Controls for unobserved heterogeneity by incorporating entity-specific effects.
+￼
+Where:
+	•	￼ represents fixed effects for each entity (e.g., market).
+	•	Random Effects (RE) Model: Assumes random variations across entities, providing a comparison to the FE model.
+￼
+Where:
+	•	￼ is the random effect.
+	•	Instrumental Variables (IV) Model (IV2SLS): Addresses potential endogeneity issues by using instrumental variables.
+￼
+Where ￼ is endogenous and instrumented by ￼.
+	•	Diagnostics: Includes Variance Inflation Factor (VIF) for multicollinearity assessment, Breusch-Pagan for heteroskedasticity, Durbin-Watson for autocorrelation, Jarque-Bera for normality, and Ramsey RESET for model specification.
+	•	Variance Inflation Factor (VIF):
+￼
+Where ￼ is the coefficient of determination of regressing the ￼ predictor on all other predictors.
+	•	Breusch-Pagan Test:
+￼
+	•	Durbin-Watson Test:
+￼
+	•	Jarque-Bera Test:
+￼
+Where ￼ is skewness and ￼ is kurtosis.
+	•	Ramsey RESET Test:
+￼
+	•	Model Comparison: Evaluates models based on Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) to determine the best-fitting model.
+￼
+￼
+Where:
+	•	￼ is the number of parameters.
+	•	￼ is the maximized value of the likelihood function.
+	•	￼ is the number of observations.
+
+3. Spatial Econometric Analysis
+
+Spatial econometric techniques are pivotal in understanding the geographical interdependencies and spatial spillover effects in the data.
+
+3.1. Spatial Weights Matrix Construction
+
+	•	K-Nearest Neighbors (KNN): Constructs spatial weights matrices using KNN, dynamically adjusting the number of neighbors (k) to ensure full connectivity of the spatial network.
+Spatial Weights Matrix (W) Specification:
+￼
+	•	Connectivity Verification: Ensures that the spatial weights matrix is fully connected, preventing isolated regions from skewing the analysis.
+	•	Graph Representation: The spatial weights matrix is represented as a graph where nodes correspond to regions and edges represent neighbor relationships.
+	•	Connectivity Check: Utilizes graph theory (e.g., NetworkX) to verify that the graph is fully connected.
+
+import networkx as nx
+G = w.to_networkx()
+is_connected = nx.is_connected(G.to_undirected())
+
+
+	•	Exporting Weights: Saves the spatial weights matrices in JSON format for reproducibility and further analyses.
+
+import json
+with open('spatial_weights.json', 'w') as f:
+    json.dump(weights_dict, f, indent=2)
+
+
+
+3.2. Spatial Lag Calculation
+
+	•	Spatial Lag of Variables: Computes spatial lags (e.g., spatial lag of usdprice) to incorporate the influence of neighboring regions into the regression models.
+￼
+Where:
+	•	￼ is the spatial autoregressive parameter.
+	•	￼ is the spatial weight between regions ￼ and ￼.
+	•	Ridge Regression with Spatial Lag: Performs Ridge regression, including spatially lagged variables to mitigate multicollinearity and stabilize coefficient estimates.
+Ridge Regression Equation:
+￼
+Where:
+	•	￼ is the regularization parameter.
+	•	￼ are the predictors, including spatial lags.
+
+3.3. Spatial Autocorrelation Assessment
+
+	•	Moran’s I: Calculates Moran’s I statistic on residuals from regression models to detect spatial autocorrelation, ensuring that spatial dependencies are appropriately modeled.
+\[
+I = \frac{N}{\sum_{i=1}^{N} \sum_{j=1}^{N} w_{ij}}} \cdot \frac{\sum_{i=1}^{N} \sum_{j=1}^{N} w_{ij}(y_i - \overline{y})(y_j - \overline{y})}{\sum_{i=1}^{N} (y_i - \overline{y})^2}
+\]
+	•	Interpretation:
+	•	￼: Positive spatial autocorrelation.
+	•	￼: Negative spatial autocorrelation.
+	•	￼: No spatial autocorrelation.
+
+from esda.moran import Moran
+moran = Moran(residual, w)
+
+
+	•	Network Flow Maps: Generates flow maps representing spatial relationships and dependencies between regions, facilitating the visualization of spatial interactions.
+	•	Flow Map Specification:
+Each flow represents the spatial interaction between a source region and its neighboring target regions, weighted by the spatial lag or other relevant metrics.
+
+import pandas as pd
+flow_df = pd.DataFrame(flow_data)
+flow_df.to_csv('flow_maps.csv', index=False)
+
+
+
+4. Data Preparation for Visualization
+
+Effective visualization is integral to interpreting the analytical outcomes and communicating findings.
+
+4.1. Choropleth Maps
+
+	•	Average Prices: Maps the mean commodity prices across regions and time periods to identify spatial price distributions.
+\[
+\text{Avg\Price}{it} = \frac{1}{N_{it}} \sum_{j=1}^{N_{it}} P_{ijt}
+\]
+Where:
+	•	\( \text{Avg\Price}{it} \) is the average price of commodity ￼ in region ￼.
+	•	￼ is the number of observations for commodity ￼ in region ￼.
+	•	￼ is the price of commodity ￼ in sub-region ￼ at time ￼.
+	•	Conflict Intensity: Visualizes the average conflict intensity per region, highlighting areas with heightened conflict.
+\[
+\text{Avg\Conflict}{it} = \frac{1}{N_{it}} \sum_{j=1}^{N_{it}} C_{ijt}
+\]
+Where:
+	•	￼ is the conflict intensity in sub-region ￼ for region ￼.
+	•	Price Changes: Illustrates percentage changes in prices over time, revealing temporal trends and volatility.
+\[
+\text{Price\Change}{it} (\%) = \left( \frac{P_{it} - P_{i(t-1)}}{P_{i(t-1)}} \right) \times 100
+\]
+	•	Residuals: Depicts residuals from econometric models to identify unexplained variations and potential areas of interest.
+￼
+Where:
+	•	￼ is the observed value.
+	•	￼ is the predicted value from the model.
+
+4.2. Time Series Data
+
+	•	Price and Conflict Intensity: Prepares time series datasets for commodity prices and conflict intensity, enabling temporal trend analyses and forecasting.
+	•	Price Time Series:
+￼
+Where:
+	•	￼ is the distance metric between markets.
+	•	￼ is the conflict correlation.
+	•	Conflict Intensity Time Series:
+￼
+Where:
+	•	￼ represents structural variables influencing conflict intensity.
+
+4.3. Network Flow Maps
+
+	•	Spatial Relationships: Constructs network graphs illustrating the flow of economic interactions and dependencies between regions, informed by the spatial weights matrices.
+	•	Flow Map Construction:
+Each edge in the network represents a spatial interaction between two regions, weighted by spatial lag variables or economic metrics.
+
+import networkx as nx
+G = nx.from_pandas_edgelist(flow_df, 'source', 'target', ['weight'])
+
+
+
+5. Parallel Processing and Optimization
+
+To handle computationally intensive tasks efficiently, the project leverages parallel processing techniques.
+
+	•	Multiprocessing: Utilizes Python’s multiprocessing and concurrent.futures modules to execute multiple analyses concurrently, significantly reducing processing time.
+
+from concurrent.futures import ProcessPoolExecutor, as_completed
+with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
+    futures = [executor.submit(analyze, args) for args in analysis_args]
+    for future in as_completed(futures):
+        results.append(future.result())
+
+
+	•	Caching Mechanisms: Implements caching strategies using Joblib to optimize repeated data loading and processing steps.
+
+from joblib import Memory
+memory = Memory(location='cache', verbose=0)
+
+@memory.cache
+def load_data(file_path):
+    return pd.read_csv(file_path)
+
+
+	•	Data Optimization: Simplifies geometries and optimizes data types to enhance performance and minimize memory usage, ensuring scalability for large datasets.
+
+gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
+gdf['usdprice'] = gdf['usdprice'].astype('float32')
+
+
+
+6. Result Aggregation and Saving
+
+All analytical outcomes are systematically aggregated and stored for downstream applications and reporting.
+
+	•	JSON and CSV Outputs: Saves results in JSON and CSV formats, facilitating ease of access and integration with visualization tools.
+
+import json
+with open('results.json', 'w') as f:
+    json.dump(results, f, indent=4, cls=NumpyEncoder)
+
+
+	•	Logging: Maintains detailed logs of all processes and analyses, ensuring transparency and facilitating debugging and reproducibility.
+
+import logging
+logging.basicConfig(filename='analysis.log', level=logging.INFO)
+logger = logging.getLogger(__name__)
+

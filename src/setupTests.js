@@ -2,20 +2,6 @@
 import '@testing-library/jest-dom';
 import 'jest-styled-components';
 
-// Mock styled-components
-jest.mock('styled-components', () => {
-  const styled = {
-    div: () => 'div',
-    a: () => 'a',
-    // Add other HTML elements as needed
-  };
-  styled.default = styled;
-  return {
-    ...jest.requireActual('styled-components'),
-    styled,
-    keyframes: () => 'keyframe-mock',
-  };
-});
 
 
 // Mock react-router-dom

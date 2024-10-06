@@ -1,29 +1,25 @@
 // src/Dashboard.test.js
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter as Router } from 'react-router-dom';
 import Dashboard from './Dashboard';
 
-test('renders dashboard links', () => {
-  render(
-    <Router>
-      <Dashboard />
-    </Router>
-  );
-  
-  expect(screen.getByText('ECM Analysis')).toBeInTheDocument();
-  expect(screen.getByText('Price Differential Analysis')).toBeInTheDocument();
-  expect(screen.getByText('Spatial Analysis')).toBeInTheDocument();
-});
+// Mock the useData hook
+jest.mock('./hooks/useData', () => ({
+  __esModule: true,
+  default: () => ({
+    data: { commodities: [], regimes: [] },
+    loading: false,
+    error: null,
+  }),
+}));
 
-test('dashboard links have correct href attributes', () => {
-  render(
-    <Router>
-      <Dashboard />
-    </Router>
-  );
+// Mock react-chartjs-2
+jest.mock('react-chartjs-2', () => ({
+  Line: () => null,
+}));
 
-  expect(screen.getByText('ECM Analysis').closest('a')).toHaveAttribute('href', '/ecm');
-  expect(screen.getByText('Price Differential Analysis').closest('a')).toHaveAttribute('href', '/price-diff');
-  expect(screen.getByText('Spatial Analysis').closest('a')).toHaveAttribute('href', '/spatial');
+test('renders Dashboard component', () => {
+  render(<Dashboard selectedCommodity="" selectedRegime="" />);
+  const headingElement = screen.getByText(/Yemen Market Analysis Dashboard/i);
+  expect(headingElement).toBeInTheDocument();
 });

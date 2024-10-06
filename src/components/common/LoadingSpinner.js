@@ -1,8 +1,8 @@
 // src/components/common/LoadingSpinner.js
 import React from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 
-const spin = keyframes`
+const spin = styled.keyframes`
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 `;

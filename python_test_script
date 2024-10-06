@@ -1,49 +1,266 @@
+import os
 import json
+import pandas as pd
 import geopandas as gpd
 from collections import defaultdict
 
-def analyze_geojson(file_path):
-    # Read the GeoJSON file
-    gdf = gpd.read_file(file_path)
-    
-    # Basic information
-    print(f"Total number of features: {len(gdf)}")
-    print(f"Coordinate Reference System: {gdf.crs}")
-    
-    # Analyze properties
-    properties = defaultdict(set)
-    for _, row in gdf.iterrows():
-        for key, value in row.items():
-            if key != 'geometry':
-                properties[key].add(type(value).__name__)
-    
-    print("\nProperties:")
-    for key, types in properties.items():
-        print(f"  {key}: {', '.join(types)}")
-    
-    # Analyze unique values for certain fields
-    important_fields = ['commodity', 'regime', 'date']
-    for field in important_fields:
-        if field in gdf.columns:
-            unique_values = gdf[field].unique()
-            print(f"\nUnique values for {field}: {len(unique_values)}")
-            print(f"Sample values: {unique_values[:5]}")
-    
-    # Time range if 'date' field exists
-    if 'date' in gdf.columns:
-        date_range = gdf['date'].agg(['min', 'max'])
-        print(f"\nDate range: from {date_range['min']} to {date_range['max']}")
-    
-    # Geometry types
-    geometry_types = gdf.geometry.type.value_counts()
-    print("\nGeometry types:")
-    print(geometry_types)
-    
-    # Sample of first feature
-    print("\nSample of first feature:")
-    first_feature = gdf.iloc[0].to_dict()
-    print(json.dumps(first_feature, indent=2, default=str))
+# Configuration for sampling
+CONSOLE_SAMPLE_LIMIT = 5  # Number of files to display in console
+MAX_SAMPLE_LENGTH = 200    # Maximum number of characters for sample entries in console
 
-# Run the analysis
-file_path = 'results/enhanced_unified_data_with_residual.geojson'
-analyze_geojson(file_path)
+# Function to write output to both console and file
+def write_output(file_handle, line, display=True):
+    """
+    Write a line to both the console and the output file.
+    
+    Parameters:
+    - file_handle: The file object to write to.
+    - line: The string to write.
+    - display: If True, also print the line to the console.
+    """
+    if display:
+        print(line)
+    file_handle.write(line + '\n')
+
+def truncate_text(text, max_length):
+    """
+    Truncate the text to the specified max_length.
+    If truncated, append '...'.
+    """
+    text_str = str(text)
+    if len(text_str) > max_length:
+        return text_str[:max_length] + '...'
+    return text_str
+
+def analyze_geojson(file_path, file_handle, display=True):
+    """
+    Analyze a single GeoJSON file and write the results to the provided file handle.
+    If display is True, also print a concise summary to the console.
+    """
+    try:
+        # Detailed output for file (always written to file)
+        detailed_output = []
+        detailed_output.append(f"\nAnalyzing GeoJSON file: {file_path}")
+        gdf = gpd.read_file(file_path)
+        
+        # Basic information
+        detailed_output.append(f"Total number of features: {len(gdf)}")
+        detailed_output.append(f"Coordinate Reference System: {gdf.crs}")
+        
+        # Analyze properties
+        properties = defaultdict(set)
+        for _, row in gdf.iterrows():
+            for key, value in row.items():
+                if key != 'geometry':
+                    properties[key].add(type(value).__name__)
+        
+        detailed_output.append("\nProperties:")
+        for key, types in properties.items():
+            detailed_output.append(f"  {key}: {', '.join(types)}")
+        
+        # Analyze unique values for certain fields
+        important_fields = ['commodity', 'regime', 'date']
+        for field in important_fields:
+            if field in gdf.columns:
+                unique_values = gdf[field].unique()
+                detailed_output.append(f"\nUnique values for {field}: {len(unique_values)}")
+                detailed_output.append(f"Sample values: {unique_values[:5]}")
+        
+        # Time range if 'date' field exists
+        if 'date' in gdf.columns:
+            date_range = gdf['date'].agg(['min', 'max'])
+            detailed_output.append(f"\nDate range: from {date_range['min']} to {date_range['max']}")
+        
+        # Geometry types
+        geometry_types = gdf.geometry.type.value_counts()
+        detailed_output.append("\nGeometry types:")
+        detailed_output.append(str(geometry_types))
+        
+        # Sample of first feature
+        first_feature = gdf.iloc[0].to_dict()
+        detailed_output.append("\nSample of first feature:")
+        detailed_output.append(json.dumps(first_feature, indent=2, default=str))
+        
+        # Write detailed output to file
+        for line in detailed_output:
+            write_output(file_handle, line, display=False)  # Only write to file
+        
+        # If display is enabled, print a concise summary
+        if display:
+            concise_output = []
+            concise_output.append(f"\nAnalyzing GeoJSON file: {file_path}")
+            concise_output.append(f"Total features: {len(gdf)}, CRS: {gdf.crs}")
+            concise_output.append(f"Properties: {', '.join(properties.keys())}")
+            for field in important_fields:
+                if field in gdf.columns:
+                    unique_count = len(gdf[field].unique())
+                    concise_output.append(f"Unique {field}: {unique_count}")
+            if 'date' in gdf.columns:
+                date_range = gdf['date'].agg(['min', 'max'])
+                concise_output.append(f"Date range: {date_range['min']} to {date_range['max']}")
+            concise_output.append(f"Geometry types: {', '.join(geometry_types.index.tolist())}")
+            # Truncate sample feature
+            sample_feature = json.dumps(first_feature, indent=2, default=str)
+            truncated_sample = truncate_text(sample_feature, MAX_SAMPLE_LENGTH)
+            concise_output.append(f"Sample feature: {truncated_sample}")
+            
+            for line in concise_output:
+                write_output(file_handle, line, display=True)
+    
+    except Exception as e:
+        error_message = f"Error analyzing GeoJSON file {file_path}: {e}"
+        write_output(file_handle, error_message, display=True)
+
+def analyze_csv(file_path, file_handle, display=True):
+    """
+    Analyze a single CSV file and write the results to the provided file handle.
+    If display is True, also print a concise summary to the console.
+    """
+    try:
+        # Detailed output for file (always written to file)
+        detailed_output = []
+        detailed_output.append(f"\nAnalyzing CSV file: {file_path}")
+        df = pd.read_csv(file_path)
+        
+        # Basic information
+        detailed_output.append(f"Total number of rows: {len(df)}")
+        detailed_output.append(f"Columns: {df.columns.tolist()}")
+        detailed_output.append(f"\nData types:\n{df.dtypes}")
+        
+        # Analyze unique values for certain fields
+        important_fields = ['commodity', 'regime', 'date']
+        for field in important_fields:
+            if field in df.columns:
+                unique_values = df[field].unique()
+                detailed_output.append(f"\nUnique values for {field}: {len(unique_values)}")
+                detailed_output.append(f"Sample values: {unique_values[:5]}")
+        
+        # Time range if 'date' field exists
+        if 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            date_range = df['date'].agg(['min', 'max'])
+            detailed_output.append(f"\nDate range: from {date_range['min']} to {date_range['max']}")
+        
+        # Sample of the first few rows
+        detailed_output.append("\nSample rows:")
+        detailed_output.append(str(df.head()))
+        
+        # Write detailed output to file
+        for line in detailed_output:
+            write_output(file_handle, line, display=False)  # Only write to file
+        
+        # If display is enabled, print a concise summary
+        if display:
+            concise_output = []
+            concise_output.append(f"\nAnalyzing CSV file: {file_path}")
+            concise_output.append(f"Total rows: {len(df)}, Columns: {len(df.columns)}")
+            concise_output.append(f"Data types: {', '.join([f'{col}: {dtype}' for col, dtype in df.dtypes.items()])}")
+            for field in important_fields:
+                if field in df.columns:
+                    unique_count = len(df[field].unique())
+                    concise_output.append(f"Unique {field}: {unique_count}")
+            if 'date' in df.columns:
+                date_range = df['date'].agg(['min', 'max'])
+                concise_output.append(f"Date range: {date_range['min']} to {date_range['max']}")
+            # Truncate sample rows
+            sample_rows = df.head().to_string()
+            truncated_sample = truncate_text(sample_rows, MAX_SAMPLE_LENGTH)
+            concise_output.append(f"Sample rows:\n{truncated_sample}")
+            
+            for line in concise_output:
+                write_output(file_handle, line, display=True)
+    
+    except Exception as e:
+        error_message = f"Error analyzing CSV file {file_path}: {e}"
+        write_output(file_handle, error_message, display=True)
+
+def analyze_json(file_path, file_handle, display=True):
+    """
+    Analyze a single JSON file and write the results to the provided file handle.
+    If display is True, also print a concise summary to the console.
+    """
+    try:
+        # Detailed output for file (always written to file)
+        detailed_output = []
+        detailed_output.append(f"\nAnalyzing JSON file: {file_path}")
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+        
+        # Basic structure of JSON
+        if isinstance(data, dict):
+            detailed_output.append("Top-level keys: " + str(list(data.keys())))
+            detailed_output.append("\nSample of top-level structure:")
+            detailed_output.append(json.dumps({k: v for k, v in list(data.items())[:5]}, indent=2, default=str))
+        elif isinstance(data, list):
+            detailed_output.append(f"Number of entries: {len(data)}")
+            if len(data) > 0:
+                detailed_output.append("\nSample entry:")
+                detailed_output.append(json.dumps(data[0], indent=2, default=str))
+        else:
+            detailed_output.append(f"JSON data type: {type(data).__name__}")
+            detailed_output.append("\nSample of data:")
+            detailed_output.append(json.dumps(data, indent=2, default=str))
+        
+        # Write detailed output to file
+        for line in detailed_output:
+            write_output(file_handle, line, display=False)  # Only write to file
+        
+        # If display is enabled, print a concise summary
+        if display:
+            concise_output = []
+            concise_output.append(f"\nAnalyzing JSON file: {file_path}")
+            if isinstance(data, dict):
+                concise_output.append(f"Top-level keys: {', '.join(list(data.keys())[:5])}")
+                # Truncate sample structure
+                sample_structure = json.dumps({k: v for k, v in list(data.items())[:5]}, indent=2, default=str)
+                truncated_sample = truncate_text(sample_structure, MAX_SAMPLE_LENGTH)
+                concise_output.append(f"Sample structure: {truncated_sample}")
+            elif isinstance(data, list):
+                concise_output.append(f"Number of entries: {len(data)}")
+                if len(data) > 0:
+                    sample_entry = json.dumps(data[0], indent=2, default=str)
+                    truncated_sample = truncate_text(sample_entry, MAX_SAMPLE_LENGTH)
+                    concise_output.append(f"Sample entry: {truncated_sample}")
+            else:
+                concise_output.append(f"JSON data type: {type(data).__name__}")
+                sample_data = json.dumps(data, indent=2, default=str)
+                truncated_sample = truncate_text(sample_data, MAX_SAMPLE_LENGTH)
+                concise_output.append(f"Sample data: {truncated_sample}")
+            
+            for line in concise_output:
+                write_output(file_handle, line, display=True)
+    
+    except Exception as e:
+        error_message = f"Error analyzing JSON file {file_path}: {e}"
+        write_output(file_handle, error_message, display=True)
+
+def analyze_all_files(results_dir, output_file):
+    """
+    Traverse the 'results' directory and its subfolders, analyzing all GeoJSON, CSV, and JSON files.
+    Results are saved in a text file. Only a sample of the results is displayed in the console.
+    """
+    displayed_files = 0
+    with open(output_file, 'w') as file_handle:
+        for root, _, files in os.walk(results_dir):
+            for file in files:
+                if displayed_files >= CONSOLE_SAMPLE_LIMIT:
+                    break
+                file_path = os.path.join(root, file)
+                display = displayed_files < CONSOLE_SAMPLE_LIMIT
+                if file.endswith('.geojson'):
+                    analyze_geojson(file_path, file_handle, display=display)
+                elif file.endswith('.csv'):
+                    analyze_csv(file_path, file_handle, display=display)
+                elif file.endswith('.json'):
+                    analyze_json(file_path, file_handle, display=display)
+                if display:
+                    displayed_files += 1
+        if displayed_files >= CONSOLE_SAMPLE_LIMIT:
+            print(f"\nDisplayed a sample of {CONSOLE_SAMPLE_LIMIT} files in the console. Full results are saved in '{output_file}'.")
+
+# Define the directory to analyze and the output file
+results_dir = 'results'
+output_file = 'results_analysis.txt'
+
+# Run the analysis on all files in the results directory and save to the text file
+analyze_all_files(results_dir, output_file)
