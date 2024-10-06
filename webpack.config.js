@@ -5,12 +5,12 @@ const { DefinePlugin } = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-  entry: path.resolve(__dirname, 'src', 'index.js'), // Adjust as needed
+  entry: path.resolve(__dirname, 'src', 'index.js'),
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'static/js/bundle.[contenthash:8].js',
-    publicPath: '/',
-    clean: true, // Cleans the output directory before emit
+    filename: 'static/js/[name].[contenthash:8].js',
+    publicPath: process.env.NODE_ENV === 'production' ? '/Yemen_Market_Analysis/' : '/',
+    clean: true,
   },
   resolve: {
     extensions: ['.js', '.jsx', '.json'],

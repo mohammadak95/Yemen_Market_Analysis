@@ -1,8 +1,5 @@
-# Yemen Market Analysis Dashboard - Repository Structure and Key Files Guide
+Yemen Market Analysis Dashboard - Repository Structure and Key Files Guide
 
-(.venv) mohammmadalakkaoui@mohammmads-macbook-air-3 Yemen_Market_Analysis % /Users/mohammmadalakkaoui/Docu
-ments/GitHub/Yemen_Market_Analysis/.venv/bin/python /Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Marke
-t_Analysis/map_git_repo.py
 ├── .babelrc
 ├── .env
 ├── .eslintrc.js
@@ -58,7 +55,8 @@ t_Analysis/map_git_repo.py
 │   ├── logo192.png
 │   ├── logo512.png
 │   ├── manifest.json
-│   └── robots.txt
+│   └── robots.txt   
+
 ├── requirements.txt
 ├── results
 │   ├── choropleth_data
@@ -68,6 +66,7 @@ t_Analysis/map_git_repo.py
 │   │   └── residuals.csv
 │   ├── ecm
 │   │   └── ecm_analysis_results.json
+│   ├── enhanced_unified_data_with_residual.geojson
 │   ├── network_data
 │   │   └── flow_maps.csv
 │   ├── price_diff_results
@@ -83,42 +82,25 @@ t_Analysis/map_git_repo.py
 │   └── prepareData.js
 ├── src
 │   ├── App.js
-│   ├── Dashboard.js
-│   ├── Dashboard.test.js
 │   ├── components
-│   │   ├── common
-│   │   │   ├── ErrorBoundary.js
-│   │   │   ├── ErrorMessage.js
-│   │   │   ├── Footer.js
-│   │   │   ├── Header.js
-│   │   │   ├── LineChart.js
-│   │   │   ├── LoadingSpinner.js
-│   │   │   ├── Map.js
-│   │   │   ├── NotFound.js
-│   │   │   ├── Sidebar.js
-│   │   │   └── ThemeToggle.js
-│   │   ├── ecm-analysis
-│   │   │   ├── DiagnosticsTable.js
-│   │   │   ├── DownloadReportButton.js
-│   │   │   ├── ECMAnalysis.js
-│   │   │   ├── IRFChart.js
-│   │   │   └── SummaryTable.js
-│   │   ├── price-differential-analysis
-│   │   │   └── PriceDifferentialAnalysis.js
-│   │   └── spatial-analysis
-│   │       └── SpatialAnalysis.js
+│   │   ├── CommoditySelector.js
+│   │   ├── InteractiveChart.js
+│   │   ├── RegimeSelector.js
+│   │   └── common
+│   │       ├── ErrorBoundary.js
+│   │       ├── ErrorMessage.js
+│   │       ├── Footer.js
+│   │       ├── Header.js
+│   │       ├── LoadingSpinner.js
+│   │       ├── Sidebar.js
+│   │       └── ThemeToggle.js
 │   ├── features
-│   │   ├── ecmSlice.js
-│   │   ├── priceDiffSlice.js
-│   │   ├── spatialSlice.js
 │   │   └── themeSlice.js
-│   ├── hooks
-│   │   └── useDataLoading.js
+│   ├── hooks 
+│   │   ├── useData.js 
+│   │   └── useDataLoader.js
 │   ├── index.css
 │   ├── index.js
-│   ├── services
-│   │   ├── api.js
-│   │   └── i18n.js
 │   ├── setupTests.js
 │   ├── store
 │   │   └── index.js
@@ -130,99 +112,122 @@ t_Analysis/map_git_repo.py
 │       └── dataSourceUtil.js
 └── webpack.config.js
 
-
-## Repository Structure Overview
+Repository Structure Overview
 
 The project is organized into several key directories:
-- `.github/workflows/`: Contains CI/CD and deployment configuration files.
-- `data/`: Stores raw data files (if any).
-- `external_data/`: Contains external datasets, including Natural Earth data.
-- `project/`: Houses the Python backend code for data analysis.
-- `public/`: Stores static assets for the React application.
-- `results/`: Contains output data from various analyses.
-- `scripts/`: Includes utility scripts like data preparation.
-- `src/`: Contains the React application source code.
 
-## Key Files and Their Purposes
+* .github/workflows/: Contains CI/CD and deployment configuration files.
+* data/: Stores raw data files (if any).
+* external_data/: Contains external datasets, including Natural Earth data.
+* project/: Houses the Python backend code for data analysis.
+* public/: Stores static assets for the React application.
+* results/: Contains output data from various analyses, including the GeoJSON file.
+* scripts/: Includes utility scripts like data preparation.
+* src/: Contains the React application source code.
 
-### Root Directory
-- `.babelrc`: Babel configuration for JavaScript transpilation, including styled-components plugin.
-- `.env`: Environment variables configuration.
-- `.eslintrc.js`: ESLint configuration for code quality.
-- `.gitattributes`: Git attributes specification.
-- `.gitignore`: Specifies intentionally untracked files to ignore.
-- `.nvmrc`: Specifies the Node.js version for the project.
-- `config-overrides.js`: Configuration overrides for Create React App.
-- `LICENSE`: Project license information.
-- `README.md`: Project overview and setup instructions.
-- `map_git_repo.py`: Python script to generate the repository structure.
-- `package.json`: Defines project dependencies, scripts, and Jest configuration.
-- `requirements.txt`: Lists Python dependencies.
-- `webpack.config.js`: Webpack configuration for bundling.
-- `jest.config.js`: Configuration for Jest testing framework.
+Key Files and Their Purposes
 
-### `project/` Directory
-- `config/config.yaml`: Configuration for the Python backend.
-- `data/processed/`: Contains processed GeoJSON and JSON data files.
-- `ecm_analysis/`: Scripts for Error Correction Model analysis.
-- `price_differential_analysis/`: Scripts for Price Differential analysis.
-- `spatial_analysis/`: Scripts for Spatial analysis and data preparation.
-- `utils/`: Utility functions for data processing.
+Root Directory
 
-### `public/` Directory
-Contains static assets for the React application, including `index.html`, favicon, and manifest.
+* .babelrc: Babel configuration for JavaScript transpilation, including styled-components plugin.
+* .env: Environment variables configuration.
+* .eslintrc.js: ESLint configuration for code quality.
+* .gitattributes: Git attributes specification.
+* .gitignore: Specifies intentionally untracked files to ignore.
+* .nvmrc: Specifies the Node.js version for the project.
+* config-overrides.js: Configuration overrides for Create React App.
+* LICENSE: Project license information.
+* README.md: Project overview and setup instructions.
+* map_git_repo.py: Python script to generate the repository structure.
+* package.json: Defines project dependencies, scripts, and Jest configuration.
+* requirements.txt: Lists Python dependencies.
+* webpack.config.js: Webpack configuration for bundling.
+* jest.config.js: Configuration for Jest testing framework.
 
-### `results/` Directory
+project/ Directory
+
+* config/config.yaml: Configuration for the Python backend.
+* data/processed/: Contains processed GeoJSON and JSON data files.
+* ecm_analysis/: Scripts for Error Correction Model analysis.
+* price_differential_analysis/: Scripts for Price Differential analysis.
+* spatial_analysis/: Scripts for Spatial analysis and data preparation.
+* utils/: Utility functions for data processing.
+
+public/ Directory
+
+Contains static assets for the React application, including index.html, favicon, and manifest.
+
+results/ Directory
+
 Stores output data from various analyses:
-- `choropleth_data/`: CSV files for choropleth visualizations.
-- `ecm/`: JSON results from ECM analysis.
-- `network_data/`: CSV files for network visualizations.
-- `price_diff_results/`: JSON results from price differential analysis.
-- `spatial_weights/`: JSON file with spatial weights information.
-- `time_series_data/`: CSV files with time series data.
 
-### `scripts/` Directory
-- `prepareData.js`: Script to prepare data for the frontend.
+* choropleth_data/: CSV files for choropleth visualizations.
+* ecm/: JSON results from ECM analysis.
+* network_data/: CSV files for network visualizations.
+* price_diff_results/: JSON results from price differential analysis.
+* spatial_weights/: JSON file with spatial weights information.
+* time_series_data/: CSV files with time series data.
+* enhanced_unified_data_with_residual.geojson: GeoJSON file containing unified data with residuals.
 
-### `src/` Directory
+scripts/ Directory
+
+* prepareData.js: Script to prepare data for the frontend.
+
+src/ Directory
+
 React application source code:
-- `components/`: React components organized by feature.
-- `features/`: Redux slices for state management.
-- `hooks/`: Custom React hooks.
-- `services/`: API and i18n service configurations.
-- `store/`: Redux store configuration.
-- `styles/`: Global styles and theme configuration.
-- `utils/`: Utility functions for the frontend.
-- `setupTests.js`: Configuration for test environment, including jest-dom and jest-styled-components.
 
-## Key Functions and Components
+* components/:
+    * common/: Common components (ErrorBoundary, ErrorMessage, Footer, Header, LoadingSpinner, Sidebar, ThemeToggle)
+    * InteractiveChart.js: Component for rendering the main interactive chart.
+    * CommoditySelector.js: Component for selecting commodities.
+    * RegimeSelector.js: Component for selecting regimes.
+* hooks/: Custom hooks for data fetching.
+    * useData.js: Fetches the main dataset.
+    * useDataLoader.js: (Optional) Can be used for fetching other data.
+* features/:
+    * themeSlice.js: Redux slice for theme management.
+* store/: Redux store configuration.
+* styles/: Global styles and theme configuration.
+* utils/:
+    * dataPath.js: Utility function to construct paths for data files.
+    * dataSourceUtil.js: Utility for data source management.
+* App.js: Main application component.
+* index.js: Main entry point for the React application.
+* setupTests.js: Configuration for test environment.
 
-### Backend (Python)
-- ECM Analysis: `load_data()`, `run_stationarity_tests()`, `estimate_ecm()`, etc.
-- Price Differential Analysis: `prepare_market_data()`, `analyze_market_pair()`, etc.
-- Spatial Analysis: `load_geojson()`, `create_spatial_weights()`, `run_spatial_analysis()`, etc.
+Key Functions and Components
 
-### Frontend (React)
-- Main Components: `ECMAnalysis`, `PriceDifferentialAnalysis`, `SpatialAnalysis`, `Dashboard`
-- Common Components: `Header`, `Footer`, `Sidebar`, `Map`, `LineChart`
-- Redux Slices: `ecmSlice`, `priceDiffSlice`, `spatialSlice`, `themeSlice`
-- Custom Hooks: `useDataLoading`
+Backend (Python)
 
-## Development and Deployment
+* ECM Analysis: `load_data()`, `run_stationarity_tests()`, `estimate_ecm()`, etc.
+* Price Differential Analysis: `prepare_market_data()`, `analyze_market_pair()`, etc.
+* Spatial Analysis: `load_geojson()`, `create_spatial_weights()`, `run_spatial_analysis()`, etc.
 
-- CI/CD: Configured in `.github/workflows/ci-cd.yml`
-  - Includes steps for installation, testing (with --passWithNoTests option), building, and deployment
-- Deployment: GitHub Pages deployment configured in `.github/workflows/ci-cd.yml`
-- Local Development: Use `npm run dev` to start the development server
-- Build: Use `npm run build` to create a production build
-- Data Preparation: `npm run prepare-data` copies necessary data to the build directory
-- Testing: Use `npm test` to run tests (currently set to pass even with no tests)
+Frontend (React)
 
-## Additional Notes
+* Main Components: App, InteractiveChart, CommoditySelector, RegimeSelector
+* Common Components: Header, Footer, Sidebar, ThemeToggle
+* Redux Slices: themeSlice
+* Utility Functions: getDataPath in dataPath.js, functions in dataSourceUtil.js
+* Custom Hooks: useData, useDataLoader
 
-- Styled-components: The project uses styled-components for CSS-in-JS styling.
-- Jest Configuration: The project includes custom Jest configuration in `package.json` to properly handle styled-components in tests.
-- Babel Configuration: The `.babelrc` file includes configuration for styled-components plugin.
-- GitHub Actions: The CI/CD workflow is set up with permissions to write to the repository for deployment purposes.
+Development and Deployment
 
-Remember to regularly update dependencies, fix and improve tests, and maintain comprehensive documentation as the project evolves.
+* CI/CD: Configured in .github/workflows/ci-cd.yml
+* Deployment: GitHub Pages deployment configured in .github/workflows/ci-cd.yml
+* Local Development: Use npm start or npm run dev to start the development server
+* Build: Use npm run build to create a production build
+Data Preparation: npm run prepare-data copies necessary data (including the new GeoJSON file) to the build directory
+Testing: Use npm test to run tests
+
+Additional Notes
+
+The project now focuses on a single interactive chart component that displays data from the GeoJSON file.
+The sidebar now contains commodity and regime selectors instead of navigation links.
+The data loading process has been updated to work with the new GeoJSON file structure.
+The InteractiveChart component now processes GeoJSON features to create datasets suitable for charting.
+CommoditySelector and RegimeSelector components now fetch their options dynamically from the GeoJSON file.
+The project maintains compatibility with both local development and GitHub Pages deployment through the updated data loading approach.
+Styled-components is used for CSS-in-JS styling.
+The project uses a custom webpack configuration for bundling.

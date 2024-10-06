@@ -1,0 +1,49 @@
+import json
+import geopandas as gpd
+from collections import defaultdict
+
+def analyze_geojson(file_path):
+    # Read the GeoJSON file
+    gdf = gpd.read_file(file_path)
+    
+    # Basic information
+    print(f"Total number of features: {len(gdf)}")
+    print(f"Coordinate Reference System: {gdf.crs}")
+    
+    # Analyze properties
+    properties = defaultdict(set)
+    for _, row in gdf.iterrows():
+        for key, value in row.items():
+            if key != 'geometry':
+                properties[key].add(type(value).__name__)
+    
+    print("\nProperties:")
+    for key, types in properties.items():
+        print(f"  {key}: {', '.join(types)}")
+    
+    # Analyze unique values for certain fields
+    important_fields = ['commodity', 'regime', 'date']
+    for field in important_fields:
+        if field in gdf.columns:
+            unique_values = gdf[field].unique()
+            print(f"\nUnique values for {field}: {len(unique_values)}")
+            print(f"Sample values: {unique_values[:5]}")
+    
+    # Time range if 'date' field exists
+    if 'date' in gdf.columns:
+        date_range = gdf['date'].agg(['min', 'max'])
+        print(f"\nDate range: from {date_range['min']} to {date_range['max']}")
+    
+    # Geometry types
+    geometry_types = gdf.geometry.type.value_counts()
+    print("\nGeometry types:")
+    print(geometry_types)
+    
+    # Sample of first feature
+    print("\nSample of first feature:")
+    first_feature = gdf.iloc[0].to_dict()
+    print(json.dumps(first_feature, indent=2, default=str))
+
+# Run the analysis
+file_path = 'results/enhanced_unified_data_with_residual.geojson'
+analyze_geojson(file_path)

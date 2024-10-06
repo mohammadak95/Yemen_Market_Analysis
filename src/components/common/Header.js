@@ -26,12 +26,6 @@ const Brand = styled.h1`
   user-select: none;
   display: flex;
   align-items: center;
-
-  /* Icon Styling */
-  svg {
-    margin-right: 8px;
-    color: ${(props) => props.theme.primaryColor};
-  }
 `;
 
 const Actions = styled.div`
@@ -70,13 +64,12 @@ const Header = ({ toggleSidebar }) => {
   return (
     <HeaderContainer>
       <Brand>
-        <FaBars />
-        Yemen Market Analysis
-      </Brand>
-      <Actions>
         <ToggleSidebarButton onClick={toggleSidebar} aria-label="Toggle Sidebar">
           <FaBars />
         </ToggleSidebarButton>
+        Yemen Market Analysis
+      </Brand>
+      <Actions>
         <ThemeToggle />
         <UserIcon />
       </Actions>

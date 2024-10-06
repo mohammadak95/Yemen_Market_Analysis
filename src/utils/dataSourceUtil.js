@@ -4,7 +4,7 @@ const ENV = process.env.NODE_ENV; // 'development' | 'production' | 'test'
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 
 const isGitHubPages = PUBLIC_URL.includes('github.io');
-const isOffline = !navigator.onLine;
+const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 
 export const getDataPath = (relativePath) => {
   if (isOffline) {

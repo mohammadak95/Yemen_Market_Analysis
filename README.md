@@ -1,88 +1,87 @@
-
 # Yemen Market Analysis Dashboard
 
 This project is a comprehensive market analysis dashboard for Yemen, combining React for the frontend and Python for data analysis. It provides insights into commodity prices, conflict intensity, and market dynamics across different regions of Yemen.
 
-## Features
-
-- **Interactive Dashboard**: Multi-commodity and multi-regime selection with dynamic charts.
-- **Data Visualizations**: Time series charts, choropleth maps, flow maps, and market connectivity graphs.
-- **Econometric Analyses**: 
-  - Error Correction Model (ECM)
-  - Price Differentials Analysis
-  - Spatial Analysis
-- **Educational Components**: Methodology explanation and glossary of terms.
-- **Dual Development Setup**: Supports both local development and GitHub Pages deployment.
-- **Responsive Design**: Optimized for desktop and mobile viewing.
-- **Dark Mode**: Toggle between light and dark themes.
-
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 
 - Node.js (version 20 or later)
-- Python 3.8+
-- npm or yarn
+- npm (usually comes with Node.js)
+- Python 3.8+ (for running analysis scripts)
 
-### Installation
+## Installation
 
 1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/Yemen_Market_Analysis.git
-   ```
+
+git clone https://github.com/yourusername/Yemen_Market_Analysis.git
+cd Yemen_Market_Analysis
+
 2. Install JavaScript dependencies:
-   ```
-   npm install
-   ```
+
+npm install
+
 3. Install Python dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
 
-## Available Scripts
+pip install -r requirements.txt
 
-In the project directory, you can run:
+## Development
 
-### `npm start` or `npm run dev`
+To run the app in development mode:
 
-Runs the app in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+npm start
 
-### `npm test`
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-Launches the test runner in interactive watch mode.
+## Building for Production
 
-### `npm run build`
+To build the app for production:
 
-Builds the app for production to the `build` folder.
+npm run build
 
-### `npm run prepare-data`
+This command builds the app for production to the `build` folder.
 
-Prepares and copies necessary data for the frontend.
+## Deployment
 
-### `npm run deploy`
+The app is configured for deployment on GitHub Pages. To deploy:
 
-Deploys the application to GitHub Pages.
+1. Ensure your repository is configured for GitHub Pages in the Settings.
+2. Run the deploy script:
 
-## Dual Development and Deployment
+npm run deploy
 
-This project supports both local development and GitHub Pages deployment:
+This will build the app and push it to the `gh-pages` branch of your repository.
 
-- **Local Development**: Use `npm start` to run the app locally. Data is served from the `results/` directory.
-- **GitHub Pages Deployment**: The `npm run deploy` script builds the app and deploys it to GitHub Pages. The `prepareData.js` script ensures all necessary data is copied to the `build/` directory for deployment.
+## Running Analysis Scripts
 
-## Project Structure
+The Python analysis scripts are located in the `project` directory. To run these scripts:
 
-- `/src`: React application source code
-- `/project`: Python backend for data analysis
-- `/results`: Output data from various analyses
-- `/public`: Static assets
-- `/scripts`: Utility scripts including data preparation
+1. Activate your Python virtual environment (if you're using one):
 
-## Data Analysis Components
+source .venv/bin/activate  # On Unix or MacOS
+.venv\Scripts\activate     # On Windows
 
-- **ECM Analysis**: Analyzes cointegration and error correction in price data.
-- **Price Differential Analysis**: Examines price differentials between markets.
-- **Spatial Analysis**: Investigates spatial relationships in market data.
+2. Navigate to the project directory:
+
+cd project
+
+3. Run the desired script:
+
+...
+
+## Data Preparation
+
+Before running the app, ensure that all necessary data files are in place:
+
+1. Run the data preparation script:
+
+npm run prepare-data
+
+This script copies all required data files to the appropriate locations in the `build` directory.
+
+## Testing
+
+To run the test suite:
+
+npm test
 
 ## Contributing
 
@@ -94,6 +93,9 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-- Data sources
-- Libraries and frameworks used
-- Any other contributors or inspirations
+- Data sources: [List your data sources here]
+- Libraries and frameworks used: React, Redux, Recharts, Leaflet, etc.
+- [Any other acknowledgments]
+
+
+

@@ -40,6 +40,12 @@ const copyRecursiveSync = (source, destination) => {
   });
 };
 
+const geojsonSource = path.join(__dirname, '../results/enhanced_unified_data_with_residual.geojson');
+const geojsonDest = path.join(__dirname, '../build/results/enhanced_unified_data_with_residual.geojson');
+
+fs.copyFileSync(geojsonSource, geojsonDest);
+console.log(`Copied ${geojsonSource} to ${geojsonDest}`);
+
 const prepareData = () => {
   try {
     copyRecursiveSync(sourceDir, destDir);

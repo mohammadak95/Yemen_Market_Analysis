@@ -7,48 +7,24 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    background-color: ${props => props.theme.backgroundColor};
+    color: ${props => props.theme.textColor};
+    line-height: 1.5;
+    font-size: 16px;
     margin: 0;
     padding: 0;
-    font-family: 'Inter', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background-color: ${(props) => props.theme.backgroundColor};
-    color: ${(props) => props.theme.textColor};
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  a {
-    text-decoration: none;
-    color: inherit;
+  h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0.5em;
+    color: ${props => props.theme.headingColor};
   }
 
-  button {
-    font-family: 'Inter', sans-serif;
-    cursor: pointer;
-    border: none;
-    background: none;
-    padding: 0;
+  select, input, button {
+    font-family: inherit;
+    font-size: inherit;
   }
-
-  /* Scrollbar Styling */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: ${(props) => props.theme.sidebarBackground};
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: ${(props) => props.theme.primaryColor};
-    border-radius: 4px;
-  }
-
-  code {
-    font-family: 'Source Code Pro', monospace;
-  }
-
-  /* Additional global styles */
 `;
 
 export default GlobalStyle;

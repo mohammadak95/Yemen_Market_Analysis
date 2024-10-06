@@ -21,6 +21,10 @@ jobs:
       run: npm ci
     - name: Run Tests
       run: npm test -- --passWithNoTests
+    - name: Prepare Data
+      run: npm run prepare-data
+    - name: Build
+      run: npm run build    
     - name: Build
       run: npm run build
     - name: Deploy to GitHub Pages
