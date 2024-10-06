@@ -1,6 +1,6 @@
 // src/Dashboard.js
 import React, { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';s
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { Line } from 'react-chartjs-2';
 import {
