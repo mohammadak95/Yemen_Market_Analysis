@@ -1,4 +1,4 @@
-// src/Dashboard.js
+//src/components/Dashboard.js
 
 import React, { useMemo, Suspense } from 'react';
 import PropTypes from 'prop-types';

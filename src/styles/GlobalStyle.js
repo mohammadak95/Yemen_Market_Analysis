@@ -1,10 +1,15 @@
 // src/styles/GlobalStyle.js
+
+
+import React from 'react'; // Added this import
 import { Global, css } from '@emotion/react';
 
 const GlobalStyle = () => (
   <Global
     styles={(theme) => css`
-      html, body, #root {
+      html,
+      body,
+      #root {
         height: 100%;
         margin: 0;
         padding: 0;

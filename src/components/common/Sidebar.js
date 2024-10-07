@@ -1,4 +1,4 @@
-// src/components/common/Sidebar.js
+//src/components/common/Sidebar.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -15,7 +15,8 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-} from '@mui/material'; // Removed 'useMediaQuery', 'useTheme' imports
+  Button,
+} from '@mui/material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import MapIcon from '@mui/icons-material/Map';
@@ -34,6 +35,7 @@ const Sidebar = ({
   sidebarOpen,
   setSidebarOpen,
   isSmUp,
+  onMethodologyClick,
 }) => {
   const handleCommodityChange = (event) => {
     setSelectedCommodity(event.target.value.trim().toLowerCase());
@@ -135,6 +137,17 @@ const Sidebar = ({
             <ListItemText primary="Spatial Analysis" />
           </ListItem>
         </List>
+
+        {/* Methodology Button */}
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          sx={{ mt: 3 }}
+          onClick={onMethodologyClick}
+        >
+          Methodology
+        </Button>
       </Box>
     </div>
   );
@@ -190,6 +203,7 @@ Sidebar.propTypes = {
   sidebarOpen: PropTypes.bool.isRequired,
   setSidebarOpen: PropTypes.func.isRequired,
   isSmUp: PropTypes.bool.isRequired,
+  onMethodologyClick: PropTypes.func.isRequired,
 };
 
 export default Sidebar;
