@@ -12,6 +12,7 @@ import {
   TimeScale,
   Tooltip,
   Legend,
+  Filler, // Import Filler
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import {
@@ -45,7 +46,8 @@ ChartJS.register(
   LineElement,
   TimeScale,
   Tooltip,
-  Legend
+  Legend,
+  Filler // Register Filler
 );
 
 const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }) => {
@@ -85,6 +87,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           backgroundColor: theme.palette.primary.light,
           yAxisID: 'y',
           tension: 0.4,
+          fill: false, // Disable fill for primary dataset if not needed
         },
         ...(showConflictIntensity
           ? [
@@ -94,7 +97,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 borderColor: theme.palette.error.main,
                 backgroundColor: theme.palette.error.light,
                 yAxisID: 'y1',
-                fill: true,
+                fill: true, // Enable fill
                 tension: 0.4,
               },
             ]
@@ -107,6 +110,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 borderColor: theme.palette.secondary.main,
                 backgroundColor: theme.palette.secondary.light,
                 yAxisID: 'y2',
+                fill: true, // Enable fill
                 tension: 0.4,
               },
             ]
@@ -292,6 +296,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
             mb: 4,
             width: '100%',
             maxWidth: 1100, // Increased max width for larger chart container
+            height: 400, // Set a fixed height for the chart
             display: 'flex',
             justifyContent: 'center',
           }}
@@ -318,8 +323,18 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                   selectedRegime={selectedRegime}
                 />
               )}
-              {selectedAnalysis === 'priceDiff' && <PriceDifferentialAnalysis />}
-              {selectedAnalysis === 'spatial' && <SpatialAnalysis />}
+              {selectedAnalysis === 'priceDiff' && (
+                <PriceDifferentialAnalysis
+                  selectedCommodity={selectedCommodity}
+                  selectedRegime={selectedRegime}
+                />
+              )}
+              {selectedAnalysis === 'spatial' && (
+                <SpatialAnalysis
+                  selectedCommodity={selectedCommodity}
+                  selectedRegime={selectedRegime}
+                />
+              )}
             </Suspense>
           </Box>
         )}
