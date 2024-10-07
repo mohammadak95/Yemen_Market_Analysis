@@ -1,63 +1,76 @@
+//src/components/ecm-analysis/DiagnosticsTable.js
+
 import React from 'react';
-import styled from 'styled-components';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Tooltip } from '@mui/material';
+import { Info as InfoIcon } from 'lucide-react';
 import PropTypes from 'prop-types';
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+const DiagnosticsTable = ({ diagnostics }) => {
+  const formatNumber = (num) => (typeof num === 'number' ? num.toExponential(4) : 'N/A');
 
-  th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-  }
+  const getInterpretation = (test, value, pValue) => {
+    switch (test) {
+      case 'Breusch-Godfrey':
+        return pValue < 0.05 ? 'Serial correlation present' : 'No serial correlation';
+      case 'ARCH':
+        return pValue < 0.05 ? 'Heteroskedasticity present' : 'Homoskedasticity';
+      case 'Jarque-Bera':
+        return pValue < 0.05 ? 'Non-normal residuals' : 'Normal residuals';
+      case 'Durbin-Watson':
+        if (value < 1.5) return 'Positive autocorrelation';
+        if (value > 2.5) return 'Negative autocorrelation';
+        return 'No autocorrelation';
+      default:
+        return 'N/A';
+    }
+  };
 
-  th {
-    background-color: #f4f4f4;
-    text-align: left;
-  }
-
-  tr:nth-child(even) {
-    background-color: #fafafa;
-  }
-`;
-
-const DiagnosticsTable = ({ diagnostics }) => (
-  <Table>
-    <thead>
-      <tr>
-        <th>Test</th>
-        <th>Statistic</th>
-        <th>P-value</th>
-      </tr>
-    </thead>
-    <tbody>
-      {[
-        { test: 'Breusch-Godfrey', stat: diagnostics.breusch_godfrey_stat, pvalue: diagnostics.breusch_godfrey_pvalue },
-        { test: 'ARCH', stat: diagnostics.arch_test_stat, pvalue: diagnostics.arch_test_pvalue },
-        { test: 'Jarque-Bera', stat: diagnostics.jarque_bera_stat, pvalue: diagnostics.jarque_bera_pvalue },
-        { test: 'Durbin-Watson', stat: diagnostics.durbin_watson_stat, pvalue: 'N/A' },
-      ].map((diag) => (
-        <tr key={diag.test}>
-          <td>{diag.test}</td>
-          <td>{diag.stat.toFixed(2)}</td>
-          <td>{typeof diag.pvalue === 'number' ? diag.pvalue.toExponential(2) : diag.pvalue}</td>
-        </tr>
-      ))}
-    </tbody>
-  </Table>
-);
+  return (
+    <TableContainer component={Paper}>
+      <Typography variant="h6" gutterBottom component="div" sx={{ p: 2 }}>
+        Diagnostic Tests
+      </Typography>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Test</TableCell>
+            <TableCell align="right">Statistic</TableCell>
+            <TableCell align="right">P-Value</TableCell>
+            <TableCell align="right">
+              Interpretation
+              <Tooltip title="Hover over each test name for more information">
+                <InfoIcon size={16} style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
+              </Tooltip>
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {Object.entries(diagnostics).map(([key, value]) => {
+            if (typeof value === 'object' && value !== null) {
+              const testName = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+              return (
+                <TableRow key={key}>
+                  <TableCell>
+                    <Tooltip title={`${testName}: ${value.description || 'No description available'}`}>
+                      <span>{testName}</span>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell align="right">{formatNumber(value.stat)}</TableCell>
+                  <TableCell align="right">{formatNumber(value.pvalue)}</TableCell>
+                  <TableCell align="right">{getInterpretation(testName, value.stat, value.pvalue)}</TableCell>
+                </TableRow>
+              );
+            }
+            return null;
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
 
 DiagnosticsTable.propTypes = {
-  diagnostics: PropTypes.shape({
-    breusch_godfrey_stat: PropTypes.number.isRequired,
-    breusch_godfrey_pvalue: PropTypes.number.isRequired,
-    arch_test_stat: PropTypes.number.isRequired,
-    arch_test_pvalue: PropTypes.number.isRequired,
-    jarque_bera_stat: PropTypes.number.isRequired,
-    jarque_bera_pvalue: PropTypes.number.isRequired,
-    durbin_watson_stat: PropTypes.number.isRequired,
-  }).isRequired,
+  diagnostics: PropTypes.object.isRequired,
 };
 
 export default DiagnosticsTable;

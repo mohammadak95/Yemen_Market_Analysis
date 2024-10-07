@@ -1,58 +1,63 @@
+//src/components/ecm-analysis/SummaryTable.js
+
 import React from 'react';
-import styled from 'styled-components';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+const SummaryTable = ({ data, selectedCommodity, selectedRegime }) => {
+  const formatNumber = (num) => (typeof num === 'number' ? num.toFixed(4) : 'N/A');
 
-  th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-  }
-
-  th {
-    background-color: #f4f4f4;
-    text-align: left;
-  }
-
-  tr:nth-child(even) {
-    background-color: #fafafa;
-  }
-`;
-
-const SummaryTable = ({ data }) => (
-  <Table>
-    <thead>
-      <tr>
-        <th>Commodity</th>
-        <th>Regime</th>
-        <th>AIC</th>
-        <th>BIC</th>
-        <th>HQIC</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>{data.commodity}</td>
-        <td>{data.regime}</td>
-        <td>{data.aic.toFixed(2)}</td>
-        <td>{data.bic.toFixed(2)}</td>
-        <td>{data.hqic.toFixed(2)}</td>
-      </tr>
-    </tbody>
-  </Table>
-);
+  return (
+    <TableContainer component={Paper}>
+      <Typography variant="h6" gutterBottom component="div" sx={{ p: 2 }}>
+        Summary: {selectedCommodity} - {selectedRegime}
+      </Typography>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Metric</TableCell>
+            <TableCell align="right">Value</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          <TableRow>
+            <TableCell>AIC</TableCell>
+            <TableCell align="right">{formatNumber(data.aic)}</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>BIC</TableCell>
+            <TableCell align="right">{formatNumber(data.bic)}</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>HQIC</TableCell>
+            <TableCell align="right">{formatNumber(data.hqic)}</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>R-squared</TableCell>
+            <TableCell align="right">{formatNumber(data.fit_metrics.r_squared)}</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>Adjusted R-squared</TableCell>
+            <TableCell align="right">{formatNumber(data.fit_metrics.adj_r_squared)}</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
 
 SummaryTable.propTypes = {
   data: PropTypes.shape({
-    commodity: PropTypes.string.isRequired,
-    regime: PropTypes.string.isRequired,
     aic: PropTypes.number.isRequired,
     bic: PropTypes.number.isRequired,
     hqic: PropTypes.number.isRequired,
+    fit_metrics: PropTypes.shape({
+      r_squared: PropTypes.number.isRequired,
+      adj_r_squared: PropTypes.number.isRequired,
+    }).isRequired,
   }).isRequired,
+  selectedCommodity: PropTypes.string.isRequired,
+  selectedRegime: PropTypes.string.isRequired,
 };
 
 export default SummaryTable;

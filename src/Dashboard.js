@@ -1,5 +1,3 @@
-//src/components/Dashboard.js
-
 import React, { useMemo, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import { Line } from 'react-chartjs-2';
@@ -69,12 +67,10 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
 
     if (filteredData.length === 0) return null;
 
-    // Apply seasonal adjustment if toggled
     if (applySeasonalAdj) {
       filteredData = applySeasonalAdjustment(filteredData, [selectedRegime], 12, priceType === 'lcu');
     }
 
-    // Apply smoothing if toggled
     if (applySmooth) {
       filteredData = applySmoothing(filteredData, [selectedRegime], 6, priceType === 'lcu');
     }
@@ -208,15 +204,12 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Heading */}
       <Typography variant="h5" gutterBottom>
         Market Analysis
       </Typography>
 
-      {/* Selectors */}
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2}>
-          {/* Left Column */}
           <Grid item xs={12} md={6}>
             <FormControl fullWidth variant="outlined" size="small" sx={{ mb: 2 }}>
               <InputLabel id="price-type-label">Price Type</InputLabel>
@@ -251,7 +244,6 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               label="Apply Smoothing"
             />
           </Grid>
-          {/* Right Column */}
           <Grid item xs={12} md={6}>
             <FormControlLabel
               control={
@@ -277,7 +269,6 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
         </Grid>
       </Paper>
 
-      {/* Chart */}
       <Paper
         sx={{
           p: 2,
@@ -292,11 +283,15 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
         )}
       </Paper>
 
-      {/* Analysis Section */}
       {selectedAnalysis && (
         <Box sx={{ mt: 4 }}>
           <Suspense fallback={<LoadingSpinner />}>
-            {selectedAnalysis === 'ecm' && <ECMAnalysis />}
+            {selectedAnalysis === 'ecm' && (
+              <ECMAnalysis
+                selectedCommodity={selectedCommodity}
+                selectedRegime={selectedRegime}
+              />
+            )}
             {selectedAnalysis === 'priceDiff' && <PriceDifferentialAnalysis />}
             {selectedAnalysis === 'spatial' && <SpatialAnalysis />}
           </Suspense>

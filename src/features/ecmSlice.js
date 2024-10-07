@@ -2,7 +2,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getDataPath } from '../utils/dataSourceUtil';
 
-// Async thunk to fetch ECM data
 export const fetchData = createAsyncThunk(
   'ecm/fetchData',
   async (_, thunkAPI) => {
@@ -23,12 +22,10 @@ const ecmSlice = createSlice({
   name: 'ecm',
   initialState: {
     data: null,
-    status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+    status: 'idle',
     error: null
   },
-  reducers: {
-    // Define synchronous reducers here if needed
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchData.pending, (state) => {
@@ -46,11 +43,4 @@ const ecmSlice = createSlice({
   }
 });
 
-// Export the actions
-export const { actions } = ecmSlice;
-
-// Export the reducer as a named export
-export const ecmReducer = ecmSlice.reducer;
-
-// Export the reducer as the default export
 export default ecmSlice.reducer;

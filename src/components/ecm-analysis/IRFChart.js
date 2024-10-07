@@ -1,68 +1,59 @@
+//src/components/ecm-analysis/IRFChart.js
+
 import React, { useMemo } from 'react';
-import { Line } from 'react-chartjs-2';
-import styled from 'styled-components';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Typography, Paper } from '@mui/material';
 import PropTypes from 'prop-types';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <Paper elevation={3} sx={{ p: 1 }}>
+        <Typography variant="body2">Period: {label}</Typography>
+        {payload.map((entry, index) => (
+          <Typography key={index} variant="body2" color="textSecondary">
+            {`${entry.name}: ${entry.value.toFixed(4)}`}
+          </Typography>
+        ))}
+      </Paper>
+    );
+  }
+  return null;
+};
 
-const ChartContainer = styled.div`
-  width: 100%;
-  height: 400px;
-  margin-bottom: 20px;
-`;
+CustomTooltip.propTypes = {
+  active: PropTypes.bool,
+  payload: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string,
+    value: PropTypes.number,
+  })),
+  label: PropTypes.number,
+};
 
 const IRFChart = ({ irfData }) => {
   const data = useMemo(() => {
-    const labels = irfData.irf.map((_, index) => `T${index + 1}`);
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Variable 1',
-          data: irfData.irf.map(point => point[0][0]),
-          borderColor: 'rgba(75, 192, 192, 1)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          fill: true,
-          tension: 0.4,
-        },
-        {
-          label: 'Variable 2',
-          data: irfData.irf.map(point => point[1][1]),
-          borderColor: 'rgba(255, 99, 132, 1)',
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          fill: true,
-          tension: 0.4,
-        },
-      ],
-    };
+    return irfData.irf.map((point, index) => ({
+      period: index,
+      response: point[0][1],
+    }));
   }, [irfData]);
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' },
-      tooltip: { mode: 'index', intersect: false },
-    },
-    interaction: { mode: 'nearest', intersect: false },
-    scales: {
-      x: { title: { display: true, text: 'Time Periods' } },
-      y: { title: { display: true, text: 'Response' } },
-    },
-  };
-
   return (
-    <ChartContainer>
-      <Line data={data} options={options} />
-    </ChartContainer>
+    <Paper sx={{ p: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        Impulse Response Function
+      </Typography>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="period" label={{ value: 'Period', position: 'insideBottom', offset: -5 }} />
+          <YAxis label={{ value: 'Response', angle: -90, position: 'insideLeft' }} />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          <Line type="monotone" dataKey="response" stroke="#8884d8" name="Price Response to Conflict" />
+        </LineChart>
+      </ResponsiveContainer>
+    </Paper>
   );
 };
 
