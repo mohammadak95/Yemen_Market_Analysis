@@ -1,7 +1,7 @@
 // src/store/index.js
 import { configureStore } from '@reduxjs/toolkit';
-import ecmReducer from '../features/ecmSlice';
-import themeReducer from '../features/themeSlice';
+import ecmReducer from '../utils/ecmSlice';
+import themeReducer from '../utils/themeSlice';
 
 // Import other reducers here if you have them
 // import ecmReducer from '../features/ecmSlice';

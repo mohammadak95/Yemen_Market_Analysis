@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleDarkMode } from './features/themeSlice';
+import { toggleDarkMode } from './utils/themeSlice';
 import Header from './components/common/Header';
 import Sidebar from './components/common/Sidebar';
 import Dashboard from './Dashboard';

@@ -13,6 +13,7 @@ import {
   Select,
   MenuItem,
   Button,
+  Slider,
 } from '@mui/material';
 import useECMData from '../../hooks/useECMData';
 import PropTypes from 'prop-types';
@@ -20,6 +21,8 @@ import SummaryTable from './SummaryTable';
 import DiagnosticsTable from './DiagnosticsTable';
 import IRFChart from './IRFChart';
 import ResidualsChart from './ResidualsChart';
+import GrangerCausalityChart from './GrangerCausalityChart';
+import SpatialAutocorrelationChart from './SpatialAutocorrelationChart';
 
 const TabPanel = ({ children, value, index }) => (
   <div hidden={value !== index} id={`ecm-tabpanel-${index}`} aria-labelledby={`ecm-tab-${index}`}>
@@ -50,6 +53,10 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
     link.href = url;
     link.download = `ECM_Results_${selectedCommodity}_${selectedRegime}.json`;
     link.click();
+  };
+
+  const handleLagsChange = (event, newValue) => {
+    setSelectedLags(newValue);
   };
 
   useEffect(() => {
@@ -119,30 +126,47 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
           The Error Correction Model (ECM) captures both short-term dynamics and long-term
           equilibrium relationships between commodity prices and conflict intensity.
         </Typography>
-        <FormControl variant="outlined" size="small" sx={{ minWidth: 120, mt: 2 }}>
-          <InputLabel id="lag-select-label">Lags</InputLabel>
-          <Select
-            labelId="lag-select-label"
-            value={selectedLags}
-            onChange={(e) => setSelectedLags(e.target.value)}
-            label="Lags"
-          >
-            {[1, 2, 3, 4, 5].map((lag) => (
-              <MenuItem key={lag} value={lag}>
-                {lag}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Button variant="contained" sx={{ ml: 2, mt: 2 }} onClick={handleDownload}>
-          Download ECM Results
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+          <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
+            <InputLabel id="lag-select-label">Lags</InputLabel>
+            <Select
+              labelId="lag-select-label"
+              value={selectedLags}
+              onChange={(e) => setSelectedLags(e.target.value)}
+              label="Lags"
+            >
+              {[1, 2, 3, 4, 5].map((lag) => (
+                <MenuItem key={lag} value={lag}>
+                  {lag}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Box sx={{ width: 300, ml: 4 }}>
+            <Typography gutterBottom>Select Number of Lags</Typography>
+            <Slider
+              value={selectedLags}
+              onChange={handleLagsChange}
+              aria-labelledby="lag-slider"
+              valueLabelDisplay="auto"
+              step={1}
+              marks
+              min={1}
+              max={10}
+            />
+          </Box>
+          <Button variant="contained" sx={{ ml: 4 }} onClick={handleDownload}>
+            Download ECM Results
+          </Button>
+        </Box>
       </Box>
-      <Tabs value={activeTab} onChange={handleTabChange} centered>
+      <Tabs value={activeTab} onChange={handleTabChange} centered variant="scrollable" scrollButtons="auto">
         <Tab label="Summary" />
         <Tab label="Diagnostics" />
         <Tab label="IRF" />
         <Tab label="Residuals Analysis" />
+        <Tab label="Granger Causality" />
+        <Tab label="Spatial Autocorrelation" />
       </Tabs>
       <TabPanel value={activeTab} index={0}>
         <SummaryTable
@@ -162,6 +186,12 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
           residuals={selectedData.residuals}
           fittedValues={selectedData.fitted_values}
         />
+      </TabPanel>
+      <TabPanel value={activeTab} index={4}>
+        <GrangerCausalityChart grangerData={selectedData.granger_causality} />
+      </TabPanel>
+      <TabPanel value={activeTab} index={5}>
+        <SpatialAutocorrelationChart spatialData={selectedData.spatial_autocorrelation} />
       </TabPanel>
     </Paper>
   );

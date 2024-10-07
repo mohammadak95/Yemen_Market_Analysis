@@ -7,10 +7,6 @@ import {
   Box,
   Toolbar,
   Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   List,
   ListItem,
   ListItemIcon,
@@ -25,7 +21,9 @@ import MapIcon from '@mui/icons-material/Map';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { styled } from '@mui/material/styles';
-import { drawerWidth, collapsedDrawerWidth } from '../../constants/layout';
+import { drawerWidth, collapsedDrawerWidth } from '../../utils/layout';
+import CommoditySelector from './CommoditySelector'; // Import the selector
+import RegimeSelector from './RegimeSelector'; // Import the selector
 
 // Styled Toggle Button without theme since it's not used
 const ToggleButton = styled(IconButton)({
@@ -46,20 +44,6 @@ const Sidebar = ({
   isSmUp,
   onMethodologyClick,
 }) => {
-  const handleCommodityChange = (event) => {
-    setSelectedCommodity(event.target.value.trim().toLowerCase());
-    if (!isSmUp) {
-      setSidebarOpen(false);
-    }
-  };
-
-  const handleRegimeChange = (event) => {
-    setSelectedRegime(event.target.value.trim().toLowerCase());
-    if (!isSmUp) {
-      setSidebarOpen(false);
-    }
-  };
-
   const handleAnalysisChange = (analysis) => {
     setSelectedAnalysis(analysis);
     if (!isSmUp) {
@@ -102,46 +86,20 @@ const Sidebar = ({
         <Box sx={{ p: 2 }}>
           {/* Commodity Selector */}
           {sidebarOpen && (
-            <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
-              <InputLabel id="commodity-label">Commodity</InputLabel>
-              <Select
-                labelId="commodity-label"
-                value={selectedCommodity}
-                onChange={handleCommodityChange}
-                label="Commodity"
-              >
-                <MenuItem value="">
-                  <em>Select a commodity</em>
-                </MenuItem>
-                {commodities.map((commodity) => (
-                  <MenuItem key={commodity} value={commodity.toLowerCase()}>
-                    {commodity}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <CommoditySelector
+              commodities={commodities}
+              selectedCommodity={selectedCommodity}
+              onSelectCommodity={setSelectedCommodity}
+            />
           )}
 
           {/* Regime Selector */}
           {sidebarOpen && (
-            <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
-              <InputLabel id="regime-label">Regime</InputLabel>
-              <Select
-                labelId="regime-label"
-                value={selectedRegime}
-                onChange={handleRegimeChange}
-                label="Regime"
-              >
-                <MenuItem value="">
-                  <em>Select a regime</em>
-                </MenuItem>
-                {regimes.map((regime) => (
-                  <MenuItem key={regime} value={regime.toLowerCase()}>
-                    {regime}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <RegimeSelector
+              regimes={regimes}
+              selectedRegime={selectedRegime}
+              onSelectRegime={setSelectedRegime}
+            />
           )}
 
           {/* Analysis Selector List */}

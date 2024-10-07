@@ -3,6 +3,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { capitalizeWords } from '../../utils/stringUtils'; // Import the helper function
 
 const RegimeSelector = ({ regimes, selectedRegime, onSelectRegime }) => {
   if (!regimes || regimes.length === 0) {
@@ -24,7 +25,7 @@ const RegimeSelector = ({ regimes, selectedRegime, onSelectRegime }) => {
         </MenuItem>
         {regimes.map((regime) => (
           <MenuItem key={regime} value={regime}>
-            {regime}
+            {capitalizeWords(regime)}
           </MenuItem>
         ))}
       </Select>

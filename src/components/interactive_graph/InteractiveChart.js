@@ -1,4 +1,4 @@
-//src/components/InteractiveChart.js
+// src/components/InteractiveChart.js
 
 import React, { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
@@ -16,6 +16,7 @@ import {
 import 'chartjs-adapter-date-fns';
 import PropTypes from 'prop-types';
 
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,124 +28,185 @@ ChartJS.register(
   TimeScale
 );
 
-const InteractiveChart = ({ data, selectedCommodity, selectedRegime }) => {
+const InteractiveChart = ({ data, selectedCommodity }) => {
+  // State to control the visibility of Conflict Intensity
   const [showConflict, setShowConflict] = useState(true);
-  const [showResidual, setShowResidual] = useState(false);
 
+  // Memoized chart data to optimize performance
   const chartData = useMemo(() => {
-    if (!data || !selectedCommodity || !selectedRegime) return null;
+    if (!data || !selectedCommodity) return null;
 
-    const filteredData = data.features.filter(
-      d => d.commodity === selectedCommodity && d.regime === selectedRegime
-    ).sort((a, b) => a.date - b.date);
+    // Filter and sort data based on selected commodity and unified regime
+    const filteredData = data.features
+      .filter((d) => d.commodity === selectedCommodity && d.regime === 'unified')
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (filteredData.length === 0) return null;
 
     return {
-      labels: filteredData.map(d => d.date),
+      labels: filteredData.map((d) => new Date(d.date)),
       datasets: [
         {
-          label: 'USD Price',
-          data: filteredData.map(d => d.usdprice),
-          borderColor: 'rgb(75, 192, 192)',
-          yAxisID: 'y',
+          label: 'LCU Price',
+          data: filteredData.map((d) => d.price),
+          borderColor: 'rgba(54, 162, 235, 1)', // Solid blue line
+          backgroundColor: 'rgba(54, 162, 235, 0.2)', // Light blue fill
+          yAxisID: 'y', // Assign LCU price to the first y-axis
+          fill: false,
+          tension: 0.4, // Smooth the line
         },
-        ...(showConflict ? [{
-          label: 'Conflict Intensity',
-          data: filteredData.map(d => d.conflict_intensity),
-          borderColor: 'rgb(255, 99, 132)',
-          yAxisID: 'y1',
-        }] : []),
-        ...(showResidual ? [{
-          label: 'Residual',
-          data: filteredData.map(d => d.residual),
-          borderColor: 'rgb(153, 102, 255)',
-          yAxisID: 'y2',
-        }] : []),
+        {
+          label: 'USD Price',
+          data: filteredData.map((d) => d.usdprice),
+          borderColor: 'rgba(75, 192, 192, 1)', // Solid teal line
+          backgroundColor: 'rgba(75, 192, 192, 0.2)', // Light teal fill
+          yAxisID: 'y1', // Assign USD price to the second y-axis
+          fill: false,
+          tension: 0.4, // Smooth the line
+        },
+        ...(showConflict
+          ? [
+              {
+                label: 'Conflict Intensity',
+                data: filteredData.map((d) => d.conflict_intensity),
+                borderColor: 'rgba(255, 99, 132, 0)', // Transparent border
+                backgroundColor: 'rgba(255, 99, 132, 0.3)', // Increased opacity for better visibility
+                yAxisID: 'y2', // Assign Conflict Intensity to a new y-axis
+                fill: 'origin', // Fill from the origin to the line
+                tension: 0.4, // Smooth the line
+                pointRadius: 0, // Hide points for a cleaner area
+              },
+            ]
+          : []),
       ],
     };
-  }, [data, selectedCommodity, selectedRegime, showConflict, showResidual]);
+  }, [data, selectedCommodity, showConflict]);
 
-  const options = {
-    responsive: true,
-    interaction: {
-      mode: 'index',
-      intersect: false,
-    },
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'month'
-        }
+  // Chart options configuration
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false, // Allows the chart to resize based on its container
+      interaction: {
+        mode: 'index',
+        intersect: false,
       },
-      y: {
-        type: 'linear',
-        display: true,
-        position: 'left',
-        title: {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'month',
+          },
+          title: {
+            display: true,
+            text: 'Date',
+          },
+          ticks: {
+            maxTicksLimit: 10, // Limits the number of ticks on the x-axis
+          },
+        },
+        y: {
+          type: 'linear',
           display: true,
-          text: 'USD Price'
-        }
-      },
-      y1: {
-        type: 'linear',
-        display: showConflict,
-        position: 'right',
-        title: {
+          position: 'left',
+          title: {
+            display: true,
+            text: 'LCU Price',
+          },
+          grid: {
+            drawOnChartArea: true, // Grid lines for LCU Price
+          },
+        },
+        y1: {
+          type: 'linear',
           display: true,
-          text: 'Conflict Intensity'
+          position: 'right',
+          title: {
+            display: true,
+            text: 'USD Price',
+          },
+          grid: {
+            drawOnChartArea: false, // Prevents grid lines for USD Price
+          },
         },
-        grid: {
-          drawOnChartArea: false,
+        y2: {
+          type: 'linear',
+          display: showConflict, // Show only if Conflict Intensity is enabled
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Conflict Intensity',
+          },
+          grid: {
+            drawOnChartArea: false, // Prevents grid lines for Conflict Intensity
+          },
+          ticks: {
+            beginAtZero: true, // Starts Conflict Intensity axis at zero
+          },
         },
       },
-      y2: {
-        type: 'linear',
-        display: showResidual,
-        position: 'right',
-        title: {
-          display: true,
-          text: 'Residual'
+      plugins: {
+        tooltip: {
+          callbacks: {
+            title: (context) => {
+              const date = new Date(context[0].parsed.x);
+              return date.toLocaleDateString();
+            },
+          },
         },
-        grid: {
-          drawOnChartArea: false,
+        legend: {
+          position: 'bottom', // Position legend below the chart
+          labels: {
+            boxWidth: 12, // Size of the legend boxes
+            padding: 15, // Spacing between legend items
+          },
         },
       },
-    },
-  };
+    }),
+    [showConflict]
+  );
 
-  if (!chartData) return <div>Please select a commodity and regime</div>;
+  // Display a prompt if no data is available
+  if (!chartData) return <div>Please select a commodity.</div>;
 
   return (
     <div>
-      <div>
+      {/* Control to toggle Conflict Intensity */}
+      <div style={{ marginBottom: '16px' }}>
         <label>
           <input
             type="checkbox"
             checked={showConflict}
             onChange={() => setShowConflict(!showConflict)}
+            style={{ marginRight: '8px' }}
           />
           Show Conflict Intensity
         </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={showResidual}
-            onChange={() => setShowResidual(!showResidual)}
-          />
-          Show Residual
-        </label>
       </div>
-      <Line options={options} data={chartData} />
+
+      {/* Line Chart */}
+      <div style={{ height: '500px' }}>
+        <Line options={options} data={chartData} />
+      </div>
     </div>
   );
 };
 
+// PropTypes for type checking
 InteractiveChart.propTypes = {
   data: PropTypes.shape({
-    features: PropTypes.array.isRequired,
-  }),
-  selectedCommodity: PropTypes.string,
-  selectedRegime: PropTypes.string,
+    features: PropTypes.arrayOf(
+      PropTypes.shape({
+        date: PropTypes.string.isRequired, // Assuming date is a string in ISO format
+        commodity: PropTypes.string.isRequired,
+        regime: PropTypes.string.isRequired,
+        price: PropTypes.number.isRequired,
+        usdprice: PropTypes.number.isRequired,
+        conflict_intensity: PropTypes.number.isRequired,
+      })
+    ).isRequired,
+  }).isRequired,
+  selectedCommodity: PropTypes.string.isRequired,
 };
 
 export default InteractiveChart;

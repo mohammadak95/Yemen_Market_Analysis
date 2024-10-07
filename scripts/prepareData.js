@@ -60,6 +60,7 @@ const prepareData = () => {
 
     // Ensure specific files are copied
     const filesToEnsure = [
+      'results/unified_data.geojson',
       'enhanced_unified_data_with_residual.geojson',
       'spatial_analysis_results.json',
       'choropleth_data/average_prices.csv',

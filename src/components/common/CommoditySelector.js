@@ -3,6 +3,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { capitalizeWords } from '../../utils/stringUtils'; // Import the helper function
 
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   if (!commodities || commodities.length === 0) {
@@ -24,7 +25,7 @@ const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }
         </MenuItem>
         {commodities.map((commodity) => (
           <MenuItem key={commodity} value={commodity}>
-            {commodity}
+            {capitalizeWords(commodity)}
           </MenuItem>
         ))}
       </Select>

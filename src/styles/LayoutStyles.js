@@ -2,7 +2,7 @@
 
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
-import { drawerWidth, collapsedDrawerWidth } from '../constants/layout';
+import { drawerWidth, collapsedDrawerWidth } from '../utils/layout';
 
 // Layout Container using Flexbox
 export const LayoutContainer = styled(Box)(( ) => ({

@@ -5,6 +5,7 @@ import { getDataPath } from '../utils/dataPath';
 
 /**
  * Aggregates data by date, regime, and commodity, averaging metrics across all regions.
+ * Additionally, computes a unified regime by averaging north and south regimes per date.
  *
  * @param {Array} features - The raw dataset from GeoJSON.
  * @returns {Array} - The aggregated dataset.
@@ -15,7 +16,7 @@ function aggregateDataByDateRegimeCommodity(features) {
   features.forEach((feature) => {
     const properties = feature.properties;
     const date = new Date(properties.date);
-    const regime = (properties.regime || '').trim().toLowerCase();
+    const regime = (properties.exchange_rate_regime || '').trim().toLowerCase();
     const commodity = (properties.commodity || '').trim().toLowerCase();
 
     // Ensure date is valid
@@ -35,7 +36,6 @@ function aggregateDataByDateRegimeCommodity(features) {
         price: 0,
         usdprice: 0,
         conflict_intensity: 0,
-        residual: 0,
         count: 0,
       };
     }
@@ -43,7 +43,6 @@ function aggregateDataByDateRegimeCommodity(features) {
     aggregationMap[key].price += parseFloat(properties.price || 0);
     aggregationMap[key].usdprice += parseFloat(properties.usdprice || 0);
     aggregationMap[key].conflict_intensity += parseFloat(properties.conflict_intensity || 0);
-    aggregationMap[key].residual += parseFloat(properties.residual || 0);
     aggregationMap[key].count += 1;
   });
 
@@ -55,11 +54,47 @@ function aggregateDataByDateRegimeCommodity(features) {
     price: item.price / item.count,
     usdprice: item.usdprice / item.count,
     conflict_intensity: item.conflict_intensity / item.count,
-    residual: item.residual / item.count,
   }));
 
+  // Create a unified regime by averaging north and south regimes per date and commodity
+  const unifiedAggregationMap = {};
+
+  aggregatedData.forEach((item) => {
+    const dateKey = item.date.toISOString().split('T')[0];
+    const key = `${dateKey}_${item.commodity}_unified`;
+
+    if (!unifiedAggregationMap[key]) {
+      unifiedAggregationMap[key] = {
+        date: item.date,
+        regime: 'unified',
+        commodity: item.commodity,
+        price: 0,
+        usdprice: 0,
+        conflict_intensity: 0,
+        count: 0,
+      };
+    }
+
+    unifiedAggregationMap[key].price += item.price;
+    unifiedAggregationMap[key].usdprice += item.usdprice;
+    unifiedAggregationMap[key].conflict_intensity += item.conflict_intensity;
+    unifiedAggregationMap[key].count += 1;
+  });
+
+  const unifiedData = Object.values(unifiedAggregationMap).map((item) => ({
+    date: item.date,
+    regime: item.regime,
+    commodity: item.commodity,
+    price: item.price / item.count,
+    usdprice: item.usdprice / item.count,
+    conflict_intensity: item.conflict_intensity / item.count,
+  }));
+
+  // Combine the original aggregated data with the unified regime data
+  const finalAggregatedData = [...aggregatedData, ...unifiedData];
+
   // Sort the data by date, regime, and commodity
-  aggregatedData.sort((a, b) => {
+  finalAggregatedData.sort((a, b) => {
     if (a.date < b.date) return -1;
     if (a.date > b.date) return 1;
     if (a.regime < b.regime) return -1;
@@ -69,7 +104,7 @@ function aggregateDataByDateRegimeCommodity(features) {
     return 0;
   });
 
-  return aggregatedData;
+  return finalAggregatedData;
 }
 
 /**
@@ -82,11 +117,10 @@ const useData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const path = getDataPath('enhanced_unified_data_with_residual.geojson');
+        const path = getDataPath('unified_data.geojson');
         console.log('Fetching data from:', path);
         const response = await fetch(path, {
           headers: {

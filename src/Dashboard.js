@@ -25,9 +25,11 @@ import {
   Select,
   MenuItem,
   Paper,
-  Typography,
+  Tooltip as MuiTooltip,
+  IconButton,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import { applySeasonalAdjustment, applySmoothing } from './utils/dataProcessing';
@@ -51,7 +53,6 @@ ChartJS.register(
 
 const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }) => {
   const [showConflictIntensity, setShowConflictIntensity] = useState(true);
-  const [showResidual, setShowResidual] = useState(false);
   const [priceType, setPriceType] = useState('lcu');
   const [applySeasonalAdj, setApplySeasonalAdj] = useState(false);
   const [applySmooth, setApplySmooth] = useState(false);
@@ -101,19 +102,6 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               },
             ]
           : []),
-        ...(showResidual
-          ? [
-              {
-                label: 'Residual',
-                data: filteredData.map((d) => d.residual),
-                borderColor: theme.palette.secondary.main,
-                backgroundColor: theme.palette.secondary.light,
-                yAxisID: 'y2',
-                fill: true,
-                tension: 0.4,
-              },
-            ]
-          : []),
       ],
     };
   }, [
@@ -121,7 +109,6 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
     selectedCommodity,
     selectedRegime,
     showConflictIntensity,
-    showResidual,
     priceType,
     applySeasonalAdj,
     applySmooth,
@@ -176,18 +163,6 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
             drawOnChartArea: false,
           },
         },
-        y2: {
-          type: 'linear',
-          display: showResidual,
-          position: 'right',
-          title: {
-            display: true,
-            text: 'Residual',
-          },
-          grid: {
-            drawOnChartArea: false,
-          },
-        },
       },
       plugins: {
         tooltip: {
@@ -198,11 +173,15 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           },
         },
         legend: {
-          position: 'top',
+          position: 'bottom', // Changed from 'top' to 'bottom'
+          labels: {
+            boxWidth: 12, // Optional: Adjust the size of the legend boxes
+            padding: 15,  // Optional: Adjust the spacing between legend items
+          },
         },
       },
     }),
-    [showConflictIntensity, showResidual, priceType]
+    [showConflictIntensity, priceType]
   );
 
   return (
@@ -215,28 +194,26 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
         flexDirection: 'column',
         alignItems: 'center',
         width: '100%',
+        px: { xs: 2, sm: 4 },
       }}
     >
-      <Typography variant="h5" gutterBottom align="center">
-        Market Analysis
-      </Typography>
-
       {/* Controls Panel */}
       <Paper
+        elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 3, md: 4 },
           mb: 4,
           width: '100%',
           maxWidth: 1200,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          borderRadius: 2,
         }}
       >
-        <Grid container spacing={4} justifyContent="center">
-          {/* First Column */}
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth variant="outlined" size="small" sx={{ mb: 3 }}>
+        <Grid container spacing={3} alignItems="center">
+          {/* Price Type Dropdown */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth variant="outlined" size="small">
               <InputLabel id="price-type-label">Price Type</InputLabel>
               <Select
                 labelId="price-type-label"
@@ -248,6 +225,18 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 <MenuItem value="usd">Price in US$</MenuItem>
               </Select>
             </FormControl>
+          </Grid>
+          {/* Tooltip for Price Type */}
+          <Grid item xs={12} sm={6} md={1}>
+            <MuiTooltip title="Select the currency type for price display">
+              <IconButton>
+                <HelpOutlineIcon />
+              </IconButton>
+            </MuiTooltip>
+          </Grid>
+          
+          {/* Apply Seasonal Adjustment */}
+          <Grid item xs={12} sm={6} md={3}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -258,6 +247,10 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               }
               label="Apply Seasonal Adjustment"
             />
+          </Grid>
+          
+          {/* Apply Smoothing */}
+          <Grid item xs={12} sm={6} md={3}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -269,8 +262,9 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               label="Apply Smoothing"
             />
           </Grid>
-          {/* Second Column */}
-          <Grid item xs={12} md={6}>
+          
+          {/* Show Conflict Intensity */}
+          <Grid item xs={12} sm={6} md={2}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -281,22 +275,13 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               }
               label="Show Conflict Intensity"
             />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showResidual}
-                  onChange={() => setShowResidual(!showResidual)}
-                  color="secondary"
-                />
-              }
-              label="Show Residual"
-            />
           </Grid>
         </Grid>
       </Paper>
 
       {/* Chart */}
       <Paper
+        elevation={3}
         sx={{
           p: 3,
           mb: 4,
@@ -306,11 +291,12 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
+          borderRadius: 2,
           height: { xs: 400, sm: 500, md: 600 },
         }}
       >
         {chartData ? (
-          <Box sx={{ width: '100%', height: '100%' }}>
+          <Box sx={{ width: '100%', height: '100%', paddingBottom: '50px' }}> {/* Added paddingBottom */}
             <Line data={chartData} options={options} />
           </Box>
         ) : (
@@ -322,12 +308,14 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
       {selectedAnalysis && (
         <Box sx={{ mt: 4, width: '100%', maxWidth: 1200 }}>
           <Paper
+            elevation={3}
             sx={{
-              p: 4,
+              p: { xs: 3, md: 4 },
               width: '100%',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              borderRadius: 2,
             }}
           >
             <Suspense

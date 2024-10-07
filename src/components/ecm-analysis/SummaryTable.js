@@ -10,6 +10,7 @@ import {
   Paper,
   Typography,
   Tooltip,
+  Box,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
@@ -17,6 +18,16 @@ const SummaryTable = ({ data, selectedCommodity, selectedRegime }) => {
   const formatNumber = (num) => (typeof num === 'number' ? num.toFixed(2) : 'N/A');
 
   const rSquared = data.fit_metrics ? data.fit_metrics.r_squared : null;
+  const adjRSquared = data.fit_metrics ? data.fit_metrics.adj_r_squared : null;
+
+  const getRSquaredInterpretation = (r2) => {
+    if (r2 >= 0.8) return { text: 'High explanatory power', color: 'green' };
+    if (r2 >= 0.5) return { text: 'Moderate explanatory power', color: 'orange' };
+    return { text: 'Low explanatory power', color: 'red' };
+  };
+
+  const rsqInterpretation = getRSquaredInterpretation(rSquared);
+  const adjRsqInterpretation = getRSquaredInterpretation(adjRSquared);
 
   return (
     <TableContainer component={Paper}>
@@ -25,9 +36,10 @@ const SummaryTable = ({ data, selectedCommodity, selectedRegime }) => {
       </Typography>
       {rSquared !== null && (
         <Typography variant="body2" sx={{ pl: 2, pb: 2 }}>
-          {rSquared > 0.8
-            ? 'The model explains a high proportion of the variance in the data.'
-            : 'The model may not explain the variance in the data well.'}
+          R-Squared Interpretation:
+          <Box component="span" sx={{ color: rsqInterpretation.color, ml: 1 }}>
+            {rsqInterpretation.text}
+          </Box>
         </Typography>
       )}
       <Table size="small">
@@ -64,7 +76,11 @@ const SummaryTable = ({ data, selectedCommodity, selectedRegime }) => {
                     <span>R-squared</span>
                   </Tooltip>
                 </TableCell>
-                <TableCell align="right">{formatNumber(data.fit_metrics.r_squared)}</TableCell>
+                <TableCell align="right">
+                  <Box sx={{ color: rsqInterpretation.color, fontWeight: 'bold' }}>
+                    {formatNumber(data.fit_metrics.r_squared)}
+                  </Box>
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>
@@ -73,7 +89,9 @@ const SummaryTable = ({ data, selectedCommodity, selectedRegime }) => {
                   </Tooltip>
                 </TableCell>
                 <TableCell align="right">
-                  {formatNumber(data.fit_metrics.adj_r_squared)}
+                  <Box sx={{ color: adjRsqInterpretation.color, fontWeight: 'bold' }}>
+                    {formatNumber(data.fit_metrics.adj_r_squared)}
+                  </Box>
                 </TableCell>
               </TableRow>
             </>

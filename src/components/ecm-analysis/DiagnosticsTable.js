@@ -82,6 +82,7 @@ const DiagnosticsTable = ({ diagnostics }) => {
 
   const getCellStyle = (isIssue) => ({
     color: isIssue ? 'red' : 'green',
+    fontWeight: 'bold',
   });
 
   return (
@@ -119,7 +120,7 @@ const DiagnosticsTable = ({ diagnostics }) => {
               return (
                 <TableRow key={key}>
                   <TableCell component="th" scope="row">
-                    <Tooltip title="Click for more information">
+                    <Tooltip title="Detailed information about this test">
                       <span>{testName.replace(/_/g, ' ')}</span>
                     </Tooltip>
                   </TableCell>
@@ -136,7 +137,7 @@ const DiagnosticsTable = ({ diagnostics }) => {
               return (
                 <TableRow key={key}>
                   <TableCell component="th" scope="row">
-                    <Tooltip title="Click for more information">
+                    <Tooltip title="Detailed information about this metric">
                       <span>{testName.replace(/_/g, ' ')}</span>
                     </Tooltip>
                   </TableCell>

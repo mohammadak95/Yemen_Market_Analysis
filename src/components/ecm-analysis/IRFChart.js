@@ -29,7 +29,10 @@ const IRFChart = ({ irfData }) => {
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
-        Impulse Response Function
+        Impulse Response Function (IRF)
+      </Typography>
+      <Typography variant="body2" gutterBottom>
+        Shows the response of commodity prices to a shock in conflict intensity over time.
       </Typography>
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={data}>
@@ -38,7 +41,7 @@ const IRFChart = ({ irfData }) => {
             dataKey="period"
             label={
               <Tooltip title="Time periods after the shock">
-                <text x="0" y="0" dy={16} dx={250} textAnchor="middle">
+                <text x="50%" y="100%" dy={16} textAnchor="middle" fill="#666" fontSize={12}>
                   Period
                 </text>
               </Tooltip>
@@ -46,8 +49,16 @@ const IRFChart = ({ irfData }) => {
           />
           <YAxis
             label={
-              <Tooltip title="Response of the variable to the shock">
-                <text x="0" y="0" dx={-30} dy={200} textAnchor="middle" transform="rotate(-90)">
+              <Tooltip title="Response of the commodity price to the shock">
+                <text
+                  transform="rotate(-90)"
+                  y={15}
+                  x={-200}
+                  dy="-5.1em"
+                  textAnchor="middle"
+                  fill="#666"
+                  fontSize={12}
+                >
                   Response
                 </text>
               </Tooltip>
@@ -57,14 +68,24 @@ const IRFChart = ({ irfData }) => {
             formatter={(value) => formatNumber(value)}
             labelFormatter={(label) => `Period: ${label}`}
           />
-          {data[0].lower !== null && data[0].upper !== null && (
+          {data.some((d) => d.lower !== null && d.upper !== null) && (
             <Area
               type="monotone"
               dataKey="upper"
               stroke={false}
               fillOpacity={0.2}
-              fill="#8884d8"
-              name="Confidence Interval"
+              fill="#82ca9d"
+              name="Confidence Interval Upper"
+            />
+          )}
+          {data.some((d) => d.lower !== null && d.upper !== null) && (
+            <Area
+              type="monotone"
+              dataKey="lower"
+              stroke={false}
+              fillOpacity={0.2}
+              fill="#82ca9d"
+              name="Confidence Interval Lower"
             />
           )}
           <Line
@@ -72,10 +93,14 @@ const IRFChart = ({ irfData }) => {
             dataKey="response"
             stroke="#8884d8"
             name="Price Response to Conflict"
-            dot={false}
+            dot={{ r: 3 }}
+            activeDot={{ r: 5 }}
           />
         </LineChart>
       </ResponsiveContainer>
+      <Typography variant="caption" display="block" sx={{ mt: 2 }}>
+        * Confidence intervals represent the uncertainty around the impulse response estimates.
+      </Typography>
     </Paper>
   );
 };

@@ -15,7 +15,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import MethodologySection from './MethodologySection';
-import methodologyContent from '../../methodologyData';
+import methodologyContent from '../../utils/methodologyData';
 
 const MethodologyModal = ({ open, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('');

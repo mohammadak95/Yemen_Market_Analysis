@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
+  Line,
 } from 'recharts';
 import { Typography, Paper, Box, Tooltip } from '@mui/material';
 import PropTypes from 'prop-types';
@@ -29,10 +30,32 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
 
   const formatNumber = (num) => (typeof num === 'number' ? num.toFixed(2) : 'N/A');
 
+  // Calculate trend line (simple linear regression)
+  const calculateTrendLine = (data) => {
+    const n = data.length;
+    const sumX = data.reduce((sum, d) => sum + d.fitted, 0);
+    const sumY = data.reduce((sum, d) => sum + d.residual, 0);
+    const sumXY = data.reduce((sum, d) => sum + d.fitted * d.residual, 0);
+    const sumX2 = data.reduce((sum, d) => sum + d.fitted * d.fitted, 0);
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+
+    return data.map((d) => ({
+      fitted: d.fitted,
+      trend: slope * d.fitted + intercept,
+    }));
+  };
+
+  const trendData = calculateTrendLine(data);
+
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
         Residuals vs Fitted Values
+      </Typography>
+      <Typography variant="body2" gutterBottom>
+        Scatter plot of residuals against fitted values to assess model fit.
       </Typography>
       <ResponsiveContainer width="100%" height={400}>
         <ScatterChart>
@@ -64,8 +87,12 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
             labelFormatter={(label) => `Fitted Value: ${formatNumber(label)}`}
           />
           <Scatter name="Residuals" data={data} fill="#8884d8" />
+          <Line type="linear" dataKey="trend" data={trendData} stroke="#ff7300" dot={false} name="Trend Line" />
         </ScatterChart>
       </ResponsiveContainer>
+      <Typography variant="caption" display="block" sx={{ mt: 2 }}>
+        * A horizontal trend line indicates no apparent relationship between residuals and fitted values.
+      </Typography>
     </Paper>
   );
 };
