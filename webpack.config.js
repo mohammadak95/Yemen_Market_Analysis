@@ -1,4 +1,3 @@
-// webpack.config.js
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { DefinePlugin } = require('webpack');
@@ -15,19 +14,16 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.jsx', '.json'],
     alias: {
-      // Add aliases if needed
       '@': path.resolve(__dirname, 'src'),
     },
   },
   module: {
     rules: [
-      // JavaScript and JSX Files
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: ['babel-loader'],
       },
-      // CSS Files
       {
         test: /\.css$/i,
         use: [
@@ -35,9 +31,9 @@ module.exports = {
           {
             loader: 'css-loader',
             options: {
-              importLoaders: 1, // Ensures that `postcss-loader` is applied before `css-loader`'s `@import` handling
+              importLoaders: 1,
               modules: {
-                auto: true, // Enable CSS modules for files matching /\.module\.\w+$/i
+                auto: true,
               },
             },
           },
@@ -46,19 +42,17 @@ module.exports = {
             options: {
               postcssOptions: {
                 plugins: [
-                  require('autoprefixer'), // Add other PostCSS plugins if needed
+                  require('autoprefixer'),
                 ],
               },
             },
           },
         ],
       },
-      // Images and Assets
       {
         test: /\.(png|jpe?g|gif|svg)$/i,
         type: 'asset/resource',
       },
-      // Fonts
       {
         test: /\.(woff(2)?|eot|ttf|otf)$/,
         type: 'asset/inline',
@@ -68,7 +62,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'public', 'index.html'),
-      favicon: path.resolve(__dirname, 'public', 'favicon.ico'), // If you have a favicon
+      favicon: path.resolve(__dirname, 'public', 'favicon.ico'),
     }),
     new DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
@@ -83,10 +77,10 @@ module.exports = {
     },
     compress: true,
     port: 3000,
-    historyApiFallback: true, // For React Router
+    historyApiFallback: true,
     hot: true,
     open: true,
   },
-  devtool: 'source-map', // Useful for debugging
+  devtool: 'source-map',
   mode: process.env.NODE_ENV || 'development',
 };

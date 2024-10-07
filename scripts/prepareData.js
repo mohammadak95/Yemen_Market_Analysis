@@ -3,18 +3,32 @@ const fs = require('fs');
 const path = require('path');
 
 const sourceDir = path.join(__dirname, '../results');
+const publicSourceDir = path.join(__dirname, '../public/results');
 const destDir = path.join(__dirname, '../build/results');
+
+const ensureDirectoryExistence = (dirPath) => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log(`Created directory: ${dirPath}`);
+  }
+};
+
+const copyFile = (source, destination) => {
+  try {
+    fs.copyFileSync(source, destination);
+    console.log(`Copied ${source} to ${destination}`);
+  } catch (error) {
+    console.error(`Error copying ${source}: ${error.message}`);
+  }
+};
 
 const copyRecursiveSync = (source, destination) => {
   if (!fs.existsSync(source)) {
-    console.error(`Source directory does not exist: ${source}`);
-    process.exit(1);
+    console.warn(`Source directory does not exist: ${source}`);
+    return;
   }
 
-  if (!fs.existsSync(destination)) {
-    fs.mkdirSync(destination, { recursive: true });
-    console.log(`Created directory: ${destination}`);
-  }
+  ensureDirectoryExistence(destination);
 
   const items = fs.readdirSync(source);
   if (items.length === 0) {
@@ -30,25 +44,49 @@ const copyRecursiveSync = (source, destination) => {
     if (stats.isDirectory()) {
       copyRecursiveSync(sourcePath, destPath);
     } else {
-      try {
-        fs.copyFileSync(sourcePath, destPath);
-        console.log(`Copied ${sourcePath} to ${destPath}`);
-      } catch (error) {
-        console.error(`Error copying ${sourcePath}: ${error.message}`);
-      }
+      copyFile(sourcePath, destPath);
     }
   });
 };
 
-const geojsonSource = path.join(__dirname, '../results/enhanced_unified_data_with_residual.geojson');
-const geojsonDest = path.join(__dirname, '../build/results/enhanced_unified_data_with_residual.geojson');
-
-fs.copyFileSync(geojsonSource, geojsonDest);
-console.log(`Copied ${geojsonSource} to ${geojsonDest}`);
-
 const prepareData = () => {
   try {
+    // Copy from results directory
     copyRecursiveSync(sourceDir, destDir);
+
+    // Copy from public/results directory
+    copyRecursiveSync(publicSourceDir, destDir);
+
+    // Ensure specific files are copied
+    const filesToEnsure = [
+      'enhanced_unified_data_with_residual.geojson',
+      'spatial_analysis_results.json',
+      'choropleth_data/average_prices.csv',
+      'choropleth_data/conflict_intensity.csv',
+      'choropleth_data/price_changes.csv',
+      'choropleth_data/residuals.csv',
+      'ecm/ecm_analysis_results.json',
+      'network_data/flow_maps.csv',
+      'price_diff_results/price_differential_results.json',
+      'spatial_weights/spatial_weights.json',
+      'time_series_data/conflict_intensity_time_series.csv',
+      'time_series_data/prices_time_series.csv'
+    ];
+
+    filesToEnsure.forEach(file => {
+      const sourcePath = path.join(sourceDir, file);
+      const publicSourcePath = path.join(publicSourceDir, file);
+      const destPath = path.join(destDir, file);
+
+      if (fs.existsSync(sourcePath)) {
+        copyFile(sourcePath, destPath);
+      } else if (fs.existsSync(publicSourcePath)) {
+        copyFile(publicSourcePath, destPath);
+      } else {
+        console.warn(`File not found in either location: ${file}`);
+      }
+    });
+
     console.log('Data preparation complete.');
   } catch (error) {
     console.error('Data preparation failed:', error.message);
