@@ -1,4 +1,5 @@
 // src/styles/CustomStyles.js
+
 import { styled } from '@mui/material/styles';
 import {
   Accordion,
@@ -42,6 +43,7 @@ export const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
   '& .MuiAccordionSummary-content': {
     margin: '12px 0 !important',
     alignItems: 'center',
+    justifyContent: 'center', // Centers content horizontally
   },
   '& .MuiAccordionSummary-expandIconWrapper': {
     color: theme.palette.primary.contrastText,
@@ -52,10 +54,13 @@ export const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
 export const StyledAccordionDetails = styled(AccordionDetails)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   padding: theme.spacing(2),
+  display: 'flex',
+  justifyContent: 'center', // Centers content horizontally
 }));
 
 // Styled Section Title
 export const SectionTitle = styled(Typography)(({ theme }) => ({
   fontWeight: theme.typography.fontWeightBold,
   color: theme.palette.primary.contrastText,
+  textAlign: 'center', // Centers the section title
 }));

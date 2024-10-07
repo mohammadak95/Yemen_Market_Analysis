@@ -16,6 +16,10 @@ export const lightTheme = createTheme({
     },
     background: {
       default: '#f5f5f5',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#000000',
     },
   },
   typography: {
@@ -37,6 +41,10 @@ export const darkTheme = createTheme({
     },
     background: {
       default: '#303030',
+      paper: '#424242',
+    },
+    text: {
+      primary: '#ffffff',
     },
   },
   typography: {

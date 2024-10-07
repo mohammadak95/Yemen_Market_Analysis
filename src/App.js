@@ -1,7 +1,7 @@
 // src/App.js
 
 import React, { useState } from 'react';
-import { ThemeProvider, CssBaseline, Box, useMediaQuery } from '@mui/material';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleDarkMode } from './features/themeSlice';
 import Header from './components/common/Header';
@@ -12,6 +12,9 @@ import useData from './hooks/useData';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import MethodologyModal from './components/methedology/MethodologyModal';
+import GlobalStyle from './styles/GlobalStyle';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { LayoutContainer, MainContent } from './styles/LayoutStyles';
 
 const App = () => {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
@@ -24,9 +27,9 @@ const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [methodologyModalOpen, setMethodologyModalOpen] = useState(false);
 
-  const { data, loading, error } = useData();
-
   const isSmUp = useMediaQuery(currentTheme.breakpoints.up('sm'));
+
+  const { data, loading, error } = useData();
 
   const handleDrawerToggle = () => {
     setSidebarOpen(!sidebarOpen);
@@ -41,12 +44,9 @@ const App = () => {
   return (
     <ThemeProvider theme={currentTheme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-        <Header
-          toggleSidebar={handleDrawerToggle}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={() => dispatch(toggleDarkMode())}
-        />
+      <GlobalStyle />
+      <LayoutContainer>
+        {/* Sidebar */}
         <Sidebar
           commodities={data?.commodities || []}
           regimes={data?.regimes || []}
@@ -61,28 +61,28 @@ const App = () => {
           isSmUp={isSmUp}
           onMethodologyClick={handleShowMethodology}
         />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            width: { sm: `calc(100% - ${sidebarOpen ? 240 : 0}px)` },
-            ml: { sm: `${sidebarOpen ? 240 : 0}px` },
-            transition: 'width 0.3s ease, margin-left 0.3s ease',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
+
+        {/* Main Content */}
+        <MainContent sidebarOpen={sidebarOpen}>
+          {/* Header */}
+          <Header
+            toggleSidebar={handleDrawerToggle}
+            isDarkMode={isDarkMode}
+            toggleDarkMode={() => dispatch(toggleDarkMode())}
+          />
+
+          {/* Dashboard */}
           <Dashboard
             data={data}
             selectedCommodity={selectedCommodity}
             selectedRegime={selectedRegime}
             selectedAnalysis={selectedAnalysis}
           />
-        </Box>
-      </Box>
-      <MethodologyModal open={methodologyModalOpen} onClose={handleCloseMethodology} />
+        </MainContent>
+
+        {/* Methodology Modal */}
+        <MethodologyModal open={methodologyModalOpen} onClose={handleCloseMethodology} />
+      </LayoutContainer>
     </ThemeProvider>
   );
 };

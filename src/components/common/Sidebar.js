@@ -1,4 +1,4 @@
-//src/components/common/Sidebar.js
+// src/components/common/Sidebar.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -16,12 +16,21 @@ import {
   ListItemIcon,
   ListItemText,
   Button,
+  Typography,
+  IconButton,
 } from '@mui/material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import MapIcon from '@mui/icons-material/Map';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { styled } from '@mui/material/styles';
+import { drawerWidth, collapsedDrawerWidth } from '../../constants/layout';
 
-const drawerWidth = 240;
+// Styled Toggle Button without theme since it's not used
+const ToggleButton = styled(IconButton)({
+  marginLeft: 'auto',
+});
 
 const Sidebar = ({
   commodities = [],
@@ -58,135 +67,136 @@ const Sidebar = ({
     }
   };
 
-  const drawerContent = (
-    <div>
-      <Toolbar />
-      <Divider />
-      <Box sx={{ p: 2 }}>
-        {/* Commodity Selector */}
-        <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-          <InputLabel id="commodity-label">Commodity</InputLabel>
-          <Select
-            labelId="commodity-label"
-            value={selectedCommodity}
-            onChange={handleCommodityChange}
-            label="Commodity"
-          >
-            <MenuItem value="">
-              <em>Select a commodity</em>
-            </MenuItem>
-            {commodities.map((commodity) => (
-              <MenuItem key={commodity} value={commodity.toLowerCase()}>
-                {commodity}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Regime Selector */}
-        <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-          <InputLabel id="regime-label">Regime</InputLabel>
-          <Select
-            labelId="regime-label"
-            value={selectedRegime}
-            onChange={handleRegimeChange}
-            label="Regime"
-          >
-            <MenuItem value="">
-              <em>Select a regime</em>
-            </MenuItem>
-            {regimes.map((regime) => (
-              <MenuItem key={regime} value={regime.toLowerCase()}>
-                {regime}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Analysis Selector List */}
-        <Divider sx={{ my: 2 }} />
-        <List>
-          <ListItem
-            button
-            selected={selectedAnalysis === 'ecm'}
-            onClick={() => handleAnalysisChange('ecm')}
-          >
-            <ListItemIcon>
-              <AssessmentIcon />
-            </ListItemIcon>
-            <ListItemText primary="ECM Analysis" />
-          </ListItem>
-          <ListItem
-            button
-            selected={selectedAnalysis === 'priceDiff'}
-            onClick={() => handleAnalysisChange('priceDiff')}
-          >
-            <ListItemIcon>
-              <ShowChartIcon />
-            </ListItemIcon>
-            <ListItemText primary="Price Differential Analysis" />
-          </ListItem>
-          <ListItem
-            button
-            selected={selectedAnalysis === 'spatial'}
-            onClick={() => handleAnalysisChange('spatial')}
-          >
-            <ListItemIcon>
-              <MapIcon />
-            </ListItemIcon>
-            <ListItemText primary="Spatial Analysis" />
-          </ListItem>
-        </List>
-
-        {/* Methodology Button */}
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ mt: 3 }}
-          onClick={onMethodologyClick}
-        >
-          Methodology
-        </Button>
-      </Box>
-    </div>
-  );
-
   return (
     <>
-      {isSmUp ? (
-        <Drawer
-          variant="persistent"
-          open={sidebarOpen}
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      ) : (
-        <Drawer
-          variant="temporary"
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      )}
+      <Drawer
+        variant={isSmUp ? 'permanent' : 'temporary'}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        sx={{
+          width: sidebarOpen ? drawerWidth : collapsedDrawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: sidebarOpen ? drawerWidth : collapsedDrawerWidth,
+            boxSizing: 'border-box',
+            transition: (theme) =>
+              theme.transitions.create('width', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+            overflowX: 'hidden',
+          },
+        }}
+      >
+        <Toolbar>
+          <Typography variant="h6" noWrap component="div">
+            {sidebarOpen ? 'Menu' : 'M'}
+          </Typography>
+          {isSmUp && (
+            <ToggleButton onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
+              {sidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            </ToggleButton>
+          )}
+        </Toolbar>
+        <Divider />
+        <Box sx={{ p: 2 }}>
+          {/* Commodity Selector */}
+          {sidebarOpen && (
+            <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
+              <InputLabel id="commodity-label">Commodity</InputLabel>
+              <Select
+                labelId="commodity-label"
+                value={selectedCommodity}
+                onChange={handleCommodityChange}
+                label="Commodity"
+              >
+                <MenuItem value="">
+                  <em>Select a commodity</em>
+                </MenuItem>
+                {commodities.map((commodity) => (
+                  <MenuItem key={commodity} value={commodity.toLowerCase()}>
+                    {commodity}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* Regime Selector */}
+          {sidebarOpen && (
+            <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
+              <InputLabel id="regime-label">Regime</InputLabel>
+              <Select
+                labelId="regime-label"
+                value={selectedRegime}
+                onChange={handleRegimeChange}
+                label="Regime"
+              >
+                <MenuItem value="">
+                  <em>Select a regime</em>
+                </MenuItem>
+                {regimes.map((regime) => (
+                  <MenuItem key={regime} value={regime.toLowerCase()}>
+                    {regime}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* Analysis Selector List */}
+          {sidebarOpen && (
+            <>
+              <Divider sx={{ my: 2 }} />
+              <List component="nav" aria-label="analysis options">
+                <ListItem
+                  button
+                  selected={selectedAnalysis === 'ecm'}
+                  onClick={() => handleAnalysisChange('ecm')}
+                >
+                  <ListItemIcon>
+                    <AssessmentIcon color={selectedAnalysis === 'ecm' ? 'primary' : 'inherit'} />
+                  </ListItemIcon>
+                  <ListItemText primary="ECM Analysis" />
+                </ListItem>
+                <ListItem
+                  button
+                  selected={selectedAnalysis === 'priceDiff'}
+                  onClick={() => handleAnalysisChange('priceDiff')}
+                >
+                  <ListItemIcon>
+                    <ShowChartIcon color={selectedAnalysis === 'priceDiff' ? 'primary' : 'inherit'} />
+                  </ListItemIcon>
+                  <ListItemText primary="Price Differential Analysis" />
+                </ListItem>
+                <ListItem
+                  button
+                  selected={selectedAnalysis === 'spatial'}
+                  onClick={() => handleAnalysisChange('spatial')}
+                >
+                  <ListItemIcon>
+                    <MapIcon color={selectedAnalysis === 'spatial' ? 'primary' : 'inherit'} />
+                  </ListItemIcon>
+                  <ListItemText primary="Spatial Analysis" />
+                </ListItem>
+              </List>
+            </>
+          )}
+
+          {/* Methodology Button */}
+          {sidebarOpen && (
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{ mt: 3 }}
+              onClick={onMethodologyClick}
+            >
+              Methodology
+            </Button>
+          )}
+        </Box>
+      </Drawer>
     </>
   );
 };

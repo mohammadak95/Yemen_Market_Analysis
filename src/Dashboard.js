@@ -12,7 +12,7 @@ import {
   TimeScale,
   Tooltip,
   Legend,
-  Filler, // Import Filler
+  Filler,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import {
@@ -25,10 +25,9 @@ import {
   Select,
   MenuItem,
   Paper,
-  useTheme,
   Typography,
-  Container,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import { applySeasonalAdjustment, applySmoothing } from './utils/dataProcessing';
@@ -47,7 +46,7 @@ ChartJS.register(
   TimeScale,
   Tooltip,
   Legend,
-  Filler // Register Filler
+  Filler
 );
 
 const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }) => {
@@ -87,7 +86,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           backgroundColor: theme.palette.primary.light,
           yAxisID: 'y',
           tension: 0.4,
-          fill: false, // Disable fill for primary dataset if not needed
+          fill: false,
         },
         ...(showConflictIntensity
           ? [
@@ -97,7 +96,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 borderColor: theme.palette.error.main,
                 backgroundColor: theme.palette.error.light,
                 yAxisID: 'y1',
-                fill: true, // Enable fill
+                fill: true,
                 tension: 0.4,
               },
             ]
@@ -110,7 +109,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 borderColor: theme.palette.secondary.main,
                 backgroundColor: theme.palette.secondary.light,
                 yAxisID: 'y2',
-                fill: true, // Enable fill
+                fill: true,
                 tension: 0.4,
               },
             ]
@@ -207,121 +206,139 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
   );
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box
+    <Box
+      sx={{
+        mt: 4,
+        mb: 4,
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '100%',
+      }}
+    >
+      <Typography variant="h5" gutterBottom align="center">
+        Market Analysis
+      </Typography>
+
+      {/* Controls Panel */}
+      <Paper
         sx={{
+          p: 4,
+          mb: 4,
+          width: '100%',
+          maxWidth: 1200,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
         }}
       >
-        <Typography variant="h5" gutterBottom>
-          Market Analysis
-        </Typography>
-
-        <Paper
-          sx={{
-            p: 4,
-            mb: 4,
-            width: '100%',
-            maxWidth: 1100, // Increased max width for larger cards
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth variant="outlined" size="small" sx={{ mb: 2 }}>
-                <InputLabel id="price-type-label">Price Type</InputLabel>
-                <Select
-                  labelId="price-type-label"
-                  value={priceType}
-                  onChange={(e) => setPriceType(e.target.value)}
-                  label="Price Type"
-                >
-                  <MenuItem value="lcu">Price in LCU</MenuItem>
-                  <MenuItem value="usd">Price in US$</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={applySeasonalAdj}
-                    onChange={() => setApplySeasonalAdj(!applySeasonalAdj)}
-                    color="primary"
-                  />
-                }
-                label="Apply Seasonal Adjustment"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={applySmooth}
-                    onChange={() => setApplySmooth(!applySmooth)}
-                    color="primary"
-                  />
-                }
-                label="Apply Smoothing"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={showConflictIntensity}
-                    onChange={() => setShowConflictIntensity(!showConflictIntensity)}
-                    color="error"
-                  />
-                }
-                label="Show Conflict Intensity"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={showResidual}
-                    onChange={() => setShowResidual(!showResidual)}
-                    color="secondary"
-                  />
-                }
-                label="Show Residual"
-              />
-            </Grid>
+        <Grid container spacing={4} justifyContent="center">
+          {/* First Column */}
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth variant="outlined" size="small" sx={{ mb: 3 }}>
+              <InputLabel id="price-type-label">Price Type</InputLabel>
+              <Select
+                labelId="price-type-label"
+                value={priceType}
+                onChange={(e) => setPriceType(e.target.value)}
+                label="Price Type"
+              >
+                <MenuItem value="lcu">Price in LCU</MenuItem>
+                <MenuItem value="usd">Price in US$</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={applySeasonalAdj}
+                  onChange={() => setApplySeasonalAdj(!applySeasonalAdj)}
+                  color="primary"
+                />
+              }
+              label="Apply Seasonal Adjustment"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={applySmooth}
+                  onChange={() => setApplySmooth(!applySmooth)}
+                  color="primary"
+                />
+              }
+              label="Apply Smoothing"
+            />
           </Grid>
-        </Paper>
+          {/* Second Column */}
+          <Grid item xs={12} md={6}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={showConflictIntensity}
+                  onChange={() => setShowConflictIntensity(!showConflictIntensity)}
+                  color="error"
+                />
+              }
+              label="Show Conflict Intensity"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={showResidual}
+                  onChange={() => setShowResidual(!showResidual)}
+                  color="secondary"
+                />
+              }
+              label="Show Residual"
+            />
+          </Grid>
+        </Grid>
+      </Paper>
 
-        <Paper
-          sx={{
-            p: 2,
-            mb: 4,
-            width: '100%',
-            maxWidth: 1100, // Increased max width for larger chart container
-            height: 400, // Set a fixed height for the chart
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          {chartData ? (
+      {/* Chart */}
+      <Paper
+        sx={{
+          p: 3,
+          mb: 4,
+          flexGrow: 1,
+          width: '100%',
+          maxWidth: 1200,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: { xs: 400, sm: 500, md: 600 },
+        }}
+      >
+        {chartData ? (
+          <Box sx={{ width: '100%', height: '100%' }}>
             <Line data={chartData} options={options} />
-          ) : (
-            <ErrorMessage message="No data available for the selected commodity and regime." />
-          )}
-        </Paper>
+          </Box>
+        ) : (
+          <ErrorMessage message="No data available for the selected commodity and regime." />
+        )}
+      </Paper>
 
-        {selectedAnalysis && (
-          <Box
+      {/* Conditional Analysis Components */}
+      {selectedAnalysis && (
+        <Box sx={{ mt: 4, width: '100%', maxWidth: 1200 }}>
+          <Paper
             sx={{
-              mt: 4,
+              p: 4,
               width: '100%',
-              maxWidth: 1100, // Increased max width for analysis components
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
             }}
           >
-            <Suspense fallback={<LoadingSpinner />}>
+            <Suspense
+              fallback={
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                  <LoadingSpinner />
+                </Box>
+              }
+            >
               {selectedAnalysis === 'ecm' && (
-                <ECMAnalysis
-                  selectedCommodity={selectedCommodity}
-                  selectedRegime={selectedRegime}
-                />
+                <ECMAnalysis selectedCommodity={selectedCommodity} selectedRegime={selectedRegime} />
               )}
               {selectedAnalysis === 'priceDiff' && (
                 <PriceDifferentialAnalysis
@@ -330,16 +347,13 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 />
               )}
               {selectedAnalysis === 'spatial' && (
-                <SpatialAnalysis
-                  selectedCommodity={selectedCommodity}
-                  selectedRegime={selectedRegime}
-                />
+                <SpatialAnalysis selectedCommodity={selectedCommodity} selectedRegime={selectedRegime} />
               )}
             </Suspense>
-          </Box>
-        )}
-      </Box>
-    </Container>
+          </Paper>
+        </Box>
+      )}
+    </Box>
   );
 };
 
