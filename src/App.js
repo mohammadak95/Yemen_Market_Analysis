@@ -11,7 +11,7 @@ import { lightTheme, darkTheme } from './styles/theme';
 import useData from './hooks/useData';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
-import MethodologyModal from './components/methedology/MethodologyModal'
+import MethodologyModal from './components/methedology/MethodologyModal';
 
 const App = () => {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
@@ -66,8 +66,12 @@ const App = () => {
           sx={{
             flexGrow: 1,
             p: 3,
-            width: { sm: `calc(100% - ${240}px)` },
-            ml: { sm: `${240}px` },
+            width: { sm: `calc(100% - ${sidebarOpen ? 240 : 0}px)` },
+            ml: { sm: `${sidebarOpen ? 240 : 0}px` },
+            transition: 'width 0.3s ease, margin-left 0.3s ease',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
         >
           <Dashboard
@@ -78,10 +82,7 @@ const App = () => {
           />
         </Box>
       </Box>
-      <MethodologyModal 
-        open={methodologyModalOpen} 
-        onClose={handleCloseMethodology} 
-      />
+      <MethodologyModal open={methodologyModalOpen} onClose={handleCloseMethodology} />
     </ThemeProvider>
   );
 };

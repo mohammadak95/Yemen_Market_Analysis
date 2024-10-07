@@ -1,16 +1,28 @@
 // src/components/ecm-analysis/ECMAnalysis.js
 
-import React, { useState } from 'react';
-import { 
-  Tabs, Tab, Box, Paper, Typography, CircularProgress, 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow
+import React, { useState, useEffect } from 'react';
+import {
+  Tabs,
+  Tab,
+  Box,
+  Paper,
+  Typography,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
 } from '@mui/material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import useECMData from '../../hooks/useECMData';
 import PropTypes from 'prop-types';
+import SummaryTable from './SummaryTable';
+import DiagnosticsTable from './DiagnosticsTable';
+import IRFChart from './IRFChart';
+import ResidualsChart from './ResidualsChart';
 
 const TabPanel = ({ children, value, index }) => (
-  <div hidden={value !== index} id={`ecm-tabpanel-${index}`}>
+  <div hidden={value !== index} id={`ecm-tabpanel-${index}`} aria-labelledby={`ecm-tab-${index}`}>
     {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
   </div>
 );
@@ -21,141 +33,60 @@ TabPanel.propTypes = {
   index: PropTypes.number.isRequired,
 };
 
-const SummaryTab = ({ data }) => (
-  <div>
-    <Typography variant="h6" gutterBottom>Summary</Typography>
-    <TableContainer component={Paper}>
-      <Table>
-        <TableBody>
-          <TableRow>
-            <TableCell>AIC</TableCell>
-            <TableCell>{data.aic.toFixed(4)}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>BIC</TableCell>
-            <TableCell>{data.bic.toFixed(4)}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>HQIC</TableCell>
-            <TableCell>{data.hqic.toFixed(4)}</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </div>
-);
-
-const DiagnosticsTab = ({ diagnostics }) => (
-  <div>
-    <Typography variant="h6" gutterBottom>Diagnostics</Typography>
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Test</TableCell>
-            <TableCell>Statistic</TableCell>
-            <TableCell>P-value</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          <TableRow>
-            <TableCell>Breusch-Godfrey</TableCell>
-            <TableCell>{diagnostics.breusch_godfrey_stat.toFixed(4)}</TableCell>
-            <TableCell>{diagnostics.breusch_godfrey_pvalue.toExponential(4)}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>ARCH</TableCell>
-            <TableCell>{diagnostics.arch_test_stat.toFixed(4)}</TableCell>
-            <TableCell>{diagnostics.arch_test_pvalue.toExponential(4)}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Jarque-Bera</TableCell>
-            <TableCell>{diagnostics.jarque_bera_stat.toFixed(4)}</TableCell>
-            <TableCell>{diagnostics.jarque_bera_pvalue.toExponential(4)}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Durbin-Watson</TableCell>
-            <TableCell>{diagnostics.durbin_watson_stat.toFixed(4)}</TableCell>
-            <TableCell>N/A</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </div>
-);
-
-const IRFTab = ({ irfData }) => {
-  const chartData = irfData.irf.map((point, index) => ({
-    period: index,
-    response1: point[0][0],
-    response2: point[0][1],
-    response3: point[1][0],
-    response4: point[1][1],
-  }));
-
-  return (
-    <div>
-      <Typography variant="h6" gutterBottom>Impulse Response Function</Typography>
-      <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="period" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="response1" stroke="#8884d8" name="Response 1" />
-          <Line type="monotone" dataKey="response2" stroke="#82ca9d" name="Response 2" />
-          <Line type="monotone" dataKey="response3" stroke="#ffc658" name="Response 3" />
-          <Line type="monotone" dataKey="response4" stroke="#ff7300" name="Response 4" />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
-const GrangerCausalityTab = ({ grangerData }) => (
-  <div>
-    <Typography variant="h6" gutterBottom>Granger Causality</Typography>
-    {Object.entries(grangerData).map(([variable, tests]) => (
-      <div key={variable}>
-        <Typography variant="subtitle1" gutterBottom>{variable}</Typography>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Lags</TableCell>
-                <TableCell>F-test p-value</TableCell>
-                <TableCell>Chi-squared test p-value</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Object.entries(tests).map(([lag, results]) => (
-                <TableRow key={lag}>
-                  <TableCell>{lag}</TableCell>
-                  <TableCell>{results.ssr_ftest_pvalue.toExponential(4)}</TableCell>
-                  <TableCell>{results.ssr_chi2test_pvalue.toExponential(4)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </div>
-    ))}
-  </div>
-);
-
 const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const [selectedLags, setSelectedLags] = useState(4);
   const { data, status, error } = useECMData();
+  const [selectedData, setSelectedData] = useState(null);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
+  const handleDownload = () => {
+    const blob = new Blob([JSON.stringify(selectedData)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ECM_Results_${selectedCommodity}_${selectedRegime}.json`;
+    link.click();
+  };
+
+  useEffect(() => {
+    if (status === 'succeeded' && data) {
+      const foundData = data.find(
+        (item) => item.commodity === selectedCommodity && item.regime === selectedRegime
+      );
+      if (foundData) {
+        // If fit_metrics are missing, compute them
+        if (!foundData.fit_metrics && foundData.residuals && foundData.fitted_values) {
+          const n = foundData.residuals.length;
+          const residualSumOfSquares = foundData.residuals.reduce((sum, val) => sum + val ** 2, 0);
+          const totalSumOfSquares = foundData.fitted_values.reduce(
+            (sum, val) => sum + (val - foundData.mean_price) ** 2,
+            0
+          );
+          const rSquared = 1 - residualSumOfSquares / totalSumOfSquares;
+          const adjRSquared = 1 - (1 - rSquared) * ((n - 1) / (n - selectedLags - 1));
+
+          foundData.fit_metrics = {
+            r_squared: rSquared,
+            adj_r_squared: adjRSquared,
+          };
+        }
+
+        setSelectedData(foundData);
+      }
+    }
+  }, [status, data, selectedCommodity, selectedRegime, selectedLags]);
+
   if (status === 'loading') {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+      <Box display="flex" flexDirection="column" alignItems="center" minHeight="200px">
         <CircularProgress />
+        <Typography variant="body2" sx={{ mt: 2 }}>
+          Loading ECM Analysis results...
+        </Typography>
       </Box>
     );
   }
@@ -168,48 +99,69 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
     );
   }
 
-  if (status !== 'succeeded' || !data) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography>No ECM data available. Please try again later.</Typography>
-      </Box>
-    );
-  }
-
-  const selectedData = data.find(
-    item => item.commodity === selectedCommodity && item.regime === selectedRegime
-  );
-
   if (!selectedData) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography>No data available for {selectedCommodity} in {selectedRegime} regime.</Typography>
+        <Typography>
+          No data available for {selectedCommodity} in {selectedRegime} regime.
+        </Typography>
       </Box>
     );
   }
 
   return (
     <Paper elevation={3} sx={{ mt: 4 }}>
-      <Typography variant="h5" sx={{ p: 2 }}>
-        ECM Analysis: {selectedCommodity} - {selectedRegime}
-      </Typography>
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h5">
+          ECM Analysis: {selectedCommodity} - {selectedRegime}
+        </Typography>
+        <Typography variant="body2" gutterBottom>
+          The Error Correction Model (ECM) captures both short-term dynamics and long-term
+          equilibrium relationships between commodity prices and conflict intensity.
+        </Typography>
+        <FormControl variant="outlined" size="small" sx={{ minWidth: 120, mt: 2 }}>
+          <InputLabel id="lag-select-label">Lags</InputLabel>
+          <Select
+            labelId="lag-select-label"
+            value={selectedLags}
+            onChange={(e) => setSelectedLags(e.target.value)}
+            label="Lags"
+          >
+            {[1, 2, 3, 4, 5].map((lag) => (
+              <MenuItem key={lag} value={lag}>
+                {lag}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Button variant="contained" sx={{ ml: 2, mt: 2 }} onClick={handleDownload}>
+          Download ECM Results
+        </Button>
+      </Box>
       <Tabs value={activeTab} onChange={handleTabChange} centered>
         <Tab label="Summary" />
         <Tab label="Diagnostics" />
         <Tab label="IRF" />
-        <Tab label="Granger Causality" />
+        <Tab label="Residuals Analysis" />
       </Tabs>
       <TabPanel value={activeTab} index={0}>
-        <SummaryTab data={selectedData} />
+        <SummaryTable
+          data={selectedData}
+          selectedCommodity={selectedCommodity}
+          selectedRegime={selectedRegime}
+        />
       </TabPanel>
       <TabPanel value={activeTab} index={1}>
-        <DiagnosticsTab diagnostics={selectedData.diagnostics} />
+        <DiagnosticsTable diagnostics={selectedData.diagnostics} />
       </TabPanel>
       <TabPanel value={activeTab} index={2}>
-        <IRFTab irfData={selectedData.irf.impulse_response} />
+        <IRFChart irfData={selectedData.irf.impulse_response} />
       </TabPanel>
       <TabPanel value={activeTab} index={3}>
-        <GrangerCausalityTab grangerData={selectedData.granger_causality} />
+        <ResidualsChart
+          residuals={selectedData.residuals}
+          fittedValues={selectedData.fitted_values}
+        />
       </TabPanel>
     </Paper>
   );

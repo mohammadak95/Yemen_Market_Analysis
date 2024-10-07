@@ -1,4 +1,6 @@
-import React, { useMemo, Suspense } from 'react';
+// src/Dashboard.js
+
+import React, { useMemo, Suspense, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Line } from 'react-chartjs-2';
 import {
@@ -47,11 +49,11 @@ ChartJS.register(
 );
 
 const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }) => {
-  const [showConflictIntensity, setShowConflictIntensity] = React.useState(true);
-  const [showResidual, setShowResidual] = React.useState(false);
-  const [priceType, setPriceType] = React.useState('lcu');
-  const [applySeasonalAdj, setApplySeasonalAdj] = React.useState(false);
-  const [applySmooth, setApplySmooth] = React.useState(false);
+  const [showConflictIntensity, setShowConflictIntensity] = useState(true);
+  const [showResidual, setShowResidual] = useState(false);
+  const [priceType, setPriceType] = useState('lcu');
+  const [applySeasonalAdj, setApplySeasonalAdj] = useState(false);
+  const [applySmooth, setApplySmooth] = useState(false);
   const theme = useTheme();
 
   const chartData = useMemo(() => {
@@ -59,9 +61,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
 
     let filteredData = data.features
       .filter(
-        (d) =>
-          d.commodity === selectedCommodity &&
-          d.regime === selectedRegime
+        (d) => d.commodity === selectedCommodity && d.regime === selectedRegime
       )
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -203,100 +203,127 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
   );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        Market Analysis
-      </Typography>
-
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth variant="outlined" size="small" sx={{ mb: 2 }}>
-              <InputLabel id="price-type-label">Price Type</InputLabel>
-              <Select
-                labelId="price-type-label"
-                value={priceType}
-                onChange={(e) => setPriceType(e.target.value)}
-                label="Price Type"
-              >
-                <MenuItem value="lcu">Price in LCU</MenuItem>
-                <MenuItem value="usd">Price in US$</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={applySeasonalAdj}
-                  onChange={() => setApplySeasonalAdj(!applySeasonalAdj)}
-                  color="primary"
-                />
-              }
-              label="Apply Seasonal Adjustment"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={applySmooth}
-                  onChange={() => setApplySmooth(!applySmooth)}
-                  color="primary"
-                />
-              }
-              label="Apply Smoothing"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showConflictIntensity}
-                  onChange={() => setShowConflictIntensity(!showConflictIntensity)}
-                  color="error"
-                />
-              }
-              label="Show Conflict Intensity"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showResidual}
-                  onChange={() => setShowResidual(!showResidual)}
-                  color="secondary"
-                />
-              }
-              label="Show Residual"
-            />
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <Paper
+    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      <Box
         sx={{
-          p: 2,
-          height: '500px',
-          mb: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        {chartData ? (
-          <Line data={chartData} options={options} />
-        ) : (
-          <ErrorMessage message="No data available for the selected commodity and regime." />
-        )}
-      </Paper>
+        <Typography variant="h5" gutterBottom>
+          Market Analysis
+        </Typography>
 
-      {selectedAnalysis && (
-        <Box sx={{ mt: 4 }}>
-          <Suspense fallback={<LoadingSpinner />}>
-            {selectedAnalysis === 'ecm' && (
-              <ECMAnalysis
-                selectedCommodity={selectedCommodity}
-                selectedRegime={selectedRegime}
+        <Paper
+          sx={{
+            p: 4,
+            mb: 4,
+            width: '100%',
+            maxWidth: 1100, // Increased max width for larger cards
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth variant="outlined" size="small" sx={{ mb: 2 }}>
+                <InputLabel id="price-type-label">Price Type</InputLabel>
+                <Select
+                  labelId="price-type-label"
+                  value={priceType}
+                  onChange={(e) => setPriceType(e.target.value)}
+                  label="Price Type"
+                >
+                  <MenuItem value="lcu">Price in LCU</MenuItem>
+                  <MenuItem value="usd">Price in US$</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={applySeasonalAdj}
+                    onChange={() => setApplySeasonalAdj(!applySeasonalAdj)}
+                    color="primary"
+                  />
+                }
+                label="Apply Seasonal Adjustment"
               />
-            )}
-            {selectedAnalysis === 'priceDiff' && <PriceDifferentialAnalysis />}
-            {selectedAnalysis === 'spatial' && <SpatialAnalysis />}
-          </Suspense>
-        </Box>
-      )}
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={applySmooth}
+                    onChange={() => setApplySmooth(!applySmooth)}
+                    color="primary"
+                  />
+                }
+                label="Apply Smoothing"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={showConflictIntensity}
+                    onChange={() => setShowConflictIntensity(!showConflictIntensity)}
+                    color="error"
+                  />
+                }
+                label="Show Conflict Intensity"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={showResidual}
+                    onChange={() => setShowResidual(!showResidual)}
+                    color="secondary"
+                  />
+                }
+                label="Show Residual"
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+
+        <Paper
+          sx={{
+            p: 2,
+            mb: 4,
+            width: '100%',
+            maxWidth: 1100, // Increased max width for larger chart container
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          {chartData ? (
+            <Line data={chartData} options={options} />
+          ) : (
+            <ErrorMessage message="No data available for the selected commodity and regime." />
+          )}
+        </Paper>
+
+        {selectedAnalysis && (
+          <Box
+            sx={{
+              mt: 4,
+              width: '100%',
+              maxWidth: 1100, // Increased max width for analysis components
+            }}
+          >
+            <Suspense fallback={<LoadingSpinner />}>
+              {selectedAnalysis === 'ecm' && (
+                <ECMAnalysis
+                  selectedCommodity={selectedCommodity}
+                  selectedRegime={selectedRegime}
+                />
+              )}
+              {selectedAnalysis === 'priceDiff' && <PriceDifferentialAnalysis />}
+              {selectedAnalysis === 'spatial' && <SpatialAnalysis />}
+            </Suspense>
+          </Box>
+        )}
+      </Box>
     </Container>
   );
 };
