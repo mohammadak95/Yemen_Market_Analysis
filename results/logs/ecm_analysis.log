@@ -1,0 +1,10 @@
+2024-10-08 13:05:32,044 - INFO - Starting ECM analysis workflow at 2024-10-08 13:05:32
+2024-10-08 13:05:32,045 - INFO - Loading data at 2024-10-08 13:05:32
+2024-10-08 13:05:32,045 - DEBUG - Loading data from /Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis/project/data/processed/unified_data.geojson
+2024-10-08 13:05:32,661 - INFO - Dropped 0 duplicate or NaN rows based on 'date'.
+2024-10-08 13:05:32,663 - INFO - Excluded records from 'Amanat Al Asimah'.
+2024-10-08 13:05:32,665 - INFO - Filtered data for specified commodities. Number of records: 18612
+2024-10-08 13:05:32,666 - DEBUG - Data filtered for exchange rate regimes: ['north', 'south', 'unified']
+2024-10-08 13:05:32,671 - DEBUG - No dummy variables created for exchange_rate_regime.
+2024-10-08 13:05:32,677 - DEBUG - Data grouped into 18 groups.
+2024-10-08 13:05:32,679 - INFO - Data loaded with 18 groups, took 0.63 seconds
