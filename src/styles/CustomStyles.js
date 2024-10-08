@@ -61,6 +61,6 @@ export const StyledAccordionDetails = styled(AccordionDetails)(({ theme }) => ({
 // Styled Section Title
 export const SectionTitle = styled(Typography)(({ theme }) => ({
   fontWeight: theme.typography.fontWeightBold,
-  color: theme.palette.primary.contrastText,
+  color: theme.palette.text.primary,
   textAlign: 'center', // Centers the section title
 }));

@@ -40,9 +40,11 @@ const GlobalStyle = () => {
         h6 {
           margin: 0;
           font-weight: ${theme.typography.fontWeightBold};
+          color: ${theme.palette.text.primary};
         }
         p {
           margin: 0 0 ${theme.spacing(2)};
+          color: ${theme.palette.text.primary};
         }
         button {
           font-family: ${theme.typography.fontFamily};

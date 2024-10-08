@@ -97,6 +97,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           tension: 0.4,
           fill: false,
         },
+
         ...(showConflictIntensity
           ? [
               {
@@ -105,8 +106,9 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 borderColor: theme.palette.error.main,
                 backgroundColor: theme.palette.error.light,
                 yAxisID: 'y1',
-                fill: true,
+                fill: 'origin',
                 tension: 0.4,
+                pointRadius: 0,
               },
             ]
           : []),
@@ -123,11 +125,11 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
     theme.palette,
   ]);
 
-  // Chart Options Configuration
+  // Chart options configuration
   const options = useMemo(
     () => ({
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, // Allows the chart to resize based on its container
       interaction: {
         mode: 'index',
         intersect: false,
@@ -141,9 +143,18 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           title: {
             display: true,
             text: 'Date',
+            color: theme.palette.text.primary,
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
           },
           ticks: {
             maxTicksLimit: 10,
+            color: theme.palette.text.primary,
+          },
+          grid: {
+            color: theme.palette.divider,
           },
         },
         y: {
@@ -153,9 +164,18 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           title: {
             display: true,
             text: priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
+            color: theme.palette.text.primary,
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
           },
           grid: {
             drawOnChartArea: true,
+            color: theme.palette.divider,
+          },
+          ticks: {
+            color: theme.palette.text.primary,
           },
         },
         y1: {
@@ -165,11 +185,19 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           title: {
             display: true,
             text: 'Conflict Intensity',
+            color: theme.palette.text.primary,
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
           },
-          min: 0,
-          max: 10,
           grid: {
             drawOnChartArea: false,
+            color: theme.palette.divider,
+          },
+          ticks: {
+            beginAtZero: true,
+            color: theme.palette.text.primary,
           },
         },
       },
@@ -177,21 +205,37 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
         tooltip: {
           callbacks: {
             title: (context) => {
-              return new Date(context[0].parsed.x).toLocaleDateString();
+              const date = new Date(context[0].parsed.x);
+              return date.toLocaleDateString();
+            },
+            label: (context) => {
+              let label = `${context.dataset.label}: `;
+              label += context.parsed.y !== null ? context.parsed.y.toFixed(2) : '';
+              return label;
             },
           },
+          backgroundColor: theme.palette.background.paper,
+          titleColor: theme.palette.text.primary,
+          bodyColor: theme.palette.text.secondary,
         },
         legend: {
-          position: 'bottom', // Positioned at the bottom for better visibility
+          position: 'bottom',
           labels: {
             boxWidth: 12,
             padding: 15,
+            color: theme.palette.text.primary,
+            font: {
+              size: 12,
+            },
           },
         },
       },
     }),
-    [showConflictIntensity, priceType]
+    [showConflictIntensity, priceType, theme.palette]
   );
+
+  // Display a prompt if no data is available
+  if (!chartData) return <div>Please select a commodity.</div>;
 
   return (
     <Box
@@ -300,12 +344,13 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           justifyContent: 'center',
           alignItems: 'center',
           borderRadius: 2,
-          height: { xs: 300, sm: 400, md: 500 }, // Adjusted heights for better mobile fit
+          height: { xs: '300px', sm: '400px', md: '500px' }, // Responsive heights
+          backgroundColor: theme.palette.background.paper,
         }}
       >
         {chartData ? (
-          <Box sx={{ width: '100%', height: '100%', paddingBottom: '50px' }}>
-            <Line data={chartData} options={options} />
+          <Box sx={{ width: '100%', height: '100%' }}>
+            <Line options={options} data={chartData} />
           </Box>
         ) : (
           <ErrorMessage message="No data available for the selected commodity and regime." />
@@ -324,6 +369,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               flexDirection: 'column',
               alignItems: 'center',
               borderRadius: 2,
+              backgroundColor: theme.palette.background.paper,
             }}
           >
             <Suspense

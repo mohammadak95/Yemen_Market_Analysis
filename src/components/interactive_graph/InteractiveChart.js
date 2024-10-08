@@ -15,6 +15,15 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import PropTypes from 'prop-types';
+import { useTheme } from '@mui/material/styles'; // Import useTheme
+import {
+  Box,
+  FormControlLabel,
+  Checkbox,
+  IconButton,
+  Tooltip as MuiTooltip,
+} from '@mui/material';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 // Register Chart.js components
 ChartJS.register(
@@ -29,6 +38,8 @@ ChartJS.register(
 );
 
 const InteractiveChart = ({ data, selectedCommodity }) => {
+  const theme = useTheme(); // Access the theme
+
   // State to control the visibility of Conflict Intensity
   const [showConflict, setShowConflict] = useState(true);
 
@@ -38,7 +49,11 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
 
     // Filter and sort data based on selected commodity and unified regime
     const filteredData = data.features
-      .filter((d) => d.commodity === selectedCommodity && d.regime === 'unified')
+      .filter(
+        (d) =>
+          d.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+          d.regime.toLowerCase() === 'unified'
+      )
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     if (filteredData.length === 0) return null;
@@ -49,8 +64,8 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
         {
           label: 'LCU Price',
           data: filteredData.map((d) => d.price),
-          borderColor: 'rgba(54, 162, 235, 1)', // Solid blue line
-          backgroundColor: 'rgba(54, 162, 235, 0.2)', // Light blue fill
+          borderColor: theme.palette.primary.main, // Use theme primary color
+          backgroundColor: theme.palette.primary.light, // Use theme primary light color
           yAxisID: 'y', // Assign LCU price to the first y-axis
           fill: false,
           tension: 0.4, // Smooth the line
@@ -58,8 +73,8 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
         {
           label: 'USD Price',
           data: filteredData.map((d) => d.usdprice),
-          borderColor: 'rgba(75, 192, 192, 1)', // Solid teal line
-          backgroundColor: 'rgba(75, 192, 192, 0.2)', // Light teal fill
+          borderColor: theme.palette.secondary.main, // Use theme secondary color
+          backgroundColor: theme.palette.secondary.light, // Use theme secondary light color
           yAxisID: 'y1', // Assign USD price to the second y-axis
           fill: false,
           tension: 0.4, // Smooth the line
@@ -69,8 +84,8 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
               {
                 label: 'Conflict Intensity',
                 data: filteredData.map((d) => d.conflict_intensity),
-                borderColor: 'rgba(255, 99, 132, 0)', // Transparent border
-                backgroundColor: 'rgba(255, 99, 132, 0.3)', // Increased opacity for better visibility
+                borderColor: theme.palette.error.main, // Use theme error color
+                backgroundColor: theme.palette.error.light, // Use theme error light color
                 yAxisID: 'y2', // Assign Conflict Intensity to a new y-axis
                 fill: 'origin', // Fill from the origin to the line
                 tension: 0.4, // Smooth the line
@@ -80,7 +95,7 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
           : []),
       ],
     };
-  }, [data, selectedCommodity, showConflict]);
+  }, [data, selectedCommodity, showConflict, theme.palette]);
 
   // Chart options configuration
   const options = useMemo(
@@ -100,9 +115,18 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
           title: {
             display: true,
             text: 'Date',
+            color: theme.palette.text.primary, // Set title color
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
           },
           ticks: {
             maxTicksLimit: 10, // Limits the number of ticks on the x-axis
+            color: theme.palette.text.primary, // Set tick color
+          },
+          grid: {
+            color: theme.palette.divider, // Use theme divider color
           },
         },
         y: {
@@ -112,9 +136,18 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
           title: {
             display: true,
             text: 'LCU Price',
+            color: theme.palette.text.primary, // Set title color
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
           },
           grid: {
             drawOnChartArea: true, // Grid lines for LCU Price
+            color: theme.palette.divider, // Use theme divider color
+          },
+          ticks: {
+            color: theme.palette.text.primary, // Set tick color
           },
         },
         y1: {
@@ -124,9 +157,18 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
           title: {
             display: true,
             text: 'USD Price',
+            color: theme.palette.text.primary, // Set title color
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
           },
           grid: {
             drawOnChartArea: false, // Prevents grid lines for USD Price
+            color: theme.palette.divider, // Use theme divider color if needed
+          },
+          ticks: {
+            color: theme.palette.text.primary, // Set tick color
           },
         },
         y2: {
@@ -136,12 +178,19 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
           title: {
             display: true,
             text: 'Conflict Intensity',
+            color: theme.palette.text.primary, // Set title color
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
           },
           grid: {
             drawOnChartArea: false, // Prevents grid lines for Conflict Intensity
+            color: theme.palette.divider, // Use theme divider color if needed
           },
           ticks: {
             beginAtZero: true, // Starts Conflict Intensity axis at zero
+            color: theme.palette.text.primary, // Set tick color
           },
         },
       },
@@ -152,43 +201,61 @@ const InteractiveChart = ({ data, selectedCommodity }) => {
               const date = new Date(context[0].parsed.x);
               return date.toLocaleDateString();
             },
+            label: (context) => {
+              let label = `${context.dataset.label}: `;
+              label += context.parsed.y !== null ? context.parsed.y.toFixed(2) : '';
+              return label;
+            },
           },
+          backgroundColor: theme.palette.background.paper, // Tooltip background
+          titleColor: theme.palette.text.primary, // Tooltip title color
+          bodyColor: theme.palette.text.secondary, // Tooltip body color
         },
         legend: {
           position: 'bottom', // Position legend below the chart
           labels: {
             boxWidth: 12, // Size of the legend boxes
             padding: 15, // Spacing between legend items
+            color: theme.palette.text.primary, // Use theme text primary color
+            font: {
+              size: 12,
+            },
           },
         },
       },
     }),
-    [showConflict]
+    [showConflict, theme.palette]
   );
 
   // Display a prompt if no data is available
   if (!chartData) return <div>Please select a commodity.</div>;
 
   return (
-    <div>
+    <Box>
       {/* Control to toggle Conflict Intensity */}
-      <div style={{ marginBottom: '16px' }}>
-        <label>
-          <input
-            type="checkbox"
-            checked={showConflict}
-            onChange={() => setShowConflict(!showConflict)}
-            style={{ marginRight: '8px' }}
-          />
-          Show Conflict Intensity
-        </label>
-      </div>
+      <Box sx={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showConflict}
+              onChange={() => setShowConflict(!showConflict)}
+              color="error" // Use theme error color for the checkbox
+            />
+          }
+          label="Show Conflict Intensity"
+        />
+        <MuiTooltip title="Toggle the visibility of Conflict Intensity on the chart">
+          <IconButton aria-label="help">
+            <HelpOutlineIcon />
+          </IconButton>
+        </MuiTooltip>
+      </Box>
 
       {/* Line Chart */}
-      <div style={{ height: '500px' }}>
+      <Box sx={{ height: '500px', width: '100%' }}>
         <Line options={options} data={chartData} />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 
