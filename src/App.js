@@ -1,8 +1,8 @@
-//src/App.js
+// src/App.js
 
 import React, { useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline, AppBar, Toolbar, IconButton, Box } from '@mui/material';
+import { CssBaseline, Toolbar, IconButton, Box } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleDarkMode } from './utils/themeSlice';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -16,13 +16,14 @@ import ErrorMessage from './components/common/ErrorMessage';
 import MethodologyModal from './components/methedology/MethodologyModal';
 import GlobalStyle from './styles/GlobalStyle';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { LayoutContainer, MainContent, useLayoutStylesWithTheme } from './styles/LayoutStyles';
+import { LayoutContainer, MainContent, drawerWidth } from './styles/LayoutStyles';
+import { styled } from '@mui/material/styles';
+import AppBar from '@mui/material/AppBar';
 
 function App() {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
   const dispatch = useDispatch();
   const theme = isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides;
-  const classes = useLayoutStylesWithTheme();
 
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedRegime, setSelectedRegime] = useState('');
@@ -44,29 +45,57 @@ function App() {
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error.message} />;
 
+  // Styled AppBar that shifts based on sidebar state
+  const StyledAppBar = styled(AppBar, {
+    shouldForwardProp: (prop) => prop !== 'open',
+  })(({ theme, open }) => ({
+    zIndex: theme.zIndex.drawer + 1,
+    transition: theme.transitions.create(['width', 'margin'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    ...(open && {
+      marginLeft: drawerWidth,
+      width: `calc(100% - ${drawerWidth}px)`,
+      transition: theme.transitions.create(['width', 'margin'], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    }),
+  }));
+
+  // Compute if AppBar should shift
+  const appBarShift = sidebarOpen && isSmUp;
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <GlobalStyle />
       <LayoutContainer>
-        <AppBar position="fixed" className={classes.appBar}>
+        {/* AppBar (Header) */}
+        <StyledAppBar position="fixed" open={appBarShift}>
           <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              className={classes.menuButton}
-            >
-              <MenuIcon />
-            </IconButton>
+            {/* Show Menu Icon only when Sidebar is closed on large screens */}
+            {!sidebarOpen && isSmUp && (
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ marginRight: 2 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
+            {/* Header Component */}
             <Header
-              toggleSidebar={handleDrawerToggle}
               isDarkMode={isDarkMode}
               toggleDarkMode={() => dispatch(toggleDarkMode())}
             />
           </Toolbar>
-        </AppBar>
+        </StyledAppBar>
+
+        {/* Sidebar */}
         <Sidebar
           commodities={data?.commodities || []}
           regimes={data?.regimes || []}
@@ -81,9 +110,12 @@ function App() {
           isSmUp={isSmUp}
           onMethodologyClick={handleShowMethodology}
         />
-        <MainContent open={sidebarOpen}>
-          <Box component="main" className={classes.content}>
-            <Box className={classes.toolbar} />
+
+        {/* Main Content */}
+        <MainContent open={sidebarOpen && isSmUp}>
+          <Box component="main">
+            {/* Spacer to push content below AppBar */}
+            <Toolbar />
             <Dashboard
               data={data}
               selectedCommodity={selectedCommodity}
@@ -92,6 +124,8 @@ function App() {
             />
           </Box>
         </MainContent>
+
+        {/* Methodology Modal */}
         <MethodologyModal open={methodologyModalOpen} onClose={handleCloseMethodology} />
       </LayoutContainer>
     </ThemeProvider>
