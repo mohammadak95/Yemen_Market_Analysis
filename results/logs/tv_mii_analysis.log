@@ -1,0 +1,536 @@
+2024-10-08 11:28:33,467 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:28:33,469 - ERROR - Error loading data: Error tokenizing data. C error: Expected 2 fields in line 4, saw 3
+
+2024-10-08 11:28:39,280 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:28:39,281 - ERROR - Error loading data: Error tokenizing data. C error: Expected 2 fields in line 4, saw 3
+
+2024-10-08 11:30:50,240 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:30:50,355 - ERROR - Error loading data: 'date'
+2024-10-08 11:31:44,867 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:31:44,867 - ERROR - Error loading data: module 'pandas' has no attribute 'read_file'
+2024-10-08 11:32:38,349 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:32:39,040 - INFO - Data loaded and sorted successfully.
+2024-10-08 11:32:39,043 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-08 11:32:40,047 - INFO - Prepared 3641 market pairs with sufficient data.
+2024-10-08 11:32:42,236 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:42,236 - INFO - Insufficient data for market pair abyan and sana'a for commodity beans (white)
+2024-10-08 11:32:42,498 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:42,499 - INFO - Insufficient data for market pair aden and sana'a for commodity beans (white)
+2024-10-08 11:32:42,745 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:42,746 - INFO - Insufficient data for market pair al bayda and sana'a for commodity beans (white)
+2024-10-08 11:32:43,045 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:43,045 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity beans (white)
+2024-10-08 11:32:43,237 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:43,238 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity beans (white)
+2024-10-08 11:32:43,410 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:43,410 - INFO - Insufficient data for market pair al jawf and sana'a for commodity beans (white)
+2024-10-08 11:32:43,575 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:43,576 - INFO - Insufficient data for market pair al maharah and sana'a for commodity beans (white)
+2024-10-08 11:32:43,735 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:43,735 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity beans (white)
+2024-10-08 11:32:43,880 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:43,881 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity beans (white)
+2024-10-08 11:32:43,999 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,000 - INFO - Insufficient data for market pair amran and sana'a for commodity beans (white)
+2024-10-08 11:32:44,113 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,113 - INFO - Insufficient data for market pair dhamar and sana'a for commodity beans (white)
+2024-10-08 11:32:44,216 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,217 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity beans (white)
+2024-10-08 11:32:44,304 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,304 - INFO - Insufficient data for market pair hajjah and sana'a for commodity beans (white)
+2024-10-08 11:32:44,384 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,384 - INFO - Insufficient data for market pair ibb and sana'a for commodity beans (white)
+2024-10-08 11:32:44,446 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,446 - INFO - Insufficient data for market pair lahj and sana'a for commodity beans (white)
+2024-10-08 11:32:44,496 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,497 - INFO - Insufficient data for market pair marib and sana'a for commodity beans (white)
+2024-10-08 11:32:44,540 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,540 - INFO - Insufficient data for market pair raymah and sana'a for commodity beans (white)
+2024-10-08 11:32:44,577 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,578 - INFO - Insufficient data for market pair sana'a and shabwah for commodity beans (white)
+2024-10-08 11:32:44,592 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,592 - INFO - Insufficient data for market pair sana'a and taizz for commodity beans (white)
+2024-10-08 11:32:44,830 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:44,830 - INFO - Insufficient data for market pair abyan and sana'a for commodity eggs
+2024-10-08 11:32:45,056 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:45,056 - INFO - Insufficient data for market pair aden and sana'a for commodity eggs
+2024-10-08 11:32:45,328 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:45,328 - INFO - Insufficient data for market pair al bayda and sana'a for commodity eggs
+2024-10-08 11:32:45,543 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:45,543 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity eggs
+2024-10-08 11:32:45,768 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:45,769 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity eggs
+2024-10-08 11:32:46,056 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:46,056 - INFO - Insufficient data for market pair al jawf and sana'a for commodity eggs
+2024-10-08 11:32:46,252 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:46,252 - INFO - Insufficient data for market pair al maharah and sana'a for commodity eggs
+2024-10-08 11:32:46,434 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:46,434 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity eggs
+2024-10-08 11:32:46,588 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:46,588 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity eggs
+2024-10-08 11:32:46,729 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:46,729 - INFO - Insufficient data for market pair amran and sana'a for commodity eggs
+2024-10-08 11:32:46,885 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:46,886 - INFO - Insufficient data for market pair dhamar and sana'a for commodity eggs
+2024-10-08 11:32:46,994 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:46,994 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity eggs
+2024-10-08 11:32:47,107 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,107 - INFO - Insufficient data for market pair hajjah and sana'a for commodity eggs
+2024-10-08 11:32:47,187 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,187 - INFO - Insufficient data for market pair ibb and sana'a for commodity eggs
+2024-10-08 11:32:47,255 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,255 - INFO - Insufficient data for market pair lahj and sana'a for commodity eggs
+2024-10-08 11:32:47,308 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,308 - INFO - Insufficient data for market pair marib and sana'a for commodity eggs
+2024-10-08 11:32:47,349 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,350 - INFO - Insufficient data for market pair raymah and sana'a for commodity eggs
+2024-10-08 11:32:47,394 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,394 - INFO - Insufficient data for market pair sana'a and shabwah for commodity eggs
+2024-10-08 11:32:47,413 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,413 - INFO - Insufficient data for market pair sana'a and taizz for commodity eggs
+2024-10-08 11:32:47,649 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,650 - INFO - Insufficient data for market pair abyan and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:47,904 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:47,904 - INFO - Insufficient data for market pair aden and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:48,129 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:48,129 - INFO - Insufficient data for market pair al bayda and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:48,374 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:48,374 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:48,601 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:48,601 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:48,794 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:48,794 - INFO - Insufficient data for market pair al jawf and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:48,972 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:48,972 - INFO - Insufficient data for market pair al maharah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:49,133 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:49,133 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:49,289 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:49,290 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:49,428 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:49,429 - INFO - Insufficient data for market pair amran and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:49,554 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:49,554 - INFO - Insufficient data for market pair dhamar and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:49,672 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:49,672 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:49,775 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:49,775 - INFO - Insufficient data for market pair hajjah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:49,863 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:49,863 - INFO - Insufficient data for market pair ibb and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:49,952 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:49,952 - INFO - Insufficient data for market pair lahj and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:50,019 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:50,019 - INFO - Insufficient data for market pair marib and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:50,069 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:50,069 - INFO - Insufficient data for market pair raymah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:32:50,124 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:50,124 - INFO - Insufficient data for market pair sana'a and shabwah for commodity exchange rate (unofficial)
+2024-10-08 11:32:50,138 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 44 but corresponding boolean dimension is 110
+2024-10-08 11:32:50,138 - INFO - Insufficient data for market pair sana'a and socotra for commodity exchange rate (unofficial)
+2024-10-08 11:32:50,153 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:50,153 - INFO - Insufficient data for market pair sana'a and taizz for commodity exchange rate (unofficial)
+2024-10-08 11:32:50,389 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:50,389 - INFO - Insufficient data for market pair abyan and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:50,623 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:50,623 - INFO - Insufficient data for market pair aden and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:50,833 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:50,833 - INFO - Insufficient data for market pair al bayda and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:51,045 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:51,046 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:51,258 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:51,258 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:51,442 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:51,442 - INFO - Insufficient data for market pair al jawf and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:51,610 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:51,611 - INFO - Insufficient data for market pair al maharah and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:51,766 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:51,766 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:51,905 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:51,905 - INFO - Insufficient data for market pair amran and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:52,039 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,039 - INFO - Insufficient data for market pair dhamar and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:52,152 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,152 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:52,255 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,255 - INFO - Insufficient data for market pair hajjah and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:52,340 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,340 - INFO - Insufficient data for market pair ibb and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:52,420 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,421 - INFO - Insufficient data for market pair lahj and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:52,490 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,490 - INFO - Insufficient data for market pair marib and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:52,542 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,542 - INFO - Insufficient data for market pair raymah and sana'a for commodity fuel (diesel)
+2024-10-08 11:32:52,599 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,599 - INFO - Insufficient data for market pair sana'a and shabwah for commodity fuel (diesel)
+2024-10-08 11:32:52,612 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,613 - INFO - Insufficient data for market pair sana'a and socotra for commodity fuel (diesel)
+2024-10-08 11:32:52,627 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,627 - INFO - Insufficient data for market pair sana'a and taizz for commodity fuel (diesel)
+2024-10-08 11:32:52,895 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:52,895 - INFO - Insufficient data for market pair abyan and sana'a for commodity fuel (gas)
+2024-10-08 11:32:53,218 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:53,218 - INFO - Insufficient data for market pair aden and sana'a for commodity fuel (gas)
+2024-10-08 11:32:53,510 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:53,510 - INFO - Insufficient data for market pair al bayda and sana'a for commodity fuel (gas)
+2024-10-08 11:32:53,740 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:53,741 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity fuel (gas)
+2024-10-08 11:32:54,014 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:54,015 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity fuel (gas)
+2024-10-08 11:32:54,218 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:54,218 - INFO - Insufficient data for market pair al jawf and sana'a for commodity fuel (gas)
+2024-10-08 11:32:54,409 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:54,410 - INFO - Insufficient data for market pair al maharah and sana'a for commodity fuel (gas)
+2024-10-08 11:32:54,607 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:54,608 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity fuel (gas)
+2024-10-08 11:32:54,767 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:54,767 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity fuel (gas)
+2024-10-08 11:32:54,904 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:54,904 - INFO - Insufficient data for market pair amran and sana'a for commodity fuel (gas)
+2024-10-08 11:32:55,038 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,038 - INFO - Insufficient data for market pair dhamar and sana'a for commodity fuel (gas)
+2024-10-08 11:32:55,156 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,156 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity fuel (gas)
+2024-10-08 11:32:55,287 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,287 - INFO - Insufficient data for market pair hajjah and sana'a for commodity fuel (gas)
+2024-10-08 11:32:55,391 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,392 - INFO - Insufficient data for market pair ibb and sana'a for commodity fuel (gas)
+2024-10-08 11:32:55,481 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,481 - INFO - Insufficient data for market pair lahj and sana'a for commodity fuel (gas)
+2024-10-08 11:32:55,542 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,542 - INFO - Insufficient data for market pair marib and sana'a for commodity fuel (gas)
+2024-10-08 11:32:55,594 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,594 - INFO - Insufficient data for market pair raymah and sana'a for commodity fuel (gas)
+2024-10-08 11:32:55,656 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,656 - INFO - Insufficient data for market pair sana'a and shabwah for commodity fuel (gas)
+2024-10-08 11:32:55,670 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,671 - INFO - Insufficient data for market pair sana'a and socotra for commodity fuel (gas)
+2024-10-08 11:32:55,682 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,682 - INFO - Insufficient data for market pair sana'a and taizz for commodity fuel (gas)
+2024-10-08 11:32:55,942 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:55,943 - INFO - Insufficient data for market pair abyan and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:56,196 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:56,196 - INFO - Insufficient data for market pair aden and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:56,449 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:56,449 - INFO - Insufficient data for market pair al bayda and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:56,710 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:56,710 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:56,917 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:56,917 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:57,174 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:57,175 - INFO - Insufficient data for market pair al jawf and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:57,368 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:57,369 - INFO - Insufficient data for market pair al maharah and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:57,583 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:57,583 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:57,778 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:57,778 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:57,939 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:57,941 - INFO - Insufficient data for market pair amran and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,105 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,106 - INFO - Insufficient data for market pair dhamar and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,256 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,257 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,399 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,399 - INFO - Insufficient data for market pair hajjah and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,502 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,503 - INFO - Insufficient data for market pair ibb and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,590 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,590 - INFO - Insufficient data for market pair lahj and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,655 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,655 - INFO - Insufficient data for market pair marib and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,715 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,715 - INFO - Insufficient data for market pair raymah and sana'a for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,768 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,768 - INFO - Insufficient data for market pair sana'a and shabwah for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,781 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,781 - INFO - Insufficient data for market pair sana'a and socotra for commodity fuel (petrol-gasoline)
+2024-10-08 11:32:58,794 - ERROR - Error computing price differential: boolean index did not match indexed array along dimension 0; dimension is 47 but corresponding boolean dimension is 116
+2024-10-08 11:32:58,794 - INFO - Insufficient data for market pair sana'a and taizz for commodity fuel (petrol-gasoline)
+2024-10-08 11:34:07,325 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:34:07,996 - INFO - Data loaded and sorted successfully.
+2024-10-08 11:34:07,999 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-08 11:34:09,007 - INFO - Prepared 3641 market pairs with sufficient data.
+2024-10-08 11:34:11,119 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:11,119 - INFO - Insufficient data for market pair abyan and sana'a for commodity beans (white)
+2024-10-08 11:34:11,383 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:11,383 - INFO - Insufficient data for market pair aden and sana'a for commodity beans (white)
+2024-10-08 11:34:11,607 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:11,607 - INFO - Insufficient data for market pair al bayda and sana'a for commodity beans (white)
+2024-10-08 11:34:11,816 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:11,816 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity beans (white)
+2024-10-08 11:34:12,005 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:12,006 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity beans (white)
+2024-10-08 11:34:12,189 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:12,189 - INFO - Insufficient data for market pair al jawf and sana'a for commodity beans (white)
+2024-10-08 11:34:12,353 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:12,354 - INFO - Insufficient data for market pair al maharah and sana'a for commodity beans (white)
+2024-10-08 11:34:12,501 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:12,501 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity beans (white)
+2024-10-08 11:34:12,636 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:12,637 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity beans (white)
+2024-10-08 11:34:12,765 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:12,765 - INFO - Insufficient data for market pair amran and sana'a for commodity beans (white)
+2024-10-08 11:34:12,874 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:12,875 - INFO - Insufficient data for market pair dhamar and sana'a for commodity beans (white)
+2024-10-08 11:34:12,979 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:12,979 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity beans (white)
+2024-10-08 11:34:13,072 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,072 - INFO - Insufficient data for market pair hajjah and sana'a for commodity beans (white)
+2024-10-08 11:34:13,150 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,150 - INFO - Insufficient data for market pair ibb and sana'a for commodity beans (white)
+2024-10-08 11:34:13,223 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,223 - INFO - Insufficient data for market pair lahj and sana'a for commodity beans (white)
+2024-10-08 11:34:13,276 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,276 - INFO - Insufficient data for market pair marib and sana'a for commodity beans (white)
+2024-10-08 11:34:13,315 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,315 - INFO - Insufficient data for market pair raymah and sana'a for commodity beans (white)
+2024-10-08 11:34:13,355 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,356 - INFO - Insufficient data for market pair sana'a and shabwah for commodity beans (white)
+2024-10-08 11:34:13,369 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,369 - INFO - Insufficient data for market pair sana'a and taizz for commodity beans (white)
+2024-10-08 11:34:13,618 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,618 - INFO - Insufficient data for market pair abyan and sana'a for commodity eggs
+2024-10-08 11:34:13,873 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:13,873 - INFO - Insufficient data for market pair aden and sana'a for commodity eggs
+2024-10-08 11:34:14,099 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:14,099 - INFO - Insufficient data for market pair al bayda and sana'a for commodity eggs
+2024-10-08 11:34:14,301 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:14,301 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity eggs
+2024-10-08 11:34:14,507 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:14,507 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity eggs
+2024-10-08 11:34:14,724 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:14,724 - INFO - Insufficient data for market pair al jawf and sana'a for commodity eggs
+2024-10-08 11:34:14,889 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:14,889 - INFO - Insufficient data for market pair al maharah and sana'a for commodity eggs
+2024-10-08 11:34:15,049 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,049 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity eggs
+2024-10-08 11:34:15,195 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,195 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity eggs
+2024-10-08 11:34:15,352 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,357 - INFO - Insufficient data for market pair amran and sana'a for commodity eggs
+2024-10-08 11:34:15,476 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,476 - INFO - Insufficient data for market pair dhamar and sana'a for commodity eggs
+2024-10-08 11:34:15,585 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,585 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity eggs
+2024-10-08 11:34:15,673 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,673 - INFO - Insufficient data for market pair hajjah and sana'a for commodity eggs
+2024-10-08 11:34:15,752 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,752 - INFO - Insufficient data for market pair ibb and sana'a for commodity eggs
+2024-10-08 11:34:15,826 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,826 - INFO - Insufficient data for market pair lahj and sana'a for commodity eggs
+2024-10-08 11:34:15,875 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,875 - INFO - Insufficient data for market pair marib and sana'a for commodity eggs
+2024-10-08 11:34:15,915 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,915 - INFO - Insufficient data for market pair raymah and sana'a for commodity eggs
+2024-10-08 11:34:15,954 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,954 - INFO - Insufficient data for market pair sana'a and shabwah for commodity eggs
+2024-10-08 11:34:15,965 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:15,966 - INFO - Insufficient data for market pair sana'a and taizz for commodity eggs
+2024-10-08 11:34:16,224 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:16,224 - INFO - Insufficient data for market pair abyan and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:16,501 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:16,501 - INFO - Insufficient data for market pair aden and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:16,852 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:16,852 - INFO - Insufficient data for market pair al bayda and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:17,076 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:17,076 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:17,295 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:17,295 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:17,488 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:17,488 - INFO - Insufficient data for market pair al jawf and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:17,672 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:17,672 - INFO - Insufficient data for market pair al maharah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:17,839 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:17,839 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:17,991 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:17,991 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,181 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,182 - INFO - Insufficient data for market pair amran and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,318 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,318 - INFO - Insufficient data for market pair dhamar and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,444 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,444 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,595 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,595 - INFO - Insufficient data for market pair hajjah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,685 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,685 - INFO - Insufficient data for market pair ibb and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,766 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,766 - INFO - Insufficient data for market pair lahj and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,829 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,829 - INFO - Insufficient data for market pair marib and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,877 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,877 - INFO - Insufficient data for market pair raymah and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,934 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,934 - INFO - Insufficient data for market pair sana'a and shabwah for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,947 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,947 - INFO - Insufficient data for market pair sana'a and socotra for commodity exchange rate (unofficial)
+2024-10-08 11:34:18,958 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:34:18,958 - INFO - Insufficient data for market pair sana'a and taizz for commodity exchange rate (unofficial)
+2024-10-08 11:38:59,554 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:39:00,225 - INFO - Data loaded and sorted successfully.
+2024-10-08 11:39:00,228 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-08 11:39:01,235 - INFO - Prepared 3641 market pairs with sufficient data.
+2024-10-08 11:39:03,384 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:03,384 - INFO - Insufficient data for market pair abyan and sana'a for commodity beans (white)
+2024-10-08 11:39:03,644 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:03,644 - INFO - Insufficient data for market pair aden and sana'a for commodity beans (white)
+2024-10-08 11:39:03,878 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:03,878 - INFO - Insufficient data for market pair al bayda and sana'a for commodity beans (white)
+2024-10-08 11:39:04,097 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:04,097 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity beans (white)
+2024-10-08 11:39:04,284 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:04,284 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity beans (white)
+2024-10-08 11:39:04,465 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:04,465 - INFO - Insufficient data for market pair al jawf and sana'a for commodity beans (white)
+2024-10-08 11:39:04,633 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:04,633 - INFO - Insufficient data for market pair al maharah and sana'a for commodity beans (white)
+2024-10-08 11:39:04,788 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:04,789 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity beans (white)
+2024-10-08 11:39:04,937 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:04,937 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity beans (white)
+2024-10-08 11:39:05,069 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,071 - INFO - Insufficient data for market pair amran and sana'a for commodity beans (white)
+2024-10-08 11:39:05,191 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,191 - INFO - Insufficient data for market pair dhamar and sana'a for commodity beans (white)
+2024-10-08 11:39:05,294 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,295 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity beans (white)
+2024-10-08 11:39:05,380 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,380 - INFO - Insufficient data for market pair hajjah and sana'a for commodity beans (white)
+2024-10-08 11:39:05,454 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,454 - INFO - Insufficient data for market pair ibb and sana'a for commodity beans (white)
+2024-10-08 11:39:05,528 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,528 - INFO - Insufficient data for market pair lahj and sana'a for commodity beans (white)
+2024-10-08 11:39:05,577 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,578 - INFO - Insufficient data for market pair marib and sana'a for commodity beans (white)
+2024-10-08 11:39:05,619 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,620 - INFO - Insufficient data for market pair raymah and sana'a for commodity beans (white)
+2024-10-08 11:39:05,657 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,657 - INFO - Insufficient data for market pair sana'a and shabwah for commodity beans (white)
+2024-10-08 11:39:05,671 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,672 - INFO - Insufficient data for market pair sana'a and taizz for commodity beans (white)
+2024-10-08 11:39:05,897 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:05,897 - INFO - Insufficient data for market pair abyan and sana'a for commodity eggs
+2024-10-08 11:39:06,125 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:06,125 - INFO - Insufficient data for market pair aden and sana'a for commodity eggs
+2024-10-08 11:39:06,350 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:06,350 - INFO - Insufficient data for market pair al bayda and sana'a for commodity eggs
+2024-10-08 11:39:06,561 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:06,561 - INFO - Insufficient data for market pair al dhale'e and sana'a for commodity eggs
+2024-10-08 11:39:06,802 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:06,802 - INFO - Insufficient data for market pair al hudaydah and sana'a for commodity eggs
+2024-10-08 11:39:06,992 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:06,992 - INFO - Insufficient data for market pair al jawf and sana'a for commodity eggs
+2024-10-08 11:39:07,160 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:07,160 - INFO - Insufficient data for market pair al maharah and sana'a for commodity eggs
+2024-10-08 11:39:07,317 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:07,317 - INFO - Insufficient data for market pair al mahwit and sana'a for commodity eggs
+2024-10-08 11:39:07,462 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:07,462 - INFO - Insufficient data for market pair amanat al asimah and sana'a for commodity eggs
+2024-10-08 11:39:07,595 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:07,595 - INFO - Insufficient data for market pair amran and sana'a for commodity eggs
+2024-10-08 11:39:07,710 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:07,710 - INFO - Insufficient data for market pair dhamar and sana'a for commodity eggs
+2024-10-08 11:39:07,812 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:07,812 - INFO - Insufficient data for market pair hadramaut and sana'a for commodity eggs
+2024-10-08 11:39:07,902 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:07,903 - INFO - Insufficient data for market pair hajjah and sana'a for commodity eggs
+2024-10-08 11:39:07,981 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:07,981 - INFO - Insufficient data for market pair ibb and sana'a for commodity eggs
+2024-10-08 11:39:08,049 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:08,049 - INFO - Insufficient data for market pair lahj and sana'a for commodity eggs
+2024-10-08 11:39:08,105 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:08,105 - INFO - Insufficient data for market pair marib and sana'a for commodity eggs
+2024-10-08 11:39:08,142 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:08,143 - INFO - Insufficient data for market pair raymah and sana'a for commodity eggs
+2024-10-08 11:39:08,181 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:08,181 - INFO - Insufficient data for market pair sana'a and shabwah for commodity eggs
+2024-10-08 11:39:08,194 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:08,195 - INFO - Insufficient data for market pair sana'a and taizz for commodity eggs
+2024-10-08 11:39:08,536 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:08,537 - INFO - Insufficient data for market pair abyan and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:39:08,817 - ERROR - Error computing price differential: cannot reindex on an axis with duplicate labels
+2024-10-08 11:39:08,817 - INFO - Insufficient data for market pair aden and sana'a for commodity exchange rate (unofficial)
+2024-10-08 11:41:45,573 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:41:46,249 - INFO - Data loaded and sorted successfully.
+2024-10-08 11:41:46,252 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-08 11:41:46,258 - INFO - Aggregated data by exchange rate regime and date.
+2024-10-08 11:41:46,266 - INFO - Prepared 18 market pairs with sufficient data.
+2024-10-08 11:41:48,428 - INFO - TV-MII results saved to results/tv_mii_results.json
+2024-10-08 11:51:24,263 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 11:51:24,914 - INFO - Data loaded and sorted successfully.
+2024-10-08 11:51:24,917 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-08 11:51:24,923 - INFO - Aggregated data by exchange rate regime and date.
+2024-10-08 11:51:24,931 - INFO - Prepared 18 market pairs with sufficient data.
+2024-10-08 11:51:27,165 - INFO - TV-MII results saved to results/tv_mii_results.json
+2024-10-08 12:16:04,748 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 12:16:05,440 - INFO - Data loaded and sorted successfully.
+2024-10-08 12:16:05,445 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-08 12:16:05,453 - INFO - Aggregated data by exchange rate regime and date.
+2024-10-08 12:16:05,461 - INFO - Prepared 18 market pairs with sufficient data.
+2024-10-08 12:16:07,275 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,281 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,287 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,291 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,291 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,293 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,295 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,298 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,300 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,302 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,304 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,305 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,307 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,309 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,312 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,313 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,315 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,316 - ERROR - Error estimating TV-MII: Invalid value for observation covariance matrix matrix. Requires a 2- or 3-dimensional array, got 0 dimensions
+2024-10-08 12:16:07,655 - ERROR - No results were generated.
+2024-10-08 12:26:03,426 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 12:26:04,084 - INFO - Data loaded and sorted successfully.
+2024-10-08 12:26:04,087 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-08 12:26:04,094 - INFO - Aggregated data by exchange rate regime and date.
+2024-10-08 12:26:04,102 - INFO - Prepared 18 market pairs with sufficient data.
+2024-10-08 12:26:06,109 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,114 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,122 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,125 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,128 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,132 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,133 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,133 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,134 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,139 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,139 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,140 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,141 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,149 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,149 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,150 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,150 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,153 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:26:06,489 - ERROR - No results were generated.
+2024-10-08 12:27:48,460 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-08 12:27:49,164 - INFO - Data loaded and sorted successfully.
+2024-10-08 12:27:49,168 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-08 12:27:49,174 - INFO - Aggregated data by exchange rate regime and date.
+2024-10-08 12:27:49,183 - INFO - Prepared 18 market pairs with sufficient data.
+2024-10-08 12:27:51,079 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,089 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,095 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,128 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,142 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,155 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,163 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,163 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,168 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,170 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,171 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,174 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,175 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,177 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,180 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,180 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,182 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,185 - ERROR - Error estimating TV-MII: Statespace model not initialized.
+2024-10-08 12:27:51,528 - ERROR - No results were generated.
