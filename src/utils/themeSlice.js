@@ -1,4 +1,4 @@
-// src/store/features/themeSlice.js
+// src/utils/themeSlice.js
 
 import { createSlice } from '@reduxjs/toolkit';
 

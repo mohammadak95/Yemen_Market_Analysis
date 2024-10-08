@@ -1,4 +1,4 @@
-// src/features/ecmSlice.js
+// src/utils/ecmSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getDataPath } from './dataSourceUtil';
 

@@ -1,13 +1,14 @@
-/* index.css */
-/* This file can be minimal since most styles are handled by styled-components */
+/* src/index.css */
+/* This file can be minimal since most styles are handled by GlobalStyle.js */
 
 body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
-  background-color: var(--primary-bg-light);
-  color: var(--text-light);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  /* Removed background-color and color as they're managed in GlobalStyle.js */
+  /* background-color: var(--primary-bg-light); */
+  /* color: var(--text-light); */
+  /* transition: background-color 0.3s ease, color 0.3s ease; */
 }
 
-/* Additional global styles can be moved to GlobalStyle.js */
+/* Remove any additional styles that might conflict with GlobalStyle.js */

@@ -1,4 +1,4 @@
-// src/methodologyContent.js
+// src/utils/methodologyContent.js
 
 const methodologyContent = [
   {

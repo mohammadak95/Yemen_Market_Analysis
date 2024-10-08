@@ -34,12 +34,14 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import { applySeasonalAdjustment, applySmoothing } from './utils/dataProcessing';
 
+// Lazy load analysis components
 const ECMAnalysis = React.lazy(() => import('./components/ecm-analysis/ECMAnalysis'));
 const PriceDifferentialAnalysis = React.lazy(() =>
   import('./components/price-differential-analysis/PriceDifferentialAnalysis')
 );
 const SpatialAnalysis = React.lazy(() => import('./components/spatial-analysis/SpatialAnalysis'));
 
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -52,27 +54,31 @@ ChartJS.register(
 );
 
 const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }) => {
+  // State for chart controls
   const [showConflictIntensity, setShowConflictIntensity] = useState(true);
-  const [priceType, setPriceType] = useState('lcu');
+  const [priceType, setPriceType] = useState('lcu'); // 'lcu' or 'usd'
   const [applySeasonalAdj, setApplySeasonalAdj] = useState(false);
   const [applySmooth, setApplySmooth] = useState(false);
   const theme = useTheme();
 
+  // Chart Data Preparation
   const chartData = useMemo(() => {
     if (!data || !selectedCommodity || !selectedRegime) return null;
 
     let filteredData = data.features
       .filter(
-        (d) => d.commodity === selectedCommodity && d.regime === selectedRegime
+        (d) => d.commodity.toLowerCase() === selectedCommodity.toLowerCase() && d.regime.toLowerCase() === selectedRegime.toLowerCase()
       )
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     if (filteredData.length === 0) return null;
 
+    // Apply Seasonal Adjustment if enabled
     if (applySeasonalAdj) {
       filteredData = applySeasonalAdjustment(filteredData, [selectedRegime], 12, priceType === 'lcu');
     }
 
+    // Apply Smoothing if enabled
     if (applySmooth) {
       filteredData = applySmoothing(filteredData, [selectedRegime], 6, priceType === 'lcu');
     }
@@ -115,6 +121,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
     theme.palette,
   ]);
 
+  // Chart Options Configuration
   const options = useMemo(
     () => ({
       responsive: true,
@@ -173,10 +180,10 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           },
         },
         legend: {
-          position: 'bottom', // Changed from 'top' to 'bottom'
+          position: 'bottom', // Positioned at the bottom for better visibility
           labels: {
-            boxWidth: 12, // Optional: Adjust the size of the legend boxes
-            padding: 15,  // Optional: Adjust the spacing between legend items
+            boxWidth: 12,
+            padding: 15,
           },
         },
       },
@@ -296,7 +303,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
         }}
       >
         {chartData ? (
-          <Box sx={{ width: '100%', height: '100%', paddingBottom: '50px' }}> {/* Added paddingBottom */}
+          <Box sx={{ width: '100%', height: '100%', paddingBottom: '50px' }}>
             <Line data={chartData} options={options} />
           </Box>
         ) : (
@@ -325,6 +332,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 </Box>
               }
             >
+              {/* Render selected analysis component */}
               {selectedAnalysis === 'ecm' && (
                 <ECMAnalysis selectedCommodity={selectedCommodity} selectedRegime={selectedRegime} />
               )}
@@ -345,11 +353,12 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
   );
 };
 
+// Define PropTypes for type checking
 Dashboard.propTypes = {
   data: PropTypes.object.isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegime: PropTypes.string.isRequired,
-  selectedAnalysis: PropTypes.string.isRequired,
+  selectedAnalysis: PropTypes.string.isRequired, // Expected values: 'ecm', 'priceDiff', 'spatial'
 };
 
 export default Dashboard;
