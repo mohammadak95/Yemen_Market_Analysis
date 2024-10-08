@@ -1,5 +1,3 @@
-// src/Dashboard.test.js
-
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Dashboard from './Dashboard';
@@ -19,6 +17,8 @@ test('renders Dashboard component', () => {
     />
   );
 
-  const headingElement = screen.getByText(/Market Analysis/i);
-  expect(headingElement).toBeInTheDocument();
+  // Look for the "Price Type" label
+  const priceTypeLabel = screen.getByLabelText(/Price Type/i);
+  
+  expect(priceTypeLabel).toBeInTheDocument();
 });
