@@ -67,7 +67,9 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
 
     let filteredData = data.features
       .filter(
-        (d) => d.commodity.toLowerCase() === selectedCommodity.toLowerCase() && d.regime.toLowerCase() === selectedRegime.toLowerCase()
+        (d) =>
+          d.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+          d.regime.toLowerCase() === selectedRegime.toLowerCase()
       )
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -240,7 +242,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               </IconButton>
             </MuiTooltip>
           </Grid>
-          
+
           {/* Apply Seasonal Adjustment */}
           <Grid item xs={12} sm={6} md={3}>
             <FormControlLabel
@@ -254,7 +256,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               label="Apply Seasonal Adjustment"
             />
           </Grid>
-          
+
           {/* Apply Smoothing */}
           <Grid item xs={12} sm={6} md={3}>
             <FormControlLabel
@@ -268,7 +270,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
               label="Apply Smoothing"
             />
           </Grid>
-          
+
           {/* Show Conflict Intensity */}
           <Grid item xs={12} sm={6} md={2}>
             <FormControlLabel
@@ -298,7 +300,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           justifyContent: 'center',
           alignItems: 'center',
           borderRadius: 2,
-          height: { xs: 400, sm: 500, md: 600 },
+          height: { xs: 300, sm: 400, md: 500 }, // Adjusted heights for better mobile fit
         }}
       >
         {chartData ? (
@@ -312,7 +314,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
 
       {/* Conditional Analysis Components */}
       {selectedAnalysis && (
-        <Box sx={{ mt: 4, width: '100%', maxWidth: 1200 }}>
+        <Box sx={{ mt: 4, width: '100%', maxWidth: 1200, mx: 'auto' }}>
           <Paper
             elevation={3}
             sx={{
