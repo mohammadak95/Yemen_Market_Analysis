@@ -194,14 +194,13 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
   return (
     <Box
       sx={{
-        mt: 4,
-        mb: 4,
         flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
         width: '100%',
-        px: { xs: 2, sm: 4 },
+        height: '100%',
+        overflow: 'auto',
+        p: { xs: 2, sm: 3 },
       }}
     >
       {/* Controls Panel */}

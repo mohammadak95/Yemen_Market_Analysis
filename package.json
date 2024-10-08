@@ -8,6 +8,7 @@
     "@emotion/styled": "^11.11.1",
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
+    "@mui/styles": "^6.1.2",
     "@reduxjs/toolkit": "^1.9.7",
     "@sentry/react": "^7.59.0",
     "@sentry/tracing": "^7.59.0",

@@ -1,49 +1,56 @@
-// src/components/common/Sidebar.js
+//src/components/common/Sidebar.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Drawer,
-  Box,
-  Toolbar,
-  Divider,
   List,
+  Divider,
+  IconButton,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Button,
-  Typography,
-  IconButton,
+  Box,
 } from '@mui/material';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import MapIcon from '@mui/icons-material/Map';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import { styled } from '@mui/material/styles';
-import { drawerWidth, collapsedDrawerWidth } from '../../utils/layout';
-import CommoditySelector from './CommoditySelector'; // Import the selector
-import RegimeSelector from './RegimeSelector'; // Import the selector
+import { styled, useTheme } from '@mui/material/styles';
+import CommoditySelector from './CommoditySelector';
+import RegimeSelector from './RegimeSelector';
 
-// Styled Toggle Button without theme since it's not used
-const ToggleButton = styled(IconButton)({
-  marginLeft: 'auto',
-});
+const drawerWidth = 240;
+
+const DrawerHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(0, 1),
+  // necessary for content to be below app bar
+  ...theme.mixins.toolbar,
+  justifyContent: 'flex-end',
+}));
 
 const Sidebar = ({
-  commodities = [],
-  regimes = [],
-  selectedCommodity = '',
+  commodities,
+  regimes,
+  selectedCommodity,
   setSelectedCommodity,
-  selectedRegime = '',
+  selectedRegime,
   setSelectedRegime,
-  selectedAnalysis = '',
+  selectedAnalysis,
   setSelectedAnalysis,
   sidebarOpen,
   setSidebarOpen,
   isSmUp,
-  onMethodologyClick,
 }) => {
+  const theme = useTheme();
+
+  const handleDrawerClose = () => {
+    setSidebarOpen(false);
+  };
+
   const handleAnalysisChange = (analysis) => {
     setSelectedAnalysis(analysis);
     if (!isSmUp) {
@@ -51,111 +58,78 @@ const Sidebar = ({
     }
   };
 
-  return (
+  const drawer = (
     <>
-      <Drawer
-        variant={isSmUp ? 'permanent' : 'temporary'}
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        sx={{
-          width: sidebarOpen ? drawerWidth : collapsedDrawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: sidebarOpen ? drawerWidth : collapsedDrawerWidth,
-            boxSizing: 'border-box',
-            transition: (theme) =>
-              theme.transitions.create('width', {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
-            overflowX: 'hidden',
-          },
-        }}
-      >
-        <Toolbar>
-          <Typography variant="h6" noWrap component="div">
-            {sidebarOpen ? 'Menu' : 'M'}
-          </Typography>
-          {isSmUp && (
-            <ToggleButton onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
-              {sidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </ToggleButton>
-          )}
-        </Toolbar>
-        <Divider />
-        <Box sx={{ p: 2 }}>
-          {/* Commodity Selector */}
-          {sidebarOpen && (
-            <CommoditySelector
-              commodities={commodities}
-              selectedCommodity={selectedCommodity}
-              onSelectCommodity={setSelectedCommodity}
-            />
-          )}
-
-          {/* Regime Selector */}
-          {sidebarOpen && (
-            <RegimeSelector
-              regimes={regimes}
-              selectedRegime={selectedRegime}
-              onSelectRegime={setSelectedRegime}
-            />
-          )}
-
-          {/* Analysis Selector List */}
-          {sidebarOpen && (
-            <>
-              <Divider sx={{ my: 2 }} />
-              <List component="nav" aria-label="analysis options">
-                <ListItem
-                  button
-                  selected={selectedAnalysis === 'ecm'}
-                  onClick={() => handleAnalysisChange('ecm')}
-                >
-                  <ListItemIcon>
-                    <AssessmentIcon color={selectedAnalysis === 'ecm' ? 'primary' : 'inherit'} />
-                  </ListItemIcon>
-                  <ListItemText primary="ECM Analysis" />
-                </ListItem>
-                <ListItem
-                  button
-                  selected={selectedAnalysis === 'priceDiff'}
-                  onClick={() => handleAnalysisChange('priceDiff')}
-                >
-                  <ListItemIcon>
-                    <ShowChartIcon color={selectedAnalysis === 'priceDiff' ? 'primary' : 'inherit'} />
-                  </ListItemIcon>
-                  <ListItemText primary="Price Differential Analysis" />
-                </ListItem>
-                <ListItem
-                  button
-                  selected={selectedAnalysis === 'spatial'}
-                  onClick={() => handleAnalysisChange('spatial')}
-                >
-                  <ListItemIcon>
-                    <MapIcon color={selectedAnalysis === 'spatial' ? 'primary' : 'inherit'} />
-                  </ListItemIcon>
-                  <ListItemText primary="Spatial Analysis" />
-                </ListItem>
-              </List>
-            </>
-          )}
-
-          {/* Methodology Button */}
-          {sidebarOpen && (
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              sx={{ mt: 3 }}
-              onClick={onMethodologyClick}
-            >
-              Methodology
-            </Button>
-          )}
-        </Box>
-      </Drawer>
+      <DrawerHeader>
+        <IconButton onClick={handleDrawerClose}>
+          {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
+      </DrawerHeader>
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <CommoditySelector
+          commodities={commodities}
+          selectedCommodity={selectedCommodity}
+          onSelectCommodity={setSelectedCommodity}
+        />
+        <RegimeSelector
+          regimes={regimes}
+          selectedRegime={selectedRegime}
+          onSelectRegime={setSelectedRegime}
+        />
+      </Box>
+      <Divider />
+      <List>
+        <ListItem
+          button
+          selected={selectedAnalysis === 'ecm'}
+          onClick={() => handleAnalysisChange('ecm')}
+        >
+          <ListItemIcon>
+            <AssessmentIcon color={selectedAnalysis === 'ecm' ? 'primary' : 'inherit'} />
+          </ListItemIcon>
+          <ListItemText primary="ECM Analysis" />
+        </ListItem>
+        <ListItem
+          button
+          selected={selectedAnalysis === 'priceDiff'}
+          onClick={() => handleAnalysisChange('priceDiff')}
+        >
+          <ListItemIcon>
+            <ShowChartIcon color={selectedAnalysis === 'priceDiff' ? 'primary' : 'inherit'} />
+          </ListItemIcon>
+          <ListItemText primary="Price Differential Analysis" />
+        </ListItem>
+        <ListItem
+          button
+          selected={selectedAnalysis === 'spatial'}
+          onClick={() => handleAnalysisChange('spatial')}
+        >
+          <ListItemIcon>
+            <MapIcon color={selectedAnalysis === 'spatial' ? 'primary' : 'inherit'} />
+          </ListItemIcon>
+          <ListItemText primary="Spatial Analysis" />
+        </ListItem>
+      </List>
     </>
+  );
+
+  return (
+    <Drawer
+      variant={isSmUp ? 'permanent' : 'temporary'}
+      open={sidebarOpen}
+      onClose={handleDrawerClose}
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: drawerWidth,
+          boxSizing: 'border-box',
+        },
+      }}
+    >
+      {drawer}
+    </Drawer>
   );
 };
 
