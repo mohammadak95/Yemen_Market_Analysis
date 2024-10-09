@@ -31,7 +31,6 @@ import GrangerCausalityChart from './GrangerCausalityChart';
 import SpatialAutocorrelationChart from './SpatialAutocorrelationChart';
 import { saveAs } from 'file-saver';
 import { jsonToCsv } from '../../utils/jsonToCsv';
-import ECMDiagram from './ECMDiagram';
 import ECMTutorial from './ECMTutorial';
 import { formatNumber } from '../../utils/formatNumber';
 
@@ -275,7 +274,7 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
           </Button>
         </Box>
         {/* Optional: Add ECM Diagram and Tutorial */}
-        <ECMDiagram />
+
         <ECMTutorial />
       </Box>
       <ECMTabs activeTab={activeTab} handleTabChange={handleTabChange} tabLabels={tabLabels}>
