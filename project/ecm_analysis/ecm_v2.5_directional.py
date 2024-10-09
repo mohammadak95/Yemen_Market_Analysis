@@ -7,16 +7,17 @@ import time
 import yaml
 import pandas as pd
 import numpy as np
-import geopandas as gpd
 from statsmodels.tsa.vector_ar.vecm import VECM, select_order, select_coint_rank
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import grangercausalitytests, adfuller, kpss
 from arch.unitroot import engle_granger
-from esda.moran import Moran
-from pysal.lib import weights
 from scipy.stats import shapiro
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy.linalg as LA
+import multiprocessing
+from functools import partial
+import psutil
+import geopandas as gpd  # Kept for data loading
 
 # Load configuration
 def load_config(path='project/config/config.yaml'):
@@ -69,32 +70,19 @@ COMMODITIES = params['commodities']
 EXR_REGIMES = params['exchange_rate_regimes']
 STN_SIG = params['stationarity_significance_level']
 CIG_SIG = params['cointegration_significance_level']
+PARALLEL_PROCESSES = config['parameters']['parallel_processes']
+MEMORY_PER_PROCESS_GB = config['parameters']['memory_per_process_gb']
 
-# Load spatial weights
-def load_spatial_weights(path):
-    try:
-        gdf = gpd.read_file(path)
-        w = weights.Queen.from_dataframe(gdf, use_index=False)
-        w.transform = 'r'
-        return w, gdf
-    except Exception as e:
-        logger.error(f"Spatial weights loading failed: {e}")
-        logger.debug(traceback.format_exc())
-        return None, None
-
-spatial_weights, spatial_gdf = load_spatial_weights(files['spatial_geojson'])
+def check_memory():
+    available_memory = psutil.virtual_memory().available / (1024**3)  # Convert to GB
+    required_memory = PARALLEL_PROCESSES * MEMORY_PER_PROCESS_GB
+    if available_memory < required_memory:
+        logger.warning(f"Available memory ({available_memory:.2f} GB) is less than required ({required_memory:.2f} GB). Adjusting parallel processes.")
+        return max(1, int(available_memory // MEMORY_PER_PROCESS_GB))
+    return PARALLEL_PROCESSES
 
 # Function to calculate VIF
 def calculate_vif(exog_df):
-    """
-    Calculate Variance Inflation Factor (VIF) for each feature in the DataFrame.
-    
-    Parameters:
-        exog_df (pd.DataFrame): DataFrame containing exogenous variables.
-    
-    Returns:
-        pd.DataFrame: DataFrame with features and their corresponding VIF scores.
-    """
     vif_data = pd.DataFrame()
     vif_data["feature"] = exog_df.columns
     vif_data["VIF"] = [variance_inflation_factor(exog_df.values, i) for i in range(exog_df.shape[1])]
@@ -102,13 +90,6 @@ def calculate_vif(exog_df):
 
 # Function to log correlation matrix
 def log_correlation_matrix(exog_df, title="Correlation Matrix of Exogenous Variables"):
-    """
-    Calculate and log the correlation matrix of the exogenous variables.
-    
-    Parameters:
-        exog_df (pd.DataFrame): DataFrame containing exogenous variables.
-        title (str): Title for the log message.
-    """
     try:
         corr_matrix = exog_df.corr()
         logger.debug(f"{title}:\n{corr_matrix}")
@@ -121,9 +102,9 @@ def load_data():
     logger.debug(f"Loading data from {files['spatial_geojson']}")
     try:
         gdf = gpd.read_file(files['spatial_geojson'])
-        df = pd.DataFrame(gdf)
+        df = gdf.drop(columns='geometry')  # Remove spatial component
 
-        required_columns = {'date', 'commodity', 'exchange_rate_regime', 'usdprice', 'conflict_intensity', 'admin1', 'population'}
+        required_columns = {'date', 'commodity', 'exchange_rate_regime', 'usdprice', 'admin1'}
         missing = required_columns - set(df.columns)
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
@@ -145,13 +126,11 @@ def load_data():
         logger.debug(f"Data filtered for exchange rate regimes: ['north', 'south']")
 
         df_agg = df.groupby(['commodity', 'exchange_rate_regime', 'date']).agg(
-            usdprice=('usdprice', 'mean'),
-            conflict_intensity=('conflict_intensity', 'mean'),
-            population=('population', 'sum')
+            usdprice=('usdprice', 'mean')
         ).reset_index()
 
         df_pivot = df_agg.pivot_table(index=['commodity', 'date'], columns='exchange_rate_regime', 
-                                      values=['usdprice', 'conflict_intensity', 'population'], 
+                                      values=['usdprice'], 
                                       aggfunc='first')
 
         df_pivot.columns = [f'{var}_{regime}' for var, regime in df_pivot.columns]
@@ -159,24 +138,6 @@ def load_data():
 
         logger.debug(f"Data after pivot and alignment shape: {df_pivot.shape}")
 
-        # Impute missing conflict_intensity values using linear interpolation
-        conflict_cols = ['conflict_intensity_north', 'conflict_intensity_south']
-        for col in conflict_cols:
-            if col in df_pivot.columns:
-                df_pivot[col] = df_pivot[col].interpolate(method='linear', limit_direction='both')
-                missing_before = df_pivot[col].isna().sum()
-                df_pivot[col].fillna(method='bfill', inplace=True)
-                df_pivot[col].fillna(method='ffill', inplace=True)
-                missing_after = df_pivot[col].isna().sum()
-                logger.info(f"Imputed missing values in {col}: before={missing_before}, after={missing_after}")
-
-        # Create indicator variables for imputed data
-        for col in conflict_cols:
-            indicator_col = f"{col}_imputed"
-            df_pivot[indicator_col] = df_pivot[col].isna().astype(int)
-            logger.debug(f"Created indicator column {indicator_col}")
-
-        # Group data by commodity for further analysis
         grouped_data = {commodity: df_pivot.xs(commodity, level='commodity') for commodity in df_pivot.index.get_level_values('commodity').unique()}
 
         logger.debug(f"Data grouped into {len(grouped_data)} groups.")
@@ -261,8 +222,8 @@ def run_stationarity_tests(series, variable):
 def run_cointegration_tests(y, x, stationarity_results):
     logger.debug("Running cointegration tests")
     try:
-        y_transformed = pd.Series(stationarity_results['usdprice']['series'])
-        x_transformed = pd.Series(stationarity_results['conflict_intensity']['series'])
+        y_transformed = pd.Series(stationarity_results['y']['series'])
+        x_transformed = pd.Series(stationarity_results['x']['series'])
         
         combined = pd.concat([y_transformed, x_transformed], axis=1).dropna()
         if combined.empty or len(combined) < 2:
@@ -277,8 +238,8 @@ def run_cointegration_tests(y, x, stationarity_results):
                 'cointegrated': eg.pvalue < CIG_SIG,
                 'rho': eg.rho
             },
-            'price_transformation': stationarity_results.get('usdprice', {}).get('transformation', 'original'),
-            'conflict_transformation': stationarity_results.get('conflict_intensity', {}).get('transformation', 'original')
+            'y_transformation': stationarity_results.get('y', {}).get('transformation', 'original'),
+            'x_transformation': stationarity_results.get('x', {}).get('transformation', 'original')
         }
         logger.debug(f"Engle-Granger p={eg.pvalue}, cointegrated={eg.pvalue < CIG_SIG}")
         return coint_result
@@ -287,96 +248,26 @@ def run_cointegration_tests(y, x, stationarity_results):
         logger.debug(traceback.format_exc())
         return None
 
-# Estimate ECM with Multicollinearity Checks and Enhanced Debugging
-def estimate_ecm(price, conflict_intensity, other_exog=None, max_lags=COIN_MAX_LAGS, ecm_lags=ECM_LAGS):
+# Estimate ECM
+def estimate_ecm(y, x, max_lags=COIN_MAX_LAGS, ecm_lags=ECM_LAGS):
     logger.debug(f"Estimating ECM with max_lags={max_lags}, ecm_lags={ecm_lags}")
     try:
-        # Combine price and conflict intensity as endogenous variables
-        endog = pd.concat([price, conflict_intensity], axis=1).dropna()
+        original_length = len(y)
+        logger.debug(f"Original data length: {original_length}")
         
-        # Check if we have enough data points after cleaning
+        endog = pd.concat([y, x], axis=1).dropna()
+        dropped_points = original_length - len(endog)
+        logger.debug(f"Data length after dropping NaNs: {len(endog)}")
+        if dropped_points > 0:
+            logger.info(f"Dropped {dropped_points} data points due to NaN values in ECM estimation")
+        
         if len(endog) < 2:
             logger.warning("Insufficient data points after cleaning. Skipping ECM estimation.")
             return None, None
         
-        # Handle exogenous variables
-        if other_exog is not None and not other_exog.empty:
-            exog = other_exog.dropna()
-            # Align exog with endog
-            endog, exog = endog.align(exog, join='inner', axis=0)
-            logger.debug(f"Including exogenous variables: {exog.columns.tolist()}")
-        else:
-            exog = None
-            logger.debug("No exogenous variables provided or all were NaN.")
-        
-        # Check again if we have enough data points after alignment
-        if len(endog) < 2:
-            logger.warning("Insufficient data points after aligning with exogenous variables. Skipping ECM estimation.")
-            return None, None
-
-        # Multicollinearity Check using VIF
-        if exog is not None and exog.shape[1] > 1:
-            logger.debug("Calculating VIF for exogenous variables.")
-            vif_df = calculate_vif(exog)
-            logger.debug(f"VIF before removing multicollinearity issues:\n{vif_df}")
-            
-            # Log correlation matrix
-            log_correlation_matrix(exog, title="Correlation Matrix of Exogenous Variables Before VIF Adjustment")
-            
-            # Define a VIF threshold
-            vif_threshold = 5.0
-            
-            # Iteratively remove variables with VIF > threshold
-            while vif_df['VIF'].max() > vif_threshold:
-                max_vif = vif_df['VIF'].max()
-                feature_to_remove = vif_df.loc[vif_df['VIF'].idxmax(), 'feature']
-                logger.warning(f"High VIF detected: {feature_to_remove} has VIF={max_vif:.2f}. Removing this feature to reduce multicollinearity.")
-                
-                # Drop the feature with the highest VIF
-                exog = exog.drop(columns=[feature_to_remove])
-                
-                # Recalculate VIF
-                vif_df = calculate_vif(exog)
-                logger.debug(f"VIF after removing {feature_to_remove}:\n{vif_df}")
-                
-                # Log correlation matrix after removal
-                log_correlation_matrix(exog, title=f"Correlation Matrix After Removing {feature_to_remove}")
-            
-            logger.info(f"Final exogenous variables after VIF checks: {exog.columns.tolist()}")
-            
-            # Log final correlation matrix
-            log_correlation_matrix(exog, title="Final Correlation Matrix of Exogenous Variables After VIF Adjustment")
-        else:
-            exog = exog if exog is not None else None
-
-        # Log properties of endog and exog
-        logger.debug(f"Endogenous variables shape: {endog.shape}")
-        logger.debug(f"Exogenous variables shape: {exog.shape if exog is not None else 'None'}")
-        
-        if exog is not None and not exog.empty:
-            # Compute condition number for exog
-            try:
-                condition_number = LA.cond(exog)
-                logger.debug(f"Condition number of exogenous variables matrix: {condition_number}")
-                if condition_number > 30:
-                    logger.warning(f"High condition number detected: {condition_number}. This indicates potential multicollinearity issues.")
-            except Exception as e:
-                logger.error(f"Failed to compute condition number: {e}")
-                logger.debug(traceback.format_exc())
-            
-            # Compute matrix rank
-            try:
-                rank = LA.matrix_rank(exog)
-                logger.debug(f"Rank of exogenous variables matrix: {rank}")
-            except Exception as e:
-                logger.error(f"Failed to compute matrix rank: {e}")
-                logger.debug(traceback.format_exc())
-        else:
-            logger.debug("No exogenous variables to compute condition number or rank.")
-
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            lag_order_result = select_order(endog, exog=exog, maxlags=min(max_lags, len(endog) // 2 - 1), deterministic='ci')
+            lag_order_result = select_order(endog, maxlags=min(max_lags, len(endog) // 2 - 1), deterministic='ci')
 
         optimal_lags = lag_order_result.aic if hasattr(lag_order_result, 'aic') else ecm_lags
         optimal_lags = max(1, min(optimal_lags, ecm_lags, len(endog) // 2 - 1))
@@ -390,29 +281,16 @@ def estimate_ecm(price, conflict_intensity, other_exog=None, max_lags=COIN_MAX_L
             logger.warning("No cointegration found based on selected rank.")
             return None, None
 
-        # Only pass exog to VECM if it's not None and not empty
-        if exog is not None and not exog.empty:
-            model = VECM(endog, exog=exog, k_ar_diff=optimal_lags, coint_rank=coint_rank, deterministic='ci')
-        else:
-            model = VECM(endog, k_ar_diff=optimal_lags, coint_rank=coint_rank, deterministic='ci')
+        model = VECM(endog, k_ar_diff=optimal_lags, coint_rank=coint_rank, deterministic='ci')
         
-        # Log model parameters before fitting
-        logger.debug(f"VECM Model Parameters:\nEndogenous Variables: {endog.columns.tolist()}\nExogenous Variables: {exog.columns.tolist() if exog is not None else 'None'}\nLag Order: {optimal_lags}\nCointegration Rank: {coint_rank}")
+        logger.debug(f"VECM Model Parameters:\nEndogenous Variables: {endog.columns.tolist()}\nLag Order: {optimal_lags}\nCointegration Rank: {coint_rank}")
 
         try:
             results = model.fit()
-            logger.info("ECM model estimated successfully")
+            logger.info(f"ECM model estimated successfully. Final data points: {len(results.resid)}")
             return model, results
         except np.linalg.LinAlgError as e:
             logger.error(f"Linear algebra error (likely due to singular matrix): {e}")
-            # Additional debugging: Check condition number
-            if exog is not None and not exog.empty:
-                try:
-                    condition_number = LA.cond(exog)
-                    logger.debug(f"Condition number of exogenous variables matrix: {condition_number}")
-                except Exception as cn_e:
-                    logger.error(f"Failed to compute condition number: {cn_e}")
-                    logger.debug(traceback.format_exc())
     except Exception as e:
         logger.error(f"Unexpected error in ECM estimation: {e}")
         logger.debug(traceback.format_exc())
@@ -449,47 +327,17 @@ def compute_granger_causality(y, x):
     try:
         max_lag = GRANGER_MAX_LAGS
         data = pd.concat([y, x], axis=1).dropna()
-        for col in x.columns:
-            test_result = grangercausalitytests(data[[y.name, col]], max_lag, verbose=False)
-            gc_metrics = {}
-            for lag, res in test_result.items():
-                ftest_p = res[0]['ssr_ftest'][1]
-                gc_metrics[lag] = {'ssr_ftest_pvalue': ftest_p}
-            gc_results[col] = gc_metrics
+        test_result = grangercausalitytests(data, max_lag, verbose=False)
+        gc_metrics = {}
+        for lag, res in test_result.items():
+            ftest_p = res[0]['ssr_ftest'][1]
+            gc_metrics[lag] = {'ssr_ftest_pvalue': ftest_p}
+        gc_results[x.name] = gc_metrics
         return gc_results
     except Exception as e:
         logger.error(f"Granger causality tests failed: {e}")
         logger.debug(traceback.format_exc())
         return gc_results
-
-# Spatial Autocorrelation
-def compute_spatial_autocorrelation(residuals, spatial_weights, gdf, filter_indices):
-    if spatial_weights is None:
-        logger.warning("Spatial weights not loaded. Skipping spatial autocorrelation tests.")
-        return None
-
-    try:
-        residuals_series = pd.Series(residuals, index=filter_indices)
-        residuals_series = residuals_series.dropna()
-        valid_indices = residuals_series.index.intersection(spatial_weights.weights.keys())
-        
-        filtered_residuals = residuals_series.loc[valid_indices]
-        filtered_weights = weights.W(
-            {key: [neigh for neigh in spatial_weights.neighbors[key] if neigh in filtered_residuals.index]
-             for key in filtered_residuals.index if key in spatial_weights.neighbors}
-        )
-        filtered_weights.transform = 'r'
-
-        moran = Moran(filtered_residuals, filtered_weights)
-        
-        return {
-            'Moran_I': moran.I,
-            'Moran_p_value': moran.p_sim
-        }
-    except Exception as e:
-        logger.error(f"Spatial autocorrelation test failed: {e}")
-        logger.debug(traceback.format_exc())
-        return None
 
 # Diagnostics
 def run_diagnostics(results):
@@ -604,98 +452,104 @@ def convert_keys_to_str(data):
     else:
         return data
 
+# Save Results Function
 def save_results(ecm_results, residuals_storage, direction):
     try:
+        # Convert results to serializable format
         flattened = convert_keys_to_str(ecm_results)
         residuals_converted = {commodity: v.tolist() for commodity, v in residuals_storage.items()}
-        combined_results = {
-            'ecm_analysis': flattened,
-            'residuals': residuals_converted
-        }
-
-        result_file = files['ecm_results_v3'].with_name(f"{files['ecm_results_v3'].stem}_{direction}.json")
-        result_file.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(result_file, 'w') as f:
-            json.dump(combined_results, f, indent=4, cls=NumpyEncoder)
-        logger.info(f"Results saved to {result_file}")
+        
+        # Define file paths
+        ecm_file = dirs['results_dir'] / f"ecm_results_{direction.replace('-', '_')}.json"
+        residuals_file = dirs['results_dir'] / f"residuals_{direction.replace('-', '_')}.json"
+        
+        # Ensure the results directory exists
+        ecm_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Save ECM results
+        with open(ecm_file, 'w') as f:
+            json.dump(flattened, f, indent=4, cls=NumpyEncoder)
+        logger.info(f"ECM results saved to {ecm_file}")
+        
+        # Save residuals
+        with open(residuals_file, 'w') as f:
+            json.dump(residuals_converted, f, indent=4, cls=NumpyEncoder)
+        logger.info(f"Residuals saved to {residuals_file}")
+        
+    except KeyError as e:
+        logger.error(f"Missing key in configuration: {e}")
+        logger.debug(traceback.format_exc())
+        raise
     except Exception as e:
         logger.error(f"Saving results failed: {e}")
         logger.debug(traceback.format_exc())
         raise
 
-# Run ECM Analysis with Enhanced Debugging
-def run_ecm_analysis(data, stationarity_results, cointegration_results, gdf, direction='north-to-south'):
-    all_results = []
-    residuals_storage = {}
-    
-    for commodity, df in data.items():
-        try:
-            if direction == 'north-to-south':
-                y = df['usdprice_north']
-                x = df['conflict_intensity_south']
-                exog_vars = ['usdprice_south', 'conflict_intensity_north_imputed']
-            elif direction == 'south-to-north':
-                y = df['usdprice_south']
-                x = df['conflict_intensity_north']
-                exog_vars = ['usdprice_north', 'conflict_intensity_south_imputed']
-            else:
-                logger.error(f"Unknown direction: {direction}")
-                continue
+# Modify the run_ecm_analysis function to handle a single commodity
+def run_ecm_analysis_single(commodity, df, stationarity_results, cointegration_results, direction='north-to-south'):
+    try:
+        logger.info(f"Starting ECM analysis for {commodity} in {direction} direction")
+        
+        if direction == 'north-to-south':
+            y = df['usdprice_north']
+            x = df['usdprice_south']
+        elif direction == 'south-to-north':
+            y = df['usdprice_south']
+            x = df['usdprice_north']
+        else:
+            logger.error(f"Unknown direction: {direction}")
+            return None, None
 
-            exog = df[exog_vars] if exog_vars else None
+        y, x = y.align(x, join='inner')
 
-            y, x = y.align(x, join='inner')
-            if exog is not None:
-                exog = exog.loc[y.index]
+        logger.debug(f"Aligned data length for {commodity} in {direction}: {len(y)}")
 
-            logger.debug(f"Aligned data length for {direction}: {len(y)}")
-            logger.debug(f"Y series: {y.head()}")
-            logger.debug(f"X series: {x.head()}")
-            if exog is not None:
-                logger.debug(f"Exogenous variables:\n{exog.head()}")
+        if len(y) < MIN_OBS:
+            logger.warning(f"Not enough aligned observations for {commodity}. Skipping.")
+            return None, None
 
-            if len(y) < MIN_OBS:
-                logger.warning(f"Not enough aligned observations for {commodity}. Skipping.")
-                continue
+        model, results = estimate_ecm(y, x)
+        if model is None or results is None:
+            logger.warning(f"ECM estimation failed for {commodity}. Skipping.")
+            return None, None
 
-            model, results = estimate_ecm(y, x, other_exog=exog)
-            if model is None or results is None:
-                logger.warning(f"ECM estimation failed for {commodity}. Skipping.")
-                continue
+        logger.debug(f"ECM estimation successful for {commodity}. Residuals shape: {results.resid.shape}")
 
-            aic, bic, hqic = compute_model_criteria(results, model)
-            diagnostics = run_diagnostics(results)
-            irf = compute_irfs(results)
-            gc = compute_granger_causality(y, x)
+        aic, bic, hqic = compute_model_criteria(results, model)
+        logger.debug(f"Model criteria for {commodity}: AIC={aic}, BIC={bic}, HQIC={hqic}")
 
-            residuals_storage[commodity] = results.resid
+        diagnostics = run_diagnostics(results)
+        logger.debug(f"Diagnostics computed for {commodity}")
 
-            filter_indices = df.index.tolist()
-            spatial = compute_spatial_autocorrelation(results.resid, spatial_weights, gdf, filter_indices)
+        irf = compute_irfs(results)
+        logger.debug(f"IRF computed for {commodity}")
 
-            all_results.append({
-                'commodity': commodity,
-                'aic': aic,
-                'bic': bic,
-                'hqic': hqic,
-                'diagnostics': diagnostics,
-                'irf': irf,
-                'granger_causality': gc,
-                'spatial_autocorrelation': spatial,
-            })
+        gc = compute_granger_causality(y, x)
+        logger.debug(f"Granger causality computed for {commodity}")
 
-        except Exception as e:
-            logger.error(f"ECM analysis failed for {commodity}: {e}")
-            logger.debug(traceback.format_exc())
-    
-    return all_results, residuals_storage
+        analysis_result = {
+            'commodity': commodity,
+            'direction': direction,
+            'aic': aic,
+            'bic': bic,
+            'hqic': hqic,
+            'diagnostics': diagnostics,
+            'irf': irf,
+            'granger_causality': gc
+        }
+
+        logger.info(f"ECM analysis completed for {commodity} in {direction} direction")
+        return analysis_result, results.resid
+
+    except Exception as e:
+        logger.error(f"ECM analysis failed for {commodity} in {direction} direction: {e}")
+        logger.debug(traceback.format_exc())
+        return None, None
 
 # Logging with timestamps
 def timed_log(msg):
     logger.info(f"{msg} at {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-# Main Workflow with Enhanced Debugging
 def main():
     timed_log("Starting ECM analysis workflow")
     try:
@@ -703,7 +557,7 @@ def main():
         
         timed_log("Loading data")
         data = load_data()
-        timed_log(f"Data loaded with {len(data)} groups, took {time.time() - start_time:.2f} seconds")
+        timed_log(f"Data loaded with {len(data)} groups, took {time.time() - start_time:.2f} seconds at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         
         stationarity_results, cointegration_results = {}, {}
         
@@ -711,38 +565,57 @@ def main():
             if len(df) < MIN_OBS:
                 logger.warning(f"Insufficient data for {commodity}. Skipping stationarity and cointegration tests.")
                 continue
-            # Assuming 'north-to-south' direction for stationarity and cointegration
-            key = f"{commodity}_north-to-south"
-            stationarity_results[key] = {
-                'usdprice': run_stationarity_tests(df['usdprice_north'], 'usdprice'),
-                'conflict_intensity': run_stationarity_tests(df['conflict_intensity_south'], 'conflict_intensity')
-            }
-            
-            coint = run_cointegration_tests(df['usdprice_north'], df['conflict_intensity_south'], stationarity_results[key])
-            if coint:
-                cointegration_results[key] = coint
-
-        # Run ECM analysis in both directions
-        try:
-            ecm_results_north_south, residuals_north_south = run_ecm_analysis(
-                data, stationarity_results, cointegration_results, spatial_gdf, direction="north-to-south"
-            )
-            save_results(ecm_results_north_south, residuals_north_south, direction="north-to-south")
-        except Exception as e:
-            logger.error(f"ECM analysis north-to-south failed: {e}")
+            # Perform stationarity and cointegration tests for both directions
+            for direction in ['north-to-south', 'south-to-north']:
+                key = f"{commodity}_{direction}"
+                if direction == 'north-to-south':
+                    y, x = df['usdprice_north'], df['usdprice_south']
+                else:
+                    y, x = df['usdprice_south'], df['usdprice_north']
+                
+                stationarity_results[key] = {
+                    'y': run_stationarity_tests(y, f'usdprice_{direction.split("-")[0]}'),
+                    'x': run_stationarity_tests(x, f'usdprice_{direction.split("-")[2]}')
+                }
+                
+                coint = run_cointegration_tests(y, x, stationarity_results[key])
+                if coint:
+                    cointegration_results[key] = coint
         
-        try:
-            ecm_results_south_north, residuals_south_north = run_ecm_analysis(
-                data, stationarity_results, cointegration_results, spatial_gdf, direction="south-to-north"
+        # Determine the number of processes to use based on available memory
+        num_processes = check_memory()
+        logger.info(f"Using {num_processes} processes for parallel computation")
+        
+        # Run ECM analysis in parallel for both directions
+        for direction in ['north-to-south', 'south-to-north']:
+            timed_log(f"Starting ECM analysis for {direction}")
+            
+            # Prepare the iterable as a list of tuples (commodity, df)
+            iterable = [(commodity, df) for commodity, df in data.items()]
+            
+            # Use partial to fix the stationarity_results, cointegration_results, and direction
+            worker_func = partial(
+                run_ecm_analysis_single,
+                stationarity_results=stationarity_results,
+                cointegration_results=cointegration_results,
+                direction=direction
             )
-            save_results(ecm_results_south_north, residuals_south_north, direction="south-to-north")
-        except Exception as e:
-            logger.error(f"ECM analysis south-to-north failed: {e}")
+            
+            with multiprocessing.Pool(processes=num_processes) as pool:
+                results = pool.starmap(worker_func, iterable)
+        
+                # Extract results and residuals
+                ecm_results = [r[0] for r in results if r[0] is not None]
+                residuals = {r[0]['commodity']: r[1] for r in results if r[0] is not None and r[1] is not None}
+        
+            save_results(ecm_results, residuals, direction=direction)
+            timed_log(f"Completed ECM analysis for {direction}")
         
         logger.info(f"ECM analysis workflow completed successfully in {time.time() - start_time:.2f} seconds")
     except Exception as e:
         logger.error(f"ECM analysis workflow failed: {e}")
         logger.debug(traceback.format_exc())
+
 
 if __name__ == '__main__':
     warnings.simplefilter('ignore')
