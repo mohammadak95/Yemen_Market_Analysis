@@ -17,7 +17,6 @@ import {
 import 'chartjs-adapter-date-fns';
 import {
   Box,
-  Grid,
   FormControlLabel,
   Checkbox,
   FormControl,
@@ -27,7 +26,8 @@ import {
   Paper,
   Tooltip as MuiTooltip,
   IconButton,
-  } from '@mui/material';
+  Grid,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -40,7 +40,6 @@ const PriceDifferentialAnalysis = React.lazy(() =>
   import('./components/price-differential-analysis/PriceDifferentialAnalysis')
 );
 const SpatialAnalysis = React.lazy(() => import('./components/spatial-analysis/SpatialAnalysis'));
-
 
 // Register Chart.js components
 ChartJS.register(
@@ -248,6 +247,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
         height: '100%',
         overflow: 'auto',
         p: { xs: 2, sm: 3 },
+        alignItems: 'center', // Center child components horizontally
       }}
     >
       {/* Controls Panel */}
@@ -361,12 +361,12 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
       {/* Conditional Analysis Components */}
       {selectedAnalysis && (
         <Box sx={{ mt: 4, width: '100%', maxWidth: 1200, mx: 'auto' }}>
-          <Paper elevation={3} sx={{ /* ... (keep existing styles) */ }}>
+          <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
             <Suspense fallback={<LoadingSpinner />}>
               {selectedAnalysis === 'ecm' && (
                 <ECMAnalysis
                   selectedCommodity={selectedCommodity}
-                  selectedRegime={selectedRegime}
+                  selectedRegime={'unified'}
                 />
               )}
               {selectedAnalysis === 'priceDiff' && (

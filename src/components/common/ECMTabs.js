@@ -2,7 +2,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Tabs, Tab } from '@mui/material';
+import { Tabs, Tab } from '@mui/material'; // Removed Box from imports
 import TabPanel from './TabPanel';
 
 const ECMTabs = ({ activeTab, handleTabChange, tabLabels, children }) => (
@@ -13,6 +13,7 @@ const ECMTabs = ({ activeTab, handleTabChange, tabLabels, children }) => (
       centered
       variant="scrollable"
       scrollButtons="auto"
+      sx={{ bgcolor: 'background.paper' }}
     >
       {tabLabels.map((label, index) => (
         <Tab key={`tab-${index}`} label={label} />
