@@ -2,30 +2,52 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { capitalizeWords } from '../../utils/stringUtils'; // Import the helper function
+import { FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, OutlinedInput } from '@mui/material';
+import { capitalizeWords } from '../../utils/stringUtils';
 
-const RegimeSelector = ({ regimes, selectedRegime, onSelectRegime }) => {
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
   if (!regimes || regimes.length === 0) {
     return <div>No regimes available</div>;
   }
 
+  const handleChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    onSelectRegimes(
+      // On autofill we get a stringified value.
+      typeof value === 'string' ? value.split(',') : value,
+    );
+  };
+
   return (
-    <FormControl fullWidth variant="outlined" margin="normal">
-      <InputLabel id="regime-label">Regime</InputLabel>
+    <FormControl fullWidth variant="outlined">
+      <InputLabel id="regime-selector-label">Regimes for Graph</InputLabel>
       <Select
-        labelId="regime-label"
-        id="regime-select"
-        value={selectedRegime}
-        onChange={(e) => onSelectRegime(e.target.value)}
-        label="Regime"
+        labelId="regime-selector-label"
+        id="regime-selector"
+        multiple
+        value={selectedRegimes}
+        onChange={handleChange}
+        input={<OutlinedInput label="Regimes for Graph" />}
+        renderValue={(selected) => selected.map((regime) => capitalizeWords(regime)).join(', ')}
+        MenuProps={MenuProps}
       >
-        <MenuItem value="">
-          <em>Select a regime</em>
-        </MenuItem>
         {regimes.map((regime) => (
           <MenuItem key={regime} value={regime}>
-            {capitalizeWords(regime)}
+            <Checkbox checked={selectedRegimes.indexOf(regime) > -1} />
+            <ListItemText primary={capitalizeWords(regime)} />
           </MenuItem>
         ))}
       </Select>
@@ -35,8 +57,8 @@ const RegimeSelector = ({ regimes, selectedRegime, onSelectRegime }) => {
 
 RegimeSelector.propTypes = {
   regimes: PropTypes.arrayOf(PropTypes.string),
-  selectedRegime: PropTypes.string,
-  onSelectRegime: PropTypes.func.isRequired,
+  selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onSelectRegimes: PropTypes.func.isRequired,
 };
 
 export default RegimeSelector;

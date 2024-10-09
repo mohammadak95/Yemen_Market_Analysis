@@ -26,10 +26,12 @@ function App() {
   const theme = isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides;
 
   const [selectedCommodity, setSelectedCommodity] = useState('');
-  const [selectedRegime, setSelectedRegime] = useState('');
   const [selectedAnalysis, setSelectedAnalysis] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [methodologyModalOpen, setMethodologyModalOpen] = useState(false);
+
+  // **State for Graph Regimes**
+  const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']); // Default to 'unified'
 
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
 
@@ -101,14 +103,15 @@ function App() {
           regimes={data?.regimes || []}
           selectedCommodity={selectedCommodity}
           setSelectedCommodity={setSelectedCommodity}
-          selectedRegime={selectedRegime}
-          setSelectedRegime={setSelectedRegime}
           selectedAnalysis={selectedAnalysis}
           setSelectedAnalysis={setSelectedAnalysis}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           isSmUp={isSmUp}
           onMethodologyClick={handleShowMethodology}
+          // **Pass the graph regimes state and setter**
+          selectedRegimes={selectedGraphRegimes}
+          setSelectedRegimes={setSelectedGraphRegimes}
         />
 
         {/* Main Content */}
@@ -119,7 +122,7 @@ function App() {
             <Dashboard
               data={data}
               selectedCommodity={selectedCommodity}
-              selectedRegime={selectedRegime}
+              selectedRegimes={selectedGraphRegimes} // Pass the graph regimes
               selectedAnalysis={selectedAnalysis}
             />
           </Box>

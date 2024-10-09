@@ -1,4 +1,4 @@
-//src/components/price-differential-analysis/PriceDifferentialAnalysis.js
+// src/components/price-differential-analysis/PriceDifferentialAnalysis.js
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
@@ -21,7 +21,7 @@ import DiagnosticsTests from './DiagnosticsTests';
 import MarketPairInfo from './MarketPairInfo';
 import usePriceDifferentialData from '../../hooks/usePriceDifferentialData';
 
-const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
+const PriceDifferentialAnalysis = ({ selectedCommodity }) => { // Removed selectedRegime from props
   const { data, status, error } = usePriceDifferentialData();
   const [baseMarket, setBaseMarket] = useState('');
   const [marketPairs, setMarketPairs] = useState([]);
@@ -178,7 +178,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
 
 PriceDifferentialAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
-  selectedRegime: PropTypes.string.isRequired,
+  // Removed selectedRegime prop
 };
 
 export default PriceDifferentialAnalysis;

@@ -1,5 +1,4 @@
 // src/Dashboard.js
-
 import React, { useMemo, Suspense, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Line } from 'react-chartjs-2';
@@ -53,7 +52,7 @@ ChartJS.register(
   Filler
 );
 
-const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }) => {
+const Dashboard = ({ data, selectedCommodity, selectedRegimes, selectedAnalysis }) => {
   // State for chart controls
   const [showConflictIntensity, setShowConflictIntensity] = useState(true);
   const [priceType, setPriceType] = useState('lcu'); // 'lcu' or 'usd'
@@ -61,36 +60,50 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
   const [applySmooth, setApplySmooth] = useState(false);
   const theme = useTheme();
 
-  // Chart Data Preparation
+  // **Chart Data Preparation for Multiple Regimes**
   const chartData = useMemo(() => {
-    if (!data || !selectedCommodity || !selectedRegime) return null;
+    if (!data || !selectedCommodity || selectedRegimes.length === 0) return null;
 
-    let filteredData = data.features
-      .filter(
-        (d) =>
-          d.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
-          d.regime.toLowerCase() === selectedRegime.toLowerCase()
-      )
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Aggregate data from selected regimes
+    let aggregatedData = [];
 
-    if (filteredData.length === 0) return null;
+    selectedRegimes.forEach((regime) => {
+      const regimeData = data.features
+        .filter(
+          (d) =>
+            d.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+            d.regime.toLowerCase() === regime.toLowerCase()
+        )
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Apply Seasonal Adjustment if enabled
-    if (applySeasonalAdj) {
-      filteredData = applySeasonalAdjustment(filteredData, [selectedRegime], 12, priceType === 'lcu');
-    }
+      if (regimeData.length > 0) {
+        let processedData = regimeData;
 
-    // Apply Smoothing if enabled
-    if (applySmooth) {
-      filteredData = applySmoothing(filteredData, [selectedRegime], 6, priceType === 'lcu');
-    }
+        // Apply Seasonal Adjustment if enabled
+        if (applySeasonalAdj) {
+          processedData = applySeasonalAdjustment(regimeData, [regime], 12, priceType === 'lcu');
+        }
+
+        // Apply Smoothing if enabled
+        if (applySmooth) {
+          processedData = applySmoothing(regimeData, [regime], 6, priceType === 'lcu');
+        }
+
+        aggregatedData = aggregatedData.concat(processedData);
+      }
+    });
+
+    if (aggregatedData.length === 0) return null;
+
+    // Sort aggregated data by date
+    aggregatedData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     return {
-      labels: filteredData.map((d) => new Date(d.date)),
+      labels: aggregatedData.map((d) => new Date(d.date)),
       datasets: [
         {
           label: priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
-          data: filteredData.map((d) => (priceType === 'lcu' ? d.price : d.usdprice)),
+          data: aggregatedData.map((d) => (priceType === 'lcu' ? d.price : d.usdprice)),
           borderColor: theme.palette.primary.main,
           backgroundColor: theme.palette.primary.light,
           yAxisID: 'y',
@@ -102,7 +115,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
           ? [
               {
                 label: 'Conflict Intensity',
-                data: filteredData.map((d) => d.conflict_intensity),
+                data: aggregatedData.map((d) => d.conflict_intensity),
                 borderColor: theme.palette.error.main,
                 backgroundColor: theme.palette.error.light,
                 yAxisID: 'y1',
@@ -117,7 +130,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
   }, [
     data,
     selectedCommodity,
-    selectedRegime,
+    selectedRegimes,
     showConflictIntensity,
     priceType,
     applySeasonalAdj,
@@ -235,7 +248,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
   );
 
   // Display a prompt if no data is available
-  if (!chartData) return <div>Please select a commodity.</div>;
+  if (!chartData) return <div>Please select at least one regime and a commodity.</div>;
 
   return (
     <Box
@@ -354,7 +367,7 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
             <Line options={options} data={chartData} />
           </Box>
         ) : (
-          <ErrorMessage message="No data available for the selected commodity and regime." />
+          <ErrorMessage message="No data available for the selected commodity and regimes." />
         )}
       </Paper>
 
@@ -363,22 +376,23 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
         <Box sx={{ mt: 4, width: '100%', maxWidth: 1200, mx: 'auto' }}>
           <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
             <Suspense fallback={<LoadingSpinner />}>
+              {/* Pass 'unified' as the regime to ECM and Price Differential analyses */}
               {selectedAnalysis === 'ecm' && (
                 <ECMAnalysis
                   selectedCommodity={selectedCommodity}
-                  selectedRegime={'unified'}
+                  selectedRegime={'unified'} // Always 'unified'
                 />
               )}
               {selectedAnalysis === 'priceDiff' && (
                 <PriceDifferentialAnalysis
                   selectedCommodity={selectedCommodity}
-                  selectedRegime={selectedRegime}
+                  selectedRegime={'unified'} // Always 'unified'
                 />
               )}
               {selectedAnalysis === 'spatial' && (
                 <SpatialAnalysis
                   selectedCommodity={selectedCommodity}
-                  selectedRegime={selectedRegime}
+                  selectedRegime={selectedRegimes} // Spatial Analysis still uses selectedRegime
                 />
               )}
             </Suspense>
@@ -389,11 +403,11 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
   );
 };
 
-// Define PropTypes for type checking
+// **Update PropTypes to include selectedRegimes**
 Dashboard.propTypes = {
   data: PropTypes.object.isRequired,
   selectedCommodity: PropTypes.string.isRequired,
-  selectedRegime: PropTypes.string.isRequired,
+  selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedAnalysis: PropTypes.string.isRequired, // Expected values: 'ecm', 'priceDiff', 'spatial'
 };
 

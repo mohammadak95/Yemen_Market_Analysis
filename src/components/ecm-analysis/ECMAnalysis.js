@@ -34,10 +34,12 @@ import { jsonToCsv } from '../../utils/jsonToCsv';
 import ECMTutorial from './ECMTutorial';
 import { formatNumber } from '../../utils/formatNumber';
 
-const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
+const ECMAnalysis = ({ selectedCommodity }) => { // Removed selectedRegime from props
   const [activeTab, setActiveTab] = useState(0);
   const [analysisType, setAnalysisType] = useState('unified');
   const [direction, setDirection] = useState('northToSouth');
+
+  const unifiedRegime = 'unified'; // Fixed regime
 
   // Fetch Unified and Directional ECM Data
   const {
@@ -72,7 +74,7 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
   useEffect(() => {
     if (analysisType === 'unified' && unifiedStatus === 'succeeded' && unifiedData) {
       const foundData = unifiedData.find(
-        (item) => item.commodity === selectedCommodity && item.regime === selectedRegime
+        (item) => item.commodity === selectedCommodity && item.regime === unifiedRegime
       );
       setSelectedData(foundData);
     } else if (analysisType === 'directional' && directionalStatus === 'succeeded' && directionalData) {
@@ -87,8 +89,8 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
     unifiedData,
     directionalData,
     selectedCommodity,
-    selectedRegime,
     direction,
+    unifiedRegime, // Added fixed regime
   ]);
 
   // Loading State
@@ -303,9 +305,9 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
   );
 }
 
-  ECMAnalysis.propTypes = {
-    selectedCommodity: PropTypes.string.isRequired,
-    selectedRegime: PropTypes.string.isRequired,
-  };
+ECMAnalysis.propTypes = {
+  selectedCommodity: PropTypes.string.isRequired,
+  // Removed selectedRegime prop
+};
 
-  export default ECMAnalysis;
+export default ECMAnalysis;

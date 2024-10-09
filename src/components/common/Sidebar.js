@@ -7,29 +7,16 @@ import {
   Box,
   Toolbar,
   Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Button,
-  IconButton,
   Typography,
   Stack,
+  IconButton,
 } from '@mui/material';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
-import MapIcon from '@mui/icons-material/Map';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { styled } from '@mui/material/styles';
 import { drawerWidth } from '../../styles/LayoutStyles';
 import CommoditySelector from './CommoditySelector';
 import RegimeSelector from './RegimeSelector';
-
-// Styled Toggle Button for collapsing and expanding the sidebar
-const ToggleButton = styled(IconButton)(( ) => ({
-  marginLeft: 'auto',
-}));
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 // Styled Drawer with dynamic width based on 'open' prop
 const SidebarDrawer = styled(Drawer)(({ theme }) => ({
@@ -53,22 +40,24 @@ const Sidebar = ({
   regimes = [],
   selectedCommodity = '',
   setSelectedCommodity,
-  selectedRegime = '',
-  setSelectedRegime,
   selectedAnalysis = '',
   setSelectedAnalysis,
   sidebarOpen,
   setSidebarOpen,
   isSmUp,
   onMethodologyClick,
+  selectedRegimes,
+  setSelectedRegimes,
 }) => {
-  // Removed 'theme' since it's not directly used to prevent ESLint warnings
-
   const handleAnalysisChange = (analysis) => {
     setSelectedAnalysis(analysis);
     if (!isSmUp) {
       setSidebarOpen(false);
     }
+  };
+
+  const handleDrawerClose = () => {
+    setSidebarOpen(false);
   };
 
   return (
@@ -81,83 +70,78 @@ const Sidebar = ({
       }}
       anchor="left"
     >
-      <Toolbar>
+      <Toolbar
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: [1],
+        }}
+      >
         <Typography variant="h6" noWrap component="div">
-          {sidebarOpen ? 'Menu' : 'M'}
+          Menu
         </Typography>
-        {isSmUp && (
-          <ToggleButton onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
-            {sidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-          </ToggleButton>
-        )}
+        {/* Toggle Button to Collapse Sidebar */}
+        <IconButton onClick={handleDrawerClose}>
+          <ChevronLeftIcon />
+        </IconButton>
       </Toolbar>
       <Divider />
       <Box sx={{ p: 2 }}>
         {sidebarOpen && (
-          <Stack spacing={2}>
+          <Stack spacing={3}>
+            {/* Commodity Selector */}
             <CommoditySelector
               commodities={commodities}
               selectedCommodity={selectedCommodity}
               onSelectCommodity={setSelectedCommodity}
             />
+
+            {/* Regime Selector */}
             <RegimeSelector
               regimes={regimes}
-              selectedRegime={selectedRegime}
-              onSelectRegime={setSelectedRegime}
+              selectedRegimes={selectedRegimes}
+              onSelectRegimes={setSelectedRegimes}
             />
-          </Stack>
-        )}
 
-        {/* Analysis Selector List */}
-        {sidebarOpen && (
-          <>
-            <Divider sx={{ my: 2 }} />
-            <List component="nav" aria-label="analysis options">
-              <ListItem
-                button
-                selected={selectedAnalysis === 'ecm'}
+            {/* Analysis Buttons */}
+            <Stack spacing={2}>
+              <Button
+                variant={selectedAnalysis === 'ecm' ? 'contained' : 'outlined'}
+                color="primary"
+                fullWidth
                 onClick={() => handleAnalysisChange('ecm')}
               >
-                <ListItemIcon>
-                  <AssessmentIcon color={selectedAnalysis === 'ecm' ? 'primary' : 'inherit'} />
-                </ListItemIcon>
-                <ListItemText primary="ECM Analysis" />
-              </ListItem>
-              <ListItem
-                button
-                selected={selectedAnalysis === 'priceDiff'}
+                ECM Analysis
+              </Button>
+              <Button
+                variant={selectedAnalysis === 'priceDiff' ? 'contained' : 'outlined'}
+                color="primary"
+                fullWidth
                 onClick={() => handleAnalysisChange('priceDiff')}
               >
-                <ListItemIcon>
-                  <ShowChartIcon color={selectedAnalysis === 'priceDiff' ? 'primary' : 'inherit'} />
-                </ListItemIcon>
-                <ListItemText primary="Price Differential Analysis" />
-              </ListItem>
-              <ListItem
-                button
-                selected={selectedAnalysis === 'spatial'}
+                Price Differential Analysis
+              </Button>
+              <Button
+                variant={selectedAnalysis === 'spatial' ? 'contained' : 'outlined'}
+                color="primary"
+                fullWidth
                 onClick={() => handleAnalysisChange('spatial')}
               >
-                <ListItemIcon>
-                  <MapIcon color={selectedAnalysis === 'spatial' ? 'primary' : 'inherit'} />
-                </ListItemIcon>
-                <ListItemText primary="Spatial Analysis" />
-              </ListItem>
-            </List>
-          </>
-        )}
+                Spatial Analysis
+              </Button>
+            </Stack>
 
-        {/* Methodology Button */}
-        {sidebarOpen && (
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mt: 3 }}
-            onClick={onMethodologyClick}
-          >
-            Methodology
-          </Button>
+            {/* Methodology Button */}
+            <Button
+              variant="contained"
+              color="secondary"
+              fullWidth
+              onClick={onMethodologyClick}
+            >
+              Methodology
+            </Button>
+          </Stack>
         )}
       </Box>
     </SidebarDrawer>
@@ -169,14 +153,14 @@ Sidebar.propTypes = {
   regimes: PropTypes.arrayOf(PropTypes.string),
   selectedCommodity: PropTypes.string,
   setSelectedCommodity: PropTypes.func.isRequired,
-  selectedRegime: PropTypes.string,
-  setSelectedRegime: PropTypes.func.isRequired,
   selectedAnalysis: PropTypes.string,
   setSelectedAnalysis: PropTypes.func.isRequired,
   sidebarOpen: PropTypes.bool.isRequired,
   setSidebarOpen: PropTypes.func.isRequired,
   isSmUp: PropTypes.bool.isRequired,
   onMethodologyClick: PropTypes.func.isRequired,
+  selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setSelectedRegimes: PropTypes.func.isRequired,
 };
 
 export default Sidebar;
