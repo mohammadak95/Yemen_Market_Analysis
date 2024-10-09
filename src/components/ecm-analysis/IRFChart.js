@@ -1,105 +1,80 @@
-// src/components/ecm-analysis/IRFChart.js
-
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip as RechartsTooltip,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
-  Area,
 } from 'recharts';
-import { Typography, Paper, Tooltip } from '@mui/material';
+import { Typography, Paper, ToggleButtonGroup, ToggleButton, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const IRFChart = ({ irfData }) => {
-  const data = useMemo(() => {
-    return irfData.irf.map((point, index) => ({
-      period: index,
-      response: point[0][1],
-      lower: irfData.lower ? irfData.lower[index][0][1] : null,
-      upper: irfData.upper ? irfData.upper[index][0][1] : null,
-    }));
-  }, [irfData]);
+  const [selectedVariable, setSelectedVariable] = useState('usdPrice');
 
-  const formatNumber = (num) => (typeof num === 'number' ? num.toFixed(2) : 'N/A');
+  const handleVariableChange = (event, newVariable) => {
+    if (newVariable !== null) {
+      setSelectedVariable(newVariable);
+    }
+  };
+
+  const chartData = irfData.irf.map((point, index) => ({
+    period: index,
+    usdPrice: point[0][0],
+    conflictIntensity: point[1][0],
+  }));
 
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
-        Impulse Response Function (IRF)
+        Impulse Response Function
       </Typography>
-      <Typography variant="body2" gutterBottom>
-        Shows the response of commodity prices to a shock in conflict intensity over time.
-      </Typography>
+      <Box sx={{ mb: 2 }}>
+        <ToggleButtonGroup
+          value={selectedVariable}
+          exclusive
+          onChange={handleVariableChange}
+          aria-label="selected variable"
+        >
+          <ToggleButton value="usdPrice" aria-label="USD Price">
+            USD Price
+          </ToggleButton>
+          <ToggleButton value="conflictIntensity" aria-label="Conflict Intensity">
+            Conflict Intensity
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={data}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="period"
-            label={
-              <Tooltip title="Time periods after the shock">
-                <text x="50%" y="100%" dy={16} textAnchor="middle" fill="#666" fontSize={12}>
-                  Period
-                </text>
-              </Tooltip>
-            }
+          <XAxis 
+            dataKey="period" 
+            label={{ value: 'Period', position: 'insideBottom', offset: -5 }} 
           />
-          <YAxis
-            label={
-              <Tooltip title="Response of the commodity price to the shock">
-                <text
-                  transform="rotate(-90)"
-                  y={15}
-                  x={-200}
-                  dy="-5.1em"
-                  textAnchor="middle"
-                  fill="#666"
-                  fontSize={12}
-                >
-                  Response
-                </text>
-              </Tooltip>
-            }
+          <YAxis 
+            label={{ value: 'Response', angle: -90, position: 'insideLeft' }} 
           />
-          <RechartsTooltip
-            formatter={(value) => formatNumber(value)}
+          <Tooltip 
+            formatter={(value) => [value.toFixed(4), selectedVariable === 'usdPrice' ? 'USD Price Response' : 'Conflict Intensity Response']}
             labelFormatter={(label) => `Period: ${label}`}
           />
-          {data.some((d) => d.lower !== null && d.upper !== null) && (
-            <Area
-              type="monotone"
-              dataKey="upper"
-              stroke={false}
-              fillOpacity={0.2}
-              fill="#82ca9d"
-              name="Confidence Interval Upper"
-            />
-          )}
-          {data.some((d) => d.lower !== null && d.upper !== null) && (
-            <Area
-              type="monotone"
-              dataKey="lower"
-              stroke={false}
-              fillOpacity={0.2}
-              fill="#82ca9d"
-              name="Confidence Interval Lower"
-            />
-          )}
-          <Line
-            type="monotone"
-            dataKey="response"
-            stroke="#8884d8"
-            name="Price Response to Conflict"
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+          <Legend />
+          <Line 
+            type="monotone" 
+            dataKey={selectedVariable} 
+            stroke="#8884d8" 
+            name={selectedVariable === 'usdPrice' ? 'USD Price Response' : 'Conflict Intensity Response'} 
+            dot={{ r: 3 }} 
+            activeDot={{ r: 8 }}
           />
         </LineChart>
       </ResponsiveContainer>
-      <Typography variant="caption" display="block" sx={{ mt: 2 }}>
-        * Confidence intervals represent the uncertainty around the impulse response estimates.
+      <Typography variant="body2" sx={{ mt: 2 }}>
+        This chart shows how {selectedVariable === 'usdPrice' ? 'USD Price' : 'Conflict Intensity'} responds to a shock over time. 
+        A positive value indicates an increase in response to the shock, while a negative value indicates a decrease.
       </Typography>
     </Paper>
   );
@@ -108,8 +83,6 @@ const IRFChart = ({ irfData }) => {
 IRFChart.propTypes = {
   irfData: PropTypes.shape({
     irf: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number))).isRequired,
-    lower: PropTypes.array,
-    upper: PropTypes.array,
   }).isRequired,
 };
 

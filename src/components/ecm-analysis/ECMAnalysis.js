@@ -1,5 +1,3 @@
-// src/components/ecm-analysis/ECMAnalysis.js
-
 import React, { useState, useEffect } from 'react';
 import {
   Tabs,
@@ -8,13 +6,14 @@ import {
   Paper,
   Typography,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  Slider,
+  Tooltip,
+  IconButton,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoIcon from '@mui/icons-material/Info';
 import useECMData from '../../hooks/useECMData';
 import PropTypes from 'prop-types';
 import SummaryTable from './SummaryTable';
@@ -38,7 +37,6 @@ TabPanel.propTypes = {
 
 const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedLags, setSelectedLags] = useState(4);
   const { data, status, error } = useECMData();
   const [selectedData, setSelectedData] = useState(null);
 
@@ -46,46 +44,14 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
     setActiveTab(newValue);
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([JSON.stringify(selectedData)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ECM_Results_${selectedCommodity}_${selectedRegime}.json`;
-    link.click();
-  };
-
-  const handleLagsChange = (event, newValue) => {
-    setSelectedLags(newValue);
-  };
-
   useEffect(() => {
     if (status === 'succeeded' && data) {
       const foundData = data.find(
         (item) => item.commodity === selectedCommodity && item.regime === selectedRegime
       );
-      if (foundData) {
-        // If fit_metrics are missing, compute them
-        if (!foundData.fit_metrics && foundData.residuals && foundData.fitted_values) {
-          const n = foundData.residuals.length;
-          const residualSumOfSquares = foundData.residuals.reduce((sum, val) => sum + val ** 2, 0);
-          const totalSumOfSquares = foundData.fitted_values.reduce(
-            (sum, val) => sum + (val - foundData.mean_price) ** 2,
-            0
-          );
-          const rSquared = 1 - residualSumOfSquares / totalSumOfSquares;
-          const adjRSquared = 1 - (1 - rSquared) * ((n - 1) / (n - selectedLags - 1));
-
-          foundData.fit_metrics = {
-            r_squared: rSquared,
-            adj_r_squared: adjRSquared,
-          };
-        }
-
-        setSelectedData(foundData);
-      }
+      setSelectedData(foundData);
     }
-  }, [status, data, selectedCommodity, selectedRegime, selectedLags]);
+  }, [status, data, selectedCommodity, selectedRegime]);
 
   if (status === 'loading') {
     return (
@@ -119,72 +85,36 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
   return (
     <Paper elevation={3} sx={{ mt: 4 }}>
       <Box sx={{ p: 2 }}>
-        <Typography variant="h5">
+        <Typography variant="h5" gutterBottom>
           ECM Analysis: {selectedCommodity} - {selectedRegime}
+          <Tooltip title="Error Correction Model (ECM) analysis examines the short-term and long-term relationships between variables.">
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Typography>
-        <Typography variant="body2" gutterBottom>
-          The Error Correction Model (ECM) captures both short-term dynamics and long-term
-          equilibrium relationships between commodity prices and conflict intensity.
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
-            <InputLabel id="lag-select-label">Lags</InputLabel>
-            <Select
-              labelId="lag-select-label"
-              value={selectedLags}
-              onChange={(e) => setSelectedLags(e.target.value)}
-              label="Lags"
-            >
-              {[1, 2, 3, 4, 5].map((lag) => (
-                <MenuItem key={lag} value={lag}>
-                  {lag}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Box sx={{ width: 300, ml: 4 }}>
-            <Typography gutterBottom>Select Number of Lags</Typography>
-            <Slider
-              value={selectedLags}
-              onChange={handleLagsChange}
-              aria-labelledby="lag-slider"
-              valueLabelDisplay="auto"
-              step={1}
-              marks
-              min={1}
-              max={10}
-            />
-          </Box>
-          <Button variant="contained" sx={{ ml: 4 }} onClick={handleDownload}>
-            Download ECM Results
-          </Button>
-        </Box>
       </Box>
       <Tabs value={activeTab} onChange={handleTabChange} centered variant="scrollable" scrollButtons="auto">
         <Tab label="Summary" />
         <Tab label="Diagnostics" />
         <Tab label="IRF" />
-        <Tab label="Residuals Analysis" />
+        <Tab label="Residuals" />
         <Tab label="Granger Causality" />
         <Tab label="Spatial Autocorrelation" />
       </Tabs>
       <TabPanel value={activeTab} index={0}>
-        <SummaryTable
-          data={selectedData}
-          selectedCommodity={selectedCommodity}
-          selectedRegime={selectedRegime}
-        />
+        <SummaryTable data={selectedData} />
       </TabPanel>
       <TabPanel value={activeTab} index={1}>
         <DiagnosticsTable diagnostics={selectedData.diagnostics} />
       </TabPanel>
       <TabPanel value={activeTab} index={2}>
-        <IRFChart irfData={selectedData.irf.impulse_response} />
+        <IRFChart irfData={selectedData.irf} />
       </TabPanel>
       <TabPanel value={activeTab} index={3}>
         <ResidualsChart
-          residuals={selectedData.residuals}
-          fittedValues={selectedData.fitted_values}
+          residuals={selectedData.diagnostics.Variable_1.acf}
+          fittedValues={selectedData.diagnostics.Variable_1.pacf}
         />
       </TabPanel>
       <TabPanel value={activeTab} index={4}>
@@ -193,6 +123,25 @@ const ECMAnalysis = ({ selectedCommodity, selectedRegime }) => {
       <TabPanel value={activeTab} index={5}>
         <SpatialAutocorrelationChart spatialData={selectedData.spatial_autocorrelation} />
       </TabPanel>
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography>Interpretation Guide</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="body2">
+            This ECM analysis provides insights into the relationship between commodity prices and conflict intensity.
+            Key points to consider:
+            <ul>
+              <li>The Summary tab shows overall model fit statistics.</li>
+              <li>Diagnostics tab provides tests for model assumptions.</li>
+              <li>IRF shows how variables respond to shocks over time.</li>
+              <li>Residuals chart helps assess model accuracy.</li>
+              <li>Granger Causality examines predictive relationships.</li>
+              <li>Spatial Autocorrelation indicates geographical dependencies.</li>
+            </ul>
+          </Typography>
+        </AccordionDetails>
+      </Accordion>
     </Paper>
   );
 };
