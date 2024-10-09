@@ -1,5 +1,3 @@
-#//project/config/config.yaml
-
 directories:
   data_dir: "project/data/"
   processed_data_dir: "project/data/processed/"
@@ -66,7 +64,9 @@ parameters:
   min_regions: 5             
   spatial_weights:
     threshold_multiplier: 1      # Multiplier for average distance in spatial weights creation
-  min_neighbors: 2               
+  min_neighbors: 2
+  parallel_processes: 8          # **Adjusted to utilize 16 cores**
+  memory_per_process_gb: 4        # **New parameter to monitor memory usage per process**
 
 logging:
   level: "DEBUG"

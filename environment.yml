@@ -1,0 +1,17 @@
+name: Yemen_Market_Analysis
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - geopandas
+  - statsmodels
+  - scikit-learn
+  - pyyaml
+  - arch
+  - esda
+  - pysal
+  - joblib
+  - psutil
+  - pyarrow
