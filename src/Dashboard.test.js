@@ -21,7 +21,7 @@ test('renders Dashboard component', () => {
     <Dashboard
       data={mockData}
       selectedCommodity="commodity"
-      selectedRegime="regime"
+      selectedRegimes={['regime']}
       selectedAnalysis=""
     />
   );
