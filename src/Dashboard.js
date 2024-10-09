@@ -27,7 +27,7 @@ import {
   Paper,
   Tooltip as MuiTooltip,
   IconButton,
-} from '@mui/material';
+  } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -40,6 +40,7 @@ const PriceDifferentialAnalysis = React.lazy(() =>
   import('./components/price-differential-analysis/PriceDifferentialAnalysis')
 );
 const SpatialAnalysis = React.lazy(() => import('./components/spatial-analysis/SpatialAnalysis'));
+
 
 // Register Chart.js components
 ChartJS.register(
@@ -360,28 +361,13 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
       {/* Conditional Analysis Components */}
       {selectedAnalysis && (
         <Box sx={{ mt: 4, width: '100%', maxWidth: 1200, mx: 'auto' }}>
-          <Paper
-            elevation={3}
-            sx={{
-              p: { xs: 3, md: 4 },
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              borderRadius: 2,
-              backgroundColor: theme.palette.background.paper,
-            }}
-          >
-            <Suspense
-              fallback={
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                  <LoadingSpinner />
-                </Box>
-              }
-            >
-              {/* Render selected analysis component */}
+          <Paper elevation={3} sx={{ /* ... (keep existing styles) */ }}>
+            <Suspense fallback={<LoadingSpinner />}>
               {selectedAnalysis === 'ecm' && (
-                <ECMAnalysis selectedCommodity={selectedCommodity} selectedRegime={selectedRegime} />
+                <ECMAnalysis
+                  selectedCommodity={selectedCommodity}
+                  selectedRegime={selectedRegime}
+                />
               )}
               {selectedAnalysis === 'priceDiff' && (
                 <PriceDifferentialAnalysis
@@ -390,7 +376,10 @@ const Dashboard = ({ data, selectedCommodity, selectedRegime, selectedAnalysis }
                 />
               )}
               {selectedAnalysis === 'spatial' && (
-                <SpatialAnalysis selectedCommodity={selectedCommodity} selectedRegime={selectedRegime} />
+                <SpatialAnalysis
+                  selectedCommodity={selectedCommodity}
+                  selectedRegime={selectedRegime}
+                />
               )}
             </Suspense>
           </Paper>

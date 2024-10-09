@@ -72,7 +72,9 @@ const prepareData = () => {
       'price_diff_results/price_differential_results.json',
       'spatial_weights/spatial_weights.json',
       'time_series_data/conflict_intensity_time_series.csv',
-      'time_series_data/prices_time_series.csv'
+      'time_series_data/prices_time_series.csv',
+      'ecm/ecm_results_north_to_south.json',
+      'ecm/ecm_results_south_to_north.json'
     ];
 
     filesToEnsure.forEach(file => {
