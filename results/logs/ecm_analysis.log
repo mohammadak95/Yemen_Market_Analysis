@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 2024-10-09 04:29:56,098 - __main__ - INFO - Starting ECM analysis workflow at 2024-10-09 04:29:56
 2024-10-09 04:29:56,099 - __main__ - INFO - Loading data at 2024-10-09 04:29:56
 2024-10-09 04:29:56,099 - __main__ - DEBUG - Loading data from /workspaces/Yemen_Market_Analysis/project/data/processed/unified_data.geojson
@@ -458,3 +459,15 @@
 2024-10-09 04:32:14,671 - __main__ - DEBUG - Computing Granger causality
 2024-10-09 04:32:23,896 - __main__ - INFO - Results saved to /workspaces/Yemen_Market_Analysis/results/ecm/ecm_analysis_results.json
 2024-10-09 04:32:23,897 - __main__ - INFO - ECM analysis workflow completed successfully in 147.80 seconds
+=======
+2024-10-08 13:05:32,044 - INFO - Starting ECM analysis workflow at 2024-10-08 13:05:32
+2024-10-08 13:05:32,045 - INFO - Loading data at 2024-10-08 13:05:32
+2024-10-08 13:05:32,045 - DEBUG - Loading data from /Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis/project/data/processed/unified_data.geojson
+2024-10-08 13:05:32,661 - INFO - Dropped 0 duplicate or NaN rows based on 'date'.
+2024-10-08 13:05:32,663 - INFO - Excluded records from 'Amanat Al Asimah'.
+2024-10-08 13:05:32,665 - INFO - Filtered data for specified commodities. Number of records: 18612
+2024-10-08 13:05:32,666 - DEBUG - Data filtered for exchange rate regimes: ['north', 'south', 'unified']
+2024-10-08 13:05:32,671 - DEBUG - No dummy variables created for exchange_rate_regime.
+2024-10-08 13:05:32,677 - DEBUG - Data grouped into 18 groups.
+2024-10-08 13:05:32,679 - INFO - Data loaded with 18 groups, took 0.63 seconds
+>>>>>>> origin/main
