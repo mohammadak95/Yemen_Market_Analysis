@@ -9,9 +9,13 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
+  TableHead,
 } from '@mui/material';
+import { CheckCircle, Cancel } from '@mui/icons-material';
+import { green, red } from '@mui/material/colors';
+import { Bar } from 'react-chartjs-2';
+import 'chart.js/auto';
 
 const RegressionResults = ({ data }) => {
   if (!data) {
@@ -22,7 +26,36 @@ const RegressionResults = ({ data }) => {
     );
   }
 
-  const { coefficients, intercept, p_values, r_squared, adj_r_squared, mse, observations } = data;
+  const { coefficients, intercept, p_values, r_squared, adj_r_squared, mse, observations, vif } = data;
+
+  // Prepare data for coefficient plot
+  const coefLabels = Object.keys(coefficients);
+  const coefValues = Object.values(coefficients);
+
+  const chartData = {
+    labels: coefLabels,
+    datasets: [
+      {
+        label: 'Coefficient Value',
+        data: coefValues,
+        backgroundColor: coefValues.map((value) =>
+          value >= 0 ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'
+        ),
+        borderColor: coefValues.map((value) =>
+          value >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)'
+        ),
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'Regression Coefficients' },
+    },
+  };
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -36,36 +69,73 @@ const RegressionResults = ({ data }) => {
               <TableCell>Variable</TableCell>
               <TableCell>Coefficient</TableCell>
               <TableCell>P-Value</TableCell>
+              <TableCell>Significant</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.keys(coefficients).map((variable) => (
+            {coefLabels.map((variable) => (
               <TableRow key={variable}>
                 <TableCell>{variable}</TableCell>
                 <TableCell>{coefficients[variable].toFixed(4)}</TableCell>
                 <TableCell>{p_values[variable].toFixed(4)}</TableCell>
+                <TableCell>
+                  {p_values[variable] < 0.05 ? (
+                    <CheckCircle sx={{ color: green[500] }} />
+                  ) : (
+                    <Cancel sx={{ color: red[500] }} />
+                  )}
+                </TableCell>
               </TableRow>
             ))}
             <TableRow>
               <TableCell>Intercept</TableCell>
               <TableCell>{intercept.toFixed(4)}</TableCell>
               <TableCell>N/A</TableCell>
+              <TableCell>N/A</TableCell>
             </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Coefficient Bar Chart */}
+      <Bar data={chartData} options={chartOptions} />
+
+      {/* Additional Metrics */}
       <Typography variant="body2" sx={{ mt: 2 }}>
-        R-Squared: {r_squared.toFixed(4)}
+        <strong>R-Squared:</strong> {r_squared.toFixed(4)}
       </Typography>
       <Typography variant="body2">
-        Adjusted R-Squared: {adj_r_squared.toFixed(4)}
+        <strong>Adjusted R-Squared:</strong> {adj_r_squared.toFixed(4)}
       </Typography>
       <Typography variant="body2">
-        Mean Squared Error (MSE): {mse.toFixed(4)}
+        <strong>Mean Squared Error (MSE):</strong> {mse.toFixed(4)}
       </Typography>
       <Typography variant="body2">
-        Observations: {observations}
+        <strong>Observations:</strong> {observations}
       </Typography>
+
+      {/* VIF Table */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+        Variance Inflation Factor (VIF)
+      </Typography>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Variable</TableCell>
+              <TableCell>VIF</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {vif.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell>{item.Variable}</TableCell>
+                <TableCell>{item.VIF.toFixed(4)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Paper>
   );
 };
@@ -79,6 +149,12 @@ RegressionResults.propTypes = {
     adj_r_squared: PropTypes.number.isRequired,
     mse: PropTypes.number.isRequired,
     observations: PropTypes.number.isRequired,
+    vif: PropTypes.arrayOf(
+      PropTypes.shape({
+        Variable: PropTypes.string.isRequired,
+        VIF: PropTypes.number.isRequired,
+      })
+    ).isRequired,
   }),
 };
 

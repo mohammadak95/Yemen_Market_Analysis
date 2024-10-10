@@ -1,3 +1,5 @@
+// src/components/spatial-analysis/index.js
+
 import React, { Suspense, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -156,7 +158,7 @@ const getAnalysisTitle = (analysis) => {
 };
 
 // Helper function to render analysis components
-const renderAnalysisComponent = (analysis, commodity, regimes) => {
+const renderAnalysisComponent = (analysis, commodity) => {
   switch (analysis) {
     case 'ecm':
       return (
@@ -176,7 +178,7 @@ const renderAnalysisComponent = (analysis, commodity, regimes) => {
       return (
         <SpatialAnalysis
           selectedCommodity={commodity}
-          selectedRegime={regimes} // Spatial Analysis uses selectedRegimes
+          selectedRegime="unified" // Pass 'unified' as a string
         />
       );
     default:
@@ -207,4 +209,3 @@ Dashboard.propTypes = {
 };
 
 export default Dashboard;
-

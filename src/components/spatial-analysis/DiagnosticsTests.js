@@ -2,7 +2,20 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TableHead } from '@mui/material';
+import {
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  TableHead, // Imported to fix the first error
+} from '@mui/material';
+import { CheckCircle, Cancel } from '@mui/icons-material';
+import { green, red } from '@mui/material/colors';
+import { Scatter } from 'react-chartjs-2';
+import 'chart.js/auto';
 
 const DiagnosticsTests = ({ data }) => {
   if (!data) {
@@ -13,7 +26,35 @@ const DiagnosticsTests = ({ data }) => {
     );
   }
 
-  const { moran_i, vif } = data;
+  const { moran_i, vif, residuals } = data; // Ensure 'residuals' is passed
+
+  // Prepare data for Residuals vs Fitted Values Scatter Plot
+  const residualsPlotData = {
+    labels: residuals.map((residual, index) => index + 1),
+    datasets: [
+      {
+        label: 'Residuals',
+        data: residuals.map((residual, index) => ({ x: index + 1, y: residual })),
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+      },
+    ],
+  };
+
+  const residualsPlotOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'Residuals vs. Fitted Values' },
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Fitted Values' },
+      },
+      y: {
+        title: { display: true, text: 'Residuals' },
+      },
+    },
+  };
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -22,49 +63,51 @@ const DiagnosticsTests = ({ data }) => {
       </Typography>
       <TableContainer>
         <Table>
-          <TableHead>
+          <TableHead> {/* Now properly defined */}
             <TableRow>
               <TableCell>Test</TableCell>
               <TableCell>Statistic</TableCell>
               <TableCell>P-Value</TableCell>
+              <TableCell>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
+            {/* Moran's I */}
             <TableRow>
-              <TableCell>Moran&apos;s I</TableCell>
+              <TableCell>Moran&apos;s I</TableCell> {/* Escaped single quote */}
               <TableCell>{moran_i.I.toFixed(4)}</TableCell>
               <TableCell>{moran_i['p-value'].toFixed(4)}</TableCell>
+              <TableCell>
+                {moran_i['p-value'] < 0.05 ? (
+                  <CheckCircle sx={{ color: green[500] }} />
+                ) : (
+                  <Cancel sx={{ color: red[500] }} />
+                )}
+              </TableCell>
             </TableRow>
-            <TableRow>
-              <TableCell>Moran&apos;s I P-Value</TableCell>
-              <TableCell>{moran_i['p-value'].toFixed(4)}</TableCell>
-              <TableCell>N/A</TableCell> {/* Adjusted to include P-Value properly */}
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        Variance Inflation Factor (VIF)
-      </Typography>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Variable</TableCell>
-              <TableCell>VIF</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+            {/* VIFs */}
             {vif.map((item, index) => (
               <TableRow key={index}>
-                <TableCell>{item.Variable}</TableCell>
+                <TableCell>VIF: {item.Variable}</TableCell>
                 <TableCell>{item.VIF.toFixed(4)}</TableCell>
+                <TableCell>N/A</TableCell>
+                <TableCell>
+                  {item.VIF < 5 ? (
+                    <CheckCircle sx={{ color: green[500] }} />
+                  ) : (
+                    <Cancel sx={{ color: red[500] }} />
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Residuals vs Fitted Values Scatter Plot */}
+      {residuals && residuals.length > 0 && (
+        <Scatter data={residualsPlotData} options={residualsPlotOptions} sx={{ mt: 4 }} />
+      )}
     </Paper>
   );
 };
@@ -81,6 +124,7 @@ DiagnosticsTests.propTypes = {
         VIF: PropTypes.number.isRequired,
       })
     ).isRequired,
+    residuals: PropTypes.arrayOf(PropTypes.number), // Ensure residuals are passed
   }),
 };
 
