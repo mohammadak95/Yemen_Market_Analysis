@@ -1,149 +1,149 @@
 {
   "abyan": [
-    "abyan",
-    "abyan",
-    "abyan",
-    "abyan",
-    "abyan"
+    "lahj",
+    "aden",
+    "al dhale'e",
+    "al bayda",
+    "taizz"
   ],
   "aden": [
-    "aden",
-    "aden",
-    "aden",
-    "aden",
-    "aden"
-  ],
-  "al bayda": [
-    "al bayda",
-    "al bayda",
-    "al bayda",
-    "al bayda",
+    "lahj",
+    "abyan",
+    "al dhale'e",
+    "taizz",
     "al bayda"
   ],
+  "al bayda": [
+    "al dhale'e",
+    "abyan",
+    "lahj",
+    "dhamar",
+    "aden"
+  ],
   "al dhale'e": [
-    "al dhale'e",
-    "al dhale'e",
-    "al dhale'e",
-    "al dhale'e",
-    "al dhale'e"
+    "ibb",
+    "lahj",
+    "taizz",
+    "abyan",
+    "al bayda"
   ],
   "al hudaydah": [
-    "al hudaydah",
-    "al hudaydah",
-    "al hudaydah",
-    "al hudaydah",
-    "al hudaydah"
-  ],
-  "al jawf": [
-    "al jawf",
-    "al jawf",
-    "al jawf",
-    "al jawf",
-    "al jawf"
-  ],
-  "al maharah": [
-    "al maharah",
-    "al maharah",
-    "al maharah",
-    "al maharah",
-    "al maharah"
-  ],
-  "al mahwit": [
+    "raymah",
     "al mahwit",
-    "al mahwit",
-    "al mahwit",
-    "al mahwit",
-    "al mahwit"
-  ],
-  "amanat al asimah": [
-    "amanat al asimah",
-    "amanat al asimah",
-    "amanat al asimah",
-    "amanat al asimah",
+    "hajjah",
+    "amran",
     "amanat al asimah"
   ],
-  "amran": [
+  "al jawf": [
+    "marib",
     "amran",
-    "amran",
-    "amran",
-    "amran",
-    "amran"
-  ],
-  "dhamar": [
-    "dhamar",
-    "dhamar",
-    "dhamar",
-    "dhamar",
-    "dhamar"
-  ],
-  "hadramaut": [
-    "hadramaut",
-    "hadramaut",
-    "hadramaut",
-    "hadramaut",
-    "hadramaut"
-  ],
-  "hajjah": [
-    "hajjah",
-    "hajjah",
-    "hajjah",
-    "hajjah",
+    "sana'a",
+    "amanat al asimah",
     "hajjah"
   ],
-  "ibb": [
-    "ibb",
-    "ibb",
-    "ibb",
-    "ibb",
-    "ibb"
+  "al maharah": [
+    "hadramaut",
+    "socotra",
+    "shabwah",
+    "marib",
+    "al bayda"
   ],
-  "lahj": [
-    "lahj",
-    "lahj",
-    "lahj",
-    "lahj",
-    "lahj"
+  "al mahwit": [
+    "hajjah",
+    "amran",
+    "amanat al asimah",
+    "raymah",
+    "al hudaydah"
   ],
-  "marib": [
-    "marib",
-    "marib",
-    "marib",
-    "marib",
-    "marib"
+  "amanat al asimah": [
+    "sana'a",
+    "amran",
+    "al mahwit",
+    "hajjah",
+    "dhamar"
   ],
-  "raymah": [
+  "amran": [
+    "hajjah",
+    "amanat al asimah",
+    "al mahwit",
+    "sana'a",
+    "al jawf"
+  ],
+  "dhamar": [
+    "ibb",
+    "sana'a",
     "raymah",
-    "raymah",
-    "raymah",
-    "raymah",
+    "amanat al asimah",
+    "al dhale'e"
+  ],
+  "hadramaut": [
+    "shabwah",
+    "al maharah",
+    "al bayda",
+    "marib",
+    "abyan"
+  ],
+  "hajjah": [
+    "al mahwit",
+    "amran",
+    "amanat al asimah",
+    "sana'a",
     "raymah"
   ],
+  "ibb": [
+    "taizz",
+    "al dhale'e",
+    "dhamar",
+    "raymah",
+    "lahj"
+  ],
+  "lahj": [
+    "aden",
+    "abyan",
+    "al dhale'e",
+    "taizz",
+    "ibb"
+  ],
+  "marib": [
+    "sana'a",
+    "al jawf",
+    "amanat al asimah",
+    "dhamar",
+    "amran"
+  ],
+  "raymah": [
+    "al hudaydah",
+    "al mahwit",
+    "dhamar",
+    "amanat al asimah",
+    "ibb"
+  ],
   "sana'a": [
-    "sana'a",
-    "sana'a",
-    "sana'a",
-    "sana'a",
-    "sana'a"
+    "amanat al asimah",
+    "amran",
+    "dhamar",
+    "marib",
+    "al mahwit"
   ],
   "shabwah": [
-    "shabwah",
-    "shabwah",
-    "shabwah",
-    "shabwah",
-    "shabwah"
+    "al bayda",
+    "marib",
+    "abyan",
+    "hadramaut",
+    "al dhale'e"
   ],
   "socotra": [
-    "socotra",
-    "socotra",
-    "socotra",
-    "socotra",
-    "socotra"
+    "al maharah",
+    "hadramaut",
+    "shabwah",
+    "al bayda",
+    "abyan"
   ],
   "taizz": [
-    "taizz",
-    "taizz",
-    "taizz",
-    "taizz",
-    "taizz"
+    "ibb",
+    "al dhale'e",
+    "lahj",
+    "dhamar",
+    "raymah"
   ]
 }
