@@ -2,23 +2,23 @@
 # Yemen Market Analysis Dashboard - Detailed Repository Structure and Key Files Guide
 
 ```
-├── .babelrc                 # Babel configuration for JavaScript transpilation
-├── .env                     # Environment variables configuration
-├── .eslintrc.js             # ESLint configuration for code quality
-├── .gitattributes           # Git attributes specification
+├── .babelrc
+├── .env
+├── .eslintrc.js
+├── .gitattributes
 ├── .github
 │   └── workflows
-│       ├── ci-cd.yml        # GitHub Actions workflow for CI/CD
-│       └── deploy.yml       # GitHub Actions workflow for deployment
-├── .gitignore               # Specifies intentionally untracked files to ignore
-├── .nvmrc                   # Specifies the Node.js version for the project
-├── 404.html                 # Custom 404 error page
-├── LICENSE                  # Project license information
-├── README.md                # Project overview and setup instructions
-├── SECURITY.md              # Security policy and vulnerability reporting
-├── config-overrides.js      # Configuration overrides for Create React App
-├── data                     # Directory for raw data files
-├── environment.yml          # Conda environment specification
+│       ├── ci-cd.yml
+│       └── deploy.yml
+├── .gitignore
+├── .nvmrc
+├── 404.html
+├── LICENSE
+├── README.md
+├── SECURITY.md
+├── config-overrides.js
+├── data
+├── environment.yml
 ├── external_data
 │   └── naturalearth_lowres
 │       ├── ne_110m_admin_0_countries.VERSION.txt
@@ -27,16 +27,19 @@
 │       ├── ne_110m_admin_0_countries.prj
 │       ├── ne_110m_admin_0_countries.shp
 │       └── ne_110m_admin_0_countries.shx
-├── map_git_repo.py          # Python script to generate the repository structure
-├── package-lock.json        # Locked versions of npm packages
-├── package.json             # Project dependencies and scripts
+├── key_file.txt
+├── map_git_repo.py
+├── package-lock.json
+├── package.json
+├── profile_output.prof
 ├── project
-│   ├── Methedology.txt      # Description of analysis methodology
+│   ├── Methedology.txt
 │   ├── config
-│   │   └── config.yaml      # Configuration for Python scripts
+│   │   └── config.yaml
 │   ├── data
 │   │   ├── processed
 │   │   │   ├── enhanced_unified_data_with_residual.geojson
+│   │   │   ├── enhanced_unified_data_with_residuals.geojson
 │   │   │   ├── unified_data.geojson
 │   │   │   ├── unified_data.json
 │   │   │   └── unified_data.parquet
@@ -61,80 +64,138 @@
 │       ├── common_utils.py
 │       └── data_utils.py
 ├── public
-│   ├── favicon.ico          # Favicon for the website
-│   ├── index.html           # HTML template for the React app
-│   ├── logo192.png          # Logo image for PWA
-│   ├── logo512.png          # Larger logo image for PWA
-│   ├── manifest.json        # Web app manifest file
-│   ├── results              # Mirror of analysis results for frontend access
+│   ├── favicon.ico
+│   ├── index.html
+│   ├── logo192.png
+│   ├── logo512.png
+│   ├── manifest.json
+│   ├── results
 │   │   ├── choropleth_data
+│   │   │   ├── average_prices.csv
+│   │   │   ├── conflict_intensity.csv
+│   │   │   ├── price_changes.csv
+│   │   │   └── residuals.csv
 │   │   ├── ecm
+│   │   │   ├── ecm_analysis_results.json
+│   │   │   ├── ecm_results_north_to_south.json
+│   │   │   └── ecm_results_south_to_north.json
+│   │   ├── enhanced_unified_data_with_residual.geojson
 │   │   ├── network_data
+│   │   │   └── flow_maps.csv
 │   │   ├── price_diff_results
+│   │   │   └── price_differential_results.json
+│   │   ├── residuals_data
+│   │   ├── spatial_analysis_results.json
 │   │   ├── spatial_weights
-│   │   └── time_series_data
-│   └── robots.txt           # Instructions for web crawlers
-├── requirements.txt         # Python dependencies
-├── results                  # Output data from various analyses
+│   │   │   └── spatial_weights.json
+│   │   ├── time_series_data
+│   │   │   ├── conflict_intensity_time_series.csv
+│   │   │   └── prices_time_series.csv
+│   │   └── unified_data.geojson
+│   └── robots.txt
+├── python_test_script
+├── requirements.txt
+├── results
 │   ├── choropleth_data
+│   │   ├── average_prices.csv
+│   │   ├── conflict_intensity.csv
+│   │   ├── price_changes.csv
+│   │   └── residuals.csv
 │   ├── ecm
+│   │   ├── ecm_analysis_results.json
+│   │   ├── ecm_results_north_to_south.json
+│   │   ├── ecm_results_south_to_north.json
+│   │   ├── residuals_north_to_south.json
+│   │   └── residuals_south_to_north.json
+│   ├── enhanced_unified_data_with_residual.geojson
 │   ├── logs
+│   │   ├── ecm_analysis.log
+│   │   └── tv_mii_analysis.log
 │   ├── network_data
+│   │   └── flow_maps.csv
 │   ├── price_diff_results
+│   │   └── price_differential_results.json
 │   ├── residuals_data
+│   ├── residuals_north_to_south.json
+│   ├── residuals_south_to_north.json
+│   ├── spatial_analysis_results.json
 │   ├── spatial_weights
-│   └── time_series_data
+│   │   └── spatial_weights.json
+│   ├── time_series_data
+│   │   ├── conflict_intensity_time_series.csv
+│   │   └── prices_time_series.csv
+│   └── unified_data.geojson
 ├── scripts
-│   └── prepareData.js       # Script to prepare data for the frontend
+│   └── prepareData.js
 ├── src
-│   ├── App.js               # Main React component
-│   ├── Dashboard.js         # Dashboard component
-│   ├── Dashboard.test.js    # Tests for Dashboard component
-│   ├── ErrorBoundary.js     # Error boundary component for React
+│   ├── App.js
+│   ├── Dashboard.css
+│   ├── Dashboard.js
+│   ├── Dashboard.test.js
+│   ├── ErrorBoundary.js
 │   ├── components
+│   │   ├── InteractiveChart.js
 │   │   ├── common
 │   │   │   ├── CommoditySelector.js
 │   │   │   ├── ECMTabs.js
+│   │   │   ├── ErrorBoundary.js
 │   │   │   ├── ErrorMessage.js
 │   │   │   ├── Header.js
+│   │   │   ├── LineChart.js
 │   │   │   ├── LoadingSpinner.js
+│   │   │   ├── Map.js
+│   │   │   ├── NotFound.js
 │   │   │   ├── RegimeSelector.js
+│   │   │   ├── SearchBar.js
 │   │   │   ├── Sidebar.js
-│   │   │   └── TabPanel.js
+│   │   │   ├── TabPanel.js
+│   │   │   └── ThemeToggle.js
 │   │   ├── ecm-analysis
 │   │   │   ├── DiagnosticsTable.js
 │   │   │   ├── ECMAnalysis.js
+│   │   │   ├── ECMInterpretation.js
+│   │   │   ├── ECMKeyInsights.js
+│   │   │   ├── ECMSummaryDashboard.js
+│   │   │   ├── ECMTutorial.js
 │   │   │   ├── GrangerCausalityChart.js
 │   │   │   ├── IRFChart.js
 │   │   │   ├── ResidualsChart.js
 │   │   │   ├── SpatialAutocorrelationChart.js
 │   │   │   └── SummaryTable.js
-│   │   ├── methodology
+│   │   ├── interactive_graph
+│   │   │   ├── InteractiveChart.js
+│   │   │   └── PriceSummaryCard.js
+│   │   ├── methedology
 │   │   │   ├── CodeBlock.js
+│   │   │   ├── MethodologyContentWrapper.js
 │   │   │   ├── MethodologyModal.js
-│   │   │   └── MethodologySection.js
+│   │   │   ├── MethodologySection.js
+│   │   │   └── MethodologySidebar.js
 │   │   ├── price-differential-analysis
 │   │   │   ├── DiagnosticsTests.js
 │   │   │   ├── MarketPairInfo.js
 │   │   │   ├── PriceDifferentialAnalysis.js
 │   │   │   ├── PriceDifferentialChart.js
-│   │   │   └── RegressionResults.js
+│   │   │   ├── RegressionResults.js
+│   │   │   └── index.js
 │   │   └── spatial-analysis
 │   │       ├── DiagnosticsTests.js
 │   │       ├── RegressionResults.js
 │   │       ├── SpatialAnalysis.js
-│   │       └── SpatialMap.js
+│   │       ├── SpatialMap.js
+│   │       └── index.js
 │   ├── hooks
 │   │   ├── useData.js
 │   │   ├── useDataLoading.js
+│   │   ├── useECMData.js
 │   │   ├── useECMDataHooks.js
 │   │   ├── usePriceDifferentialData.js
 │   │   └── useSpatialData.js
-│   ├── index.css            # Global CSS styles
-│   ├── index.js             # Entry point for the React app
-│   ├── setupTests.js        # Test setup file
+│   ├── index.css
+│   ├── index.js
+│   ├── setupTests.js
 │   ├── store
-│   │   └── index.js         # Redux store configuration
+│   │   └── index.js
 │   ├── styles
 │   │   ├── CustomStyles.js
 │   │   ├── GlobalStyle.js
@@ -156,8 +217,121 @@
 │       ├── spatialSlice.js
 │       ├── stringUtils.js
 │       └── themeSlice.js
-└── webpack.config.js        # Webpack configuration for bundling
+└── webpack.config.js
 ```
+
+## Core Application Files
+- `src/App.js`: Main React component and entry point for the application.
+- `src/Dashboard.js`: Core dashboard component for the main interface.
+- `src/index.js`: Entry point for the React app.
+
+## Component Directories
+### Interactive Graph
+- `src/components/interactive_graph/InteractiveChart.js`: Renders interactive data visualization charts.
+- `src/components/interactive_graph/PriceSummaryCard.js`: Displays summary of price data.
+
+### Common Components
+- `src/components/common/`:
+  - `CommoditySelector.js`: Component for selecting commodities.
+  - `ECMTabs.js`: Tab navigation for Error Correction Model analysis.
+  - `ErrorBoundary.js`: Handles errors in React components.
+  - `ErrorMessage.js`: Displays error messages.
+  - `Header.js`: Application header component.
+  - `LineChart.js`: Reusable line chart component.
+  - `LoadingSpinner.js`: Loading indicator component.
+  - `Map.js`: Map visualization component.
+  - `NotFound.js`: 404 page component.
+  - `RegimeSelector.js`: Component for selecting regimes.
+  - `SearchBar.js`: Search functionality component.
+  - `Sidebar.js`: Sidebar navigation component.
+  - `TabPanel.js`: Generic tab panel component.
+  - `ThemeToggle.js`: Theme switching component.
+
+### ECM Analysis
+- `src/components/ecm-analysis/`:
+  - `DiagnosticsTable.js`: Displays diagnostic information for ECM.
+  - `ECMAnalysis.js`: Main component for ECM analysis.
+  - `ECMInterpretation.js`: Provides interpretation of ECM results.
+  - `ECMKeyInsights.js`: Highlights key insights from ECM analysis.
+  - `ECMSummaryDashboard.js`: Summary dashboard for ECM analysis.
+  - `ECMTutorial.js`: Tutorial component for ECM analysis.
+  - `GrangerCausalityChart.js`: Visualizes Granger causality tests.
+  - `IRFChart.js`: Impulse Response Function chart.
+  - `ResidualsChart.js`: Chart for residual analysis.
+  - `SpatialAutocorrelationChart.js`: Visualizes spatial autocorrelation.
+  - `SummaryTable.js`: Summarizes ECM results.
+
+### Price Differential Analysis
+- `src/components/price-differential-analysis/`:
+  - `DiagnosticsTests.js`: Diagnostic tests for price differential analysis.
+  - `MarketPairInfo.js`: Displays information about market pairs.
+  - `PriceDifferentialAnalysis.js`: Main component for price differential analysis.
+  - `PriceDifferentialChart.js`: Chart for price differential visualization.
+  - `RegressionResults.js`: Displays regression results.
+  - `index.js`: Exports components for price differential analysis.
+
+### Spatial Analysis
+- `src/components/spatial-analysis/`:
+  - `DiagnosticsTests.js`: Diagnostic tests for spatial analysis.
+  - `RegressionResults.js`: Displays regression results for spatial models.
+  - `SpatialAnalysis.js`: Main component for spatial analysis.
+  - `SpatialMap.js`: Map component for spatial visualization.
+  - `index.js`: Exports components for spatial analysis.
+
+### Methodology Components
+- `src/components/methedology/`:
+  - `CodeBlock.js`: Renders code blocks in methodology explanations.
+  - `MethodologyContentWrapper.js`: Wrapper for methodology content.
+  - `MethodologyModal.js`: Modal for displaying methodology information.
+  - `MethodologySection.js`: Individual sections of methodology explanation.
+  - `MethodologySidebar.js`: Sidebar for methodology navigation.
+
+## Custom Hooks
+- `src/hooks/`:
+  - `useData.js`: Custom hook for general data fetching and management.
+  - `useDataLoading.js`: Hook for handling data loading states.
+  - `useECMData.js`: Specific hook for ECM data management.
+  - `useECMDataHooks.js`: Additional hooks for ECM data.
+  - `usePriceDifferentialData.js`: Hook for price differential data.
+  - `useSpatialData.js`: Hook for spatial analysis data.
+
+## State Management
+- `src/store/index.js`: Redux store configuration.
+
+## Styling
+- `src/styles/`:
+  - `CustomStyles.js`: Custom style definitions.
+  - `GlobalStyle.js`: Global styles for the application.
+  - `LayoutStyles.js`: Styles related to layout components.
+  - `theme.js`: Theme configuration for the application.
+
+## Utility Functions
+- `src/utils/`:
+  - `api.js`: Functions for API interactions.
+  - `chartSetup.js`: Setup for chart configurations.
+  - `dataPath.js`: Utility for managing data file paths.
+  - `dataProcessing.js`: Data processing utilities.
+  - `dataSourceUtil.js`: Utilities for data source management.
+  - `ecmSlice.js`: Redux slice for ECM state management.
+  - `formatNumber.js`: Number formatting utility.
+  - `i18n.js`: Internationalization setup.
+  - `jsonToCsv.js`: JSON to CSV conversion utility.
+  - `layout.js`: Layout-related utility functions.
+  - `methodologyData.js`: Data for methodology explanations.
+  - `priceDiffSlice.js`: Redux slice for price differential analysis.
+  - `spatialSlice.js`: Redux slice for spatial analysis.
+  - `stringUtils.js`: String manipulation utilities.
+  - `themeSlice.js`: Redux slice for theme management.
+
+## Build and Configuration
+- `scripts/prepareData.js`: Script for data preparation.
+- `config-overrides.js`: Configuration overrides for Create React App.
+- `webpack.config.js`: Webpack configuration for application bundling.
+
+## Testing
+- `src/setupTests.js`: Setup file for Jest testing framework.
+- `src/Dashboard.test.js`: Test file for the Dashboard component.
+
 
 ## Additional Key Files and Their Functions
 
@@ -172,33 +346,4 @@
 
 4. **public/results/**
    - Mirror of the results directory, organized into subdirectories for different types of analysis outputs, making them accessible to the frontend.
-
-5. **src/components/common/**
-   - Houses reusable UI components like `CommoditySelector.js`, `ECMTabs.js`, `LoadingSpinner.js`, etc., promoting code reusability.
-
-6. **src/components/ecm-analysis/**
-   - Contains specialized components for ECM analysis visualization, including charts for different aspects of the analysis.
-
-7. **src/components/methodology/**
-   - Components for displaying methodology information, including `MethodologyModal.js` for a pop-up explanation.
-
-8. **src/hooks/**
-   - Custom React hooks for data fetching and management, including specific hooks for ECM, price differential, and spatial data.
-
-9. **src/utils/**
-   - Various utility functions and Redux slices (`ecmSlice.js`, `priceDiffSlice.js`, `spatialSlice.js`) for state management and data processing.
-
-## Key Updates and Their Significance
-
-1. **Diverse Data Formats**: The presence of multiple data formats in `project/data/processed/` indicates flexibility in data handling and storage.
-
-2. **Iterative ECM Analysis**: Multiple versions of ECM analysis scripts show an iterative development process, potentially addressing different aspects or improvements in the analysis.
-
-3. **Comprehensive Frontend Structure**: The `src/components/` directory shows a well-organized frontend with clear separation of concerns for different analysis types and common components.
-
-4. **Advanced State Management**: The presence of Redux slices in `src/utils/` suggests a sophisticated state management approach for different aspects of the application.
-
-5. **Methodology Explanation**: The inclusion of methodology-specific components indicates an emphasis on explaining the analysis methods to users.
-
-6. **Internationalization**: The presence of `i18n.js` in `src/utils/` suggests preparation for multi-language support.
 
