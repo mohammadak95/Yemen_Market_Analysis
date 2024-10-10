@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/Yemen_Market_Analysis/static/css/main.2226b50f.css",
-    "main.js": "/Yemen_Market_Analysis/static/js/main.ca57b6fd.js",
-    "static/js/202.cbf15a8b.chunk.js": "/Yemen_Market_Analysis/static/js/202.cbf15a8b.chunk.js",
-    "static/js/181.c53debe2.chunk.js": "/Yemen_Market_Analysis/static/js/181.c53debe2.chunk.js",
+    "main.js": "/Yemen_Market_Analysis/static/js/main.99af7c4a.js",
+    "static/js/354.ab07ec63.chunk.js": "/Yemen_Market_Analysis/static/js/354.ab07ec63.chunk.js",
+    "static/js/181.f5940a3d.chunk.js": "/Yemen_Market_Analysis/static/js/181.f5940a3d.chunk.js",
     "static/css/713.0f7354f9.chunk.css": "/Yemen_Market_Analysis/static/css/713.0f7354f9.chunk.css",
     "static/js/713.2a035656.chunk.js": "/Yemen_Market_Analysis/static/js/713.2a035656.chunk.js",
     "static/js/201.6e57f73c.chunk.js": "/Yemen_Market_Analysis/static/js/201.6e57f73c.chunk.js",
-    "static/js/20.d132c045.chunk.js": "/Yemen_Market_Analysis/static/js/20.d132c045.chunk.js",
-    "static/js/150.b455db26.chunk.js": "/Yemen_Market_Analysis/static/js/150.b455db26.chunk.js",
+    "static/js/20.6fcfc33f.chunk.js": "/Yemen_Market_Analysis/static/js/20.6fcfc33f.chunk.js",
+    "static/js/821.70fdbb96.chunk.js": "/Yemen_Market_Analysis/static/js/821.70fdbb96.chunk.js",
     "static/js/643.67f28a29.chunk.js": "/Yemen_Market_Analysis/static/js/643.67f28a29.chunk.js",
     "static/media/KaTeX_AMS-Regular.ttf": "/Yemen_Market_Analysis/static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
     "static/media/KaTeX_Main-Regular.ttf": "/Yemen_Market_Analysis/static/media/KaTeX_Main-Regular.9eba1d77abcf2aa6e94e.ttf",
@@ -72,18 +72,18 @@
     "static/media/KaTeX_Size3-Regular.woff2": "/Yemen_Market_Analysis/static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "/Yemen_Market_Analysis/index.html",
     "main.2226b50f.css.map": "/Yemen_Market_Analysis/static/css/main.2226b50f.css.map",
-    "main.ca57b6fd.js.map": "/Yemen_Market_Analysis/static/js/main.ca57b6fd.js.map",
-    "202.cbf15a8b.chunk.js.map": "/Yemen_Market_Analysis/static/js/202.cbf15a8b.chunk.js.map",
-    "181.c53debe2.chunk.js.map": "/Yemen_Market_Analysis/static/js/181.c53debe2.chunk.js.map",
+    "main.99af7c4a.js.map": "/Yemen_Market_Analysis/static/js/main.99af7c4a.js.map",
+    "354.ab07ec63.chunk.js.map": "/Yemen_Market_Analysis/static/js/354.ab07ec63.chunk.js.map",
+    "181.f5940a3d.chunk.js.map": "/Yemen_Market_Analysis/static/js/181.f5940a3d.chunk.js.map",
     "713.0f7354f9.chunk.css.map": "/Yemen_Market_Analysis/static/css/713.0f7354f9.chunk.css.map",
     "713.2a035656.chunk.js.map": "/Yemen_Market_Analysis/static/js/713.2a035656.chunk.js.map",
     "201.6e57f73c.chunk.js.map": "/Yemen_Market_Analysis/static/js/201.6e57f73c.chunk.js.map",
-    "20.d132c045.chunk.js.map": "/Yemen_Market_Analysis/static/js/20.d132c045.chunk.js.map",
-    "150.b455db26.chunk.js.map": "/Yemen_Market_Analysis/static/js/150.b455db26.chunk.js.map",
+    "20.6fcfc33f.chunk.js.map": "/Yemen_Market_Analysis/static/js/20.6fcfc33f.chunk.js.map",
+    "821.70fdbb96.chunk.js.map": "/Yemen_Market_Analysis/static/js/821.70fdbb96.chunk.js.map",
     "643.67f28a29.chunk.js.map": "/Yemen_Market_Analysis/static/js/643.67f28a29.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.2226b50f.css",
-    "static/js/main.ca57b6fd.js"
+    "static/js/main.99af7c4a.js"
   ]
 }
