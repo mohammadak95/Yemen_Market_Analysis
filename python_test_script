@@ -1,266 +1,540 @@
+#!/usr/bin/env python3
+"""
+explore_spatial_results.py
+
+This script explores the spatial analysis results generated for the Yemen Market Analysis Dashboard.
+It performs data loading, validation, exploratory data analysis (EDA), and prepares data for dashboard integration.
+
+Author: Your Name
+Date: 2024-10-10
+"""
+
 import os
+import sys
 import json
+import logging
+from pathlib import Path
+from typing import List, Dict
+
 import pandas as pd
 import geopandas as gpd
-from collections import defaultdict
+import matplotlib.pyplot as plt
+import seaborn as sns
+import networkx as nx
+from sklearn.impute import SimpleImputer
+import numpy as np
 
-# Configuration for sampling
-CONSOLE_SAMPLE_LIMIT = 5  # Number of files to display in console
-MAX_SAMPLE_LENGTH = 200    # Maximum number of characters for sample entries in console
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("explore_spatial_results.log"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
-# Function to write output to both console and file
-def write_output(file_handle, line, display=True):
-    """
-    Write a line to both the console and the output file.
-    
-    Parameters:
-    - file_handle: The file object to write to.
-    - line: The string to write.
-    - display: If True, also print the line to the console.
-    """
-    if display:
-        print(line)
-    file_handle.write(line + '\n')
+# Constants
+RESULTS_DIR = Path("public/results")
+CHOROPLETH_DIR = RESULTS_DIR / "choropleth_data"
+NETWORK_DATA_DIR = RESULTS_DIR / "network_data"
+SPATIAL_WEIGHTS_DIR = RESULTS_DIR / "spatial_weights"
+TIME_SERIES_DIR = RESULTS_DIR / "time_series_data"
+SPATIAL_ANALYSIS_RESULTS_FILE = RESULTS_DIR / "spatial_analysis_results.json"
 
-def truncate_text(text, max_length):
-    """
-    Truncate the text to the specified max_length.
-    If truncated, append '...'.
-    """
-    text_str = str(text)
-    if len(text_str) > max_length:
-        return text_str[:max_length] + '...'
-    return text_str
+# Output directory for exploration results
+OUTPUT_DIR = Path("exploration_outputs")
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-def analyze_geojson(file_path, file_handle, display=True):
+def load_json(file_path: Path) -> List[Dict]:
     """
-    Analyze a single GeoJSON file and write the results to the provided file handle.
-    If display is True, also print a concise summary to the console.
+    Load a JSON file into a Python list of dictionaries.
+
+    Args:
+        file_path (Path): Path to the JSON file.
+
+    Returns:
+        List[Dict]: Loaded JSON data.
     """
     try:
-        # Detailed output for file (always written to file)
-        detailed_output = []
-        detailed_output.append(f"\nAnalyzing GeoJSON file: {file_path}")
-        gdf = gpd.read_file(file_path)
-        
-        # Basic information
-        detailed_output.append(f"Total number of features: {len(gdf)}")
-        detailed_output.append(f"Coordinate Reference System: {gdf.crs}")
-        
-        # Analyze properties
-        properties = defaultdict(set)
-        for _, row in gdf.iterrows():
-            for key, value in row.items():
-                if key != 'geometry':
-                    properties[key].add(type(value).__name__)
-        
-        detailed_output.append("\nProperties:")
-        for key, types in properties.items():
-            detailed_output.append(f"  {key}: {', '.join(types)}")
-        
-        # Analyze unique values for certain fields
-        important_fields = ['commodity', 'regime', 'date']
-        for field in important_fields:
-            if field in gdf.columns:
-                unique_values = gdf[field].unique()
-                detailed_output.append(f"\nUnique values for {field}: {len(unique_values)}")
-                detailed_output.append(f"Sample values: {unique_values[:5]}")
-        
-        # Time range if 'date' field exists
-        if 'date' in gdf.columns:
-            date_range = gdf['date'].agg(['min', 'max'])
-            detailed_output.append(f"\nDate range: from {date_range['min']} to {date_range['max']}")
-        
-        # Geometry types
-        geometry_types = gdf.geometry.type.value_counts()
-        detailed_output.append("\nGeometry types:")
-        detailed_output.append(str(geometry_types))
-        
-        # Sample of first feature
-        first_feature = gdf.iloc[0].to_dict()
-        detailed_output.append("\nSample of first feature:")
-        detailed_output.append(json.dumps(first_feature, indent=2, default=str))
-        
-        # Write detailed output to file
-        for line in detailed_output:
-            write_output(file_handle, line, display=False)  # Only write to file
-        
-        # If display is enabled, print a concise summary
-        if display:
-            concise_output = []
-            concise_output.append(f"\nAnalyzing GeoJSON file: {file_path}")
-            concise_output.append(f"Total features: {len(gdf)}, CRS: {gdf.crs}")
-            concise_output.append(f"Properties: {', '.join(properties.keys())}")
-            for field in important_fields:
-                if field in gdf.columns:
-                    unique_count = len(gdf[field].unique())
-                    concise_output.append(f"Unique {field}: {unique_count}")
-            if 'date' in gdf.columns:
-                date_range = gdf['date'].agg(['min', 'max'])
-                concise_output.append(f"Date range: {date_range['min']} to {date_range['max']}")
-            concise_output.append(f"Geometry types: {', '.join(geometry_types.index.tolist())}")
-            # Truncate sample feature
-            sample_feature = json.dumps(first_feature, indent=2, default=str)
-            truncated_sample = truncate_text(sample_feature, MAX_SAMPLE_LENGTH)
-            concise_output.append(f"Sample feature: {truncated_sample}")
-            
-            for line in concise_output:
-                write_output(file_handle, line, display=True)
-    
-    except Exception as e:
-        error_message = f"Error analyzing GeoJSON file {file_path}: {e}"
-        write_output(file_handle, error_message, display=True)
-
-def analyze_csv(file_path, file_handle, display=True):
-    """
-    Analyze a single CSV file and write the results to the provided file handle.
-    If display is True, also print a concise summary to the console.
-    """
-    try:
-        # Detailed output for file (always written to file)
-        detailed_output = []
-        detailed_output.append(f"\nAnalyzing CSV file: {file_path}")
-        df = pd.read_csv(file_path)
-        
-        # Basic information
-        detailed_output.append(f"Total number of rows: {len(df)}")
-        detailed_output.append(f"Columns: {df.columns.tolist()}")
-        detailed_output.append(f"\nData types:\n{df.dtypes}")
-        
-        # Analyze unique values for certain fields
-        important_fields = ['commodity', 'regime', 'date']
-        for field in important_fields:
-            if field in df.columns:
-                unique_values = df[field].unique()
-                detailed_output.append(f"\nUnique values for {field}: {len(unique_values)}")
-                detailed_output.append(f"Sample values: {unique_values[:5]}")
-        
-        # Time range if 'date' field exists
-        if 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'], errors='coerce')
-            date_range = df['date'].agg(['min', 'max'])
-            detailed_output.append(f"\nDate range: from {date_range['min']} to {date_range['max']}")
-        
-        # Sample of the first few rows
-        detailed_output.append("\nSample rows:")
-        detailed_output.append(str(df.head()))
-        
-        # Write detailed output to file
-        for line in detailed_output:
-            write_output(file_handle, line, display=False)  # Only write to file
-        
-        # If display is enabled, print a concise summary
-        if display:
-            concise_output = []
-            concise_output.append(f"\nAnalyzing CSV file: {file_path}")
-            concise_output.append(f"Total rows: {len(df)}, Columns: {len(df.columns)}")
-            concise_output.append(f"Data types: {', '.join([f'{col}: {dtype}' for col, dtype in df.dtypes.items()])}")
-            for field in important_fields:
-                if field in df.columns:
-                    unique_count = len(df[field].unique())
-                    concise_output.append(f"Unique {field}: {unique_count}")
-            if 'date' in df.columns:
-                date_range = df['date'].agg(['min', 'max'])
-                concise_output.append(f"Date range: {date_range['min']} to {date_range['max']}")
-            # Truncate sample rows
-            sample_rows = df.head().to_string()
-            truncated_sample = truncate_text(sample_rows, MAX_SAMPLE_LENGTH)
-            concise_output.append(f"Sample rows:\n{truncated_sample}")
-            
-            for line in concise_output:
-                write_output(file_handle, line, display=True)
-    
-    except Exception as e:
-        error_message = f"Error analyzing CSV file {file_path}: {e}"
-        write_output(file_handle, error_message, display=True)
-
-def analyze_json(file_path, file_handle, display=True):
-    """
-    Analyze a single JSON file and write the results to the provided file handle.
-    If display is True, also print a concise summary to the console.
-    """
-    try:
-        # Detailed output for file (always written to file)
-        detailed_output = []
-        detailed_output.append(f"\nAnalyzing JSON file: {file_path}")
         with open(file_path, 'r') as f:
             data = json.load(f)
+        logger.info(f"Loaded JSON file: {file_path} with {len(data)} analysis entries.")
+        return data
+    except Exception as e:
+        logger.error(f"Error loading JSON file {file_path}: {e}")
+        sys.exit(1)
+
+def load_geojson(file_path: Path) -> gpd.GeoDataFrame:
+    """
+    Load a GeoJSON file into a GeoDataFrame.
+
+    Args:
+        file_path (Path): Path to the GeoJSON file.
+
+    Returns:
+        gpd.GeoDataFrame: Loaded GeoDataFrame.
+    """
+    try:
+        gdf = gpd.read_file(file_path)
+        logger.info(f"Loaded GeoJSON file: {file_path} with {len(gdf)} records.")
+        return gdf
+    except Exception as e:
+        logger.error(f"Error loading GeoJSON file {file_path}: {e}")
+        sys.exit(1)
+
+def extract_residuals_from_json(json_data: List[Dict], logger: logging.Logger) -> pd.DataFrame:
+    """
+    Extract residuals from the spatial analysis JSON results.
+
+    Args:
+        json_data (List[Dict]): Loaded JSON data.
+        logger (logging.Logger): Logger instance.
+
+    Returns:
+        pd.DataFrame: Aggregated residuals DataFrame.
+    """
+    try:
+        residual_list = []
+        for analysis in json_data:
+            commodity = analysis.get('commodity')
+            regime = analysis.get('regime')
+            residuals = analysis.get('residual', [])
+            if not residuals:
+                logger.warning(f"No residuals found for '{commodity}' in '{regime}' regime.")
+                continue
+            for res in residuals:
+                residual_list.append({
+                    'region_id': res['region_id'],
+                    'date': res['date'],
+                    'commodity': commodity,
+                    'regime': regime,
+                    'residual': res['residual']
+                })
         
-        # Basic structure of JSON
-        if isinstance(data, dict):
-            detailed_output.append("Top-level keys: " + str(list(data.keys())))
-            detailed_output.append("\nSample of top-level structure:")
-            detailed_output.append(json.dumps({k: v for k, v in list(data.items())[:5]}, indent=2, default=str))
-        elif isinstance(data, list):
-            detailed_output.append(f"Number of entries: {len(data)}")
-            if len(data) > 0:
-                detailed_output.append("\nSample entry:")
-                detailed_output.append(json.dumps(data[0], indent=2, default=str))
-        else:
-            detailed_output.append(f"JSON data type: {type(data).__name__}")
-            detailed_output.append("\nSample of data:")
-            detailed_output.append(json.dumps(data, indent=2, default=str))
+        residual_df = pd.DataFrame(residual_list)
+        if residual_df.empty:
+            logger.warning("No residuals extracted from JSON data.")
+            return residual_df
         
-        # Write detailed output to file
-        for line in detailed_output:
-            write_output(file_handle, line, display=False)  # Only write to file
+        # Convert 'date' column to datetime
+        residual_df['date'] = pd.to_datetime(residual_df['date'], errors='coerce')
+        logger.info(f"Extracted {len(residual_df)} residuals from JSON data.")
         
-        # If display is enabled, print a concise summary
-        if display:
-            concise_output = []
-            concise_output.append(f"\nAnalyzing JSON file: {file_path}")
-            if isinstance(data, dict):
-                concise_output.append(f"Top-level keys: {', '.join(list(data.keys())[:5])}")
-                # Truncate sample structure
-                sample_structure = json.dumps({k: v for k, v in list(data.items())[:5]}, indent=2, default=str)
-                truncated_sample = truncate_text(sample_structure, MAX_SAMPLE_LENGTH)
-                concise_output.append(f"Sample structure: {truncated_sample}")
-            elif isinstance(data, list):
-                concise_output.append(f"Number of entries: {len(data)}")
-                if len(data) > 0:
-                    sample_entry = json.dumps(data[0], indent=2, default=str)
-                    truncated_sample = truncate_text(sample_entry, MAX_SAMPLE_LENGTH)
-                    concise_output.append(f"Sample entry: {truncated_sample}")
-            else:
-                concise_output.append(f"JSON data type: {type(data).__name__}")
-                sample_data = json.dumps(data, indent=2, default=str)
-                truncated_sample = truncate_text(sample_data, MAX_SAMPLE_LENGTH)
-                concise_output.append(f"Sample data: {truncated_sample}")
-            
-            for line in concise_output:
-                write_output(file_handle, line, display=True)
+        # Handle any potential missing dates
+        missing_dates = residual_df['date'].isnull().sum()
+        if missing_dates > 0:
+            logger.warning(f"{missing_dates} residuals have invalid dates and will be dropped.")
+            residual_df = residual_df.dropna(subset=['date'])
+        
+        # Aggregate residuals by taking the mean
+        residual_agg = residual_df.groupby(['region_id', 'date', 'commodity', 'regime']).agg({
+            'residual': 'mean'
+        }).reset_index()
+        logger.info("Aggregated residuals successfully.")
+        
+        return residual_agg
+    except Exception as e:
+        logger.error(f"Failed to extract residuals from JSON data: {e}")
+        sys.exit(1)
+
+def load_geojson_with_residuals(enhanced_geojson_path: Path, logger: logging.Logger) -> gpd.GeoDataFrame:
+    """
+    Load the enhanced GeoJSON file that includes residuals.
+
+    Args:
+        enhanced_geojson_path (Path): Path to the enhanced GeoJSON file.
+        logger (logging.Logger): Logger instance.
+
+    Returns:
+        gpd.GeoDataFrame: Loaded GeoDataFrame with residuals.
+    """
+    try:
+        gdf = gpd.read_file(enhanced_geojson_path)
+        logger.info(f"Loaded enhanced GeoJSON: {enhanced_geojson_path} with {len(gdf)} records.")
+        return gdf
+    except Exception as e:
+        logger.error(f"Failed to load enhanced GeoJSON from {enhanced_geojson_path}: {e}")
+        sys.exit(1)
+
+def validate_dataframes(dfs: Dict[str, pd.DataFrame], logger: logging.Logger) -> None:
+    """
+    Validate the integrity of DataFrames by checking for missing values and duplicates.
+
+    Args:
+        dfs (Dict[str, pd.DataFrame]): Dictionary of DataFrames to validate.
+        logger (logging.Logger): Logger instance.
+    """
+    for name, df in dfs.items():
+        logger.info(f"Validating DataFrame: {name}")
+        missing = df.isnull().sum().sum()
+        duplicates = df.duplicated().sum()
+        logger.info(f" - Missing values: {missing}")
+        logger.info(f" - Duplicate records: {duplicates}")
+        if missing > 0:
+            logger.warning(f"DataFrame '{name}' contains {missing} missing values.")
+        if duplicates > 0:
+            logger.warning(f"DataFrame '{name}' contains {duplicates} duplicate records.")
+
+def summarize_dataframe(df: pd.DataFrame, name: str, output_dir: Path, logger: logging.Logger) -> None:
+    """
+    Print summary statistics and save to a text file.
+
+    Args:
+        df (pd.DataFrame): DataFrame to summarize.
+        name (str): Name of the DataFrame.
+        output_dir (Path): Directory to save the summary.
+        logger (logging.Logger): Logger instance.
+    """
+    try:
+        summary = df.describe(include='all')
+        logger.info(f"Summary statistics for {name}:\n{summary}")
+        summary.to_csv(output_dir / f"{name}_summary.csv")
+        logger.info(f"Saved summary statistics for {name} to {output_dir / f'{name}_summary.csv'}.")
+    except Exception as e:
+        logger.error(f"Failed to summarize DataFrame '{name}': {e}")
+
+def plot_histograms(residual_df: pd.DataFrame, logger: logging.Logger) -> None:
+    """
+    Plot histograms for the residuals.
+
+    Args:
+        residual_df (pd.DataFrame): DataFrame containing residuals.
+        logger (logging.Logger): Logger instance.
+    """
+    try:
+        if residual_df.empty:
+            logger.warning("Residual DataFrame is empty. Skipping histograms.")
+            return
+
+        plt.figure(figsize=(10, 6))
+        sns.histplot(residual_df['residual'], bins=30, kde=True, color='skyblue')
+        plt.title("Histogram of Residuals")
+        plt.xlabel("Residual")
+        plt.ylabel("Frequency")
+        plt.tight_layout()
+        plt.savefig(OUTPUT_DIR / "residuals_histogram.png")
+        plt.clf()
+        logger.info(f"Saved residuals histogram to {OUTPUT_DIR / 'residuals_histogram.png'}.")
+    except Exception as e:
+        logger.error(f"Failed to plot residuals histogram: {e}")
+
+def plot_correlation_heatmap(residual_df: pd.DataFrame, logger: logging.Logger) -> None:
+    """
+    Plot a correlation heatmap for residuals across commodities and regimes.
+
+    Args:
+        residual_df (pd.DataFrame): DataFrame containing residuals.
+        logger (logging.Logger): Logger instance.
+    """
+    try:
+        if residual_df.empty:
+            logger.warning("Residual DataFrame is empty. Skipping correlation heatmap.")
+            return
+
+        # Pivot the residuals to have commodities and regimes as separate columns
+        pivot_df = residual_df.pivot_table(index=['region_id', 'date'], columns=['commodity', 'regime'], values='residual')
+        
+        # Handle missing values by imputing with the mean
+        imputer = SimpleImputer(strategy='mean')
+        pivot_imputed = pd.DataFrame(imputer.fit_transform(pivot_df), columns=pivot_df.columns)
+        
+        # Calculate the correlation matrix
+        corr_matrix = pivot_imputed.corr()
+        
+        plt.figure(figsize=(12, 10))
+        sns.heatmap(corr_matrix, annot=False, cmap='coolwarm', fmt=".2f")
+        plt.title("Correlation Heatmap of Residuals Across Commodities and Regimes")
+        plt.tight_layout()
+        plt.savefig(OUTPUT_DIR / "residuals_correlation_heatmap.png")
+        plt.clf()
+        logger.info(f"Saved residuals correlation heatmap to {OUTPUT_DIR / 'residuals_correlation_heatmap.png'}.")
+    except Exception as e:
+        logger.error(f"Failed to plot residuals correlation heatmap: {e}")
+
+def plot_spatial_distribution(gdf: gpd.GeoDataFrame, column: str, title: str, output_path: Path, logger: logging.Logger) -> None:
+    """
+    Plot the spatial distribution of a specific column on a map.
+
+    Args:
+        gdf (gpd.GeoDataFrame): GeoDataFrame containing geometries and data.
+        column (str): Column name to visualize.
+        title (str): Title of the plot.
+        output_path (Path): Path to save the plot.
+        logger (logging.Logger): Logger instance.
+    """
+    try:
+        if column not in gdf.columns:
+            logger.warning(f"Column '{column}' not found in GeoDataFrame. Skipping spatial distribution map for '{column}'.")
+            return
+
+        if gdf[column].isnull().all():
+            logger.warning(f"All values in column '{column}' are null. Skipping spatial distribution map for '{column}'.")
+            return
+
+        fig, ax = plt.subplots(1, 1, figsize=(12, 8))
+        gdf.plot(column=column, ax=ax, legend=True, cmap='OrRd', missing_kwds={
+            "color": "lightgrey",
+            "edgecolor": "red",
+            "hatch": "///",
+            "label": "Missing values",
+        })
+        plt.title(title)
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(output_path)
+        plt.clf()
+        logger.info(f"Saved spatial distribution map for '{column}' to {output_path}.")
+    except Exception as e:
+        logger.error(f"Failed to plot spatial distribution for '{column}': {e}")
+
+def explore_flow_maps(flow_maps_df: pd.DataFrame, unique_regions_gdf: gpd.GeoDataFrame, logger: logging.Logger) -> None:
+    """
+    Explore and visualize the flow maps data.
+
+    Args:
+        flow_maps_df (pd.DataFrame): DataFrame containing flow map data.
+        unique_regions_gdf (gpd.GeoDataFrame): GeoDataFrame with unique region geometries.
+        logger (logging.Logger): Logger instance.
+    """
+    try:
+        logger.info("Exploring flow maps data.")
+        # Basic statistics
+        total_flows = len(flow_maps_df)
+        avg_weight = flow_maps_df['weight'].mean()
+        max_weight = flow_maps_df['weight'].max()
+        logger.info(f"Total number of flows: {total_flows}")
+        logger.info(f"Average flow weight: {avg_weight:.2f}")
+        logger.info(f"Maximum flow weight: {max_weight:.2f}")
+
+        # Plot top 10 flows by weight
+        top_flows = flow_maps_df.nlargest(10, 'weight')
+        plt.figure(figsize=(12, 8))
+        sns.barplot(x='weight', y='source', data=top_flows, hue='target', palette='viridis')
+        plt.title("Top 10 Flows by Weight")
+        plt.xlabel("Flow Weight")
+        plt.ylabel("Source Region")
+        plt.legend(title='Target Region', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig(OUTPUT_DIR / "top_flows_barplot.png")
+        plt.clf()
+        logger.info(f"Saved top flows barplot to {OUTPUT_DIR / 'top_flows_barplot.png'}.")
+    
+        # Network graph visualization (optional)
+        G = nx.from_pandas_edgelist(flow_maps_df, 'source', 'target', ['weight'])
+        plt.figure(figsize=(12, 12))
+        pos = {region: (row['geometry'].centroid.x, row['geometry'].centroid.y) for region, row in unique_regions_gdf.set_index('region_id').iterrows()}
+        nx.draw_networkx_nodes(G, pos, node_size=50, node_color='blue', alpha=0.6)
+        edges = G.edges(data=True)
+        weights = [edge_data['weight'] for _, _, edge_data in edges]
+        if weights:
+            # Normalize weights for better visualization
+            max_flow = max(weights)
+            normalized_weights = [w / max_flow * 5 for w in weights]  # Scale weights for plotting
+            nx.draw_networkx_edges(G, pos, edgelist=edges, width=normalized_weights, alpha=0.3)
+        plt.title("Flow Maps Network Graph")
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(OUTPUT_DIR / "flow_maps_network_graph.png")
+        plt.clf()
+        logger.info(f"Saved flow maps network graph to {OUTPUT_DIR / 'flow_maps_network_graph.png'}.")
     
     except Exception as e:
-        error_message = f"Error analyzing JSON file {file_path}: {e}"
-        write_output(file_handle, error_message, display=True)
+        logger.error(f"Failed to explore flow maps data: {e}")
 
-def analyze_all_files(results_dir, output_file):
+def analyze_spatial_weights(spatial_weights: Dict, unique_regions_gdf: gpd.GeoDataFrame, logger: logging.Logger) -> None:
     """
-    Traverse the 'results' directory and its subfolders, analyzing all GeoJSON, CSV, and JSON files.
-    Results are saved in a text file. Only a sample of the results is displayed in the console.
+    Analyze the spatial weights matrix.
+
+    Args:
+        spatial_weights (Dict): Spatial weights matrix.
+        unique_regions_gdf (gpd.GeoDataFrame): GeoDataFrame with unique region geometries.
+        logger (logging.Logger): Logger instance.
     """
-    displayed_files = 0
-    with open(output_file, 'w') as file_handle:
-        for root, _, files in os.walk(results_dir):
-            for file in files:
-                if displayed_files >= CONSOLE_SAMPLE_LIMIT:
-                    break
-                file_path = os.path.join(root, file)
-                display = displayed_files < CONSOLE_SAMPLE_LIMIT
-                if file.endswith('.geojson'):
-                    analyze_geojson(file_path, file_handle, display=display)
-                elif file.endswith('.csv'):
-                    analyze_csv(file_path, file_handle, display=display)
-                elif file.endswith('.json'):
-                    analyze_json(file_path, file_handle, display=display)
-                if display:
-                    displayed_files += 1
-        if displayed_files >= CONSOLE_SAMPLE_LIMIT:
-            print(f"\nDisplayed a sample of {CONSOLE_SAMPLE_LIMIT} files in the console. Full results are saved in '{output_file}'.")
+    try:
+        logger.info("Analyzing spatial weights matrix.")
+        # Basic statistics
+        num_regions = len(spatial_weights)
+        avg_neighbors = sum(len(neighbors) for neighbors in spatial_weights.values()) / num_regions
+        logger.info(f"Number of regions: {num_regions}")
+        logger.info(f"Average number of neighbors per region: {avg_neighbors:.2f}")
 
-# Define the directory to analyze and the output file
-results_dir = 'results'
-output_file = 'results_analysis.txt'
+        # Distribution of number of neighbors
+        neighbor_counts = [len(neighbors) for neighbors in spatial_weights.values()]
+        plt.figure(figsize=(10, 6))
+        sns.histplot(neighbor_counts, bins=range(0, max(neighbor_counts)+2), kde=False, color='green')
+        plt.title("Distribution of Number of Neighbors per Region")
+        plt.xlabel("Number of Neighbors")
+        plt.ylabel("Frequency")
+        plt.tight_layout()
+        plt.savefig(OUTPUT_DIR / "neighbors_distribution.png")
+        plt.clf()
+        logger.info(f"Saved neighbors distribution histogram to {OUTPUT_DIR / 'neighbors_distribution.png'}.")
+    
+        # Example: Identify regions with the most and fewest neighbors
+        max_neighbors = max(neighbor_counts)
+        min_neighbors = min(neighbor_counts)
+        regions_max = [region for region, neighbors in spatial_weights.items() if len(neighbors) == max_neighbors]
+        regions_min = [region for region, neighbors in spatial_weights.items() if len(neighbors) == min_neighbors]
+        logger.info(f"Regions with the most neighbors ({max_neighbors}): {regions_max}")
+        logger.info(f"Regions with the fewest neighbors ({min_neighbors}): {regions_min}")
+    
+    except Exception as e:
+        logger.error(f"Failed to analyze spatial weights matrix: {e}")
 
-# Run the analysis on all files in the results directory and save to the text file
-analyze_all_files(results_dir, output_file)
+def explore_spatial_analysis_results(json_data: List[Dict], output_path: Path, logger: logging.Logger) -> pd.DataFrame:
+    """
+    Explore the spatial analysis results from the JSON file.
+
+    Args:
+        json_data (List[Dict]): Spatial analysis results.
+        output_path (Path): Path to save the exploration results.
+        logger (logging.Logger): Logger instance.
+
+    Returns:
+        pd.DataFrame: Processed spatial analysis results DataFrame.
+    """
+    try:
+        logger.info("Exploring spatial analysis results.")
+        # Convert to DataFrame for easier manipulation
+        results_list = []
+        for analysis in json_data:
+            record = {
+                'commodity': analysis.get('commodity'),
+                'regime': analysis.get('regime'),
+                'intercept': analysis.get('intercept'),
+                'r_squared': analysis.get('r_squared'),
+                'adj_r_squared': analysis.get('adj_r_squared'),
+                'mse': analysis.get('mse'),
+                'observations': analysis.get('observations'),
+                'moran_i': analysis.get('moran_i')['I'] if analysis.get('moran_i') else np.nan,
+                'moran_p_value': analysis.get('moran_i')['p-value'] if analysis.get('moran_i') else np.nan
+            }
+            # Add coefficients
+            coefficients = analysis.get('coefficients', {})
+            for var, coef in coefficients.items():
+                record[f"coef_{var}"] = coef
+            # Add p-values
+            p_values = analysis.get('p_values', {})
+            for var, p in p_values.items():
+                record[f"pval_{var}"] = p
+            # Add VIFs
+            vif_list = analysis.get('vif', [])
+            for vif in vif_list:
+                record[f"vif_{vif['Variable']}"] = vif['VIF']
+            results_list.append(record)
+        
+        if not results_list:
+            logger.warning("No spatial analysis results to explore.")
+            return pd.DataFrame()
+        
+        results_df = pd.DataFrame(results_list)
+        summarize_dataframe(results_df, "spatial_analysis_results", OUTPUT_DIR, logger)
+
+        # Save the DataFrame to CSV for further use
+        results_df.to_csv(output_path, index=False)
+        logger.info(f"Saved spatial analysis results exploration to {output_path}.")
+
+        # Plot R-squared distribution
+        if 'r_squared' in results_df.columns:
+            plt.figure(figsize=(10, 6))
+            sns.histplot(results_df['r_squared'], bins=20, kde=True, color='purple')
+            plt.title("Distribution of R-squared Values")
+            plt.xlabel("R-squared")
+            plt.ylabel("Frequency")
+            plt.tight_layout()
+            plt.savefig(OUTPUT_DIR / "r_squared_distribution.png")
+            plt.clf()
+            logger.info(f"Saved R-squared distribution plot to {OUTPUT_DIR / 'r_squared_distribution.png'}.")
+        else:
+            logger.warning("'r_squared' column not found in spatial analysis results. Skipping R-squared distribution plot.")
+
+        # Scatter plot of Moran's I vs R-squared
+        if 'r_squared' in results_df.columns and 'moran_i' in results_df.columns:
+            plt.figure(figsize=(10, 6))
+            sns.scatterplot(data=results_df, x='r_squared', y='moran_i', hue='commodity', style='regime', s=100)
+            plt.title("Moran's I vs R-squared")
+            plt.xlabel("R-squared")
+            plt.ylabel("Moran's I")
+            plt.legend(title='Commodity/Regime', bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig(OUTPUT_DIR / "moran_i_vs_r_squared.png")
+            plt.clf()
+            logger.info(f"Saved Moran's I vs R-squared scatter plot to {OUTPUT_DIR / 'moran_i_vs_r_squared.png'}.")
+        else:
+            logger.warning("Required columns for Moran's I vs R-squared scatter plot not found. Skipping plot.")
+    
+        return results_df
+    except Exception as e:
+        logger.error(f"Failed to explore spatial analysis results: {e}")
+
+def main():
+    """
+    Main function to orchestrate the exploration of spatial analysis results.
+    """
+    logger.info("Starting exploration of spatial analysis results.")
+
+    # Paths
+    enhanced_geojson_path = Path("public/results/enhanced_unified_data_with_residual.geojson")
+    spatial_analysis_json_path = SPATIAL_ANALYSIS_RESULTS_FILE
+
+    # Step 1: Load spatial analysis JSON results
+    spatial_analysis_results = load_json(spatial_analysis_json_path)
+    
+    # Step 2: Extract residuals from JSON
+    residual_agg = extract_residuals_from_json(spatial_analysis_results, logger)
+
+    # Step 3: Load the enhanced GeoJSON data with residuals
+    gdf = load_geojson_with_residuals(enhanced_geojson_path, logger)
+
+    # Step 4: Validate DataFrames
+    dfs = {
+        "residuals": residual_agg
+    }
+    validate_dataframes(dfs, logger)
+
+    # Step 5: Summarize DataFrames
+    summarize_dataframe(residual_agg, "residuals", OUTPUT_DIR, logger)
+
+    # Step 6: Plot Histograms
+    plot_histograms(residual_agg, logger)
+
+    # Step 7: Plot Correlation Heatmap
+    plot_correlation_heatmap(residual_agg, logger)
+
+    # Step 8: Plot Spatial Distribution of Residuals
+    plot_spatial_distribution(
+        gdf,
+        'residual',
+        "Residuals Distribution",
+        OUTPUT_DIR / "residuals_map.png",
+        logger
+    )
+
+    # Step 9: Explore Flow Maps
+    flow_maps_csv_path = NETWORK_DATA_DIR / "flow_maps.csv"
+    if flow_maps_csv_path.exists():
+        flow_maps = pd.read_csv(flow_maps_csv_path)
+        unique_regions_path = enhanced_geojson_path
+        unique_regions_gdf = load_geojson_with_residuals(unique_regions_path, logger)
+        explore_flow_maps(flow_maps, unique_regions_gdf, logger)
+    else:
+        logger.warning(f"Flow maps CSV file not found at {flow_maps_csv_path}. Skipping flow maps exploration.")
+
+    # Step 10: Analyze Spatial Weights
+    spatial_weights_json_path = SPATIAL_WEIGHTS_DIR / "spatial_weights.json"
+    if spatial_weights_json_path.exists():
+        spatial_weights = load_json(spatial_weights_json_path)
+        unique_regions_gdf = load_geojson_with_residuals(enhanced_geojson_path, logger)
+        analyze_spatial_weights(spatial_weights, unique_regions_gdf, logger)
+    else:
+        logger.warning(f"Spatial weights JSON file not found at {spatial_weights_json_path}. Skipping spatial weights analysis.")
+
+    # Step 11: Explore Spatial Analysis Results
+    explore_spatial_analysis_results(spatial_analysis_results, OUTPUT_DIR / "spatial_analysis_results_exploration.csv", logger)
+
+    logger.info("Exploration of spatial analysis results completed successfully.")
+
+if __name__ == "__main__":
+    main()

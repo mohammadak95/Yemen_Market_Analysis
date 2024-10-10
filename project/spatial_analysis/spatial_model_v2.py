@@ -579,6 +579,16 @@ def save_analysis_results(results, output_path, logger):
         with open(output_path, 'w') as f:
             json.dump(results_with_str_timestamps, f, indent=4)
         logger.info(f"Results saved to {output_path}.")
+
+        # Validate that residuals are present
+        residuals_present = any(
+            analysis.get('residual') for analysis in results_with_str_timestamps
+        )
+        if residuals_present:
+            logger.info("Residuals are present in the analysis results.")
+        else:
+            logger.warning("No residuals found in the analysis results.")
+    
     except Exception as e:
         logger.error(f"Failed to save results to '{output_path}': {e}")
 
