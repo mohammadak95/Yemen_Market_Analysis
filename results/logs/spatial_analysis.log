@@ -2339,3 +2339,480 @@
 2024-10-10 10:00:55,080 - INFO - Average prices saved to results/choropleth_data/average_prices.csv.
 2024-10-10 10:00:55,236 - INFO - Results saved to results/spatial_analysis_results.json.
 2024-10-10 10:00:55,238 - INFO - Spatial analysis pipeline completed successfully.
+2024-10-10 14:03:00,563 - INFO - Loading GeoJSON data from project/data/processed/unified_data.geojson.
+2024-10-10 14:03:01,236 - DEBUG - Converted 'date' to datetime.
+2024-10-10 14:03:01,236 - INFO - 'region_id' column assigned using 'admin1'.
+2024-10-10 14:03:01,260 - INFO - Dropped 0 duplicate rows.
+2024-10-10 14:03:01,260 - INFO - GeoJSON data loaded with 21355 records.
+2024-10-10 14:03:01,260 - DEBUG - Columns in the dataset: Index(['admin1', 'commodity', 'date', 'price', 'usdprice', 'latitude',
+       'longitude', 'events', 'fatalities', 'population',
+       'population_percentage', 'exchange_rate_regime', 'conflict_intensity',
+       'conflict_intensity_weighted', 'conflict_intensity_normalized',
+       'conflict_intensity_lag1', 'conflict_intensity_lag2',
+       'conflict_intensity_lag3', 'geometry', 'region_id'],
+      dtype='object')
+2024-10-10 14:03:01,263 - INFO - Found 2432 duplicate entries.
+2024-10-10 14:03:01,273 - DEBUG - Duplicate entries:
+       admin1           commodity       date  ...  conflict_intensity_lag3                        geometry  region_id
+16304  sana'a  beans (kidney red) 2020-09-01  ...                 0.543734  POINT (444268.525 1683424.525)     sana'a
+16305  sana'a  beans (kidney red) 2020-09-01  ...                 0.087477  POINT (444268.525 1683424.525)     sana'a
+16306  sana'a  beans (kidney red) 2020-10-01  ...                 0.541284  POINT (444268.525 1683424.525)     sana'a
+16307  sana'a  beans (kidney red) 2020-10-01  ...                 0.230145  POINT (444268.525 1683424.525)     sana'a
+16308  sana'a  beans (kidney red) 2020-11-01  ...                 0.631726  POINT (444268.525 1683424.525)     sana'a
+...       ...                 ...        ...  ...                      ...                             ...        ...
+18731  sana'a         wheat flour 2024-03-01  ...                 0.230145  POINT (444268.525 1683424.525)     sana'a
+18732  sana'a         wheat flour 2024-04-01  ...                 0.210134  POINT (444268.525 1683424.525)     sana'a
+18733  sana'a         wheat flour 2024-04-01  ...                 0.340528  POINT (444268.525 1683424.525)     sana'a
+18734  sana'a         wheat flour 2024-05-01  ...                 0.246123  POINT (444268.525 1683424.525)     sana'a
+18735  sana'a         wheat flour 2024-05-01  ...                 0.253052  POINT (444268.525 1683424.525)     sana'a
+
+[2432 rows x 20 columns]
+2024-10-10 14:03:01,604 - INFO - Handled duplicates by averaging numeric columns and keeping first non-numeric values.
+2024-10-10 14:03:01,605 - INFO - Aligning data to 'M' frequency by region, date, and commodity.
+2024-10-10 14:03:01,608 - DEBUG - Aligning data for region: abyan, commodity: beans (kidney red)
+2024-10-10 14:03:01,614 - DEBUG - Aligning data for region: abyan, commodity: beans (white)
+2024-10-10 14:03:01,615 - DEBUG - Aligning data for region: abyan, commodity: eggs
+2024-10-10 14:03:01,616 - DEBUG - Aligning data for region: abyan, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,617 - DEBUG - Aligning data for region: abyan, commodity: fuel (diesel)
+2024-10-10 14:03:01,618 - DEBUG - Aligning data for region: abyan, commodity: fuel (gas)
+2024-10-10 14:03:01,619 - DEBUG - Aligning data for region: abyan, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,620 - DEBUG - Aligning data for region: abyan, commodity: lentils
+2024-10-10 14:03:01,621 - DEBUG - Aligning data for region: abyan, commodity: milling cost (wheat)
+2024-10-10 14:03:01,622 - DEBUG - Aligning data for region: abyan, commodity: oil (vegetable)
+2024-10-10 14:03:01,623 - DEBUG - Aligning data for region: abyan, commodity: onions
+2024-10-10 14:03:01,624 - DEBUG - Aligning data for region: abyan, commodity: peas (yellow, split)
+2024-10-10 14:03:01,625 - DEBUG - Aligning data for region: abyan, commodity: potatoes
+2024-10-10 14:03:01,626 - DEBUG - Aligning data for region: abyan, commodity: rice (imported)
+2024-10-10 14:03:01,627 - DEBUG - Aligning data for region: abyan, commodity: salt
+2024-10-10 14:03:01,628 - DEBUG - Aligning data for region: abyan, commodity: sugar
+2024-10-10 14:03:01,629 - DEBUG - Aligning data for region: abyan, commodity: tomatoes
+2024-10-10 14:03:01,631 - DEBUG - Aligning data for region: abyan, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,632 - DEBUG - Aligning data for region: abyan, commodity: wage (qualified labour)
+2024-10-10 14:03:01,632 - DEBUG - Aligning data for region: abyan, commodity: wheat
+2024-10-10 14:03:01,633 - DEBUG - Aligning data for region: abyan, commodity: wheat flour
+2024-10-10 14:03:01,634 - DEBUG - Aligning data for region: aden, commodity: beans (kidney red)
+2024-10-10 14:03:01,635 - DEBUG - Aligning data for region: aden, commodity: beans (white)
+2024-10-10 14:03:01,636 - DEBUG - Aligning data for region: aden, commodity: eggs
+2024-10-10 14:03:01,637 - DEBUG - Aligning data for region: aden, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,638 - DEBUG - Aligning data for region: aden, commodity: fuel (diesel)
+2024-10-10 14:03:01,639 - DEBUG - Aligning data for region: aden, commodity: fuel (gas)
+2024-10-10 14:03:01,640 - DEBUG - Aligning data for region: aden, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,641 - DEBUG - Aligning data for region: aden, commodity: lentils
+2024-10-10 14:03:01,642 - DEBUG - Aligning data for region: aden, commodity: milling cost (wheat)
+2024-10-10 14:03:01,644 - DEBUG - Aligning data for region: aden, commodity: oil (vegetable)
+2024-10-10 14:03:01,645 - DEBUG - Aligning data for region: aden, commodity: onions
+2024-10-10 14:03:01,647 - DEBUG - Aligning data for region: aden, commodity: peas (yellow, split)
+2024-10-10 14:03:01,648 - DEBUG - Aligning data for region: aden, commodity: potatoes
+2024-10-10 14:03:01,649 - DEBUG - Aligning data for region: aden, commodity: rice (imported)
+2024-10-10 14:03:01,650 - DEBUG - Aligning data for region: aden, commodity: salt
+2024-10-10 14:03:01,651 - DEBUG - Aligning data for region: aden, commodity: sugar
+2024-10-10 14:03:01,652 - DEBUG - Aligning data for region: aden, commodity: tomatoes
+2024-10-10 14:03:01,653 - DEBUG - Aligning data for region: aden, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,654 - DEBUG - Aligning data for region: aden, commodity: wage (qualified labour)
+2024-10-10 14:03:01,654 - DEBUG - Aligning data for region: aden, commodity: wheat
+2024-10-10 14:03:01,655 - DEBUG - Aligning data for region: aden, commodity: wheat flour
+2024-10-10 14:03:01,656 - DEBUG - Aligning data for region: al bayda, commodity: beans (kidney red)
+2024-10-10 14:03:01,657 - DEBUG - Aligning data for region: al bayda, commodity: beans (white)
+2024-10-10 14:03:01,658 - DEBUG - Aligning data for region: al bayda, commodity: eggs
+2024-10-10 14:03:01,659 - DEBUG - Aligning data for region: al bayda, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,660 - DEBUG - Aligning data for region: al bayda, commodity: fuel (diesel)
+2024-10-10 14:03:01,662 - DEBUG - Aligning data for region: al bayda, commodity: fuel (gas)
+2024-10-10 14:03:01,663 - DEBUG - Aligning data for region: al bayda, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,664 - DEBUG - Aligning data for region: al bayda, commodity: lentils
+2024-10-10 14:03:01,665 - DEBUG - Aligning data for region: al bayda, commodity: milling cost (wheat)
+2024-10-10 14:03:01,666 - DEBUG - Aligning data for region: al bayda, commodity: oil (vegetable)
+2024-10-10 14:03:01,667 - DEBUG - Aligning data for region: al bayda, commodity: onions
+2024-10-10 14:03:01,668 - DEBUG - Aligning data for region: al bayda, commodity: potatoes
+2024-10-10 14:03:01,668 - DEBUG - Aligning data for region: al bayda, commodity: rice (imported)
+2024-10-10 14:03:01,669 - DEBUG - Aligning data for region: al bayda, commodity: salt
+2024-10-10 14:03:01,670 - DEBUG - Aligning data for region: al bayda, commodity: sugar
+2024-10-10 14:03:01,671 - DEBUG - Aligning data for region: al bayda, commodity: tomatoes
+2024-10-10 14:03:01,672 - DEBUG - Aligning data for region: al bayda, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,673 - DEBUG - Aligning data for region: al bayda, commodity: wage (qualified labour)
+2024-10-10 14:03:01,674 - DEBUG - Aligning data for region: al bayda, commodity: wheat
+2024-10-10 14:03:01,674 - DEBUG - Aligning data for region: al bayda, commodity: wheat flour
+2024-10-10 14:03:01,675 - DEBUG - Aligning data for region: al dhale'e, commodity: beans (kidney red)
+2024-10-10 14:03:01,676 - DEBUG - Aligning data for region: al dhale'e, commodity: beans (white)
+2024-10-10 14:03:01,677 - DEBUG - Aligning data for region: al dhale'e, commodity: eggs
+2024-10-10 14:03:01,679 - DEBUG - Aligning data for region: al dhale'e, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,680 - DEBUG - Aligning data for region: al dhale'e, commodity: fuel (diesel)
+2024-10-10 14:03:01,681 - DEBUG - Aligning data for region: al dhale'e, commodity: fuel (gas)
+2024-10-10 14:03:01,682 - DEBUG - Aligning data for region: al dhale'e, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,683 - DEBUG - Aligning data for region: al dhale'e, commodity: lentils
+2024-10-10 14:03:01,684 - DEBUG - Aligning data for region: al dhale'e, commodity: milling cost (wheat)
+2024-10-10 14:03:01,684 - DEBUG - Aligning data for region: al dhale'e, commodity: oil (vegetable)
+2024-10-10 14:03:01,685 - DEBUG - Aligning data for region: al dhale'e, commodity: onions
+2024-10-10 14:03:01,686 - DEBUG - Aligning data for region: al dhale'e, commodity: potatoes
+2024-10-10 14:03:01,687 - DEBUG - Aligning data for region: al dhale'e, commodity: rice (imported)
+2024-10-10 14:03:01,688 - DEBUG - Aligning data for region: al dhale'e, commodity: salt
+2024-10-10 14:03:01,689 - DEBUG - Aligning data for region: al dhale'e, commodity: sugar
+2024-10-10 14:03:01,690 - DEBUG - Aligning data for region: al dhale'e, commodity: tomatoes
+2024-10-10 14:03:01,691 - DEBUG - Aligning data for region: al dhale'e, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,692 - DEBUG - Aligning data for region: al dhale'e, commodity: wage (qualified labour)
+2024-10-10 14:03:01,693 - DEBUG - Aligning data for region: al dhale'e, commodity: wheat
+2024-10-10 14:03:01,694 - DEBUG - Aligning data for region: al dhale'e, commodity: wheat flour
+2024-10-10 14:03:01,696 - DEBUG - Aligning data for region: al hudaydah, commodity: beans (kidney red)
+2024-10-10 14:03:01,697 - DEBUG - Aligning data for region: al hudaydah, commodity: beans (white)
+2024-10-10 14:03:01,698 - DEBUG - Aligning data for region: al hudaydah, commodity: eggs
+2024-10-10 14:03:01,699 - DEBUG - Aligning data for region: al hudaydah, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,700 - DEBUG - Aligning data for region: al hudaydah, commodity: fuel (diesel)
+2024-10-10 14:03:01,701 - DEBUG - Aligning data for region: al hudaydah, commodity: fuel (gas)
+2024-10-10 14:03:01,701 - DEBUG - Aligning data for region: al hudaydah, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,702 - DEBUG - Aligning data for region: al hudaydah, commodity: lentils
+2024-10-10 14:03:01,703 - DEBUG - Aligning data for region: al hudaydah, commodity: milling cost (wheat)
+2024-10-10 14:03:01,704 - DEBUG - Aligning data for region: al hudaydah, commodity: oil (vegetable)
+2024-10-10 14:03:01,705 - DEBUG - Aligning data for region: al hudaydah, commodity: onions
+2024-10-10 14:03:01,706 - DEBUG - Aligning data for region: al hudaydah, commodity: peas (yellow, split)
+2024-10-10 14:03:01,707 - DEBUG - Aligning data for region: al hudaydah, commodity: potatoes
+2024-10-10 14:03:01,708 - DEBUG - Aligning data for region: al hudaydah, commodity: rice (imported)
+2024-10-10 14:03:01,709 - DEBUG - Aligning data for region: al hudaydah, commodity: salt
+2024-10-10 14:03:01,710 - DEBUG - Aligning data for region: al hudaydah, commodity: sugar
+2024-10-10 14:03:01,711 - DEBUG - Aligning data for region: al hudaydah, commodity: tomatoes
+2024-10-10 14:03:01,712 - DEBUG - Aligning data for region: al hudaydah, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,713 - DEBUG - Aligning data for region: al hudaydah, commodity: wage (qualified labour)
+2024-10-10 14:03:01,714 - DEBUG - Aligning data for region: al hudaydah, commodity: wheat
+2024-10-10 14:03:01,715 - DEBUG - Aligning data for region: al hudaydah, commodity: wheat flour
+2024-10-10 14:03:01,716 - DEBUG - Aligning data for region: al jawf, commodity: beans (kidney red)
+2024-10-10 14:03:01,717 - DEBUG - Aligning data for region: al jawf, commodity: beans (white)
+2024-10-10 14:03:01,718 - DEBUG - Aligning data for region: al jawf, commodity: eggs
+2024-10-10 14:03:01,719 - DEBUG - Aligning data for region: al jawf, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,720 - DEBUG - Aligning data for region: al jawf, commodity: fuel (diesel)
+2024-10-10 14:03:01,721 - DEBUG - Aligning data for region: al jawf, commodity: fuel (gas)
+2024-10-10 14:03:01,722 - DEBUG - Aligning data for region: al jawf, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,723 - DEBUG - Aligning data for region: al jawf, commodity: lentils
+2024-10-10 14:03:01,723 - DEBUG - Aligning data for region: al jawf, commodity: milling cost (wheat)
+2024-10-10 14:03:01,724 - DEBUG - Aligning data for region: al jawf, commodity: oil (vegetable)
+2024-10-10 14:03:01,725 - DEBUG - Aligning data for region: al jawf, commodity: onions
+2024-10-10 14:03:01,726 - DEBUG - Aligning data for region: al jawf, commodity: potatoes
+2024-10-10 14:03:01,727 - DEBUG - Aligning data for region: al jawf, commodity: rice (imported)
+2024-10-10 14:03:01,728 - DEBUG - Aligning data for region: al jawf, commodity: salt
+2024-10-10 14:03:01,729 - DEBUG - Aligning data for region: al jawf, commodity: sugar
+2024-10-10 14:03:01,731 - DEBUG - Aligning data for region: al jawf, commodity: tomatoes
+2024-10-10 14:03:01,732 - DEBUG - Aligning data for region: al jawf, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,732 - DEBUG - Aligning data for region: al jawf, commodity: wage (qualified labour)
+2024-10-10 14:03:01,733 - DEBUG - Aligning data for region: al jawf, commodity: wheat
+2024-10-10 14:03:01,734 - DEBUG - Aligning data for region: al jawf, commodity: wheat flour
+2024-10-10 14:03:01,735 - DEBUG - Aligning data for region: al maharah, commodity: beans (kidney red)
+2024-10-10 14:03:01,736 - DEBUG - Aligning data for region: al maharah, commodity: beans (white)
+2024-10-10 14:03:01,737 - DEBUG - Aligning data for region: al maharah, commodity: eggs
+2024-10-10 14:03:01,738 - DEBUG - Aligning data for region: al maharah, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,739 - DEBUG - Aligning data for region: al maharah, commodity: fuel (diesel)
+2024-10-10 14:03:01,740 - DEBUG - Aligning data for region: al maharah, commodity: fuel (gas)
+2024-10-10 14:03:01,741 - DEBUG - Aligning data for region: al maharah, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,741 - DEBUG - Aligning data for region: al maharah, commodity: lentils
+2024-10-10 14:03:01,742 - DEBUG - Aligning data for region: al maharah, commodity: oil (vegetable)
+2024-10-10 14:03:01,743 - DEBUG - Aligning data for region: al maharah, commodity: onions
+2024-10-10 14:03:01,744 - DEBUG - Aligning data for region: al maharah, commodity: potatoes
+2024-10-10 14:03:01,746 - DEBUG - Aligning data for region: al maharah, commodity: rice (imported)
+2024-10-10 14:03:01,747 - DEBUG - Aligning data for region: al maharah, commodity: salt
+2024-10-10 14:03:01,748 - DEBUG - Aligning data for region: al maharah, commodity: sugar
+2024-10-10 14:03:01,749 - DEBUG - Aligning data for region: al maharah, commodity: tomatoes
+2024-10-10 14:03:01,750 - DEBUG - Aligning data for region: al maharah, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,751 - DEBUG - Aligning data for region: al maharah, commodity: wage (qualified labour)
+2024-10-10 14:03:01,752 - DEBUG - Aligning data for region: al maharah, commodity: wheat
+2024-10-10 14:03:01,753 - DEBUG - Aligning data for region: al maharah, commodity: wheat flour
+2024-10-10 14:03:01,754 - DEBUG - Aligning data for region: al mahwit, commodity: beans (kidney red)
+2024-10-10 14:03:01,754 - DEBUG - Aligning data for region: al mahwit, commodity: beans (white)
+2024-10-10 14:03:01,755 - DEBUG - Aligning data for region: al mahwit, commodity: eggs
+2024-10-10 14:03:01,756 - DEBUG - Aligning data for region: al mahwit, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,757 - DEBUG - Aligning data for region: al mahwit, commodity: fuel (diesel)
+2024-10-10 14:03:01,758 - DEBUG - Aligning data for region: al mahwit, commodity: fuel (gas)
+2024-10-10 14:03:01,759 - DEBUG - Aligning data for region: al mahwit, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,760 - DEBUG - Aligning data for region: al mahwit, commodity: lentils
+2024-10-10 14:03:01,761 - DEBUG - Aligning data for region: al mahwit, commodity: milling cost (wheat)
+2024-10-10 14:03:01,762 - DEBUG - Aligning data for region: al mahwit, commodity: oil (vegetable)
+2024-10-10 14:03:01,763 - DEBUG - Aligning data for region: al mahwit, commodity: onions
+2024-10-10 14:03:01,764 - DEBUG - Aligning data for region: al mahwit, commodity: peas (yellow, split)
+2024-10-10 14:03:01,765 - DEBUG - Aligning data for region: al mahwit, commodity: potatoes
+2024-10-10 14:03:01,766 - DEBUG - Aligning data for region: al mahwit, commodity: rice (imported)
+2024-10-10 14:03:01,767 - DEBUG - Aligning data for region: al mahwit, commodity: salt
+2024-10-10 14:03:01,768 - DEBUG - Aligning data for region: al mahwit, commodity: sugar
+2024-10-10 14:03:01,769 - DEBUG - Aligning data for region: al mahwit, commodity: tomatoes
+2024-10-10 14:03:01,770 - DEBUG - Aligning data for region: al mahwit, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,771 - DEBUG - Aligning data for region: al mahwit, commodity: wage (qualified labour)
+2024-10-10 14:03:01,772 - DEBUG - Aligning data for region: al mahwit, commodity: wheat
+2024-10-10 14:03:01,772 - DEBUG - Aligning data for region: al mahwit, commodity: wheat flour
+2024-10-10 14:03:01,773 - DEBUG - Aligning data for region: amanat al asimah, commodity: beans (kidney red)
+2024-10-10 14:03:01,774 - DEBUG - Aligning data for region: amanat al asimah, commodity: beans (white)
+2024-10-10 14:03:01,775 - DEBUG - Aligning data for region: amanat al asimah, commodity: eggs
+2024-10-10 14:03:01,776 - DEBUG - Aligning data for region: amanat al asimah, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,777 - DEBUG - Aligning data for region: amanat al asimah, commodity: fuel (gas)
+2024-10-10 14:03:01,779 - DEBUG - Aligning data for region: amanat al asimah, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,780 - DEBUG - Aligning data for region: amanat al asimah, commodity: lentils
+2024-10-10 14:03:01,781 - DEBUG - Aligning data for region: amanat al asimah, commodity: milling cost (wheat)
+2024-10-10 14:03:01,782 - DEBUG - Aligning data for region: amanat al asimah, commodity: oil (vegetable)
+2024-10-10 14:03:01,783 - DEBUG - Aligning data for region: amanat al asimah, commodity: onions
+2024-10-10 14:03:01,784 - DEBUG - Aligning data for region: amanat al asimah, commodity: peas (yellow, split)
+2024-10-10 14:03:01,784 - DEBUG - Aligning data for region: amanat al asimah, commodity: potatoes
+2024-10-10 14:03:01,785 - DEBUG - Aligning data for region: amanat al asimah, commodity: rice (imported)
+2024-10-10 14:03:01,786 - DEBUG - Aligning data for region: amanat al asimah, commodity: salt
+2024-10-10 14:03:01,787 - DEBUG - Aligning data for region: amanat al asimah, commodity: sugar
+2024-10-10 14:03:01,788 - DEBUG - Aligning data for region: amanat al asimah, commodity: tomatoes
+2024-10-10 14:03:01,789 - DEBUG - Aligning data for region: amanat al asimah, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,790 - DEBUG - Aligning data for region: amanat al asimah, commodity: wage (qualified labour)
+2024-10-10 14:03:01,791 - DEBUG - Aligning data for region: amanat al asimah, commodity: wheat
+2024-10-10 14:03:01,792 - DEBUG - Aligning data for region: amanat al asimah, commodity: wheat flour
+2024-10-10 14:03:01,793 - DEBUG - Aligning data for region: amran, commodity: beans (kidney red)
+2024-10-10 14:03:01,794 - DEBUG - Aligning data for region: amran, commodity: beans (white)
+2024-10-10 14:03:01,795 - DEBUG - Aligning data for region: amran, commodity: eggs
+2024-10-10 14:03:01,796 - DEBUG - Aligning data for region: amran, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,798 - DEBUG - Aligning data for region: amran, commodity: fuel (diesel)
+2024-10-10 14:03:01,798 - DEBUG - Aligning data for region: amran, commodity: fuel (gas)
+2024-10-10 14:03:01,799 - DEBUG - Aligning data for region: amran, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,800 - DEBUG - Aligning data for region: amran, commodity: lentils
+2024-10-10 14:03:01,801 - DEBUG - Aligning data for region: amran, commodity: milling cost (wheat)
+2024-10-10 14:03:01,802 - DEBUG - Aligning data for region: amran, commodity: oil (vegetable)
+2024-10-10 14:03:01,803 - DEBUG - Aligning data for region: amran, commodity: onions
+2024-10-10 14:03:01,804 - DEBUG - Aligning data for region: amran, commodity: peas (yellow, split)
+2024-10-10 14:03:01,805 - DEBUG - Aligning data for region: amran, commodity: potatoes
+2024-10-10 14:03:01,806 - DEBUG - Aligning data for region: amran, commodity: rice (imported)
+2024-10-10 14:03:01,806 - DEBUG - Aligning data for region: amran, commodity: salt
+2024-10-10 14:03:01,807 - DEBUG - Aligning data for region: amran, commodity: sugar
+2024-10-10 14:03:01,808 - DEBUG - Aligning data for region: amran, commodity: tomatoes
+2024-10-10 14:03:01,809 - DEBUG - Aligning data for region: amran, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,810 - DEBUG - Aligning data for region: amran, commodity: wage (qualified labour)
+2024-10-10 14:03:01,811 - DEBUG - Aligning data for region: amran, commodity: wheat
+2024-10-10 14:03:01,813 - DEBUG - Aligning data for region: amran, commodity: wheat flour
+2024-10-10 14:03:01,814 - DEBUG - Aligning data for region: dhamar, commodity: beans (kidney red)
+2024-10-10 14:03:01,815 - DEBUG - Aligning data for region: dhamar, commodity: beans (white)
+2024-10-10 14:03:01,815 - DEBUG - Aligning data for region: dhamar, commodity: eggs
+2024-10-10 14:03:01,816 - DEBUG - Aligning data for region: dhamar, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,817 - DEBUG - Aligning data for region: dhamar, commodity: fuel (diesel)
+2024-10-10 14:03:01,818 - DEBUG - Aligning data for region: dhamar, commodity: fuel (gas)
+2024-10-10 14:03:01,819 - DEBUG - Aligning data for region: dhamar, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,820 - DEBUG - Aligning data for region: dhamar, commodity: lentils
+2024-10-10 14:03:01,821 - DEBUG - Aligning data for region: dhamar, commodity: milling cost (wheat)
+2024-10-10 14:03:01,822 - DEBUG - Aligning data for region: dhamar, commodity: oil (vegetable)
+2024-10-10 14:03:01,823 - DEBUG - Aligning data for region: dhamar, commodity: onions
+2024-10-10 14:03:01,823 - DEBUG - Aligning data for region: dhamar, commodity: peas (yellow, split)
+2024-10-10 14:03:01,824 - DEBUG - Aligning data for region: dhamar, commodity: potatoes
+2024-10-10 14:03:01,825 - DEBUG - Aligning data for region: dhamar, commodity: rice (imported)
+2024-10-10 14:03:01,827 - DEBUG - Aligning data for region: dhamar, commodity: salt
+2024-10-10 14:03:01,828 - DEBUG - Aligning data for region: dhamar, commodity: sugar
+2024-10-10 14:03:01,829 - DEBUG - Aligning data for region: dhamar, commodity: tomatoes
+2024-10-10 14:03:01,830 - DEBUG - Aligning data for region: dhamar, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,831 - DEBUG - Aligning data for region: dhamar, commodity: wage (qualified labour)
+2024-10-10 14:03:01,832 - DEBUG - Aligning data for region: dhamar, commodity: wheat
+2024-10-10 14:03:01,833 - DEBUG - Aligning data for region: dhamar, commodity: wheat flour
+2024-10-10 14:03:01,834 - DEBUG - Aligning data for region: hadramaut, commodity: beans (kidney red)
+2024-10-10 14:03:01,835 - DEBUG - Aligning data for region: hadramaut, commodity: beans (white)
+2024-10-10 14:03:01,836 - DEBUG - Aligning data for region: hadramaut, commodity: eggs
+2024-10-10 14:03:01,837 - DEBUG - Aligning data for region: hadramaut, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,838 - DEBUG - Aligning data for region: hadramaut, commodity: fuel (diesel)
+2024-10-10 14:03:01,838 - DEBUG - Aligning data for region: hadramaut, commodity: fuel (gas)
+2024-10-10 14:03:01,839 - DEBUG - Aligning data for region: hadramaut, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,840 - DEBUG - Aligning data for region: hadramaut, commodity: lentils
+2024-10-10 14:03:01,841 - DEBUG - Aligning data for region: hadramaut, commodity: milling cost (wheat)
+2024-10-10 14:03:01,842 - DEBUG - Aligning data for region: hadramaut, commodity: oil (vegetable)
+2024-10-10 14:03:01,843 - DEBUG - Aligning data for region: hadramaut, commodity: onions
+2024-10-10 14:03:01,844 - DEBUG - Aligning data for region: hadramaut, commodity: peas (yellow, split)
+2024-10-10 14:03:01,846 - DEBUG - Aligning data for region: hadramaut, commodity: potatoes
+2024-10-10 14:03:01,847 - DEBUG - Aligning data for region: hadramaut, commodity: rice (imported)
+2024-10-10 14:03:01,847 - DEBUG - Aligning data for region: hadramaut, commodity: salt
+2024-10-10 14:03:01,848 - DEBUG - Aligning data for region: hadramaut, commodity: sugar
+2024-10-10 14:03:01,849 - DEBUG - Aligning data for region: hadramaut, commodity: tomatoes
+2024-10-10 14:03:01,850 - DEBUG - Aligning data for region: hadramaut, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,851 - DEBUG - Aligning data for region: hadramaut, commodity: wage (qualified labour)
+2024-10-10 14:03:01,852 - DEBUG - Aligning data for region: hadramaut, commodity: wheat
+2024-10-10 14:03:01,853 - DEBUG - Aligning data for region: hadramaut, commodity: wheat flour
+2024-10-10 14:03:01,854 - DEBUG - Aligning data for region: hajjah, commodity: beans (kidney red)
+2024-10-10 14:03:01,854 - DEBUG - Aligning data for region: hajjah, commodity: beans (white)
+2024-10-10 14:03:01,855 - DEBUG - Aligning data for region: hajjah, commodity: eggs
+2024-10-10 14:03:01,856 - DEBUG - Aligning data for region: hajjah, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,857 - DEBUG - Aligning data for region: hajjah, commodity: fuel (diesel)
+2024-10-10 14:03:01,858 - DEBUG - Aligning data for region: hajjah, commodity: fuel (gas)
+2024-10-10 14:03:01,859 - DEBUG - Aligning data for region: hajjah, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,860 - DEBUG - Aligning data for region: hajjah, commodity: lentils
+2024-10-10 14:03:01,861 - DEBUG - Aligning data for region: hajjah, commodity: milling cost (wheat)
+2024-10-10 14:03:01,862 - DEBUG - Aligning data for region: hajjah, commodity: oil (vegetable)
+2024-10-10 14:03:01,864 - DEBUG - Aligning data for region: hajjah, commodity: onions
+2024-10-10 14:03:01,865 - DEBUG - Aligning data for region: hajjah, commodity: potatoes
+2024-10-10 14:03:01,866 - DEBUG - Aligning data for region: hajjah, commodity: rice (imported)
+2024-10-10 14:03:01,867 - DEBUG - Aligning data for region: hajjah, commodity: salt
+2024-10-10 14:03:01,867 - DEBUG - Aligning data for region: hajjah, commodity: sugar
+2024-10-10 14:03:01,868 - DEBUG - Aligning data for region: hajjah, commodity: tomatoes
+2024-10-10 14:03:01,869 - DEBUG - Aligning data for region: hajjah, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,870 - DEBUG - Aligning data for region: hajjah, commodity: wage (qualified labour)
+2024-10-10 14:03:01,871 - DEBUG - Aligning data for region: hajjah, commodity: wheat
+2024-10-10 14:03:01,872 - DEBUG - Aligning data for region: hajjah, commodity: wheat flour
+2024-10-10 14:03:01,873 - DEBUG - Aligning data for region: ibb, commodity: beans (kidney red)
+2024-10-10 14:03:01,874 - DEBUG - Aligning data for region: ibb, commodity: beans (white)
+2024-10-10 14:03:01,875 - DEBUG - Aligning data for region: ibb, commodity: eggs
+2024-10-10 14:03:01,876 - DEBUG - Aligning data for region: ibb, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,877 - DEBUG - Aligning data for region: ibb, commodity: fuel (diesel)
+2024-10-10 14:03:01,878 - DEBUG - Aligning data for region: ibb, commodity: fuel (gas)
+2024-10-10 14:03:01,880 - DEBUG - Aligning data for region: ibb, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,881 - DEBUG - Aligning data for region: ibb, commodity: lentils
+2024-10-10 14:03:01,881 - DEBUG - Aligning data for region: ibb, commodity: milling cost (wheat)
+2024-10-10 14:03:01,882 - DEBUG - Aligning data for region: ibb, commodity: oil (vegetable)
+2024-10-10 14:03:01,883 - DEBUG - Aligning data for region: ibb, commodity: onions
+2024-10-10 14:03:01,884 - DEBUG - Aligning data for region: ibb, commodity: potatoes
+2024-10-10 14:03:01,885 - DEBUG - Aligning data for region: ibb, commodity: rice (imported)
+2024-10-10 14:03:01,886 - DEBUG - Aligning data for region: ibb, commodity: salt
+2024-10-10 14:03:01,887 - DEBUG - Aligning data for region: ibb, commodity: sugar
+2024-10-10 14:03:01,888 - DEBUG - Aligning data for region: ibb, commodity: tomatoes
+2024-10-10 14:03:01,889 - DEBUG - Aligning data for region: ibb, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,889 - DEBUG - Aligning data for region: ibb, commodity: wage (qualified labour)
+2024-10-10 14:03:01,890 - DEBUG - Aligning data for region: ibb, commodity: wheat
+2024-10-10 14:03:01,891 - DEBUG - Aligning data for region: ibb, commodity: wheat flour
+2024-10-10 14:03:01,892 - DEBUG - Aligning data for region: lahj, commodity: beans (kidney red)
+2024-10-10 14:03:01,893 - DEBUG - Aligning data for region: lahj, commodity: beans (white)
+2024-10-10 14:03:01,894 - DEBUG - Aligning data for region: lahj, commodity: eggs
+2024-10-10 14:03:01,896 - DEBUG - Aligning data for region: lahj, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,897 - DEBUG - Aligning data for region: lahj, commodity: fuel (diesel)
+2024-10-10 14:03:01,898 - DEBUG - Aligning data for region: lahj, commodity: fuel (gas)
+2024-10-10 14:03:01,899 - DEBUG - Aligning data for region: lahj, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,900 - DEBUG - Aligning data for region: lahj, commodity: lentils
+2024-10-10 14:03:01,900 - DEBUG - Aligning data for region: lahj, commodity: milling cost (wheat)
+2024-10-10 14:03:01,901 - DEBUG - Aligning data for region: lahj, commodity: oil (vegetable)
+2024-10-10 14:03:01,902 - DEBUG - Aligning data for region: lahj, commodity: onions
+2024-10-10 14:03:01,903 - DEBUG - Aligning data for region: lahj, commodity: peas (yellow, split)
+2024-10-10 14:03:01,904 - DEBUG - Aligning data for region: lahj, commodity: potatoes
+2024-10-10 14:03:01,905 - DEBUG - Aligning data for region: lahj, commodity: rice (imported)
+2024-10-10 14:03:01,906 - DEBUG - Aligning data for region: lahj, commodity: salt
+2024-10-10 14:03:01,907 - DEBUG - Aligning data for region: lahj, commodity: sugar
+2024-10-10 14:03:01,908 - DEBUG - Aligning data for region: lahj, commodity: tomatoes
+2024-10-10 14:03:01,909 - DEBUG - Aligning data for region: lahj, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,910 - DEBUG - Aligning data for region: lahj, commodity: wage (qualified labour)
+2024-10-10 14:03:01,911 - DEBUG - Aligning data for region: lahj, commodity: wheat
+2024-10-10 14:03:01,912 - DEBUG - Aligning data for region: lahj, commodity: wheat flour
+2024-10-10 14:03:01,913 - DEBUG - Aligning data for region: marib, commodity: beans (kidney red)
+2024-10-10 14:03:01,914 - DEBUG - Aligning data for region: marib, commodity: beans (white)
+2024-10-10 14:03:01,915 - DEBUG - Aligning data for region: marib, commodity: eggs
+2024-10-10 14:03:01,916 - DEBUG - Aligning data for region: marib, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,917 - DEBUG - Aligning data for region: marib, commodity: fuel (diesel)
+2024-10-10 14:03:01,918 - DEBUG - Aligning data for region: marib, commodity: fuel (gas)
+2024-10-10 14:03:01,919 - DEBUG - Aligning data for region: marib, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,920 - DEBUG - Aligning data for region: marib, commodity: lentils
+2024-10-10 14:03:01,920 - DEBUG - Aligning data for region: marib, commodity: milling cost (wheat)
+2024-10-10 14:03:01,921 - DEBUG - Aligning data for region: marib, commodity: oil (vegetable)
+2024-10-10 14:03:01,922 - DEBUG - Aligning data for region: marib, commodity: onions
+2024-10-10 14:03:01,923 - DEBUG - Aligning data for region: marib, commodity: potatoes
+2024-10-10 14:03:01,924 - DEBUG - Aligning data for region: marib, commodity: rice (imported)
+2024-10-10 14:03:01,925 - DEBUG - Aligning data for region: marib, commodity: salt
+2024-10-10 14:03:01,926 - DEBUG - Aligning data for region: marib, commodity: sugar
+2024-10-10 14:03:01,927 - DEBUG - Aligning data for region: marib, commodity: tomatoes
+2024-10-10 14:03:01,928 - DEBUG - Aligning data for region: marib, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,929 - DEBUG - Aligning data for region: marib, commodity: wage (qualified labour)
+2024-10-10 14:03:01,930 - DEBUG - Aligning data for region: marib, commodity: wheat
+2024-10-10 14:03:01,931 - DEBUG - Aligning data for region: marib, commodity: wheat flour
+2024-10-10 14:03:01,932 - DEBUG - Aligning data for region: raymah, commodity: beans (kidney red)
+2024-10-10 14:03:01,933 - DEBUG - Aligning data for region: raymah, commodity: beans (white)
+2024-10-10 14:03:01,934 - DEBUG - Aligning data for region: raymah, commodity: eggs
+2024-10-10 14:03:01,934 - DEBUG - Aligning data for region: raymah, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,935 - DEBUG - Aligning data for region: raymah, commodity: fuel (diesel)
+2024-10-10 14:03:01,936 - DEBUG - Aligning data for region: raymah, commodity: fuel (gas)
+2024-10-10 14:03:01,937 - DEBUG - Aligning data for region: raymah, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,938 - DEBUG - Aligning data for region: raymah, commodity: lentils
+2024-10-10 14:03:01,939 - DEBUG - Aligning data for region: raymah, commodity: milling cost (wheat)
+2024-10-10 14:03:01,940 - DEBUG - Aligning data for region: raymah, commodity: oil (vegetable)
+2024-10-10 14:03:01,941 - DEBUG - Aligning data for region: raymah, commodity: onions
+2024-10-10 14:03:01,941 - DEBUG - Aligning data for region: raymah, commodity: peas (yellow, split)
+2024-10-10 14:03:01,942 - DEBUG - Aligning data for region: raymah, commodity: potatoes
+2024-10-10 14:03:01,943 - DEBUG - Aligning data for region: raymah, commodity: rice (imported)
+2024-10-10 14:03:01,944 - DEBUG - Aligning data for region: raymah, commodity: salt
+2024-10-10 14:03:01,946 - DEBUG - Aligning data for region: raymah, commodity: sugar
+2024-10-10 14:03:01,947 - DEBUG - Aligning data for region: raymah, commodity: tomatoes
+2024-10-10 14:03:01,948 - DEBUG - Aligning data for region: raymah, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,949 - DEBUG - Aligning data for region: raymah, commodity: wage (qualified labour)
+2024-10-10 14:03:01,950 - DEBUG - Aligning data for region: raymah, commodity: wheat
+2024-10-10 14:03:01,950 - DEBUG - Aligning data for region: raymah, commodity: wheat flour
+2024-10-10 14:03:01,951 - DEBUG - Aligning data for region: sana'a, commodity: beans (kidney red)
+2024-10-10 14:03:01,952 - DEBUG - Aligning data for region: sana'a, commodity: beans (white)
+2024-10-10 14:03:01,953 - DEBUG - Aligning data for region: sana'a, commodity: eggs
+2024-10-10 14:03:01,954 - DEBUG - Aligning data for region: sana'a, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,955 - DEBUG - Aligning data for region: sana'a, commodity: fuel (diesel)
+2024-10-10 14:03:01,956 - DEBUG - Aligning data for region: sana'a, commodity: fuel (gas)
+2024-10-10 14:03:01,956 - DEBUG - Aligning data for region: sana'a, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,957 - DEBUG - Aligning data for region: sana'a, commodity: lentils
+2024-10-10 14:03:01,958 - DEBUG - Aligning data for region: sana'a, commodity: milling cost (wheat)
+2024-10-10 14:03:01,959 - DEBUG - Aligning data for region: sana'a, commodity: oil (vegetable)
+2024-10-10 14:03:01,961 - DEBUG - Aligning data for region: sana'a, commodity: onions
+2024-10-10 14:03:01,962 - DEBUG - Aligning data for region: sana'a, commodity: peas (yellow, split)
+2024-10-10 14:03:01,964 - DEBUG - Aligning data for region: sana'a, commodity: potatoes
+2024-10-10 14:03:01,964 - DEBUG - Aligning data for region: sana'a, commodity: rice (imported)
+2024-10-10 14:03:01,965 - DEBUG - Aligning data for region: sana'a, commodity: salt
+2024-10-10 14:03:01,966 - DEBUG - Aligning data for region: sana'a, commodity: sugar
+2024-10-10 14:03:01,967 - DEBUG - Aligning data for region: sana'a, commodity: tomatoes
+2024-10-10 14:03:01,968 - DEBUG - Aligning data for region: sana'a, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,969 - DEBUG - Aligning data for region: sana'a, commodity: wage (qualified labour)
+2024-10-10 14:03:01,970 - DEBUG - Aligning data for region: sana'a, commodity: wheat
+2024-10-10 14:03:01,971 - DEBUG - Aligning data for region: sana'a, commodity: wheat flour
+2024-10-10 14:03:01,972 - DEBUG - Aligning data for region: shabwah, commodity: beans (kidney red)
+2024-10-10 14:03:01,972 - DEBUG - Aligning data for region: shabwah, commodity: beans (white)
+2024-10-10 14:03:01,973 - DEBUG - Aligning data for region: shabwah, commodity: eggs
+2024-10-10 14:03:01,974 - DEBUG - Aligning data for region: shabwah, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,975 - DEBUG - Aligning data for region: shabwah, commodity: fuel (diesel)
+2024-10-10 14:03:01,976 - DEBUG - Aligning data for region: shabwah, commodity: fuel (gas)
+2024-10-10 14:03:01,977 - DEBUG - Aligning data for region: shabwah, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,979 - DEBUG - Aligning data for region: shabwah, commodity: lentils
+2024-10-10 14:03:01,980 - DEBUG - Aligning data for region: shabwah, commodity: milling cost (wheat)
+2024-10-10 14:03:01,981 - DEBUG - Aligning data for region: shabwah, commodity: oil (vegetable)
+2024-10-10 14:03:01,982 - DEBUG - Aligning data for region: shabwah, commodity: onions
+2024-10-10 14:03:01,983 - DEBUG - Aligning data for region: shabwah, commodity: potatoes
+2024-10-10 14:03:01,984 - DEBUG - Aligning data for region: shabwah, commodity: rice (imported)
+2024-10-10 14:03:01,985 - DEBUG - Aligning data for region: shabwah, commodity: salt
+2024-10-10 14:03:01,986 - DEBUG - Aligning data for region: shabwah, commodity: sugar
+2024-10-10 14:03:01,987 - DEBUG - Aligning data for region: shabwah, commodity: tomatoes
+2024-10-10 14:03:01,988 - DEBUG - Aligning data for region: shabwah, commodity: wage (non-qualified labour)
+2024-10-10 14:03:01,988 - DEBUG - Aligning data for region: shabwah, commodity: wage (qualified labour)
+2024-10-10 14:03:01,989 - DEBUG - Aligning data for region: shabwah, commodity: wheat
+2024-10-10 14:03:01,990 - DEBUG - Aligning data for region: shabwah, commodity: wheat flour
+2024-10-10 14:03:01,991 - DEBUG - Aligning data for region: socotra, commodity: exchange rate (unofficial)
+2024-10-10 14:03:01,992 - DEBUG - Aligning data for region: socotra, commodity: fuel (diesel)
+2024-10-10 14:03:01,993 - DEBUG - Aligning data for region: socotra, commodity: fuel (gas)
+2024-10-10 14:03:01,994 - DEBUG - Aligning data for region: socotra, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:01,995 - DEBUG - Aligning data for region: socotra, commodity: oil (vegetable)
+2024-10-10 14:03:01,996 - DEBUG - Aligning data for region: socotra, commodity: onions
+2024-10-10 14:03:01,997 - DEBUG - Aligning data for region: socotra, commodity: potatoes
+2024-10-10 14:03:01,998 - DEBUG - Aligning data for region: socotra, commodity: rice (imported)
+2024-10-10 14:03:01,999 - DEBUG - Aligning data for region: socotra, commodity: salt
+2024-10-10 14:03:02,000 - DEBUG - Aligning data for region: socotra, commodity: sugar
+2024-10-10 14:03:02,001 - DEBUG - Aligning data for region: socotra, commodity: tomatoes
+2024-10-10 14:03:02,002 - DEBUG - Aligning data for region: socotra, commodity: wage (non-qualified labour)
+2024-10-10 14:03:02,003 - DEBUG - Aligning data for region: socotra, commodity: wage (qualified labour)
+2024-10-10 14:03:02,004 - DEBUG - Aligning data for region: socotra, commodity: wheat
+2024-10-10 14:03:02,005 - DEBUG - Aligning data for region: socotra, commodity: wheat flour
+2024-10-10 14:03:02,006 - DEBUG - Aligning data for region: taizz, commodity: beans (kidney red)
+2024-10-10 14:03:02,006 - DEBUG - Aligning data for region: taizz, commodity: beans (white)
+2024-10-10 14:03:02,007 - DEBUG - Aligning data for region: taizz, commodity: eggs
+2024-10-10 14:03:02,008 - DEBUG - Aligning data for region: taizz, commodity: exchange rate (unofficial)
+2024-10-10 14:03:02,009 - DEBUG - Aligning data for region: taizz, commodity: fuel (diesel)
+2024-10-10 14:03:02,011 - DEBUG - Aligning data for region: taizz, commodity: fuel (gas)
+2024-10-10 14:03:02,012 - DEBUG - Aligning data for region: taizz, commodity: fuel (petrol-gasoline)
+2024-10-10 14:03:02,013 - DEBUG - Aligning data for region: taizz, commodity: lentils
+2024-10-10 14:03:02,013 - DEBUG - Aligning data for region: taizz, commodity: milling cost (wheat)
+2024-10-10 14:03:02,014 - DEBUG - Aligning data for region: taizz, commodity: oil (vegetable)
+2024-10-10 14:03:02,015 - DEBUG - Aligning data for region: taizz, commodity: onions
+2024-10-10 14:03:02,016 - DEBUG - Aligning data for region: taizz, commodity: peas (yellow, split)
+2024-10-10 14:03:02,017 - DEBUG - Aligning data for region: taizz, commodity: potatoes
+2024-10-10 14:03:02,018 - DEBUG - Aligning data for region: taizz, commodity: rice (imported)
+2024-10-10 14:03:02,019 - DEBUG - Aligning data for region: taizz, commodity: salt
+2024-10-10 14:03:02,020 - DEBUG - Aligning data for region: taizz, commodity: sugar
+2024-10-10 14:03:02,020 - DEBUG - Aligning data for region: taizz, commodity: tomatoes
+2024-10-10 14:03:02,021 - DEBUG - Aligning data for region: taizz, commodity: wage (non-qualified labour)
+2024-10-10 14:03:02,022 - DEBUG - Aligning data for region: taizz, commodity: wage (qualified labour)
+2024-10-10 14:03:02,023 - DEBUG - Aligning data for region: taizz, commodity: wheat
+2024-10-10 14:03:02,024 - DEBUG - Aligning data for region: taizz, commodity: wheat flour
+2024-10-10 14:03:02,040 - INFO - Data aligned to 'M' frequency.
+2024-10-10 14:03:02,046 - INFO - Unified regime created with 19914 records.
+2024-10-10 14:03:02,048 - INFO - Working exclusively with the unified regime: unified
+2024-10-10 14:03:02,049 - INFO - Found 21 unique commodities for the unified regime.
+2024-10-10 14:03:05,190 - INFO - Residuals aggregated successfully.
+2024-10-10 14:03:05,203 - INFO - No duplicate residual entries found after aggregation.
+2024-10-10 14:03:05,203 - INFO - Simplifying geometries to reduce GeoJSON size.
+2024-10-10 14:03:05,212 - INFO - Geometries simplified successfully.
+2024-10-10 14:03:05,212 - INFO - Optimizing data types for memory efficiency.
+2024-10-10 14:03:05,216 - INFO - Data types optimized successfully.
+2024-10-10 14:03:05,216 - INFO - Selecting essential columns for the final GeoJSON.
+2024-10-10 14:03:05,218 - INFO - Essential columns selected.
+2024-10-10 14:03:05,218 - INFO - Saving enhanced GeoJSON to 'project/data/processed/enhanced_unified_data_with_residual.geojson'.
+2024-10-10 14:03:05,443 - INFO - Created 19,914 records
+2024-10-10 14:03:05,444 - INFO - Enhanced GeoJSON saved successfully.
+2024-10-10 14:03:05,785 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-10 14:03:07,828 - INFO - Spatial weights saved to results/spatial_weights/spatial_weights.json.
+2024-10-10 14:03:13,976 - INFO - Flow map saved to results/network_data/flow_maps.csv.
+2024-10-10 14:03:13,987 - INFO - Average prices saved to results/choropleth_data/average_prices.csv.
+2024-10-10 14:03:14,079 - INFO - Results saved to results/spatial_analysis_results.json.
+2024-10-10 14:03:14,079 - INFO - Residuals are present in the analysis results.
+2024-10-10 14:03:14,080 - INFO - Spatial analysis pipeline completed successfully.
