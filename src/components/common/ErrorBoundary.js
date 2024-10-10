@@ -2,37 +2,30 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Alert, AlertTitle } from '@mui/material';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
+    // Update state so the next render shows the fallback UI.
     return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    this.setState({ error, errorInfo });
-    console.error('Uncaught error:', error, errorInfo);
+    // You can log the error to an error reporting service here
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      return (
-        <Alert severity="error">
-          <AlertTitle>Something went wrong</AlertTitle>
-          {this.state.error && this.state.error.toString()}
-          <details style={{ whiteSpace: 'pre-wrap' }}>
-            {this.state.errorInfo && this.state.errorInfo.componentStack}
-          </details>
-        </Alert>
-      );
+      // You can render any custom fallback UI
+      return <h1>Something went wrong: {this.state.error.message}</h1>;
     }
 
-    return this.props.children;
+    return this.props.children; 
   }
 }
 

@@ -1,3 +1,5 @@
+# ecm_v2.5_directional.py
+
 import logging
 import json
 import warnings
@@ -174,35 +176,18 @@ def run_stationarity_tests(series, variable):
     for name, transformed in transformations.items():
         logger.debug(f"Testing transformation: {name}")
         try:
-            if len(transformed) < 10:
-                logger.warning(f"Not enough data points for transformation {name} of {variable}. Skipping.")
-                continue
-            
-            adf_stat, adf_p, _, _, critical_values, _ = adfuller(transformed, autolag='AIC')
-            kpss_stat, kpss_p, _, _ = kpss(transformed, regression='c', nlags='auto')
-
-            adf_stationary = adf_p < STN_SIG
-            kpss_stationary = kpss_p > STN_SIG
-
+            # Assuming critical_values is obtained from some test result
+            test_result = adfuller(transformed)
+            critical_values = test_result[4]  # This is typically a dictionary
             results[name] = {
-                'ADF': {
-                    'Statistic': adf_stat,
-                    'p-value': adf_p,
-                    'Critical Values': critical_values,
-                    'Stationary': adf_stationary
-                },
-                'KPSS': {
-                    'Statistic': kpss_stat,
-                    'p-value': kpss_p,
-                    'Stationary': kpss_stationary
-                }
+                'ADF Statistic': test_result[0],
+                'p-value': test_result[1],
+                'Critical Values': list(critical_values.values()),  # Convert dict values to list
+                'Used Lag': test_result[2],
+                'Number of Observations Used': test_result[3]
             }
-
-            logger.debug(f"ADF p={adf_p}, KPSS p={kpss_p} for {name}")
-
-            if adf_stationary and kpss_stationary:
+            if test_result[1] < STN_SIG:
                 selected_transformation = name
-                logger.debug(f"Selected transformation: {name}")
                 break
         except Exception as e:
             logger.error(f"Stationarity test failed for {name}: {e}")
@@ -401,17 +386,17 @@ def run_univariate_diagnostics(resid, exog):
     pacf_vals = sm.tsa.pacf(resid, nlags=20).tolist()
 
     return {
-        'breusch_godfrey_stat': float(bg_stat),
-        'breusch_godfrey_pvalue': float(bg_p),
-        'arch_test_stat': float(arch_stat),
-        'arch_test_pvalue': float(arch_p),
-        'jarque_bera_stat': float(jb_stat),
-        'jarque_bera_pvalue': float(jb_p),
-        'durbin_watson_stat': float(dw_stat),
-        'white_test_stat': float(white_stat),
-        'white_test_pvalue': float(white_p),
-        'shapiro_wilk_stat': float(shapiro_stat),
-        'shapiro_wilk_pvalue': float(shapiro_p),
+        'breusch_godfrey_stat': float(bg_stat) if not np.isnan(bg_stat) else None,
+        'breusch_godfrey_pvalue': float(bg_p) if not np.isnan(bg_p) else None,
+        'arch_test_stat': float(arch_stat) if not np.isnan(arch_stat) else None,
+        'arch_test_pvalue': float(arch_p) if not np.isnan(arch_p) else None,
+        'jarque_bera_stat': float(jb_stat) if not np.isnan(jb_stat) else None,
+        'jarque_bera_pvalue': float(jb_p) if not np.isnan(jb_p) else None,
+        'durbin_watson_stat': float(dw_stat) if not np.isnan(dw_stat) else None,
+        'white_test_stat': float(white_stat) if not np.isnan(white_stat) else None,
+        'white_test_pvalue': float(white_p) if not np.isnan(white_p) else None,
+        'shapiro_wilk_stat': float(shapiro_stat) if not np.isnan(shapiro_stat) else None,
+        'shapiro_wilk_pvalue': float(shapiro_p) if not np.isnan(shapiro_p) else None,
         'acf': acf_vals,
         'pacf': pacf_vals
     }
@@ -441,16 +426,29 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         if isinstance(obj, (np.number, bool)):
             return obj.item()
+        if isinstance(obj, float) and np.isnan(obj):
+            return None  # JSON does not support NaN
         return super().default(obj)
 
-# Convert keys to strings recursively
+# Convert keys to strings recursively and handle NaN
 def convert_keys_to_str(data):
     if isinstance(data, dict):
         return {str(k): convert_keys_to_str(v) for k, v in data.items()}
     elif isinstance(data, list):
         return [convert_keys_to_str(i) for i in data]
+    elif isinstance(data, float) and np.isnan(data):
+        return None
     else:
         return data
+
+# Validate analysis result
+def validate_analysis_result(analysis_result):
+    required_fields = ['commodity', 'direction', 'aic', 'bic', 'hqic', 'alpha', 'beta', 'gamma', 'diagnostics', 'irf', 'granger_causality']
+    for field in required_fields:
+        if field not in analysis_result:
+            logger.warning(f"Missing field '{field}' in analysis result for {analysis_result.get('commodity', 'Unknown')}")
+            analysis_result[field] = None  # Assign a default value
+    return analysis_result
 
 # Save Results Function
 def save_results(ecm_results, residuals_storage, direction):
@@ -527,16 +525,34 @@ def run_ecm_analysis_single(commodity, df, stationarity_results, cointegration_r
         gc = compute_granger_causality(y, x)
         logger.debug(f"Granger causality computed for {commodity}")
 
+        # Extract coefficients
+        try:
+            alpha = results.alpha[0, 0]  # Assuming first cointegration relation
+            beta = results.beta[0, 0]    # Assuming first cointegration relation
+            gamma = results.gamma[0, 0]  # Assuming first equation
+            logger.debug(f"Extracted coefficients for {commodity}: alpha={alpha}, beta={beta}, gamma={gamma}")
+        except Exception as e:
+            logger.error(f"Failed to extract coefficients for {commodity}: {e}")
+            alpha = None  # Use None to represent null in JSON
+            beta = None
+            gamma = None
+
         analysis_result = {
             'commodity': commodity,
             'direction': direction,
             'aic': aic,
             'bic': bic,
             'hqic': hqic,
+            'alpha': alpha,
+            'beta': beta,
+            'gamma': gamma,
             'diagnostics': diagnostics,
             'irf': irf,
             'granger_causality': gc
         }
+
+        # Validate analysis result
+        analysis_result = validate_analysis_result(analysis_result)
 
         logger.info(f"ECM analysis completed for {commodity} in {direction} direction")
         return analysis_result, results.resid
@@ -615,7 +631,6 @@ def main():
     except Exception as e:
         logger.error(f"ECM analysis workflow failed: {e}")
         logger.debug(traceback.format_exc())
-
 
 if __name__ == '__main__':
     warnings.simplefilter('ignore')

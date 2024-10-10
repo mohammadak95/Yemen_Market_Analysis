@@ -1,13 +1,11 @@
-// src/Dashboard.js
-
-import React, { Suspense } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
   Paper,
   Grid,
   Typography,
-  Fade, // Import Fade transition
+  Fade,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
@@ -49,6 +47,20 @@ ChartJS.register(
 const Dashboard = ({ data, selectedAnalysis, selectedCommodity, selectedRegimes }) => {
   const theme = useTheme();
 
+  // Convert dates to strings
+  const processedData = useMemo(() => {
+    if (data && data.features) {
+      return {
+        ...data,
+        features: data.features.map(feature => ({
+          ...feature,
+          date: feature.date instanceof Date ? feature.date.toISOString() : feature.date
+        }))
+      };
+    }
+    return data;
+  }, [data]);
+
   return (
     <Box
       sx={{
@@ -80,11 +92,15 @@ const Dashboard = ({ data, selectedAnalysis, selectedCommodity, selectedRegimes 
                   flexDirection: 'column',
                 }}
               >
-                <InteractiveChart
-                  data={data.features}
-                  selectedCommodity={selectedCommodity}
-                  selectedRegimes={selectedRegimes}
-                />
+                {processedData.features && processedData.features.length > 0 ? (
+                  <InteractiveChart
+                    data={processedData.features}
+                    selectedCommodity={selectedCommodity}
+                    selectedRegimes={selectedRegimes}
+                  />
+                ) : (
+                  <LoadingSpinner />
+                )}
               </Box>
             ) : (
               <Box
@@ -94,7 +110,7 @@ const Dashboard = ({ data, selectedAnalysis, selectedCommodity, selectedRegimes 
               >
                 <ErrorMessage message="Please select at least one regime and a commodity from the sidebar." />
               </Box>
-            )} {/* Added closing parenthesis here */}
+            )}
           </Paper>
         </Grid>
 
@@ -169,10 +185,26 @@ const renderAnalysisComponent = (analysis, commodity, regimes) => {
 };
 
 Dashboard.propTypes = {
-  data: PropTypes.object.isRequired, // Adjusted to match App.js passing data as prop
-  selectedAnalysis: PropTypes.string.isRequired, // Expected values: 'ecm', 'priceDiff', 'spatial'
+  data: PropTypes.shape({
+    features: PropTypes.arrayOf(
+      PropTypes.shape({
+        date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]).isRequired,
+        commodity: PropTypes.string.isRequired,
+        regime: PropTypes.string.isRequired,
+        price: PropTypes.number,
+      })
+    ).isRequired,
+    commodities: PropTypes.arrayOf(PropTypes.string),
+    regimes: PropTypes.arrayOf(PropTypes.string),
+    dateRange: PropTypes.shape({
+      min: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+      max: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    }),
+  }).isRequired,
+  selectedAnalysis: PropTypes.string.isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default Dashboard;
+

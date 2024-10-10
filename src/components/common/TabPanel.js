@@ -4,28 +4,24 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography } from '@mui/material';
 
-const TabPanel = (props) => {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`ecm-tabpanel-${index}`}
-      aria-labelledby={`ecm-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography component="div">{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-};
+const TabPanel = ({ children, value, index, ...other }) => (
+  <div
+    role="tabpanel"
+    hidden={value !== index}
+    id={`ecm-tabpanel-${index}`}
+    aria-labelledby={`ecm-tab-${index}`}
+    {...other}
+  >
+    {value === index && (
+      <Box sx={{ p: 3 }}>
+        <Typography component="div">{children}</Typography>
+      </Box>
+    )}
+  </div>
+);
 
 TabPanel.propTypes = {
-  children: PropTypes.node,
+  children: PropTypes.node, // No change needed here
   index: PropTypes.number.isRequired,
   value: PropTypes.number.isRequired,
 };

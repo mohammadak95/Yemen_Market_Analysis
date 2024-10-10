@@ -10,18 +10,14 @@ import {
   IconButton,
   ToggleButtonGroup,
   ToggleButton,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Button,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
 import NorthIcon from '@mui/icons-material/North';
 import SouthIcon from '@mui/icons-material/South';
 import DownloadIcon from '@mui/icons-material/Download';
 import PropTypes from 'prop-types';
-import { useECMData } from '../../hooks/useECMDataHooks';
+import { useECMData } from '../../hooks/useECMData'; // Adjusted import
 import ECMTabs from '../common/ECMTabs';
 import SummaryTable from './SummaryTable';
 import DiagnosticsTable from './DiagnosticsTable';
@@ -33,8 +29,10 @@ import { saveAs } from 'file-saver';
 import { jsonToCsv } from '../../utils/jsonToCsv';
 import ECMTutorial from './ECMTutorial';
 import { formatNumber } from '../../utils/formatNumber';
+import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-const ECMAnalysis = ({ selectedCommodity }) => { // Removed selectedRegime from props
+const ECMAnalysis = ({ selectedCommodity }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [analysisType, setAnalysisType] = useState('unified');
   const [direction, setDirection] = useState('northToSouth');
@@ -74,12 +72,12 @@ const ECMAnalysis = ({ selectedCommodity }) => { // Removed selectedRegime from 
   useEffect(() => {
     if (analysisType === 'unified' && unifiedStatus === 'succeeded' && unifiedData) {
       const foundData = unifiedData.find(
-        (item) => item.commodity === selectedCommodity && item.regime === unifiedRegime
+        (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase() && item.regime === unifiedRegime
       );
       setSelectedData(foundData);
     } else if (analysisType === 'directional' && directionalStatus === 'succeeded' && directionalData) {
       const directionData = directionalData[direction];
-      const foundData = directionData.find((item) => item.commodity === selectedCommodity);
+      const foundData = directionData.find((item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase());
       setSelectedData(foundData);
     }
   }, [
@@ -92,6 +90,65 @@ const ECMAnalysis = ({ selectedCommodity }) => { // Removed selectedRegime from 
     direction,
     unifiedRegime, // Added fixed regime
   ]);
+
+  // Handle Download as CSV and JSON
+  const handleDownloadCsv = () => {
+    if (!selectedData) {
+      console.warn('No ECM data available to download.');
+      return;
+    }
+
+    const dataToDownload = {
+      Summary: {
+        AIC: formatNumber(selectedData.aic),
+        BIC: formatNumber(selectedData.bic),
+        HQIC: formatNumber(selectedData.hqic),
+        Alpha: selectedData.alpha,
+        Beta: selectedData.beta,
+        Gamma: selectedData.gamma,
+      },
+      Diagnostics: selectedData.diagnostics,
+      IRF: selectedData.irf,
+      GrangerCausality: selectedData.granger_causality,
+      Residuals: selectedData.residuals,
+      FittedValues: selectedData.fittedValues,
+      SpatialAutocorrelation: selectedData.spatial_autocorrelation,
+      Direction: selectedData.direction, // Added direction for context
+    };
+
+    const csv = jsonToCsv([dataToDownload]);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `${selectedCommodity}_ECM_Analysis.csv`);
+  };
+
+  const handleDownloadJson = () => {
+    if (!selectedData) {
+      console.warn('No ECM data available to download.');
+      return;
+    }
+
+    const dataToDownload = {
+      Summary: {
+        AIC: formatNumber(selectedData.aic),
+        BIC: formatNumber(selectedData.bic),
+        HQIC: formatNumber(selectedData.hqic),
+        Alpha: selectedData.alpha,
+        Beta: selectedData.beta,
+        Gamma: selectedData.gamma,
+      },
+      Diagnostics: selectedData.diagnostics,
+      IRF: selectedData.irf,
+      GrangerCausality: selectedData.granger_causality,
+      Residuals: selectedData.residuals,
+      FittedValues: selectedData.fittedValues,
+      SpatialAutocorrelation: selectedData.spatial_autocorrelation,
+      Direction: selectedData.direction, // Added direction for context
+    };
+
+    const jsonString = JSON.stringify(dataToDownload, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    saveAs(blob, `${selectedCommodity}_ECM_Analysis.json`);
+  };
 
   // Loading State
   if (
@@ -127,7 +184,7 @@ const ECMAnalysis = ({ selectedCommodity }) => { // Removed selectedRegime from 
     return (
       <Box sx={{ p: 2, mt: 4 }}>
         <Typography variant="h6">
-          No data available for {selectedCommodity} in the selected analysis type.
+          No data available for <strong>{selectedCommodity}</strong> in the selected analysis type.
         </Typography>
       </Box>
     );
@@ -151,14 +208,14 @@ const ECMAnalysis = ({ selectedCommodity }) => { // Removed selectedRegime from 
     <IRFChart key="irf" irfData={selectedData.irf} />, // Pass the correct irf array
     <ResidualsChart
       key="residuals"
-      residuals={selectedData.diagnostics.Variable_1.acf}
-      fittedValues={selectedData.diagnostics.Variable_1.pacf}
+      residuals={selectedData.residuals}
+      fittedValues={selectedData.fittedValues}
     />,
     <GrangerCausalityChart key="grangerCausality" grangerData={selectedData.granger_causality} />,
   ];
 
   // Append Spatial Autocorrelation for Unified ECM
-  if (analysisType === 'unified') {
+  if (analysisType === 'unified' && selectedData.spatial_autocorrelation) {
     tabLabels.push('Spatial Autocorrelation');
     tabContent.push(
       <SpatialAutocorrelationChart
@@ -167,43 +224,6 @@ const ECMAnalysis = ({ selectedCommodity }) => { // Removed selectedRegime from 
       />
     );
   }
-
-  // Handle Download as CSV and JSON
-  const handleDownloadCsv = () => {
-    const dataToDownload = {
-      Summary: {
-        AIC: formatNumber(selectedData.aic),
-        BIC: formatNumber(selectedData.bic),
-        HQIC: formatNumber(selectedData.hqic),
-      },
-      Diagnostics: selectedData.diagnostics,
-      IRF: selectedData.irf,
-      GrangerCausality: selectedData.granger_causality,
-      SpatialAutocorrelation: selectedData.spatial_autocorrelation,
-    };
-
-    const csv = jsonToCsv([dataToDownload]);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, `${selectedCommodity}_ECM_Analysis.csv`);
-  };
-
-  const handleDownloadJson = () => {
-    const dataToDownload = {
-      Summary: {
-        AIC: formatNumber(selectedData.aic),
-        BIC: formatNumber(selectedData.bic),
-        HQIC: formatNumber(selectedData.hqic),
-      },
-      Diagnostics: selectedData.diagnostics,
-      IRF: selectedData.irf,
-      GrangerCausality: selectedData.granger_causality,
-      SpatialAutocorrelation: selectedData.spatial_autocorrelation,
-    };
-
-    const jsonString = JSON.stringify(dataToDownload, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    saveAs(blob, `${selectedCommodity}_ECM_Analysis.json`);
-  };
 
   return (
     <Paper elevation={3} sx={{ mt: 4, p: { xs: 1, sm: 2 } }}>

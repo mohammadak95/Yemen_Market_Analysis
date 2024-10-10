@@ -10,12 +10,20 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Line,
+  ReferenceLine,
 } from 'recharts';
-import { Typography, Paper, Box, Tooltip } from '@mui/material';
+import { Typography, Paper, Box, Tooltip as MuiTooltip } from '@mui/material';
 import PropTypes from 'prop-types';
+import { formatNumber } from '../../utils/formatNumber';
 
 const ResidualsChart = ({ residuals, fittedValues }) => {
-  if (!residuals || !fittedValues || residuals.length === 0 || fittedValues.length === 0) {
+  if (
+    !residuals ||
+    !fittedValues ||
+    residuals.length === 0 ||
+    fittedValues.length === 0 ||
+    residuals.length !== fittedValues.length
+  ) {
     return (
       <Box sx={{ p: 2 }}>
         <Typography>No residuals data available to display the chart.</Typography>
@@ -28,8 +36,6 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
     residual,
   }));
 
-  const formatNumber = (num) => (typeof num === 'number' ? num.toFixed(2) : 'N/A');
-
   // Calculate trend line (simple linear regression)
   const calculateTrendLine = (data) => {
     const n = data.length;
@@ -38,7 +44,10 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
     const sumXY = data.reduce((sum, d) => sum + d.fitted * d.residual, 0);
     const sumX2 = data.reduce((sum, d) => sum + d.fitted * d.fitted, 0);
 
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const denominator = n * sumX2 - sumX * sumX;
+    if (denominator === 0) return data.map((d) => ({ fitted: d.fitted, trend: 0 }));
+
+    const slope = (n * sumXY - sumX * sumY) / denominator;
     const intercept = (sumY - slope * sumX) / n;
 
     return data.map((d) => ({
@@ -50,7 +59,7 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
   const trendData = calculateTrendLine(data);
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <Paper sx={{ p: 2, mb: 2 }}>
       <Typography variant="h6" gutterBottom>
         Residuals vs Fitted Values
       </Typography>
@@ -64,34 +73,47 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
             dataKey="fitted"
             name="Fitted Values"
             label={
-              <Tooltip title="Predicted values from the model">
+              <MuiTooltip title="Predicted values from the model" arrow>
                 <text x="0" y="0" dy={16} dx={250} textAnchor="middle">
                   Fitted Values
                 </text>
-              </Tooltip>
+              </MuiTooltip>
             }
+            tickFormatter={(value) => formatNumber(value)}
           />
           <YAxis
             dataKey="residual"
             name="Residuals"
             label={
-              <Tooltip title="Difference between observed and predicted values">
+              <MuiTooltip title="Difference between observed and predicted values" arrow>
                 <text x="0" y="0" dx={-30} dy={200} textAnchor="middle" transform="rotate(-90)">
                   Residuals
                 </text>
-              </Tooltip>
+              </MuiTooltip>
             }
+            tickFormatter={(value) => formatNumber(value)}
           />
           <RechartsTooltip
-            formatter={(value) => formatNumber(value)}
+            formatter={(value, name) => [
+              formatNumber(value),
+              name === 'residual' ? 'Residual' : name,
+            ]}
             labelFormatter={(label) => `Fitted Value: ${formatNumber(label)}`}
           />
           <Scatter name="Residuals" data={data} fill="#8884d8" />
-          <Line type="linear" dataKey="trend" data={trendData} stroke="#ff7300" dot={false} name="Trend Line" />
+          <Line
+            type="linear"
+            dataKey="trend"
+            data={trendData}
+            stroke="#ff7300"
+            dot={false}
+            name="Trend Line"
+          />
+          <ReferenceLine y={0} stroke="red" strokeDasharray="3 3" />
         </ScatterChart>
       </ResponsiveContainer>
-      <Typography variant="caption" display="block" sx={{ mt: 2 }}>
-        * A horizontal trend line indicates no apparent relationship between residuals and fitted values.
+      <Typography variant="body2" sx={{ mt: 2 }}>
+        This scatter plot helps in identifying any systematic patterns in the residuals. A random scatter around the trend line indicates a good model fit. Patterns or trends may suggest model misspecification.
       </Typography>
     </Paper>
   );

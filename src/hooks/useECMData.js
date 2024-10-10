@@ -1,3 +1,5 @@
+// src/hooks/useECMData.js
+
 import { useState, useEffect, useCallback } from 'react';
 import { getDataPath } from '../utils/dataPath';
 
@@ -10,6 +12,7 @@ export const useECMData = () => {
   const [directionalStatus, setDirectionalStatus] = useState('idle');
   const [directionalError, setDirectionalError] = useState(null);
 
+  // Fetch data utility
   const fetchData = useCallback(async (url) => {
     const response = await fetch(url, {
       headers: { Accept: 'application/json' },
@@ -21,6 +24,7 @@ export const useECMData = () => {
     return JSON.parse(text.replace(/NaN/g, 'null'));
   }, []);
 
+  // Process Unified ECM Data
   const processUnifiedData = useCallback((data) => {
     return data.ecm_analysis.map((item) => ({
       ...item,
@@ -29,19 +33,25 @@ export const useECMData = () => {
         Variable_2: item.diagnostics?.Variable_2 || 'N/A',
       },
       irf: Array.isArray(item.irf?.impulse_response?.irf) ? item.irf.impulse_response.irf : [],
-      granger_causality:
-        item.granger_causality?.conflict_intensity !== undefined
-          ? item.granger_causality.conflict_intensity
-          : 'N/A',
+      granger_causality: item.granger_causality || 'N/A', // Preserve entire object
       spatial_autocorrelation: item.spatial_autocorrelation
         ? {
-            Variable_1: item.spatial_autocorrelation.Variable_1 || 'N/A',
-            Variable_2: item.spatial_autocorrelation.Variable_2 || 'N/A',
+            Variable_1: {
+              Moran_I: item.spatial_autocorrelation.Variable_1?.Moran_I || null,
+              Moran_p_value: item.spatial_autocorrelation.Variable_1?.Moran_p_value || null,
+            },
+            Variable_2: {
+              Moran_I: item.spatial_autocorrelation.Variable_2?.Moran_I || null,
+              Moran_p_value: item.spatial_autocorrelation.Variable_2?.Moran_p_value || null,
+            },
           }
         : null,
+      residuals: item.residuals || [],
+      fittedValues: item.fittedValues || [],
     }));
   }, []);
 
+  // Process Directional ECM Data
   const processDirectionalData = useCallback((data) => {
     return data.map((item) => ({
       ...item,
@@ -50,11 +60,21 @@ export const useECMData = () => {
         Variable_2: item.diagnostics?.Variable_2 || 'N/A',
       },
       irf: Array.isArray(item.irf?.impulse_response?.irf) ? item.irf.impulse_response.irf : [],
-      granger_causality:
-        item.granger_causality?.conflict_intensity !== undefined
-          ? item.granger_causality.conflict_intensity
-          : 'N/A',
-      spatial_autocorrelation: null,
+      granger_causality: item.granger_causality || 'N/A', // Preserve entire object
+      spatial_autocorrelation: item.spatial_autocorrelation
+        ? {
+            Variable_1: {
+              Moran_I: item.spatial_autocorrelation.Variable_1?.Moran_I || null,
+              Moran_p_value: item.spatial_autocorrelation.Variable_1?.Moran_p_value || null,
+            },
+            Variable_2: {
+              Moran_I: item.spatial_autocorrelation.Variable_2?.Moran_I || null,
+              Moran_p_value: item.spatial_autocorrelation.Variable_2?.Moran_p_value || null,
+            },
+          }
+        : null,
+      residuals: item.residuals || [],
+      fittedValues: item.fittedValues || [],
     }));
   }, []);
 
@@ -70,6 +90,8 @@ export const useECMData = () => {
         console.log('Parsed Unified ECM data (first item):', jsonData.ecm_analysis[0]);
 
         const processedData = processUnifiedData(jsonData);
+        console.log('Processed Unified ECM data:', processedData); // Additional logging
+
         setUnifiedData(processedData);
         setUnifiedStatus('succeeded');
       } catch (err) {
@@ -102,6 +124,8 @@ export const useECMData = () => {
           southToNorth: processDirectionalData(southToNorthData),
         };
 
+        console.log('Processed Directional Data:', processedDirectionalData); // Additional logging
+
         setDirectionalData(processedDirectionalData);
         setDirectionalStatus('succeeded');
       } catch (err) {
@@ -113,7 +137,7 @@ export const useECMData = () => {
 
     fetchUnifiedData();
     fetchDirectionalData();
-  }, [fetchData, processUnifiedData, processDirectionalData]);
+  }, [fetchData, processUnifiedData, processDirectionalData, unifiedData, directionalData]);
 
   return {
     unifiedData,
