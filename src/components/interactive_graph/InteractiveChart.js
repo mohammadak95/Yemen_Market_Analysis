@@ -25,6 +25,7 @@ import {
   Tooltip as MuiTooltip,
   IconButton,
   Grid,
+  Typography,
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {

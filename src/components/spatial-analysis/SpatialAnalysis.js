@@ -52,7 +52,7 @@ const SpatialAnalysis = ({ selectedCommodity }) => {
   }
 
   return (
-    <Paper sx={{ p: 2, mt: 3 }}>
+    <Paper elevation={3} sx={{ mt: 4, p: { xs: 1, sm: 2 }, width: '100%' }}>
       <Typography variant="h5" gutterBottom>
         Spatial Analysis for {selectedCommodity}
       </Typography>

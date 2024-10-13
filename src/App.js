@@ -1,6 +1,6 @@
-// src/App.js
+//src/App.js
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, Toolbar, IconButton } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
@@ -20,9 +20,6 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import AppBar from '@mui/material/AppBar';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
-
-
-
 
 const drawerWidth = 240;
 
@@ -60,14 +57,14 @@ const App = React.memo(function App() {
 
   const { data, loading, error } = useData();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
     if (!hasSeenWelcome) {
       setWelcomeModalOpen(true);
     }
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     setSidebarOpen(isSmUp);
   }, [isSmUp]);
 

@@ -1,14 +1,13 @@
-// src/styles/LayoutStyles.js
+//src/styles/LayoutStyles.js
 
 import { styled } from '@mui/material/styles';
 import { Box } from '@mui/material';
-
 
 export const drawerWidth = 240;
 
 export const LayoutContainer = styled(Box)(( ) => ({
   display: 'flex',
-  minHeight: '100vh', // Ensure full viewport height
+  minHeight: '100vh',
   width: '100%',
 }));
 
@@ -21,9 +20,9 @@ export const MainContent = styled('main', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  overflow: 'auto', // Enable scrolling if content overflows
+  overflow: 'auto',
   display: 'flex',
-  flexDirection: 'column', // Stack content vertically
+  flexDirection: 'column',
 }));
 
 export const SidebarWrapper = styled(Box)(({ theme }) => ({

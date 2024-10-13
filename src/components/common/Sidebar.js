@@ -8,10 +8,9 @@ import {
   Toolbar,
   Divider,
   Button,
-  Typography,
   Stack,
 } from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import { drawerWidth } from '../../styles/LayoutStyles';
 import CommoditySelector from './CommoditySelector';
 import RegimeSelector from './RegimeSelector';
@@ -43,7 +42,6 @@ const Sidebar = ({
   setSelectedRegimes,
   onOpenWelcomeModal,
 }) => {
-  const theme = useTheme();
 
   // Handle analysis button clicks
   const handleAnalysisChange = useCallback(
@@ -117,6 +115,15 @@ const Sidebar = ({
             >
               Spatial Analysis
             </Button>
+            {/* Tutorials Button */}
+            <Button
+              variant={selectedAnalysis === 'tutorials' ? 'contained' : 'outlined'}
+              color="primary"
+              fullWidth
+              onClick={() => handleAnalysisChange('tutorials')}
+            >
+              Tutorials
+            </Button>
           </Stack>
 
           {/* Methodology Button */}
@@ -177,11 +184,11 @@ const Sidebar = ({
 };
 
 Sidebar.propTypes = {
-  commodities: PropTypes.arrayOf(PropTypes.string),
-  regimes: PropTypes.arrayOf(PropTypes.string),
-  selectedCommodity: PropTypes.string,
+  commodities: PropTypes.arrayOf(PropTypes.string).isRequired,
+  regimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedCommodity: PropTypes.string.isRequired,
   setSelectedCommodity: PropTypes.func.isRequired,
-  selectedAnalysis: PropTypes.string,
+  selectedAnalysis: PropTypes.string.isRequired,
   setSelectedAnalysis: PropTypes.func.isRequired,
   sidebarOpen: PropTypes.bool.isRequired,
   setSidebarOpen: PropTypes.func.isRequired,

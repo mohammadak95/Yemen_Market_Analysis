@@ -19,6 +19,9 @@ const PriceDifferentialAnalysis = React.lazy(() =>
 const SpatialAnalysis = React.lazy(() =>
   import('./components/spatial-analysis/SpatialAnalysis')
 );
+const Tutorials = React.lazy(() =>
+  import('./components/tutorials/Tutorials')
+);
 
 // Register Chart.js components
 import {
@@ -74,6 +77,7 @@ const Dashboard = React.memo(
         ecm: ECMAnalysis,
         priceDiff: PriceDifferentialAnalysis,
         spatial: SpatialAnalysis,
+        tutorials: Tutorials, // Add Tutorials to the components map
       };
       return components[selectedAnalysis] || null;
     }, [selectedAnalysis]);
@@ -118,6 +122,7 @@ const Dashboard = React.memo(
           {selectedAnalysis && AnalysisComponent && (
             <Grid item xs={12}>
               <Suspense fallback={<LoadingSpinner />}>
+                {/* Wrap Fade inside Suspense to ensure child is loaded */}
                 <AnalysisWrapper>
                   <AnalysisComponent
                     selectedCommodity={selectedCommodity}

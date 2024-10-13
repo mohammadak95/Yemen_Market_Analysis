@@ -35,9 +35,7 @@ const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
   }
 
   const handleChange = (event) => {
-    const {
-      target: { value },
-    } = event;
+    const value = event.target.value;
     onSelectRegimes(typeof value === 'string' ? value.split(',') : value);
   };
 

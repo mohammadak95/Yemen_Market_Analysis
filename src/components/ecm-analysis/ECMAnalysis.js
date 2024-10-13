@@ -172,7 +172,7 @@ const ECMAnalysis = ({ selectedCommodity }) => {
   }
 
   return (
-    <Paper elevation={3} sx={{ mt: 4, p: { xs: 1, sm: 2 } }}>
+    <Paper elevation={3} sx={{ mt: 4, p: { xs: 1, sm: 2 }, width: '100%' }}>
       <Box sx={{ p: 2 }}>
         <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
           ECM Analysis: {selectedCommodity}
