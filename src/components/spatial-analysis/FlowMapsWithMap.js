@@ -1,105 +1,113 @@
-import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Paper } from '@mui/material';
-import L from 'leaflet';
-import yemenGeoJSON from '../../data/yemen_simple.geojson'; // Ensure this is in WGS84
+// src/components/spatial-analysis/FlowMapsWithMap.js
 
-// Initialize Leaflet marker icons to avoid missing icon issues
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
+import * as d3 from 'd3';
 
 const FlowMapsWithMap = ({ flowMaps }) => {
-  // Convert flowMaps to GeoJSON for easy integration with Leaflet
-  const flowGeoJSON = useMemo(() => {
-    return {
-      type: 'FeatureCollection',
-      features: flowMaps
-        .filter((flow) => flow.source_lat && flow.source_lng && flow.target_lat && flow.target_lng) // Ensure valid coordinates
-        .map((flow) => ({
-          type: 'Feature',
-          properties: {
-            source: flow.source,
-            target: flow.target,
-            weight: flow.weight,
-          },
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [flow.source_lng, flow.source_lat],
-              [flow.target_lng, flow.target_lat],
-            ],
-          },
-        })),
+  const svgRef = useRef(null);
+  const containerRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  // Handle responsive sizing
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        setDimensions({
+          width: clientWidth,
+          height: clientHeight,
+        });
+      }
     };
-  }, [flowMaps]);
 
-  // Log the GeoJSON structure to debug invalid structures
-  console.log('Flow GeoJSON Data:', flowGeoJSON);
+    // Initial size
+    handleResize();
 
-  // Styling for flow lines based on the weight
-  const geoJsonOptions = useMemo(() => ({
-    style: (feature) => ({
-      color: '#0077ff', // Set a standard color for flow lines
-      weight: Math.min(feature.properties.weight / 10, 8), // Control the line width based on weight
-      opacity: 0.7, // Slightly transparent for better readability
-    }),
-    onEachFeature: (feature, layer) => {
-      const { source, target, weight } = feature.properties;
-      layer.bindPopup(`
-        <strong>Flow:</strong> ${source} → ${target}<br/>
-        <strong>Weight:</strong> ${weight}
-      `);
-    },
-  }), []);
+    // Add event listener
+    window.addEventListener('resize', handleResize);
 
-  // Central Yemen coordinates for the map view
-  const mapCenter = [15.3694, 44.1910]; // Center of Yemen
-  const mapZoom = 6; // Suitable zoom level
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Markers for each unique region (source or target) in the flow data
-  const regionMarkers = useMemo(() => {
-    const uniqueRegions = new Set(flowMaps.flatMap(flow => [flow.source, flow.target]));
-    return Array.from(uniqueRegions).map((region) => {
-      const flow = flowMaps.find((f) => f.source === region || f.target === region);
-      const lat = flow.source === region ? flow.source_lat : flow.target_lat;
-      const lng = flow.source === region ? flow.source_lng : flow.target_lng;
-      return (
-        <Marker key={region} position={[lat, lng]}>
-          <Popup>
-            <strong>{region}</strong><br />
-            Latitude: {lat.toFixed(4)}<br />
-            Longitude: {lng.toFixed(4)}
-          </Popup>
-        </Marker>
-      );
-    });
-  }, [flowMaps]);
+  useEffect(() => {
+    if (!flowMaps || flowMaps.length === 0) return;
+
+    const { width, height } = dimensions;
+
+    const svg = d3.select(svgRef.current)
+      .attr('width', width)
+      .attr('height', height);
+
+    svg.selectAll("*").remove();
+
+    // Extract all longitude and latitude values
+
+    // Define a geographic projection
+    const projection = d3.geoMercator()
+      .fitSize([width - 100, height - 100], {
+        type: "FeatureCollection",
+        features: flowMaps.flatMap(d => [
+          { type: "Feature", geometry: { type: "Point", coordinates: [d.source_lng, d.source_lat] } },
+          { type: "Feature", geometry: { type: "Point", coordinates: [d.target_lng, d.target_lat] } }
+        ])
+      });
+
+    // Helper functions to get projected coordinates
+    const getX = d => projection([d.lng, d.lat])[0];
+    const getY = d => projection([d.lng, d.lat])[1];
+
+    // Draw flow lines
+    svg.selectAll('line')
+      .data(flowMaps)
+      .enter()
+      .append('line')
+      .attr('x1', d => getX({ lng: d.source_lng, lat: d.source_lat }))
+      .attr('y1', d => getY({ lng: d.source_lng, lat: d.source_lat }))
+      .attr('x2', d => getX({ lng: d.target_lng, lat: d.target_lat }))
+      .attr('y2', d => getY({ lng: d.target_lng, lat: d.target_lat }))
+      .attr('stroke', '#0077be')
+      .attr('stroke-width', d => Math.sqrt(d.weight) / 2)
+      .attr('opacity', 0.6);
+
+    // Draw nodes
+    const allPoints = flowMaps.flatMap(d => [
+      { name: d.source, lng: d.source_lng, lat: d.source_lat },
+      { name: d.target, lng: d.target_lng, lat: d.target_lat }
+    ]);
+
+    const uniquePoints = Array.from(
+      new Map(allPoints.map(item => [item.name, item])).values()
+    );
+
+    svg.selectAll('circle')
+      .data(uniquePoints)
+      .enter()
+      .append('circle')
+      .attr('cx', d => getX(d))
+      .attr('cy', d => getY(d))
+      .attr('r', 5)
+      .attr('fill', '#ff7f00')
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 1.5);
+
+    svg.selectAll('text')
+      .data(uniquePoints)
+      .enter()
+      .append('text')
+      .attr('x', d => getX(d) + 8)
+      .attr('y', d => getY(d))
+      .text(d => d.name)
+      .attr('font-size', '10px')
+      .attr('fill', '#333');
+
+  }, [flowMaps, dimensions]);
 
   return (
-    <Paper sx={{ p: 2, height: '600px', position: 'relative' }}>
-      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }}>
-        {/* OpenStreetMap Tile Layer */}
-        <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-        />
-
-        {/* Yemen Boundary GeoJSON */}
-        <GeoJSON data={yemenGeoJSON} style={{ color: 'green', weight: 2, fillOpacity: 0.1 }} />
-
-        {/* Flow Lines from Flow GeoJSON */}
-        <GeoJSON data={flowGeoJSON} {...geoJsonOptions} />
-
-        {/* Region Markers */}
-        {regionMarkers}
-      </MapContainer>
-    </Paper>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '600px' }}>
+      <svg ref={svgRef}></svg>
+    </div>
   );
 };
 
@@ -115,6 +123,7 @@ FlowMapsWithMap.propTypes = {
       weight: PropTypes.number.isRequired,
     })
   ).isRequired,
+  geoCoordinates: PropTypes.object.isRequired,
 };
 
 export default FlowMapsWithMap;

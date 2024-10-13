@@ -2,73 +2,54 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Table, TableBody, TableCell, TableContainer, TableRow, Paper, Typography } from '@mui/material';
+import ResultTable from '../common/ResultTable';
 
-const SummaryTable = ({ data }) => (
-  <TableContainer component={Paper} sx={{ mb: 2 }}>
-    <Table>
-      <TableBody>
-        <TableRow>
-          <TableCell>
-            <Typography fontWeight="bold">AIC</Typography>
-          </TableCell>
-          <TableCell>{typeof data.aic === 'number' ? data.aic.toFixed(2) : 'N/A'}</TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <Typography fontWeight="bold">BIC</Typography>
-          </TableCell>
-          <TableCell>{typeof data.bic === 'number' ? data.bic.toFixed(2) : 'N/A'}</TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <Typography fontWeight="bold">HQIC</Typography>
-          </TableCell>
-          <TableCell>{typeof data.hqic === 'number' ? data.hqic.toFixed(2) : 'N/A'}</TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <Typography fontWeight="bold">Alpha (α)</Typography>
-          </TableCell>
-          <TableCell>
-            {typeof data.alpha === 'number'
-              ? data.alpha.toFixed(4)
-              : <Typography color="text.secondary">N/A</Typography>}
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <Typography fontWeight="bold">Beta (β)</Typography>
-          </TableCell>
-          <TableCell>
-            {typeof data.beta === 'number'
-              ? data.beta.toFixed(4)
-              : <Typography color="text.secondary">N/A</Typography>}
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <Typography fontWeight="bold">Gamma (γ)</Typography>
-          </TableCell>
-          <TableCell>
-            {typeof data.gamma === 'number'
-              ? data.gamma.toFixed(4)
-              : <Typography color="text.secondary">N/A</Typography>}
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
-  </TableContainer>
-);
+const SummaryTable = ({ data }) => {
+  const summaryData = [
+    {
+      name: 'AIC',
+      value: data.aic !== null && data.aic !== undefined ? data.aic.toFixed(2) : 'N/A',
+    },
+    {
+      name: 'BIC',
+      value: data.bic !== null && data.bic !== undefined ? data.bic.toFixed(2) : 'N/A',
+    },
+    {
+      name: 'HQIC',
+      value: data.hqic !== null && data.hqic !== undefined ? data.hqic.toFixed(2) : 'N/A',
+    },
+    {
+      name: 'Alpha (α)',
+      value: data.alpha !== null && data.alpha !== undefined ? data.alpha.toFixed(4) : 'N/A',
+    },
+    {
+      name: 'Beta (β)',
+      value: data.beta !== null && data.beta !== undefined ? data.beta.toFixed(4) : 'N/A',
+    },
+    {
+      name: 'Gamma (γ)',
+      value: data.gamma !== null && data.gamma !== undefined ? data.gamma.toFixed(4) : 'N/A',
+    },
+  ];
+
+  const columns = [
+    { field: 'name' },
+    { field: 'value' },
+  ];
+
+  return (
+    <ResultTable title="Model Summary Statistics" data={summaryData} columns={columns} />
+  );
+};
 
 SummaryTable.propTypes = {
   data: PropTypes.shape({
-    aic: PropTypes.number.isRequired,
-    bic: PropTypes.number.isRequired,
-    hqic: PropTypes.number.isRequired,
-    alpha: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf([null])]),
-    beta: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf([null])]),
-    gamma: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf([null])]),
+    aic: PropTypes.number,
+    bic: PropTypes.number,
+    hqic: PropTypes.number,
+    alpha: PropTypes.number,
+    beta: PropTypes.number,
+    gamma: PropTypes.number,
   }).isRequired,
 };
 

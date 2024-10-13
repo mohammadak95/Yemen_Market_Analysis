@@ -1,6 +1,4 @@
-// src/components/methodology/MethodologyModal.js
-
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Dialog,
@@ -9,36 +7,40 @@ import {
   IconButton,
   Typography,
   Box,
-  InputAdornment,
-  TextField,
+  Divider,
+  useMediaQuery,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import SearchIcon from '@mui/icons-material/Search';
-import MethodologySection from './MethodologySection';
-import methodologyContent from '../../utils/methodologyData';
+import MethodologyContentWrapper from './MethodologyContentWrapper';
+import { useTheme } from '@mui/material/styles';
 
 const MethodologyModal = ({ open, onClose }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredContent = methodologyContent.filter(section =>
-    section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (section.content && section.content.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const theme = useTheme();
+  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
+      fullScreen={!isSmUp}
       fullWidth
       maxWidth="md"
       PaperProps={{
         sx: {
-          borderRadius: 2,
+          borderRadius: { xs: 0, sm: 2 },
           boxShadow: 3,
-        }
+        },
       }}
     >
-      <DialogTitle sx={{ m: 0, p: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+      <DialogTitle
+        sx={{
+          m: 0,
+          p: 2,
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+          position: 'relative',
+        }}
+      >
         <Typography variant="h6">Methodology</Typography>
         <IconButton
           aria-label="close"
@@ -53,27 +55,10 @@ const MethodologyModal = ({ open, onClose }) => {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers>
-        <Box sx={{ mb: 2 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search methodology..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-        <Box sx={{ maxHeight: '60vh', overflow: 'auto' }}>
-          {filteredContent.map((section, index) => (
-            <MethodologySection key={index} section={section} level={1} />
-          ))}
+      <DialogContent dividers sx={{ p: 0 }}>
+        <Divider />
+        <Box sx={{ p: 2, maxHeight: { xs: 'calc(100vh - 100px)', sm: '60vh' }, overflowY: 'auto' }}>
+          <MethodologyContentWrapper />
         </Box>
       </DialogContent>
     </Dialog>

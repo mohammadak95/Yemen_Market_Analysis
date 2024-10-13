@@ -1,10 +1,8 @@
-// src/components/methodology/CodeBlock.js
-
 import React from 'react';
 import PropTypes from 'prop-types';
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Box, IconButton, useTheme } from '@mui/material';
+import { Box, IconButton, useTheme, Tooltip } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 const CodeBlock = ({ language, code }) => {
@@ -22,30 +20,35 @@ const CodeBlock = ({ language, code }) => {
         my: 2,
         borderRadius: 1,
         overflow: 'hidden',
+        bgcolor: theme.palette.background.paper,
+        boxShadow: 1,
       }}
     >
-      <IconButton
-        onClick={handleCopy}
-        size="small"
-        sx={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          bgcolor: 'background.paper',
-          '&:hover': {
-            bgcolor: 'action.hover',
-          },
-        }}
-      >
-        <ContentCopyIcon fontSize="small" />
-      </IconButton>
+      <Tooltip title="Copy Code">
+        <IconButton
+          onClick={handleCopy}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            bgcolor: 'background.default',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
+        >
+          <ContentCopyIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
       <SyntaxHighlighter
         language={language}
         style={isDarkMode ? vscDarkPlus : vs}
         customStyle={{
           margin: 0,
           padding: theme.spacing(2),
-          fontSize: '0.875rem',
+          fontSize: '0.9rem',
+          backgroundColor: 'transparent',
         }}
       >
         {code}

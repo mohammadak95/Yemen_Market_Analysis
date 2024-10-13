@@ -7,7 +7,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
 } from 'recharts';
@@ -21,14 +21,12 @@ const SpatialAutocorrelationChart = ({ spatialData }) => {
       moranI: spatialData.Variable_1.Moran_I,
       pValue: spatialData.Variable_1.Moran_p_value,
       isSignificant: spatialData.Variable_1.Moran_p_value < 0.05,
-      type: spatialData.Variable_1.Moran_I >= 0 ? 'Clustering' : 'Dispersion',
     },
     {
       variable: 'Conflict Intensity',
       moranI: spatialData.Variable_2.Moran_I,
       pValue: spatialData.Variable_2.Moran_p_value,
       isSignificant: spatialData.Variable_2.Moran_p_value < 0.05,
-      type: spatialData.Variable_2.Moran_I >= 0 ? 'Clustering' : 'Dispersion',
     },
   ];
 
@@ -52,9 +50,9 @@ const SpatialAutocorrelationChart = ({ spatialData }) => {
             label={{ value: 'P-Value', angle: 90, position: 'insideRight', fontSize: '1rem' }}
             tickFormatter={(value) => value.toFixed(4)}
           />
-          <Tooltip
+          <RechartsTooltip
             formatter={(value, name) => [
-              name === "Moran's I" ? value.toFixed(4) : value.toFixed(4),
+              name === "Moran&apos;s I" ? value.toFixed(4) : value.toFixed(4),
               name,
             ]}
             labelFormatter={(label) => `Variable: ${label}`}
@@ -64,7 +62,7 @@ const SpatialAutocorrelationChart = ({ spatialData }) => {
             yAxisId="left"
             dataKey="moranI"
             fill="#8884d8"
-            name="Moran's I"
+            name="Moran&apos;s I"
             isAnimationActive={true}
           />
           <Bar
@@ -80,16 +78,16 @@ const SpatialAutocorrelationChart = ({ spatialData }) => {
         <strong>Moran&apos;s I Interpretation:</strong>
         <ul>
           <li>
-            <strong>Clustering:</strong> Moran&apos;s I &gt; 0 indicates spatial clustering of similar residuals.
+            <strong>Positive Moran&apos;s I:</strong> Indicates spatial clustering of similar values.
           </li>
           <li>
-            <strong>Dispersion:</strong> Moran&apos;s I &lt; 0 indicates dispersion or spatial randomness.
+            <strong>Negative Moran&apos;s I:</strong> Indicates dispersion or spatial randomness.
           </li>
           <li>
             <strong>Significance:</strong> P-Values below 0.05 suggest significant spatial autocorrelation.
           </li>
         </ul>
-        <strong>Note:</strong> Significant Moran&apos;s I values imply that residuals are not randomly distributed across space, indicating potential spatial dependencies in the model.
+        Significant Moran&apos;s I values imply that residuals are not randomly distributed across space, indicating potential spatial dependencies in the model.
       </Typography>
     </Paper>
   );

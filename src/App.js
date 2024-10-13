@@ -1,5 +1,3 @@
-// src/App.js
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, Toolbar, IconButton, Box } from '@mui/material';
@@ -20,7 +18,6 @@ import { LayoutContainer, MainContent, drawerWidth } from './styles/LayoutStyles
 import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import ErrorBoundary from './components/common/ErrorBoundary';
-
 
 const StyledAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
@@ -96,7 +93,7 @@ const App = React.memo(function App() {
         <LayoutContainer>
           <StyledAppBar position="fixed" open={appBarShift}>
             <Toolbar>
-              {!sidebarOpen && isSmUp && (
+              {(!sidebarOpen || !isSmUp) && (
                 <IconButton
                   color="inherit"
                   aria-label="open drawer"

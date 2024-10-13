@@ -5,23 +5,6 @@ import Papa from 'papaparse';
 import { getDataPath } from '../utils/dataPath';
 import { transformToWGS84 } from '../utils/coordinateTransform';
 
-const fetchWithErrorHandling = async (url, options = {}, errorMessage, signal) => {
-  try {
-    const response = await fetch(url, { ...options, signal });
-    if (!response.ok) {
-      throw new Error(`${errorMessage}: HTTP error (Status: ${response.status})`);
-    }
-    return response;
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      console.warn(`Fetch aborted for ${url}`);
-    } else {
-      console.error(`Error during fetch for ${url}:`, err);
-      throw new Error(`${errorMessage}: ${err.message}`);
-    }
-  }
-};
-
 const useSpatialData = () => {
   const [state, setState] = useState({
     geoData: null,
@@ -43,79 +26,40 @@ const useSpatialData = () => {
         const flowMapsURL = getDataPath('network_data/flow_maps.csv');
         const analysisResultsURL = getDataPath('spatial_analysis_results.json');
 
-        console.log('GeoJSON URL:', geoJsonURL);
-        console.log('Spatial Weights URL:', spatialWeightsURL);
-        console.log('Flow Maps URL:', flowMapsURL);
-        console.log('Analysis Results URL:', analysisResultsURL);
-
-        const geoJsonResponse = await fetchWithErrorHandling(
-          geoJsonURL,
-          { headers: { Accept: 'application/geo+json' } },
-          'Failed to fetch enhanced GeoJSON data',
-          signal
-        );
-
-        const contentType = geoJsonResponse.headers.get('Content-Type');
-        if (!contentType || !contentType.includes('application/geo+json')) {
-          const text = await geoJsonResponse.text();
-          console.error(`Unexpected Content-Type for ${geoJsonURL}: ${contentType}`);
-          console.error('Response body:', text);
-          throw new Error(`Expected GeoJSON but received Content-Type: ${contentType}`);
-        }
-
-        const geoJsonClone = geoJsonResponse.clone();
-        const geoJsonText = await geoJsonClone.text();
-        console.log('Raw GeoJSON response:', geoJsonText.substring(0, 1000));
-
-        const geoJsonData = await geoJsonResponse.json();
-        console.log('GeoJSON data loaded, features count:', geoJsonData.features.length);
-
-        const [weightsResponse, flowMapsResponse, analysisResultsResponse] = await Promise.all([
-          fetchWithErrorHandling(
-            spatialWeightsURL,
-            { headers: { Accept: 'application/json' } },
-            'Failed to fetch spatial weights data',
-            signal
-          ),
-          fetchWithErrorHandling(
-            flowMapsURL,
-            { headers: { Accept: 'text/csv' } },
-            'Failed to fetch flow maps data',
-            signal
-          ),
-          fetchWithErrorHandling(
-            analysisResultsURL,
-            { headers: { Accept: 'application/json' } },
-            'Failed to fetch spatial analysis results data',
-            signal
-          ),
+        // Fetch all data in parallel
+        const [geoJsonResponse, weightsResponse, flowMapsResponse, analysisResultsResponse] = await Promise.all([
+          fetch(geoJsonURL, { headers: { Accept: 'application/geo+json' }, signal }),
+          fetch(spatialWeightsURL, { headers: { Accept: 'application/json' }, signal }),
+          fetch(flowMapsURL, { headers: { Accept: 'text/csv' }, signal }),
+          fetch(analysisResultsURL, { headers: { Accept: 'application/json' }, signal }),
         ]);
 
+        if (!geoJsonResponse.ok) throw new Error('Failed to fetch GeoJSON data.');
+        if (!weightsResponse.ok) throw new Error('Failed to fetch spatial weights data.');
+        if (!flowMapsResponse.ok) throw new Error('Failed to fetch flow maps data.');
+        if (!analysisResultsResponse.ok) throw new Error('Failed to fetch analysis results.');
+
+        const geoJsonData = await geoJsonResponse.json();
         const weightsData = await weightsResponse.json();
-
         const flowMapsText = await flowMapsResponse.text();
-        console.log('Raw Flow Maps CSV:', flowMapsText.substring(0, 1000));
+        const analysisResultsData = await analysisResultsResponse.json();
 
-        const parseResult = Papa.parse(flowMapsText, {
+        // Parse CSV data using PapaParse
+        const { data: flowMapsData, errors } = Papa.parse(flowMapsText, {
           header: true,
           skipEmptyLines: true,
           dynamicTyping: true,
         });
 
-        if (parseResult.errors.length) {
-          throw new Error(`CSV Parsing Error: ${parseResult.errors[0].message}`);
+        if (errors.length > 0) {
+          throw new Error(`Error parsing flow maps CSV: ${errors[0].message}`);
         }
 
-        let flowMapsData = parseResult.data;
+        // Transform coordinates to WGS84
+        const transformedFlowMapsData = flowMapsData.map(flow => {
+          const transformedSource = transformToWGS84(flow.source_lng, flow.source_lat);
+          const transformedTarget = transformToWGS84(flow.target_lng, flow.target_lat);
 
-        // Transform coordinates from projected system (assumed EPSG:3857) to WGS84
-        const sourceEPSG = 'EPSG:3857'; // You may change this depending on the actual projection
-        flowMapsData = flowMapsData.map(flow => {
-          // Ensure that source and target coordinates are properly transformed to WGS84
-          const transformedSource = transformToWGS84(flow.source_lng, flow.source_lat, sourceEPSG);
-          const transformedTarget = transformToWGS84(flow.target_lng, flow.target_lat, sourceEPSG);
-          
-          // Return the transformed coordinates in WGS84
           return {
             ...flow,
             source_lat: transformedSource[1],
@@ -125,14 +69,10 @@ const useSpatialData = () => {
           };
         });
 
-        console.log('Transformed Flow Maps Data:', flowMapsData.slice(0, 5));
-
-        const analysisResultsData = await analysisResultsResponse.json();
-
         setState({
           geoData: geoJsonData,
           spatialWeights: weightsData,
-          flowMaps: flowMapsData,
+          flowMaps: transformedFlowMapsData,
           analysisResults: analysisResultsData,
           loading: false,
           error: null,
@@ -140,7 +80,7 @@ const useSpatialData = () => {
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Error fetching spatial data:', err);
-          setState((prevState) => ({ ...prevState, loading: false, error: err.message }));
+          setState(prevState => ({ ...prevState, loading: false, error: err.message }));
         }
       }
     };

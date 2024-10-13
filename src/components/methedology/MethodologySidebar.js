@@ -1,15 +1,20 @@
-// src/components/methodology/MethodologySidebar.js
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Drawer,
   List,
-  ListItem,
+  ListItemButton,
   ListItemText,
+  Toolbar,
+  Divider,
+  IconButton,
+  Typography,
   useTheme,
 } from '@mui/material';
-import methodologyContent from '../../methodologyData';
+import CloseIcon from '@mui/icons-material/Close';
+import methodologyContent from '../../utils/methodologyContent';
+
+const drawerWidth = 240;
 
 const MethodologySidebar = ({ open, onClose }) => {
   const theme = useTheme();
@@ -24,15 +29,15 @@ const MethodologySidebar = ({ open, onClose }) => {
 
   const renderListItems = (sections, level = 0) =>
     sections.map((section, index) => (
-      <ListItem
-        button
-        key={`${section.id}-${index}`}
-        onClick={() => handleListItemClick(`section-${section.id}`)}
-        sx={{ pl: theme.spacing(level + 1) }}
-      >
-        <ListItemText primary={section.title} />
+      <React.Fragment key={`${section.id || section.title}-${index}`}>
+        <ListItemButton
+          onClick={() => handleListItemClick(`section-${section.id || index}`)}
+          sx={{ pl: theme.spacing(level + 2) }}
+        >
+          <ListItemText primary={section.title} />
+        </ListItemButton>
         {section.children && renderListItems(section.children, level + 1)}
-      </ListItem>
+      </React.Fragment>
     ));
 
   return (
@@ -41,17 +46,31 @@ const MethodologySidebar = ({ open, onClose }) => {
       open={open}
       onClose={onClose}
       sx={{
-        width: 250,
+        width: drawerWidth,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-          width: 250,
+          width: drawerWidth,
           boxSizing: 'border-box',
         },
       }}
     >
-      <List>
-        {renderListItems(methodologyContent)}
-      </List>
+      <Toolbar
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+        }}
+      >
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Contents
+        </Typography>
+        <IconButton onClick={onClose} sx={{ color: 'inherit' }}>
+          <CloseIcon />
+        </IconButton>
+      </Toolbar>
+      <Divider />
+      <List>{renderListItems(methodologyContent)}</List>
     </Drawer>
   );
 };

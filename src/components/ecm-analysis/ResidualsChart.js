@@ -12,9 +12,8 @@ import {
   Line,
   ReferenceLine,
 } from 'recharts';
-import { Typography, Paper, Box, Tooltip as MuiTooltip } from '@mui/material';
+import { Typography, Paper, Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import { formatNumber } from '../../utils/formatNumber';
 
 const ResidualsChart = ({ residuals, fittedValues }) => {
   if (
@@ -72,33 +71,31 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
           <XAxis
             dataKey="fitted"
             name="Fitted Values"
-            label={
-              <MuiTooltip title="Predicted values from the model" arrow>
-                <text x="0" y="0" dy={16} dx={250} textAnchor="middle">
-                  Fitted Values
-                </text>
-              </MuiTooltip>
-            }
-            tickFormatter={(value) => formatNumber(value)}
+            label={{
+              value: 'Fitted Values',
+              position: 'insideBottom',
+              offset: -5,
+              fontSize: '1rem',
+            }}
+            tickFormatter={(value) => value.toFixed(2)}
           />
           <YAxis
             dataKey="residual"
             name="Residuals"
-            label={
-              <MuiTooltip title="Difference between observed and predicted values" arrow>
-                <text x="0" y="0" dx={-30} dy={200} textAnchor="middle" transform="rotate(-90)">
-                  Residuals
-                </text>
-              </MuiTooltip>
-            }
-            tickFormatter={(value) => formatNumber(value)}
+            label={{
+              value: 'Residuals',
+              angle: -90,
+              position: 'insideLeft',
+              fontSize: '1rem',
+            }}
+            tickFormatter={(value) => value.toFixed(2)}
           />
           <RechartsTooltip
             formatter={(value, name) => [
-              formatNumber(value),
+              value.toFixed(4),
               name === 'residual' ? 'Residual' : name,
             ]}
-            labelFormatter={(label) => `Fitted Value: ${formatNumber(label)}`}
+            labelFormatter={(label) => `Fitted Value: ${label.toFixed(4)}`}
           />
           <Scatter name="Residuals" data={data} fill="#8884d8" />
           <Line
@@ -120,8 +117,8 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
 };
 
 ResidualsChart.propTypes = {
-  residuals: PropTypes.arrayOf(PropTypes.number),
-  fittedValues: PropTypes.arrayOf(PropTypes.number),
+  residuals: PropTypes.arrayOf(PropTypes.number).isRequired,
+  fittedValues: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 export default ResidualsChart;

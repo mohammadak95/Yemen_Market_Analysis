@@ -2,13 +2,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import ResultTable from '../common/ResultTable';
+import { Typography } from '@mui/material';
 
 const RegressionResults = ({ data }) => {
-  console.log("RegressionResults data:", data);
-
-  if (!data || !data.stationarity) {
-    console.log("Missing regression data. Data structure:", JSON.stringify(data, null, 2));
+  if (!data || !data.regression_results) {
     return (
       <Typography variant="body1">
         No regression results available for this market pair.
@@ -16,41 +14,55 @@ const RegressionResults = ({ data }) => {
     );
   }
 
-  const { stationarity } = data;
+  const regressionData = [
+    {
+      name: 'Intercept (α)',
+      value:
+        data.regression_results.intercept !== undefined
+          ? data.regression_results.intercept.toFixed(4)
+          : 'N/A',
+    },
+    {
+      name: 'Slope (β)',
+      value:
+        data.regression_results.slope !== undefined
+          ? data.regression_results.slope.toFixed(4)
+          : 'N/A',
+    },
+    {
+      name: 'R-squared',
+      value:
+        data.regression_results.r_squared !== undefined
+          ? data.regression_results.r_squared.toFixed(4)
+          : 'N/A',
+    },
+    {
+      name: 'P-Value',
+      value:
+        data.regression_results.p_value !== undefined
+          ? data.regression_results.p_value.toFixed(4)
+          : 'N/A',
+    },
+  ];
+
+  const columns = [
+    { field: 'name' },
+    { field: 'value' },
+  ];
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>Stationarity Test Results</Typography>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Test</TableCell>
-              <TableCell>Statistic</TableCell>
-              <TableCell>P-Value</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow>
-              <TableCell>ADF Test</TableCell>
-              <TableCell>{stationarity.ADF.statistic.toFixed(4)}</TableCell>
-              <TableCell>{stationarity.ADF["p-value"].toFixed(4)}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>KPSS Test</TableCell>
-              <TableCell>{stationarity.KPSS.statistic.toFixed(4)}</TableCell>
-              <TableCell>{stationarity.KPSS["p-value"].toFixed(4)}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Paper>
+    <ResultTable title="Regression Results" data={regressionData} columns={columns} />
   );
 };
 
 RegressionResults.propTypes = {
   data: PropTypes.shape({
-    stationarity: PropTypes.object,
+    regression_results: PropTypes.shape({
+      intercept: PropTypes.number,
+      slope: PropTypes.number,
+      r_squared: PropTypes.number,
+      p_value: PropTypes.number,
+    }),
   }),
 };
 

@@ -11,11 +11,15 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import NorthIcon from '@mui/icons-material/North';
 import SouthIcon from '@mui/icons-material/South';
 import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PropTypes from 'prop-types';
 import { useECMData } from '../../hooks/useECMData'; // Adjusted import
 import ECMTabs from '../common/ECMTabs';
@@ -26,11 +30,7 @@ import ResidualsChart from './ResidualsChart';
 import GrangerCausalityChart from './GrangerCausalityChart';
 import SpatialAutocorrelationChart from './SpatialAutocorrelationChart';
 import { saveAs } from 'file-saver';
-import { jsonToCsv } from '../../utils/jsonToCsv';
 import ECMTutorial from './ECMTutorial';
-import { formatNumber } from '../../utils/formatNumber';
-import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const ECMAnalysis = ({ selectedCommodity }) => {
   const [activeTab, setActiveTab] = useState(0);
@@ -72,12 +72,16 @@ const ECMAnalysis = ({ selectedCommodity }) => {
   useEffect(() => {
     if (analysisType === 'unified' && unifiedStatus === 'succeeded' && unifiedData) {
       const foundData = unifiedData.find(
-        (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase() && item.regime === unifiedRegime
+        (item) =>
+          item.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+          item.regime === unifiedRegime
       );
       setSelectedData(foundData);
     } else if (analysisType === 'directional' && directionalStatus === 'succeeded' && directionalData) {
       const directionData = directionalData[direction];
-      const foundData = directionData.find((item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase());
+      const foundData = directionData.find(
+        (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase()
+      );
       setSelectedData(foundData);
     }
   }, [
@@ -88,65 +92,17 @@ const ECMAnalysis = ({ selectedCommodity }) => {
     directionalData,
     selectedCommodity,
     direction,
-    unifiedRegime, // Added fixed regime
+    unifiedRegime,
   ]);
 
-  // Handle Download as CSV and JSON
-  const handleDownloadCsv = () => {
-    if (!selectedData) {
-      console.warn('No ECM data available to download.');
-      return;
-    }
-
-    const dataToDownload = {
-      Summary: {
-        AIC: formatNumber(selectedData.aic),
-        BIC: formatNumber(selectedData.bic),
-        HQIC: formatNumber(selectedData.hqic),
-        Alpha: selectedData.alpha,
-        Beta: selectedData.beta,
-        Gamma: selectedData.gamma,
-      },
-      Diagnostics: selectedData.diagnostics,
-      IRF: selectedData.irf,
-      GrangerCausality: selectedData.granger_causality,
-      Residuals: selectedData.residuals,
-      FittedValues: selectedData.fittedValues,
-      SpatialAutocorrelation: selectedData.spatial_autocorrelation,
-      Direction: selectedData.direction, // Added direction for context
-    };
-
-    const csv = jsonToCsv([dataToDownload]);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, `${selectedCommodity}_ECM_Analysis.csv`);
-  };
-
+  // Handle Download as JSON
   const handleDownloadJson = () => {
     if (!selectedData) {
       console.warn('No ECM data available to download.');
       return;
     }
 
-    const dataToDownload = {
-      Summary: {
-        AIC: formatNumber(selectedData.aic),
-        BIC: formatNumber(selectedData.bic),
-        HQIC: formatNumber(selectedData.hqic),
-        Alpha: selectedData.alpha,
-        Beta: selectedData.beta,
-        Gamma: selectedData.gamma,
-      },
-      Diagnostics: selectedData.diagnostics,
-      IRF: selectedData.irf,
-      GrangerCausality: selectedData.granger_causality,
-      Residuals: selectedData.residuals,
-      FittedValues: selectedData.fittedValues,
-      SpatialAutocorrelation: selectedData.spatial_autocorrelation,
-      Direction: selectedData.direction, // Added direction for context
-    };
-
-    const jsonString = JSON.stringify(dataToDownload, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(selectedData, null, 2)], { type: 'application/json' });
     saveAs(blob, `${selectedCommodity}_ECM_Analysis.json`);
   };
 
@@ -190,26 +146,16 @@ const ECMAnalysis = ({ selectedCommodity }) => {
     );
   }
 
-  // Debugging: Log selectedData to verify its structure
-  console.log('Selected Data:', selectedData);
-
   // Define Tab Labels and Content Based on Analysis Type
-  let tabLabels = [
-    'Summary',
-    'Diagnostics',
-    'IRF',
-    'Residuals',
-    'Granger Causality',
-  ];
-
+  let tabLabels = ['Summary', 'Diagnostics', 'IRF', 'Residuals', 'Granger Causality'];
   let tabContent = [
     <SummaryTable key="summary" data={selectedData} />,
     <DiagnosticsTable key="diagnostics" diagnostics={selectedData.diagnostics} />,
-    <IRFChart key="irf" irfData={selectedData.irf} />, // Pass the correct irf array
+    <IRFChart key="irf" irfData={selectedData.irf} />,
     <ResidualsChart
       key="residuals"
       residuals={selectedData.residuals}
-      fittedValues={selectedData.fittedValues}
+      fittedValues={selectedData.fitted_values}
     />,
     <GrangerCausalityChart key="grangerCausality" grangerData={selectedData.granger_causality} />,
   ];
@@ -281,21 +227,11 @@ const ECMAnalysis = ({ selectedCommodity }) => {
             variant="contained"
             color="primary"
             startIcon={<DownloadIcon />}
-            onClick={handleDownloadCsv}
-            sx={{ mr: 2 }}
-          >
-            Download CSV
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<DownloadIcon />}
             onClick={handleDownloadJson}
           >
             Download JSON
           </Button>
         </Box>
-        {/* Optional: Add ECM Diagram and Tutorial */}
 
         <ECMTutorial />
       </Box>
@@ -311,23 +247,36 @@ const ECMAnalysis = ({ selectedCommodity }) => {
             This ECM analysis provides insights into the relationship between commodity prices and conflict
             intensity. Key points to consider:
             <ul>
-              <li>The <strong>Summary</strong> tab shows overall model fit statistics.</li>
-              <li>The <strong>Diagnostics</strong> tab provides tests for model assumptions.</li>
-              <li>The <strong>IRF</strong> tab shows how variables respond to shocks over time.</li>
-              <li>The <strong>Residuals</strong> chart helps assess model accuracy.</li>
-              <li>The <strong>Granger Causality</strong> examines predictive relationships.</li>
-              {analysisType === 'unified' && <li>The <strong>Spatial Autocorrelation</strong> tab indicates geographical dependencies.</li>}
+              <li>
+                The <strong>Summary</strong> tab shows overall model fit statistics.
+              </li>
+              <li>
+                The <strong>Diagnostics</strong> tab provides tests for model assumptions.
+              </li>
+              <li>
+                The <strong>IRF</strong> tab shows how variables respond to shocks over time.
+              </li>
+              <li>
+                The <strong>Residuals</strong> chart helps assess model accuracy.
+              </li>
+              <li>
+                The <strong>Granger Causality</strong> examines predictive relationships.
+              </li>
+              {analysisType === 'unified' && (
+                <li>
+                  The <strong>Spatial Autocorrelation</strong> tab indicates geographical dependencies.
+                </li>
+              )}
             </ul>
           </Typography>
         </AccordionDetails>
       </Accordion>
     </Paper>
   );
-}
+};
 
 ECMAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
-  // Removed selectedRegime prop
 };
 
 export default ECMAnalysis;

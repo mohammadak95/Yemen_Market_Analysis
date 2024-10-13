@@ -1,5 +1,3 @@
-// src/Dashboard.js
-
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -73,10 +71,10 @@ const Dashboard = React.memo(({ data, selectedAnalysis, selectedCommodity, selec
     return components[selectedAnalysis] || null;
   }, [selectedAnalysis]);
 
-  // Memoize the analysis title
+  // Memoize the analysis title with more descriptive text
   const analysisTitle = useMemo(() => {
     const titles = {
-      ecm: 'ECM Analysis',
+      ecm: 'Error Correction Model (ECM) Analysis',
       priceDiff: 'Price Differential Analysis',
       spatial: 'Spatial Analysis',
     };
@@ -119,15 +117,15 @@ const Dashboard = React.memo(({ data, selectedAnalysis, selectedCommodity, selec
           <Paper
             elevation={3}
             sx={{
-              p: 3,
+              p: { xs: 2, sm: 3 },
               borderRadius: 2,
               backgroundColor: theme.palette.background.paper,
             }}
           >
-            <Typography variant="h6" gutterBottom>
-              Interactive Chart
+            <Typography variant="h5" gutterBottom>
+              Interactive Commodity Price Chart
             </Typography>
-            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ mt: 2 }}>
               {renderInteractiveChart()}
             </Box>
           </Paper>
@@ -140,12 +138,12 @@ const Dashboard = React.memo(({ data, selectedAnalysis, selectedCommodity, selec
               <Paper
                 elevation={3}
                 sx={{
-                  p: 3,
+                  p: { xs: 2, sm: 3 },
                   borderRadius: 2,
                   backgroundColor: theme.palette.background.paper,
                 }}
               >
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h5" gutterBottom>
                   {analysisTitle}
                 </Typography>
                 <Suspense fallback={<LoadingSpinner />}>

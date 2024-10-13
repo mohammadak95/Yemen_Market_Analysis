@@ -2,17 +2,20 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { 
-  Paper, 
-  Typography, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Chip 
+import {
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Box,
 } from '@mui/material';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 const RegressionResults = ({ data }) => {
   if (!data || !data.coefficients) {
@@ -25,8 +28,6 @@ const RegressionResults = ({ data }) => {
 
   const {
     coefficients,
-    std_errors,
-    t_values,
     p_values,
     r_squared,
     adj_r_squared,
@@ -43,36 +44,42 @@ const RegressionResults = ({ data }) => {
   };
 
   const getPValueColor = (p) => {
-    if (p < 0.01) return 'error';
+    if (p < 0.01) return 'success';
     if (p < 0.05) return 'warning';
     return 'default';
   };
 
+  const getCoefficientIcon = (coef) => {
+    return coef > 0 ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />;
+  };
+
   return (
     <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>Regression Results</Typography>
-      <TableContainer>
-        <Table>
+      <Typography variant="h6" gutterBottom>
+        Regression Results
+      </Typography>
+      <TableContainer component={Box}>
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Variable</TableCell>
-              <TableCell>Coefficient</TableCell>
-              <TableCell>Standard Error</TableCell>
-              <TableCell>T-Statistic</TableCell>
-              <TableCell>P-Value</TableCell>
+              <TableCell align="right">Coefficient</TableCell>
+              <TableCell align="right">P-Value</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {Object.entries(coefficients).map(([variable, coefficient]) => (
               <TableRow key={variable}>
                 <TableCell>{variable}</TableCell>
-                <TableCell>{renderValue(coefficient)}</TableCell>
-                <TableCell>{renderValue(std_errors?.[variable])}</TableCell>
-                <TableCell>{renderValue(t_values?.[variable])}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={renderValue(p_values?.[variable])} 
+                <TableCell align="right">
+                  {getCoefficientIcon(coefficient)}
+                  {renderValue(coefficient)}
+                </TableCell>
+                <TableCell align="right">
+                  <Chip
+                    label={renderValue(p_values?.[variable])}
                     color={getPValueColor(p_values?.[variable])}
+                    size="small"
                   />
                 </TableCell>
               </TableRow>
@@ -80,12 +87,14 @@ const RegressionResults = ({ data }) => {
           </TableBody>
         </Table>
       </TableContainer>
-      <Typography variant="body1" sx={{ mt: 2 }}>
-        <strong>R-squared:</strong> {renderValue(r_squared)}
-      </Typography>
-      <Typography variant="body1">
-        <strong>Adjusted R-squared:</strong> {renderValue(adj_r_squared)}
-      </Typography>
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="body2">
+          <strong>R-squared:</strong> {renderValue(r_squared)}
+        </Typography>
+        <Typography variant="body2">
+          <strong>Adjusted R-squared:</strong> {renderValue(adj_r_squared)}
+        </Typography>
+      </Box>
     </Paper>
   );
 };
@@ -93,8 +102,6 @@ const RegressionResults = ({ data }) => {
 RegressionResults.propTypes = {
   data: PropTypes.shape({
     coefficients: PropTypes.object.isRequired,
-    std_errors: PropTypes.object,
-    t_values: PropTypes.object,
     p_values: PropTypes.object,
     r_squared: PropTypes.number,
     adj_r_squared: PropTypes.number,

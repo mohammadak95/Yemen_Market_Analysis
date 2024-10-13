@@ -1,73 +1,75 @@
-//src/components/price-differential-analysis/MarketPairInfo.js
+// src/components/price-differential-analysis/MarketPairInfo.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Typography,
-  TableContainer,
-  Table,
-  TableRow,
-  TableCell,
-  TableBody,
-  Paper,
-} from '@mui/material';
+import Interpretation from '../common/Interpretation';
+import ResultTable from '../common/ResultTable';
+import { Typography } from '@mui/material';
 
 const MarketPairInfo = ({ data }) => {
   if (!data) {
     return (
-      <Typography variant="body1">
-        No market pair information available.
-      </Typography>
+      <Typography variant="body1">No market pair information available.</Typography>
     );
   }
 
-  const formatNumber = (num) => (typeof num === 'number' ? num.toFixed(4) : 'N/A');
+  const marketInfoData = [
+    {
+      name: 'Base Market',
+      value: data.base_market || 'N/A',
+    },
+    {
+      name: 'Comparison Market',
+      value: data.other_market || 'N/A',
+    },
+    {
+      name: 'Distance',
+      value: data.distance ? `${data.distance.toFixed(2)} km` : 'N/A',
+    },
+    {
+      name: 'Common Dates',
+      value: data.common_dates || 'N/A',
+    },
+  ];
+
+  const columns = [
+    { field: 'name' },
+    { field: 'value' },
+  ];
+
+  const interpretationMessages = [];
+
+  if (data.p_value !== undefined) {
+    const significanceMessage =
+      data.p_value < 0.05
+        ? 'The price differential is statistically significant, indicating a strong impact.'
+        : 'The price differential is not statistically significant, suggesting a weak or negligible impact.';
+    interpretationMessages.push(significanceMessage);
+  }
+
+  if (data.conflict_correlation !== undefined) {
+    const correlationMessage = `The conflict correlation between the markets is ${
+      data.conflict_correlation > 0 ? 'positive' : 'negative'
+    } (${data.conflict_correlation.toFixed(4)}).`;
+    interpretationMessages.push(correlationMessage);
+  }
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Market Pair Information
-      </Typography>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableBody>
-            <TableRow>
-              <TableCell>Conflict Correlation</TableCell>
-              <TableCell>{formatNumber(data.conflict_correlation)}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Common Dates</TableCell>
-              <TableCell>{data.common_dates || 'N/A'}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Distance (km)</TableCell>
-              <TableCell>{formatNumber(data.distance)}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>P-Value</TableCell>
-              <TableCell>{formatNumber(data.p_value)}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Interpretation</TableCell>
-              <TableCell>
-                {data.p_value < 0.05
-                  ? 'The price differential is statistically significant, indicating a strong impact.'
-                  : 'The price differential is not statistically significant, suggesting a weak or negligible impact.'}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Paper>
+    <>
+      <ResultTable title="Market Pair Information" data={marketInfoData} columns={columns} />
+      <Interpretation title="Interpretation" messages={interpretationMessages} />
+    </>
   );
 };
 
 MarketPairInfo.propTypes = {
   data: PropTypes.shape({
-    conflict_correlation: PropTypes.number,
-    common_dates: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    base_market: PropTypes.string,
+    other_market: PropTypes.string,
     distance: PropTypes.number,
+    common_dates: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     p_value: PropTypes.number,
+    conflict_correlation: PropTypes.number,
   }),
 };
 

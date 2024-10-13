@@ -3,20 +3,26 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FixedSizeList as List } from 'react-window';
-import { ListItem, ListItemText } from '@mui/material';
+import { ListItem, ListItemText, Typography } from '@mui/material';
 
-// Named function for Row component
-function Row({ index, style, data }) {
+const Row = ({ index, style, data }) => {
   const { residuals } = data;
+  const residual = residuals[index];
+
   return (
     <ListItem style={style} key={index} divider>
       <ListItemText
-        primary={`Region: ${residuals[index].region_id}`}
-        secondary={`Date: ${new Date(residuals[index].date).toLocaleDateString()} | Residual: ${residuals[index].residual}`}
+        primary={`Region: ${residual.region_id}`}
+        secondary={
+          <>
+            <Typography variant="body2">{`Date: ${new Date(residual.date).toLocaleDateString()}`}</Typography>
+            <Typography variant="body2">{`Residual: ${residual.residual.toFixed(4)}`}</Typography>
+          </>
+        }
       />
     </ListItem>
   );
-}
+};
 
 Row.propTypes = {
   index: PropTypes.number.isRequired,
@@ -37,7 +43,7 @@ const ResidualsList = ({ residuals }) => {
     <List
       height={400}
       itemCount={residuals.length}
-      itemSize={50}
+      itemSize={80}
       width="100%"
       itemData={{ residuals }}
     >

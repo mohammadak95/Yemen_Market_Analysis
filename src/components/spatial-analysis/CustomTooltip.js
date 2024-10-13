@@ -1,18 +1,20 @@
+// src/components/CustomTooltip.js
+
 import React from 'react';
 import { Tooltip as MuiTooltip, Typography, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = React.memo(({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
       <MuiTooltip
-        open={true}
+        open
         title={
-          <Box>
+          <Box sx={{ p: 1 }}>
             <Typography variant="subtitle2">{`Region: ${data.region_id}`}</Typography>
             <Typography variant="body2">{`Date: ${new Date(data.date).toLocaleDateString()}`}</Typography>
-            <Typography variant="body2">{`Residual: ${data.residual}`}</Typography>
+            <Typography variant="body2">{`Residual: ${data.residual.toFixed(4)}`}</Typography>
           </Box>
         }
         placement="top"
@@ -27,7 +29,7 @@ const CustomTooltip = ({ active, payload }) => {
   }
 
   return null;
-};
+});
 
 CustomTooltip.propTypes = {
   active: PropTypes.bool,
@@ -40,7 +42,6 @@ CustomTooltip.propTypes = {
       }),
     })
   ),
-  label: PropTypes.string,
 };
 
 export default CustomTooltip;

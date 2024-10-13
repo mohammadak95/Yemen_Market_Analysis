@@ -1,5 +1,3 @@
-// src/components/common/Sidebar.js
-
 import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -18,19 +16,21 @@ import CommoditySelector from './CommoditySelector';
 import RegimeSelector from './RegimeSelector';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
-// Styled Drawer with dynamic width based on 'open' prop
+// Styled Drawer with dynamic width based on screen size
 const SidebarDrawer = styled(Drawer)(({ theme }) => ({
   width: drawerWidth,
   flexShrink: 0,
   whiteSpace: 'nowrap',
   boxSizing: 'border-box',
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+  },
   '& .MuiDrawer-paper': {
     width: drawerWidth,
     boxSizing: 'border-box',
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+    },
     overflowX: 'hidden',
   },
 }));
