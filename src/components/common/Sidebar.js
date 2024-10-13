@@ -19,7 +19,7 @@ import RegimeSelector from './RegimeSelector';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import InfoIcon from '@mui/icons-material/Info';
 
-const SidebarDrawer = styled(Drawer)(({ theme }) => ({
+const SidebarDrawer = styled(Drawer)(( ) => ({
   width: drawerWidth,
   flexShrink: 0,
   boxSizing: 'border-box',
