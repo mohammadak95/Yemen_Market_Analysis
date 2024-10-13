@@ -3,28 +3,33 @@
 import { styled } from '@mui/material/styles';
 import { Box } from '@mui/material';
 
-// Define drawer widths
+
 export const drawerWidth = 240;
 
-// Container for the entire layout
-export const LayoutContainer = styled(Box)(() => ({
+export const LayoutContainer = styled(Box)(( ) => ({
   display: 'flex',
-  minHeight: '100vh',
+  minHeight: '100vh', // Ensure full viewport height
+  width: '100%',
 }));
 
-// Main content area that shifts based on the sidebar's open state
-export const MainContent = styled(Box, {
+export const MainContent = styled('main', {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
   flexGrow: 1,
-  padding: theme.spacing(2),
-  transition: theme.transitions.create('margin', {
+  marginLeft: open && theme.breakpoints.up('sm') ? `${drawerWidth}px` : 0,
+  transition: theme.transitions.create(['margin'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  marginLeft: open ? `${drawerWidth}px` : 0,
+  overflow: 'auto', // Enable scrolling if content overflows
+  display: 'flex',
+  flexDirection: 'column', // Stack content vertically
+}));
+
+export const SidebarWrapper = styled(Box)(({ theme }) => ({
+  width: drawerWidth,
+  flexShrink: 0,
   [theme.breakpoints.down('sm')]: {
-    marginLeft: 0,
-    padding: theme.spacing(1),
+    width: '100%',
   },
 }));

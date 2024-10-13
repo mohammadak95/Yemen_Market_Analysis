@@ -2,11 +2,12 @@
 
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Paper, Grid, Typography, Fade } from '@mui/material';
+import { Box, Grid } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
+import AnalysisWrapper from './components/AnalysisWrapper'; // Ensure correct import path
 
 // Lazy load analysis components
 const ECMAnalysis = React.lazy(() =>
@@ -56,21 +57,18 @@ const Dashboard = React.memo(
     // Memoize processedData to optimize performance
     const processedData = useMemo(() => {
       if (data?.features) {
-        return {
-          ...data,
-          features: data.features.map((feature) => ({
-            ...feature,
-            date:
-              feature.date instanceof Date
-                ? feature.date.toISOString()
-                : feature.date,
-          })),
-        };
+        return data.features.map((feature) => ({
+          ...feature,
+          date:
+            feature.date instanceof Date
+              ? feature.date.toISOString()
+              : feature.date,
+        }));
       }
-      return data;
+      return [];
     }, [data]);
 
-    // Memoize the analysis component to prevent re-renders
+    // Determine which analysis component to render
     const AnalysisComponent = useMemo(() => {
       const components = {
         ecm: ECMAnalysis,
@@ -78,16 +76,6 @@ const Dashboard = React.memo(
         spatial: SpatialAnalysis,
       };
       return components[selectedAnalysis] || null;
-    }, [selectedAnalysis]);
-
-    // Memoize the analysis title with more descriptive text
-    const analysisTitle = useMemo(() => {
-      const titles = {
-        ecm: 'Error Correction Model (ECM) Analysis',
-        priceDiff: 'Price Differential Analysis',
-        spatial: 'Spatial Analysis',
-      };
-      return titles[selectedAnalysis] || 'Analysis';
     }, [selectedAnalysis]);
 
     // Render the interactive chart component
@@ -98,75 +86,45 @@ const Dashboard = React.memo(
         );
       }
 
-      if (!processedData?.features || processedData.features.length === 0) {
+      if (!processedData || processedData.length === 0) {
         return <LoadingSpinner />;
       }
 
       return (
         <InteractiveChart
-          data={processedData.features}
+          data={processedData}
           selectedCommodity={selectedCommodity}
           selectedRegimes={selectedRegimes}
         />
       );
-    }, [
-      processedData?.features,
-      selectedCommodity,
-      selectedRegimes,
-    ]);
+    }, [processedData, selectedCommodity, selectedRegimes]);
 
     return (
       <Box
         sx={{
           flexGrow: 1,
-          p: { xs: 1, sm: 2, md: 3 },
+          p: { xs: 2, sm: 3 },
           backgroundColor: theme.palette.background.default,
-          minHeight: '100vh',
+          minHeight: 'calc(100vh - 64px)',
         }}
       >
-        <Grid container spacing={2} justifyContent="center">
+        <Grid container spacing={2}>
           {/* Interactive Chart Section */}
           <Grid item xs={12}>
-            <Paper
-              elevation={3}
-              sx={{
-                p: { xs: 1, sm: 2, md: 3 },
-                borderRadius: 2,
-                backgroundColor: theme.palette.background.paper,
-              }}
-            >
-              <Typography variant="h5" gutterBottom>
-                Interactive Commodity Price Chart
-              </Typography>
-              <Box sx={{ mt: 2 }}>{renderInteractiveChart()}</Box>
-            </Paper>
+            {renderInteractiveChart()}
           </Grid>
 
-          {/* Analysis Components Section with Fade Transition */}
-          {selectedAnalysis && (
+          {/* Analysis Components Section */}
+          {selectedAnalysis && AnalysisComponent && (
             <Grid item xs={12}>
-              <Fade in={Boolean(selectedAnalysis)} timeout={500}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: { xs: 1, sm: 2, md: 3 },
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.background.paper,
-                  }}
-                >
-                  <Typography variant="h5" gutterBottom>
-                    {analysisTitle}
-                  </Typography>
-                  <Suspense fallback={<LoadingSpinner />}>
-                    {AnalysisComponent && (
-                      <AnalysisComponent
-                        selectedCommodity={selectedCommodity}
-                        selectedRegime="unified"
-                      />
-                    )}
-                  </Suspense>
-                </Paper>
-              </Fade>
+              <Suspense fallback={<LoadingSpinner />}>
+                <AnalysisWrapper>
+                  <AnalysisComponent
+                    selectedCommodity={selectedCommodity}
+                    selectedRegime="unified"
+                  />
+                </AnalysisWrapper>
+              </Suspense>
             </Grid>
           )}
         </Grid>
@@ -188,6 +146,8 @@ Dashboard.propTypes = {
         commodity: PropTypes.string.isRequired,
         regime: PropTypes.string.isRequired,
         price: PropTypes.number,
+        usdprice: PropTypes.number,
+        conflict_intensity: PropTypes.number,
       })
     ),
     commodities: PropTypes.arrayOf(PropTypes.string),

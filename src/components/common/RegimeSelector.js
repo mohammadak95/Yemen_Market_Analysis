@@ -2,7 +2,16 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, OutlinedInput } from '@mui/material';
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  ListItemText,
+  OutlinedInput,
+  Typography,
+} from '@mui/material';
 import { capitalizeWords } from '../../utils/stringUtils';
 
 const ITEM_HEIGHT = 48;
@@ -18,21 +27,22 @@ const MenuProps = {
 
 const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
   if (!regimes || regimes.length === 0) {
-    return <div>No regimes available</div>;
+    return (
+      <Typography variant="body2" color="textSecondary">
+        No regimes available
+      </Typography>
+    );
   }
 
   const handleChange = (event) => {
     const {
       target: { value },
     } = event;
-    onSelectRegimes(
-      // On autofill we get a stringified value.
-      typeof value === 'string' ? value.split(',') : value,
-    );
+    onSelectRegimes(typeof value === 'string' ? value.split(',') : value);
   };
 
   return (
-    <FormControl fullWidth variant="outlined">
+    <FormControl fullWidth variant="outlined" size="small" margin="normal">
       <InputLabel id="regime-selector-label">Regimes for Graph</InputLabel>
       <Select
         labelId="regime-selector-label"
@@ -41,7 +51,9 @@ const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
         value={selectedRegimes}
         onChange={handleChange}
         input={<OutlinedInput label="Regimes for Graph" />}
-        renderValue={(selected) => selected.map((regime) => capitalizeWords(regime)).join(', ')}
+        renderValue={(selected) =>
+          selected.map((regime) => capitalizeWords(regime)).join(', ')
+        }
         MenuProps={MenuProps}
       >
         {regimes.map((regime) => (
@@ -56,7 +68,7 @@ const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
 };
 
 RegimeSelector.propTypes = {
-  regimes: PropTypes.arrayOf(PropTypes.string),
+  regimes: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
   onSelectRegimes: PropTypes.func.isRequired,
 };

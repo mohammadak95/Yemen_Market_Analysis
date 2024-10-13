@@ -10,22 +10,21 @@ import {
   Button,
   Typography,
   Stack,
-  IconButton,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { drawerWidth } from '../../styles/LayoutStyles';
 import CommoditySelector from './CommoditySelector';
 import RegimeSelector from './RegimeSelector';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import InfoIcon from '@mui/icons-material/Info';
 
-const SidebarDrawer = styled(Drawer)(( ) => ({
-  width: drawerWidth,
-  flexShrink: 0,
-  boxSizing: 'border-box',
+const SidebarDrawer = styled(Drawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {
     width: drawerWidth,
     boxSizing: 'border-box',
+    height: '100vh', // Ensure full height
+    [theme.breakpoints.up('sm')]: {
+      position: 'relative',
+    },
   },
 }));
 
@@ -44,20 +43,20 @@ const Sidebar = ({
   setSelectedRegimes,
   onOpenWelcomeModal,
 }) => {
+  const theme = useTheme();
+
+  // Handle analysis button clicks
   const handleAnalysisChange = useCallback(
     (analysis) => {
       setSelectedAnalysis(analysis);
       if (!isSmUp) {
-        setSidebarOpen(false);
+        setSidebarOpen(false); // Close sidebar on mobile after selection
       }
     },
     [setSelectedAnalysis, isSmUp, setSidebarOpen]
   );
 
-  const handleDrawerClose = useCallback(() => {
-    setSidebarOpen(false);
-  }, [setSidebarOpen]);
-
+  // Handle commodity selection
   const handleCommoditySelect = useCallback(
     (commodity) => {
       setSelectedCommodity(commodity);
@@ -65,6 +64,7 @@ const Sidebar = ({
     [setSelectedCommodity]
   );
 
+  // Handle regimes selection
   const handleRegimesSelect = useCallback(
     (regimes) => {
       setSelectedRegimes(regimes);
@@ -72,6 +72,7 @@ const Sidebar = ({
     [setSelectedRegimes]
   );
 
+  // Memoize sidebar content for performance
   const sidebarContent = useMemo(
     () => (
       <Box sx={{ p: 2 }}>
@@ -161,28 +162,15 @@ const Sidebar = ({
     <SidebarDrawer
       variant={variant}
       open={sidebarOpen}
-      onClose={handleDrawerClose}
+      onClose={() => setSidebarOpen(false)}
       ModalProps={{
         keepMounted: true, // Better open performance on mobile.
       }}
       anchor="left"
     >
-      <Toolbar
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: [1],
-        }}
-      >
-        <Typography variant="h6" noWrap component="div">
-          Menu
-        </Typography>
-        <IconButton onClick={handleDrawerClose}>
-          <ChevronLeftIcon />
-        </IconButton>
-      </Toolbar>
+      <Toolbar />
       <Divider />
+      {/* Sidebar Content */}
       {sidebarContent}
     </SidebarDrawer>
   );

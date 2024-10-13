@@ -20,16 +20,11 @@ import { useTheme } from '@mui/material/styles';
 import {
   Box,
   Paper,
-  FormControlLabel,
-  Checkbox,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  ToggleButtonGroup,
+  ToggleButton,
+  Tooltip as MuiTooltip,
   IconButton,
   Grid,
-  Typography,
-  Tooltip as MuiTooltip,
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
@@ -73,8 +68,7 @@ const InteractiveChart = ({
   const theme = useTheme(); // Access the theme
 
   // State for chart controls
-  const [showConflictIntensity, setShowConflictIntensity] =
-    useState(true);
+  const [showConflictIntensity, setShowConflictIntensity] = useState(true);
   const [priceType, setPriceType] = useState('lcu'); // 'lcu' or 'usd'
   const [applySeasonalAdj, setApplySeasonalAdj] = useState(false);
   const [applySmooth, setApplySmooth] = useState(false);
@@ -89,8 +83,7 @@ const InteractiveChart = ({
       regime,
       data: data.filter(
         (d) =>
-          d.commodity.toLowerCase() ===
-            selectedCommodity.toLowerCase() &&
+          d.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
           d.regime.toLowerCase() === regime.toLowerCase()
       ),
     }));
@@ -148,9 +141,7 @@ const InteractiveChart = ({
       // Conflict Intensity Shaded Area Dataset
       if (showConflictIntensity) {
         datasets.push({
-          label: `${capitalizeWords(
-            regimeData.regime
-          )} Conflict Intensity`,
+          label: `${capitalizeWords(regimeData.regime)} Conflict Intensity`,
           data: processedData.map((d) => ({
             x: new Date(d.date),
             y: d.conflict_intensity,
@@ -315,95 +306,79 @@ const InteractiveChart = ({
           backgroundColor: theme.palette.background.paper,
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          {/* Price Type Dropdown */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth variant="outlined" size="small">
-              <InputLabel id="price-type-label">Price Type</InputLabel>
-              <Select
-                labelId="price-type-label"
-                value={priceType}
-                onChange={(e) => setPriceType(e.target.value)}
-                label="Price Type"
-              >
-                <MenuItem value="lcu">Price in LCU</MenuItem>
-                <MenuItem value="usd">Price in US$</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          {/* Tooltip for Price Type */}
-          <Grid item xs={12} sm={6} md={1}>
-            <MuiTooltip title="Select the currency type for price display">
-              <IconButton>
-                <HelpOutlineIcon />
-              </IconButton>
-            </MuiTooltip>
-          </Grid>
-
-          {/* Apply Seasonal Adjustment */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={applySeasonalAdj}
-                  onChange={() =>
-                    setApplySeasonalAdj(!applySeasonalAdj)
-                  }
-                  color="primary"
-                />
-              }
-              label="Apply Seasonal Adjustment"
-            />
-          </Grid>
-          {/* Tooltip for Seasonal Adjustment */}
-          <Grid item xs={12} sm={6} md={1}>
-            <MuiTooltip title="Toggle seasonal adjustment on the price data">
-              <IconButton>
-                <HelpOutlineIcon />
-              </IconButton>
-            </MuiTooltip>
+        <Grid
+          container
+          spacing={2}
+          alignItems="center"
+          justifyContent="center"
+        >
+          {/* Toggle Controls */}
+          <Grid item xs={12} md="auto">
+            <ToggleButtonGroup
+              value={priceType}
+              exclusive
+              onChange={(e, newValue) => {
+                if (newValue !== null) setPriceType(newValue);
+              }}
+              aria-label="Price Type"
+              size="small"
+            >
+              <ToggleButton value="lcu" aria-label="Price in LCU">
+                LCU
+              </ToggleButton>
+              <ToggleButton value="usd" aria-label="Price in US$">
+                US$
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Grid>
 
-          {/* Apply Smoothing */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={applySmooth}
-                  onChange={() => setApplySmooth(!applySmooth)}
-                  color="primary"
-                />
-              }
-              label="Apply Smoothing"
-            />
-          </Grid>
-          {/* Tooltip for Smoothing */}
-          <Grid item xs={12} sm={6} md={1}>
-            <MuiTooltip title="Toggle smoothing on the price data">
-              <IconButton>
-                <HelpOutlineIcon />
-              </IconButton>
-            </MuiTooltip>
+          <Grid item xs={12} md="auto">
+            <ToggleButtonGroup
+              value={applySeasonalAdj}
+              exclusive
+              onChange={() => setApplySeasonalAdj(!applySeasonalAdj)}
+              aria-label="Seasonal Adjustment"
+              size="small"
+            >
+              <ToggleButton value={true} selected={applySeasonalAdj}>
+                Seasonal Adjustment
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Grid>
 
-          {/* Show Conflict Intensity */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showConflictIntensity}
-                  onChange={() =>
-                    setShowConflictIntensity(!showConflictIntensity)
-                  }
-                  color="error"
-                />
-              }
-              label="Show Conflict Intensity"
-            />
+          <Grid item xs={12} md="auto">
+            <ToggleButtonGroup
+              value={applySmooth}
+              exclusive
+              onChange={() => setApplySmooth(!applySmooth)}
+              aria-label="Smoothing"
+              size="small"
+            >
+              <ToggleButton value={true} selected={applySmooth}>
+                Smoothing
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Grid>
-          {/* Tooltip for Conflict Intensity */}
-          <Grid item xs={12} sm={6} md={1}>
-            <MuiTooltip title="Toggle the visibility of Conflict Intensity on the chart">
+
+          <Grid item xs={12} md="auto">
+            <ToggleButtonGroup
+              value={showConflictIntensity}
+              exclusive
+              onChange={() =>
+                setShowConflictIntensity(!showConflictIntensity)
+              }
+              aria-label="Conflict Intensity"
+              size="small"
+            >
+              <ToggleButton value={true} selected={showConflictIntensity}>
+                Conflict Intensity
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Grid>
+
+          {/* Help Icon */}
+          <Grid item xs={12} md="auto">
+            <MuiTooltip title="Use the toggles to customize the chart display.">
               <IconButton>
                 <HelpOutlineIcon />
               </IconButton>
@@ -413,7 +388,12 @@ const InteractiveChart = ({
       </Paper>
 
       {/* Line Chart */}
-      <Box sx={{ height: { xs: '300px', sm: '400px', md: '500px' }, width: '100%' }}>
+      <Box
+        sx={{
+          height: { xs: '300px', sm: '400px', md: '500px' },
+          width: '100%',
+        }}
+      >
         <Line options={options} data={chartData} />
       </Box>
     </Box>
@@ -428,7 +408,7 @@ InteractiveChart.propTypes = {
       commodity: PropTypes.string.isRequired,
       regime: PropTypes.string.isRequired,
       price: PropTypes.number.isRequired,
-      usdprice: PropTypes.number.isRequired,
+      usdprice: PropTypes.number.isRequired, // Assuming you have usdprice
       conflict_intensity: PropTypes.number.isRequired,
     })
   ).isRequired,

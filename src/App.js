@@ -2,48 +2,43 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline, Box, Toolbar, IconButton } from '@mui/material';
+import { CssBaseline, Toolbar, IconButton } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleDarkMode } from './utils/themeSlice';
 import Header from './components/common/Header';
 import Sidebar from './components/common/Sidebar';
 import Dashboard from './Dashboard';
-import {
-  lightThemeWithOverrides,
-  darkThemeWithOverrides,
-} from './styles/theme';
+import { lightThemeWithOverrides, darkThemeWithOverrides } from './styles/theme';
 import useData from './hooks/useData';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import MethodologyModal from './components/methedology/MethodologyModal';
 import WelcomeModal from './WelcomeModal';
-import { styled } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import {
-  LayoutContainer,
-  MainContent,
-  drawerWidth,
-} from './styles/LayoutStyles';
+import { LayoutContainer, MainContent, SidebarWrapper } from './styles/LayoutStyles';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import AppBar from '@mui/material/AppBar';
 import MenuIcon from '@mui/icons-material/Menu';
+import { styled } from '@mui/material/styles';
 
-// Corrected StyledAppBar without using 'isSmUp'
+
+
+
+const drawerWidth = 240;
+
 const StyledAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(['width', 'margin'], {
+  transition: theme.transitions.create(['margin', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  // Apply margin and width adjustments only on 'sm' and up
-  [theme.breakpoints.up('sm')]: {
-    ...(open && {
+  ...(open &&
+    theme.breakpoints.up('sm') && {
       marginLeft: drawerWidth,
       width: `calc(100% - ${drawerWidth}px)`,
     }),
-  },
 }));
 
 const App = React.memo(function App() {
@@ -55,21 +50,16 @@ const App = React.memo(function App() {
   );
 
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
-
-  // Initialize sidebarOpen based on screen size
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
 
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedAnalysis, setSelectedAnalysis] = useState('');
   const [methodologyModalOpen, setMethodologyModalOpen] = useState(false);
-  const [selectedGraphRegimes, setSelectedGraphRegimes] = useState([
-    'unified',
-  ]);
+  const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']);
   const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
 
   const { data, loading, error } = useData();
 
-  // Handle Welcome Modal on first load
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
     if (!hasSeenWelcome) {
@@ -77,7 +67,6 @@ const App = React.memo(function App() {
     }
   }, []);
 
-  // Adjust sidebar open state based on screen size
   useEffect(() => {
     setSidebarOpen(isSmUp);
   }, [isSmUp]);
@@ -131,63 +120,49 @@ const App = React.memo(function App() {
         <LayoutContainer>
           <StyledAppBar position="fixed" open={sidebarOpen && isSmUp}>
             <Toolbar>
-              {(!isSmUp || !sidebarOpen) && (
-                <IconButton
-                  color="inherit"
-                  aria-label="open drawer"
-                  edge="start"
-                  onClick={handleDrawerToggle}
-                  sx={{ marginRight: 2 }}
-                >
-                  <MenuIcon />
-                </IconButton>
-              )}
-              <Header
-                isDarkMode={isDarkMode}
-                toggleDarkMode={handleToggleDarkMode}
-              />
+              <IconButton
+                color="inherit"
+                aria-label="toggle drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ marginRight: 2 }}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Header isDarkMode={isDarkMode} toggleDarkMode={handleToggleDarkMode} />
             </Toolbar>
           </StyledAppBar>
 
-          <Sidebar
-            commodities={data?.commodities || []}
-            regimes={data?.regimes || []}
-            selectedCommodity={selectedCommodity}
-            setSelectedCommodity={handleSetSelectedCommodity}
-            selectedAnalysis={selectedAnalysis}
-            setSelectedAnalysis={handleSetSelectedAnalysis}
-            sidebarOpen={sidebarOpen}
-            setSidebarOpen={setSidebarOpen}
-            isSmUp={isSmUp}
-            onMethodologyClick={handleShowMethodology}
-            selectedRegimes={selectedGraphRegimes}
-            setSelectedRegimes={handleSetSelectedGraphRegimes}
-            onOpenWelcomeModal={handleOpenWelcomeModal}
-          />
+          <SidebarWrapper>
+            <Sidebar
+              commodities={data?.commodities || []}
+              regimes={data?.regimes || []}
+              selectedCommodity={selectedCommodity}
+              setSelectedCommodity={handleSetSelectedCommodity}
+              selectedAnalysis={selectedAnalysis}
+              setSelectedAnalysis={handleSetSelectedAnalysis}
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+              isSmUp={isSmUp}
+              onMethodologyClick={handleShowMethodology}
+              selectedRegimes={selectedGraphRegimes}
+              setSelectedRegimes={handleSetSelectedGraphRegimes}
+              onOpenWelcomeModal={handleOpenWelcomeModal}
+            />
+          </SidebarWrapper>
 
           <MainContent open={sidebarOpen && isSmUp}>
-            <Box component="main">
-              <Toolbar />
-              <Dashboard
-                data={data}
-                selectedCommodity={selectedCommodity}
-                selectedRegimes={selectedGraphRegimes}
-                selectedAnalysis={selectedAnalysis}
-              />
-            </Box>
+            <Toolbar />
+            <Dashboard
+              data={data}
+              selectedCommodity={selectedCommodity}
+              selectedRegimes={selectedGraphRegimes}
+              selectedAnalysis={selectedAnalysis}
+            />
           </MainContent>
 
-          {/* Methodology Modal */}
-          <MethodologyModal
-            open={methodologyModalOpen}
-            onClose={handleCloseMethodology}
-          />
-
-          {/* Welcome Modal */}
-          <WelcomeModal
-            open={welcomeModalOpen}
-            onClose={handleCloseWelcomeModal}
-          />
+          <MethodologyModal open={methodologyModalOpen} onClose={handleCloseMethodology} />
+          <WelcomeModal open={welcomeModalOpen} onClose={handleCloseWelcomeModal} />
         </LayoutContainer>
       </ErrorBoundary>
     </ThemeProvider>

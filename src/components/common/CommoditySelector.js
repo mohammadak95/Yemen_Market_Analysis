@@ -2,16 +2,20 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { capitalizeWords } from '../../utils/stringUtils'; // Import the helper function
+import { FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
+import { capitalizeWords } from '../../utils/stringUtils';
 
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   if (!commodities || commodities.length === 0) {
-    return <div>No commodities available</div>;
+    return (
+      <Typography variant="body2" color="textSecondary">
+        No commodities available
+      </Typography>
+    );
   }
 
   return (
-    <FormControl fullWidth variant="outlined" margin="normal">
+    <FormControl fullWidth variant="outlined" size="small" margin="normal">
       <InputLabel id="commodity-label">Commodity</InputLabel>
       <Select
         labelId="commodity-label"
@@ -34,8 +38,8 @@ const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }
 };
 
 CommoditySelector.propTypes = {
-  commodities: PropTypes.arrayOf(PropTypes.string),
-  selectedCommodity: PropTypes.string,
+  commodities: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedCommodity: PropTypes.string.isRequired,
   onSelectCommodity: PropTypes.func.isRequired,
 };
 
