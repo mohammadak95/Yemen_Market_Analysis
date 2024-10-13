@@ -8,8 +8,8 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  Title,
-  Tooltip,
+  Title as ChartTitle,
+  Tooltip as ChartTooltip,
   Legend,
   TimeScale,
   Filler,
@@ -32,7 +32,10 @@ import {
   Tooltip as MuiTooltip,
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { applySeasonalAdjustment, applySmoothing } from '../../utils/dataProcessing'; // Data processing functions
+import {
+  applySeasonalAdjustment,
+  applySmoothing,
+} from '../../utils/dataProcessing'; // Data processing functions
 
 // Utility function to capitalize words
 const capitalizeWords = (str) => {
@@ -45,8 +48,8 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
-  Title,
-  Tooltip,
+  ChartTitle,
+  ChartTooltip,
   Legend,
   TimeScale,
   Filler
@@ -70,27 +73,32 @@ const InteractiveChart = ({
   const theme = useTheme(); // Access the theme
 
   // State for chart controls
-  const [showConflictIntensity, setShowConflictIntensity] = useState(true);
+  const [showConflictIntensity, setShowConflictIntensity] =
+    useState(true);
   const [priceType, setPriceType] = useState('lcu'); // 'lcu' or 'usd'
   const [applySeasonalAdj, setApplySeasonalAdj] = useState(false);
   const [applySmooth, setApplySmooth] = useState(false);
 
   // Memoized chart data to optimize performance
   const chartData = useMemo(() => {
-    if (!data || !selectedCommodity || selectedRegimes.length === 0) return null;
+    if (!data || !selectedCommodity || selectedRegimes.length === 0)
+      return null;
 
     // Group data by regime
     const dataByRegime = selectedRegimes.map((regime) => ({
       regime,
       data: data.filter(
         (d) =>
-          d.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+          d.commodity.toLowerCase() ===
+            selectedCommodity.toLowerCase() &&
           d.regime.toLowerCase() === regime.toLowerCase()
       ),
     }));
 
     // Remove regimes with no data
-    const validDataByRegime = dataByRegime.filter((regimeData) => regimeData.data.length > 0);
+    const validDataByRegime = dataByRegime.filter(
+      (regimeData) => regimeData.data.length > 0
+    );
 
     if (validDataByRegime.length === 0) return null;
 
@@ -140,7 +148,9 @@ const InteractiveChart = ({
       // Conflict Intensity Shaded Area Dataset
       if (showConflictIntensity) {
         datasets.push({
-          label: `${capitalizeWords(regimeData.regime)} Conflict Intensity`,
+          label: `${capitalizeWords(
+            regimeData.regime
+          )} Conflict Intensity`,
           data: processedData.map((d) => ({
             x: new Date(d.date),
             y: d.conflict_intensity,
@@ -186,18 +196,18 @@ const InteractiveChart = ({
           title: {
             display: true,
             text: 'Date',
-            color: theme.palette.text.primary, // Set title color
+            color: theme.palette.text.primary,
             font: {
               size: 14,
               weight: 'bold',
             },
           },
           ticks: {
-            maxTicksLimit: 10, // Limits the number of ticks on the x-axis
-            color: theme.palette.text.primary, // Set tick color
+            maxTicksLimit: 10,
+            color: theme.palette.text.primary,
           },
           grid: {
-            color: theme.palette.divider, // Use theme divider color
+            color: theme.palette.divider,
           },
         },
         y: {
@@ -206,46 +216,46 @@ const InteractiveChart = ({
           position: 'left',
           title: {
             display: true,
-            text: priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
-            color: theme.palette.text.primary, // Set title color
+            text:
+              priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
+            color: theme.palette.text.primary,
             font: {
               size: 14,
               weight: 'bold',
             },
           },
           ticks: {
-            color: theme.palette.text.primary, // Set tick color
+            color: theme.palette.text.primary,
             callback: (value) => {
-              return value.toLocaleString(); // Format numbers with commas
+              return value.toLocaleString();
             },
           },
           grid: {
-            color: theme.palette.divider, // Use theme divider color
+            color: theme.palette.divider,
           },
         },
         y1: {
           type: 'linear',
-          display: showConflictIntensity, // Show only if Conflict Intensity is enabled
+          display: showConflictIntensity,
           position: 'right',
           title: {
             display: true,
             text: 'Conflict Intensity',
-            color: theme.palette.text.primary, // Set title color
+            color: theme.palette.text.primary,
             font: {
               size: 14,
               weight: 'bold',
             },
           },
           ticks: {
-            beginAtZero: true, // Starts Conflict Intensity axis at zero
-            color: theme.palette.text.primary, // Set tick color
+            beginAtZero: true,
+            color: theme.palette.text.primary,
             callback: (value) => {
-              return value.toLocaleString(); // Format numbers with commas
+              return value.toLocaleString();
             },
           },
           grid: {
-            drawOnChartArea: false, // Prevents grid lines for Conflict Intensity
-            color: theme.palette.divider, // Use theme divider color if needed
+            drawOnChartArea: false,
           },
         },
       },
@@ -258,20 +268,23 @@ const InteractiveChart = ({
             },
             label: (context) => {
               let label = `${context.dataset.label}: `;
-              label += context.parsed.y !== null ? context.parsed.y.toLocaleString() : '';
+              label +=
+                context.parsed.y !== null
+                  ? context.parsed.y.toLocaleString()
+                  : '';
               return label;
             },
           },
-          backgroundColor: theme.palette.background.paper, // Tooltip background
-          titleColor: theme.palette.text.primary, // Tooltip title color
-          bodyColor: theme.palette.text.secondary, // Tooltip body color
+          backgroundColor: theme.palette.background.paper,
+          titleColor: theme.palette.text.primary,
+          bodyColor: theme.palette.text.secondary,
         },
         legend: {
-          position: 'bottom', // Position legend below the chart
+          position: 'bottom',
           labels: {
-            boxWidth: 12, // Size of the legend boxes
-            padding: 15, // Spacing between legend items
-            color: theme.palette.text.primary, // Use theme text primary color
+            boxWidth: 12,
+            padding: 15,
+            color: theme.palette.text.primary,
             font: {
               size: 12,
             },
@@ -283,7 +296,12 @@ const InteractiveChart = ({
   );
 
   // Display a prompt if no data is available
-  if (!chartData) return <Typography>Please select at least one regime and a commodity.</Typography>;
+  if (!chartData)
+    return (
+      <Typography>
+        Please select at least one regime and a commodity.
+      </Typography>
+    );
 
   return (
     <Box>
@@ -297,7 +315,7 @@ const InteractiveChart = ({
           backgroundColor: theme.palette.background.paper,
         }}
       >
-        <Grid container spacing={3} alignItems="center">
+        <Grid container spacing={2} alignItems="center">
           {/* Price Type Dropdown */}
           <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth variant="outlined" size="small">
@@ -328,7 +346,9 @@ const InteractiveChart = ({
               control={
                 <Checkbox
                   checked={applySeasonalAdj}
-                  onChange={() => setApplySeasonalAdj(!applySeasonalAdj)}
+                  onChange={() =>
+                    setApplySeasonalAdj(!applySeasonalAdj)
+                  }
                   color="primary"
                 />
               }
@@ -372,7 +392,9 @@ const InteractiveChart = ({
               control={
                 <Checkbox
                   checked={showConflictIntensity}
-                  onChange={() => setShowConflictIntensity(!showConflictIntensity)}
+                  onChange={() =>
+                    setShowConflictIntensity(!showConflictIntensity)
+                  }
                   color="error"
                 />
               }
@@ -391,7 +413,7 @@ const InteractiveChart = ({
       </Paper>
 
       {/* Line Chart */}
-      <Box sx={{ height: '500px', width: '100%' }}>
+      <Box sx={{ height: { xs: '300px', sm: '400px', md: '500px' }, width: '100%' }}>
         <Line options={options} data={chartData} />
       </Box>
     </Box>
@@ -402,7 +424,7 @@ const InteractiveChart = ({
 InteractiveChart.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.shape({
-      date: PropTypes.string.isRequired, // Assuming date is a string in ISO format
+      date: PropTypes.string.isRequired,
       commodity: PropTypes.string.isRequired,
       regime: PropTypes.string.isRequired,
       price: PropTypes.number.isRequired,

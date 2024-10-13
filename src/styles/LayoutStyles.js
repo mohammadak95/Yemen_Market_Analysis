@@ -5,7 +5,6 @@ import { Box } from '@mui/material';
 
 // Define drawer widths
 export const drawerWidth = 240;
-export const collapsedDrawerWidth = 60; // Width when the sidebar is collapsed
 
 // Container for the entire layout
 export const LayoutContainer = styled(Box)(() => ({
@@ -18,17 +17,14 @@ export const MainContent = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
   flexGrow: 1,
-  padding: theme.spacing(3),
+  padding: theme.spacing(2),
   transition: theme.transitions.create('margin', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  marginLeft: `-${drawerWidth}px`,
-  ...(open && {
-    transition: theme.transitions.create('margin', {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
+  marginLeft: open ? `${drawerWidth}px` : 0,
+  [theme.breakpoints.down('sm')]: {
     marginLeft: 0,
-  }),
+    padding: theme.spacing(1),
+  },
 }));

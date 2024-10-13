@@ -15,29 +15,26 @@ const baseTheme = {
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
-      fontSize: '2.5rem',
-      fontWeight: 500,
-    },
-    h2: {
       fontSize: '2rem',
       fontWeight: 500,
+      '@media (min-width:600px)': {
+        fontSize: '2.5rem',
+      },
+      '@media (min-width:960px)': {
+        fontSize: '3rem',
+      },
     },
-    h3: {
+    h2: {
       fontSize: '1.75rem',
       fontWeight: 500,
+      '@media (min-width:600px)': {
+        fontSize: '2rem',
+      },
+      '@media (min-width:960px)': {
+        fontSize: '2.5rem',
+      },
     },
-    h4: {
-      fontSize: '1.5rem',
-      fontWeight: 500,
-    },
-    h5: {
-      fontSize: '1.25rem',
-      fontWeight: 500,
-    },
-    h6: {
-      fontSize: '1rem',
-      fontWeight: 500,
-    },
+    // Add responsive sizes for other variants as needed
   },
   shape: {
     borderRadius: 8,
@@ -61,18 +58,6 @@ const lightTheme = createTheme({
       light: '#f48fb1',
       dark: '#f06292',
       contrastText: '#ffffff',
-    },
-    error: {
-      main: '#f44336',
-    },
-    warning: {
-      main: '#ffa726',
-    },
-    info: {
-      main: '#29b6f6',
-    },
-    success: {
-      main: '#66bb6a',
     },
     background: {
       default: '#ffffff',
@@ -102,18 +87,6 @@ const darkTheme = createTheme({
       dark: '#f06292',
       contrastText: '#000000',
     },
-    error: {
-      main: '#f44336',
-    },
-    warning: {
-      main: '#ffa726',
-    },
-    info: {
-      main: '#29b6f6',
-    },
-    success: {
-      main: '#66bb6a',
-    },
     background: {
       default: '#121212',
       paper: '#1E1E1E',
@@ -122,7 +95,6 @@ const darkTheme = createTheme({
       primary: '#FFFFFF',
       secondary: '#B3B3B3',
     },
-    divider: '#333333',
   },
 });
 
@@ -136,20 +108,6 @@ const themeOverrides = {
         },
       },
     },
-    MuiAccordion: {
-      styleOverrides: {
-        root: {
-          backgroundColor: 'inherit',
-          boxShadow: 'none',
-          '&:not(:last-child)': {
-            borderBottom: 0,
-          },
-          '&:before': {
-            display: 'none',
-          },
-        },
-      },
-    },
     MuiTypography: {
       styleOverrides: {
         root: {
@@ -157,14 +115,19 @@ const themeOverrides = {
         },
       },
     },
-    // Add more component overrides as needed
   },
 };
 
 // Combine Light Theme with Overrides
-export const lightThemeWithOverrides = createTheme(lightTheme, themeOverrides);
+export const lightThemeWithOverrides = createTheme(
+  lightTheme,
+  themeOverrides
+);
 
 // Combine Dark Theme with Overrides
-export const darkThemeWithOverrides = createTheme(darkTheme, themeOverrides);
+export const darkThemeWithOverrides = createTheme(
+  darkTheme,
+  themeOverrides
+);
 
 export default lightThemeWithOverrides; // Default export can be adjusted as needed

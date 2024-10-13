@@ -49,7 +49,27 @@ const GlobalStyle = () => {
         button {
           font-family: ${theme.typography.fontFamily};
         }
-        /* Additional global styles can be added here */
+        /* Adjust font sizes for mobile */
+        @media (max-width: 600px) {
+          h1 {
+            font-size: 1.8rem;
+          }
+          h2 {
+            font-size: 1.6rem;
+          }
+          h3 {
+            font-size: 1.4rem;
+          }
+          h4 {
+            font-size: 1.2rem;
+          }
+          h5 {
+            font-size: 1rem;
+          }
+          h6 {
+            font-size: 0.9rem;
+          }
+        }
       `}
     />
   );
