@@ -1,0 +1,191 @@
+{
+  "abyan": {
+    "neighbors": [
+      "lahj",
+      "aden",
+      "al dhale'e",
+      "al bayda",
+      "taizz"
+    ]
+  },
+  "aden": {
+    "neighbors": [
+      "lahj",
+      "abyan",
+      "al dhale'e",
+      "taizz",
+      "al bayda"
+    ]
+  },
+  "al bayda": {
+    "neighbors": [
+      "al dhale'e",
+      "abyan",
+      "lahj",
+      "dhamar",
+      "aden"
+    ]
+  },
+  "al dhale'e": {
+    "neighbors": [
+      "ibb",
+      "lahj",
+      "taizz",
+      "abyan",
+      "al bayda"
+    ]
+  },
+  "al hudaydah": {
+    "neighbors": [
+      "raymah",
+      "al mahwit",
+      "hajjah",
+      "amran",
+      "amanat al asimah"
+    ]
+  },
+  "al jawf": {
+    "neighbors": [
+      "marib",
+      "amran",
+      "sana'a",
+      "amanat al asimah",
+      "hajjah"
+    ]
+  },
+  "al maharah": {
+    "neighbors": [
+      "hadramaut",
+      "socotra",
+      "shabwah",
+      "marib",
+      "al bayda"
+    ]
+  },
+  "al mahwit": {
+    "neighbors": [
+      "hajjah",
+      "amran",
+      "amanat al asimah",
+      "raymah",
+      "al hudaydah"
+    ]
+  },
+  "amanat al asimah": {
+    "neighbors": [
+      "sana'a",
+      "amran",
+      "al mahwit",
+      "hajjah",
+      "dhamar"
+    ]
+  },
+  "amran": {
+    "neighbors": [
+      "hajjah",
+      "amanat al asimah",
+      "al mahwit",
+      "sana'a",
+      "al jawf"
+    ]
+  },
+  "dhamar": {
+    "neighbors": [
+      "ibb",
+      "sana'a",
+      "raymah",
+      "amanat al asimah",
+      "al dhale'e"
+    ]
+  },
+  "hadramaut": {
+    "neighbors": [
+      "shabwah",
+      "al maharah",
+      "al bayda",
+      "marib",
+      "abyan"
+    ]
+  },
+  "hajjah": {
+    "neighbors": [
+      "al mahwit",
+      "amran",
+      "amanat al asimah",
+      "sana'a",
+      "raymah"
+    ]
+  },
+  "ibb": {
+    "neighbors": [
+      "taizz",
+      "al dhale'e",
+      "dhamar",
+      "raymah",
+      "lahj"
+    ]
+  },
+  "lahj": {
+    "neighbors": [
+      "aden",
+      "abyan",
+      "al dhale'e",
+      "taizz",
+      "ibb"
+    ]
+  },
+  "marib": {
+    "neighbors": [
+      "sana'a",
+      "al jawf",
+      "amanat al asimah",
+      "dhamar",
+      "amran"
+    ]
+  },
+  "raymah": {
+    "neighbors": [
+      "al hudaydah",
+      "al mahwit",
+      "dhamar",
+      "amanat al asimah",
+      "ibb"
+    ]
+  },
+  "sana'a": {
+    "neighbors": [
+      "amanat al asimah",
+      "amran",
+      "dhamar",
+      "marib",
+      "al mahwit"
+    ]
+  },
+  "shabwah": {
+    "neighbors": [
+      "al bayda",
+      "marib",
+      "abyan",
+      "hadramaut",
+      "al dhale'e"
+    ]
+  },
+  "socotra": {
+    "neighbors": [
+      "al maharah",
+      "hadramaut",
+      "shabwah",
+      "al bayda",
+      "abyan"
+    ]
+  },
+  "taizz": {
+    "neighbors": [
+      "ibb",
+      "al dhale'e",
+      "lahj",
+      "dhamar",
+      "raymah"
+    ]
+  }
+}
