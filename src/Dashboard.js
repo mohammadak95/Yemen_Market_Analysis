@@ -1,6 +1,6 @@
-// src/components/spatial-analysis/index.js
+// src/Dashboard.js
 
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -21,7 +21,7 @@ const PriceDifferentialAnalysis = React.lazy(() =>
 );
 const SpatialAnalysis = React.lazy(() => import('./components/spatial-analysis/SpatialAnalysis'));
 
-// Register Chart.js components (if not already registered globally)
+// Register Chart.js components
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -46,12 +46,12 @@ ChartJS.register(
   Filler
 );
 
-const Dashboard = ({ data, selectedAnalysis, selectedCommodity, selectedRegimes }) => {
+const Dashboard = React.memo(({ data, selectedAnalysis, selectedCommodity, selectedRegimes }) => {
   const theme = useTheme();
 
-  // Convert dates to strings
+  // Memoize processedData to optimize performance
   const processedData = useMemo(() => {
-    if (data && data.features) {
+    if (data?.features) {
       return {
         ...data,
         features: data.features.map(feature => ({
@@ -62,6 +62,47 @@ const Dashboard = ({ data, selectedAnalysis, selectedCommodity, selectedRegimes 
     }
     return data;
   }, [data]);
+
+  // Memoize the analysis component to prevent re-renders
+  const AnalysisComponent = useMemo(() => {
+    const components = {
+      ecm: ECMAnalysis,
+      priceDiff: PriceDifferentialAnalysis,
+      spatial: SpatialAnalysis,
+    };
+    return components[selectedAnalysis] || null;
+  }, [selectedAnalysis]);
+
+  // Memoize the analysis title
+  const analysisTitle = useMemo(() => {
+    const titles = {
+      ecm: 'ECM Analysis',
+      priceDiff: 'Price Differential Analysis',
+      spatial: 'Spatial Analysis',
+    };
+    return titles[selectedAnalysis] || 'Analysis';
+  }, [selectedAnalysis]);
+
+  // Render the interactive chart component
+  const renderInteractiveChart = useCallback(() => {
+    if (!selectedCommodity || selectedRegimes.length === 0) {
+      return (
+        <ErrorMessage message="Please select at least one regime and a commodity from the sidebar." />
+      );
+    }
+
+    if (!processedData?.features || processedData.features.length === 0) {
+      return <LoadingSpinner />;
+    }
+
+    return (
+      <InteractiveChart
+        data={processedData.features}
+        selectedCommodity={selectedCommodity}
+        selectedRegimes={selectedRegimes}
+      />
+    );
+  }, [processedData?.features, selectedCommodity, selectedRegimes]);
 
   return (
     <Box
@@ -86,33 +127,9 @@ const Dashboard = ({ data, selectedAnalysis, selectedCommodity, selectedRegimes 
             <Typography variant="h6" gutterBottom>
               Interactive Chart
             </Typography>
-            {selectedCommodity && selectedRegimes.length > 0 ? (
-              <Box
-                sx={{
-                  mt: 2,
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                {processedData.features && processedData.features.length > 0 ? (
-                  <InteractiveChart
-                    data={processedData.features}
-                    selectedCommodity={selectedCommodity}
-                    selectedRegimes={selectedRegimes}
-                  />
-                ) : (
-                  <LoadingSpinner />
-                )}
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  mt: 2,
-                }}
-              >
-                <ErrorMessage message="Please select at least one regime and a commodity from the sidebar." />
-              </Box>
-            )}
+            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column' }}>
+              {renderInteractiveChart()}
+            </Box>
           </Paper>
         </Grid>
 
@@ -129,10 +146,15 @@ const Dashboard = ({ data, selectedAnalysis, selectedCommodity, selectedRegimes 
                 }}
               >
                 <Typography variant="h6" gutterBottom>
-                  {getAnalysisTitle(selectedAnalysis)}
+                  {analysisTitle}
                 </Typography>
                 <Suspense fallback={<LoadingSpinner />}>
-                  {renderAnalysisComponent(selectedAnalysis, selectedCommodity, selectedRegimes)}
+                  {AnalysisComponent && (
+                    <AnalysisComponent
+                      selectedCommodity={selectedCommodity}
+                      selectedRegime="unified"
+                    />
+                  )}
                 </Suspense>
               </Paper>
             </Fade>
@@ -141,50 +163,9 @@ const Dashboard = ({ data, selectedAnalysis, selectedCommodity, selectedRegimes 
       </Grid>
     </Box>
   );
-};
+});
 
-// Helper function to get analysis title
-const getAnalysisTitle = (analysis) => {
-  switch (analysis) {
-    case 'ecm':
-      return 'ECM Analysis';
-    case 'priceDiff':
-      return 'Price Differential Analysis';
-    case 'spatial':
-      return 'Spatial Analysis';
-    default:
-      return 'Analysis';
-  }
-};
-
-// Helper function to render analysis components
-const renderAnalysisComponent = (analysis, commodity) => {
-  switch (analysis) {
-    case 'ecm':
-      return (
-        <ECMAnalysis
-          selectedCommodity={commodity}
-          selectedRegime="unified" // Always 'unified'
-        />
-      );
-    case 'priceDiff':
-      return (
-        <PriceDifferentialAnalysis
-          selectedCommodity={commodity}
-          selectedRegime="unified" // Always 'unified'
-        />
-      );
-    case 'spatial':
-      return (
-        <SpatialAnalysis
-          selectedCommodity={commodity}
-          selectedRegime="unified" // Pass 'unified' as a string
-        />
-      );
-    default:
-      return <ErrorMessage message="Invalid analysis selected." />;
-  }
-};
+Dashboard.displayName = 'Dashboard';
 
 Dashboard.propTypes = {
   data: PropTypes.shape({
@@ -195,14 +176,14 @@ Dashboard.propTypes = {
         regime: PropTypes.string.isRequired,
         price: PropTypes.number,
       })
-    ).isRequired,
+    ),
     commodities: PropTypes.arrayOf(PropTypes.string),
     regimes: PropTypes.arrayOf(PropTypes.string),
     dateRange: PropTypes.shape({
       min: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
       max: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
     }),
-  }).isRequired,
+  }),
   selectedAnalysis: PropTypes.string.isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,

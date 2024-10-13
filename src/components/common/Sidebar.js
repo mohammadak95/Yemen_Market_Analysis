@@ -1,6 +1,6 @@
 // src/components/common/Sidebar.js
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Drawer,
@@ -49,22 +49,96 @@ const Sidebar = ({
   selectedRegimes,
   setSelectedRegimes,
 }) => {
-  const handleAnalysisChange = (analysis) => {
+  const handleAnalysisChange = useCallback((analysis) => {
     setSelectedAnalysis(analysis);
     if (!isSmUp) {
       setSidebarOpen(false);
     }
-  };
+  }, [setSelectedAnalysis, isSmUp, setSidebarOpen]);
 
-  const handleDrawerClose = () => {
+  const handleDrawerClose = useCallback(() => {
     setSidebarOpen(false);
-  };
+  }, [setSidebarOpen]);
+
+  const handleCommoditySelect = useCallback((commodity) => {
+    setSelectedCommodity(commodity);
+  }, [setSelectedCommodity]);
+
+  const handleRegimesSelect = useCallback((regimes) => {
+    setSelectedRegimes(regimes);
+  }, [setSelectedRegimes]);
+
+  const sidebarContent = useMemo(() => (
+    <Stack spacing={3}>
+      {/* Commodity Selector */}
+      <CommoditySelector
+        commodities={commodities}
+        selectedCommodity={selectedCommodity}
+        onSelectCommodity={handleCommoditySelect}
+      />
+
+      {/* Regime Selector */}
+      <RegimeSelector
+        regimes={regimes}
+        selectedRegimes={selectedRegimes}
+        onSelectRegimes={handleRegimesSelect}
+      />
+
+      {/* Analysis Buttons */}
+      <Stack spacing={2}>
+        <Button
+          variant={selectedAnalysis === 'ecm' ? 'contained' : 'outlined'}
+          color="primary"
+          fullWidth
+          onClick={() => handleAnalysisChange('ecm')}
+        >
+          ECM Analysis
+        </Button>
+        <Button
+          variant={selectedAnalysis === 'priceDiff' ? 'contained' : 'outlined'}
+          color="primary"
+          fullWidth
+          onClick={() => handleAnalysisChange('priceDiff')}
+        >
+          Price Differential Analysis
+        </Button>
+        <Button
+          variant={selectedAnalysis === 'spatial' ? 'contained' : 'outlined'}
+          color="primary"
+          fullWidth
+          onClick={() => handleAnalysisChange('spatial')}
+        >
+          Spatial Analysis
+        </Button>
+      </Stack>
+
+      {/* Methodology Button */}
+      <Button
+        variant="contained"
+        color="secondary"
+        fullWidth
+        onClick={onMethodologyClick}
+      >
+        Methodology
+      </Button>
+    </Stack>
+  ), [
+    commodities,
+    selectedCommodity,
+    handleCommoditySelect,
+    regimes,
+    selectedRegimes,
+    handleRegimesSelect,
+    selectedAnalysis,
+    handleAnalysisChange,
+    onMethodologyClick
+  ]);
 
   return (
     <SidebarDrawer
       variant={isSmUp ? 'persistent' : 'temporary'}
       open={sidebarOpen}
-      onClose={() => setSidebarOpen(false)}
+      onClose={handleDrawerClose}
       ModalProps={{
         keepMounted: true, // Better open performance on mobile.
       }}
@@ -88,61 +162,7 @@ const Sidebar = ({
       </Toolbar>
       <Divider />
       <Box sx={{ p: 2 }}>
-        {sidebarOpen && (
-          <Stack spacing={3}>
-            {/* Commodity Selector */}
-            <CommoditySelector
-              commodities={commodities}
-              selectedCommodity={selectedCommodity}
-              onSelectCommodity={setSelectedCommodity}
-            />
-
-            {/* Regime Selector */}
-            <RegimeSelector
-              regimes={regimes}
-              selectedRegimes={selectedRegimes}
-              onSelectRegimes={setSelectedRegimes}
-            />
-
-            {/* Analysis Buttons */}
-            <Stack spacing={2}>
-              <Button
-                variant={selectedAnalysis === 'ecm' ? 'contained' : 'outlined'}
-                color="primary"
-                fullWidth
-                onClick={() => handleAnalysisChange('ecm')}
-              >
-                ECM Analysis
-              </Button>
-              <Button
-                variant={selectedAnalysis === 'priceDiff' ? 'contained' : 'outlined'}
-                color="primary"
-                fullWidth
-                onClick={() => handleAnalysisChange('priceDiff')}
-              >
-                Price Differential Analysis
-              </Button>
-              <Button
-                variant={selectedAnalysis === 'spatial' ? 'contained' : 'outlined'}
-                color="primary"
-                fullWidth
-                onClick={() => handleAnalysisChange('spatial')}
-              >
-                Spatial Analysis
-              </Button>
-            </Stack>
-
-            {/* Methodology Button */}
-            <Button
-              variant="contained"
-              color="secondary"
-              fullWidth
-              onClick={onMethodologyClick}
-            >
-              Methodology
-            </Button>
-          </Stack>
-        )}
+        {sidebarOpen && sidebarContent}
       </Box>
     </SidebarDrawer>
   );
@@ -163,4 +183,4 @@ Sidebar.propTypes = {
   setSelectedRegimes: PropTypes.func.isRequired,
 };
 
-export default Sidebar;
+export default React.memo(Sidebar);

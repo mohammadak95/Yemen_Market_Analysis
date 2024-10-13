@@ -180,6 +180,7 @@
 │   │   │   └── index.js
 │   │   └── spatial-analysis
 │   │       ├── DiagnosticsTests.js
+│   │       ├── FlowMapsWithMap.js
 │   │       ├── RegressionResults.js
 │   │       ├── SpatialAnalysis.js
 │   │       ├── SpatialMap.js

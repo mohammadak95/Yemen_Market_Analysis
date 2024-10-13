@@ -1,5 +1,3 @@
-// src/components/spatial-analysis/RegressionResults.js
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -11,11 +9,9 @@ import {
   TableContainer,
   TableRow,
   TableHead,
+  Button,
 } from '@mui/material';
-import { CheckCircle, Cancel } from '@mui/icons-material';
-import { green, red } from '@mui/material/colors';
-import { Bar } from 'react-chartjs-2';
-import 'chart.js/auto';
+import { SaveAlt } from '@mui/icons-material';
 
 const RegressionResults = ({ data }) => {
   if (!data) {
@@ -26,35 +22,30 @@ const RegressionResults = ({ data }) => {
     );
   }
 
-  const { coefficients, intercept, p_values, r_squared, adj_r_squared, mse, observations, vif } = data;
+  const { coefficients, intercept, r_squared, adj_r_squared, mse, observations } = data;
 
-  // Prepare data for coefficient plot
-  const coefLabels = Object.keys(coefficients);
-  const coefValues = Object.values(coefficients);
+  // Function to export table data as CSV
+  const exportCSV = () => {
+    const rows = [
+      ['Metric', 'Value'],
+      ['Intercept', intercept.toFixed(4)],
+      ...Object.entries(coefficients).map(([key, value]) => [key, value.toFixed(4)]),
+      ['R-squared', r_squared.toFixed(4)],
+      ['Adjusted R-squared', adj_r_squared.toFixed(4)],
+      ['Mean Squared Error (MSE)', mse.toFixed(4)],
+      ['Observations', observations],
+    ];
 
-  const chartData = {
-    labels: coefLabels,
-    datasets: [
-      {
-        label: 'Coefficient Value',
-        data: coefValues,
-        backgroundColor: coefValues.map((value) =>
-          value >= 0 ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'
-        ),
-        borderColor: coefValues.map((value) =>
-          value >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)'
-        ),
-        borderWidth: 1,
-      },
-    ],
-  };
+    const csvContent = 'data:text/csv;charset=utf-8,' +
+      rows.map(e => e.join(',')).join('\n');
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      title: { display: true, text: 'Regression Coefficients' },
-    },
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'regression_results.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -62,77 +53,50 @@ const RegressionResults = ({ data }) => {
       <Typography variant="h6" gutterBottom>
         Regression Results
       </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<SaveAlt />}
+        onClick={exportCSV}
+        sx={{ mb: 2 }}
+      >
+        Export as CSV
+      </Button>
       <TableContainer>
-        <Table>
+        <Table aria-label="Regression Results Table">
           <TableHead>
             <TableRow>
-              <TableCell>Variable</TableCell>
-              <TableCell>Coefficient</TableCell>
-              <TableCell>P-Value</TableCell>
-              <TableCell>Significant</TableCell>
+              <TableCell><strong>Metric</strong></TableCell>
+              <TableCell><strong>Value</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {coefLabels.map((variable) => (
-              <TableRow key={variable}>
-                <TableCell>{variable}</TableCell>
-                <TableCell>{coefficients[variable].toFixed(4)}</TableCell>
-                <TableCell>{p_values[variable].toFixed(4)}</TableCell>
-                <TableCell>
-                  {p_values[variable] < 0.05 ? (
-                    <CheckCircle sx={{ color: green[500] }} />
-                  ) : (
-                    <Cancel sx={{ color: red[500] }} />
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
             <TableRow>
               <TableCell>Intercept</TableCell>
               <TableCell>{intercept.toFixed(4)}</TableCell>
-              <TableCell>N/A</TableCell>
-              <TableCell>N/A</TableCell>
             </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Coefficient Bar Chart */}
-      <Bar data={chartData} options={chartOptions} />
-
-      {/* Additional Metrics */}
-      <Typography variant="body2" sx={{ mt: 2 }}>
-        <strong>R-Squared:</strong> {r_squared.toFixed(4)}
-      </Typography>
-      <Typography variant="body2">
-        <strong>Adjusted R-Squared:</strong> {adj_r_squared.toFixed(4)}
-      </Typography>
-      <Typography variant="body2">
-        <strong>Mean Squared Error (MSE):</strong> {mse.toFixed(4)}
-      </Typography>
-      <Typography variant="body2">
-        <strong>Observations:</strong> {observations}
-      </Typography>
-
-      {/* VIF Table */}
-      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-        Variance Inflation Factor (VIF)
-      </Typography>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Variable</TableCell>
-              <TableCell>VIF</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {vif.map((item, index) => (
-              <TableRow key={index}>
-                <TableCell>{item.Variable}</TableCell>
-                <TableCell>{item.VIF.toFixed(4)}</TableCell>
+            {Object.entries(coefficients).map(([key, value]) => (
+              <TableRow key={key}>
+                <TableCell>{key}</TableCell>
+                <TableCell>{value.toFixed(4)}</TableCell>
               </TableRow>
             ))}
+            <TableRow>
+              <TableCell>R-squared</TableCell>
+              <TableCell>{r_squared.toFixed(4)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Adjusted R-squared</TableCell>
+              <TableCell>{adj_r_squared.toFixed(4)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Mean Squared Error (MSE)</TableCell>
+              <TableCell>{mse.toFixed(4)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Observations</TableCell>
+              <TableCell>{observations}</TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
@@ -144,17 +108,10 @@ RegressionResults.propTypes = {
   data: PropTypes.shape({
     coefficients: PropTypes.object.isRequired,
     intercept: PropTypes.number.isRequired,
-    p_values: PropTypes.object.isRequired,
     r_squared: PropTypes.number.isRequired,
     adj_r_squared: PropTypes.number.isRequired,
     mse: PropTypes.number.isRequired,
     observations: PropTypes.number.isRequired,
-    vif: PropTypes.arrayOf(
-      PropTypes.shape({
-        Variable: PropTypes.string.isRequired,
-        VIF: PropTypes.number.isRequired,
-      })
-    ).isRequired,
   }),
 };
 

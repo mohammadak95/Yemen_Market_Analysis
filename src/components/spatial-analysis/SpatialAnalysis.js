@@ -1,150 +1,108 @@
-// src/components/spatial-analysis/SpatialAnalysis.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
+  Paper,
   Typography,
+  CircularProgress,
   Tabs,
   Tab,
-  Paper,
-  CircularProgress,
-  Alert,
 } from '@mui/material';
 import SpatialMap from './SpatialMap';
-import RegressionResults from './RegressionResults';
+import FlowMapsWithMap from './FlowMapsWithMap';
 import DiagnosticsTests from './DiagnosticsTests';
-import FlowMaps from './FlowMaps';
+import RegressionResults from './RegressionResults';
 import useSpatialData from '../../hooks/useSpatialData';
-import { getDataPath } from '../../utils/dataPath';
+import ErrorMessage from '../common/ErrorMessage';
 
 const SpatialAnalysis = ({ selectedCommodity, selectedRegime }) => {
-  const { geoData, flowMaps, loading, error } = useSpatialData();
   const [activeTab, setActiveTab] = useState(0);
+  const { geoData, flowMaps, analysisResults, loading, error } = useSpatialData();
 
-  const [spatialResults, setSpatialResults] = useState(null);
-  const [resultsLoading, setResultsLoading] = useState(true);
-  const [resultsError, setResultsError] = useState(null);
-
-  useEffect(() => {
-    // Fetch spatial analysis results
-    const fetchSpatialResults = async () => {
-      setResultsLoading(true);
-      try {
-        const path = getDataPath('spatial_analysis_results.json');
-        const response = await fetch(path, {
-          headers: {
-            Accept: 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch spatial analysis results: ${response.status}`);
-        }
-
-        const jsonData = await response.json();
-        setSpatialResults(jsonData);
-        setResultsLoading(false);
-      } catch (err) {
-        console.error('Error fetching spatial analysis results:', err);
-        setResultsError(err);
-        setResultsLoading(false);
+  const geoCoordinates = useMemo(() => {
+    if (!geoData?.features) return {};
+    return geoData.features.reduce((acc, feature) => {
+      if (feature.geometry?.coordinates) {
+        acc[feature.properties.region_id] = {
+          lng: feature.geometry.coordinates[0],
+          lat: feature.geometry.coordinates[1],
+        };
       }
-    };
-
-    fetchSpatialResults();
-  }, []);
+      return acc;
+    }, {});
+  }, [geoData]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  // Determine loading and error states
-  const isLoading = loading || resultsLoading;
-  const hasError = error || resultsError;
+  const safeAnalysisResults = useMemo(() => {
+    return Array.isArray(analysisResults) ? analysisResults : [];
+  }, [analysisResults]);
 
-  if (isLoading) {
+  const currentAnalysis = useMemo(() => {
+    return safeAnalysisResults.find(
+      (r) => r.commodity === selectedCommodity && r.regime === selectedRegime
+    );
+  }, [safeAnalysisResults, selectedCommodity, selectedRegime]);
+
+  if (loading) {
     return (
-      <Box display="flex" flexDirection="column" alignItems="center" minHeight="200px">
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <CircularProgress />
-        <Typography variant="body2" sx={{ mt: 2 }}>
-          Loading Spatial Analysis results...
-        </Typography>
       </Box>
     );
   }
 
-  if (hasError) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error">
-          Error: {error?.message || resultsError?.message}
-        </Alert>
-      </Box>
-    );
+  if (error) {
+    return <ErrorMessage message={`Error loading spatial data: ${error}`} />;
   }
 
-  if (!spatialResults || !geoData) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography>
-          No spatial analysis data available.
-        </Typography>
-      </Box>
-    );
+  if (!geoData || !flowMaps || safeAnalysisResults.length === 0) {
+    return <ErrorMessage message="Some required data is missing. Please try again later." />;
   }
-
-  // Filter the spatialResults for the selectedCommodity and selectedRegime
-  const filteredResults = spatialResults.find(
-    (result) =>
-      result.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
-      result.regime.toLowerCase() === selectedRegime.toLowerCase()
-  );
-
-  if (!filteredResults) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="warning">
-          No spatial analysis results available for <strong>{selectedCommodity}</strong> in <strong>{selectedRegime}</strong> regime.
-        </Alert>
-      </Box>
-    );
-  }
-
-  // Extract unique regions for FlowMaps
-  const uniqueRegions = geoData.features.map((feature) => ({
-    region_id: feature.properties.region_id,
-    geometry: feature.geometry,
-  }));
 
   return (
-    <Paper elevation={3} sx={{ p: 2 }}>
-      <Box sx={{ p: 2 }}>
-        <Typography variant="h5" gutterBottom>
-          Spatial Analysis: {selectedCommodity} - {selectedRegime} Regime
-        </Typography>
-      </Box>
-      <Tabs value={activeTab} onChange={handleTabChange} centered sx={{ mt: 2 }}>
-        <Tab label="Spatial Map" />
-        <Tab label="Regression Results" />
-        <Tab label="Diagnostics Tests" />
+    <Paper sx={{ p: 2, mt: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Spatial Analysis for {selectedCommodity} - {selectedRegime} Regime
+      </Typography>
+
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
+        aria-label="Spatial Analysis Tabs"
+        variant="scrollable"
+        scrollButtons="auto"
+      >
+        <Tab label="Residuals Map" />
         <Tab label="Flow Maps" />
+        <Tab label="Diagnostics" />
+        <Tab label="Regression Results" />
       </Tabs>
-      <Box sx={{ p: 3 }}>
-        {activeTab === 0 && (
-          <SpatialMap
-            geoData={geoData}
-            selectedCommodity={selectedCommodity}
-            selectedRegime={selectedRegime}
-          />
+
+      <Box sx={{ mt: 2 }}>
+        {activeTab === 0 && <SpatialMap geoData={geoData} />}
+        {activeTab === 1 && Object.keys(geoCoordinates).length > 0 && (
+          <FlowMapsWithMap flowMaps={flowMaps} geoCoordinates={geoCoordinates} />
         )}
-        {activeTab === 1 && <RegressionResults data={filteredResults} />}
-        {activeTab === 2 && <DiagnosticsTests data={filteredResults} />}
+        {activeTab === 2 && (
+          currentAnalysis ? (
+            <DiagnosticsTests data={currentAnalysis} />
+          ) : (
+            <Typography variant="body1">
+              No diagnostics data available for the selected commodity and regime.
+            </Typography>
+          )
+        )}
         {activeTab === 3 && (
-          <FlowMaps
-            flowMaps={flowMaps}
-            uniqueRegions={uniqueRegions}
-          />
+          currentAnalysis ? (
+            <RegressionResults data={currentAnalysis} />
+          ) : (
+            <Typography variant="body1">
+              No regression results available for the selected commodity and regime.
+            </Typography>
+          )
         )}
       </Box>
     </Paper>
@@ -153,7 +111,7 @@ const SpatialAnalysis = ({ selectedCommodity, selectedRegime }) => {
 
 SpatialAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
-  selectedRegime: PropTypes.string.isRequired, // Now expects a string
+  selectedRegime: PropTypes.string.isRequired,
 };
 
 export default SpatialAnalysis;

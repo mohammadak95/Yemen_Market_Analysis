@@ -1,6 +1,6 @@
 // src/hooks/useECMData.js
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDataPath } from '../utils/dataPath';
 
 export const useECMData = () => {
@@ -12,7 +12,8 @@ export const useECMData = () => {
   const [directionalStatus, setDirectionalStatus] = useState('idle');
   const [directionalError, setDirectionalError] = useState(null);
 
-  // Fetch data utility
+  const fetchInProgress = useRef(false);
+
   const fetchData = useCallback(async (url) => {
     const response = await fetch(url, {
       headers: { Accept: 'application/json' },
@@ -24,7 +25,6 @@ export const useECMData = () => {
     return JSON.parse(text.replace(/NaN/g, 'null'));
   }, []);
 
-  // Process Unified ECM Data
   const processUnifiedData = useCallback((data) => {
     return data.ecm_analysis.map((item) => ({
       ...item,
@@ -33,7 +33,7 @@ export const useECMData = () => {
         Variable_2: item.diagnostics?.Variable_2 || 'N/A',
       },
       irf: Array.isArray(item.irf?.impulse_response?.irf) ? item.irf.impulse_response.irf : [],
-      granger_causality: item.granger_causality || 'N/A', // Preserve entire object
+      granger_causality: item.granger_causality || 'N/A',
       spatial_autocorrelation: item.spatial_autocorrelation
         ? {
             Variable_1: {
@@ -51,7 +51,6 @@ export const useECMData = () => {
     }));
   }, []);
 
-  // Process Directional ECM Data
   const processDirectionalData = useCallback((data) => {
     return data.map((item) => ({
       ...item,
@@ -60,7 +59,7 @@ export const useECMData = () => {
         Variable_2: item.diagnostics?.Variable_2 || 'N/A',
       },
       irf: Array.isArray(item.irf?.impulse_response?.irf) ? item.irf.impulse_response.irf : [],
-      granger_causality: item.granger_causality || 'N/A', // Preserve entire object
+      granger_causality: item.granger_causality || 'N/A',
       spatial_autocorrelation: item.spatial_autocorrelation
         ? {
             Variable_1: {
@@ -79,65 +78,47 @@ export const useECMData = () => {
   }, []);
 
   useEffect(() => {
-    const fetchUnifiedData = async () => {
-      if (unifiedData) return; // Prevent re-fetching if data is already loaded
+    if (fetchInProgress.current) return;
+
+    const fetchAllData = async () => {
+      fetchInProgress.current = true;
       setUnifiedStatus('loading');
-      try {
-        const path = getDataPath('ecm/ecm_analysis_results.json');
-        console.log('Fetching Unified ECM data from:', path);
-
-        const jsonData = await fetchData(path);
-        console.log('Parsed Unified ECM data (first item):', jsonData.ecm_analysis[0]);
-
-        const processedData = processUnifiedData(jsonData);
-        console.log('Processed Unified ECM data:', processedData); // Additional logging
-
-        setUnifiedData(processedData);
-        setUnifiedStatus('succeeded');
-      } catch (err) {
-        console.error('Error fetching Unified ECM data:', err);
-        setUnifiedError(err.message);
-        setUnifiedStatus('failed');
-      }
-    };
-
-    const fetchDirectionalData = async () => {
-      if (directionalData) return; // Prevent re-fetching if data is already loaded
       setDirectionalStatus('loading');
+
       try {
+        const unifiedPath = getDataPath('ecm/ecm_analysis_results.json');
         const northToSouthPath = getDataPath('ecm/ecm_results_north_to_south.json');
         const southToNorthPath = getDataPath('ecm/ecm_results_south_to_north.json');
 
-        console.log('Fetching North to South ECM data from:', northToSouthPath);
-        console.log('Fetching South to North ECM data from:', southToNorthPath);
-
-        const [northToSouthData, southToNorthData] = await Promise.all([
+        const [unifiedJsonData, northToSouthData, southToNorthData] = await Promise.all([
+          fetchData(unifiedPath),
           fetchData(northToSouthPath),
           fetchData(southToNorthPath),
         ]);
 
-        console.log('Parsed North to South ECM data (first item):', northToSouthData[0]);
-        console.log('Parsed South to North ECM data (first item):', southToNorthData[0]);
+        const processedUnifiedData = processUnifiedData(unifiedJsonData);
+        setUnifiedData(processedUnifiedData);
+        setUnifiedStatus('succeeded');
 
         const processedDirectionalData = {
           northToSouth: processDirectionalData(northToSouthData),
           southToNorth: processDirectionalData(southToNorthData),
         };
-
-        console.log('Processed Directional Data:', processedDirectionalData); // Additional logging
-
         setDirectionalData(processedDirectionalData);
         setDirectionalStatus('succeeded');
       } catch (err) {
-        console.error('Error fetching Directional ECM data:', err);
+        console.error('Error fetching ECM data:', err);
+        setUnifiedError(err.message);
         setDirectionalError(err.message);
+        setUnifiedStatus('failed');
         setDirectionalStatus('failed');
+      } finally {
+        fetchInProgress.current = false;
       }
     };
 
-    fetchUnifiedData();
-    fetchDirectionalData();
-  }, [fetchData, processUnifiedData, processDirectionalData, unifiedData, directionalData]);
+    fetchAllData();
+  }, [fetchData, processUnifiedData, processDirectionalData]);
 
   return {
     unifiedData,

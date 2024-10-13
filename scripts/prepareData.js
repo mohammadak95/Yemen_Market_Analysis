@@ -24,24 +24,12 @@ const copyFile = (source, destination) => {
 };
 
 const copyRecursiveSync = (source, destination) => {
-  if (!fs.existsSync(source)) {
-    console.warn(`Source directory does not exist: ${source}`);
-    return;
-  }
-
   ensureDirectoryExistence(destination);
-
   const items = fs.readdirSync(source);
-  if (items.length === 0) {
-    console.warn(`Source directory is empty: ${source}`);
-    return;
-  }
-
   items.forEach((item) => {
     const sourcePath = path.join(source, item);
     const destPath = path.join(destination, item);
     const stats = fs.statSync(sourcePath);
-
     if (stats.isDirectory()) {
       copyRecursiveSync(sourcePath, destPath);
     } else {
@@ -52,15 +40,11 @@ const copyRecursiveSync = (source, destination) => {
 
 const prepareData = () => {
   try {
-    // Copy from results directory
     copyRecursiveSync(sourceDir, destDir);
-
-    // Copy from public/results directory
     copyRecursiveSync(publicSourceDir, destDir);
 
-    // Ensure specific files are copied
     const filesToEnsure = [
-      'results/unified_data.geojson',
+      'unified_data.geojson',
       'enhanced_unified_data_with_residual.geojson',
       'spatial_analysis_results.json',
       'choropleth_data/average_prices.csv',
@@ -70,7 +54,7 @@ const prepareData = () => {
       'ecm/ecm_analysis_results.json',
       'network_data/flow_maps.csv',
       'price_diff_results/price_differential_results.json',
-      'spatial_weights/spatial_weights.json',
+      'spatial_weights/transformed_spatial_weights.json',
       'time_series_data/conflict_intensity_time_series.csv',
       'time_series_data/prices_time_series.csv',
       'ecm/ecm_results_north_to_south.json',

@@ -13,6 +13,7 @@
     "@sentry/react": "^7.59.0",
     "@sentry/tracing": "^7.59.0",
     "@svgr/webpack": "^8.1.0",
+    "@welldone-software/why-did-you-render": "^8.0.3",
     "axios": "^1.5.1",
     "chart.js": "^4.4.4",
     "chartjs-adapter-date-fns": "^3.0.0",
@@ -28,6 +29,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.447.0",
     "papaparse": "^5.4.1",
+    "puppeteer": "^23.5.3",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
@@ -35,12 +37,15 @@
     "react-icons": "^4.10.1",
     "react-katex": "^3.0.1",
     "react-leaflet": "^4.2.1",
+    "react-leaflet-markercluster": "^2.0.0",
     "react-query": "^3.39.3",
     "react-redux": "^8.1.3",
     "react-router-dom": "^6.14.2",
     "react-select": "^5.8.1",
     "react-syntax-highlighter": "^15.5.0",
+    "react-tooltip": "^5.28.0",
     "react-transition-group": "^4.4.5",
+    "react-window": "^1.8.10",
     "recharts": "^2.4.3",
     "styled-components": "^5.3.11",
     "web-vitals": "^3.3.1"
@@ -53,7 +58,8 @@
     "test": "react-scripts test --env=jsdom --setupFilesAfterEnv=./src/setupTests.js",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "transform-spatial-weights": "node scripts/transformSpatialWeights.js"
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",

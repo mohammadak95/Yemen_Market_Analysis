@@ -1,114 +1,82 @@
-// src/components/spatial-analysis/SpatialMap.js
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, Circle, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Typography } from '@mui/material';
-import chroma from 'chroma-js'; // For color scaling
+import { Paper, Typography } from '@mui/material';
+import CustomTooltip from './CustomTooltip';
+import MarkerClusterGroup from 'react-leaflet-markercluster';
+import 'react-leaflet-markercluster/dist/styles.min.css';
 
-const SpatialMap = ({ geoData, selectedCommodity, selectedRegime }) => {
-  if (!geoData || !geoData.features) {
+const SpatialMap = ({ geoData }) => {
+  if (!geoData) {
     return (
       <Typography variant="body1">
-        No geographic data available to display the map.
+        No geographical data available.
       </Typography>
     );
   }
 
-  // Filter the GeoJSON data for the selected commodity and regime
-  const filteredFeatures = geoData.features.filter((feature) => {
-    const properties = feature.properties;
-    return (
-      properties.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
-      properties.regime.toLowerCase() === selectedRegime.toLowerCase()
+  // Calculate centroid for map center
+  const centroid = useMemo(() => {
+    if (geoData.features.length === 0) return [0, 0];
+    const sum = geoData.features.reduce(
+      (acc, feature) => {
+        const [lng, lat] = feature.geometry.coordinates;
+        return { lng: acc.lng + lng, lat: acc.lat + lat };
+      },
+      { lng: 0, lat: 0 }
     );
-  });
+    return [sum.lat / geoData.features.length, sum.lng / geoData.features.length];
+  }, [geoData]);
 
-  const filteredGeoData = {
-    ...geoData,
-    features: filteredFeatures,
-  };
+  // Determine maximum residual for scaling
+  const maxResidual = useMemo(() => {
+    if (geoData.features.length === 0) return 1;
+    return Math.max(...geoData.features.map(f => Math.abs(f.properties.residual)));
+  }, [geoData]);
 
-  // Determine residual range for color scaling
-  const residuals = filteredFeatures.map((f) => f.properties.residual);
-  const minResidual = Math.min(...residuals);
-  const maxResidual = Math.max(...residuals);
-  const absMaxResidual = Math.max(Math.abs(minResidual), Math.abs(maxResidual));
-
-  // Define color scale
-  const colorScale = chroma.scale(['blue', 'white', 'red']).domain([-absMaxResidual, 0, absMaxResidual]);
-
-  const onEachFeature = (feature, layer) => {
-    const properties = feature.properties;
-    const residual = properties.residual || 0;
-    const regionId = properties.region_id || 'Unknown';
-    layer.bindPopup(
-      `<strong>Region:</strong> ${regionId}<br/>
-       <strong>Commodity:</strong> ${properties.commodity}<br/>
-       <strong>Residual:</strong> ${residual.toFixed(4)}`
-    );
-  };
-
-  // Define a style function to color the regions based on the residual
-  const style = (feature) => {
-    const residual = feature.properties.residual || 0;
-    return {
-      fillColor: colorScale(residual).hex(),
-      weight: 1,
-      opacity: 1,
-      color: 'white',
-      fillOpacity: 0.7,
-    };
-  };
+  const scaleFactor = 500 / maxResidual; // Adjust based on desired maximum radius
 
   return (
-    <MapContainer style={{ height: '500px', width: '100%' }} center={[15.5527, 48.5164]} zoom={6} aria-label="Spatial Residuals Map">
-      <TileLayer
-        attribution='&copy; OpenStreetMap contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <GeoJSON data={filteredGeoData} onEachFeature={onEachFeature} style={style} />
-      {/* Legend Component */}
-      <div
-        className="legend"
-        style={{
-          position: 'absolute',
-          bottom: '30px',
-          left: '10px',
-          padding: '10px',
-          background: 'white',
-          borderRadius: '5px',
-          boxShadow: '0 0 15px rgba(0,0,0,0.2)',
-        }}
-      >
-        <Typography variant="caption" gutterBottom>
-          Residuals
-        </Typography>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          {/* Gradient Bar */}
-          <div
-            style={{
-              width: '100px',
-              height: '10px',
-              background: `linear-gradient(to right, ${colorScale(-absMaxResidual).hex()}, ${colorScale(0).hex()}, ${colorScale(absMaxResidual).hex()})`,
-              marginRight: '10px',
-            }}
-          ></div>
-          {/* Labels */}
-          <span style={{ fontSize: '0.75rem' }}>{-absMaxResidual.toFixed(2)}</span>
-          <span style={{ margin: '0 5px', fontSize: '0.75rem' }}>0</span>
-          <span style={{ fontSize: '0.75rem' }}>{absMaxResidual.toFixed(2)}</span>
-        </div>
-      </div>
-    </MapContainer>
+    <Paper sx={{ p: 2, height: '500px', position: 'relative' }}>
+      <MapContainer center={centroid} zoom={5} style={{ height: '100%', width: '100%' }}>
+        <TileLayer
+          attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
+          url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
+        />
+        <MarkerClusterGroup>
+          {geoData.features.map((feature) => {
+            const { region_id, residual, date } = feature.properties;
+            const [lng, lat] = feature.geometry.coordinates;
+            const residualValue = residual;
+            const color = residualValue > 0 ? 'red' : 'blue';
+            const radius = Math.min(Math.abs(residualValue) * scaleFactor, 1000); // Set MAX_RADIUS as needed
+
+            return (
+              <Circle
+                key={region_id}
+                center={[lat, lng]}
+                radius={radius}
+                pathOptions={{ color }}
+              >
+                <Tooltip>
+                  <CustomTooltip
+                    active={true}
+                    payload={[{ payload: { region_id, date, residual: residualValue } }]}
+                    label={`${region_id}`}
+                  />
+                </Tooltip>
+              </Circle>
+            );
+          })}
+        </MarkerClusterGroup>
+      </MapContainer>
+    </Paper>
   );
 };
 
 SpatialMap.propTypes = {
   geoData: PropTypes.object.isRequired,
-  selectedCommodity: PropTypes.string.isRequired,
-  selectedRegime: PropTypes.string.isRequired,
 };
 
 export default SpatialMap;
