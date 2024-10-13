@@ -58,7 +58,7 @@ const WelcomeModal = ({ open, onClose }) => {
               <ListItemText
                 primary={
                   <>
-                    <strong>Select a Commodity:</strong> Use the dropdown menu in the sidebar to choose a commodity you're interested in analyzing.
+                    <strong>Select a Commodity:</strong> Use the dropdown menu in the sidebar to choose a commodity you&apos;re interested in analyzing.
                   </>
                 }
               />
@@ -85,7 +85,7 @@ const WelcomeModal = ({ open, onClose }) => {
               <ListItemText
                 primary={
                   <>
-                    <strong>Access Tutorials:</strong> Click on the "Tutorials" button in the sidebar to learn more about the methods used.
+                    <strong>Access Tutorials:</strong> Click on the &quot;Tutorials&quot; button in the sidebar to learn more about the methods used.
                   </>
                 }
               />
@@ -105,7 +105,7 @@ const WelcomeModal = ({ open, onClose }) => {
               color="primary"
             />
           }
-          label="Don't show this again"
+          label="Don&apos;t show this again"
         />
         <Button onClick={handleClose} variant="contained" color="primary" aria-label="Close Welcome Modal">
           Get Started
