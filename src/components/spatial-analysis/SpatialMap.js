@@ -1,13 +1,56 @@
-import React, { useMemo } from 'react';
+// src/components/SpatialMap.js
+
+import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { MapContainer, TileLayer, Circle, Tooltip } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Paper, Typography } from '@mui/material';
-import CustomTooltip from './CustomTooltip';
-import MarkerClusterGroup from 'react-leaflet-markercluster';
-import 'react-leaflet-markercluster/dist/styles.min.css';
 
 const SpatialMap = ({ geoData }) => {
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    if (!geoData || !mapRef.current) return;
+
+    const map = L.map(mapRef.current).setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const geojsonLayer = L.geoJSON(geoData, {
+      pointToLayer: (feature, latlng) => {
+        const residual = feature.properties.residual;
+        const color = residual > 0 ? 'red' : 'blue';
+        const radius = Math.min(Math.abs(residual) * 10, 20); // Adjust scaling factor as needed
+
+        return L.circleMarker(latlng, {
+          radius,
+          fillColor: color,
+          color: color,
+          weight: 1,
+          opacity: 0.6,
+          fillOpacity: 0.4,
+        });
+      },
+      onEachFeature: (feature, layer) => {
+        const { region_id, date, residual } = feature.properties;
+        layer.bindTooltip(`
+          <div>
+            <strong>Region:</strong> ${region_id}<br/>
+            <strong>Date:</strong> ${new Date(date).toLocaleDateString()}<br/>
+            <strong>Residual:</strong> ${residual.toFixed(4)}
+          </div>
+        `);
+      }
+    }).addTo(map);
+
+    map.fitBounds(geojsonLayer.getBounds());
+
+    return () => {
+      map.remove();
+    };
+  }, [geoData]);
+
   if (!geoData) {
     return (
       <Typography variant="body1">
@@ -16,67 +59,15 @@ const SpatialMap = ({ geoData }) => {
     );
   }
 
-  // Calculate centroid for map center
-  const centroid = useMemo(() => {
-    if (geoData.features.length === 0) return [0, 0];
-    const sum = geoData.features.reduce(
-      (acc, feature) => {
-        const [lng, lat] = feature.geometry.coordinates;
-        return { lng: acc.lng + lng, lat: acc.lat + lat };
-      },
-      { lng: 0, lat: 0 }
-    );
-    return [sum.lat / geoData.features.length, sum.lng / geoData.features.length];
-  }, [geoData]);
-
-  // Determine maximum residual for scaling
-  const maxResidual = useMemo(() => {
-    if (geoData.features.length === 0) return 1;
-    return Math.max(...geoData.features.map(f => Math.abs(f.properties.residual)));
-  }, [geoData]);
-
-  const scaleFactor = 500 / maxResidual; // Adjust based on desired maximum radius
-
   return (
     <Paper sx={{ p: 2, height: '500px', position: 'relative' }}>
-      <MapContainer center={centroid} zoom={5} style={{ height: '100%', width: '100%' }}>
-        <TileLayer
-          attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
-          url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
-        />
-        <MarkerClusterGroup>
-          {geoData.features.map((feature) => {
-            const { region_id, residual, date } = feature.properties;
-            const [lng, lat] = feature.geometry.coordinates;
-            const residualValue = residual;
-            const color = residualValue > 0 ? 'red' : 'blue';
-            const radius = Math.min(Math.abs(residualValue) * scaleFactor, 1000); // Set MAX_RADIUS as needed
-
-            return (
-              <Circle
-                key={region_id}
-                center={[lat, lng]}
-                radius={radius}
-                pathOptions={{ color }}
-              >
-                <Tooltip>
-                  <CustomTooltip
-                    active={true}
-                    payload={[{ payload: { region_id, date, residual: residualValue } }]}
-                    label={`${region_id}`}
-                  />
-                </Tooltip>
-              </Circle>
-            );
-          })}
-        </MarkerClusterGroup>
-      </MapContainer>
+      <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
     </Paper>
   );
 };
 
 SpatialMap.propTypes = {
-  geoData: PropTypes.object.isRequired,
+  geoData: PropTypes.object
 };
 
 export default SpatialMap;

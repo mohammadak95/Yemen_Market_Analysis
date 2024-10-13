@@ -1,165 +1,162 @@
-import React, { useMemo } from 'react';
+// src/components/spatial-analysis/DiagnosticsTests.js
+
+import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
+import { 
+  Paper, 
+  Typography, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
   Tooltip,
-  TableHead
+  Box
 } from '@mui/material';
-import { CheckCircle, Cancel } from '@mui/icons-material';
-import { green, red } from '@mui/material/colors';
-import { Scatter } from 'react-chartjs-2';
-import 'chart.js/auto';
-import ResidualsList from './ResidualsList';
+import InfoIcon from '@mui/icons-material/Info';
 
 const DiagnosticsTests = ({ data }) => {
   if (!data) {
     return (
       <Typography variant="body1">
-        No diagnostics tests available.
+        No diagnostic tests data available.
       </Typography>
     );
   }
 
-  const { moran_i = {}, vif = [], residual = [] } = data;
+  const {
+    moran_i,
+    observations,
+    mse,
+    r_squared,
+    adj_r_squared,
+    // Removed VIF and other diagnostics as per user request
+  } = data;
 
-  // Sample residuals for plotting to enhance performance
-  const sampledResiduals = useMemo(() => {
-    const sampleSize = 1000;
-    return residual.slice(0, sampleSize);
-  }, [residual]);
+  const renderValue = (value) => {
+    if (typeof value === 'number') {
+      return value.toFixed(4);
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    return 'N/A';
+  };
 
-  const residualValues = sampledResiduals.map((item) => item.residual);
-
-  const residualsPlotData = useMemo(() => ({
-    labels: residualValues.map((_, index) => index + 1),
-    datasets: [
-      {
-        label: 'Residuals',
-        data: residualValues.map((residual, index) => ({ x: index + 1, y: residual })),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        pointHoverRadius: 6,
-        pointRadius: 4,
-      },
-    ],
-  }), [residualValues]);
-
-  const residualsPlotOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            return `Residual: ${context.parsed.y.toFixed(4)}`;
-          },
-        },
-      },
-      title: { display: true, text: 'Residuals vs. Fitted Values' },
-    },
-    scales: {
-      x: {
-        title: { display: true, text: 'Fitted Values Index' },
-        ticks: { display: false },
-      },
-      y: {
-        title: { display: true, text: 'Residuals' },
-      },
-    },
+  // Explanations for each test
+  const explanations = {
+    moran_i: "Moran's I assesses spatial autocorrelation in the residuals of the regression model. A significant Moran's I suggests that the residuals are spatially autocorrelated.",
+    observations: 'The number of observations used in the regression analysis.',
+    mse: 'Mean Squared Error (MSE) measures the average of the squares of the errors, indicating the quality of the regression model.',
+    r_squared: 'R-squared represents the proportion of the variance in the dependent variable that is predictable from the independent variables.',
+    adj_r_squared: 'Adjusted R-squared adjusts the R-squared value based on the number of predictors in the model, providing a more accurate measure for multiple regression.',
+    // Add more explanations as needed
   };
 
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
-        Diagnostics Tests
+        Diagnostic Tests
       </Typography>
-      <TableContainer>
-        <Table aria-label="Diagnostics Tests Table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Test</TableCell>
-              <TableCell>Statistic</TableCell>
-              <TableCell>P-Value</TableCell>
-              <TableCell>Significant</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {/* Moran's I */}
-            {moran_i.I !== undefined && moran_i['p-value'] !== undefined ? (
-              <TableRow>
-                <TableCell>Moran&apos;s I</TableCell>
-                <TableCell>{moran_i.I.toFixed(4)}</TableCell>
-                <TableCell>{moran_i['p-value'].toFixed(4)}</TableCell>
-                <TableCell>
-                  {moran_i['p-value'] < 0.05 ? (
-                    <Tooltip title="Significantly Spatially Autocorrelated">
-                      <CheckCircle sx={{ color: green[500] }} aria-label="Significant" />
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title="Not Spatially Autocorrelated">
-                      <Cancel sx={{ color: red[500] }} aria-label="Not Significant" />
-                    </Tooltip>
-                  )}
-                </TableCell>
-              </TableRow>
-            ) : (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <Typography variant="body2" color="error">
-                    Moran&apos;s I data is incomplete.
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
-            {/* VIFs */}
-            {vif.length > 0 ? (
-              vif.map((item, index) => (
-                <TableRow key={item.Variable || index}>
-                  <TableCell>VIF: {item.Variable}</TableCell>
-                  <TableCell>{item.VIF.toFixed(4)}</TableCell>
-                  <TableCell>N/A</TableCell>
-                  <TableCell>
-                    {item.VIF < 5 ? (
-                      <Tooltip title="No Multicollinearity">
-                        <CheckCircle sx={{ color: green[500] }} aria-label="No Multicollinearity" />
-                      </Tooltip>
-                    ) : (
-                      <Tooltip title="High Multicollinearity">
-                        <Cancel sx={{ color: red[500] }} aria-label="High Multicollinearity" />
-                      </Tooltip>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <Typography variant="body2" color="error">
-                    VIF data is missing.
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
 
-      {/* Residuals vs Fitted Values Scatter Plot */}
-      {sampledResiduals.length > 0 && (
-        <Paper sx={{ mt: 4, p: 2, height: '400px' }}>
-          <Scatter data={residualsPlotData} options={residualsPlotOptions} />
-          <ResidualsList residuals={residual} />
-          <Typography variant="caption" display="block" align="center" sx={{ mt: 1 }}>
-            Hover over points to see residual values.
-          </Typography>
-        </Paper>
-      )}
+      {/* Moran's I Table */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          <Tooltip title={explanations.moran_i} arrow>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+              Moran&apos;s I <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+            </Box>
+          </Tooltip>
+        </Typography>
+        {moran_i ? (
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small" aria-label="Moran's I Table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Metric</TableCell>
+                  <TableCell align="right">Value</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell component="th" scope="row">I</TableCell>
+                  <TableCell align="right">{renderValue(moran_i.I)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">p-value</TableCell>
+                  <TableCell align="right">{renderValue(moran_i['p-value'])}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Typography variant="body2">No Moran&apos;s I data available.</Typography>
+        )}
+      </Box>
+
+      {/* Model Statistics Table */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          <Tooltip title="Model performance metrics indicating the fit and accuracy of the regression model." arrow>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+              Model Statistics <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+            </Box>
+          </Tooltip>
+        </Typography>
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small" aria-label="Model Statistics Table">
+            <TableHead>
+              <TableRow>
+                <TableCell>Statistic</TableCell>
+                <TableCell align="right">Value</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell component="th" scope="row">
+                  <Tooltip title={explanations.observations} arrow>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                      Observations <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+                    </Box>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="right">{renderValue(observations)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell component="th" scope="row">
+                  <Tooltip title={explanations.mse} arrow>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                      Mean Squared Error (MSE) <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+                    </Box>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="right">{renderValue(mse)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell component="th" scope="row">
+                  <Tooltip title={explanations.r_squared} arrow>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                      R-squared <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+                    </Box>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="right">{renderValue(r_squared)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell component="th" scope="row">
+                  <Tooltip title={explanations.adj_r_squared} arrow>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                      Adjusted R-squared <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+                    </Box>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="right">{renderValue(adj_r_squared)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </Paper>
   );
 };
@@ -167,22 +164,14 @@ const DiagnosticsTests = ({ data }) => {
 DiagnosticsTests.propTypes = {
   data: PropTypes.shape({
     moran_i: PropTypes.shape({
-      I: PropTypes.number.isRequired,
-      'p-value': PropTypes.number.isRequired,
+      I: PropTypes.number,
+      'p-value': PropTypes.number,
     }),
-    vif: PropTypes.arrayOf(
-      PropTypes.shape({
-        Variable: PropTypes.string.isRequired,
-        VIF: PropTypes.number.isRequired,
-      })
-    ),
-    residual: PropTypes.arrayOf(
-      PropTypes.shape({
-        region_id: PropTypes.string.isRequired,
-        date: PropTypes.string.isRequired,
-        residual: PropTypes.number.isRequired,
-      })
-    ),
+    observations: PropTypes.number,
+    mse: PropTypes.number,
+    r_squared: PropTypes.number,
+    adj_r_squared: PropTypes.number,
+    // Add other diagnostics as needed
   }),
 };
 

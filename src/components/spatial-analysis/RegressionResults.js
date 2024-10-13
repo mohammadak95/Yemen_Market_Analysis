@@ -1,20 +1,21 @@
+// src/components/spatial-analysis/RegressionResults.js
+
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  TableHead,
-  Button,
+import { 
+  Paper, 
+  Typography, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Chip 
 } from '@mui/material';
-import { SaveAlt } from '@mui/icons-material';
 
 const RegressionResults = ({ data }) => {
-  if (!data) {
+  if (!data || !data.coefficients) {
     return (
       <Typography variant="body1">
         No regression results available.
@@ -22,84 +23,69 @@ const RegressionResults = ({ data }) => {
     );
   }
 
-  const { coefficients, intercept, r_squared, adj_r_squared, mse, observations } = data;
+  const {
+    coefficients,
+    std_errors,
+    t_values,
+    p_values,
+    r_squared,
+    adj_r_squared,
+  } = data;
 
-  // Function to export table data as CSV
-  const exportCSV = () => {
-    const rows = [
-      ['Metric', 'Value'],
-      ['Intercept', intercept.toFixed(4)],
-      ...Object.entries(coefficients).map(([key, value]) => [key, value.toFixed(4)]),
-      ['R-squared', r_squared.toFixed(4)],
-      ['Adjusted R-squared', adj_r_squared.toFixed(4)],
-      ['Mean Squared Error (MSE)', mse.toFixed(4)],
-      ['Observations', observations],
-    ];
+  const renderValue = (value) => {
+    if (typeof value === 'number') {
+      return value.toFixed(4);
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    return 'N/A';
+  };
 
-    const csvContent = 'data:text/csv;charset=utf-8,' +
-      rows.map(e => e.join(',')).join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'regression_results.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const getPValueColor = (p) => {
+    if (p < 0.01) return 'error';
+    if (p < 0.05) return 'warning';
+    return 'default';
   };
 
   return (
     <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Regression Results
-      </Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<SaveAlt />}
-        onClick={exportCSV}
-        sx={{ mb: 2 }}
-      >
-        Export as CSV
-      </Button>
+      <Typography variant="h6" gutterBottom>Regression Results</Typography>
       <TableContainer>
-        <Table aria-label="Regression Results Table">
+        <Table>
           <TableHead>
             <TableRow>
-              <TableCell><strong>Metric</strong></TableCell>
-              <TableCell><strong>Value</strong></TableCell>
+              <TableCell>Variable</TableCell>
+              <TableCell>Coefficient</TableCell>
+              <TableCell>Standard Error</TableCell>
+              <TableCell>T-Statistic</TableCell>
+              <TableCell>P-Value</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            <TableRow>
-              <TableCell>Intercept</TableCell>
-              <TableCell>{intercept.toFixed(4)}</TableCell>
-            </TableRow>
-            {Object.entries(coefficients).map(([key, value]) => (
-              <TableRow key={key}>
-                <TableCell>{key}</TableCell>
-                <TableCell>{value.toFixed(4)}</TableCell>
+            {Object.entries(coefficients).map(([variable, coefficient]) => (
+              <TableRow key={variable}>
+                <TableCell>{variable}</TableCell>
+                <TableCell>{renderValue(coefficient)}</TableCell>
+                <TableCell>{renderValue(std_errors?.[variable])}</TableCell>
+                <TableCell>{renderValue(t_values?.[variable])}</TableCell>
+                <TableCell>
+                  <Chip 
+                    label={renderValue(p_values?.[variable])} 
+                    color={getPValueColor(p_values?.[variable])}
+                  />
+                </TableCell>
               </TableRow>
             ))}
-            <TableRow>
-              <TableCell>R-squared</TableCell>
-              <TableCell>{r_squared.toFixed(4)}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Adjusted R-squared</TableCell>
-              <TableCell>{adj_r_squared.toFixed(4)}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Mean Squared Error (MSE)</TableCell>
-              <TableCell>{mse.toFixed(4)}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Observations</TableCell>
-              <TableCell>{observations}</TableCell>
-            </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
+      <Typography variant="body1" sx={{ mt: 2 }}>
+        <strong>R-squared:</strong> {renderValue(r_squared)}
+      </Typography>
+      <Typography variant="body1">
+        <strong>Adjusted R-squared:</strong> {renderValue(adj_r_squared)}
+      </Typography>
     </Paper>
   );
 };
@@ -107,11 +93,11 @@ const RegressionResults = ({ data }) => {
 RegressionResults.propTypes = {
   data: PropTypes.shape({
     coefficients: PropTypes.object.isRequired,
-    intercept: PropTypes.number.isRequired,
-    r_squared: PropTypes.number.isRequired,
-    adj_r_squared: PropTypes.number.isRequired,
-    mse: PropTypes.number.isRequired,
-    observations: PropTypes.number.isRequired,
+    std_errors: PropTypes.object,
+    t_values: PropTypes.object,
+    p_values: PropTypes.object,
+    r_squared: PropTypes.number,
+    adj_r_squared: PropTypes.number,
   }),
 };
 

@@ -4,25 +4,23 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var metaThemeColor = document.createElement('meta');
-        metaThemeColor.name = "theme-color";
-        metaThemeColor.content = "#000000";
-        document.getElementsByTagName('head')[0].appendChild(metaThemeColor);
-      });
-    </script>
+    <!-- Theme color will be set dynamically using JavaScript -->
     <meta
       name="description"
       content="Yemen Market Analysis Dashboard"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <base href="%PUBLIC_URL%/">
     <title>Yemen Market Analysis</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-  </body>
+  <script>
+    let themeColorMeta = document.createElement('meta');
+    themeColorMeta.name = 'theme-color';
+    themeColorMeta.content = '#000000';
+    document.head.appendChild(themeColorMeta);
+  </script>
+</body>
 </html>

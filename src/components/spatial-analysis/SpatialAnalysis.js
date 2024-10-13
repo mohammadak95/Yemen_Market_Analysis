@@ -1,3 +1,5 @@
+// src/components/spatial-analysis/SpatialAnalysis.js
+
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -19,15 +21,24 @@ const SpatialAnalysis = ({ selectedCommodity, selectedRegime }) => {
   const [activeTab, setActiveTab] = useState(0);
   const { geoData, flowMaps, analysisResults, loading, error } = useSpatialData();
 
+  const filteredGeoData = useMemo(() => {
+    if (!geoData || !geoData.features) return null;
+    return {
+      ...geoData,
+      features: geoData.features.filter(
+        feature => 
+          feature.properties.commodity === selectedCommodity &&
+          feature.properties.regime === selectedRegime
+      )
+    };
+  }, [geoData, selectedCommodity, selectedRegime]);
+
   const geoCoordinates = useMemo(() => {
     if (!geoData?.features) return {};
     return geoData.features.reduce((acc, feature) => {
-      if (feature.geometry?.coordinates) {
-        acc[feature.properties.region_id] = {
-          lng: feature.geometry.coordinates[0],
-          lat: feature.geometry.coordinates[1],
-        };
-      }
+      const { region_id } = feature.properties;
+      const { coordinates } = feature.geometry;
+      acc[region_id] = { lng: coordinates[0], lat: coordinates[1] };
       return acc;
     }, {});
   }, [geoData]);
@@ -36,15 +47,11 @@ const SpatialAnalysis = ({ selectedCommodity, selectedRegime }) => {
     setActiveTab(newValue);
   };
 
-  const safeAnalysisResults = useMemo(() => {
-    return Array.isArray(analysisResults) ? analysisResults : [];
-  }, [analysisResults]);
-
   const currentAnalysis = useMemo(() => {
-    return safeAnalysisResults.find(
+    return analysisResults?.find(
       (r) => r.commodity === selectedCommodity && r.regime === selectedRegime
     );
-  }, [safeAnalysisResults, selectedCommodity, selectedRegime]);
+  }, [analysisResults, selectedCommodity, selectedRegime]);
 
   if (loading) {
     return (
@@ -58,7 +65,7 @@ const SpatialAnalysis = ({ selectedCommodity, selectedRegime }) => {
     return <ErrorMessage message={`Error loading spatial data: ${error}`} />;
   }
 
-  if (!geoData || !flowMaps || safeAnalysisResults.length === 0) {
+  if (!filteredGeoData || !flowMaps || !analysisResults) {
     return <ErrorMessage message="Some required data is missing. Please try again later." />;
   }
 
@@ -82,9 +89,12 @@ const SpatialAnalysis = ({ selectedCommodity, selectedRegime }) => {
       </Tabs>
 
       <Box sx={{ mt: 2 }}>
-        {activeTab === 0 && <SpatialMap geoData={geoData} />}
-        {activeTab === 1 && Object.keys(geoCoordinates).length > 0 && (
-          <FlowMapsWithMap flowMaps={flowMaps} geoCoordinates={geoCoordinates} />
+        {activeTab === 0 && <SpatialMap geoData={filteredGeoData} />}
+        {activeTab === 1 && (
+          <FlowMapsWithMap 
+            flowMaps={flowMaps} 
+            geoCoordinates={geoCoordinates} 
+          />
         )}
         {activeTab === 2 && (
           currentAnalysis ? (

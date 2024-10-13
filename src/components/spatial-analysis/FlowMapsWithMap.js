@@ -1,69 +1,103 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { MapContainer, TileLayer, Polyline, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Paper, Typography } from '@mui/material';
-import CustomTooltip from './CustomTooltip';
-import MarkerClusterGroup from 'react-leaflet-markercluster';
-import 'react-leaflet-markercluster/dist/styles.min.css';
+import { Paper } from '@mui/material';
+import L from 'leaflet';
+import yemenGeoJSON from '../../data/yemen_simple.geojson'; // Ensure this is in WGS84
 
-const FlowMapsWithMap = ({ flowMaps, geoCoordinates }) => {
-  // Function to get coordinates for a region
-  const getCoordinates = (regionId) => {
-    const coord = geoCoordinates[regionId];
-    if (coord) {
-      return [coord.lat, coord.lng];
-    }
-    return null;
-  };
+// Initialize Leaflet marker icons to avoid missing icon issues
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
-  // Calculate bounds for map view
-  const bounds = useMemo(() => {
-    const latlngs = flowMaps.flatMap(flow => {
-      const source = getCoordinates(flow.source_region_id);
-      const target = getCoordinates(flow.target_region_id);
-      return source && target ? [source, target] : [];
+const FlowMapsWithMap = ({ flowMaps }) => {
+  // Convert flowMaps to GeoJSON for easy integration with Leaflet
+  const flowGeoJSON = useMemo(() => {
+    return {
+      type: 'FeatureCollection',
+      features: flowMaps
+        .filter((flow) => flow.source_lat && flow.source_lng && flow.target_lat && flow.target_lng) // Ensure valid coordinates
+        .map((flow) => ({
+          type: 'Feature',
+          properties: {
+            source: flow.source,
+            target: flow.target,
+            weight: flow.weight,
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: [
+              [flow.source_lng, flow.source_lat],
+              [flow.target_lng, flow.target_lat],
+            ],
+          },
+        })),
+    };
+  }, [flowMaps]);
+
+  // Log the GeoJSON structure to debug invalid structures
+  console.log('Flow GeoJSON Data:', flowGeoJSON);
+
+  // Styling for flow lines based on the weight
+  const geoJsonOptions = useMemo(() => ({
+    style: (feature) => ({
+      color: '#0077ff', // Set a standard color for flow lines
+      weight: Math.min(feature.properties.weight / 10, 8), // Control the line width based on weight
+      opacity: 0.7, // Slightly transparent for better readability
+    }),
+    onEachFeature: (feature, layer) => {
+      const { source, target, weight } = feature.properties;
+      layer.bindPopup(`
+        <strong>Flow:</strong> ${source} → ${target}<br/>
+        <strong>Weight:</strong> ${weight}
+      `);
+    },
+  }), []);
+
+  // Central Yemen coordinates for the map view
+  const mapCenter = [15.3694, 44.1910]; // Center of Yemen
+  const mapZoom = 6; // Suitable zoom level
+
+  // Markers for each unique region (source or target) in the flow data
+  const regionMarkers = useMemo(() => {
+    const uniqueRegions = new Set(flowMaps.flatMap(flow => [flow.source, flow.target]));
+    return Array.from(uniqueRegions).map((region) => {
+      const flow = flowMaps.find((f) => f.source === region || f.target === region);
+      const lat = flow.source === region ? flow.source_lat : flow.target_lat;
+      const lng = flow.source === region ? flow.source_lng : flow.target_lng;
+      return (
+        <Marker key={region} position={[lat, lng]}>
+          <Popup>
+            <strong>{region}</strong><br />
+            Latitude: {lat.toFixed(4)}<br />
+            Longitude: {lng.toFixed(4)}
+          </Popup>
+        </Marker>
+      );
     });
-    return latlngs.length > 0 ? latlngs : [[0, 0]];
-  }, [flowMaps, geoCoordinates]);
+  }, [flowMaps]);
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Flow Maps
-      </Typography>
-      <MapContainer bounds={bounds} style={{ height: '500px', width: '100%' }}>
+    <Paper sx={{ p: 2, height: '600px', position: 'relative' }}>
+      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }}>
+        {/* OpenStreetMap Tile Layer */}
         <TileLayer
-          attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
-          url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
+          attribution='&copy; OpenStreetMap contributors'
+          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
-        <MarkerClusterGroup>
-          {flowMaps.map((flow, index) => {
-            const sourceCoord = getCoordinates(flow.source_region_id);
-            const targetCoord = getCoordinates(flow.target_region_id);
-            if (sourceCoord && targetCoord) {
-              return (
-                <Polyline
-                  key={`${flow.source_region_id}-${flow.target_region_id}-${index}`}
-                  positions={[sourceCoord, targetCoord]}
-                  color="blue"
-                  weight={2}
-                  opacity={0.6}
-                >
-                  <Tooltip>
-                    <CustomTooltip
-                      active={true}
-                      payload={[{ payload: { flow } }]}
-                      label={`Flow from ${flow.source_region_id} to ${flow.target_region_id}`}
-                    />
-                  </Tooltip>
-                </Polyline>
-              );
-            }
-            console.warn(`Missing coordinates for flow from ${flow.source_region_id} to ${flow.target_region_id}`);
-            return null;
-          })}
-        </MarkerClusterGroup>
+
+        {/* Yemen Boundary GeoJSON */}
+        <GeoJSON data={yemenGeoJSON} style={{ color: 'green', weight: 2, fillOpacity: 0.1 }} />
+
+        {/* Flow Lines from Flow GeoJSON */}
+        <GeoJSON data={flowGeoJSON} {...geoJsonOptions} />
+
+        {/* Region Markers */}
+        {regionMarkers}
       </MapContainer>
     </Paper>
   );
@@ -72,12 +106,15 @@ const FlowMapsWithMap = ({ flowMaps, geoCoordinates }) => {
 FlowMapsWithMap.propTypes = {
   flowMaps: PropTypes.arrayOf(
     PropTypes.shape({
-      source_region_id: PropTypes.string.isRequired,
-      target_region_id: PropTypes.string.isRequired,
-      value: PropTypes.number.isRequired,
+      source: PropTypes.string.isRequired,
+      source_lat: PropTypes.number.isRequired,
+      source_lng: PropTypes.number.isRequired,
+      target: PropTypes.string.isRequired,
+      target_lat: PropTypes.number.isRequired,
+      target_lng: PropTypes.number.isRequired,
+      weight: PropTypes.number.isRequired,
     })
   ).isRequired,
-  geoCoordinates: PropTypes.object.isRequired,
 };
 
 export default FlowMapsWithMap;
