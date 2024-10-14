@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline, Toolbar, IconButton } from '@mui/material';
+import { CssBaseline, Toolbar, IconButton, Box } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleDarkMode } from './utils/themeSlice';
 import Header from './components/common/Header';
@@ -76,6 +76,7 @@ const App = React.memo(function App() {
     setSidebarOpen((prevOpen) => !prevOpen);
   }, []);
 
+
   const handleShowMethodology = useCallback(() => {
     setMethodologyModalOpen(true);
   }, []);
@@ -138,7 +139,12 @@ const App = React.memo(function App() {
               >
                 <MenuIcon />
               </IconButton>
-              <Header isDarkMode={isDarkMode} toggleDarkMode={handleToggleDarkMode} />
+              <Header 
+                isDarkMode={isDarkMode} 
+                toggleDarkMode={handleToggleDarkMode}
+                handleDrawerToggle={handleDrawerToggle}
+                isSmUp={isSmUp}
+              />
             </Toolbar>
           </StyledAppBar>
 
@@ -158,18 +164,27 @@ const App = React.memo(function App() {
               selectedRegimes={selectedGraphRegimes}
               setSelectedRegimes={handleSetSelectedGraphRegimes}
               onOpenWelcomeModal={handleOpenWelcomeModal}
+              handleDrawerToggle={handleDrawerToggle}
             />
           </SidebarWrapper>
 
           <MainContent>
-            <Toolbar />
-            <Dashboard
-              data={data}
-              selectedCommodity={selectedCommodity}
-              selectedRegimes={selectedGraphRegimes}
-              selectedAnalysis={selectedAnalysis}
-              windowWidth={windowSize.width}
-            />
+            <Toolbar /> {/* This pushes content below the AppBar */}
+            <Box sx={{ 
+              flexGrow: 1, 
+              overflow: 'auto',
+              height: 'calc(100vh - 64px)', // Full height minus AppBar height
+              padding: theme.spacing(2),
+            }}>
+              <Dashboard
+                data={data}
+                selectedCommodity={selectedCommodity}
+                selectedRegimes={selectedGraphRegimes}
+                selectedAnalysis={selectedAnalysis}
+                windowWidth={windowSize.width}
+                sidebarOpen={sidebarOpen}
+              />
+            </Box>
           </MainContent>
 
           <MethodologyModal open={methodologyModalOpen} onClose={handleCloseMethodology} />

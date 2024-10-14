@@ -206,10 +206,11 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     <Paper
       elevation={3}
       sx={{
-        mt: 4,
+        mt: { xs: 2, sm: 4 },
         p: { xs: 1, sm: 2 },
         width: '100%',
         backgroundColor: theme.palette.background.paper,
+        overflow: 'hidden', // Prevent content from overflowing
       }}
     >
       <Box sx={{ p: 2 }}>
@@ -308,7 +309,7 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
               </ToggleButton>
             </ToggleButtonGroup>
           )}
-
+  
           <Button
             variant="contained"
             color="primary"
@@ -325,17 +326,19 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
             Download CSV
           </Button>
         </Box>
-
+  
         <ECMTutorial />
       </Box>
-      <ECMTabs
-        activeTab={activeTab}
-        handleTabChange={handleTabChange}
-        tabLabels={tabLabels}
-        isMobile={isMobile}
-      >
-        {tabContent}
-      </ECMTabs>
+      <Box sx={{ overflowX: 'auto' }}> {/* Make horizontal scrollable if needed */}
+        <ECMTabs
+          activeTab={activeTab}
+          handleTabChange={handleTabChange}
+          tabLabels={tabLabels}
+          isMobile={isMobile}
+        >
+          {tabContent}
+        </ECMTabs>
+      </Box>
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="h6">Interpretation Guide</Typography>
@@ -371,7 +374,7 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
       </Accordion>
     </Paper>
   );
-};
+}
 
 ECMAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,

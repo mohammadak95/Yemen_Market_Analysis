@@ -420,14 +420,12 @@ const InteractiveChart = ({
         </Grid>
       </Paper>
 
-      <Box
-        sx={{
-          width: '100%',
-          height: { xs: '300px', sm: '400px', md: '500px' }, // Responsive height
-          position: 'relative',
-          mb: 2 // Add bottom margin
-        }}
-      >
+      <Box sx={{
+        width: '100%',
+        height: { xs: '250px', sm: '300px', md: '400px' }, // Reduced height for mobile
+        position: 'relative',
+        mb: 2 // Add bottom margin
+      }}>
         <Line options={options} data={chartData} />
       </Box>
     </Box>

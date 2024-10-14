@@ -1,5 +1,3 @@
-// src/components/common/Sidebar.js
-
 import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -9,23 +7,14 @@ import {
   Divider,
   Button,
   Stack,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { drawerWidth } from '../../styles/LayoutStyles';
 import CommoditySelector from './CommoditySelector';
 import RegimeSelector from './RegimeSelector';
 import InfoIcon from '@mui/icons-material/Info';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-
-const SidebarDrawer = styled(Drawer)(({ theme }) => ({
-  '& .MuiDrawer-paper': {
-    boxSizing: 'border-box',
-    width: drawerWidth,
-    [theme.breakpoints.down('sm')]: {
-      width: '100%',
-    },
-  },
-}));
 
 const Sidebar = ({
   commodities = [],
@@ -44,6 +33,9 @@ const Sidebar = ({
   onOpenWelcomeModal,
   handleDrawerToggle,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const handleAnalysisChange = useCallback(
     (analysis) => {
       setSelectedAnalysis(analysis);
@@ -158,22 +150,29 @@ const Sidebar = ({
     ]
   );
 
-  const variant = isSmUp ? 'persistent' : 'temporary';
-
   return (
-    <SidebarDrawer
-      variant={variant}
+    <Drawer
+      variant={isMobile ? 'temporary' : 'persistent'}
       open={sidebarOpen}
       onClose={handleDrawerToggle}
       ModalProps={{
         keepMounted: true, // Better open performance on mobile
       }}
-      anchor="left"
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: drawerWidth,
+          boxSizing: 'border-box',
+          [theme.breakpoints.down('sm')]: {
+            top: '56px', // Height of mobile AppBar
+            height: 'calc(100% - 56px)',
+          },
+        },
+      }}
     >
       <Toolbar />
       <Divider />
       {sidebarContent}
-    </SidebarDrawer>
+    </Drawer>
   );
 };
 

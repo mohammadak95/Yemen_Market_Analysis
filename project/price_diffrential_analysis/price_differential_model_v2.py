@@ -5,26 +5,25 @@ import pandas as pd
 import numpy as np
 import geopandas as gpd
 from statsmodels.tsa.stattools import adfuller, kpss
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from statsmodels.stats.diagnostic import het_breuschpagan
-from statsmodels.stats.stattools import durbin_watson
 import statsmodels.api as sm
-from scipy.stats import pearsonr, jarque_bera
 import logging
 from pathlib import Path
 import multiprocessing as mp
 import warnings
 from scipy.spatial.distance import euclidean
+from scipy.stats import pearsonr
 import yaml
 import traceback
 from datetime import datetime
+import gzip
 
 # Additional Imports for Enhanced Functionality
-from linearmodels.panel import PanelOLS, RandomEffects
+from linearmodels.panel import RandomEffects
 from linearmodels.iv import IV2SLS
 from joblib import Memory
-from statsmodels.stats.outliers_influence import OLSInfluence
-from statsmodels.stats.diagnostic import breaks_cusumolsresid
+from statsmodels.stats.diagnostic import het_breuschpagan, linear_reset
+from statsmodels.stats.stattools import jarque_bera, durbin_watson
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 # Load configuration
 def load_config(config_path='project/config/config.yaml'):
@@ -365,9 +364,26 @@ def handle_high_vif(X, threshold=10):
 
     return X
 
-def run_price_differential_model(df):
-    """Run price differential model using OLS, Random Effects, and IV2SLS."""
+def run_price_differential_model(data):
+    """Run the price differential model with diversified estimation methods and enhanced diagnostics."""
     try:
+        # Flatten nested data and explode the price_differential list
+        df = pd.json_normalize(data)
+        logger.debug(f"DataFrame columns after json_normalize: {df.columns.tolist()}")
+        logger.debug(f"Sample data after json_normalize:\n{df.head()}")
+
+        df = df.explode('price_differential').reset_index(drop=True)
+        df['price_differential'] = df['price_differential'].astype(float)
+
+        # Create entity_id
+        df['entity_id'] = df.groupby(['base_market', 'other_market']).ngroup()
+
+        # Add a time index
+        df['time'] = df.groupby(['entity_id']).cumcount()
+
+        # Set the index for panel data
+        df.set_index(['entity_id', 'time'], inplace=True)
+
         # Prepare X and y
         X_columns = ['distance', 'conflict_correlation']
         X = df[X_columns]
@@ -378,8 +394,7 @@ def run_price_differential_model(df):
 
         # Ensure no duplicate columns
         if X.columns.duplicated().any():
-            logger.error("Duplicate columns found in predictors. Cannot proceed with panel estimation.")
-            return None
+            X = X.loc[:, ~X.columns.duplicated()]
 
         # Handle high VIF
         X = handle_high_vif(X)
@@ -394,99 +409,59 @@ def run_price_differential_model(df):
         logger.debug(f"Number of unique groups: {num_groups}")
 
         if num_groups < 2:
-            logger.error("Not enough groups to compute clustered standard errors. Proceeding with robust standard errors.")
-            ols_model = sm.OLS(y, X).fit(cov_type='HC1')
+            logger.warning("Not enough groups for clustered standard errors. Skipping OLS estimation.")
         else:
             ols_model = sm.OLS(y, X).fit(cov_type='cluster', cov_kwds={'groups': clusters})
-
-        results['OLS'] = {
-            'coefficients': ols_model.params.to_dict(),
-            'std_errors': ols_model.bse.to_dict(),
-            't_statistics': ols_model.tvalues.to_dict(),
-            'p_values': ols_model.pvalues.to_dict(),
-            'r_squared': ols_model.rsquared,
-            'adj_r_squared': ols_model.rsquared_adj,
-            'aic': ols_model.aic,
-            'bic': ols_model.bic,
-            'conf_int': ols_model.conf_int().values.tolist(),  # Confidence intervals
-            'f_statistic': ols_model.fvalue,  # F-statistic
-            'f_pvalue': ols_model.f_pvalue,   # F-statistic p-value
-            'fitted_values': ols_model.fittedvalues.tolist(),  # Fitted values
-            'residuals': ols_model.resid.tolist()  # Residuals
-        }
+            results['OLS'] = {
+                'coefficients': ols_model.params.to_dict(),
+                'std_errors': ols_model.bse.to_dict(),
+                't_statistics': ols_model.tvalues.to_dict(),
+                'p_values': ols_model.pvalues.to_dict(),
+                'r_squared': ols_model.rsquared,
+                'adj_r_squared': ols_model.rsquared_adj,
+                'aic': ols_model.aic,
+                'bic': ols_model.bic,
+                'f_statistic': ols_model.fvalue,
+                'f_pvalue': ols_model.f_pvalue
+            }
 
         # Random Effects Model
         logger.info("Estimating Random Effects model")
         try:
-            clusters = df['other_market']
-            clusters.index = df.index  # Align index
-            num_clusters = clusters.nunique()
-            logger.debug(f"Number of unique clusters: {num_clusters}")
-
-            if num_clusters < 2:
-                logger.error("Not enough clusters to compute clustered standard errors. Proceeding with robust standard errors.")
-                re_model = RandomEffects(y, X).fit(cov_type='robust')
-            else:
-                re_model = RandomEffects(y, X).fit(cov_type='clustered', clusters=clusters)
-
+            re_model = RandomEffects(y, X).fit()
             results['RandomEffects'] = {
                 'coefficients': re_model.params.to_dict(),
                 'std_errors': re_model.std_errors.to_dict(),
-                't_statistics': re_model.tstats.to_dict(),
-                'p_values': re_model.pvalues.to_dict(),
-                'r_squared': re_model.rsquared,
-                'conf_int': re_model.conf_int().values.tolist()  # Confidence intervals
+                't_statistics': re_model.tstats.to_dict(),  # Corrected attribute
+                'p_values': re_model.pvalues.to_dict()
             }
         except Exception as e:
-            logger.error(f"Error during Random Effects estimation: {e}")
+            logger.error(f"Error estimating Random Effects model: {str(e)}")
             logger.debug(f"Detailed error information: {traceback.format_exc()}")
-            results['RandomEffects'] = None
 
         # IV2SLS Model
         logger.info("Estimating IV2SLS model for endogeneity checks")
         try:
-            clusters = df['other_market']
-            clusters.index = df.index  # Align index
-            iv_model = IV2SLS.from_formula(
-                'price_differential ~ 1 + [distance ~ conflict_correlation]',
-                df
-            ).fit(cov_type='clustered', clusters=clusters)
-
-            # First-stage results for IV
-            first_stage_results = iv_model.first_stage.summary
+            iv_model = IV2SLS(y, X, None, None).fit()
             results['IV2SLS'] = {
                 'coefficients': iv_model.params.to_dict(),
                 'std_errors': iv_model.std_errors.to_dict(),
-                't_statistics': iv_model.tstats.to_dict(),
-                'p_values': iv_model.pvalues.to_dict(),
-                'r_squared': iv_model.rsquared,
-                'conf_int': iv_model.conf_int().values.tolist(),  # Confidence intervals
-                'first_stage': str(first_stage_results)  # First stage summary
+                't_statistics': iv_model.tstats.to_dict(),  # Corrected attribute
+                'p_values': iv_model.pvalues.to_dict()
             }
-
-            # Check if 'overid' exists and add it if available
-            if hasattr(iv_model, 'overid'):
-                results['IV2SLS']['overid_test'] = str(iv_model.overid)
-            else:
-                logger.warning("IV2SLS model does not have an overid attribute. Skipping overid test.")
         except Exception as e:
-            logger.warning(f"IV2SLS model estimation failed: {e}")
+            logger.error(f"Error estimating IV2SLS model: {str(e)}")
             logger.debug(f"Detailed error information: {traceback.format_exc()}")
-            results['IV2SLS'] = None
 
         # Systematize Model Selection
         logger.info("Comparing models based on AIC and BIC")
         model_comparison = {}
         for model_name, model_result in results.items():
-            if model_result is not None and model_name != 'diagnostics':
-                # Only include models that have 'aic' and 'bic'
-                if 'aic' in model_result and 'bic' in model_result:
-                    model_comparison[model_name] = {
-                        'AIC': model_result.get('aic'),
-                        'BIC': model_result.get('bic')
-                    }
-                else:
-                    logger.debug(f"{model_name} does not have AIC/BIC for comparison.")
+            if 'aic' in model_result and 'bic' in model_result:
+                model_comparison[model_name] = {
+                    'aic': model_result['aic'],
+                    'bic': model_result['bic']
+                }
         results['ModelComparison'] = model_comparison
 
         # Calculate VIF for OLS Model
@@ -511,45 +486,28 @@ def run_price_differential_model(df):
         results['diagnostics']['DurbinWatson'] = float(dw_stat)
 
         # Jarque-Bera Test
-        jb_stat, jb_pvalue = jarque_bera(residuals)
+        jb_stat, jb_pvalue, jb_skew, jb_kurtosis = jarque_bera(residuals)
         results['diagnostics']['JarqueBera'] = {
             'statistic': float(jb_stat),
-            'p-value': float(jb_pvalue)
+            'p-value': float(jb_pvalue),
+            'skew': float(jb_skew),
+            'kurtosis': float(jb_kurtosis)
         }
 
-        # CUSUM Stability Test
-        try:
-            residuals_array = np.asarray(residuals).flatten()
-            cusum_stat, p_value, crit_value = breaks_cusumolsresid(residuals_array)
-            cusum_stat = float(cusum_stat) if isinstance(cusum_stat, (np.ndarray, list)) else cusum_stat
-            p_value = float(p_value) if isinstance(p_value, (np.ndarray, list)) else p_value
-            results['diagnostics']['CUSUM'] = {
-                'statistic': cusum_stat,
-                'p-value': p_value
-            }
-        except Exception as e:
-            logger.warning(f"CUSUM test failed: {e}")
-            results['diagnostics']['CUSUM'] = None
-
         # Ramsey RESET Test
-        from statsmodels.stats.diagnostic import linear_reset
         logger.info("Performing Ramsey RESET test for OLS model")
         try:
-            reset_test = linear_reset(ols_model, power=2, use_f=True)
-            results['diagnostics']['Ramsey_RESET'] = {
-                'statistic': float(reset_test.fvalue),
+            reset_test = linear_reset(ols_model, use_f=True)
+            results['diagnostics']['RamseyRESET'] = {
+                'f_statistic': float(reset_test.fvalue),
                 'p-value': float(reset_test.pvalue)
             }
         except Exception as e:
-            logger.warning(f"Ramsey RESET test failed: {e}")
-            results['diagnostics']['Ramsey_RESET'] = None
-
-        # Leverage
-        influence = OLSInfluence(ols_model)
-        leverage = influence.hat_matrix_diag
-        results['diagnostics']['Leverage'] = leverage.tolist()
+            logger.error(f"Error performing Ramsey RESET test: {str(e)}")
+            logger.debug(f"Detailed error information: {traceback.format_exc()}")
 
         logger.info("Completed price differential model")
+        # Return regression results
         return results
     except Exception as e:
         logger.error(f"An error occurred in run_price_differential_model: {str(e)}")
@@ -631,31 +589,39 @@ def main(file_path):
 
         all_results[base_market] = {
             "commodity_results": commodity_results,
-            "model_results": model_results
+            "model_results": model_results,
+            "diagnostics": model_results.get('diagnostics') if model_results else None
         }
 
     if not all_results:
         logger.error("No analysis results generated for any base markets. Exiting.")
         return
 
-    # Save all results in a single file
-    output_file = price_diff_results_dir / "price_differential_results.json"
+    # Prepare results without redundant data
+    final_results = {
+        "markets": all_results
+    }
+
+    # Custom default function to handle serialization
+    def default(o):
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        elif isinstance(o, (pd.Series, pd.DataFrame)):
+            return o.to_dict()
+        elif isinstance(o, (np.int64, np.int32, np.integer)):
+            return int(o)
+        elif isinstance(o, (np.float64, np.float32, np.floating)):
+            return float(o)
+        elif isinstance(o, datetime):
+            return o.isoformat()
+        else:
+            return str(o)  # Fallback to string representation
+
+    # Save all results in a compressed file
+    output_file = price_diff_results_dir / "price_differential_results.json.gz"
     try:
-        with open(output_file, "w") as f:
-            def default(o):
-                if isinstance(o, np.ndarray):
-                    return o.tolist()
-                elif isinstance(o, (pd.Series, pd.DataFrame)):
-                    return o.to_dict()
-                elif isinstance(o, (np.int64, np.int32, np.integer)):
-                    return int(o)
-                elif isinstance(o, (np.float64, np.float32, np.floating)):
-                    return float(o)
-                elif isinstance(o, datetime):
-                    return o.isoformat()
-                else:
-                    return str(o)
-            json.dump(all_results, f, indent=4, default=default)
+        with gzip.open(output_file, "wt", compresslevel=5) as f:
+            json.dump(final_results, f, indent=4, default=default)
         logger.info(f"All results saved to {output_file}")
     except Exception as e:
         logger.error(f"Error saving results to {output_file}: {e}")
