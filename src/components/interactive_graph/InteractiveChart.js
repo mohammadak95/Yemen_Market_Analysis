@@ -271,7 +271,7 @@ const InteractiveChart = ({
           align: 'center',
           labels: {
             boxWidth: 12,
-            padding: 15,
+            padding: isMobile ? 10 : 15,
             color: theme.palette.text.primary,
             font: {
               size: isMobile ? 10 : 12,
@@ -306,7 +306,7 @@ const InteractiveChart = ({
       >
         <Grid
           container
-          spacing={2}
+          spacing={1}
           alignItems="center"
           justifyContent="center"
         >

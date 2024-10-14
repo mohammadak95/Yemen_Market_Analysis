@@ -514,6 +514,9 @@ def run_price_differential_model(data):
         logger.debug(f"Detailed error information: {traceback.format_exc()}")
         return None
 
+import json
+import gzip
+
 def main(file_path):
     logger.info("Starting Price Differential Analysis")
 
@@ -557,7 +560,7 @@ def main(file_path):
         logger.info(f"Prepared {len(analysis_args)} market pairs for analysis for base market {base_market}")
 
         if len(analysis_args) == 0:
-            logger.warning(f"No market pairs to analyze for base market {base_market}. Skipping.")
+            logger.warning(f"No valid market pairs for base market {base_market}. Skipping.")
             continue
 
         # Use all available cores, but limit to number of analysis_args to prevent overuse
@@ -599,33 +602,73 @@ def main(file_path):
 
     # Prepare results without redundant data
     final_results = {
-        "markets": all_results
+        "markets": {}
     }
+
+    for base_market, data in all_results.items():
+        commodity_results = data["commodity_results"]
+        organized_commodity_results = {}
+        
+        for commodity, analyses in commodity_results.items():
+            organized_analyses = []
+            for analysis in analyses:
+                organized_analyses.append({
+                    'other_market': analysis['other_market'],
+                    'price_differential_summary': {
+                        'mean': np.mean(analysis['price_differential']),
+                        'std': np.std(analysis['price_differential']),
+                        'min': np.min(analysis['price_differential']),
+                        'max': np.max(analysis['price_differential']),
+                        'count': len(analysis['price_differential'])
+                    },
+                    'stationarity': analysis['stationarity'],
+                    'conflict_correlation': analysis['conflict_correlation'],
+                    'common_dates': analysis['common_dates'],
+                    'distance': analysis['distance'],
+                    'p_value': analysis['p_value']
+                })
+            
+            organized_commodity_results[commodity] = organized_analyses
+        
+        final_results["markets"][base_market] = {
+            "commodity_results": organized_commodity_results,
+            "model_results": data.get("model_results"),
+            "diagnostics": data.get("diagnostics")
+        }
 
     # Custom default function to handle serialization
     def default(o):
-        if isinstance(o, np.ndarray):
+        if isinstance(o, (np.integer, int)):
+            return int(o)
+        elif isinstance(o, (np.floating, float)):
+            return float(o)
+        elif isinstance(o, (np.ndarray, list, tuple)):
             return o.tolist()
         elif isinstance(o, (pd.Series, pd.DataFrame)):
             return o.to_dict()
-        elif isinstance(o, (np.int64, np.int32, np.integer)):
-            return int(o)
-        elif isinstance(o, (np.float64, np.float32, np.floating)):
-            return float(o)
         elif isinstance(o, datetime):
             return o.isoformat()
         else:
-            return str(o)  # Fallback to string representation
+            raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
 
-    # Save all results in a compressed file
-    output_file = price_diff_results_dir / "price_differential_results.json.gz"
+    # Save all results in a compressed file with indentation and sorted keys
+    output_file_gz = price_diff_results_dir / "price_differential_results.json.gz"
     try:
-        with gzip.open(output_file, "wt", compresslevel=5) as f:
-            json.dump(final_results, f, indent=4, default=default)
-        logger.info(f"All results saved to {output_file}")
+        with gzip.open(output_file_gz, "wt", compresslevel=5) as f:
+            json.dump(final_results, f, default=default, indent=4, sort_keys=True)
+        logger.info(f"All results saved to {output_file_gz}")
     except Exception as e:
-        logger.error(f"Error saving results to {output_file}: {e}")
+        logger.error(f"Error saving results to {output_file_gz}: {e}")
         logger.debug(f"Detailed error information: {traceback.format_exc()}")
+
+    # Optionally, validate the JSON output
+    try:
+        with gzip.open(output_file_gz, "rt") as f:
+            data = json.load(f)
+        logger.info("JSON output successfully validated.")
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON validation failed: {e}")
+
 
     logger.info("Price Differential Analysis completed")
 

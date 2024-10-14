@@ -134,7 +134,9 @@ const Dashboard = React.memo(
             <Box
               sx={{
                 width: '100%',
-                height: { xs: '250px', sm: '300px', md: '400px' },
+                height: { xs: '300px', sm: '400px', md: '500px' }, // Responsive height
+                position: 'relative',
+                mb: 2 // Add bottom margin
               }}
             >
               {renderInteractiveChart()}
