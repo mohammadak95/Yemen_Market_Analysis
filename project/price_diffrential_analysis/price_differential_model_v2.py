@@ -426,7 +426,7 @@ def run_price_differential_model(data):
             'adj_r_squared': ols_model.rsquared_adj,
             'aic': ols_model.aic,
             'bic': ols_model.bic,
-            'conf_int': ols_model.conf_int().tolist(),  # Confidence intervals
+            'conf_int': ols_model.conf_int().values.tolist(),  # Confidence intervals
             'f_statistic': ols_model.fvalue,  # F-statistic
             'f_pvalue': ols_model.f_pvalue,   # F-statistic p-value
             'fitted_values': ols_model.fittedvalues.tolist(),  # Fitted values
