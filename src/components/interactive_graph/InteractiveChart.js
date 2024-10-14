@@ -22,12 +22,9 @@ import {
   Paper,
   ToggleButtonGroup,
   ToggleButton,
-  Tooltip as MuiTooltip,
-  IconButton,
   Grid,
   Typography,
 } from '@mui/material';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
   applySeasonalAdjustment,
   applySmoothing,
@@ -287,7 +284,8 @@ const InteractiveChart = ({
           borderWidth: 1,
         },
         legend: {
-          position: isMobile ? 'bottom' : 'right',
+          position: 'bottom', // Place legend below the chart
+          align: 'center', // Center the legend
           labels: {
             boxWidth: 12,
             padding: 15,
@@ -329,10 +327,10 @@ const InteractiveChart = ({
           container
           spacing={2}
           alignItems="center"
-          justifyContent={isMobile ? 'center' : 'flex-start'}
+          justifyContent="center" // Center the controls
         >
           {/* Price Type Toggle */}
-          <Grid item xs={12} sm="auto">
+          <Grid item>
             <ToggleButtonGroup
               value={priceType}
               exclusive
@@ -341,75 +339,109 @@ const InteractiveChart = ({
               }}
               aria-label="Price Type"
               size="small"
-              fullWidth={isMobile}
+              sx={{
+                minWidth: isMobile ? 'auto' : 'auto',
+              }}
             >
-              <ToggleButton value="lcu" aria-label="Price in LCU">
+              <ToggleButton
+                value="lcu"
+                aria-label="Price in LCU"
+                sx={{
+                  fontSize: isMobile ? '0.8rem' : '0.9rem',
+                  padding: isMobile ? '4px 8px' : '6px 12px',
+                }}
+              >
                 LCU
               </ToggleButton>
-              <ToggleButton value="usd" aria-label="Price in US$">
+              <ToggleButton
+                value="usd"
+                aria-label="Price in US$"
+                sx={{
+                  fontSize: isMobile ? '0.8rem' : '0.9rem',
+                  padding: isMobile ? '4px 8px' : '6px 12px',
+                }}
+              >
                 US$
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
 
           {/* Seasonal Adjustment Toggle */}
-          <Grid item xs={12} sm="auto">
+          <Grid item>
             <ToggleButtonGroup
               value={applySeasonalAdj}
               exclusive
               onChange={() => setApplySeasonalAdj(!applySeasonalAdj)}
               aria-label="Seasonal Adjustment"
               size="small"
-              fullWidth={isMobile}
+              sx={{
+                minWidth: isMobile ? 'auto' : 'auto',
+              }}
             >
-              <ToggleButton value={true} selected={applySeasonalAdj}>
+              <ToggleButton
+                value={true}
+                selected={applySeasonalAdj}
+                sx={{
+                  fontSize: isMobile ? '0.8rem' : '0.9rem',
+                  padding: isMobile ? '4px 8px' : '6px 12px',
+                }}
+              >
                 Seasonal Adjustment
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
 
           {/* Smoothing Toggle */}
-          <Grid item xs={12} sm="auto">
+          <Grid item>
             <ToggleButtonGroup
               value={applySmooth}
               exclusive
               onChange={() => setApplySmooth(!applySmooth)}
               aria-label="Smoothing"
               size="small"
-              fullWidth={isMobile}
+              sx={{
+                minWidth: isMobile ? 'auto' : 'auto',
+              }}
             >
-              <ToggleButton value={true} selected={applySmooth}>
+              <ToggleButton
+                value={true}
+                selected={applySmooth}
+                sx={{
+                  fontSize: isMobile ? '0.8rem' : '0.9rem',
+                  padding: isMobile ? '4px 8px' : '6px 12px',
+                }}
+              >
                 Smoothing
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
 
           {/* Conflict Intensity Toggle */}
-          <Grid item xs={12} sm="auto">
+          <Grid item>
             <ToggleButtonGroup
               value={showConflictIntensity}
               exclusive
-              onChange={() =>
-                setShowConflictIntensity(!showConflictIntensity)
-              }
+              onChange={() => setShowConflictIntensity(!showConflictIntensity)}
               aria-label="Conflict Intensity"
               size="small"
-              fullWidth={isMobile}
+              sx={{
+                minWidth: isMobile ? 'auto' : 'auto',
+              }}
             >
-              <ToggleButton value={true} selected={showConflictIntensity}>
+              <ToggleButton
+                value={true}
+                selected={showConflictIntensity}
+                sx={{
+                  fontSize: isMobile ? '0.8rem' : '0.9rem',
+                  padding: isMobile ? '4px 8px' : '6px 12px',
+                }}
+              >
                 Conflict Intensity
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
 
-          {/* Help Icon */}
-          <Grid item xs={12} sm="auto">
-            <MuiTooltip title="Use the toggles to customize the chart display.">
-              <IconButton>
-                <HelpOutlineIcon />
-              </IconButton>
-            </MuiTooltip>
-          </Grid>
+          {/* Removed the Tooltip and IconButton here */}
         </Grid>
       </Paper>
 
@@ -418,6 +450,7 @@ const InteractiveChart = ({
         sx={{
           height: { xs: '300px', sm: '400px', md: '500px' },
           width: '100%',
+          position: 'relative',
         }}
       >
         <Line options={options} data={chartData} />
