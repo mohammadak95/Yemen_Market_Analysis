@@ -10,8 +10,10 @@ import {
   Tabs,
   Tab,
   Button,
+  Tooltip as MuiTooltip,
+  IconButton,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import InfoIcon from '@mui/icons-material/Info';
 import DownloadIcon from '@mui/icons-material/Download';
 import SpatialMap from './SpatialMap';
 import FlowMapsWithMap from './FlowMapsWithMap';
@@ -21,6 +23,7 @@ import useSpatialData from '../../hooks/useSpatialData';
 import ErrorMessage from '../common/ErrorMessage';
 import { saveAs } from 'file-saver';
 import { jsonToCsv } from '../../utils/jsonToCsv';
+import { useTheme } from '@mui/material/styles';
 
 const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
@@ -55,7 +58,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     }
 
     const dataToDownload = {
-      // Add data fields to download
+      // Add specific data fields to download as needed
       ...currentAnalysis,
     };
 
@@ -99,7 +102,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     return (
       <Box sx={{ p: 2, mt: 4 }}>
         <Typography>
-          No spatial data available for {selectedCommodity}.
+          No spatial data available for <strong>{selectedCommodity}</strong>.
         </Typography>
       </Box>
     );
@@ -116,6 +119,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
       }}
     >
       <Box sx={{ p: 2 }}>
+        {/* Title with Info Tooltip */}
         <Typography
           variant={isMobile ? 'h5' : 'h4'}
           gutterBottom
@@ -128,21 +132,44 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
           }}
         >
           Spatial Analysis for {selectedCommodity}
+          <MuiTooltip title="Spatial Analysis examines the geographical distribution and relationships related to the selected commodity.">
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize={isMobile ? 'medium' : 'large'} />
+            </IconButton>
+          </MuiTooltip>
         </Typography>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        {/* Download Button Consolidated in Flex Container */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 2,
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
           <Button
             variant="contained"
             color="primary"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadCsv}
+            size="medium"
+            sx={{
+              minWidth: '140px',
+              height: '36px',
+              fontSize: '0.9rem',
+              padding: '6px 16px',
+            }}
           >
             Download CSV
           </Button>
         </Box>
       </Box>
 
-      {/* Tabs for Different Views */}
+      {/* Enhanced Tabs */}
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -152,38 +179,47 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         allowScrollButtonsMobile
         sx={{
           mt: 2,
-          flexWrap: 'wrap',
+          flexWrap: 'nowrap',
           '& .MuiTabs-flexContainer': {
             justifyContent: 'center',
+          },
+        }}
+        TabIndicatorProps={{
+          style: {
+            backgroundColor: theme.palette.primary.main,
           },
         }}
       >
         <Tab
           label="Residuals Map"
           sx={{
-            minWidth: isMobile ? 'auto' : 120,
+            minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
+            textTransform: 'none',
           }}
         />
         <Tab
           label="Flow Map"
           sx={{
-            minWidth: isMobile ? 'auto' : 120,
+            minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
+            textTransform: 'none',
           }}
         />
         <Tab
           label="Diagnostics"
           sx={{
-            minWidth: isMobile ? 'auto' : 120,
+            minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
+            textTransform: 'none',
           }}
         />
         <Tab
           label="Regression Results"
           sx={{
-            minWidth: isMobile ? 'auto' : 120,
+            minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
+            textTransform: 'none',
           }}
         />
       </Tabs>

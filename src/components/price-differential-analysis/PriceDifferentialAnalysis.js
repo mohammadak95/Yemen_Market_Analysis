@@ -163,7 +163,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
     return (
       <Box sx={{ p: 2, mt: 4 }}>
         <Typography>
-          No price differential data available for {selectedCommodity} in the selected
+          No price differential data available for <strong>{selectedCommodity}</strong> in the selected
           market pair.
         </Typography>
       </Box>
@@ -182,7 +182,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
     >
       <Box sx={{ p: 2 }}>
         <Typography
-          variant="h4"
+          variant={isMobile ? 'h5' : 'h4'}
           gutterBottom
           sx={{
             fontWeight: 'bold',
@@ -200,6 +200,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
           </MuiTooltip>
         </Typography>
 
+        {/* Improved Controls Layout */}
         <Box
           sx={{
             display: 'flex',
@@ -207,24 +208,30 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
             alignItems: 'center',
             justifyContent: 'center',
             mb: 2,
+            gap: 2,
+            flexWrap: 'wrap',
           }}
         >
+          {/* Base Market Select */}
           <FormControl
             variant="outlined"
             size="small"
             sx={{
               minWidth: 200,
-              mr: isMobile ? 0 : 2,
-              mb: isMobile ? 2 : 0,
+              flex: isMobile ? '1 1 100%' : '0 1 auto',
             }}
             fullWidth={isMobile}
           >
-            <InputLabel id="base-market-select-label">Select Base Market</InputLabel>
+            <InputLabel id="base-market-select-label">Base Market</InputLabel>
             <Select
               labelId="base-market-select-label"
               value={baseMarket}
               onChange={(e) => setBaseMarket(e.target.value)}
-              label="Select Base Market"
+              label="Base Market"
+              size="small"
+              sx={{
+                fontSize: '0.9rem',
+              }}
             >
               {Object.keys(data).map((market) => (
                 <MenuItem key={market} value={market}>
@@ -233,22 +240,27 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
               ))}
             </Select>
           </FormControl>
+
+          {/* Comparison Market Select */}
           <FormControl
             variant="outlined"
             size="small"
             sx={{
               minWidth: 200,
-              mr: isMobile ? 0 : 2,
-              mb: isMobile ? 2 : 0,
+              flex: isMobile ? '1 1 100%' : '0 1 auto',
             }}
             fullWidth={isMobile}
           >
-            <InputLabel id="market-pair-select-label">Select Comparison Market</InputLabel>
+            <InputLabel id="market-pair-select-label">Comparison Market</InputLabel>
             <Select
               labelId="market-pair-select-label"
               value={selectedMarketPair}
               onChange={handleMarketPairChange}
-              label="Select Comparison Market"
+              label="Comparison Market"
+              size="small"
+              sx={{
+                fontSize: '0.9rem',
+              }}
             >
               {marketPairs.map((market) => (
                 <MenuItem key={market} value={market}>
@@ -257,14 +269,20 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
               ))}
             </Select>
           </FormControl>
-        </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          {/* Download CSV Button */}
           <Button
             variant="contained"
             color="primary"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadCsv}
+            size="medium"
+            sx={{
+              minWidth: '140px',
+              height: '36px',
+              fontSize: '0.9rem',
+              padding: '6px 16px',
+            }}
           >
             Download CSV
           </Button>
@@ -273,6 +291,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
         <PriceDifferentialTutorial />
       </Box>
 
+      {/* Enhanced Tabs */}
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -281,38 +300,47 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
         allowScrollButtonsMobile
         sx={{
           mt: 2,
-          flexWrap: 'wrap',
+          flexWrap: 'nowrap',
           '& .MuiTabs-flexContainer': {
             justifyContent: 'center',
+          },
+        }}
+        TabIndicatorProps={{
+          style: {
+            backgroundColor: theme.palette.primary.main,
           },
         }}
       >
         <Tab
           label="Price Differential Chart"
           sx={{
-            minWidth: isMobile ? 'auto' : 120,
+            minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
+            textTransform: 'none',
           }}
         />
         <Tab
           label="Regression Results"
           sx={{
-            minWidth: isMobile ? 'auto' : 120,
+            minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
+            textTransform: 'none',
           }}
         />
         <Tab
           label="Diagnostics"
           sx={{
-            minWidth: isMobile ? 'auto' : 120,
+            minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
+            textTransform: 'none',
           }}
         />
         <Tab
           label="Market Pair Info"
           sx={{
-            minWidth: isMobile ? 'auto' : 120,
+            minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
+            textTransform: 'none',
           }}
         />
       </Tabs>

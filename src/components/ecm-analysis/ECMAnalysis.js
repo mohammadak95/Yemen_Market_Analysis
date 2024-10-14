@@ -243,51 +243,97 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
         <Box
           sx={{
             display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
+            flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             mb: 2,
+            gap: 2, // Adds consistent spacing between elements
+            flexWrap: 'wrap', // Allows wrapping on smaller screens if necessary
           }}
         >
+          {/* Analysis Type Toggle Buttons */}
           <ToggleButtonGroup
             value={analysisType}
             exclusive
             onChange={handleAnalysisTypeChange}
             aria-label="ECM analysis type"
-            sx={{ mr: isMobile ? 0 : 2, mb: { xs: 2, sm: 0 } }}
+            size="small" // Smaller size for sleek appearance
+            sx={{
+              minHeight: '32px', // Ensures consistent height
+            }}
           >
-            <ToggleButton value="unified" aria-label="Unified ECM">
+            <ToggleButton
+              value="unified"
+              aria-label="Unified ECM"
+              sx={{
+                fontSize: '0.8rem', // Smaller font size
+                padding: '4px 8px', // Reduced padding
+              }}
+            >
               Unified ECM
             </ToggleButton>
-            <ToggleButton value="directional" aria-label="Directional ECM">
+            <ToggleButton
+              value="directional"
+              aria-label="Directional ECM"
+              sx={{
+                fontSize: '0.8rem',
+                padding: '4px 8px',
+              }}
+            >
               Directional ECM
             </ToggleButton>
           </ToggleButtonGroup>
+
+          {/* Direction Toggle Buttons (Visible only when 'directional' is selected) */}
           {analysisType === 'directional' && (
             <ToggleButtonGroup
               value={direction}
               exclusive
               onChange={handleDirectionChange}
               aria-label="ECM direction"
+              size="small"
+              sx={{
+                minHeight: '32px',
+              }}
             >
-              <ToggleButton value="northToSouth" aria-label="North to South">
-                <NorthIcon sx={{ mr: 1 }} />
+              <ToggleButton
+                value="northToSouth"
+                aria-label="North to South"
+                sx={{
+                  fontSize: '0.8rem',
+                  padding: '4px 8px',
+                }}
+              >
+                <NorthIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
                 North to South
               </ToggleButton>
-              <ToggleButton value="southToNorth" aria-label="South to North">
-                <SouthIcon sx={{ mr: 1 }} />
+              <ToggleButton
+                value="southToNorth"
+                aria-label="South to North"
+                sx={{
+                  fontSize: '0.8rem',
+                  padding: '4px 8px',
+                }}
+              >
+                <SouthIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
                 South to North
               </ToggleButton>
             </ToggleButtonGroup>
           )}
-        </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          {/* Download CSV Button */}
           <Button
             variant="contained"
             color="primary"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadCsv}
+            size="medium" // Larger size for prominence
+            sx={{
+              minWidth: '140px', // Ensures adequate width
+              height: '36px', // Consistent height with ToggleButtons
+              fontSize: '0.9rem', // Slightly larger font for readability
+              padding: '6px 16px', // Balanced padding
+            }}
           >
             Download CSV
           </Button>
