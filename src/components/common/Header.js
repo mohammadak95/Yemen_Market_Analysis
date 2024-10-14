@@ -23,7 +23,7 @@ const Header = ({ isDarkMode, toggleDarkMode }) => {
           },
         }}
       >
-        Commodity and Conflict Dashboard
+        Yemen Market Analysis Dashboard
       </Typography>
       <IconButton onClick={toggleDarkMode} color="inherit" aria-label="toggle dark mode">
         {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
