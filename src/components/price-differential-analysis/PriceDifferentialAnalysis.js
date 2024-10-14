@@ -14,7 +14,7 @@ import {
   Button,
   Tabs,
   Tab,
-  Tooltip,
+  Tooltip as MuiTooltip,
   IconButton,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
@@ -26,9 +26,13 @@ import MarketPairInfo from './MarketPairInfo';
 import PriceDifferentialTutorial from './PriceDifferentialTutorial';
 import usePriceDifferentialData from '../../hooks/usePriceDifferentialData';
 import { saveAs } from 'file-saver';
-import { jsonToCsv } from '../../utils/jsonToCsv'; // Ensure this utility exists
+import { jsonToCsv } from '../../utils/jsonToCsv';
+import { useTheme } from '@mui/material/styles';
 
-const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
+const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
+  const theme = useTheme();
+  const isMobile = windowWidth < theme.breakpoints.values.sm;
+
   const { data, status, error } = usePriceDifferentialData();
   const [baseMarket, setBaseMarket] = useState('');
   const [marketPairs, setMarketPairs] = useState([]);
@@ -93,7 +97,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
     setActiveTab(newValue);
   };
 
-  // Handle Download as CSV and JSON
+  // Handle Download as CSV
   const handleDownloadCsv = () => {
     if (!selectedData) {
       console.warn('No price differential data available to download.');
@@ -124,36 +128,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
     saveAs(blob, `${selectedCommodity}_PriceDifferential_Analysis.csv`);
   };
 
-  const handleDownloadJson = () => {
-    if (!selectedData) {
-      console.warn('No price differential data available to download.');
-      return;
-    }
-
-    const dataToDownload = {
-      Summary: {
-        AIC: selectedData.regression_results?.aic || 'N/A',
-        BIC: selectedData.regression_results?.bic || 'N/A',
-        HQIC: selectedData.regression_results?.hqic || 'N/A',
-        Alpha: selectedData.regression_results?.alpha || 'N/A',
-        Beta: selectedData.regression_results?.beta || 'N/A',
-        Gamma: selectedData.regression_results?.gamma || 'N/A',
-      },
-      Diagnostics: selectedData.diagnostics,
-      PriceDifferential: selectedData.price_differential,
-      RegressionResults: selectedData.regression_results,
-      MarketPairInfo: selectedData.market_pair_info,
-      ConflictCorrelation: selectedData.conflict_correlation,
-      CommonDates: selectedData.common_dates,
-      Distance: selectedData.distance,
-      PValue: selectedData.p_value,
-    };
-
-    const jsonString = JSON.stringify(dataToDownload, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    saveAs(blob, `${selectedCommodity}_PriceDifferential_Analysis.json`);
-  };
-
   // Loading State
   if (status === 'loading') {
     return (
@@ -165,7 +139,10 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
         mt={4}
       >
         <CircularProgress size={60} />
-        <Typography variant="body1" sx={{ mt: 2, fontSize: '1.2rem' }}>
+        <Typography
+          variant="body1"
+          sx={{ mt: 2, fontSize: isMobile ? '1rem' : '1.2rem' }}
+        >
           Loading Price Differential Analysis results...
         </Typography>
       </Box>
@@ -194,25 +171,54 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
   }
 
   return (
-    <Paper elevation={3} sx={{ mt: 4, p: { xs: 1, sm: 2 }, width: '100%' }}>
+    <Paper
+      elevation={3}
+      sx={{
+        mt: 4,
+        p: { xs: 1, sm: 2 },
+        width: '100%',
+        backgroundColor: theme.palette.background.paper,
+      }}
+    >
       <Box sx={{ p: 2 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            fontSize: isMobile ? '1.5rem' : '2rem',
+          }}
+        >
           Price Differential Analysis: {selectedCommodity}
-          <Tooltip title="Analyzes the price differences between two markets for a specific commodity.">
+          <MuiTooltip title="Analyzes the price differences between two markets for a specific commodity.">
             <IconButton size="small" sx={{ ml: 1 }}>
-              <InfoIcon fontSize="large" />
+              <InfoIcon fontSize={isMobile ? 'medium' : 'large'} />
             </IconButton>
-          </Tooltip>
+          </MuiTooltip>
         </Typography>
+
         <Box
           sx={{
             display: 'flex',
-            flexWrap: 'wrap',
+            flexDirection: isMobile ? 'column' : 'row',
             alignItems: 'center',
+            justifyContent: 'center',
             mb: 2,
           }}
         >
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 200, mr: 2 }}>
+          <FormControl
+            variant="outlined"
+            size="small"
+            sx={{
+              minWidth: 200,
+              mr: isMobile ? 0 : 2,
+              mb: isMobile ? 2 : 0,
+            }}
+            fullWidth={isMobile}
+          >
             <InputLabel id="base-market-select-label">Select Base Market</InputLabel>
             <Select
               labelId="base-market-select-label"
@@ -230,7 +236,12 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
           <FormControl
             variant="outlined"
             size="small"
-            sx={{ minWidth: 200, mr: 2, mt: { xs: 2, sm: 0 } }}
+            sx={{
+              minWidth: 200,
+              mr: isMobile ? 0 : 2,
+              mb: isMobile ? 2 : 0,
+            }}
+            fullWidth={isMobile}
           >
             <InputLabel id="market-pair-select-label">Select Comparison Market</InputLabel>
             <Select
@@ -246,44 +257,75 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
               ))}
             </Select>
           </FormControl>
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
           <Button
             variant="contained"
             color="primary"
             startIcon={<DownloadIcon />}
-            sx={{ mt: { xs: 2, sm: 0 } }}
-            onClick={handleDownloadJson}
-          >
-            Download JSON
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<DownloadIcon />}
-            sx={{ ml: 2, mt: { xs: 2, sm: 0 } }}
             onClick={handleDownloadCsv}
           >
             Download CSV
           </Button>
         </Box>
+
         <PriceDifferentialTutorial />
       </Box>
+
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
         variant="scrollable"
-        scrollButtons="auto"
-        sx={{ mt: 2 }}
+        scrollButtons
+        allowScrollButtonsMobile
+        sx={{
+          mt: 2,
+          flexWrap: 'wrap',
+          '& .MuiTabs-flexContainer': {
+            justifyContent: 'center',
+          },
+        }}
       >
-        <Tab label="Price Differential Chart" />
-        <Tab label="Regression Results" />
-        <Tab label="Diagnostics" />
-        <Tab label="Market Pair Info" />
+        <Tab
+          label="Price Differential Chart"
+          sx={{
+            minWidth: isMobile ? 'auto' : 120,
+            fontSize: isMobile ? '0.8rem' : '1rem',
+          }}
+        />
+        <Tab
+          label="Regression Results"
+          sx={{
+            minWidth: isMobile ? 'auto' : 120,
+            fontSize: isMobile ? '0.8rem' : '1rem',
+          }}
+        />
+        <Tab
+          label="Diagnostics"
+          sx={{
+            minWidth: isMobile ? 'auto' : 120,
+            fontSize: isMobile ? '0.8rem' : '1rem',
+          }}
+        />
+        <Tab
+          label="Market Pair Info"
+          sx={{
+            minWidth: isMobile ? 'auto' : 120,
+            fontSize: isMobile ? '0.8rem' : '1rem',
+          }}
+        />
       </Tabs>
       <Box sx={{ mt: 2 }}>
-        {activeTab === 0 && <PriceDifferentialChart data={selectedData} />}
-        {activeTab === 1 && <RegressionResults data={selectedData} />}
-        {activeTab === 2 && <DiagnosticsTable diagnostics={selectedData} />}
-        {activeTab === 3 && <MarketPairInfo data={selectedData} />}
+        {activeTab === 0 && (
+          <PriceDifferentialChart
+            data={selectedData}
+            isMobile={isMobile}
+          />
+        )}
+        {activeTab === 1 && <RegressionResults data={selectedData} isMobile={isMobile} />}
+        {activeTab === 2 && <DiagnosticsTable diagnostics={selectedData} isMobile={isMobile} />}
+        {activeTab === 3 && <MarketPairInfo data={selectedData} isMobile={isMobile} />}
       </Box>
     </Paper>
   );
@@ -291,6 +333,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
 
 PriceDifferentialAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
+  windowWidth: PropTypes.number.isRequired,
 };
 
 export default PriceDifferentialAnalysis;

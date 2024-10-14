@@ -11,19 +11,22 @@ import {
   Stack,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { drawerWidth } from '../../styles/LayoutStyles';
+import { drawerWidth } from '../../styles/LayoutStyles'
 import CommoditySelector from './CommoditySelector';
 import RegimeSelector from './RegimeSelector';
 import InfoIcon from '@mui/icons-material/Info';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
-const SidebarDrawer = styled(Drawer)(({ theme }) => ({
+const SidebarDrawer = styled(Drawer)(({ theme, open }) => ({
   '& .MuiDrawer-paper': {
-    width: drawerWidth,
     boxSizing: 'border-box',
-    height: '100vh', // Ensure full height
-    [theme.breakpoints.up('sm')]: {
-      position: 'relative',
-    },
+    height: '100vh',
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.standard,
+    }),
+    overflowX: 'hidden',
+    width: open ? drawerWidth : 0,
   },
 }));
 
@@ -38,23 +41,21 @@ const Sidebar = ({
   setSidebarOpen,
   isSmUp,
   onMethodologyClick,
+  onTutorialsClick,
   selectedRegimes,
   setSelectedRegimes,
   onOpenWelcomeModal,
 }) => {
-
-  // Handle analysis button clicks
   const handleAnalysisChange = useCallback(
     (analysis) => {
       setSelectedAnalysis(analysis);
       if (!isSmUp) {
-        setSidebarOpen(false); // Close sidebar on mobile after selection
+        setSidebarOpen(false);
       }
     },
     [setSelectedAnalysis, isSmUp, setSidebarOpen]
   );
 
-  // Handle commodity selection
   const handleCommoditySelect = useCallback(
     (commodity) => {
       setSelectedCommodity(commodity);
@@ -62,7 +63,6 @@ const Sidebar = ({
     [setSelectedCommodity]
   );
 
-  // Handle regimes selection
   const handleRegimesSelect = useCallback(
     (regimes) => {
       setSelectedRegimes(regimes);
@@ -70,26 +70,22 @@ const Sidebar = ({
     [setSelectedRegimes]
   );
 
-  // Memoize sidebar content for performance
   const sidebarContent = useMemo(
     () => (
       <Box sx={{ p: 2 }}>
         <Stack spacing={3}>
-          {/* Commodity Selector */}
           <CommoditySelector
             commodities={commodities}
             selectedCommodity={selectedCommodity}
             onSelectCommodity={handleCommoditySelect}
           />
 
-          {/* Regime Selector */}
           <RegimeSelector
             regimes={regimes}
             selectedRegimes={selectedRegimes}
             onSelectRegimes={handleRegimesSelect}
           />
 
-          {/* Analysis Buttons */}
           <Stack spacing={2}>
             <Button
               variant={selectedAnalysis === 'ecm' ? 'contained' : 'outlined'}
@@ -115,28 +111,28 @@ const Sidebar = ({
             >
               Spatial Analysis
             </Button>
-            {/* Tutorials Button */}
-            <Button
-              variant={selectedAnalysis === 'tutorials' ? 'contained' : 'outlined'}
-              color="primary"
-              fullWidth
-              onClick={() => handleAnalysisChange('tutorials')}
-            >
-              Tutorials
-            </Button>
           </Stack>
 
-          {/* Methodology Button */}
           <Button
             variant="contained"
             color="secondary"
             fullWidth
             onClick={onMethodologyClick}
+            startIcon={<InfoIcon />}
           >
             Methodology
           </Button>
 
-          {/* Welcome Modal Button */}
+          <Button
+            variant="contained"
+            color="secondary"
+            fullWidth
+            onClick={onTutorialsClick}
+            startIcon={<MenuBookIcon />}
+          >
+            Tutorials
+          </Button>
+
           <Button
             variant="outlined"
             color="primary"
@@ -159,6 +155,7 @@ const Sidebar = ({
       selectedAnalysis,
       handleAnalysisChange,
       onMethodologyClick,
+      onTutorialsClick,
       onOpenWelcomeModal,
     ]
   );
@@ -171,13 +168,12 @@ const Sidebar = ({
       open={sidebarOpen}
       onClose={() => setSidebarOpen(false)}
       ModalProps={{
-        keepMounted: true, // Better open performance on mobile.
+        keepMounted: true,
       }}
       anchor="left"
     >
       <Toolbar />
       <Divider />
-      {/* Sidebar Content */}
       {sidebarContent}
     </SidebarDrawer>
   );
@@ -194,6 +190,7 @@ Sidebar.propTypes = {
   setSidebarOpen: PropTypes.func.isRequired,
   isSmUp: PropTypes.bool.isRequired,
   onMethodologyClick: PropTypes.func.isRequired,
+  onTutorialsClick: PropTypes.func.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
   setSelectedRegimes: PropTypes.func.isRequired,
   onOpenWelcomeModal: PropTypes.func.isRequired,

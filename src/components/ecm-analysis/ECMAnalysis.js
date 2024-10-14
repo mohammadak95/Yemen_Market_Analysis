@@ -6,7 +6,7 @@ import {
   Paper,
   Typography,
   CircularProgress,
-  Tooltip,
+  Tooltip as MuiTooltip,
   IconButton,
   ToggleButtonGroup,
   ToggleButton,
@@ -21,7 +21,7 @@ import SouthIcon from '@mui/icons-material/South';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PropTypes from 'prop-types';
-import { useECMData } from '../../hooks/useECMData'; // Adjusted import
+import { useECMData } from '../../hooks/useECMData';
 import ECMTabs from '../common/ECMTabs';
 import SummaryTable from './SummaryTable';
 import DiagnosticsTable from './DiagnosticsTable';
@@ -31,13 +31,18 @@ import GrangerCausalityChart from './GrangerCausalityChart';
 import SpatialAutocorrelationChart from './SpatialAutocorrelationChart';
 import { saveAs } from 'file-saver';
 import ECMTutorial from './ECMTutorial';
+import { useTheme } from '@mui/material/styles';
+import { jsonToCsv } from '../../utils/jsonToCsv';
 
-const ECMAnalysis = ({ selectedCommodity }) => {
+const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
+  const theme = useTheme();
+  const isMobile = windowWidth < theme.breakpoints.values.sm;
+
   const [activeTab, setActiveTab] = useState(0);
   const [analysisType, setAnalysisType] = useState('unified');
   const [direction, setDirection] = useState('northToSouth');
 
-  const unifiedRegime = 'unified'; // Fixed regime
+  const unifiedRegime = 'unified';
 
   // Fetch Unified and Directional ECM Data
   const {
@@ -79,10 +84,14 @@ const ECMAnalysis = ({ selectedCommodity }) => {
       setSelectedData(foundData);
     } else if (analysisType === 'directional' && directionalStatus === 'succeeded' && directionalData) {
       const directionData = directionalData[direction];
-      const foundData = directionData.find(
-        (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase()
-      );
-      setSelectedData(foundData);
+      if (directionData) {
+        const foundData = directionData.find(
+          (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase()
+        );
+        setSelectedData(foundData || null);
+      } else {
+        setSelectedData(null);
+      }
     }
   }, [
     analysisType,
@@ -95,15 +104,35 @@ const ECMAnalysis = ({ selectedCommodity }) => {
     unifiedRegime,
   ]);
 
-  // Handle Download as JSON
-  const handleDownloadJson = () => {
+  // Handle Download as CSV
+  const handleDownloadCsv = () => {
     if (!selectedData) {
       console.warn('No ECM data available to download.');
       return;
     }
 
-    const blob = new Blob([JSON.stringify(selectedData, null, 2)], { type: 'application/json' });
-    saveAs(blob, `${selectedCommodity}_ECM_Analysis.json`);
+    const dataToDownload = {
+      Summary: {
+        AIC: selectedData.regression_results?.aic?.toFixed(2) || 'N/A',
+        BIC: selectedData.regression_results?.bic?.toFixed(2) || 'N/A',
+        HQIC: selectedData.regression_results?.hqic?.toFixed(2) || 'N/A',
+        Alpha: selectedData.regression_results?.alpha?.toFixed(4) || 'N/A',
+        Beta: selectedData.regression_results?.beta?.toFixed(4) || 'N/A',
+        Gamma: selectedData.regression_results?.gamma?.toFixed(4) || 'N/A',
+      },
+      Diagnostics: selectedData.diagnostics,
+      IRF: selectedData.irf,
+      Residuals: selectedData.residuals,
+      RegressionResults: selectedData.regression_results,
+      GrangerCausality: selectedData.granger_causality,
+      SpatialAutocorrelation: selectedData.spatial_autocorrelation,
+      MarketPairInfo: selectedData.market_pair_info,
+      // Add other relevant data fields as needed
+    };
+
+    const csv = jsonToCsv([dataToDownload]);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `${selectedCommodity}_ECM_Analysis.csv`);
   };
 
   // Loading State
@@ -112,9 +141,18 @@ const ECMAnalysis = ({ selectedCommodity }) => {
     (analysisType === 'directional' && directionalStatus === 'loading')
   ) {
     return (
-      <Box display="flex" flexDirection="column" alignItems="center" minHeight="200px" mt={4}>
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        minHeight="200px"
+        mt={4}
+      >
         <CircularProgress size={60} />
-        <Typography variant="body1" sx={{ mt: 2, fontSize: '1.2rem' }}>
+        <Typography
+          variant="body1"
+          sx={{ mt: 2, fontSize: isMobile ? '1rem' : '1.2rem' }}
+        >
           Loading ECM Analysis results...
         </Typography>
       </Box>
@@ -149,15 +187,16 @@ const ECMAnalysis = ({ selectedCommodity }) => {
   // Define Tab Labels and Content Based on Analysis Type
   let tabLabels = ['Summary', 'Diagnostics', 'IRF', 'Residuals', 'Granger Causality'];
   let tabContent = [
-    <SummaryTable key="summary" data={selectedData} />,
-    <DiagnosticsTable key="diagnostics" diagnostics={selectedData.diagnostics} />,
-    <IRFChart key="irf" irfData={selectedData.irf} />,
+    <SummaryTable key="summary" data={selectedData} isMobile={isMobile} />,
+    <DiagnosticsTable key="diagnostics" diagnostics={selectedData.diagnostics} isMobile={isMobile} />,
+    <IRFChart key="irf" irfData={selectedData.irf} isMobile={isMobile} />,
     <ResidualsChart
       key="residuals"
       residuals={selectedData.residuals}
       fittedValues={selectedData.fitted_values}
+      isMobile={isMobile}
     />,
-    <GrangerCausalityChart key="grangerCausality" grangerData={selectedData.granger_causality} />,
+    <GrangerCausalityChart key="grangerCausality" grangerData={selectedData.granger_causality} isMobile={isMobile} />,
   ];
 
   // Append Spatial Autocorrelation for Unified ECM
@@ -167,26 +206,46 @@ const ECMAnalysis = ({ selectedCommodity }) => {
       <SpatialAutocorrelationChart
         key="spatialAutocorrelation"
         spatialData={selectedData.spatial_autocorrelation}
+        isMobile={isMobile}
       />
     );
   }
 
   return (
-    <Paper elevation={3} sx={{ mt: 4, p: { xs: 1, sm: 2 }, width: '100%' }}>
+    <Paper
+      elevation={3}
+      sx={{
+        mt: 4,
+        p: { xs: 1, sm: 2 },
+        width: '100%',
+        backgroundColor: theme.palette.background.paper,
+      }}
+    >
       <Box sx={{ p: 2 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        <Typography
+          variant={isMobile ? 'h5' : 'h4'}
+          gutterBottom
+          sx={{
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            fontSize: isMobile ? '1.5rem' : '2rem',
+          }}
+        >
           ECM Analysis: {selectedCommodity}
-          <Tooltip title="Error Correction Model (ECM) analysis examines the short-term and long-term relationships between variables.">
+          <MuiTooltip title="Error Correction Model (ECM) analysis examines the short-term and long-term relationships between variables.">
             <IconButton size="small" sx={{ ml: 1 }}>
-              <InfoIcon fontSize="large" />
+              <InfoIcon fontSize={isMobile ? 'medium' : 'large'} />
             </IconButton>
-          </Tooltip>
+          </MuiTooltip>
         </Typography>
         <Box
           sx={{
             display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
+            flexDirection: isMobile ? 'column' : 'row',
             alignItems: 'center',
+            justifyContent: 'center',
             mb: 2,
           }}
         >
@@ -195,7 +254,7 @@ const ECMAnalysis = ({ selectedCommodity }) => {
             exclusive
             onChange={handleAnalysisTypeChange}
             aria-label="ECM analysis type"
-            sx={{ mr: 2, mb: { xs: 2, sm: 0 } }}
+            sx={{ mr: isMobile ? 0 : 2, mb: { xs: 2, sm: 0 } }}
           >
             <ToggleButton value="unified" aria-label="Unified ECM">
               Unified ECM
@@ -222,20 +281,27 @@ const ECMAnalysis = ({ selectedCommodity }) => {
             </ToggleButtonGroup>
           )}
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
           <Button
             variant="contained"
             color="primary"
             startIcon={<DownloadIcon />}
-            onClick={handleDownloadJson}
+            onClick={handleDownloadCsv}
           >
-            Download JSON
+            Download CSV
           </Button>
         </Box>
 
         <ECMTutorial />
       </Box>
-      <ECMTabs activeTab={activeTab} handleTabChange={handleTabChange} tabLabels={tabLabels}>
+      <ECMTabs
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
+        tabLabels={tabLabels}
+        isMobile={isMobile}
+        centeredTabs
+      >
         {tabContent}
       </ECMTabs>
       <Accordion>
@@ -243,7 +309,7 @@ const ECMAnalysis = ({ selectedCommodity }) => {
           <Typography variant="h6">Interpretation Guide</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <Typography variant="body1" sx={{ fontSize: '1rem' }}>
+          <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
             This ECM analysis provides insights into the relationship between commodity prices and conflict
             intensity. Key points to consider:
             <ul>
@@ -262,7 +328,7 @@ const ECMAnalysis = ({ selectedCommodity }) => {
               <li>
                 The <strong>Granger Causality</strong> examines predictive relationships.
               </li>
-              {analysisType === 'unified' && (
+              {analysisType === 'unified' && selectedData.spatial_autocorrelation && (
                 <li>
                   The <strong>Spatial Autocorrelation</strong> tab indicates geographical dependencies.
                 </li>
@@ -277,6 +343,7 @@ const ECMAnalysis = ({ selectedCommodity }) => {
 
 ECMAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
+  windowWidth: PropTypes.number.isRequired,
 };
 
 export default ECMAnalysis;

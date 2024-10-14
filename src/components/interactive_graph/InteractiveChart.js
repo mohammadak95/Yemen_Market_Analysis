@@ -65,6 +65,7 @@ const InteractiveChart = ({
   data,
   selectedCommodity,
   selectedRegimes,
+  windowWidth, // New prop to receive window width
 }) => {
   const theme = useTheme(); // Access the theme
 
@@ -73,6 +74,9 @@ const InteractiveChart = ({
   const [priceType, setPriceType] = useState('lcu'); // 'lcu' or 'usd'
   const [applySeasonalAdj, setApplySeasonalAdj] = useState(false);
   const [applySmooth, setApplySmooth] = useState(false);
+
+  // Determine if the device is mobile based on windowWidth
+  const isMobile = windowWidth < theme.breakpoints.values.sm;
 
   // Memoized chart data to optimize performance
   const chartData = useMemo(() => {
@@ -190,13 +194,16 @@ const InteractiveChart = ({
             text: 'Date',
             color: theme.palette.text.primary,
             font: {
-              size: 14,
+              size: isMobile ? 12 : 14,
               weight: 'bold',
             },
           },
           ticks: {
-            maxTicksLimit: 10,
+            maxTicksLimit: isMobile ? 5 : 10,
             color: theme.palette.text.primary,
+            font: {
+              size: isMobile ? 10 : 12,
+            },
           },
           grid: {
             color: theme.palette.divider,
@@ -212,12 +219,15 @@ const InteractiveChart = ({
               priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
             color: theme.palette.text.primary,
             font: {
-              size: 14,
+              size: isMobile ? 12 : 14,
               weight: 'bold',
             },
           },
           ticks: {
             color: theme.palette.text.primary,
+            font: {
+              size: isMobile ? 10 : 12,
+            },
             callback: (value) => {
               return value.toLocaleString();
             },
@@ -235,13 +245,16 @@ const InteractiveChart = ({
             text: 'Conflict Intensity',
             color: theme.palette.text.primary,
             font: {
-              size: 14,
+              size: isMobile ? 12 : 14,
               weight: 'bold',
             },
           },
           ticks: {
             beginAtZero: true,
             color: theme.palette.text.primary,
+            font: {
+              size: isMobile ? 10 : 12,
+            },
             callback: (value) => {
               return value.toLocaleString();
             },
@@ -270,21 +283,26 @@ const InteractiveChart = ({
           backgroundColor: theme.palette.background.paper,
           titleColor: theme.palette.text.primary,
           bodyColor: theme.palette.text.secondary,
+          borderColor: theme.palette.divider,
+          borderWidth: 1,
         },
         legend: {
-          position: 'bottom',
+          position: isMobile ? 'bottom' : 'right',
           labels: {
             boxWidth: 12,
             padding: 15,
             color: theme.palette.text.primary,
             font: {
-              size: 12,
+              size: isMobile ? 10 : 12,
             },
           },
         },
+        title: {
+          display: false,
+        },
       },
     }),
-    [showConflictIntensity, priceType, theme.palette]
+    [showConflictIntensity, priceType, theme.palette, isMobile]
   );
 
   // Display a prompt if no data is available
@@ -311,10 +329,10 @@ const InteractiveChart = ({
           container
           spacing={2}
           alignItems="center"
-          justifyContent="center"
+          justifyContent={isMobile ? 'center' : 'flex-start'}
         >
-          {/* Toggle Controls */}
-          <Grid item xs={12} md="auto">
+          {/* Price Type Toggle */}
+          <Grid item xs={12} sm="auto">
             <ToggleButtonGroup
               value={priceType}
               exclusive
@@ -323,6 +341,7 @@ const InteractiveChart = ({
               }}
               aria-label="Price Type"
               size="small"
+              fullWidth={isMobile}
             >
               <ToggleButton value="lcu" aria-label="Price in LCU">
                 LCU
@@ -333,13 +352,15 @@ const InteractiveChart = ({
             </ToggleButtonGroup>
           </Grid>
 
-          <Grid item xs={12} md="auto">
+          {/* Seasonal Adjustment Toggle */}
+          <Grid item xs={12} sm="auto">
             <ToggleButtonGroup
               value={applySeasonalAdj}
               exclusive
               onChange={() => setApplySeasonalAdj(!applySeasonalAdj)}
               aria-label="Seasonal Adjustment"
               size="small"
+              fullWidth={isMobile}
             >
               <ToggleButton value={true} selected={applySeasonalAdj}>
                 Seasonal Adjustment
@@ -347,13 +368,15 @@ const InteractiveChart = ({
             </ToggleButtonGroup>
           </Grid>
 
-          <Grid item xs={12} md="auto">
+          {/* Smoothing Toggle */}
+          <Grid item xs={12} sm="auto">
             <ToggleButtonGroup
               value={applySmooth}
               exclusive
               onChange={() => setApplySmooth(!applySmooth)}
               aria-label="Smoothing"
               size="small"
+              fullWidth={isMobile}
             >
               <ToggleButton value={true} selected={applySmooth}>
                 Smoothing
@@ -361,7 +384,8 @@ const InteractiveChart = ({
             </ToggleButtonGroup>
           </Grid>
 
-          <Grid item xs={12} md="auto">
+          {/* Conflict Intensity Toggle */}
+          <Grid item xs={12} sm="auto">
             <ToggleButtonGroup
               value={showConflictIntensity}
               exclusive
@@ -370,6 +394,7 @@ const InteractiveChart = ({
               }
               aria-label="Conflict Intensity"
               size="small"
+              fullWidth={isMobile}
             >
               <ToggleButton value={true} selected={showConflictIntensity}>
                 Conflict Intensity
@@ -378,7 +403,7 @@ const InteractiveChart = ({
           </Grid>
 
           {/* Help Icon */}
-          <Grid item xs={12} md="auto">
+          <Grid item xs={12} sm="auto">
             <MuiTooltip title="Use the toggles to customize the chart display.">
               <IconButton>
                 <HelpOutlineIcon />
@@ -415,6 +440,7 @@ InteractiveChart.propTypes = {
   ).isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  windowWidth: PropTypes.number.isRequired, // New prop for window width
 };
 
 export default InteractiveChart;

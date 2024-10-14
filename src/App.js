@@ -1,4 +1,4 @@
-//src/App.js
+// src/App.js
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
@@ -13,13 +13,15 @@ import useData from './hooks/useData';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import MethodologyModal from './components/methedology/MethodologyModal';
-import WelcomeModal from './WelcomeModal';
+import TutorialsModal from './components/tutorials/TutorialsModal';
+import WelcomeModal from './components/common/WelcomeModal';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { LayoutContainer, MainContent, SidebarWrapper } from './styles/LayoutStyles';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import AppBar from '@mui/material/AppBar';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
+import useWindowSize from './hooks/useWindowSize';
 
 const drawerWidth = 240;
 
@@ -27,15 +29,14 @@ const StyledAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(['margin', 'width'], {
+  transition: theme.transitions.create(['margin-left', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  ...(open &&
-    theme.breakpoints.up('sm') && {
-      marginLeft: drawerWidth,
-      width: `calc(100% - ${drawerWidth}px)`,
-    }),
+  [theme.breakpoints.up('sm')]: {
+    width: `calc(100% - ${open ? drawerWidth : 0}px)`,
+    marginLeft: open ? `${drawerWidth}px` : 0,
+  },
 }));
 
 const App = React.memo(function App() {
@@ -52,10 +53,13 @@ const App = React.memo(function App() {
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedAnalysis, setSelectedAnalysis] = useState('');
   const [methodologyModalOpen, setMethodologyModalOpen] = useState(false);
+  const [tutorialsModalOpen, setTutorialsModalOpen] = useState(false);
   const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']);
   const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
 
   const { data, loading, error } = useData();
+
+  const windowSize = useWindowSize();
 
   React.useEffect(() => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
@@ -78,6 +82,14 @@ const App = React.memo(function App() {
 
   const handleCloseMethodology = useCallback(() => {
     setMethodologyModalOpen(false);
+  }, []);
+
+  const handleShowTutorials = useCallback(() => {
+    setTutorialsModalOpen(true);
+  }, []);
+
+  const handleCloseTutorials = useCallback(() => {
+    setTutorialsModalOpen(false);
   }, []);
 
   const handleToggleDarkMode = useCallback(() => {
@@ -130,7 +142,7 @@ const App = React.memo(function App() {
             </Toolbar>
           </StyledAppBar>
 
-          <SidebarWrapper>
+          <SidebarWrapper open={sidebarOpen && isSmUp}>
             <Sidebar
               commodities={data?.commodities || []}
               regimes={data?.regimes || []}
@@ -142,23 +154,26 @@ const App = React.memo(function App() {
               setSidebarOpen={setSidebarOpen}
               isSmUp={isSmUp}
               onMethodologyClick={handleShowMethodology}
+              onTutorialsClick={handleShowTutorials}
               selectedRegimes={selectedGraphRegimes}
               setSelectedRegimes={handleSetSelectedGraphRegimes}
               onOpenWelcomeModal={handleOpenWelcomeModal}
             />
           </SidebarWrapper>
 
-          <MainContent open={sidebarOpen && isSmUp}>
+          <MainContent>
             <Toolbar />
             <Dashboard
               data={data}
               selectedCommodity={selectedCommodity}
               selectedRegimes={selectedGraphRegimes}
               selectedAnalysis={selectedAnalysis}
+              windowWidth={windowSize.width} // Optional: Pass window size if needed
             />
           </MainContent>
 
           <MethodologyModal open={methodologyModalOpen} onClose={handleCloseMethodology} />
+          <TutorialsModal open={tutorialsModalOpen} onClose={handleCloseTutorials} />
           <WelcomeModal open={welcomeModalOpen} onClose={handleCloseWelcomeModal} />
         </LayoutContainer>
       </ErrorBoundary>

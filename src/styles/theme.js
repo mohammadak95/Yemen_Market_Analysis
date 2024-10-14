@@ -130,4 +130,4 @@ export const darkThemeWithOverrides = createTheme(
   themeOverrides
 );
 
-export default lightThemeWithOverrides; // Default export can be adjusted as needed
+export default lightThemeWithOverrides;

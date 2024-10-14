@@ -7,7 +7,7 @@ import { useTheme } from '@mui/material/styles';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
-import AnalysisWrapper from './components/AnalysisWrapper'; // Ensure correct import path
+import AnalysisWrapper from './utils/AnalysisWrapper'; // Ensure correct import path
 
 // Lazy load analysis components
 const ECMAnalysis = React.lazy(() =>
@@ -54,8 +54,10 @@ const Dashboard = React.memo(
     selectedAnalysis,
     selectedCommodity,
     selectedRegimes,
+    windowWidth, // New required prop for window width
   }) => {
     const theme = useTheme();
+    const isMobile = windowWidth < theme.breakpoints.values.sm; // Determine if the device is mobile
 
     // Memoize processedData to optimize performance
     const processedData = useMemo(() => {
@@ -99,9 +101,28 @@ const Dashboard = React.memo(
           data={processedData}
           selectedCommodity={selectedCommodity}
           selectedRegimes={selectedRegimes}
+          windowWidth={windowWidth} // Pass windowWidth for responsiveness
         />
       );
-    }, [processedData, selectedCommodity, selectedRegimes]);
+    }, [processedData, selectedCommodity, selectedRegimes, windowWidth]);
+
+    // Render the analysis component
+    const renderAnalysisComponent = useCallback(() => {
+      if (selectedAnalysis && AnalysisComponent) {
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <AnalysisWrapper>
+              <AnalysisComponent
+                selectedCommodity={selectedCommodity}
+                windowWidth={windowWidth} // Pass windowWidth for responsiveness
+                // If AnalysisComponent requires other props, pass them here
+              />
+            </AnalysisWrapper>
+          </Suspense>
+        );
+      }
+      return null;
+    }, [selectedAnalysis, AnalysisComponent, selectedCommodity, windowWidth]);
 
     return (
       <Box
@@ -109,27 +130,28 @@ const Dashboard = React.memo(
           flexGrow: 1,
           p: { xs: 2, sm: 3 },
           backgroundColor: theme.palette.background.default,
-          minHeight: 'calc(100vh - 64px)',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
         }}
       >
-        <Grid container spacing={2}>
+        <Grid container spacing={isMobile ? 2 : 4} sx={{ flexGrow: 1 }}>
           {/* Interactive Chart Section */}
           <Grid item xs={12}>
-            {renderInteractiveChart()}
+            <Box
+              sx={{
+                width: '100%',
+                height: isMobile ? '300px' : '500px', // Adjust height based on device
+              }}
+            >
+              {renderInteractiveChart()}
+            </Box>
           </Grid>
 
           {/* Analysis Components Section */}
           {selectedAnalysis && AnalysisComponent && (
             <Grid item xs={12}>
-              <Suspense fallback={<LoadingSpinner />}>
-                {/* Wrap Fade inside Suspense to ensure child is loaded */}
-                <AnalysisWrapper>
-                  <AnalysisComponent
-                    selectedCommodity={selectedCommodity}
-                    selectedRegime="unified"
-                  />
-                </AnalysisWrapper>
-              </Suspense>
+              {renderAnalysisComponent()}
             </Grid>
           )}
         </Grid>
@@ -171,6 +193,7 @@ Dashboard.propTypes = {
   selectedAnalysis: PropTypes.string.isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  windowWidth: PropTypes.number.isRequired, // Changed to required
 };
 
 export default Dashboard;
