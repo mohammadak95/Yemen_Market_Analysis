@@ -51,7 +51,7 @@ parameters = config.get('parameters', {})
 logging_config = parameters.get('logging', {})
 
 # Extract logging parameters
-log_level = logging_config.get('level', 'INFO').upper()
+log_level = logging_config.get('level', 'DEBUG').upper()  # Set to 'DEBUG' for detailed logs
 log_format = logging_config.get('format', '%(asctime)s - %(levelname)s - %(message)s')
 
 # Define directory paths from config
@@ -76,7 +76,7 @@ naturalearth_lowres = Path(files.get('naturalearth_lowres', 'external_data/natur
 
 # Initialize logging
 logging.basicConfig(
-    level=getattr(logging, log_level, logging.INFO),
+    level=logging.DEBUG,  # Force DEBUG level for detailed logs
     format=log_format,
     handlers=[
         logging.FileHandler(log_dir / 'price_differential_analysis.log'),
@@ -390,29 +390,32 @@ def run_price_differential_model(data):
             logger.warning(f"{missing_other_market} entries have missing 'other_market'. These will be excluded.")
             df = df.dropna(subset=['other_market'])
 
+        # Reset index to ensure alignment
+        df = df.reset_index(drop=True)
+
         # Prepare the data
         X_columns = ['distance', 'conflict_correlation']
         if not all(col in df.columns for col in X_columns):
             logger.error(f"Missing required predictor columns: {X_columns}")
             return None
-        X = df[X_columns]
-        y = df['price_differential'].apply(lambda x: x[-1] if isinstance(x, list) and len(x) > 0 else np.nan)  # Use the last price differential value
+        X = df[X_columns].reset_index(drop=True)
+        y = df['price_differential'].apply(lambda x: x[-1] if isinstance(x, list) and len(x) > 0 else np.nan).reset_index(drop=True)
 
         # Drop rows with NaNs or infinite values in y
         valid_mask_y = y.replace([np.inf, -np.inf], np.nan).notnull()
-        X = X[valid_mask_y]
-        y = y[valid_mask_y]
-        logger.debug(f"After removing NaNs/infs in y - X shape: {X.shape}, y shape: {y.shape}")
 
         # Further drop rows with NaNs or infinite values in X
         valid_mask_X = X.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)
-        combined_valid_mask = valid_mask_y & valid_mask_X
-        X = X[combined_valid_mask]
-        y = y[combined_valid_mask]
-        logger.debug(f"After removing NaNs/infs in X - X shape: {X.shape}, y shape: {y.shape}")
 
-        # **New Debugging: Align 'df' with 'combined_valid_mask'**
-        df_filtered = df[combined_valid_mask].copy()
+        # Create combined mask
+        combined_valid_mask = valid_mask_y & valid_mask_X
+
+        # Apply combined mask
+        X = X[combined_valid_mask].reset_index(drop=True)
+        y = y[combined_valid_mask].reset_index(drop=True)
+        df_filtered = df[combined_valid_mask].reset_index(drop=True)
+
+        logger.debug(f"After cleaning - X shape: {X.shape}, y shape: {y.shape}")
         logger.debug(f"Filtered df shape: {df_filtered.shape}")
         logger.debug(f"Filtered df columns: {df_filtered.columns.tolist()}")
         logger.debug(f"Filtered df sample data:\n{df_filtered.head()}")
@@ -436,17 +439,15 @@ def run_price_differential_model(data):
         logger.debug("Added constant term to X")
 
         # Combine X and y for panel models
-        # Here, assuming each row is a unique entity based on base_market and other_market
         # Create a unique identifier for each entity
         df_entities = df_filtered[['base_market', 'other_market']].drop_duplicates().reset_index(drop=True)
         df_entities['entity_id'] = df_entities.index
         df_entities = df_entities.set_index(['base_market', 'other_market'])
 
         # Merge to get entity_id in panel_df
-        panel_df = pd.concat([y, X], axis=1).reset_index()
-        panel_df = panel_df.merge(df_entities, on=['base_market', 'other_market'], how='left')
+        panel_df = pd.concat([df_filtered[['base_market', 'other_market']].reset_index(drop=True), y, X], axis=1)
+        panel_df = panel_df.merge(df_entities.reset_index(), on=['base_market', 'other_market'], how='left')
         panel_df = panel_df.set_index(['entity_id'])
-        panel_df = panel_df.dropna(subset=['entity_id'])
 
         # Ensure 'price_differential' is in panel_df
         panel_df.rename(columns={'price_differential': 'price_differential'}, inplace=True)
@@ -461,8 +462,17 @@ def run_price_differential_model(data):
         # 1. Ordinary Least Squares (OLS) with Clustered Standard Errors
         logger.info("Estimating OLS model with clustered standard errors")
         try:
-            groups = df_filtered['base_market']
-            ols_model = sm.OLS(y, X).fit(cov_type='cluster', cov_kwds={'groups': groups})
+            # Use 'other_market' as groups
+            groups = df_filtered['other_market']
+            num_groups = groups.nunique()
+            logger.debug(f"Number of unique groups: {num_groups}")
+
+            if num_groups < 2:
+                logger.error("Not enough groups to compute clustered standard errors. Proceeding with robust standard errors.")
+                ols_model = sm.OLS(y, X).fit(cov_type='HC1')  # Using robust standard errors
+            else:
+                ols_model = sm.OLS(y, X).fit(cov_type='cluster', cov_kwds={'groups': groups})
+
             results['OLS'] = {
                 'coefficients': ols_model.params.to_dict(),
                 'std_errors': ols_model.bse.to_dict(),
@@ -485,7 +495,15 @@ def run_price_differential_model(data):
         # 2. Fixed Effects (FE) Model
         logger.info("Estimating Fixed Effects model")
         try:
-            fe_model = PanelOLS.from_formula('price_differential ~ distance + conflict_correlation + EntityEffects', panel_df).fit(cov_type='clustered', cluster_entity=True)
+            num_entities = panel_df.index.nunique()
+            logger.debug(f"Number of unique entities: {num_entities}")
+
+            if num_entities < 2:
+                logger.error("Not enough entities to compute clustered standard errors. Proceeding without clustering.")
+                fe_model = PanelOLS.from_formula('price_differential ~ distance + conflict_correlation + EntityEffects', panel_df).fit()
+            else:
+                fe_model = PanelOLS.from_formula('price_differential ~ distance + conflict_correlation + EntityEffects', panel_df).fit(cov_type='clustered', cluster_entity=True)
+
             results['FixedEffects'] = {
                 'coefficients': fe_model.params.to_dict(),
                 'std_errors': fe_model.std_errors.to_dict(),
@@ -503,7 +521,15 @@ def run_price_differential_model(data):
         # 3. Random Effects (RE) Model
         logger.info("Estimating Random Effects model")
         try:
-            re_model = RandomEffects.from_formula('price_differential ~ distance + conflict_correlation', panel_df).fit(cov_type='clustered', cluster_entity=True)
+            num_entities = panel_df.index.nunique()
+            logger.debug(f"Number of unique entities: {num_entities}")
+
+            if num_entities < 2:
+                logger.error("Not enough entities to compute clustered standard errors. Proceeding without clustering.")
+                re_model = RandomEffects.from_formula('price_differential ~ distance + conflict_correlation', panel_df).fit()
+            else:
+                re_model = RandomEffects.from_formula('price_differential ~ distance + conflict_correlation', panel_df).fit(cov_type='clustered', cluster_entity=True)
+
             results['RandomEffects'] = {
                 'coefficients': re_model.params.to_dict(),
                 'std_errors': re_model.std_errors.to_dict(),

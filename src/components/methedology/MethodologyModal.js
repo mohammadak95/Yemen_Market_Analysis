@@ -6,17 +6,18 @@ import {
   DialogContent,
   IconButton,
   Typography,
-  Box,
-  Divider,
   useMediaQuery,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MethodologyContentWrapper from './MethodologyContentWrapper';
 import { useTheme } from '@mui/material/styles';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock'; // Import the custom hook
 
 const MethodologyModal = ({ open, onClose }) => {
   const theme = useTheme();
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
+
+  useBodyScrollLock(open); // Use the custom hook
 
   return (
     <Dialog
@@ -24,11 +25,13 @@ const MethodologyModal = ({ open, onClose }) => {
       onClose={onClose}
       fullScreen={!isSmUp}
       fullWidth
-      maxWidth="md"
+      maxWidth="lg"
+      scroll="paper" // Ensure scrolling within the dialog
       PaperProps={{
         sx: {
           borderRadius: { xs: 0, sm: 2 },
           boxShadow: 3,
+          maxHeight: '90vh', // Control the dialog's max height
         },
       }}
     >
@@ -55,11 +58,8 @@ const MethodologyModal = ({ open, onClose }) => {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers sx={{ p: 0 }}>
-        <Divider />
-        <Box sx={{ p: 2, maxHeight: { xs: 'calc(100vh - 100px)', sm: '60vh' }, overflowY: 'auto' }}>
-          <MethodologyContentWrapper />
-        </Box>
+      <DialogContent dividers sx={{ padding: 2 }}>
+        <MethodologyContentWrapper />
       </DialogContent>
     </Dialog>
   );

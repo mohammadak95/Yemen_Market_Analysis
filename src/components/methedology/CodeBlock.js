@@ -1,3 +1,5 @@
+//src/components/methodology/MethodologyModal.js
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -49,6 +51,7 @@ const CodeBlock = ({ language, code }) => {
           padding: theme.spacing(2),
           fontSize: '0.9rem',
           backgroundColor: 'transparent',
+          overflowX: 'auto', // Added to handle horizontal overflow
         }}
       >
         {code}
