@@ -365,27 +365,9 @@ def handle_high_vif(X, threshold=10):
 
     return X
 
-def run_price_differential_model(data):
-    """Run the price differential model with diversified estimation methods, clustered standard errors, and enhanced diagnostics."""
+def run_price_differential_model(df):
+    """Run price differential model using OLS, Random Effects, and IV2SLS."""
     try:
-        # Flatten nested data and explode the price_differential list
-        df = pd.json_normalize(data)
-        logger.debug(f"DataFrame columns after json_normalize: {df.columns.tolist()}")
-        logger.debug(f"Sample data after json_normalize:\n{df.head()}")
-
-        # Explode the price_differential to create multiple observations per entity
-        df = df.explode('price_differential').reset_index(drop=True)
-        df['price_differential'] = df['price_differential'].astype(float)
-
-        # Create entity_id
-        df['entity_id'] = df.groupby(['base_market', 'other_market']).ngroup()
-
-        # Add a time index
-        df['time'] = df.groupby(['entity_id']).cumcount()
-
-        # Set the index for panel data
-        df.set_index(['entity_id', 'time'], inplace=True)
-
         # Prepare X and y
         X_columns = ['distance', 'conflict_correlation']
         X = df[X_columns]
@@ -453,7 +435,7 @@ def run_price_differential_model(data):
                 't_statistics': re_model.tstats.to_dict(),
                 'p_values': re_model.pvalues.to_dict(),
                 'r_squared': re_model.rsquared,
-                'conf_int': re_model.conf_int().tolist()  # Confidence intervals
+                'conf_int': re_model.conf_int().values.tolist()  # Confidence intervals
             }
         except Exception as e:
             logger.error(f"Error during Random Effects estimation: {e}")
@@ -471,17 +453,22 @@ def run_price_differential_model(data):
             ).fit(cov_type='clustered', clusters=clusters)
 
             # First-stage results for IV
-            first_stage_results = iv_model.first_stage['distance'].summary
+            first_stage_results = iv_model.first_stage.summary
             results['IV2SLS'] = {
                 'coefficients': iv_model.params.to_dict(),
                 'std_errors': iv_model.std_errors.to_dict(),
                 't_statistics': iv_model.tstats.to_dict(),
                 'p_values': iv_model.pvalues.to_dict(),
                 'r_squared': iv_model.rsquared,
-                'conf_int': iv_model.conf_int().tolist(),  # Confidence intervals
-                'first_stage': str(first_stage_results),  # First stage summary
-                'overid_test': str(iv_model.overid) if iv_model.overid else None  # Overidentification test
+                'conf_int': iv_model.conf_int().values.tolist(),  # Confidence intervals
+                'first_stage': str(first_stage_results)  # First stage summary
             }
+
+            # Check if 'overid' exists and add it if available
+            if hasattr(iv_model, 'overid'):
+                results['IV2SLS']['overid_test'] = str(iv_model.overid)
+            else:
+                logger.warning("IV2SLS model does not have an overid attribute. Skipping overid test.")
         except Exception as e:
             logger.warning(f"IV2SLS model estimation failed: {e}")
             logger.debug(f"Detailed error information: {traceback.format_exc()}")
@@ -532,18 +519,10 @@ def run_price_differential_model(data):
 
         # CUSUM Stability Test
         try:
-            # Ensure residuals are a 1D NumPy array
             residuals_array = np.asarray(residuals).flatten()
             cusum_stat, p_value, crit_value = breaks_cusumolsresid(residuals_array)
-            # Extract scalar values if necessary
-            if isinstance(cusum_stat, (np.ndarray, list)):
-                cusum_stat = float(cusum_stat[0])
-            else:
-                cusum_stat = float(cusum_stat)
-            if isinstance(p_value, (np.ndarray, list)):
-                p_value = float(p_value[0])
-            else:
-                p_value = float(p_value)
+            cusum_stat = float(cusum_stat) if isinstance(cusum_stat, (np.ndarray, list)) else cusum_stat
+            p_value = float(p_value) if isinstance(p_value, (np.ndarray, list)) else p_value
             results['diagnostics']['CUSUM'] = {
                 'statistic': cusum_stat,
                 'p-value': p_value
@@ -615,7 +594,6 @@ def main(file_path):
         # Remove any None entries in analysis_args
         analysis_args = [arg for arg in analysis_args if arg[1] is not None]
 
-        # **New Debugging: Inspect analysis_args**
         logger.debug(f"First 5 analysis_args entries: {analysis_args[:5]}")
 
         logger.info(f"Prepared {len(analysis_args)} market pairs for analysis for base market {base_market}")
@@ -664,7 +642,6 @@ def main(file_path):
     output_file = price_diff_results_dir / "price_differential_results.json"
     try:
         with open(output_file, "w") as f:
-            # Custom default function to handle serialization
             def default(o):
                 if isinstance(o, np.ndarray):
                     return o.tolist()
@@ -677,7 +654,7 @@ def main(file_path):
                 elif isinstance(o, datetime):
                     return o.isoformat()
                 else:
-                    return str(o)  # Fallback to string representation
+                    return str(o)
             json.dump(all_results, f, indent=4, default=default)
         logger.info(f"All results saved to {output_file}")
     except Exception as e:

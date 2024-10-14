@@ -54,6 +54,7 @@ const Dashboard = React.memo(
     selectedAnalysis,
     selectedCommodity,
     selectedRegimes,
+    windowWidth,
   }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -112,14 +113,14 @@ const Dashboard = React.memo(
             <AnalysisWrapper>
               <AnalysisComponent
                 selectedCommodity={selectedCommodity}
-                // If AnalysisComponent requires other props, pass them here
+                windowWidth={windowWidth}
               />
             </AnalysisWrapper>
           </Suspense>
         );
       }
       return null;
-    }, [selectedAnalysis, AnalysisComponent, selectedCommodity]);
+    }, [selectedAnalysis, AnalysisComponent, selectedCommodity, windowWidth]);
 
     return (
       <Box
@@ -190,6 +191,7 @@ Dashboard.propTypes = {
   selectedAnalysis: PropTypes.string.isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  windowWidth: PropTypes.number.isRequired,
 };
 
 export default Dashboard;

@@ -168,7 +168,7 @@ const App = React.memo(function App() {
               selectedCommodity={selectedCommodity}
               selectedRegimes={selectedGraphRegimes}
               selectedAnalysis={selectedAnalysis}
-              windowWidth={windowSize.width} // Optional: Pass window size if needed
+              windowWidth={windowSize.width}
             />
           </MainContent>
 

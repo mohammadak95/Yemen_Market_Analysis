@@ -1,5 +1,3 @@
-// src/components/interactive_graph/InteractiveChart.js
-
 import React, { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -424,9 +422,10 @@ const InteractiveChart = ({
 
       <Box
         sx={{
-          height: { xs: '300px', sm: '400px', md: '500px' },
           width: '100%',
+          height: { xs: '300px', sm: '400px', md: '500px' }, // Responsive height
           position: 'relative',
+          mb: 2 // Add bottom margin
         }}
       >
         <Line options={options} data={chartData} />
