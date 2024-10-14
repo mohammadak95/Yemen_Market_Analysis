@@ -11,7 +11,7 @@ import {
   Stack,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { drawerWidth } from '../../styles/LayoutStyles'
+import { drawerWidth } from '../../styles/LayoutStyles';
 import CommoditySelector from './CommoditySelector';
 import RegimeSelector from './RegimeSelector';
 import InfoIcon from '@mui/icons-material/Info';
@@ -115,7 +115,7 @@ const Sidebar = ({
 
           <Button
             variant="contained"
-            color="secondary"
+            sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }} // Red tone for Methodology
             fullWidth
             onClick={onMethodologyClick}
             startIcon={<InfoIcon />}
@@ -125,7 +125,7 @@ const Sidebar = ({
 
           <Button
             variant="contained"
-            color="secondary"
+            sx={{ backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' } }} // Blue tone for Tutorials
             fullWidth
             onClick={onTutorialsClick}
             startIcon={<MenuBookIcon />}
@@ -134,11 +134,11 @@ const Sidebar = ({
           </Button>
 
           <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<InfoIcon />}
+            variant="contained"
+            sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#388e3c' } }} // Green tone for How to Use
             fullWidth
             onClick={onOpenWelcomeModal}
+            startIcon={<InfoIcon />}
           >
             How to Use
           </Button>

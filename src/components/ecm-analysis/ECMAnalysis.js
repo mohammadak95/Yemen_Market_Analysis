@@ -341,6 +341,7 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
   );
 };
 
+// PropTypes validation for props
 ECMAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
   windowWidth: PropTypes.number.isRequired,
