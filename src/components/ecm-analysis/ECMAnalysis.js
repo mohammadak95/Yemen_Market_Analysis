@@ -23,6 +23,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PropTypes from 'prop-types';
 import { useECMData } from '../../hooks/useECMData';
 import ECMTabs from '../common/ECMTabs';
+import ECMKeyInsights from './ECMKeyInsights';
 import SummaryTable from './SummaryTable';
 import DiagnosticsTable from './DiagnosticsTable';
 import IRFChart from './IRFChart';
@@ -210,7 +211,7 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
         p: { xs: 1, sm: 2 },
         width: '100%',
         backgroundColor: theme.palette.background.paper,
-        overflow: 'hidden', // Prevent content from overflowing
+        overflow: 'hidden',
       }}
     >
       <Box sx={{ p: 2 }}>
@@ -329,7 +330,10 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
   
         <ECMTutorial />
       </Box>
-      <Box sx={{ overflowX: 'auto' }}> {/* Make horizontal scrollable if needed */}
+
+      <ECMKeyInsights selectedData={selectedData} />
+      
+      <Box sx={{ overflowX: 'auto' }}>
         <ECMTabs
           activeTab={activeTab}
           handleTabChange={handleTabChange}
@@ -348,6 +352,9 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
             This ECM analysis provides insights into the relationship between commodity prices and conflict
             intensity. Key points to consider:
             <ul>
+              <li>
+                The <strong>Key Insights</strong> section provides a quick overview of the main findings.
+              </li>
               <li>
                 The <strong>Summary</strong> tab shows overall model fit statistics.
               </li>

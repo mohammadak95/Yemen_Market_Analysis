@@ -1,25 +1,59 @@
-// src/components/ecm-analysis/ECMKeyInsights.js
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Typography, Paper, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 
-const ECMKeyInsights = ({ analysisResult }) => {
-  const insights = [
-    {
-      text: `The ECM model for ${analysisResult.model_name} indicates significant findings in the relationship between USD Price and Conflict Intensity.`,
-      condition: analysisResult.model_name,
-    },
-    {
-      text: `The price differential is ${analysisResult.price_differential_description}.`,
-      condition: analysisResult.price_differential_description,
-    },
-    {
-      text: `The model suggests ${analysisResult.model_description}.`,
-      condition: analysisResult.model_description,
-    },
-  ].filter(insight => insight.condition);
+const ECMKeyInsights = ({ selectedData }) => {
+  const generateKeyInsights = () => {
+    const insights = [];
+
+    if (selectedData) {
+      const { alpha, beta, gamma } = selectedData;
+
+      if (alpha != null) {
+        const adjustmentSpeed = Math.abs(alpha);
+        insights.push(
+          `The Error Correction Term (α) is ${alpha.toFixed(4)}, indicating ${
+            alpha < 0 ? 'convergence' : 'divergence'
+          } to long-run equilibrium. The speed of adjustment is ${(adjustmentSpeed * 100).toFixed(2)}% per period.`
+        );
+      }
+
+      if (beta != null) {
+        insights.push(
+          `The long-run relationship coefficient (β) is ${beta.toFixed(4)}, suggesting a ${
+            beta > 0 ? 'positive' : 'negative'
+          } long-term relationship between USD Price and Conflict Intensity.`
+        );
+      }
+
+      if (gamma != null) {
+        insights.push(
+          `The short-term dynamics coefficient (γ) is ${gamma.toFixed(4)}, representing the immediate impact of changes in Conflict Intensity on USD Price.`
+        );
+      }
+
+      if (selectedData.granger_causality && selectedData.granger_causality.conflict_intensity) {
+        const significantLags = Object.entries(selectedData.granger_causality.conflict_intensity)
+          .filter(([, data]) => data.ssr_ftest_pvalue < 0.05)
+          .map(([lag]) => lag);
+        
+        if (significantLags.length > 0) {
+          insights.push(
+            `Granger causality is significant at lag${significantLags.length > 1 ? 's' : ''} ${significantLags.join(', ')}, indicating that past values of Conflict Intensity may help predict future USD Prices.`
+          );
+        } else {
+          insights.push(
+            "There is no evidence of Granger causality, suggesting that past Conflict Intensity values do not significantly predict future USD Prices."
+          );
+        }
+      }
+    }
+
+    return insights;
+  };
+
+  const insights = generateKeyInsights();
 
   return (
     <Paper sx={{ p: 2, mb: 2 }}>
@@ -30,7 +64,7 @@ const ECMKeyInsights = ({ analysisResult }) => {
             <ListItemIcon>
               <InfoIcon color="primary" />
             </ListItemIcon>
-            <ListItemText primary={insight.text} />
+            <ListItemText primary={insight} />
           </ListItem>
         ))}
       </List>
@@ -39,10 +73,13 @@ const ECMKeyInsights = ({ analysisResult }) => {
 };
 
 ECMKeyInsights.propTypes = {
-  analysisResult: PropTypes.shape({
-    model_name: PropTypes.string,
-    price_differential_description: PropTypes.string,
-    model_description: PropTypes.string,
+  selectedData: PropTypes.shape({
+    alpha: PropTypes.number,
+    beta: PropTypes.number,
+    gamma: PropTypes.number,
+    granger_causality: PropTypes.shape({
+      conflict_intensity: PropTypes.object,
+    }),
   }).isRequired,
 };
 
