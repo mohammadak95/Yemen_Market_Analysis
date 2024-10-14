@@ -90,14 +90,13 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   const handleMarketPairChange = (event) => {
     setSelectedMarketPair(event.target.value);
-    setActiveTab(0); // Reset to first tab when market pair changes
+    setActiveTab(0);
   };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  // Handle Download as CSV
   const handleDownloadCsv = () => {
     if (!selectedData) {
       console.warn('No price differential data available to download.');
@@ -128,7 +127,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
     saveAs(blob, `${selectedCommodity}_PriceDifferential_Analysis.csv`);
   };
 
-  // Loading State
   if (status === 'loading') {
     return (
       <Box
@@ -149,7 +147,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
-  // Error State
   if (status === 'failed') {
     return (
       <Box sx={{ p: 2, mt: 4 }}>
@@ -158,7 +155,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
-  // No Data State
   if (!selectedData) {
     return (
       <Box sx={{ p: 2, mt: 4 }}>
@@ -200,7 +196,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
           </MuiTooltip>
         </Typography>
 
-        {/* Improved Controls Layout */}
         <Box
           sx={{
             display: 'flex',
@@ -212,7 +207,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
             flexWrap: 'wrap',
           }}
         >
-          {/* Base Market Select */}
           <FormControl
             variant="outlined"
             size="small"
@@ -241,7 +235,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
             </Select>
           </FormControl>
 
-          {/* Comparison Market Select */}
           <FormControl
             variant="outlined"
             size="small"
@@ -270,7 +263,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
             </Select>
           </FormControl>
 
-          {/* Download CSV Button */}
           <Button
             variant="contained"
             color="primary"
@@ -291,7 +283,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
         <PriceDifferentialTutorial />
       </Box>
 
-      {/* Enhanced Tabs */}
       <Tabs
         value={activeTab}
         onChange={handleTabChange}

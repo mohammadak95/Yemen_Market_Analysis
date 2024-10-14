@@ -44,7 +44,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   const unifiedRegime = 'unified';
 
-  // Fetch Unified and Directional ECM Data
   const {
     unifiedData,
     unifiedStatus,
@@ -63,14 +62,14 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
   const handleAnalysisTypeChange = (event, newType) => {
     if (newType !== null) {
       setAnalysisType(newType);
-      setActiveTab(0); // Reset to first tab when analysis type changes
+      setActiveTab(0);
     }
   };
 
   const handleDirectionChange = (event, newDirection) => {
     if (newDirection !== null) {
       setDirection(newDirection);
-      setActiveTab(0); // Reset to first tab when direction changes
+      setActiveTab(0);
     }
   };
 
@@ -104,7 +103,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     unifiedRegime,
   ]);
 
-  // Handle Download as CSV
   const handleDownloadCsv = () => {
     if (!selectedData) {
       console.warn('No ECM data available to download.');
@@ -126,8 +124,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
       RegressionResults: selectedData.regression_results,
       GrangerCausality: selectedData.granger_causality,
       SpatialAutocorrelation: selectedData.spatial_autocorrelation,
-      MarketPairInfo: selectedData.market_pair_info,
-      // Add other relevant data fields as needed
     };
 
     const csv = jsonToCsv([dataToDownload]);
@@ -135,7 +131,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     saveAs(blob, `${selectedCommodity}_ECM_Analysis.csv`);
   };
 
-  // Loading State
   if (
     (analysisType === 'unified' && unifiedStatus === 'loading') ||
     (analysisType === 'directional' && directionalStatus === 'loading')
@@ -159,7 +154,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
-  // Error State
   if (
     (analysisType === 'unified' && unifiedStatus === 'failed') ||
     (analysisType === 'directional' && directionalStatus === 'failed')
@@ -173,7 +167,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
-  // No Data State
   if (!selectedData) {
     return (
       <Box sx={{ p: 2, mt: 4 }}>
@@ -184,7 +177,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
-  // Define Tab Labels and Content Based on Analysis Type
   let tabLabels = ['Summary', 'Diagnostics', 'IRF', 'Residuals', 'Granger Causality'];
   let tabContent = [
     <SummaryTable key="summary" data={selectedData} isMobile={isMobile} />,
@@ -199,7 +191,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     <GrangerCausalityChart key="grangerCausality" grangerData={selectedData.granger_causality} isMobile={isMobile} />,
   ];
 
-  // Append Spatial Autocorrelation for Unified ECM
   if (analysisType === 'unified' && selectedData.spatial_autocorrelation) {
     tabLabels.push('Spatial Autocorrelation');
     tabContent.push(
@@ -243,153 +234,148 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
         <Box
           sx={{
             display: 'flex',
-            flexDirection: 'row',
+            flexDirection: isMobile ? 'column' : 'row',
             alignItems: 'center',
             justifyContent: 'center',
             mb: 2,
-            gap: 2, // Adds consistent spacing between elements
-            flexWrap: 'wrap', // Allows wrapping on smaller screens if necessary
+            gap: 2,
+            flexWrap: 'wrap',
           }}
         >
-{/* Analysis Type Toggle Buttons */}
-<ToggleButtonGroup
-value={analysisType}
-exclusive
-onChange={handleAnalysisTypeChange}
-aria-label="ECM analysis type"
-size="small" // Smaller size for sleek appearance
-sx={{
-minHeight: '32px', // Ensures consistent height
-}}
->
-<ToggleButton
-value="unified"
-aria-label="Unified ECM"
-sx={{
-fontSize: '0.8rem', // Smaller font size
-padding: '4px 8px', // Reduced padding
-}}
->
-Unified ECM
-</ToggleButton>
-<ToggleButton
-value="directional"
-aria-label="Directional ECM"
-sx={{
-fontSize: '0.8rem',
-padding: '4px 8px',
-}}
->
-Directional ECM
-</ToggleButton>
-</ToggleButtonGroup>
-      {/* Direction Toggle Buttons (Visible only when 'directional' is selected) */}
-      {analysisType === 'directional' && (
-        <ToggleButtonGroup
-          value={direction}
-          exclusive
-          onChange={handleDirectionChange}
-          aria-label="ECM direction"
-          size="small"
-          sx={{
-            minHeight: '32px',
-          }}
-        >
-          <ToggleButton
-            value="northToSouth"
-            aria-label="North to South"
+          <ToggleButtonGroup
+            value={analysisType}
+            exclusive
+            onChange={handleAnalysisTypeChange}
+            aria-label="ECM analysis type"
+            size="small"
             sx={{
-              fontSize: '0.8rem',
-              padding: '4px 8px',
+              minHeight: '32px',
             }}
           >
-            <NorthIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
-            North to South
-          </ToggleButton>
-          <ToggleButton
-            value="southToNorth"
-            aria-label="South to North"
-            sx={{
-              fontSize: '0.8rem',
-              padding: '4px 8px',
-            }}
-          >
-            <SouthIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
-            South to North
-          </ToggleButton>
-        </ToggleButtonGroup>
-      )}
-
-      {/* Download CSV Button */}
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<DownloadIcon />}
-        onClick={handleDownloadCsv}
-        size="medium" // Larger size for prominence
-        sx={{
-          minWidth: '140px', // Ensures adequate width
-          height: '36px', // Consistent height with ToggleButtons
-          fontSize: '0.9rem', // Slightly larger font for readability
-          padding: '6px 16px', // Balanced padding
-        }}
-      >
-        Download CSV
-      </Button>
-    </Box>
-
-    <ECMTutorial />
-  </Box>
-  <ECMTabs
-    activeTab={activeTab}
-    handleTabChange={handleTabChange}
-    tabLabels={tabLabels}
-    isMobile={isMobile}
-    centeredTabs
-  >
-    {tabContent}
-  </ECMTabs>
-  <Accordion>
-    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-      <Typography variant="h6">Interpretation Guide</Typography>
-    </AccordionSummary>
-    <AccordionDetails>
-      <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
-        This ECM analysis provides insights into the relationship between commodity prices and conflict
-        intensity. Key points to consider:
-        <ul>
-          <li>
-            The <strong>Summary</strong> tab shows overall model fit statistics.
-          </li>
-          <li>
-            The <strong>Diagnostics</strong> tab provides tests for model assumptions.
-          </li>
-          <li>
-            The <strong>IRF</strong> tab shows how variables respond to shocks over time.
-          </li>
-          <li>
-            The <strong>Residuals</strong> chart helps assess model accuracy.
-          </li>
-          <li>
-            The <strong>Granger Causality</strong> examines predictive relationships.
-          </li>
-          {analysisType === 'unified' && selectedData?.spatial_autocorrelation && (
-            <li>
-              The <strong>Spatial Autocorrelation</strong> tab indicates geographical dependencies.
-            </li>
+            <ToggleButton
+              value="unified"
+              aria-label="Unified ECM"
+              sx={{
+                fontSize: '0.8rem',
+                padding: '4px 8px',
+              }}
+            >
+              Unified ECM
+            </ToggleButton>
+            <ToggleButton
+              value="directional"
+              aria-label="Directional ECM"
+              sx={{
+                fontSize: '0.8rem',
+                padding: '4px 8px',
+              }}
+            >
+              Directional ECM
+            </ToggleButton>
+          </ToggleButtonGroup>
+          {analysisType === 'directional' && (
+            <ToggleButtonGroup
+              value={direction}
+              exclusive
+              onChange={handleDirectionChange}
+              aria-label="ECM direction"
+              size="small"
+              sx={{
+                minHeight: '32px',
+              }}
+            >
+              <ToggleButton
+                value="northToSouth"
+                aria-label="North to South"
+                sx={{
+                  fontSize: '0.8rem',
+                  padding: '4px 8px',
+                }}
+              >
+                <NorthIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
+                North to South
+              </ToggleButton>
+              <ToggleButton
+                value="southToNorth"
+                aria-label="South to North"
+                sx={{
+                  fontSize: '0.8rem',
+                  padding: '4px 8px',
+                }}
+              >
+                <SouthIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
+                South to North
+              </ToggleButton>
+            </ToggleButtonGroup>
           )}
-        </ul>
-      </Typography>
-    </AccordionDetails>
-  </Accordion>
-</Paper>
-);
+
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadCsv}
+            size="medium"
+            sx={{
+              minWidth: '140px',
+              height: '36px',
+              fontSize: '0.9rem',
+              padding: '6px 16px',
+            }}
+          >
+            Download CSV
+          </Button>
+        </Box>
+
+        <ECMTutorial />
+      </Box>
+      <ECMTabs
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
+        tabLabels={tabLabels}
+        isMobile={isMobile}
+      >
+        {tabContent}
+      </ECMTabs>
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6">Interpretation Guide</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
+            This ECM analysis provides insights into the relationship between commodity prices and conflict
+            intensity. Key points to consider:
+            <ul>
+              <li>
+                The <strong>Summary</strong> tab shows overall model fit statistics.
+              </li>
+              <li>
+                The <strong>Diagnostics</strong> tab provides tests for model assumptions.
+              </li>
+              <li>
+                The <strong>IRF</strong> tab shows how variables respond to shocks over time.
+              </li>
+              <li>
+                The <strong>Residuals</strong> chart helps assess model accuracy.
+              </li>
+              <li>
+                The <strong>Granger Causality</strong> examines predictive relationships.
+              </li>
+              {analysisType === 'unified' && selectedData?.spatial_autocorrelation && (
+                <li>
+                  The <strong>Spatial Autocorrelation</strong> tab indicates geographical dependencies.
+                </li>
+              )}
+            </ul>
+          </Typography>
+        </AccordionDetails>
+      </Accordion>
+    </Paper>
+  );
 };
 
-// PropTypes validation for props
 ECMAnalysis.propTypes = {
-selectedCommodity: PropTypes.string.isRequired,
-windowWidth: PropTypes.number.isRequired,
+  selectedCommodity: PropTypes.string.isRequired,
+  windowWidth: PropTypes.number.isRequired,
 };
 
 export default ECMAnalysis;

@@ -50,7 +50,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     return analysisResults?.find((r) => r.commodity === selectedCommodity);
   }, [analysisResults, selectedCommodity]);
 
-  // Handle Download as CSV
   const handleDownloadCsv = () => {
     if (!currentAnalysis) {
       console.warn('No spatial analysis data available to download.');
@@ -58,7 +57,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     }
 
     const dataToDownload = {
-      // Add specific data fields to download as needed
       ...currentAnalysis,
     };
 
@@ -67,7 +65,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     saveAs(blob, `${selectedCommodity}_Spatial_Analysis.csv`);
   };
 
-  // Loading State
   if (loading) {
     return (
       <Box
@@ -88,7 +85,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
-  // Error State
   if (error) {
     return (
       <Box sx={{ p: 2, mt: 4 }}>
@@ -97,7 +93,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
-  // No Data State
   if (!selectedCommodity || !filteredGeoData) {
     return (
       <Box sx={{ p: 2, mt: 4 }}>
@@ -119,7 +114,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
       }}
     >
       <Box sx={{ p: 2 }}>
-        {/* Title with Info Tooltip */}
         <Typography
           variant={isMobile ? 'h5' : 'h4'}
           gutterBottom
@@ -139,7 +133,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
           </MuiTooltip>
         </Typography>
 
-        {/* Download Button Consolidated in Flex Container */}
         <Box
           sx={{
             display: 'flex',
@@ -169,7 +162,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         </Box>
       </Box>
 
-      {/* Enhanced Tabs */}
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -224,7 +216,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         />
       </Tabs>
 
-      {/* Content Based on Active Tab */}
       <Box sx={{ mt: 2 }}>
         {activeTab === 0 && filteredGeoData && (
           <SpatialMap
