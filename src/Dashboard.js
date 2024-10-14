@@ -2,12 +2,12 @@
 
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Grid } from '@mui/material';
+import { Box, Grid, useMediaQuery } from '@mui/material'; // Import useMediaQuery
 import { useTheme } from '@mui/material/styles';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
-import AnalysisWrapper from './utils/AnalysisWrapper'; // Ensure correct import path
+import AnalysisWrapper from './utils/AnalysisWrapper';
 
 // Lazy load analysis components
 const ECMAnalysis = React.lazy(() =>
@@ -54,10 +54,9 @@ const Dashboard = React.memo(
     selectedAnalysis,
     selectedCommodity,
     selectedRegimes,
-    windowWidth, // New required prop for window width
   }) => {
     const theme = useTheme();
-    const isMobile = windowWidth < theme.breakpoints.values.sm; // Determine if the device is mobile
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Use useMediaQuery
 
     // Memoize processedData to optimize performance
     const processedData = useMemo(() => {
@@ -79,7 +78,7 @@ const Dashboard = React.memo(
         ecm: ECMAnalysis,
         priceDiff: PriceDifferentialAnalysis,
         spatial: SpatialAnalysis,
-        tutorials: Tutorials, // Add Tutorials to the components map
+        tutorials: Tutorials,
       };
       return components[selectedAnalysis] || null;
     }, [selectedAnalysis]);
@@ -101,10 +100,9 @@ const Dashboard = React.memo(
           data={processedData}
           selectedCommodity={selectedCommodity}
           selectedRegimes={selectedRegimes}
-          windowWidth={windowWidth} // Pass windowWidth for responsiveness
         />
       );
-    }, [processedData, selectedCommodity, selectedRegimes, windowWidth]);
+    }, [processedData, selectedCommodity, selectedRegimes]);
 
     // Render the analysis component
     const renderAnalysisComponent = useCallback(() => {
@@ -114,7 +112,6 @@ const Dashboard = React.memo(
             <AnalysisWrapper>
               <AnalysisComponent
                 selectedCommodity={selectedCommodity}
-                windowWidth={windowWidth} // Pass windowWidth for responsiveness
                 // If AnalysisComponent requires other props, pass them here
               />
             </AnalysisWrapper>
@@ -122,13 +119,13 @@ const Dashboard = React.memo(
         );
       }
       return null;
-    }, [selectedAnalysis, AnalysisComponent, selectedCommodity, windowWidth]);
+    }, [selectedAnalysis, AnalysisComponent, selectedCommodity]);
 
     return (
       <Box
         sx={{
           flexGrow: 1,
-          p: { xs: 2, sm: 3 },
+          p: isMobile ? theme.spacing(1) : theme.spacing(2), // Use theme.spacing for padding
           backgroundColor: theme.palette.background.default,
           display: 'flex',
           flexDirection: 'column',
@@ -141,7 +138,7 @@ const Dashboard = React.memo(
             <Box
               sx={{
                 width: '100%',
-                height: isMobile ? '300px' : '500px', // Adjust height based on device
+                height: isMobile ? '300px' : '500px',
               }}
             >
               {renderInteractiveChart()}
@@ -193,7 +190,6 @@ Dashboard.propTypes = {
   selectedAnalysis: PropTypes.string.isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
-  windowWidth: PropTypes.number.isRequired, // Changed to required
 };
 
 export default Dashboard;
