@@ -28,14 +28,12 @@ import {
 import {
   applySeasonalAdjustment,
   applySmoothing,
-} from '../../utils/dataProcessing'; // Data processing functions
+} from '../../utils/dataProcessing';
 
-// Utility function to capitalize words
 const capitalizeWords = (str) => {
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -48,39 +46,34 @@ ChartJS.register(
   Filler
 );
 
-// Predefined color palette
 const COLORS = [
-  'rgba(75, 192, 192, 1)', // Teal
-  'rgba(255, 99, 132, 1)', // Red
-  'rgba(54, 162, 235, 1)', // Blue
-  'rgba(255, 206, 86, 1)', // Yellow
-  'rgba(153, 102, 255, 1)', // Purple
-  'rgba(255, 159, 64, 1)', // Orange
+  'rgba(75, 192, 192, 1)',
+  'rgba(255, 99, 132, 1)',
+  'rgba(54, 162, 235, 1)',
+  'rgba(255, 206, 86, 1)',
+  'rgba(153, 102, 255, 1)',
+  'rgba(255, 159, 64, 1)',
 ];
 
 const InteractiveChart = ({
   data,
   selectedCommodity,
   selectedRegimes,
-  windowWidth, // New prop to receive window width
+  windowWidth,
 }) => {
-  const theme = useTheme(); // Access the theme
+  const theme = useTheme();
 
-  // State for chart controls
   const [showConflictIntensity, setShowConflictIntensity] = useState(true);
-  const [priceType, setPriceType] = useState('lcu'); // 'lcu' or 'usd'
+  const [priceType, setPriceType] = useState('lcu');
   const [applySeasonalAdj, setApplySeasonalAdj] = useState(false);
   const [applySmooth, setApplySmooth] = useState(false);
 
-  // Determine if the device is mobile based on windowWidth
   const isMobile = windowWidth < theme.breakpoints.values.sm;
 
-  // Memoized chart data to optimize performance
   const chartData = useMemo(() => {
     if (!data || !selectedCommodity || selectedRegimes.length === 0)
       return null;
 
-    // Group data by regime
     const dataByRegime = selectedRegimes.map((regime) => ({
       regime,
       data: data.filter(
@@ -90,23 +83,20 @@ const InteractiveChart = ({
       ),
     }));
 
-    // Remove regimes with no data
     const validDataByRegime = dataByRegime.filter(
       (regimeData) => regimeData.data.length > 0
     );
 
     if (validDataByRegime.length === 0) return null;
 
-    // Generate datasets for each regime
     const datasets = [];
 
     validDataByRegime.forEach((regimeData, index) => {
       const color = COLORS[index % COLORS.length];
-      const conflictColor = color.replace('1)', '0.2)'); // Semi-transparent for shaded area
+      const conflictColor = color.replace('1)', '0.2)');
 
       let processedData = regimeData.data;
 
-      // Apply Seasonal Adjustment if enabled
       if (applySeasonalAdj) {
         processedData = applySeasonalAdjustment(
           processedData,
@@ -116,7 +106,6 @@ const InteractiveChart = ({
         );
       }
 
-      // Apply Smoothing if enabled
       if (applySmooth) {
         processedData = applySmoothing(
           processedData,
@@ -126,7 +115,6 @@ const InteractiveChart = ({
         );
       }
 
-      // Price Line Dataset
       datasets.push({
         label: `${capitalizeWords(regimeData.regime)} Price`,
         data: processedData.map((d) => ({
@@ -140,7 +128,6 @@ const InteractiveChart = ({
         tension: 0.3,
       });
 
-      // Conflict Intensity Shaded Area Dataset
       if (showConflictIntensity) {
         datasets.push({
           label: `${capitalizeWords(regimeData.regime)} Conflict Intensity`,
@@ -151,9 +138,9 @@ const InteractiveChart = ({
           borderColor: conflictColor,
           backgroundColor: conflictColor,
           yAxisID: 'y1',
-          fill: 'origin', // Fill from the origin to the line
+          fill: 'origin',
           tension: 0.3,
-          pointRadius: 0, // Hide points for a cleaner area
+          pointRadius: 0,
         });
       }
     });
@@ -171,11 +158,10 @@ const InteractiveChart = ({
     applySmooth,
   ]);
 
-  // Chart options configuration
   const options = useMemo(
     () => ({
       responsive: true,
-      maintainAspectRatio: false, // Allows the chart to resize based on its container
+      maintainAspectRatio: false,
       interaction: {
         mode: 'index',
         intersect: false,
@@ -284,8 +270,8 @@ const InteractiveChart = ({
           borderWidth: 1,
         },
         legend: {
-          position: 'bottom', // Place legend below the chart
-          align: 'center', // Center the legend
+          position: 'bottom',
+          align: 'center',
           labels: {
             boxWidth: 12,
             padding: 15,
@@ -303,7 +289,6 @@ const InteractiveChart = ({
     [showConflictIntensity, priceType, theme.palette, isMobile]
   );
 
-  // Display a prompt if no data is available
   if (!chartData)
     return (
       <Typography>
@@ -313,7 +298,6 @@ const InteractiveChart = ({
 
   return (
     <Box>
-      {/* Controls Panel */}
       <Paper
         elevation={1}
         sx={{
@@ -327,9 +311,8 @@ const InteractiveChart = ({
           container
           spacing={2}
           alignItems="center"
-          justifyContent="center" // Center the controls
+          justifyContent="center"
         >
-          {/* Price Type Toggle */}
           <Grid item>
             <ToggleButtonGroup
               value={priceType}
@@ -366,7 +349,6 @@ const InteractiveChart = ({
             </ToggleButtonGroup>
           </Grid>
 
-          {/* Seasonal Adjustment Toggle */}
           <Grid item>
             <ToggleButtonGroup
               value={applySeasonalAdj}
@@ -391,7 +373,6 @@ const InteractiveChart = ({
             </ToggleButtonGroup>
           </Grid>
 
-          {/* Smoothing Toggle */}
           <Grid item>
             <ToggleButtonGroup
               value={applySmooth}
@@ -416,7 +397,6 @@ const InteractiveChart = ({
             </ToggleButtonGroup>
           </Grid>
 
-          {/* Conflict Intensity Toggle */}
           <Grid item>
             <ToggleButtonGroup
               value={showConflictIntensity}
@@ -440,12 +420,9 @@ const InteractiveChart = ({
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
-
-          {/* Removed the Tooltip and IconButton here */}
         </Grid>
       </Paper>
 
-      {/* Line Chart */}
       <Box
         sx={{
           height: { xs: '300px', sm: '400px', md: '500px' },
@@ -459,7 +436,6 @@ const InteractiveChart = ({
   );
 };
 
-// PropTypes for type checking
 InteractiveChart.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.shape({
@@ -467,13 +443,13 @@ InteractiveChart.propTypes = {
       commodity: PropTypes.string.isRequired,
       regime: PropTypes.string.isRequired,
       price: PropTypes.number.isRequired,
-      usdprice: PropTypes.number.isRequired, // Assuming you have usdprice
+      usdprice: PropTypes.number.isRequired,
       conflict_intensity: PropTypes.number.isRequired,
     })
   ).isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
-  windowWidth: PropTypes.number.isRequired, // New prop for window width
+  windowWidth: PropTypes.number.isRequired,
 };
 
 export default InteractiveChart;
