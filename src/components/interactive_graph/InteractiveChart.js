@@ -29,6 +29,7 @@ import {
   applySeasonalAdjustment,
   applySmoothing,
 } from '../../utils/dataProcessing';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const capitalizeWords = (str) => {
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -59,16 +60,14 @@ const InteractiveChart = ({
   data,
   selectedCommodity,
   selectedRegimes,
-  windowWidth,
 }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [showConflictIntensity, setShowConflictIntensity] = useState(true);
   const [priceType, setPriceType] = useState('lcu');
   const [applySeasonalAdj, setApplySeasonalAdj] = useState(false);
   const [applySmooth, setApplySmooth] = useState(false);
-
-  const isMobile = windowWidth < theme.breakpoints.values.sm;
 
   const chartData = useMemo(() => {
     if (!data || !selectedCommodity || selectedRegimes.length === 0)
@@ -323,7 +322,7 @@ const InteractiveChart = ({
               aria-label="Price Type"
               size="small"
               sx={{
-                minWidth: isMobile ? 'auto' : 'auto',
+                minWidth: 'auto',
               }}
             >
               <ToggleButton
@@ -357,7 +356,7 @@ const InteractiveChart = ({
               aria-label="Seasonal Adjustment"
               size="small"
               sx={{
-                minWidth: isMobile ? 'auto' : 'auto',
+                minWidth: 'auto',
               }}
             >
               <ToggleButton
@@ -381,7 +380,7 @@ const InteractiveChart = ({
               aria-label="Smoothing"
               size="small"
               sx={{
-                minWidth: isMobile ? 'auto' : 'auto',
+                minWidth: 'auto',
               }}
             >
               <ToggleButton
@@ -405,7 +404,7 @@ const InteractiveChart = ({
               aria-label="Conflict Intensity"
               size="small"
               sx={{
-                minWidth: isMobile ? 'auto' : 'auto',
+                minWidth: 'auto',
               }}
             >
               <ToggleButton
@@ -449,7 +448,6 @@ InteractiveChart.propTypes = {
   ).isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
-  windowWidth: PropTypes.number.isRequired,
 };
 
 export default InteractiveChart;

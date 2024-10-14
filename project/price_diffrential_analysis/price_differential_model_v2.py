@@ -425,10 +425,13 @@ def run_price_differential_model(data):
             'r_squared': ols_model.rsquared,
             'adj_r_squared': ols_model.rsquared_adj,
             'aic': ols_model.aic,
-            'bic': ols_model.bic
+            'bic': ols_model.bic,
+            'conf_int': ols_model.conf_int().tolist(),  # Confidence intervals
+            'f_statistic': ols_model.fvalue,  # F-statistic
+            'f_pvalue': ols_model.f_pvalue,   # F-statistic p-value
+            'fitted_values': ols_model.fittedvalues.tolist(),  # Fitted values
+            'residuals': ols_model.resid.tolist()  # Residuals
         }
-
-        # Removed Fixed Effects Model due to absorption of variables
 
         # Random Effects Model
         logger.info("Estimating Random Effects model")
@@ -450,8 +453,7 @@ def run_price_differential_model(data):
                 't_statistics': re_model.tstats.to_dict(),
                 'p_values': re_model.pvalues.to_dict(),
                 'r_squared': re_model.rsquared,
-                'aic': re_model.aic,
-                'bic': re_model.bic
+                'conf_int': re_model.conf_int().tolist()  # Confidence intervals
             }
         except Exception as e:
             logger.error(f"Error during Random Effects estimation: {e}")
@@ -467,12 +469,18 @@ def run_price_differential_model(data):
                 'price_differential ~ 1 + [distance ~ conflict_correlation]',
                 df
             ).fit(cov_type='clustered', clusters=clusters)
+
+            # First-stage results for IV
+            first_stage_results = iv_model.first_stage['distance'].summary
             results['IV2SLS'] = {
                 'coefficients': iv_model.params.to_dict(),
                 'std_errors': iv_model.std_errors.to_dict(),
                 't_statistics': iv_model.tstats.to_dict(),
                 'p_values': iv_model.pvalues.to_dict(),
-                'r_squared': iv_model.rsquared
+                'r_squared': iv_model.rsquared,
+                'conf_int': iv_model.conf_int().tolist(),  # Confidence intervals
+                'first_stage': str(first_stage_results),  # First stage summary
+                'overid_test': str(iv_model.overid) if iv_model.overid else None  # Overidentification test
             }
         except Exception as e:
             logger.warning(f"IV2SLS model estimation failed: {e}")
@@ -484,11 +492,14 @@ def run_price_differential_model(data):
         model_comparison = {}
         for model_name, model_result in results.items():
             if model_result is not None and model_name != 'diagnostics':
-                model_comparison[model_name] = {
-                    'AIC': model_result.get('aic'),
-                    'BIC': model_result.get('bic')
-                }
-
+                # Only include models that have 'aic' and 'bic'
+                if 'aic' in model_result and 'bic' in model_result:
+                    model_comparison[model_name] = {
+                        'AIC': model_result.get('aic'),
+                        'BIC': model_result.get('bic')
+                    }
+                else:
+                    logger.debug(f"{model_name} does not have AIC/BIC for comparison.")
         results['ModelComparison'] = model_comparison
 
         # Calculate VIF for OLS Model
@@ -521,10 +532,21 @@ def run_price_differential_model(data):
 
         # CUSUM Stability Test
         try:
-            cusum_stat, crit_value, p_value = breaks_cusumolsresid(residuals)
+            # Ensure residuals are a 1D NumPy array
+            residuals_array = np.asarray(residuals).flatten()
+            cusum_stat, p_value, crit_value = breaks_cusumolsresid(residuals_array)
+            # Extract scalar values if necessary
+            if isinstance(cusum_stat, (np.ndarray, list)):
+                cusum_stat = float(cusum_stat[0])
+            else:
+                cusum_stat = float(cusum_stat)
+            if isinstance(p_value, (np.ndarray, list)):
+                p_value = float(p_value[0])
+            else:
+                p_value = float(p_value)
             results['diagnostics']['CUSUM'] = {
-                'statistic': float(cusum_stat),
-                'p-value': float(p_value)
+                'statistic': cusum_stat,
+                'p-value': p_value
             }
         except Exception as e:
             logger.warning(f"CUSUM test failed: {e}")

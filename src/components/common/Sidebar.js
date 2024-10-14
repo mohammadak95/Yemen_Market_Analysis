@@ -17,16 +17,13 @@ import RegimeSelector from './RegimeSelector';
 import InfoIcon from '@mui/icons-material/Info';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 
-const SidebarDrawer = styled(Drawer)(({ theme, open }) => ({
+const SidebarDrawer = styled(Drawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {
     boxSizing: 'border-box',
-    height: '100vh',
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.standard,
-    }),
-    overflowX: 'hidden',
-    width: open ? drawerWidth : 0,
+    width: drawerWidth,
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+    },
   },
 }));
 
@@ -45,6 +42,7 @@ const Sidebar = ({
   selectedRegimes,
   setSelectedRegimes,
   onOpenWelcomeModal,
+  handleDrawerToggle,
 }) => {
   const handleAnalysisChange = useCallback(
     (analysis) => {
@@ -115,7 +113,7 @@ const Sidebar = ({
 
           <Button
             variant="contained"
-            sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }} // Red tone for Methodology
+            sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }}
             fullWidth
             onClick={onMethodologyClick}
             startIcon={<InfoIcon />}
@@ -125,7 +123,7 @@ const Sidebar = ({
 
           <Button
             variant="contained"
-            sx={{ backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' } }} // Blue tone for Tutorials
+            sx={{ backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' } }}
             fullWidth
             onClick={onTutorialsClick}
             startIcon={<MenuBookIcon />}
@@ -135,7 +133,7 @@ const Sidebar = ({
 
           <Button
             variant="contained"
-            sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#388e3c' } }} // Green tone for How to Use
+            sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#388e3c' } }}
             fullWidth
             onClick={onOpenWelcomeModal}
             startIcon={<InfoIcon />}
@@ -166,9 +164,9 @@ const Sidebar = ({
     <SidebarDrawer
       variant={variant}
       open={sidebarOpen}
-      onClose={() => setSidebarOpen(false)}
+      onClose={handleDrawerToggle}
       ModalProps={{
-        keepMounted: true,
+        keepMounted: true, // Better open performance on mobile
       }}
       anchor="left"
     >
@@ -194,6 +192,7 @@ Sidebar.propTypes = {
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
   setSelectedRegimes: PropTypes.func.isRequired,
   onOpenWelcomeModal: PropTypes.func.isRequired,
+  handleDrawerToggle: PropTypes.func.isRequired,
 };
 
 export default React.memo(Sidebar);

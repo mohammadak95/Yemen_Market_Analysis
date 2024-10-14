@@ -2,7 +2,7 @@
 
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Grid, useMediaQuery } from '@mui/material'; // Import useMediaQuery
+import { Box, Grid, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -56,7 +56,7 @@ const Dashboard = React.memo(
     selectedRegimes,
   }) => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Use useMediaQuery
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // Memoize processedData to optimize performance
     const processedData = useMemo(() => {
@@ -125,14 +125,14 @@ const Dashboard = React.memo(
       <Box
         sx={{
           flexGrow: 1,
-          p: isMobile ? theme.spacing(1) : theme.spacing(2), // Use theme.spacing for padding
+          p: theme.spacing(2),
           backgroundColor: theme.palette.background.default,
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
         }}
       >
-        <Grid container spacing={isMobile ? 2 : 4} sx={{ flexGrow: 1 }}>
+        <Grid container spacing={2} sx={{ flexGrow: 1 }}>
           {/* Interactive Chart Section */}
           <Grid item xs={12}>
             <Box
