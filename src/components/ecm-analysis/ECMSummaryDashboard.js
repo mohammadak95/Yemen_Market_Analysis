@@ -1,7 +1,7 @@
 // src/components/ecm-analysis/ECMSummaryDashboard.js
 
 import React from 'react';
-import { Container, Typography, Tabs, Tab, Box } from '@mui/material';
+import { Container, Typography, Tabs, Tab, Box, Paper } from '@mui/material';
 import ECMKeyInsights from './ECMKeyInsights';
 import ECMInterpretation from './ECMInterpretation';
 import DiagnosticsTable from './DiagnosticsTable';
@@ -10,7 +10,6 @@ import GrangerCausalityChart from './GrangerCausalityChart';
 import ResidualsChart from './ResidualsChart';
 import SpatialAutocorrelationChart from './SpatialAutocorrelationChart';
 import SummaryTable from './SummaryTable';
-
 import PropTypes from 'prop-types';
 
 const ECMSummaryDashboard = ({ analysisResult }) => {
@@ -20,52 +19,40 @@ const ECMSummaryDashboard = ({ analysisResult }) => {
     setActiveTab(newValue);
   };
 
+  const tabContent = [
+    { label: "Key Insights", component: <ECMKeyInsights analysisResult={analysisResult} /> },
+    { label: "Interpretation", component: <ECMInterpretation analysisResult={analysisResult} /> },
+    { label: "Diagnostics Tests", component: <DiagnosticsTable diagnostics={analysisResult.diagnostics} /> },
+    { label: "Model Summary", component: <SummaryTable data={analysisResult} /> },
+    { label: "IRF Chart", component: <IRFChart irfData={analysisResult.irf} /> },
+    { label: "Granger Causality", component: <GrangerCausalityChart grangerData={analysisResult.granger_causality} /> },
+    { label: "Residuals Chart", component: analysisResult.residuals && analysisResult.fitted_values ? 
+      <ResidualsChart residuals={analysisResult.residuals} fittedValues={analysisResult.fitted_values} /> : null },
+    { label: "Spatial Autocorrelation", component: analysisResult.spatial_autocorrelation ? 
+      <SpatialAutocorrelationChart spatialData={analysisResult.spatial_autocorrelation} /> : null },
+  ];
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 'bold' }}>
-        Directional Error Correction Model (ECM) Analysis
-      </Typography>
-
-      {/* Tabs */}
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ mt: 2 }}
-      >
-        <Tab label="Key Insights" />
-        <Tab label="Interpretation" />
-        <Tab label="Diagnostics Tests" />
-        <Tab label="Model Summary" />
-        <Tab label="IRF Chart" />
-        <Tab label="Granger Causality" />
-        <Tab label="Residuals Chart" />
-        <Tab label="Spatial Autocorrelation" />
-      </Tabs>
-
-      {/* Tab Content */}
-      <Box sx={{ mt: 2 }}>
-        {activeTab === 0 && <ECMKeyInsights analysisResult={analysisResult} />}
-        {activeTab === 1 && <ECMInterpretation analysisResult={analysisResult} />}
-        {activeTab === 2 && <DiagnosticsTable diagnostics={analysisResult.diagnostics} />}
-        {activeTab === 3 && <SummaryTable data={analysisResult} />}
-        {activeTab === 4 && <IRFChart irfData={analysisResult.irf} />}
-        {activeTab === 5 && <GrangerCausalityChart grangerData={analysisResult.granger_causality} />}
-        {activeTab === 6 && (
-          analysisResult.residuals && analysisResult.fitted_values && (
-            <ResidualsChart
-              residuals={analysisResult.residuals}
-              fittedValues={analysisResult.fitted_values}
-            />
-          )
-        )}
-        {activeTab === 7 && (
-          analysisResult.spatial_autocorrelation && (
-            <SpatialAutocorrelationChart spatialData={analysisResult.spatial_autocorrelation} />
-          )
-        )}
-      </Box>
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 'bold' }}>
+          Directional Error Correction Model (ECM) Analysis
+        </Typography>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ mb: 2 }}
+        >
+          {tabContent.map((tab, index) => (
+            <Tab key={index} label={tab.label} disabled={!tab.component} />
+          ))}
+        </Tabs>
+        <Box sx={{ mt: 2 }}>
+          {tabContent[activeTab].component}
+        </Box>
+      </Paper>
     </Container>
   );
 };

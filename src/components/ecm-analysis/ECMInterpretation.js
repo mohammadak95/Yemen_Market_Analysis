@@ -2,40 +2,50 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Interpretation from '../common/Interpretation';
+import { Typography, Paper, Box } from '@mui/material';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ECMInterpretation = ({ analysisResult }) => {
-  const messages = [];
+  const coefficientData = [
+    { name: 'Alpha (α)', value: analysisResult.alpha },
+    { name: 'Beta (β)', value: analysisResult.beta },
+    { name: 'Gamma (γ)', value: analysisResult.gamma },
+  ];
 
-  if (analysisResult.alpha !== undefined) {
-    messages.push(
-      `The Error Correction Term (α) is ${
-        analysisResult.alpha < 0 ? 'negative' : 'positive'
-      }, indicating that the system ${
-        analysisResult.alpha < 0 ? 'adjusts towards' : 'diverges from'
-      } equilibrium after a shock.`
-    );
-  }
+  const interpretCoefficient = (name, value) => {
+    switch (name) {
+      case 'Alpha (α)':
+        return `The Error Correction Term (α) is ${value < 0 ? 'negative' : 'positive'}, indicating that the system ${value < 0 ? 'adjusts towards' : 'diverges from'} equilibrium after a shock.`;
+      case 'Beta (β)':
+        return `The long-run relationship coefficient (β) suggests a ${value > 0 ? 'positive' : 'negative'} long-term relationship between the variables.`;
+      case 'Gamma (γ)':
+        return `The short-term dynamics coefficient (γ) indicates the immediate impact of changes in the independent variable on the dependent variable.`;
+      default:
+        return '';
+    }
+  };
 
-  if (analysisResult.beta !== undefined) {
-    messages.push(
-      `The long-run relationship coefficient (β) is ${analysisResult.beta.toFixed(
-        4
-      )}, suggesting a ${
-        analysisResult.beta > 0 ? 'positive' : 'negative'
-      } long-term relationship between the variables.`
-    );
-  }
-
-  if (analysisResult.gamma !== undefined) {
-    messages.push(
-      `The short-term dynamics coefficient (γ) is ${analysisResult.gamma.toFixed(
-        4
-      )}, indicating the immediate impact of changes in the independent variable on the dependent variable.`
-    );
-  }
-
-  return <Interpretation title="Interpretation" messages={messages} />;
+  return (
+    <Paper sx={{ p: 2, mb: 2 }}>
+      <Typography variant="h6" gutterBottom>ECM Coefficient Interpretation</Typography>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={coefficientData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="value" fill="#8884d8" />
+        </BarChart>
+      </ResponsiveContainer>
+      <Box sx={{ mt: 2 }}>
+        {coefficientData.map(({ name, value }) => (
+          <Typography key={name} variant="body2" paragraph>
+            <strong>{name}:</strong> {value.toFixed(4)} - {interpretCoefficient(name, value)}
+          </Typography>
+        ))}
+      </Box>
+    </Paper>
+  );
 };
 
 ECMInterpretation.propTypes = {

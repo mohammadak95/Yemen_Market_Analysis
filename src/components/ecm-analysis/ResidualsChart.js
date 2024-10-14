@@ -1,28 +1,12 @@
 // src/components/ecm-analysis/ResidualsChart.js
 
 import React from 'react';
-import {
-  ScatterChart,
-  Scatter,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  Line,
-  ReferenceLine,
-} from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Typography, Paper, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const ResidualsChart = ({ residuals, fittedValues }) => {
-  if (
-    !residuals ||
-    !fittedValues ||
-    residuals.length === 0 ||
-    fittedValues.length === 0 ||
-    residuals.length !== fittedValues.length
-  ) {
+const ResidualsChart = ({ residuals, fittedValues, isMobile }) => {
+  if (!residuals || !fittedValues || residuals.length === 0 || fittedValues.length === 0 || residuals.length !== fittedValues.length) {
     return (
       <Box sx={{ p: 2 }}>
         <Typography>No residuals data available to display the chart.</Typography>
@@ -35,82 +19,47 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
     residual,
   }));
 
-  // Calculate trend line (simple linear regression)
-  const calculateTrendLine = (data) => {
-    const n = data.length;
-    const sumX = data.reduce((sum, d) => sum + d.fitted, 0);
-    const sumY = data.reduce((sum, d) => sum + d.residual, 0);
-    const sumXY = data.reduce((sum, d) => sum + d.fitted * d.residual, 0);
-    const sumX2 = data.reduce((sum, d) => sum + d.fitted * d.fitted, 0);
+  const interpretResiduals = () => {
+    const meanResidual = residuals.reduce((sum, val) => sum + val, 0) / residuals.length;
+    const maxResidual = Math.max(...residuals.map(Math.abs));
+    const percentageWithinTwoSD = residuals.filter(r => Math.abs(r) <= 2 * Math.sqrt(meanResidual)).length / residuals.length * 100;
 
-    const denominator = n * sumX2 - sumX * sumX;
-    if (denominator === 0) return data.map((d) => ({ fitted: d.fitted, trend: 0 }));
-
-    const slope = (n * sumXY - sumX * sumY) / denominator;
-    const intercept = (sumY - slope * sumX) / n;
-
-    return data.map((d) => ({
-      fitted: d.fitted,
-      trend: slope * d.fitted + intercept,
-    }));
+    return `
+      Residual Analysis:
+      - Mean residual: ${meanResidual.toFixed(4)}
+      - Maximum absolute residual: ${maxResidual.toFixed(4)}
+      - ${percentageWithinTwoSD.toFixed(2)}% of residuals are within 2 standard deviations
+      ${Math.abs(meanResidual) < 0.1 ? 'The residuals appear to be centered around zero, which is good.' : 'The residuals show some bias, as they are not centered around zero.'}
+      ${percentageWithinTwoSD > 95 ? 'The spread of residuals appears normal.' : 'The spread of residuals may indicate non-normal errors.'}
+    `;
   };
-
-  const trendData = calculateTrendLine(data);
 
   return (
     <Paper sx={{ p: 2, mb: 2 }}>
       <Typography variant="h6" gutterBottom>
         Residuals vs Fitted Values
       </Typography>
-      <Typography variant="body2" gutterBottom>
-        Scatter plot of residuals against fitted values to assess model fit.
-      </Typography>
-      <ResponsiveContainer width="100%" height={400}>
-        <ScatterChart>
+      <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
+        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
           <CartesianGrid />
           <XAxis
             dataKey="fitted"
             name="Fitted Values"
-            label={{
-              value: 'Fitted Values',
-              position: 'insideBottom',
-              offset: -5,
-              fontSize: '1rem',
-            }}
-            tickFormatter={(value) => value.toFixed(2)}
+            label={{ value: 'Fitted Values', position: 'insideBottom', offset: -5 }}
           />
           <YAxis
             dataKey="residual"
             name="Residuals"
-            label={{
-              value: 'Residuals',
-              angle: -90,
-              position: 'insideLeft',
-              fontSize: '1rem',
-            }}
-            tickFormatter={(value) => value.toFixed(2)}
+            label={{ value: 'Residuals', angle: -90, position: 'insideLeft' }}
           />
-          <RechartsTooltip
-            formatter={(value, name) => [
-              value.toFixed(4),
-              name === 'residual' ? 'Residual' : name,
-            ]}
-            labelFormatter={(label) => `Fitted Value: ${label.toFixed(4)}`}
-          />
+          <Tooltip cursor={{ strokeDasharray: '3 3' }} />
           <Scatter name="Residuals" data={data} fill="#8884d8" />
-          <Line
-            type="linear"
-            dataKey="trend"
-            data={trendData}
-            stroke="#ff7300"
-            dot={false}
-            name="Trend Line"
-          />
           <ReferenceLine y={0} stroke="red" strokeDasharray="3 3" />
         </ScatterChart>
       </ResponsiveContainer>
-      <Typography variant="body2" sx={{ mt: 2 }}>
-        This scatter plot helps in identifying any systematic patterns in the residuals. A random scatter around the trend line indicates a good model fit. Patterns or trends may suggest model misspecification.
+      <Typography variant="body2" sx={{ mt: 2, whiteSpace: 'pre-line' }}>
+        <strong>Interpretation:</strong>
+        {interpretResiduals()}
       </Typography>
     </Paper>
   );
@@ -119,6 +68,7 @@ const ResidualsChart = ({ residuals, fittedValues }) => {
 ResidualsChart.propTypes = {
   residuals: PropTypes.arrayOf(PropTypes.number).isRequired,
   fittedValues: PropTypes.arrayOf(PropTypes.number).isRequired,
+  isMobile: PropTypes.bool.isRequired,
 };
 
 export default ResidualsChart;

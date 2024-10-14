@@ -368,9 +368,10 @@ def handle_high_vif(X, threshold=10):
 def run_price_differential_model(data):
     """Run the price differential model with diversified estimation methods, clustered standard errors, and enhanced diagnostics."""
     try:
-        df = pd.DataFrame(data)
-        logger.debug(f"run_price_differential_model DataFrame columns: {df.columns.tolist()}")
-        logger.debug(f"run_price_differential_model DataFrame sample data:\n{df.head()}")
+        # Use json_normalize to flatten nested dictionaries
+        df = pd.json_normalize(data)
+        logger.debug(f"DataFrame columns after json_normalize: {df.columns.tolist()}")
+        logger.debug(f"Sample data after json_normalize:\n{df.head()}")
 
         # Check if 'base_market' and 'other_market' exist
         required_columns = ['base_market', 'other_market']
@@ -395,7 +396,7 @@ def run_price_differential_model(data):
             logger.error(f"Missing required predictor columns: {X_columns}")
             return None
         X = df[X_columns]
-        y = df['price_differential'].apply(lambda x: x[-1] if len(x) > 0 else np.nan)  # Use the last price differential value
+        y = df['price_differential'].apply(lambda x: x[-1] if isinstance(x, list) and len(x) > 0 else np.nan)  # Use the last price differential value
 
         # Drop rows with NaNs or infinite values in y
         valid_mask_y = y.replace([np.inf, -np.inf], np.nan).notnull()
@@ -539,7 +540,7 @@ def run_price_differential_model(data):
         logger.info("Comparing models based on AIC and BIC")
         model_comparison = {}
         for model_name, model_result in results.items():
-            if model_result is not None:
+            if model_result is not None and model_name != 'diagnostics':
                 model_comparison[model_name] = {
                     'AIC': model_result.get('aic'),
                     'BIC': model_result.get('bic')
@@ -560,29 +561,29 @@ def run_price_differential_model(data):
         # Breusch-Pagan Test for Heteroskedasticity
         bp_test = het_breuschpagan(residuals, ols_model.model.exog)
         results['diagnostics']['BreuschPagan'] = {
-            'statistic': bp_test[0],
-            'p-value': bp_test[1],
-            'f-value': bp_test[2],
-            'f_pvalue': bp_test[3]
+            'statistic': float(bp_test[0]),
+            'p-value': float(bp_test[1]),
+            'f-value': float(bp_test[2]),
+            'f_pvalue': float(bp_test[3])
         }
 
         # Durbin-Watson Test for Autocorrelation
         dw_stat = durbin_watson(residuals)
-        results['diagnostics']['DurbinWatson'] = dw_stat
+        results['diagnostics']['DurbinWatson'] = float(dw_stat)
 
         # Jarque-Bera Test for Normality
         jb_stat, jb_pvalue = jarque_bera(residuals)
         results['diagnostics']['JarqueBera'] = {
-            'statistic': jb_stat,
-            'p-value': jb_pvalue
+            'statistic': float(jb_stat),
+            'p-value': float(jb_pvalue)
         }
 
         # CUSUM Stability Test
         try:
             cusum_test = breaks_cusumolsresid(residuals)
             results['diagnostics']['CUSUM'] = {
-                'statistic': cusum_test.stat,
-                'p-value': cusum_test.pvalue
+                'statistic': float(cusum_test.stat),
+                'p-value': float(cusum_test.pvalue)
             }
         except Exception as e:
             logger.warning(f"CUSUM test failed: {e}")
@@ -597,8 +598,8 @@ def run_price_differential_model(data):
             reset_model = sm.OLS(y, sm.add_constant(pd.concat([X, y_fitted_sq, y_fitted_cu], axis=1))).fit()
             reset_stat = reset_model.f_test([('y_fitted_sq', 0, 1), ('y_fitted_cu', 0, 1)])
             results['diagnostics']['Ramsey_RESET'] = {
-                'statistic': reset_stat.statistic[0][0],
-                'p-value': reset_stat.pvalue
+                'statistic': float(reset_stat.statistic[0][0]),
+                'p-value': float(reset_stat.pvalue)
             }
         except Exception as e:
             logger.warning(f"Ramsey RESET test failed: {e}")
@@ -707,7 +708,21 @@ def main(file_path):
     output_file = price_diff_results_dir / "price_differential_results.json"
     try:
         with open(output_file, "w") as f:
-            json.dump(all_results, f, indent=4, default=lambda x: x.tolist() if isinstance(x, np.ndarray) else x)
+            # Custom default function to handle serialization
+            def default(o):
+                if isinstance(o, np.ndarray):
+                    return o.tolist()
+                elif isinstance(o, (pd.Series, pd.DataFrame)):
+                    return o.to_dict()
+                elif isinstance(o, (np.int64, np.int32, np.integer)):
+                    return int(o)
+                elif isinstance(o, (np.float64, np.float32, np.floating)):
+                    return float(o)
+                elif isinstance(o, datetime):
+                    return o.isoformat()
+                else:
+                    return str(o)  # Fallback to string representation
+            json.dump(all_results, f, indent=4, default=default)
         logger.info(f"All results saved to {output_file}")
     except Exception as e:
         logger.error(f"Error saving results to {output_file}: {e}")

@@ -1,89 +1,77 @@
 // src/components/ecm-analysis/GrangerCausalityChart.js
 
 import React from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  Legend,
-  Cell,
-} from 'recharts';
-import { Typography, Paper } from '@mui/material';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Typography, Paper, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const GrangerCausalityChart = ({ grangerData }) => {
-  // Prepare the chart data
-  const chartData = [];
-
-  // Iterate over each variable in grangerData
-  for (const [dependentVar, lagsData] of Object.entries(grangerData)) {
-    for (const [lag, testResult] of Object.entries(lagsData)) {
-      chartData.push({
-        variable: dependentVar,
-        lag: parseInt(lag),
-        pValue: testResult.ssr_ftest_pvalue,
-        significant: testResult.ssr_ftest_pvalue < 0.05,
-      });
-    }
+  if (!grangerData || !grangerData.conflict_intensity) {
+    return (
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Typography variant="h6" gutterBottom>Granger Causality Test Results</Typography>
+        <Typography>No Granger causality data available.</Typography>
+      </Paper>
+    );
   }
 
-  // Sort the data by variable and lag
-  chartData.sort((a, b) => {
-    if (a.variable === b.variable) {
-      return a.lag - b.lag;
+  const chartData = Object.entries(grangerData.conflict_intensity).map(([lag, data]) => ({
+    lag: parseInt(lag),
+    pValue: data.ssr_ftest_pvalue,
+    significant: data.ssr_ftest_pvalue < 0.05,
+  }));
+
+  const interpretGrangerCausality = () => {
+    const significantLags = chartData.filter(d => d.significant).map(d => d.lag);
+    
+    if (significantLags.length === 0) {
+      return "There is no evidence of Granger causality at any lag. This suggests that past values of conflict intensity do not help predict future commodity prices.";
+    } else {
+      return `Granger causality is significant at lag${significantLags.length > 1 ? 's' : ''} ${significantLags.join(', ')}. This indicates that past values of conflict intensity may help predict future commodity prices at these time horizons.`;
     }
-    return a.variable.localeCompare(b.variable);
-  });
+  };
 
   return (
-    <Paper sx={{ p: 3, mb: 4 }}>
-      <Typography variant="h5" gutterBottom>
+    <Paper sx={{ p: 2, mb: 2 }}>
+      <Typography variant="h6" gutterBottom>
         Granger Causality Test Results
       </Typography>
-      <ResponsiveContainer width="100%" height={400}>
+      <ResponsiveContainer width="100%" height={300}>
         <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="lag"
-            label={{ value: 'Lag', position: 'insideBottom', offset: -5, fontSize: '1rem' }}
-          />
-          <YAxis
-            domain={[0, 1]}
-            label={{ value: 'P-Value', angle: -90, position: 'insideLeft', fontSize: '1rem' }}
-            tickFormatter={(value) => value.toFixed(2)}
-          />
-          <RechartsTooltip
-            formatter={(value, name) => [
-              value.toFixed(4),
-              name === 'pValue' ? 'P-Value' : name,
-            ]}
+          <XAxis dataKey="lag" label={{ value: 'Lag', position: 'insideBottom', offset: -5 }} />
+          <YAxis label={{ value: 'P-Value', angle: -90, position: 'insideLeft' }} />
+          <Tooltip
+            formatter={(value) => value.toFixed(4)}
             labelFormatter={(label) => `Lag: ${label}`}
           />
-          <Legend verticalAlign="top" height={36} />
-          <Bar dataKey="pValue" name="P-Value">
+          <Bar dataKey="pValue" fill="#8884d8">
             {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={entry.significant ? '#ff4d4f' : '#82ca9d'}
-              />
+              <Cell key={`cell-${index}`} fill={entry.significant ? '#ff4d4f' : '#8884d8'} />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <Typography variant="body2" sx={{ mt: 2 }}>
-        * Bars highlighted in red indicate significant Granger causality at the 5% significance level.
-        Significant results suggest that past values of the influencing factors can predict future values of the dependent variable.
-      </Typography>
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="body2">
+          <strong>Interpretation:</strong> {interpretGrangerCausality()}
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          Note: Bars in red indicate statistically significant Granger causality (p-value &lt; 0.05).
+        </Typography>
+      </Box>
     </Paper>
   );
 };
 
 GrangerCausalityChart.propTypes = {
-  grangerData: PropTypes.object.isRequired,
+  grangerData: PropTypes.shape({
+    conflict_intensity: PropTypes.objectOf(
+      PropTypes.shape({
+        ssr_ftest_pvalue: PropTypes.number.isRequired,
+      })
+    ),
+  }),
 };
 
 export default GrangerCausalityChart;
