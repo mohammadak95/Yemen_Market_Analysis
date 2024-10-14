@@ -1,0 +1,144 @@
+2024-10-14 12:41:39,039 - INFO - Starting Price Differential Analysis
+2024-10-14 12:41:39,046 - INFO - Loaded 17816 records from the JSON file
+2024-10-14 12:41:39,050 - INFO - Using base markets: ['aden', "sana'a"]
+2024-10-14 12:41:39,050 - INFO - Available commodities in data: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-14 12:41:39,050 - INFO - Processing base market: aden
+2024-10-14 12:41:39,050 - INFO - Preparing market data for base market: aden
+2024-10-14 12:41:39,343 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:41:39,347 - INFO - Prepared 336 market pairs for analysis for base market aden
+2024-10-14 12:41:39,348 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:41:41,619 - INFO - Analyzed 336 market pairs for base market aden
+2024-10-14 12:41:41,639 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:41:41,641 - INFO - Variables with VIF > 10: []
+2024-10-14 12:41:41,645 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:41:41,650 - INFO - Processing base market: sana'a
+2024-10-14 12:41:41,650 - INFO - Preparing market data for base market: sana'a
+2024-10-14 12:41:41,926 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:41:41,931 - INFO - Prepared 336 market pairs for analysis for base market sana'a
+2024-10-14 12:41:41,931 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:41:44,133 - INFO - Analyzed 336 market pairs for base market sana'a
+2024-10-14 12:41:44,145 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:41:44,147 - INFO - Variables with VIF > 10: []
+2024-10-14 12:41:44,149 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:41:44,184 - INFO - All results saved to results/price_diff_results/price_differential_results.json
+2024-10-14 12:41:44,184 - INFO - Price Differential Analysis completed
+2024-10-14 12:42:07,056 - INFO - Starting Price Differential Analysis
+2024-10-14 12:42:07,064 - INFO - Loaded 17816 records from the JSON file
+2024-10-14 12:42:07,067 - INFO - Using base markets: ['aden', "sana'a"]
+2024-10-14 12:42:07,068 - INFO - Available commodities in data: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-14 12:42:07,068 - INFO - Processing base market: aden
+2024-10-14 12:42:07,068 - INFO - Preparing market data for base market: aden
+2024-10-14 12:42:07,347 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:42:07,352 - INFO - Prepared 336 market pairs for analysis for base market aden
+2024-10-14 12:42:07,352 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:42:09,532 - INFO - Analyzed 336 market pairs for base market aden
+2024-10-14 12:42:09,548 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:42:09,550 - INFO - Variables with VIF > 10: []
+2024-10-14 12:42:09,553 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:42:09,559 - INFO - Processing base market: sana'a
+2024-10-14 12:42:09,559 - INFO - Preparing market data for base market: sana'a
+2024-10-14 12:42:09,829 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:42:09,834 - INFO - Prepared 336 market pairs for analysis for base market sana'a
+2024-10-14 12:42:09,834 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:42:11,758 - INFO - Analyzed 336 market pairs for base market sana'a
+2024-10-14 12:42:11,768 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:42:11,769 - INFO - Variables with VIF > 10: []
+2024-10-14 12:42:11,771 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:42:11,807 - INFO - All results saved to results/price_diff_results/price_differential_results.json
+2024-10-14 12:42:11,807 - INFO - Price Differential Analysis completed
+2024-10-14 12:42:24,193 - INFO - Starting Price Differential Analysis
+2024-10-14 12:42:24,201 - INFO - Loaded 17816 records from the JSON file
+2024-10-14 12:42:24,204 - INFO - Using base markets: ['aden', "sana'a"]
+2024-10-14 12:42:24,205 - INFO - Available commodities in data: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-14 12:42:24,205 - INFO - Processing base market: aden
+2024-10-14 12:42:24,205 - INFO - Preparing market data for base market: aden
+2024-10-14 12:42:24,465 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:42:24,470 - INFO - Prepared 336 market pairs for analysis for base market aden
+2024-10-14 12:42:24,470 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:42:26,535 - INFO - Analyzed 336 market pairs for base market aden
+2024-10-14 12:42:26,554 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:42:26,556 - INFO - Variables with VIF > 10: []
+2024-10-14 12:42:26,559 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:42:26,564 - INFO - Processing base market: sana'a
+2024-10-14 12:42:26,564 - INFO - Preparing market data for base market: sana'a
+2024-10-14 12:42:26,825 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:42:26,830 - INFO - Prepared 336 market pairs for analysis for base market sana'a
+2024-10-14 12:42:26,830 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:42:28,742 - INFO - Analyzed 336 market pairs for base market sana'a
+2024-10-14 12:42:28,753 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:42:28,754 - INFO - Variables with VIF > 10: []
+2024-10-14 12:42:28,756 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:42:28,791 - INFO - All results saved to results/price_diff_results/price_differential_results.json
+2024-10-14 12:42:28,791 - INFO - Price Differential Analysis completed
+2024-10-14 12:48:00,685 - INFO - Starting Price Differential Analysis
+2024-10-14 12:48:00,693 - INFO - Loaded 17816 records from the JSON file
+2024-10-14 12:48:00,696 - INFO - Using base markets: ['aden', "sana'a"]
+2024-10-14 12:48:00,697 - INFO - Available commodities in data: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-14 12:48:00,697 - INFO - Processing base market: aden
+2024-10-14 12:48:00,697 - INFO - Preparing market data for base market: aden
+2024-10-14 12:48:00,972 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:48:00,976 - INFO - Prepared 336 market pairs for analysis for base market aden
+2024-10-14 12:48:00,976 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:48:03,492 - INFO - Analyzed 336 market pairs for base market aden
+2024-10-14 12:48:03,511 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:48:03,513 - INFO - Variables with VIF > 10: []
+2024-10-14 12:48:03,517 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:48:03,522 - INFO - Processing base market: sana'a
+2024-10-14 12:48:03,522 - INFO - Preparing market data for base market: sana'a
+2024-10-14 12:48:03,790 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:48:03,795 - INFO - Prepared 336 market pairs for analysis for base market sana'a
+2024-10-14 12:48:03,795 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:48:06,184 - INFO - Analyzed 336 market pairs for base market sana'a
+2024-10-14 12:48:06,197 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:48:06,199 - INFO - Variables with VIF > 10: []
+2024-10-14 12:48:06,201 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:48:06,235 - INFO - All results saved to results/price_diff_results/price_differential_results.json
+2024-10-14 12:48:06,235 - INFO - Price Differential Analysis completed
+2024-10-14 12:48:32,395 - INFO - Starting Price Differential Analysis
+2024-10-14 12:48:32,402 - INFO - Loaded 17816 records from the JSON file
+2024-10-14 12:48:32,405 - INFO - Using base markets: ['aden', "sana'a"]
+2024-10-14 12:48:32,406 - INFO - Available commodities in data: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-14 12:48:32,406 - INFO - Processing base market: aden
+2024-10-14 12:48:32,406 - INFO - Preparing market data for base market: aden
+2024-10-14 12:48:32,675 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:48:32,680 - INFO - Prepared 336 market pairs for analysis for base market aden
+2024-10-14 12:48:32,680 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:48:34,718 - INFO - Analyzed 336 market pairs for base market aden
+2024-10-14 12:48:34,735 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:48:34,737 - INFO - Variables with VIF > 10: []
+2024-10-14 12:48:34,742 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:48:34,747 - INFO - Processing base market: sana'a
+2024-10-14 12:48:34,747 - INFO - Preparing market data for base market: sana'a
+2024-10-14 12:48:35,007 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 12:48:35,012 - INFO - Prepared 336 market pairs for analysis for base market sana'a
+2024-10-14 12:48:35,012 - INFO - Using 8 cores for parallel processing
+2024-10-14 12:48:36,917 - INFO - Analyzed 336 market pairs for base market sana'a
+2024-10-14 12:48:36,928 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 12:48:36,930 - INFO - Variables with VIF > 10: []
+2024-10-14 12:48:36,932 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 12:48:36,966 - INFO - All results saved to results/price_diff_results/price_differential_results.json
+2024-10-14 12:48:36,966 - INFO - Price Differential Analysis completed
+2024-10-14 13:06:57,787 - INFO - Starting Price Differential Analysis
+2024-10-14 13:06:57,795 - INFO - Loaded 17816 records from the JSON file
+2024-10-14 13:06:57,798 - INFO - Using base markets: ['aden', "sana'a"]
+2024-10-14 13:06:57,799 - INFO - Available commodities in data: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-14 13:06:57,799 - INFO - Processing base market: aden
+2024-10-14 13:06:57,799 - INFO - Preparing market data for base market: aden
+2024-10-14 13:06:58,109 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 13:06:58,113 - INFO - Prepared 336 market pairs for analysis for base market aden
+2024-10-14 13:06:58,113 - INFO - Using 8 cores for parallel processing
+2024-10-14 13:07:00,757 - INFO - Analyzed 336 market pairs for base market aden
+2024-10-14 13:07:00,778 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 13:07:00,782 - INFO - Variables with VIF > 10: []
+2024-10-14 13:07:00,786 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 13:07:00,792 - INFO - Processing base market: sana'a
+2024-10-14 13:07:00,792 - INFO - Preparing market data for base market: sana'a
+2024-10-14 13:07:01,102 - INFO - Prepared market data for 354 (market, commodity) pairs
+2024-10-14 13:07:01,108 - INFO - Prepared 336 market pairs for analysis for base market sana'a
+2024-10-14 13:07:01,108 - INFO - Using 8 cores for parallel processing
+2024-10-14 13:07:03,733 - INFO - Analyzed 336 market pairs for base market sana'a
+2024-10-14 13:07:03,750 - INFO - Model data - X shape: (336, 2), y shape: (336,)
+2024-10-14 13:07:03,754 - INFO - Variables with VIF > 10: []
+2024-10-14 13:07:03,758 - ERROR - KeyError in run_price_differential_model: 'base_market'
+2024-10-14 13:07:03,807 - INFO - All results saved to results/price_diff_results/price_differential_results.json
+2024-10-14 13:07:03,807 - INFO - Price Differential Analysis completed
