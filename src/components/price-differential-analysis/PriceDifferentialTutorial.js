@@ -2,39 +2,27 @@
 
 import React, { useState } from 'react';
 import {
-  Typography,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
   Button,
-  List,
-  ListItem,
-  ListItemText,
+  Typography,
 } from '@mui/material';
 
 const PriceDifferentialTutorial = () => {
   const [open, setOpen] = useState(false);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
+  const handleOpen = () => setOpen(true);
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClose = () => setOpen(false);
 
   return (
     <>
-      <Typography
-        variant="body1"
-        sx={{ mb: 2, cursor: 'pointer', color: 'primary.main' }}
-        onClick={handleClickOpen}
-        aria-label="Open Price Differential Tutorial"
-      >
-        📘 Learn About Price Differential Analysis
-      </Typography>
+      <Button variant="outlined" onClick={handleOpen}>
+        Learn about Price Differential Analysis
+      </Button>
       <Dialog
         open={open}
         onClose={handleClose}
@@ -48,69 +36,56 @@ const PriceDifferentialTutorial = () => {
         </DialogTitle>
         <DialogContent dividers>
           <DialogContentText id="price-differential-tutorial-description" component="div">
-            <Typography variant="subtitle1" gutterBottom>
-              What is Price Differential Analysis?
+            <Typography variant="body1" gutterBottom>
+              <strong>What is Price Differential Analysis?</strong>
             </Typography>
             <Typography variant="body2" gutterBottom>
-              Price Differential Analysis examines the differences in commodity prices between two markets over time. It helps identify pricing disparities, potential arbitrage opportunities, and the impact of external factors such as transportation costs, tariffs, or market inefficiencies.
+              Price Differential Analysis examines the differences in commodity prices between two markets over time. It helps identify trends, market inefficiencies, and the impact of external factors such as conflict intensity.
             </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-              Key Components:
+            <Typography variant="body1" gutterBottom>
+              <strong>Key Components:</strong>
             </Typography>
-            <List dense>
-              <ListItem>
-                <ListItemText primary="Price Differential:" />
-                <Typography variant="body2" sx={{ ml: 2 }}>
-                  The difference in prices of a commodity between two markets at the same time.
+            <ul>
+              <li>
+                <Typography variant="body2">
+                  <strong>Price Differential Chart:</strong> Visualizes the price differences over time.
                 </Typography>
-              </ListItem>
-              <ListItem>
-                <ListItemText primary="Regression Analysis:" />
-                <Typography variant="body2" sx={{ ml: 2 }}>
-                  A statistical method used to model the relationship between the price differential and influencing factors.
+              </li>
+              <li>
+                <Typography variant="body2">
+                  <strong>Regression Results:</strong> Analyzes trends and statistical significance.
                 </Typography>
-              </ListItem>
-              <ListItem>
-                <ListItemText primary="Diagnostics Tests:" />
-                <Typography variant="body2" sx={{ ml: 2 }}>
-                  Statistical tests to validate the assumptions of the regression model.
+              </li>
+              <li>
+                <Typography variant="body2">
+                  <strong>Diagnostics:</strong> Provides statistical tests to validate the analysis.
                 </Typography>
-              </ListItem>
-              <ListItem>
-                <ListItemText primary="Market Pair Information:" />
-                <Typography variant="body2" sx={{ ml: 2 }}>
-                  Details about the selected markets, such as distance, correlation, and common dates.
+              </li>
+              <li>
+                <Typography variant="body2">
+                  <strong>Market Pair Information:</strong> Offers context about the markets being compared.
                 </Typography>
-              </ListItem>
-            </List>
-            <Typography variant="subtitle1" gutterBottom>
-              Interpretation:
+              </li>
+            </ul>
+            <Typography variant="body1" gutterBottom>
+              <strong>How to Interpret the Results:</strong>
             </Typography>
             <Typography variant="body2" gutterBottom>
-              Understanding the price differential can provide insights into market dynamics, supply and demand factors, and the effectiveness of market integration. Significant price differentials may indicate barriers to trade, inefficiencies, or opportunities for market intervention.
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-              Further Reading:
+              - A positive price differential indicates that the base market has higher prices for the commodity compared to the comparison market.
             </Typography>
             <Typography variant="body2" gutterBottom>
-              For a deeper understanding of Price Differential Analysis, refer to:
-              <ul>
-                <li>
-                  <a href="https://en.wikipedia.org/wiki/Price_differential" target="_blank" rel="noopener noreferrer">
-                    Wikipedia: Price Differential
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.investopedia.com/terms/p/price-differential.asp" target="_blank" rel="noopener noreferrer">
-                    Investopedia: Price Differential
-                  </a>
-                </li>
-              </ul>
+              - Statistical significance in the regression results suggests a meaningful trend over time.
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              - Diagnostics help ensure that the data meets the assumptions necessary for valid statistical inference.
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              - Understanding the context of the markets, such as distance and conflict intensity, provides insights into the factors influencing price differentials.
             </Typography>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} variant="contained" aria-label="Close Price Differential Tutorial">
+          <Button onClick={handleClose} color="primary" autoFocus>
             Close
           </Button>
         </DialogActions>

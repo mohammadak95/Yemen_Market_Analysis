@@ -1,12 +1,12 @@
-// src/components/price-differential/DiagnosticsTable.js
+// src/components/price-differential-analysis/DiagnosticsTable.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
 import ResultTable from '../common/ResultTable';
-import { Typography } from '@mui/material';
+import { Typography, Paper, Box } from '@mui/material';
 
-const DiagnosticsTable = ({ diagnostics }) => {
-  if (!diagnostics) {
+const DiagnosticsTable = ({ data }) => {
+  if (!data || !data.diagnostics) {
     return (
       <Typography variant="body1">
         No diagnostic tests available for this market pair.
@@ -17,19 +17,26 @@ const DiagnosticsTable = ({ diagnostics }) => {
   const diagnosticTests = [
     {
       name: 'Conflict Correlation',
-      value: diagnostics.conflict_correlation?.toFixed(4) || 'N/A',
+      value:
+        data.diagnostics.conflict_correlation != null
+          ? data.diagnostics.conflict_correlation.toFixed(4)
+          : 'N/A',
     },
     {
       name: 'Common Dates',
-      value: diagnostics.common_dates || 'N/A',
+      value: data.diagnostics.common_dates != null ? data.diagnostics.common_dates : 'N/A',
     },
     {
       name: 'Distance',
-      value: diagnostics.distance ? `${diagnostics.distance.toFixed(2)} km` : 'N/A',
+      value:
+        data.diagnostics.distance_km != null
+          ? `${(data.diagnostics.distance_km * 200).toFixed(2)} km`
+          : 'N/A',
     },
     {
-      name: 'P-Value',
-      value: diagnostics.p_value?.toFixed(4) || 'N/A',
+      name: 'P-Value (Stationarity Test)',
+      value:
+        data.diagnostics.p_value != null ? data.diagnostics.p_value.toFixed(4) : 'N/A',
     },
   ];
 
@@ -38,17 +45,49 @@ const DiagnosticsTable = ({ diagnostics }) => {
     { field: 'value', tooltip: 'Test Result' },
   ];
 
+  const interpretDiagnostics = () => {
+    let interpretation = '';
+
+    if (data.diagnostics.p_value != null) {
+      const stationarity =
+        data.diagnostics.p_value < 0.05 ? 'stationary' : 'non-stationary';
+      interpretation += `The stationarity test indicates that the price differential series is ${stationarity} (p-value: ${data.diagnostics.p_value.toFixed(
+        4
+      )}).\n\n`;
+    }
+
+    if (data.diagnostics.conflict_correlation != null) {
+      const correlationType =
+        data.diagnostics.conflict_correlation > 0 ? 'positive' : 'negative';
+      interpretation += `The conflict correlation is ${data.diagnostics.conflict_correlation.toFixed(
+        4
+      )}, indicating a ${correlationType} relationship between conflicts in the markets.`;
+    }
+
+    return interpretation;
+  };
+
   return (
-    <ResultTable title="Market Pair Diagnostics" data={diagnosticTests} columns={columns} />
+    <Paper sx={{ p: 2, mb: 2 }}>
+      <ResultTable title="Diagnostics" data={diagnosticTests} columns={columns} />
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="h6" gutterBottom>Interpretation</Typography>
+        <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+          {interpretDiagnostics()}
+        </Typography>
+      </Box>
+    </Paper>
   );
 };
 
 DiagnosticsTable.propTypes = {
-  diagnostics: PropTypes.shape({
-    conflict_correlation: PropTypes.number,
-    common_dates: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    distance: PropTypes.number,
-    p_value: PropTypes.number,
+  data: PropTypes.shape({
+    diagnostics: PropTypes.shape({
+      conflict_correlation: PropTypes.number,
+      common_dates: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      distance_km: PropTypes.number,
+      p_value: PropTypes.number,
+    }),
   }),
 };
 

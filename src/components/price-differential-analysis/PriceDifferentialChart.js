@@ -1,4 +1,4 @@
-// src/components/price-differential/PriceDifferentialChart.js
+// src/components/price-differential-analysis/PriceDifferentialChart.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -24,13 +24,15 @@ const PriceDifferentialChart = ({ data }) => {
     );
   }
 
-  const chartData = data.price_differential.map((value, index) => ({
-    period: index,
-    differential: Number(value.toFixed(4)),
+  const { dates, values } = data.price_differential;
+
+  const chartData = dates.map((dateStr, index) => ({
+    date: new Date(dateStr),
+    differential: Number(values[index].toFixed(4)),
   }));
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <Paper sx={{ p: 2, mb: 2 }}>
       <Typography variant="h6" gutterBottom>
         Price Differential Over Time
       </Typography>
@@ -38,8 +40,9 @@ const PriceDifferentialChart = ({ data }) => {
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
-            dataKey="period"
-            label={{ value: 'Time Period', position: 'insideBottom', offset: -5, fontSize: '1rem' }}
+            dataKey="date"
+            tickFormatter={(tick) => tick.toLocaleDateString()}
+            label={{ value: 'Date', position: 'insideBottom', offset: -5, fontSize: '1rem' }}
           />
           <YAxis
             label={{
@@ -52,7 +55,7 @@ const PriceDifferentialChart = ({ data }) => {
           />
           <RechartsTooltip
             formatter={(value) => value.toFixed(4)}
-            labelFormatter={(label) => `Period: ${label}`}
+            labelFormatter={(label) => `Date: ${label.toLocaleDateString()}`}
           />
           <Legend />
           <Line
@@ -67,7 +70,7 @@ const PriceDifferentialChart = ({ data }) => {
         </LineChart>
       </ResponsiveContainer>
       <Typography variant="body2" sx={{ mt: 2 }}>
-        This chart displays the price differential between the selected markets over time. A positive value indicates higher prices in the base market compared to the comparison market, while a negative value indicates lower prices.
+        This chart displays the price differential between {data.base_market} and {data.other_market} for {data.commodity} over time. Positive values indicate higher prices in {data.base_market} compared to {data.other_market}, while negative values indicate lower prices.
       </Typography>
     </Paper>
   );
@@ -75,7 +78,13 @@ const PriceDifferentialChart = ({ data }) => {
 
 PriceDifferentialChart.propTypes = {
   data: PropTypes.shape({
-    price_differential: PropTypes.arrayOf(PropTypes.number),
+    base_market: PropTypes.string,
+    other_market: PropTypes.string,
+    commodity: PropTypes.string,
+    price_differential: PropTypes.shape({
+      dates: PropTypes.arrayOf(PropTypes.string),
+      values: PropTypes.arrayOf(PropTypes.number),
+    }),
   }),
 };
 

@@ -15,7 +15,6 @@ from scipy.stats import pearsonr
 import yaml
 import traceback
 from datetime import datetime
-import gzip
 
 # Additional Imports for Enhanced Functionality
 from linearmodels.panel import RandomEffects
@@ -241,8 +240,9 @@ def calculate_price_differential(price_i, price_j):
     price_j = price_j[valid_mask]
     logger.debug(f"Calculated valid price differentials: {len(price_i)} pairs")
     if len(price_i) == 0:
-        return np.array([])
-    return np.log(price_i) - np.log(price_j)
+        return np.array([]), np.array([])
+    price_diff = np.log(price_i) - np.log(price_j)
+    return price_diff, valid_mask
 
 def calculate_distance(coord1, coord2):
     """Calculate Euclidean distance between two coordinates."""
@@ -283,11 +283,14 @@ def analyze_market_pair(args):
             logger.warning(f"Mismatched price array lengths for {base_market} and {other_market} on {commodity}: {len(price_i)} vs {len(price_j)}. Skipping.")
             return None
 
-        price_diff = calculate_price_differential(price_i, price_j)
+        price_diff, valid_mask = calculate_price_differential(price_i, price_j)
 
         if len(price_diff) == 0:
             logger.warning(f"No valid price differentials for {base_market} and {other_market} on {commodity}. Skipping.")
             return None
+
+        # Collect the dates corresponding to the price differentials
+        common_dates_prices = common_dates[valid_mask]
 
         stationarity_results = run_stationarity_tests(price_diff)
 
@@ -296,8 +299,8 @@ def analyze_market_pair(args):
             return None
 
         # Ensure conflict_intensity arrays align with common dates
-        conflict_base = base_data['conflict_intensity'][mask_base]
-        conflict_other = other_data['conflict_intensity'][mask_other]
+        conflict_base = base_data['conflict_intensity'][mask_base][valid_mask]
+        conflict_other = other_data['conflict_intensity'][mask_other][valid_mask]
 
         logger.debug(f"Conflict_base length: {len(conflict_base)}, Conflict_other length: {len(conflict_other)}")
 
@@ -325,204 +328,54 @@ def analyze_market_pair(args):
         # Extract p-value from ADF test for significance
         p_value = stationarity_results['ADF']['p-value']
 
-        logger.debug(f"Returning analysis result for {base_market}, {other_market}, {commodity}")
+        # Prepare data for regression
+        # Since the price differential is over time, we can perform a simple linear regression over time
+        X_reg = np.arange(len(price_diff)).reshape(-1, 1)  # Time index
+        y_reg = price_diff
 
+        # Add constant to X_reg
+        X_reg = sm.add_constant(X_reg)
+
+        # Run regression
+        regression_model = sm.OLS(y_reg, X_reg).fit()
+
+        regression_results = {
+            'intercept': float(regression_model.params[0]),
+            'slope': float(regression_model.params[1]),
+            'r_squared': float(regression_model.rsquared),
+            'p_value': float(regression_model.pvalues[1]),  # p-value for slope
+            'aic': float(regression_model.aic),
+            'bic': float(regression_model.bic)
+        }
+
+        # Collect all required data for output
         return {
             'base_market': base_market,
             'other_market': other_market,
             'commodity': commodity,
-            'price_differential': price_diff.tolist(),
-            'stationarity': stationarity_results,
-            'conflict_correlation': float(correlation),
-            'common_dates': int(len(common_dates)),
-            'distance': distance,
-            'p_value': p_value  # Added p_value at the root level
+            'price_differential': {
+                'dates': [str(date) for date in common_dates_prices],
+                'values': price_diff.tolist()
+            },
+            'regression_results': regression_results,
+            'diagnostics': {
+                'conflict_correlation': float(correlation),
+                'common_dates': int(len(common_dates_prices)),
+                'distance_km': float(distance),
+                'p_value': float(p_value)
+            }
         }
     except Exception as e:
         logger.error(f"Error in analyze_market_pair: {str(e)}")
         logger.debug(f"Detailed error information: {traceback.format_exc()}")
         return None
 
-def calculate_vif(X):
-    """Calculate Variance Inflation Factor."""
-    vif = pd.DataFrame()
-    vif["Variable"] = X.columns
-    vif["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
-    return vif
-
-def handle_high_vif(X, threshold=10):
-    """Handle high VIF by transforming variables."""
-    vif = calculate_vif(X)
-    high_vif_vars = vif[vif['VIF'] > threshold]['Variable'].tolist()
-    logger.info(f"Variables with VIF > {threshold}: {high_vif_vars}")
-
-    for var in high_vif_vars:
-        squared_var = f'{var}_squared'
-        X[squared_var] = X[var] ** 2
-        logger.debug(f"Transformed '{var}' to '{squared_var}' to address high VIF")
-        X = X.drop(columns=[var])
-
-    return X
-
-def run_price_differential_model(data):
-    """Run the price differential model with diversified estimation methods and enhanced diagnostics."""
-    try:
-        # Flatten nested data and explode the price_differential list
-        df = pd.json_normalize(data)
-        logger.debug(f"DataFrame columns after json_normalize: {df.columns.tolist()}")
-        logger.debug(f"Sample data after json_normalize:\n{df.head()}")
-
-        df = df.explode('price_differential').reset_index(drop=True)
-        df['price_differential'] = df['price_differential'].astype(float)
-
-        # Create entity_id
-        df['entity_id'] = df.groupby(['base_market', 'other_market']).ngroup()
-
-        # Add a time index
-        df['time'] = df.groupby(['entity_id']).cumcount()
-
-        # Set the index for panel data
-        df.set_index(['entity_id', 'time'], inplace=True)
-
-        # Prepare X and y
-        X_columns = ['distance', 'conflict_correlation']
-        X = df[X_columns]
-        y = df['price_differential']
-
-        # Add constant term
-        X = sm.add_constant(X)
-
-        # Ensure no duplicate columns
-        if X.columns.duplicated().any():
-            X = X.loc[:, ~X.columns.duplicated()]
-
-        # Handle high VIF
-        X = handle_high_vif(X)
-
-        # Diversified Estimation Methods
-        results = {}
-
-        # OLS with Clustered Standard Errors
-        logger.info("Estimating OLS model with clustered standard errors")
-        clusters = df.reset_index()['other_market']
-        num_groups = clusters.nunique()
-        logger.debug(f"Number of unique groups: {num_groups}")
-
-        if num_groups < 2:
-            logger.warning("Not enough groups for clustered standard errors. Skipping OLS estimation.")
-        else:
-            ols_model = sm.OLS(y, X).fit(cov_type='cluster', cov_kwds={'groups': clusters})
-            results['OLS'] = {
-                'coefficients': ols_model.params.to_dict(),
-                'std_errors': ols_model.bse.to_dict(),
-                't_statistics': ols_model.tvalues.to_dict(),
-                'p_values': ols_model.pvalues.to_dict(),
-                'r_squared': ols_model.rsquared,
-                'adj_r_squared': ols_model.rsquared_adj,
-                'aic': ols_model.aic,
-                'bic': ols_model.bic,
-                'f_statistic': ols_model.fvalue,
-                'f_pvalue': ols_model.f_pvalue
-            }
-
-        # Random Effects Model
-        logger.info("Estimating Random Effects model")
-        try:
-            re_model = RandomEffects(y, X).fit()
-            results['RandomEffects'] = {
-                'coefficients': re_model.params.to_dict(),
-                'std_errors': re_model.std_errors.to_dict(),
-                't_statistics': re_model.tstats.to_dict(),  # Corrected attribute
-                'p_values': re_model.pvalues.to_dict()
-            }
-        except Exception as e:
-            logger.error(f"Error estimating Random Effects model: {str(e)}")
-            logger.debug(f"Detailed error information: {traceback.format_exc()}")
-
-        # IV2SLS Model
-        logger.info("Estimating IV2SLS model for endogeneity checks")
-        try:
-            iv_model = IV2SLS(y, X, None, None).fit()
-            results['IV2SLS'] = {
-                'coefficients': iv_model.params.to_dict(),
-                'std_errors': iv_model.std_errors.to_dict(),
-                't_statistics': iv_model.tstats.to_dict(),  # Corrected attribute
-                'p_values': iv_model.pvalues.to_dict()
-            }
-        except Exception as e:
-            logger.error(f"Error estimating IV2SLS model: {str(e)}")
-            logger.debug(f"Detailed error information: {traceback.format_exc()}")
-
-        # Systematize Model Selection
-        logger.info("Comparing models based on AIC and BIC")
-        model_comparison = {}
-        for model_name, model_result in results.items():
-            if 'aic' in model_result and 'bic' in model_result:
-                model_comparison[model_name] = {
-                    'aic': model_result['aic'],
-                    'bic': model_result['bic']
-                }
-        results['ModelComparison'] = model_comparison
-
-        # Calculate VIF for OLS Model
-        vif = calculate_vif(X)
-        results['diagnostics'] = {'vif': vif.to_dict(orient='records')}
-
-        # Residual Diagnostics for OLS Model
-        logger.info("Performing residual diagnostics for OLS model")
-        residuals = ols_model.resid
-
-        # Breusch-Pagan Test
-        bp_test = het_breuschpagan(residuals, ols_model.model.exog)
-        results['diagnostics']['BreuschPagan'] = {
-            'statistic': float(bp_test[0]),
-            'p-value': float(bp_test[1]),
-            'f-value': float(bp_test[2]),
-            'f_pvalue': float(bp_test[3])
-        }
-
-        # Durbin-Watson Test
-        dw_stat = durbin_watson(residuals)
-        results['diagnostics']['DurbinWatson'] = float(dw_stat)
-
-        # Jarque-Bera Test
-        jb_stat, jb_pvalue, jb_skew, jb_kurtosis = jarque_bera(residuals)
-        results['diagnostics']['JarqueBera'] = {
-            'statistic': float(jb_stat),
-            'p-value': float(jb_pvalue),
-            'skew': float(jb_skew),
-            'kurtosis': float(jb_kurtosis)
-        }
-
-        # Ramsey RESET Test
-        logger.info("Performing Ramsey RESET test for OLS model")
-        try:
-            reset_test = linear_reset(ols_model, use_f=True)
-            results['diagnostics']['RamseyRESET'] = {
-                'f_statistic': float(reset_test.fvalue),
-                'p-value': float(reset_test.pvalue)
-            }
-        except Exception as e:
-            logger.error(f"Error performing Ramsey RESET test: {str(e)}")
-            logger.debug(f"Detailed error information: {traceback.format_exc()}")
-
-        logger.info("Completed price differential model")
-        # Return regression results
-        return results
-    except Exception as e:
-        logger.error(f"An error occurred in run_price_differential_model: {str(e)}")
-        logger.debug(f"Detailed error information: {traceback.format_exc()}")
-        return None
-
-import json
-import gzip
-
 def main(file_path):
     logger.info("Starting Price Differential Analysis")
 
     # Load all data
     df = load_data(file_path)
-    logger.info(f"Loaded {len(df)} records from the JSON file")
+    logger.info(f"Loaded {len(df)} records from the GeoJSON file")
 
     # Define the base markets
     desired_base_markets = ['aden', "sana'a"]
@@ -579,9 +432,6 @@ def main(file_path):
             logger.warning(f"No valid analysis results for base market {base_market}. Skipping.")
             continue
 
-        # Run price differential model
-        model_results = run_price_differential_model(results)
-
         # Organize results by commodity
         commodity_results = {}
         for result in results:
@@ -590,10 +440,12 @@ def main(file_path):
                 commodity_results[commodity] = []
             commodity_results[commodity].append(result)
 
+        # Indicate which model was used as selected
+        selected_model = 'Simple Time Regression'  # Indicate the model used
+
         all_results[base_market] = {
             "commodity_results": commodity_results,
-            "model_results": model_results,
-            "diagnostics": model_results.get('diagnostics') if model_results else None
+            "selected_model": selected_model
         }
 
     if not all_results:
@@ -602,39 +454,8 @@ def main(file_path):
 
     # Prepare results without redundant data
     final_results = {
-        "markets": {}
+        "markets": all_results
     }
-
-    for base_market, data in all_results.items():
-        commodity_results = data["commodity_results"]
-        organized_commodity_results = {}
-        
-        for commodity, analyses in commodity_results.items():
-            organized_analyses = []
-            for analysis in analyses:
-                organized_analyses.append({
-                    'other_market': analysis['other_market'],
-                    'price_differential_summary': {
-                        'mean': np.mean(analysis['price_differential']),
-                        'std': np.std(analysis['price_differential']),
-                        'min': np.min(analysis['price_differential']),
-                        'max': np.max(analysis['price_differential']),
-                        'count': len(analysis['price_differential'])
-                    },
-                    'stationarity': analysis['stationarity'],
-                    'conflict_correlation': analysis['conflict_correlation'],
-                    'common_dates': analysis['common_dates'],
-                    'distance': analysis['distance'],
-                    'p_value': analysis['p_value']
-                })
-            
-            organized_commodity_results[commodity] = organized_analyses
-        
-        final_results["markets"][base_market] = {
-            "commodity_results": organized_commodity_results,
-            "model_results": data.get("model_results"),
-            "diagnostics": data.get("diagnostics")
-        }
 
     # Custom default function to handle serialization
     def default(o):
@@ -651,24 +472,23 @@ def main(file_path):
         else:
             raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
 
-    # Save all results in a compressed file with indentation and sorted keys
-    output_file_gz = price_diff_results_dir / "price_differential_results.json.gz"
+    # Save all results in a plain JSON file with indentation and sorted keys
+    output_file = price_diff_results_dir / "price_differential_results.json"
     try:
-        with gzip.open(output_file_gz, "wt", compresslevel=5) as f:
+        with open(output_file, "w") as f:
             json.dump(final_results, f, default=default, indent=4, sort_keys=True)
-        logger.info(f"All results saved to {output_file_gz}")
+        logger.info(f"All results saved to {output_file}")
     except Exception as e:
-        logger.error(f"Error saving results to {output_file_gz}: {e}")
+        logger.error(f"Error saving results to {output_file}: {e}")
         logger.debug(f"Detailed error information: {traceback.format_exc()}")
 
     # Optionally, validate the JSON output
     try:
-        with gzip.open(output_file_gz, "rt") as f:
+        with open(output_file, "r") as f:
             data = json.load(f)
         logger.info("JSON output successfully validated.")
     except json.JSONDecodeError as e:
         logger.error(f"JSON validation failed: {e}")
-
 
     logger.info("Price Differential Analysis completed")
 

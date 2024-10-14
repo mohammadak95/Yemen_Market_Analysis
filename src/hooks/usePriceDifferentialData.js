@@ -5,6 +5,7 @@ import { getDataPath } from '../utils/dataPath';
 
 const usePriceDifferentialData = () => {
   const [data, setData] = useState(null);
+  const [markets, setMarkets] = useState([]);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
 
@@ -27,13 +28,15 @@ const usePriceDifferentialData = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const text = await response.text();
-        console.log('Raw response:', text.substring(0, 200) + '...');
-
-        const jsonData = JSON.parse(text);
+        const jsonData = await response.json();
         console.log('Parsed price differential data:', jsonData);
 
-        setData(jsonData);
+        // Extract markets data
+        const marketsData = jsonData.markets || {};
+        const marketsList = Object.keys(marketsData);
+
+        setData(marketsData);
+        setMarkets(marketsList);
         setStatus('succeeded');
       } catch (err) {
         console.error('Error fetching price differential data:', err);
@@ -46,7 +49,7 @@ const usePriceDifferentialData = () => {
     fetchData();
   }, []);
 
-  return { data, status, error };
+  return { data, markets, status, error };
 };
 
 export default usePriceDifferentialData;

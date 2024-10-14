@@ -6,7 +6,7 @@ import ResultTable from '../common/ResultTable';
 import { Typography } from '@mui/material';
 
 const DiagnosticsTests = ({ data }) => {
-  if (!data) {
+  if (!data || !data.diagnostics) {
     return (
       <Typography variant="body1">
         No diagnostic tests available for this market pair.
@@ -14,22 +14,31 @@ const DiagnosticsTests = ({ data }) => {
     );
   }
 
+  const diagnostics = data.diagnostics;
+
   const diagnosticsData = [
     {
       name: 'Conflict Correlation',
-      value: data.conflict_correlation.toFixed(4),
+      value:
+        diagnostics.conflict_correlation != null
+          ? diagnostics.conflict_correlation.toFixed(4)
+          : 'N/A',
     },
     {
       name: 'Common Dates',
-      value: data.common_dates,
+      value: diagnostics.common_dates != null ? diagnostics.common_dates : 'N/A',
     },
     {
       name: 'Distance',
-      value: `${data.distance.toFixed(2)} km`,
+      value:
+        diagnostics.distance != null
+          ? `${(diagnostics.distance * 200).toFixed(2)} km`
+          : 'N/A',
     },
     {
       name: 'P-Value',
-      value: data.p_value.toFixed(4),
+      value:
+        diagnostics.p_value != null ? diagnostics.p_value.toFixed(4) : 'N/A',
     },
   ];
 
@@ -49,10 +58,12 @@ const DiagnosticsTests = ({ data }) => {
 
 DiagnosticsTests.propTypes = {
   data: PropTypes.shape({
-    conflict_correlation: PropTypes.number,
-    common_dates: PropTypes.number,
-    distance: PropTypes.number,
-    p_value: PropTypes.number,
+    diagnostics: PropTypes.shape({
+      conflict_correlation: PropTypes.number,
+      common_dates: PropTypes.number,
+      distance: PropTypes.number,
+      p_value: PropTypes.number,
+    }),
   }),
 };
 

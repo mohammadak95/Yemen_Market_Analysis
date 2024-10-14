@@ -2,9 +2,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Interpretation from '../common/Interpretation';
+import { Typography, Paper, Box } from '@mui/material';
 import ResultTable from '../common/ResultTable';
-import { Typography } from '@mui/material';
 
 const MarketPairInfo = ({ data }) => {
   if (!data) {
@@ -23,12 +22,19 @@ const MarketPairInfo = ({ data }) => {
       value: data.other_market || 'N/A',
     },
     {
+      name: 'Commodity',
+      value: data.commodity || 'N/A',
+    },
+    {
       name: 'Distance',
-      value: data.distance ? `${data.distance.toFixed(2)} km` : 'N/A',
+      value:
+        data.diagnostics.distance_km != null
+          ? `${(data.diagnostics.distance_km * 200).toFixed(2)} km`
+          : 'N/A',
     },
     {
       name: 'Common Dates',
-      value: data.common_dates || 'N/A',
+      value: data.diagnostics.common_dates != null ? data.diagnostics.common_dates : 'N/A',
     },
   ];
 
@@ -37,28 +43,31 @@ const MarketPairInfo = ({ data }) => {
     { field: 'value' },
   ];
 
-  const interpretationMessages = [];
+  const interpretMarketPair = () => {
+    let interpretation = '';
 
-  if (data.p_value !== undefined) {
-    const significanceMessage =
-      data.p_value < 0.05
-        ? 'The price differential is statistically significant, indicating a strong impact.'
-        : 'The price differential is not statistically significant, suggesting a weak or negligible impact.';
-    interpretationMessages.push(significanceMessage);
-  }
+    if (data.diagnostics?.distance_km != null) {
+      const distanceKm = (data.diagnostics.distance_km * 200).toFixed(2);
+      interpretation += `The distance between ${data.base_market} and ${data.other_market} is approximately ${distanceKm} km. This distance may influence the price differential due to transportation costs and market integration.\n\n`;
+    }
 
-  if (data.conflict_correlation !== undefined) {
-    const correlationMessage = `The conflict correlation between the markets is ${
-      data.conflict_correlation > 0 ? 'positive' : 'negative'
-    } (${data.conflict_correlation.toFixed(4)}).`;
-    interpretationMessages.push(correlationMessage);
-  }
+    if (data.diagnostics?.common_dates != null) {
+      interpretation += `The analysis is based on ${data.diagnostics.common_dates} common dates, providing a robust dataset for comparison.`;
+    }
+
+    return interpretation;
+  };
 
   return (
-    <>
+    <Paper sx={{ p: 2, mb: 2 }}>
       <ResultTable title="Market Pair Information" data={marketInfoData} columns={columns} />
-      <Interpretation title="Interpretation" messages={interpretationMessages} />
-    </>
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="h6" gutterBottom>Interpretation</Typography>
+        <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+          {interpretMarketPair()}
+        </Typography>
+      </Box>
+    </Paper>
   );
 };
 
@@ -66,10 +75,11 @@ MarketPairInfo.propTypes = {
   data: PropTypes.shape({
     base_market: PropTypes.string,
     other_market: PropTypes.string,
-    distance: PropTypes.number,
-    common_dates: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    p_value: PropTypes.number,
-    conflict_correlation: PropTypes.number,
+    commodity: PropTypes.string,
+    diagnostics: PropTypes.shape({
+      distance_km: PropTypes.number,
+      common_dates: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
   }),
 };
 

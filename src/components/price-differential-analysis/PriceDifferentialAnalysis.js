@@ -16,55 +16,53 @@ import {
   Tab,
   Tooltip as MuiTooltip,
   IconButton,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PriceDifferentialChart from './PriceDifferentialChart';
 import RegressionResults from './RegressionResults';
 import DiagnosticsTable from './DiagnosticsTable';
 import MarketPairInfo from './MarketPairInfo';
 import PriceDifferentialTutorial from './PriceDifferentialTutorial';
+import KeyInsights from './KeyInsights';
 import usePriceDifferentialData from '../../hooks/usePriceDifferentialData';
 import { saveAs } from 'file-saver';
 import { jsonToCsv } from '../../utils/jsonToCsv';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
-const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
+const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
   const theme = useTheme();
-  const isMobile = windowWidth < theme.breakpoints.values.sm;
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const { data, status, error } = usePriceDifferentialData();
+  const { data, markets, status, error } = usePriceDifferentialData();
   const [baseMarket, setBaseMarket] = useState('');
   const [marketPairs, setMarketPairs] = useState([]);
   const [selectedMarketPair, setSelectedMarketPair] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [selectedData, setSelectedData] = useState(null);
 
+  // Update base markets when data loads
   useEffect(() => {
-    if (status === 'succeeded' && data) {
-      const baseMarkets = Object.keys(data);
-      if (baseMarkets.length > 0) {
-        setBaseMarket((prev) =>
-          prev && baseMarkets.includes(prev) ? prev : baseMarkets[0]
-        );
-      }
+    if (data && markets.length > 0) {
+      setBaseMarket(markets[0]);
     }
-  }, [status, data]);
+  }, [data, markets]);
 
+  // Update market pairs when base market or data changes
   useEffect(() => {
-    if (
-      baseMarket &&
-      data[baseMarket] &&
-      data[baseMarket].commodity_results &&
-      data[baseMarket].commodity_results[selectedCommodity]
-    ) {
-      const commodityResults = data[baseMarket].commodity_results[selectedCommodity];
+    if (data && baseMarket) {
+      const commodityResults = data[baseMarket]?.commodity_results[selectedCommodity];
       if (commodityResults) {
         const pairs = commodityResults.map((item) => item.other_market);
         setMarketPairs(pairs);
-        setSelectedMarketPair((prev) =>
-          prev && pairs.includes(prev) ? prev : pairs[0]
-        );
+        if (!pairs.includes(selectedMarketPair)) {
+          setSelectedMarketPair(pairs[0]);
+        }
       } else {
         setMarketPairs([]);
         setSelectedMarketPair('');
@@ -72,6 +70,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
     }
   }, [baseMarket, data, selectedCommodity]);
 
+  // Update selected data when selection changes
   useEffect(() => {
     if (
       data &&
@@ -87,6 +86,11 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
       setSelectedData(null);
     }
   }, [data, baseMarket, selectedCommodity, selectedMarketPair]);
+
+  const handleBaseMarketChange = (event) => {
+    setBaseMarket(event.target.value);
+    setActiveTab(0);
+  };
 
   const handleMarketPairChange = (event) => {
     setSelectedMarketPair(event.target.value);
@@ -108,23 +112,72 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
         AIC: selectedData.regression_results?.aic?.toFixed(2) || 'N/A',
         BIC: selectedData.regression_results?.bic?.toFixed(2) || 'N/A',
         HQIC: selectedData.regression_results?.hqic?.toFixed(2) || 'N/A',
-        Alpha: selectedData.regression_results?.alpha?.toFixed(4) || 'N/A',
-        Beta: selectedData.regression_results?.beta?.toFixed(4) || 'N/A',
-        Gamma: selectedData.regression_results?.gamma?.toFixed(4) || 'N/A',
+        Intercept: selectedData.regression_results?.intercept?.toFixed(4) || 'N/A',
+        Slope: selectedData.regression_results?.slope?.toFixed(4) || 'N/A',
+        'R-squared': selectedData.regression_results?.r_squared?.toFixed(4) || 'N/A',
+        'P-Value': selectedData.regression_results?.p_value?.toFixed(4) || 'N/A',
       },
       Diagnostics: selectedData.diagnostics,
       PriceDifferential: selectedData.price_differential,
       RegressionResults: selectedData.regression_results,
-      MarketPairInfo: selectedData.market_pair_info,
-      ConflictCorrelation: selectedData.conflict_correlation,
-      CommonDates: selectedData.common_dates,
-      Distance: selectedData.distance,
-      PValue: selectedData.p_value,
+      MarketPairInfo: {
+        base_market: selectedData.base_market,
+        other_market: selectedData.other_market,
+        commodity: selectedData.commodity,
+      },
     };
 
     const csv = jsonToCsv([dataToDownload]);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, `${selectedCommodity}_PriceDifferential_Analysis.csv`);
+    saveAs(
+      blob,
+      `${selectedCommodity}_PriceDifferential_${selectedData.base_market}_vs_${selectedData.other_market}.csv`
+    );
+  };
+
+  // Generate key insights
+  const generateKeyInsights = () => {
+    const insights = [];
+
+    if (selectedData) {
+      const { regression_results, diagnostics } = selectedData;
+
+      if (regression_results?.slope != null && regression_results?.p_value != null) {
+        const slopeSignificance =
+          regression_results.p_value < 0.05
+            ? 'statistically significant'
+            : 'not statistically significant';
+        insights.push(
+          `The slope (β) is ${regression_results.slope.toFixed(4)} and is ${slopeSignificance} (p-value: ${regression_results.p_value.toFixed(
+            4
+          )}), indicating ${
+            slopeSignificance === 'statistically significant' ? 'a significant trend' : 'no significant trend'
+          } in the price differential over time.`
+        );
+      }
+
+      if (diagnostics?.p_value != null) {
+        const stationarity = diagnostics.p_value < 0.05 ? 'stationary' : 'non-stationary';
+        insights.push(
+          `The price differential series is ${stationarity} (p-value: ${diagnostics.p_value.toFixed(
+            4
+          )}), indicating ${
+            stationarity === 'stationary' ? 'it does not have' : 'the presence of'
+          } a unit root.`
+        );
+      }
+
+      if (diagnostics?.conflict_correlation != null) {
+        const conflictPattern = diagnostics.conflict_correlation > 0 ? 'similar' : 'opposite';
+        insights.push(
+          `The conflict correlation between the markets is ${diagnostics.conflict_correlation.toFixed(
+            4
+          )}, suggesting ${conflictPattern} patterns of conflict intensity between the markets.`
+        );
+      }
+    }
+
+    return insights;
   };
 
   if (status === 'loading') {
@@ -189,7 +242,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
           }}
         >
           Price Differential Analysis: {selectedCommodity}
-          <MuiTooltip title="Analyzes the price differences between two markets for a specific commodity.">
+          <MuiTooltip title="Analyzes the price differences between two markets for a specific commodity over time.">
             <IconButton size="small" sx={{ ml: 1 }}>
               <InfoIcon fontSize={isMobile ? 'medium' : 'large'} />
             </IconButton>
@@ -220,14 +273,14 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
             <Select
               labelId="base-market-select-label"
               value={baseMarket}
-              onChange={(e) => setBaseMarket(e.target.value)}
+              onChange={handleBaseMarketChange}
               label="Base Market"
               size="small"
               sx={{
                 fontSize: '0.9rem',
               }}
             >
-              {Object.keys(data).map((market) => (
+              {markets.map((market) => (
                 <MenuItem key={market} value={market}>
                   {market}
                 </MenuItem>
@@ -283,6 +336,10 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
         <PriceDifferentialTutorial />
       </Box>
 
+      {/* Key Insights */}
+      <KeyInsights insights={generateKeyInsights()} />
+
+      {/* Tabs */}
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -303,7 +360,11 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
         }}
       >
         <Tab
-          label="Price Differential Chart"
+          label={
+            <MuiTooltip title="Visual representation of the price differential over time.">
+              <span>Price Differential Chart</span>
+            </MuiTooltip>
+          }
           sx={{
             minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
@@ -311,7 +372,11 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
           }}
         />
         <Tab
-          label="Regression Results"
+          label={
+            <MuiTooltip title="Statistical analysis of the price differential trend.">
+              <span>Regression Results</span>
+            </MuiTooltip>
+          }
           sx={{
             minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
@@ -319,7 +384,11 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
           }}
         />
         <Tab
-          label="Diagnostics"
+          label={
+            <MuiTooltip title="Statistical tests to validate the analysis.">
+              <span>Diagnostics</span>
+            </MuiTooltip>
+          }
           sx={{
             minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
@@ -327,7 +396,11 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
           }}
         />
         <Tab
-          label="Market Pair Info"
+          label={
+            <MuiTooltip title="Information about the selected markets and commodity.">
+              <span>Market Pair Info</span>
+            </MuiTooltip>
+          }
           sx={{
             minWidth: isMobile ? 'auto' : 150,
             fontSize: isMobile ? '0.8rem' : '1rem',
@@ -335,17 +408,42 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
           }}
         />
       </Tabs>
+
+      {/* Tab Content */}
       <Box sx={{ mt: 2 }}>
         {activeTab === 0 && (
-          <PriceDifferentialChart
-            data={selectedData}
-            isMobile={isMobile}
-          />
+          <PriceDifferentialChart data={selectedData} isMobile={isMobile} />
         )}
         {activeTab === 1 && <RegressionResults data={selectedData} isMobile={isMobile} />}
-        {activeTab === 2 && <DiagnosticsTable diagnostics={selectedData} isMobile={isMobile} />}
+        {activeTab === 2 && <DiagnosticsTable data={selectedData} isMobile={isMobile} />}
         {activeTab === 3 && <MarketPairInfo data={selectedData} isMobile={isMobile} />}
       </Box>
+
+      {/* Interpretation Guide */}
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6">Interpretation Guide</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
+            This analysis helps you understand the price differences between two markets for a specific commodity. Key points to consider:
+            <ul>
+              <li>
+                The <strong>Price Differential Chart</strong> visualizes the price differences over time.
+              </li>
+              <li>
+                The <strong>Regression Results</strong> provide statistical analysis of trends.
+              </li>
+              <li>
+                The <strong>Diagnostics</strong> tab offers statistical tests to validate the analysis.
+              </li>
+              <li>
+                The <strong>Market Pair Info</strong> gives context about the selected markets and commodity.
+              </li>
+            </ul>
+          </Typography>
+        </AccordionDetails>
+      </Accordion>
     </Paper>
   );
 };
