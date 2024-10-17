@@ -1,68 +1,51 @@
 // src/utils/mergeSpatialData.js
 
-// Utility function to normalize region names
-// Enhanced normalization to handle more variations
-const normalizeRegionName = (name) => {
-    if (typeof name !== 'string') {
-      return '';
+// Function to merge spatial data with mapping and exclusion logic
+export const mergeSpatialDataWithMapping = (geoBoundariesData, enhancedData, regionMapping, excludedRegions) => {
+
+  const enhancedDataMap = new Map(
+    enhancedData.features.map((feature) => {
+      const regionName = feature.properties.region_id;
+      return [regionName, feature];
+    })
+  );
+
+  const mergedFeatures = [];
+  const unmatchedRegions = new Set();
+
+  // Filter out excluded regions first
+  const filteredGeoBoundariesData = geoBoundariesData.features.filter((feature) => {
+    const originalShapeName = feature.properties.shapeName;
+    const mappedShapeName = regionMapping[originalShapeName] || originalShapeName;
+    if (excludedRegions.includes(mappedShapeName)) {
+      console.info(`Excluding region: ${originalShapeName}`);
+      return false;
     }
-    return name
-      .trim()
-      .toLowerCase()
-      .replace(/governorate|governorates?/g, '') // remove variations of 'governorate'
-      .replace(/['’`´]/g, '') // remove apostrophes
-      .replace(/[\s-]+/g, ' ') // normalize spaces and dashes
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, ''); // remove diacritics
+    return true;
+  });
+
+  filteredGeoBoundariesData.forEach((feature) => {
+    const originalShapeName = feature.properties.shapeName;
+    const mappedShapeName = regionMapping[originalShapeName] || originalShapeName;
+
+    const enhancedFeature = enhancedDataMap.get(mappedShapeName);
+
+    if (enhancedFeature) {
+      mergedFeatures.push({
+        type: 'Feature',
+        properties: { ...feature.properties, ...enhancedFeature.properties },
+        geometry: feature.geometry,
+      });
+    } else {
+      unmatchedRegions.add(originalShapeName);
+      console.warn(`No enhanced data found for mapped region: ${mappedShapeName}`);
+    }
+  });
+
+  console.warn('Unmatched regions:', Array.from(unmatchedRegions));
+
+  return {
+    type: 'FeatureCollection',
+    features: mergedFeatures,
   };
-  
-  // Function to merge spatial data with mapping and exclusion logic
-  export const mergeSpatialDataWithMapping = (geoBoundariesData, enhancedData, regionMapping, excludedRegions) => {
-    // Normalize and map the region names in the geoBoundaries data
-    const geoBoundariesMap = new Map(
-      geoBoundariesData.features.map((feature) => {
-        const normalizedName = normalizeRegionName(feature.properties.shapeName);
-        return [normalizedName, feature];
-      })
-    );
-  
-    // Create a merged dataset based on matching region names and the mapping
-    const mergedFeatures = [];
-    const unmatchedRegions = new Set();
-  
-    enhancedData.features.forEach((feature) => {
-      const originalRegionId = normalizeRegionName(feature.properties.region_id);
-      
-      // Apply the mapping if the region name exists in the mapping table
-      const mappedRegionId = regionMapping[originalRegionId] || originalRegionId;
-  
-      // Exclude regions that are listed in the excludedRegions
-      if (excludedRegions.includes(mappedRegionId)) {
-        return;
-      }
-  
-      // Check if the mapped region is in the geoBoundaries map
-      const geoFeature = geoBoundariesMap.get(mappedRegionId);
-      if (geoFeature) {
-        // Merge properties from the geoBoundaries feature
-        const mergedFeature = {
-          type: 'Feature',
-          properties: { ...geoFeature.properties, ...feature.properties },
-          geometry: geoFeature.geometry,
-        };
-        mergedFeatures.push(mergedFeature);
-      } else {
-        unmatchedRegions.add(originalRegionId);
-      }
-    });
-  
-    // Create a new FeatureCollection for the merged data
-    const mergedData = {
-      type: 'FeatureCollection',
-      features: mergedFeatures,
-    };
-  
-    console.warn('Unmatched regions:', Array.from(unmatchedRegions));
-    
-    return mergedData;
-  };
+};
