@@ -58,7 +58,8 @@ const prepareData = () => {
       'time_series_data/conflict_intensity_time_series.csv',
       'time_series_data/prices_time_series.csv',
       'ecm/ecm_results_north_to_south.json',
-      'ecm/ecm_results_south_to_north.json'
+      'ecm/ecm_results_south_to_north.json',
+      'choropleth_data/geoBoundaries-YEM-ADM1.geojson'
     ];
 
     filesToEnsure.forEach(file => {

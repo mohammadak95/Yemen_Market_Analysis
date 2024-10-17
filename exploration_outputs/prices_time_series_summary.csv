@@ -1,5 +1,0 @@
-,region_id,date,beans (kidney red),beans (white),eggs,exchange rate (unofficial),fuel (diesel),fuel (gas),fuel (petrol-gasoline),lentils,milling cost (wheat),oil (vegetable),onions,"peas (yellow, split)",potatoes,rice (imported),salt,sugar,tomatoes,wage (non-qualified labour),wage (qualified labour),wheat,wheat flour
-count,987,987,883,941,941,985,941,988,988,941,894,988,988,565,988,988,988,988,988,988,988,988,988
-unique,21,47,638,655,438,841,655,633,626,626,464,891,679,406,670,529,385,537,760,461,466,639,510
-top,abyan,2020-07-31,12.001,3.6003001,0.24,2.0602,1.9002,26.0021,1.9002,4.0002999,6.0005002,8.0005999,2.0002,2.0002,2.0002,4.0002999,0.4,2.0002,2.0002,28.002199,60.004799,1.2000999,3.6003001
-freq,47,21,15,11,39,6,48,33,60,19,29,11,19,27,17,46,66,88,17,24,41,35,26

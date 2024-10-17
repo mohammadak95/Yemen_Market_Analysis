@@ -4,7 +4,7 @@ import React from 'react';
 import { Tooltip as MuiTooltip, Typography, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const CustomTooltip = React.memo(({ active, payload }) => {
+const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -23,13 +23,13 @@ const CustomTooltip = React.memo(({ active, payload }) => {
         disableHoverListener
         disableTouchListener
       >
-        <span aria-label={`Tooltip for region ${data.region_id}`}></span>
+        <span />
       </MuiTooltip>
     );
   }
 
   return null;
-});
+};
 
 CustomTooltip.propTypes = {
   active: PropTypes.bool,

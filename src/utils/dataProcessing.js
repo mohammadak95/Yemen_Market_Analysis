@@ -191,3 +191,30 @@ export function applySeasonalAdjustment(
   
     return result;
   }
+
+export const processData = (geoJsonData, enhancedData, selectedCommodity) => {
+  // Group enhanced data by admin1 and calculate average price for the selected commodity
+  const averagePrices = enhancedData.features.reduce((acc, feature) => {
+    if (feature.properties.commodity === selectedCommodity) {
+      const admin1 = feature.properties.admin1;
+      if (!acc[admin1]) {
+        acc[admin1] = { sum: 0, count: 0 };
+      }
+      acc[admin1].sum += feature.properties.price;
+      acc[admin1].count += 1;
+    }
+    return acc;
+  }, {});
+
+  // Merge average prices with geoJSON data
+  geoJsonData.features.forEach(feature => {
+    const admin1 = feature.properties.ADM1_EN;
+    if (averagePrices[admin1]) {
+      feature.properties.averagePrice = averagePrices[admin1].sum / averagePrices[admin1].count;
+    } else {
+      feature.properties.averagePrice = 0;
+    }
+  });
+
+  return geoJsonData;
+};

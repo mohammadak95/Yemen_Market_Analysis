@@ -50,7 +50,11 @@ const RegressionResults = ({ data }) => {
   };
 
   const getCoefficientIcon = (coef) => {
-    return coef > 0 ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />;
+    return coef > 0 ? (
+      <ArrowUpwardIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+    ) : (
+      <ArrowDownwardIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+    );
   };
 
   return (
@@ -101,8 +105,8 @@ const RegressionResults = ({ data }) => {
 
 RegressionResults.propTypes = {
   data: PropTypes.shape({
-    coefficients: PropTypes.object.isRequired,
-    p_values: PropTypes.object,
+    coefficients: PropTypes.objectOf(PropTypes.number).isRequired,
+    p_values: PropTypes.objectOf(PropTypes.number),
     r_squared: PropTypes.number,
     adj_r_squared: PropTypes.number,
   }),

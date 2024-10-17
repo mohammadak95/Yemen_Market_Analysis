@@ -1,4 +1,4 @@
-// src/components/SpatialMap.js
+// src/components/spatial-analysis/SpatialMap.js
 
 import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
@@ -8,16 +8,27 @@ import { Paper, Typography } from '@mui/material';
 
 const SpatialMap = ({ geoData }) => {
   const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const geoJsonLayer = useRef(null);
 
   useEffect(() => {
     if (!geoData || !mapRef.current) return;
 
-    const map = L.map(mapRef.current).setView([0, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    // Initialize the map only once
+    if (!mapInstance.current) {
+      mapInstance.current = L.map(mapRef.current).setView([0, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+      }).addTo(mapInstance.current);
+    }
 
-    const geojsonLayer = L.geoJSON(geoData, {
+    // Remove previous GeoJSON layer
+    if (geoJsonLayer.current) {
+      mapInstance.current.removeLayer(geoJsonLayer.current);
+    }
+
+    // Add new GeoJSON layer
+    geoJsonLayer.current = L.geoJSON(geoData, {
       pointToLayer: (feature, latlng) => {
         const residual = feature.properties.residual;
         const color = residual > 0 ? 'red' : 'blue';
@@ -41,17 +52,21 @@ const SpatialMap = ({ geoData }) => {
             <strong>Residual:</strong> ${residual.toFixed(4)}
           </div>
         `);
-      }
-    }).addTo(map);
+      },
+    }).addTo(mapInstance.current);
 
-    map.fitBounds(geojsonLayer.getBounds());
+    // Fit map bounds to the GeoJSON layer
+    mapInstance.current.fitBounds(geoJsonLayer.current.getBounds());
 
+    // Cleanup function
     return () => {
-      map.remove();
+      if (geoJsonLayer.current) {
+        mapInstance.current.removeLayer(geoJsonLayer.current);
+      }
     };
   }, [geoData]);
 
-  if (!geoData) {
+  if (!geoData || geoData.features.length === 0) {
     return (
       <Typography variant="body1">
         No geographical data available.
@@ -67,7 +82,7 @@ const SpatialMap = ({ geoData }) => {
 };
 
 SpatialMap.propTypes = {
-  geoData: PropTypes.object
+  geoData: PropTypes.object.isRequired,
 };
 
 export default SpatialMap;

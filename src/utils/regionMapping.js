@@ -1,0 +1,26 @@
+export const regionMapping = {
+  'Sanʿaʾ': 'sanaa',
+  'Sanʿaʾ Governorate': 'sanaa',
+  'Amanat al Asimah': 'amanat al asimah',
+  '‘Adan Governorate': 'aden',
+  'Al Hudaydah Governorate': 'al hudaydah',
+  "Ad Dali' Governorate": 'al dhalee',
+  'Hadhramaut': 'hadramaut',
+  'Abyan Governorate': 'abyan',
+  'Al Bayda\' Governorate': 'al bayda',
+  'Lahij Governorate': 'lahj',
+  'Shabwah Governorate': 'shabwah',
+  "Ma'rib Governorate": 'marib',
+  'Al Mahwit Governorate': 'al mahwit',
+  'Raymah Governorate': 'raymah',
+  'Socotra': 'socotra',
+  "'Amran Governorate": 'amran',
+  'Al Mahrah Governorate': 'al maharah',
+  'Dhamar Governorate': 'dhamar',
+  'Ibb Governorate': 'ibb',
+  "Ta'izz Governorate": 'taizz',
+  'Hajjah Governorate': 'hajjah',
+  "Sa'dah Governorate": 'sadah',
+};
+
+export const excludedRegions = ['sadah'];
