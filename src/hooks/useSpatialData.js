@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { getDataPath } from '../utils/dataPath';
 import { transformToWGS84 } from '../utils/coordinateTransform';
-import { mergeSpatialDataWithMapping } from '../utils/mergeSpatialData'; // Import the merging function
-import { regionMapping, excludedRegions } from '../utils/regionMapping'; // Import mappings
+import { mergeSpatialDataWithMapping } from '../utils/mergeSpatialData';
+import { regionMapping, excludedRegions } from '../utils/regionMapping';
+import { parseISO } from 'date-fns'; // Ensure date-fns is installed: npm install date-fns
 
 const useSpatialData = () => {
   const [state, setState] = useState({
@@ -15,6 +16,8 @@ const useSpatialData = () => {
     loading: true,
     error: null,
   });
+
+  const [uniqueMonths, setUniqueMonths] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -30,6 +33,7 @@ const useSpatialData = () => {
 
         console.log('Fetching data from:', geoBoundariesPath, geoJsonURL, spatialWeightsURL, flowMapsURL, analysisResultsURL);
 
+        // Fetch all data concurrently
         const [
           geoBoundariesResponse,
           geoJsonResponse,
@@ -44,12 +48,14 @@ const useSpatialData = () => {
           fetch(analysisResultsURL, { headers: { Accept: 'application/json' }, signal }),
         ]);
 
+        // Check for successful responses
         if (!geoBoundariesResponse.ok) throw new Error('Failed to fetch GeoBoundaries data.');
         if (!geoJsonResponse.ok) throw new Error('Failed to fetch GeoJSON data.');
         if (!weightsResponse.ok) throw new Error('Failed to fetch spatial weights data.');
         if (!flowMapsResponse.ok) throw new Error('Failed to fetch flow maps data.');
         if (!analysisResultsResponse.ok) throw new Error('Failed to fetch analysis results.');
 
+        // Parse the fetched data
         const [
           geoBoundariesData,
           geoJsonData,
@@ -64,6 +70,7 @@ const useSpatialData = () => {
           analysisResultsResponse.json(),
         ]);
 
+        // Parse Flow Maps CSV using PapaParse
         const { data: flowMapsData, errors } = Papa.parse(flowMapsText, {
           header: true,
           skipEmptyLines: true,
@@ -76,26 +83,69 @@ const useSpatialData = () => {
 
         console.log('Flow maps data:', flowMapsData);
 
-        const transformedFlowMapsData = flowMapsData.map((flow) => {
-          const [sourceLng, sourceLat] = transformToWGS84(flow.source_lng, flow.source_lat);
-          const [targetLng, targetLat] = transformToWGS84(flow.target_lng, flow.target_lat);
-          return {
-            ...flow,
-            source_lat: sourceLat,
-            source_lng: sourceLng,
-            target_lat: targetLat,
-            target_lng: targetLng,
-          };
-        });
+        // Transform Flow Maps Coordinates to WGS84
+        const transformedFlowMapsData = flowMapsData
+          .map((flow, index) => {
+            if (
+              typeof flow.source_lng !== 'number' ||
+              typeof flow.source_lat !== 'number' ||
+              typeof flow.target_lng !== 'number' ||
+              typeof flow.target_lat !== 'number'
+            ) {
+              console.warn(`Invalid coordinates in flow map entry at index ${index}:`, flow);
+              return null;
+            }
 
-        // Merge data using the provided merging function
+            const [sourceLng, sourceLat] = transformToWGS84(flow.source_lng, flow.source_lat);
+            const [targetLng, targetLat] = transformToWGS84(flow.target_lng, flow.target_lat);
+            return {
+              ...flow,
+              source_lat: sourceLat,
+              source_lng: sourceLng,
+              target_lat: targetLat,
+              target_lng: targetLng,
+            };
+          })
+          .filter(flow => flow !== null);
+
+        // Merge GeoBoundaries and Enhanced GeoJSON Data
         const mergedData = mergeSpatialDataWithMapping(
           geoBoundariesData,
           geoJsonData,
           regionMapping,
           excludedRegions
         );
+        
+        // Log mergedData to confirm the result
+        console.log('Merged GeoJSON Data:', mergedData);
 
+        // Extract unique months from mergedData.features
+        const dates = mergedData.features
+          .map(feature => feature.properties.date)
+          .filter(dateStr => {
+            if (!dateStr) return false;
+            const parsedDate = parseISO(dateStr);
+            if (isNaN(parsedDate.getTime())) {
+              console.warn(`Invalid date format: ${dateStr}`);
+              return false;
+            }
+            return true;
+          });
+
+        const uniqueMonthSet = new Set(
+          dates.map(dateStr => {
+            const parsedDate = parseISO(dateStr);
+            return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}`;
+          })
+        );
+
+        const uniqueMonthDates = Array.from(uniqueMonthSet)
+          .map(monthStr => new Date(`${monthStr}-01`))
+          .sort((a, b) => a - b);
+
+        console.log('Unique Months:', uniqueMonthDates);
+
+        // Update state with merged data and unique months
         setState({
           geoData: mergedData,
           geoBoundaries: geoBoundariesData,
@@ -106,11 +156,13 @@ const useSpatialData = () => {
           error: null,
         });
 
+        setUniqueMonths(uniqueMonthDates);
+
         console.log('Spatial data loaded and merged successfully');
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Error fetching spatial data:', err);
-          setState((prevState) => ({
+          setState(prevState => ({
             ...prevState,
             loading: false,
             error: err.message,
@@ -126,20 +178,7 @@ const useSpatialData = () => {
     };
   }, []);
 
-  const dateRange = useMemo(() => {
-    if (!state.geoData || !state.geoData.features || state.geoData.features.length === 0) {
-      return { min: new Date(), max: new Date() };
-    }
-    const dates = state.geoData.features
-      .map(feature => new Date(feature.properties.date))
-      .filter(date => !isNaN(date.getTime()));
-    return {
-      min: new Date(Math.min(...dates)),
-      max: new Date(Math.max(...dates)),
-    };
-  }, [state.geoData]);
-
-  return { ...state, dateRange };
+  return { ...state, uniqueMonths };
 };
 
 export default useSpatialData;
