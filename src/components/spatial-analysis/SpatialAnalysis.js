@@ -33,36 +33,18 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
   const isMobile = windowWidth < theme.breakpoints.values.sm;
 
-  // Debug: Log received props
-  console.log('[Debug] SpatialAnalysis Props:', { selectedCommodity, windowWidth });
-
   const [activeTab, setActiveTab] = useState(1);
   const { geoData, flowMaps, analysisResults, loading, error, uniqueMonths } = useSpatialData();
-
-  // Debug: Log data fetched from useSpatialData hook
-  useEffect(() => {
-    console.log('[Debug] Data fetched from useSpatialData:', { geoData, flowMaps, analysisResults, loading, error, uniqueMonths });
-  }, [geoData, flowMaps, analysisResults, loading, error, uniqueMonths]);
 
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // Ensure uniqueMonths is sorted in ascending order
-  const sortedUniqueMonths = useMemo(() => {
-    return [...uniqueMonths].sort((a, b) => a - b);
-  }, [uniqueMonths]);
+  console.log('[Debug] SpatialAnalysis Props:', { selectedCommodity, windowWidth });
 
-  // Set selectedDate and selectedMonthIndex to the latest date in uniqueMonths when the component mounts or uniqueMonths changes
   useEffect(() => {
-    if (sortedUniqueMonths.length > 0) {
-      const latestDate = sortedUniqueMonths[sortedUniqueMonths.length - 1];
-      setSelectedDate(latestDate);
-      setSelectedMonthIndex(sortedUniqueMonths.length - 1);
-      console.log(`[Debug] Initialized selectedMonthIndex to ${sortedUniqueMonths.length - 1} (${latestDate})`);
-    }
-  }, [sortedUniqueMonths]);
+    console.log('[Debug] Data fetched from useSpatialData:', { geoData, flowMaps, analysisResults, loading, error, uniqueMonths });
+  }, [geoData, flowMaps, analysisResults, loading, error, uniqueMonths]);
 
-  // Helper function to format Date object to "YYYY-MM-DD"
   const formatDate = useCallback((date) => {
     if (!(date instanceof Date) || isNaN(date)) {
       console.warn('[Warning] Invalid date provided to formatDate:', date);
@@ -71,79 +53,106 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     return formatDateFn(date, 'yyyy-MM-dd');
   }, []);
 
-  // Find the latest month with data for the selected commodity
+  const sortedUniqueMonths = useMemo(() => {
+    return [...uniqueMonths].sort((a, b) => a - b);
+  }, [uniqueMonths]);
+
+  useEffect(() => {
+    if (geoData && geoData.features) {
+      const commodityCounts = geoData.features.reduce((acc, feature) => {
+        const commodity = feature.properties.commodity.toLowerCase();
+        acc[commodity] = (acc[commodity] || 0) + 1;
+        return acc;
+      }, {});
+      console.log('Commodity counts:', commodityCounts);
+      console.log('Selected commodity (lowercase):', selectedCommodity.toLowerCase());
+      console.log('Commodity exists in data:', Object.prototype.hasOwnProperty.call(commodityCounts, selectedCommodity.toLowerCase()));
+    }
+  }, [geoData, selectedCommodity]);
+
   useEffect(() => {
     if (sortedUniqueMonths.length > 0 && geoData) {
-      let found = false;
+      const currentDate = new Date();
+      let latestValidDate = null;
+      let latestValidIndex = -1;
+
+      console.log('Searching for data with commodity:', selectedCommodity.toLowerCase());
+
       for (let i = sortedUniqueMonths.length - 1; i >= 0; i--) {
         const month = sortedUniqueMonths[i];
-        const formattedDate = formatDate(month);
-        const hasData = geoData.features.some(feature => 
-          feature.properties.commodity && 
-          feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
-          feature.properties.date === formattedDate
-        );
-        if (hasData) {
-          if (selectedMonthIndex !== i) {
-            setSelectedMonthIndex(i);
-            setSelectedDate(month);
-            console.log(`[Debug] setSelectedMonthIndex to ${i} (${sortedUniqueMonths[i]})`);
+        if (month <= currentDate) {
+          const formattedDate = formatDate(month);
+          const matchingFeatures = geoData.features.filter(feature => 
+            feature.properties.commodity && 
+            feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+            feature.properties.date === formattedDate
+          );
+
+          if (matchingFeatures.length > 0) {
+            latestValidDate = month;
+            latestValidIndex = i;
+            console.log(`Found ${matchingFeatures.length} matching features for date ${formattedDate}`);
+            break;
+          } else {
+            console.log(`No matching features found for date ${formattedDate}`);
           }
-          found = true;
-          break;
         }
       }
-      if (!found && selectedMonthIndex !== null) {
+
+      if (latestValidDate) {
+        setSelectedMonthIndex(latestValidIndex);
+        setSelectedDate(latestValidDate);
+        console.log(`[Debug] setSelectedMonthIndex to ${latestValidIndex} (${latestValidDate})`);
+      } else {
+        console.warn(`No valid data found for ${selectedCommodity.toLowerCase()} in any month.`);
         setSelectedMonthIndex(null);
         setSelectedDate(null);
-        console.warn(`[Warning] No data found for commodity: ${selectedCommodity} in any month.`);
       }
     }
-  }, [sortedUniqueMonths, geoData, selectedCommodity, formatDate, selectedMonthIndex]);
+  }, [sortedUniqueMonths, geoData, selectedCommodity, formatDate]);
 
-  // Filter and prepare GeoJSON data for the selected date
   const filteredGeoData = useMemo(() => {
-    if (!geoData) {
-      console.warn('[Warning] geoData is undefined or null.');
-      return null;
-    }
-    if (sortedUniqueMonths.length === 0) {
-      console.warn('[Warning] uniqueMonths is empty.');
-      return null;
-    }
-    if (selectedMonthIndex === null) {
-      console.warn('[Warning] No valid month selected for filtering.');
+    if (!geoData || !selectedDate) {
+      console.warn('[Warning] geoData or selectedDate is null/undefined');
       return null;
     }
 
-    const selectedDateObj = sortedUniqueMonths[selectedMonthIndex];
-    const formattedSelectedDate = formatDate(selectedDateObj);
-    if (formattedSelectedDate === 'Invalid Date') {
-      console.warn('[Warning] Selected date is invalid after formatting.');
-      return null;
-    }
+    const formattedSelectedDate = formatDate(selectedDate);
+    console.log('Formatting selected date:', selectedDate, 'to:', formattedSelectedDate);
 
-    // Filter features matching the selected date and commodity
     const filteredFeatures = geoData.features.filter((feature) => {
       const featureDate = feature.properties.date;
       const commodity = feature.properties.commodity;
-      return featureDate === formattedSelectedDate && 
+      const match = featureDate === formattedSelectedDate && 
         commodity && 
         commodity.toLowerCase() === selectedCommodity.toLowerCase();
+      
+      if (match) {
+        console.log('Matched feature:', feature);
+      }
+      
+      return match;
     });
+
+    console.log(`Filtered ${filteredFeatures.length} features for ${selectedCommodity.toLowerCase()} on ${formattedSelectedDate}`);
 
     return {
       ...geoData,
       features: filteredFeatures,
     };
-  }, [geoData, selectedMonthIndex, sortedUniqueMonths, formatDate, selectedCommodity]);
+  }, [geoData, selectedDate, formatDate, selectedCommodity]);
 
-  // Find the current analysis data for the selectedCommodity
+  useEffect(() => {
+    console.log(`[Debug] selectedDate: ${selectedDate}, selectedMonthIndex: ${selectedMonthIndex}`);
+  }, [selectedDate, selectedMonthIndex]);
+
   const currentAnalysis = useMemo(() => {
-    return analysisResults?.find((r) => r.commodity.toLowerCase() === selectedCommodity.toLowerCase());
+    if (!analysisResults || !selectedCommodity) {
+      return null;
+    }
+    return analysisResults.find(r => r.commodity.toLowerCase() === selectedCommodity.toLowerCase());
   }, [analysisResults, selectedCommodity]);
 
-  // Handle CSV download
   const handleDownloadCsv = useCallback(() => {
     if (!currentAnalysis) {
       console.warn('No spatial analysis data available to download.');
@@ -154,22 +163,28 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     saveAs(blob, `${selectedCommodity}_Spatial_Analysis.csv`);
   }, [currentAnalysis, selectedCommodity]);
 
-  // Handle tab changes
   const handleTabChange = useCallback((event, newValue) => {
     setActiveTab(newValue);
   }, []);
 
-  // Handle date changes from TimeSlider
   const handleDateChange = useCallback((newDate) => {
     const newIndex = sortedUniqueMonths.findIndex(month => month.getTime() === newDate.getTime());
     if (newIndex !== -1) {
-      if (selectedMonthIndex !== newIndex) {
+      const formattedNewDate = formatDate(newDate);
+      const hasData = geoData.features.some(feature => 
+        feature.properties.commodity && 
+        feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+        feature.properties.date === formattedNewDate
+      );
+      if (hasData) {
         setSelectedMonthIndex(newIndex);
-        console.log(`[Debug] setSelectedMonthIndex to ${newIndex} (${sortedUniqueMonths[newIndex]})`);
+        setSelectedDate(newDate);
+        console.log(`[Debug] setSelectedMonthIndex to ${newIndex} (${newDate})`);
+      } else {
+        console.warn(`No data available for ${selectedCommodity.toLowerCase()} on ${formattedNewDate}`);
       }
-      setSelectedDate(newDate);
     }
-  }, [sortedUniqueMonths, selectedMonthIndex]);
+  }, [sortedUniqueMonths, geoData, selectedCommodity, formatDate]);
 
   if (loading) {
     return (
@@ -190,21 +205,16 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
-  if (!selectedCommodity || !filteredGeoData || filteredGeoData.features.length === 0) {
-    return (
-      <Box sx={{ p: 2, mt: 4 }}>
-        <Typography>
-          No spatial data available for <strong>{selectedCommodity}</strong> on the selected date.
-        </Typography>
-      </Box>
-    );
-  }
+  console.log('Filtered GeoData:', filteredGeoData);
+  console.log('Selected Date:', selectedDate);
+  console.log('Selected Commodity:', selectedCommodity);
 
-  if (sortedUniqueMonths.length === 0) {
+  if (!filteredGeoData || filteredGeoData.features.length === 0) {
     return (
       <Box sx={{ p: 2, mt: 4 }}>
         <Typography>
-          No monthly data available for the selected commodity.
+          No spatial data available for <strong>{selectedCommodity}</strong> on the selected date ({selectedDate ? formatDate(selectedDate) : 'No date selected'}).
+          Please try selecting a different commodity or date range.
         </Typography>
       </Box>
     );
@@ -212,7 +222,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   return (
     <Paper elevation={3} sx={{ mt: 4, p: { xs: 1, sm: 2 }, width: '100%', backgroundColor: theme.palette.background.paper }}>
-      {/* Header Section */}
       <Box sx={{ p: 2 }}>
         <Typography
           variant={isMobile ? 'h5' : 'h4'}
@@ -227,7 +236,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
           </MuiTooltip>
         </Typography>
 
-        {/* Download Button */}
         <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
           <Button
             variant="contained"
@@ -242,7 +250,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         </Box>
       </Box>
 
-      {/* Tabs for Different Analyses */}
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -260,7 +267,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         <Tab label="Regression Results" sx={{ minWidth: isMobile ? 'auto' : 150, fontSize: isMobile ? '0.8rem' : '1rem', textTransform: 'none' }} />
       </Tabs>
 
-      {/* Tab Content */}
       <Box sx={{ mt: 2 }}>
         {activeTab === 0 && flowMaps && (
           <>
@@ -279,9 +285,9 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
               selectedCommodity={selectedCommodity}
               enhancedData={filteredGeoData}
               selectedDate={selectedDate}
-              selectedMonthIndex={selectedMonthIndex} // Pass the selectedMonthIndex
+              selectedMonthIndex={selectedMonthIndex}
               onDateChange={handleDateChange}
-              uniqueMonths={sortedUniqueMonths} // Use the sorted array
+              uniqueMonths={sortedUniqueMonths}
             />
           </>
         )}
@@ -323,7 +329,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         )}
       </Box>
 
-      {/* Interpretation Guide Accordion */}
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="h6">Interpretation Guide</Typography>
@@ -332,22 +337,43 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
           <Typography variant="body1" component="div" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
             This spatial analysis provides insights into the geographical distribution and relationships of {selectedCommodity} prices and conflict intensity. Key points to consider:
             <ul>
+              <li>The <strong>Animated Flow Map</strong> shows the movement of {selectedCommodity} between regions over time.</li>
+              <li>The <strong>Choropleth Map</strong> displays the distribution of {selectedCommodity} prices across different regions.</li>
+              <li>The <strong>Network Graph</strong> illustrates the connections and interdependencies between different markets.</li>
+              <li>The <strong>Diagnostics</strong> tab provides statistical tests to validate the spatial analysis.</li>
+              <li>The <strong>Regression Results</strong> show the relationship between various factors and {selectedCommodity} prices.</li>
+            </ul>
+            <Typography variant="subtitle2" sx={{ mt: 2, fontWeight: 'bold' }}>
+              How to Interpret the Results:
+            </Typography>
+            <ul>
               <li>
-                The <strong>Animated Flow Map</strong> shows the movement of {selectedCommodity} between regions over time.
+                <strong>Animated Flow Map:</strong> Look for patterns in commodity movement. Strong flows may indicate established trade routes or areas of high demand.
               </li>
               <li>
-                The <strong>Choropleth Map</strong> displays the distribution of {selectedCommodity} prices across different regions.
+                <strong>Choropleth Map:</strong> Darker colors typically indicate higher prices or conflict intensity. Pay attention to regional clusters and outliers.
               </li>
               <li>
-                The <strong>Network Graph</strong> illustrates the connections and interdependencies between different markets.
+                <strong>Network Graph:</strong> Larger nodes or thicker edges suggest more significant market connections. Isolated nodes may indicate less integrated markets.
               </li>
               <li>
-                The <strong>Diagnostics</strong> tab provides statistical tests to validate the spatial analysis.
+                <strong>Diagnostics:</strong> Look for statistically significant results (p-value &lt; 0.05) which indicate meaningful spatial relationships.
               </li>
               <li>
-                The <strong>Regression Results</strong> show the relationship between various factors and {selectedCommodity} prices.
+                <strong>Regression Results:</strong> Coefficients show the strength and direction of relationships. Positive values indicate direct relationships, negative values inverse relationships.
               </li>
             </ul>
+            <Typography variant="subtitle2" sx={{ mt: 2, fontWeight: 'bold' }}>
+              Key Considerations:
+            </Typography>
+            <ul>
+              <li>Consider how conflict intensity correlates with {selectedCommodity} prices across different regions.</li>
+              <li>Look for temporal trends: How do patterns change over time? Are there seasonal effects?</li>
+              <li>Think about geographical factors: How might terrain, infrastructure, or political boundaries influence the observed patterns?</li>
+              <li>Consider economic policies: How might different exchange rate regimes affect prices and trade flows?</li>
+            </ul>
+            <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic' }}>
+            </Typography>
           </Typography>
         </AccordionDetails>
       </Accordion>

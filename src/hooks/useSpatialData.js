@@ -156,7 +156,7 @@ const useSpatialData = () => {
           error: null,
         });
 
-        setUniqueMonths(uniqueMonthDates);
+        setUniqueMonths(uniqueMonthDates.length > 0 ? uniqueMonthDates : []);
 
         console.log('Spatial data loaded and merged successfully');
       } catch (err) {
