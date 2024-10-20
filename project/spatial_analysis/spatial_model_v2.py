@@ -16,14 +16,18 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_squared_error
 from scipy import stats
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tsa.seasonal import seasonal_decompose
 from libpysal.weights import KNN
 from esda.moran import Moran
 import warnings
 
-# Suppress non-critical warnings
+# --------------------------- Suppress Non-critical Warnings ---------------------------
+
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", message="urllib3.*")
+
+# --------------------------- Configuration and Setup ---------------------------
 
 def load_config(config_path):
     """
@@ -42,51 +46,158 @@ def setup_logging(logs_dir, log_level, log_format):
     Set up logging configuration.
     """
     logs_dir.mkdir(parents=True, exist_ok=True)
-    logging.basicConfig(
-        level=log_level.upper(),
-        format=log_format,
-        handlers=[
-            logging.FileHandler(logs_dir / "spatial_analysis.log"),
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
     logger = logging.getLogger(__name__)
+    logger.setLevel(log_level.upper())
+
+    # File Handler
+    file_handler = logging.FileHandler(logs_dir / "spatial_analysis.log")
+    file_handler.setLevel(log_level.upper())
+    formatter = logging.Formatter(log_format, datefmt='%Y-%m-%d %H:%M:%S')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    # Stream Handler
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(log_level.upper())
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+
     return logger
 
-def load_geojson(file_path, time_column, region_identifier, logger):
+# --------------------------- Seasonal Adjustment Functions ---------------------------
+
+def perform_seasonal_adjustment_on_group(group, freq='M', logger=None):
     """
-    Load the GeoJSON data and preprocess it.
+    Perform seasonal adjustment on a single group.
+    Args:
+        group (pd.DataFrame): DataFrame group to adjust.
+        freq (str): Frequency for seasonal decomposition ('M' for monthly).
+        logger (logging.Logger): Logger for logging messages.
+    Returns:
+        pd.DataFrame: Adjusted DataFrame with seasonality removed from 'usdprice'.
     """
     try:
-        logger.info(f"Loading GeoJSON data from {file_path}.")
-        gdf = gpd.read_file(file_path)
-        gdf[time_column] = pd.to_datetime(gdf[time_column], errors='coerce')
-        logger.debug(f"Converted '{time_column}' to datetime.")
+        # Ensure 'date' column is datetime
+        if not pd.api.types.is_datetime64_any_dtype(group['date']):
+            group['date'] = pd.to_datetime(group['date'], errors='coerce')
+            if group['date'].isnull().all():
+                logger.error(f"All dates could not be converted to datetime for Commodity: {group['commodity'].iloc[0]}, Region: {group['admin1'].iloc[0]}.")
+                return group  # Return original group without adjustment
 
-        # Assign 'region_id' using the specified region identifier
-        if region_identifier in gdf.columns:
-            gdf = gdf.rename(columns={region_identifier: 'region_id'})
-            logger.info(f"'region_id' column assigned using '{region_identifier}'.")
-        else:
-            logger.error(f"'{region_identifier}' column not found in GeoJSON data.")
-            sys.exit(1)
+        group = group.sort_values('date')
+        group.set_index('date', inplace=True)
 
-        # Check for missing 'region_id's
-        if gdf['region_id'].isnull().any():
-            logger.error("Some 'region_id' values are missing. Please check the data.")
-            sys.exit(1)
+        # Check if sufficient data points are available
+        if group.shape[0] < 2 * 12:  # At least two years of monthly data
+            logger.warning(f"Insufficient data points for seasonal adjustment for Commodity: {group['commodity'].iloc[0]}, Region: {group['admin1'].iloc[0]}. Required: >=24, Available: {group.shape[0]}. Skipping adjustment.")
+            return group  # Return original group without adjustment
 
-        # Drop duplicate rows
-        initial_count = len(gdf)
-        gdf = gdf.drop_duplicates()
-        final_count = len(gdf)
-        logger.info(f"Dropped {initial_count - final_count} duplicate rows.")
+        # Perform seasonal decomposition
+        decomposition = seasonal_decompose(group['usdprice'], model='additive', period=12, extrapolate_trend='freq')
 
-        logger.info(f"GeoJSON data loaded with {len(gdf)} records.")
+        # Adjust the 'usdprice' by removing the seasonal component
+        group['usdprice'] = group['usdprice'] - decomposition.seasonal
+
+        group.reset_index(inplace=True)
+        logger.debug(f"Seasonal adjustment successful for Commodity: {group['commodity'].iloc[0]}, Region: {group['admin1'].iloc[0]}.")
+        return group
+
+    except Exception as e:
+        logger.error(f"Seasonal adjustment failed for Commodity: {group['commodity'].iloc[0]}, Region: {group['admin1'].iloc[0]}. Error: {e}")
+        return group  # Return original group without adjustment
+
+def apply_seasonal_adjustment(gdf, frequency='M', commodity_col='commodity', region_col='admin1', logger=None):
+    """
+    Apply seasonal adjustment to the 'usdprice' column for each commodity-region group.
+    Args:
+        gdf (pd.DataFrame): GeoDataFrame containing the data.
+        frequency (str): Frequency for seasonal decomposition.
+        commodity_col (str): Column name for commodities.
+        region_col (str): Column name for regions.
+        logger (logging.Logger): Logger for logging messages.
+    Returns:
+        pd.DataFrame: DataFrame with seasonal adjustment applied.
+    """
+    adjusted_groups = []
+
+    # Verify that the required columns exist
+    required_columns = [commodity_col, region_col, 'usdprice', 'date']
+    for col in required_columns:
+        if col not in gdf.columns:
+            logger.error(f"Required column '{col}' not found in DataFrame.")
+            raise KeyError(f"Required column '{col}' not found in DataFrame.")
+
+    # Group by commodity and region
+    grouped = gdf.groupby([commodity_col, region_col])
+    total_groups = len(grouped)
+    processed_groups = 0
+
+    logger.info(f"Total groups to process for seasonal adjustment: {total_groups}")
+
+    for (commodity, region), group in grouped:
+        logger.debug(f"Processing Commodity: {commodity}, Region: {region}, Records: {len(group)}")
+        
+        # Drop rows with null 'usdprice' or 'date'
+        group = group.dropna(subset=['usdprice', 'date'])
+        if group.empty:
+            logger.warning(f"All records have null 'usdprice' or 'date' for Commodity: {commodity}, Region: {region}. Skipping adjustment.")
+            continue
+
+        try:
+            adjusted = perform_seasonal_adjustment_on_group(group, freq=frequency, logger=logger)
+
+            if adjusted is not None and not adjusted.empty:
+                adjusted_groups.append(adjusted)
+                logger.debug(f"Adjusted Commodity: {commodity}, Region: {region}")
+            else:
+                logger.warning(f"No adjustment performed for Commodity: {commodity}, Region: {region}.")
+        
+        except Exception as e:
+            logger.error(f"Error adjusting Commodity: {commodity}, Region: {region}. Error: {e}")
+            adjusted_groups.append(group)  # Append the original group without adjustment
+        
+        processed_groups += 1
+
+    logger.info(f"Processed {processed_groups} out of {total_groups} groups.")
+
+    if not adjusted_groups:
+        logger.error("No groups were adjusted. 'adjusted_groups' is empty.")
+        raise ValueError("No objects to concatenate")
+
+    # Concatenate all adjusted groups
+    try:
+        gdf_adjusted = pd.concat(adjusted_groups, ignore_index=True)
+        logger.info("Seasonal adjustment concatenated successfully.")
+        return gdf_adjusted
+    except Exception as e:
+        logger.error(f"Failed to concatenate adjusted groups. Error: {e}")
+        raise
+
+# --------------------------- Smoothing Function ---------------------------
+
+def apply_smoothing(gdf, window=3, commodity_col='commodity', region_col='region_id', logger=None):
+    """
+    Apply moving average smoothing to the 'usdprice' column.
+    Args:
+        gdf (pd.DataFrame): GeoDataFrame containing the data.
+        window (int): Window size for the moving average.
+        commodity_col (str): Column name for commodities.
+        region_col (str): Column name for regions.
+        logger (logging.Logger): Logger for logging messages.
+    Returns:
+        pd.DataFrame: DataFrame with smoothed 'usdprice'.
+    """
+    try:
+        logger.info(f"Applying moving average smoothing with window size {window}.")
+        gdf = gdf.sort_values(['commodity', 'region_id', 'date'])
+        gdf['usdprice'] = gdf.groupby(['commodity', 'region_id'])['usdprice'].transform(lambda x: x.rolling(window, min_periods=1, center=True).mean())
+        logger.info("Smoothing applied successfully.")
         return gdf
     except Exception as e:
-        logger.error(f"Failed to load GeoJSON data from {file_path}: {e}")
-        sys.exit(1)
+        logger.error(f"Failed to apply smoothing: {e}")
+        raise
+
+# --------------------------- Data Processing Functions ---------------------------
 
 def load_and_debug_geojson(filepath, logger):
     try:
@@ -94,16 +205,22 @@ def load_and_debug_geojson(filepath, logger):
         gdf = gpd.read_file(filepath)
 
         # Convert date column to datetime
-        gdf['date'] = pd.to_datetime(gdf['date'])
+        gdf['date'] = pd.to_datetime(gdf['date'], errors='coerce')
         logger.debug("Converted 'date' to datetime.")
 
         # Assign region_id from 'admin1'
-        gdf['region_id'] = gdf['admin1']
-        logger.info("'region_id' column assigned using 'admin1'.")
+        if 'admin1' in gdf.columns:
+            gdf['region_id'] = gdf['admin1']
+            logger.info("'region_id' column assigned using 'admin1'.")
+        else:
+            logger.error("'admin1' column not found in GeoJSON data.")
+            sys.exit(1)
 
         # Drop duplicates
+        initial_count = len(gdf)
         gdf.drop_duplicates(inplace=True)
-        logger.info(f"Dropped {gdf.duplicated().sum()} duplicate rows.")
+        final_count = len(gdf)
+        logger.info(f"Dropped {initial_count - final_count} duplicate rows.")
         logger.info(f"GeoJSON data loaded with {len(gdf)} records.")
 
         # Debug: Print out the columns present in the dataset
@@ -136,12 +253,12 @@ def identify_duplicates(gdf, logger):
 def handle_duplicates(gdf, logger):
     # Separate numeric and non-numeric columns, excluding 'admin1', 'date', and 'commodity' from non-numeric columns
     numeric_cols = gdf.select_dtypes(include=['number']).columns
-    non_numeric_cols = gdf.select_dtypes(exclude=['number']).drop(['admin1', 'date', 'commodity'], axis=1).columns
+    non_numeric_cols = gdf.select_dtypes(exclude=['number']).columns.difference(['admin1', 'date', 'commodity'])
 
     # Group by 'admin1', 'commodity', and 'date', calculate mean for numeric columns
     gdf_numeric = gdf.groupby(['admin1', 'commodity', 'date'])[numeric_cols].mean().reset_index()
 
-    # For non-numeric columns, take the first value, excluding 'admin1', 'date', and 'commodity'
+    # For non-numeric columns, take the first value
     gdf_non_numeric = gdf.groupby(['admin1', 'commodity', 'date'])[non_numeric_cols].first().reset_index()
 
     # Merge numeric and non-numeric data back together
@@ -155,10 +272,9 @@ def create_unified_regime(gdf, exchange_rate_regime_column, regimes_to_unify, ne
     Create a unified regime by combining specified regimes.
     """
     try:
-        unified_df = gdf[gdf[exchange_rate_regime_column].isin(regimes_to_unify)].copy()
-        unified_df[exchange_rate_regime_column] = new_regime_name
-        logger.info(f"Unified regime created with {len(unified_df)} records.")
-        return unified_df
+        gdf['regime'] = gdf[exchange_rate_regime_column].replace(regimes_to_unify, new_regime_name)
+        logger.info(f"Unified regime '{new_regime_name}' created.")
+        return gdf
     except Exception as e:
         logger.error(f"Failed to create unified regime: {e}")
         sys.exit(1)
@@ -185,6 +301,7 @@ def save_spatial_weights(gdf, w, output_path, logger):
             region_id = gdf.iloc[region_idx]['region_id']
             spatial_weights[region_id] = [gdf.iloc[n]['region_id'] for n in neighbors]
 
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, 'w') as f:
             json.dump(spatial_weights, f, indent=2)
         logger.info(f"Spatial weights saved to {output_path}.")
@@ -213,6 +330,7 @@ def save_flow_map(gdf, w, output_path, logger):
                     'weight': 1  # Assuming binary weights; adjust if weights have different meaning
                 })
 
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         pd.DataFrame(flow_data).to_csv(output_path, index=False)
         logger.info(f"Flow map saved to {output_path}.")
     except Exception as e:
@@ -223,6 +341,7 @@ def save_average_prices(gdf, output_path, time_column, logger):
     Save average prices for each region and date in CSV format.
     """
     try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         average_prices = gdf.groupby(['region_id', time_column])['usdprice'].mean().reset_index().rename(columns={'usdprice': 'avg_usdprice'})
         average_prices.to_csv(output_path, index=False)
         logger.info(f"Average prices saved to {output_path}.")
@@ -309,73 +428,6 @@ def calculate_moran(residual, w, logger):
         logger.error(f"Failed to calculate Moran's I: {e}")
         raise
 
-def resample_data(gdf, frequency, time_column, logger):
-    """
-    Resample the GeoDataFrame to the specified frequency.
-    Aggregates numeric columns using the mean and retains the first geometry per group.
-    """
-    try:
-        logger.info(f"Resampling data to '{frequency}' frequency.")
-        gdf = gdf.set_index(time_column)
-
-        # Identify numeric columns for aggregation
-        numeric_cols = gdf.select_dtypes(include=['number']).columns.tolist()
-        agg_dict = {col: 'mean' for col in numeric_cols}
-        agg_dict['geometry'] = 'first'
-
-        gdf_resampled = gdf.groupby('region_id').resample(frequency).agg(agg_dict).reset_index()
-
-        logger.info(f"Data resampled to '{frequency}' frequency.")
-        return gdf_resampled
-    except Exception as e:
-        logger.error(f"Failed to resample data: {e}")
-        sys.exit(1)
-
-def align_frequency(gdf, frequency, time_column, logger):
-    """
-    Align all data to the specified frequency within each 'region' and 'commodity' group,
-    filling missing periods as needed for each region, commodity, and date combination.
-    """
-    try:
-        # Check if 'admin1' and 'commodity' columns exist
-        if 'admin1' not in gdf.columns or 'commodity' not in gdf.columns:
-            raise KeyError("Required columns 'admin1' or 'commodity' are missing from the dataset.")
-        
-        logger.info(f"Aligning data to '{frequency}' frequency by region, date, and commodity.")
-
-        # Create an empty list to store results for each commodity and region group
-        aligned_gdfs = []
-
-        # Group data by 'admin1' (region), 'commodity', and 'date'
-        for (region, commodity), group in gdf.groupby(['admin1', 'commodity']):
-            logger.debug(f"Aligning data for region: {region}, commodity: {commodity}")
-
-            # Set the index to the 'date' for resampling
-            group = group.set_index(time_column).sort_index()
-
-            # Resample the data to the desired frequency
-            resampled_group = group.resample(frequency).ffill()
-
-            # Add back the region and commodity information after alignment
-            resampled_group['admin1'] = region
-            resampled_group['commodity'] = commodity
-
-            # Append the aligned group to the results list
-            aligned_gdfs.append(resampled_group.reset_index())
-
-        # Concatenate all aligned data into a single DataFrame
-        aligned_gdf = pd.concat(aligned_gdfs, ignore_index=True)
-
-        logger.info(f"Data aligned to '{frequency}' frequency.")
-        return aligned_gdf
-
-    except KeyError as e:
-        logger.error(f"Column missing in data: {e}")
-        sys.exit(1)
-    except Exception as e:
-        logger.error(f"Failed to align data frequency: {e}")
-        sys.exit(1)
-
 def run_spatial_analysis(gdf, commodity, regime, params, logger):
     """
     Perform spatial analysis for a specific commodity and exchange rate regime.
@@ -384,7 +436,7 @@ def run_spatial_analysis(gdf, commodity, regime, params, logger):
         # Subset the data for the given commodity and regime
         gdf_subset = gdf[
             (gdf['commodity'].str.lower() == commodity.lower()) & 
-            (gdf[params['exchange_rate_regime_column']].str.lower() == regime.lower())
+            (gdf['regime'].str.lower() == regime.lower())
         ].copy()
 
         if len(gdf_subset) < params['min_regions']:
@@ -397,7 +449,7 @@ def run_spatial_analysis(gdf, commodity, regime, params, logger):
         # Create spatial weights
         w = create_spatial_weights(gdf_subset, params['initial_k'], logger)
 
-        # Calculate spatial lag of 'usdprice'
+        # Calculate spatial lag of 'usdprice' (seasonally adjusted price)
         gdf_subset['spatial_lag_price'] = calculate_spatial_lag(gdf_subset, w, 'usdprice', logger)
 
         # Define independent variables and dependent variable
@@ -552,6 +604,7 @@ def save_enhanced_geojson(gdf, output_path, logger):
     Save the modified GeoDataFrame with residuals to a new GeoJSON file.
     """
     try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         logger.info(f"Saving enhanced GeoJSON to '{output_path}'.")
         gdf.to_file(output_path, driver='GeoJSON')
         logger.info(f"Enhanced GeoJSON saved successfully.")
@@ -563,6 +616,7 @@ def save_analysis_results(results, output_path, logger):
     Save the analysis results to a JSON file.
     """
     try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         # Convert Timestamps to strings
         def convert_timestamps(obj):
             if isinstance(obj, pd.Timestamp):
@@ -588,9 +642,11 @@ def save_analysis_results(results, output_path, logger):
             logger.info("Residuals are present in the analysis results.")
         else:
             logger.warning("No residuals found in the analysis results.")
-    
+
     except Exception as e:
         logger.error(f"Failed to save results to '{output_path}': {e}")
+
+# --------------------------- Main Function ---------------------------
 
 def main():
     # Load configuration
@@ -609,7 +665,6 @@ def main():
     ENHANCED_GEOJSON = PROCESSED_DATA_DIR / "enhanced_unified_data_with_residual.geojson"
     SPATIAL_ANALYSIS_RESULTS = Path(FILES['spatial_analysis_results'])
     SPATIAL_WEIGHTS_JSON = RESULTS_DIR / "spatial_weights" / "spatial_weights.json"
-    NATURALEARTH_LOWRES = Path(FILES['naturalearth_lowres'])
 
     PARAMS = config['parameters']
     FREQUENCY = PARAMS.get('frequency', 'M')  # Default to monthly if not specified
@@ -632,22 +687,23 @@ def main():
         directory.mkdir(parents=True, exist_ok=True)
 
     # Step 1: Load the GeoJSON data
-    gdf = load_and_debug_geojson("project/data/processed/unified_data.geojson", logger)
+    gdf = load_and_debug_geojson(SPATIAL_GEOJSON, logger)
 
     # Identify duplicates
     duplicate_entries = identify_duplicates(gdf, logger)
 
-    # Handle duplicates (e.g., averaging or removing)
+    # Handle duplicates (averaging numeric columns)
     if not duplicate_entries.empty:
         gdf = handle_duplicates(gdf, logger)
 
-    # Proceed with data alignment
+    # Step 2: Apply seasonal adjustment and align frequency
+    gdf = apply_seasonal_adjustment(gdf, frequency=FREQUENCY, logger=logger)
 
-    # Step 2: Resample or align frequency
-    gdf = align_frequency(gdf, FREQUENCY, PARAMS['time_column'], logger)
+    # Step 3: Apply smoothing to reduce volatility
+    gdf = apply_smoothing(gdf, window=3, logger=logger)  # You can adjust the window size as needed
 
-    # Step 3: Create the unified regime
-    unified_df = create_unified_regime(
+    # Step 4: Create the unified regime
+    gdf = create_unified_regime(
         gdf,
         PARAMS['exchange_rate_regime_column'],
         PARAMS['regimes_to_unify'],
@@ -655,11 +711,11 @@ def main():
         logger
     )
 
-    ### NEW STEP: Only keep the unified regime ###
-    gdf = unified_df.copy()
+    # Only keep the unified regime
+    gdf = gdf[gdf['regime'] == PARAMS['new_regime_name']].copy()
     logger.info(f"Working exclusively with the unified regime: {PARAMS['new_regime_name']}")
 
-    # Step 4: Prepare arguments for parallel processing
+    # Step 5: Prepare arguments for parallel processing
     unique_combinations = gdf[['commodity']].drop_duplicates()
 
     logger.info(f"Found {len(unique_combinations)} unique commodities for the unified regime.")
@@ -669,7 +725,7 @@ def main():
         for _, row in unique_combinations.iterrows()
     ]
 
-    # Step 5: Run spatial analysis in parallel
+    # Step 6: Run spatial analysis in parallel
     results = []
     max_workers = os.cpu_count() - 1 if os.cpu_count() > 1 else 1  # Reserve one core
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -684,14 +740,14 @@ def main():
             except Exception as exc:
                 logger.error(f"Analysis for '{commodity}' in unified regime generated an exception: {exc}")
 
-    # Step 6: Aggregate residuals
+    # Step 7: Aggregate residuals
     if results:
         residual_agg = aggregate_residuals(results, PARAMS['time_column'], logger)
 
         # Merge aggregated residual into gdf
         gdf_merged = gdf.merge(
             residual_agg,
-            on=['region_id', PARAMS['time_column'], 'commodity'],
+            on=['region_id', PARAMS['time_column'], 'commodity', 'regime'],
             how='left'
         )
 
@@ -717,21 +773,21 @@ def main():
         gdf_merged['residual'] = np.nan
         gdf_merged = gpd.GeoDataFrame(gdf_merged, geometry='geometry')
 
-    # Step 7: Simplify geometries and optimize data types
+    # Step 8: Simplify geometries and optimize data types
     simplify_geometries(gdf_merged, tolerance=0.01, logger=logger)
     optimize_data_types(gdf_merged, logger)
 
-    # Step 8: Select essential columns for the final GeoJSON
+    # Step 9: Select essential columns for the final GeoJSON
     required_columns = [
         'region_id', PARAMS['time_column'], 'usdprice', 
         'conflict_intensity', 'residual', 'commodity', 'regime', 'geometry'
     ]
     gdf_final = select_essential_columns(gdf_merged, required_columns, logger)
 
-    # Step 9: Save the modified GeoDataFrame with residuals to a new GeoJSON file
+    # Step 10: Save the modified GeoDataFrame with residuals to a new GeoJSON file
     save_enhanced_geojson(gdf_final, ENHANCED_GEOJSON, logger)
 
-    # Step 10: Save spatial weights, flow maps, and average prices
+    # Step 11: Save spatial weights, flow maps, and average prices
     try:
         # Create spatial weights for the entire dataset
         w_full = create_spatial_weights(gdf_final, PARAMS['initial_k'], logger)
@@ -749,7 +805,7 @@ def main():
     except Exception as e:
         logger.error(f"Failed to save average prices: {e}")
 
-    # Step 11: Save the analysis results to JSON
+    # Step 12: Save the analysis results to JSON
     save_analysis_results(results, SPATIAL_ANALYSIS_RESULTS, logger)
 
     logger.info("Spatial analysis pipeline completed successfully.")
