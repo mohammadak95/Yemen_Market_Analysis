@@ -1,4 +1,4 @@
-# first line: 111
+# first line: 224
 @memory.cache  # Cached to optimize repeated data loading
 def load_data(file_path):
     """Load data from GeoJSON file using GeoPandas and preprocess it."""
@@ -8,9 +8,8 @@ def load_data(file_path):
         df = pd.DataFrame(gdf.drop(columns='geometry'))
         logger.info(f"Loaded GeoJSON with {len(df)} records.")
 
-        # Convert 'date' to datetime and set as index
+        # Convert 'date' to datetime
         df[TIME_COLUMN] = pd.to_datetime(df[TIME_COLUMN])
-        df.set_index(TIME_COLUMN, inplace=True)
 
         # Exclude 'Amanat Al Asimah' in a case-insensitive manner
         amanat_mask = df[REGION_IDENTIFIER].str.lower() != 'amanat al asimah'
@@ -58,8 +57,20 @@ def load_data(file_path):
         logger.debug(f"DataFrame columns after filtering: {df.columns.tolist()}")
         logger.debug(f"Sample data:\n{df.head()}")
 
+        # **New Step: Handle duplicates by averaging numeric columns**
+        df = handle_duplicates(df)
+
+        # **New Step: Apply seasonal adjustment**
+        df = apply_seasonal_adjustment(df, frequency='M')
+
+        # **New Step: Apply smoothing**
+        df = apply_smoothing(df, window=3)
+
+        # Reset index to TIME_COLUMN if not already
+        if df.index.name != TIME_COLUMN:
+            df.set_index(TIME_COLUMN, inplace=True)
+
         return df
     except Exception as e:
-        logger.error(f"Error loading data: {e}")
-        logger.debug(f"Detailed error information: {traceback.format_exc()}")
+        logger.error(f"Failed to load and preprocess data: {e}")
         raise

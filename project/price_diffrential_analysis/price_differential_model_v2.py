@@ -23,6 +23,9 @@ from joblib import Memory
 from statsmodels.stats.diagnostic import het_breuschpagan, linear_reset
 from statsmodels.stats.stattools import jarque_bera, durbin_watson
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+# --------------------------- Configuration and Setup ---------------------------
 
 # Load configuration
 def load_config(config_path='project/config/config.yaml'):
@@ -74,7 +77,7 @@ naturalearth_lowres = Path(files.get('naturalearth_lowres', 'external_data/natur
 
 # Initialize logging
 logging.basicConfig(
-    level=logging.DEBUG,  # Force DEBUG level for detailed logs
+    level=log_level,  # Use level from config
     format=log_format,
     handlers=[
         logging.FileHandler(log_dir / 'price_differential_analysis.log'),
@@ -105,6 +108,119 @@ REGION_IDENTIFIER = parameters.get('region_identifier', 'admin1')
 TIME_COLUMN = parameters.get('time_column', 'date')
 LAG_VARIABLE = parameters.get('lag_variable', 'usdprice')
 
+# --------------------------- Data Transformation Functions ---------------------------
+
+def handle_duplicates(df):
+    """
+    Handle duplicates by averaging numeric columns.
+    """
+    try:
+        # Identify numeric and non-numeric columns
+        numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+        non_numeric_cols = df.select_dtypes(exclude=['number']).columns.tolist()
+        
+        # Exclude grouping columns from non-numeric columns
+        grouping_cols = [REGION_IDENTIFIER, 'commodity', TIME_COLUMN, EXCHANGE_RATE_REGIME_COLUMN]
+        non_numeric_cols = [col for col in non_numeric_cols if col not in grouping_cols]
+        
+        # Group by the specified columns and calculate mean for numeric columns
+        df_numeric = df.groupby(grouping_cols)[numeric_cols].mean().reset_index()
+        
+        # For non-numeric columns, take the first value
+        df_non_numeric = df.groupby(grouping_cols)[non_numeric_cols].first().reset_index()
+        
+        # Merge numeric and non-numeric data back together
+        df = pd.merge(df_numeric, df_non_numeric, on=grouping_cols, how='left')
+        
+        logger.info("Handled duplicates by averaging numeric columns and keeping first non-numeric values.")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to handle duplicates: {e}")
+        raise
+
+def perform_seasonal_adjustment_on_group(group, freq='M'):
+    """
+    Perform seasonal adjustment on a single group.
+    """
+    try:
+        group = group.sort_values(TIME_COLUMN)
+        group.set_index(TIME_COLUMN, inplace=True)
+
+        # Check if sufficient data points are available
+        if group.shape[0] < 2 * 12:  # At least two years of monthly data
+            logger.warning(f"Insufficient data points for seasonal adjustment for Commodity: {group['commodity'].iloc[0]}, Region: {group[REGION_IDENTIFIER].iloc[0]}. Required: >=24, Available: {group.shape[0]}. Skipping adjustment.")
+            return group.reset_index()
+
+        # Perform seasonal decomposition
+        decomposition = seasonal_decompose(group['usdprice'], model='additive', period=12, extrapolate_trend='freq')
+
+        # Adjust the 'usdprice' by removing the seasonal component
+        group['usdprice'] = group['usdprice'] - decomposition.seasonal
+
+        group.reset_index(inplace=True)
+        logger.debug(f"Seasonal adjustment successful for Commodity: {group['commodity'].iloc[0]}, Region: {group[REGION_IDENTIFIER].iloc[0]}.")
+        return group
+
+    except Exception as e:
+        logger.error(f"Seasonal adjustment failed for Commodity: {group['commodity'].iloc[0]}, Region: {group[REGION_IDENTIFIER].iloc[0]}. Error: {e}")
+        return group.reset_index()  # Return the original group without adjustment
+
+def apply_seasonal_adjustment(df, frequency='M'):
+    """
+    Apply seasonal adjustment to the 'usdprice' column for each commodity-region group.
+    """
+    try:
+        adjusted_groups = []
+        grouped = df.groupby(['commodity', REGION_IDENTIFIER])
+        total_groups = len(grouped)
+        processed_groups = 0
+
+        logger.info(f"Total groups to process for seasonal adjustment: {total_groups}")
+
+        for (commodity, region), group in grouped:
+            logger.debug(f"Processing Commodity: {commodity}, Region: {region}, Records: {len(group)}")
+
+            # Drop rows with null 'usdprice' or 'date'
+            group = group.dropna(subset=['usdprice', TIME_COLUMN])
+            if group.empty:
+                logger.warning(f"All records have null 'usdprice' or 'date' for Commodity: {commodity}, Region: {region}. Skipping adjustment.")
+                continue
+
+            adjusted = perform_seasonal_adjustment_on_group(group, freq=frequency)
+
+            adjusted_groups.append(adjusted)
+            processed_groups += 1
+
+        logger.info(f"Processed {processed_groups} out of {total_groups} groups.")
+
+        if not adjusted_groups:
+            logger.error("No groups were adjusted. 'adjusted_groups' is empty.")
+            raise ValueError("No groups to concatenate.")
+
+        df_adjusted = pd.concat(adjusted_groups, ignore_index=True)
+        logger.info("Seasonal adjustment applied successfully.")
+        return df_adjusted
+
+    except Exception as e:
+        logger.error(f"Failed to apply seasonal adjustment: {e}")
+        raise
+
+def apply_smoothing(df, window=3):
+    """
+    Apply moving average smoothing to the 'usdprice' column.
+    """
+    try:
+        logger.info(f"Applying moving average smoothing with window size {window}.")
+        df = df.sort_values(['commodity', REGION_IDENTIFIER, TIME_COLUMN])
+        df['usdprice'] = df.groupby(['commodity', REGION_IDENTIFIER])['usdprice'].transform(lambda x: x.rolling(window, min_periods=1, center=True).mean())
+        logger.info("Smoothing applied successfully.")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to apply smoothing: {e}")
+        raise
+
+# --------------------------- Data Loading and Preprocessing ---------------------------
+
 @memory.cache  # Cached to optimize repeated data loading
 def load_data(file_path):
     """Load data from GeoJSON file using GeoPandas and preprocess it."""
@@ -114,9 +230,8 @@ def load_data(file_path):
         df = pd.DataFrame(gdf.drop(columns='geometry'))
         logger.info(f"Loaded GeoJSON with {len(df)} records.")
 
-        # Convert 'date' to datetime and set as index
+        # Convert 'date' to datetime
         df[TIME_COLUMN] = pd.to_datetime(df[TIME_COLUMN])
-        df.set_index(TIME_COLUMN, inplace=True)
 
         # Exclude 'Amanat Al Asimah' in a case-insensitive manner
         amanat_mask = df[REGION_IDENTIFIER].str.lower() != 'amanat al asimah'
@@ -164,11 +279,25 @@ def load_data(file_path):
         logger.debug(f"DataFrame columns after filtering: {df.columns.tolist()}")
         logger.debug(f"Sample data:\n{df.head()}")
 
+        # **New Step: Handle duplicates by averaging numeric columns**
+        df = handle_duplicates(df)
+
+        # **New Step: Apply seasonal adjustment**
+        df = apply_seasonal_adjustment(df, frequency='M')
+
+        # **New Step: Apply smoothing**
+        df = apply_smoothing(df, window=3)
+
+        # Reset index to TIME_COLUMN if not already
+        if df.index.name != TIME_COLUMN:
+            df.set_index(TIME_COLUMN, inplace=True)
+
         return df
     except Exception as e:
-        logger.error(f"Error loading data: {e}")
-        logger.debug(f"Detailed error information: {traceback.format_exc()}")
+        logger.error(f"Failed to load and preprocess data: {e}")
         raise
+
+# --------------------------- Analysis Functions ---------------------------
 
 def prepare_market_data(df, base_market):
     """Prepare market data for analysis for a specific base market."""
