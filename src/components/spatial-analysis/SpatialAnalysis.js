@@ -27,7 +27,6 @@ import ErrorMessage from '../common/ErrorMessage';
 import { saveAs } from 'file-saver';
 import { jsonToCsv } from '../../utils/jsonToCsv';
 import { useTheme } from '@mui/material/styles';
-import { format as formatDateFn } from 'date-fns';
 
 const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
@@ -45,12 +44,15 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     console.log('[Debug] Data fetched from useSpatialData:', { geoData, flowMaps, analysisResults, loading, error, uniqueMonths });
   }, [geoData, flowMaps, analysisResults, loading, error, uniqueMonths]);
 
+  // Adjusted formatDate to return "YYYY-MM" for month-level comparison
   const formatDate = useCallback((date) => {
     if (!(date instanceof Date) || isNaN(date)) {
       console.warn('[Warning] Invalid date provided to formatDate:', date);
       return 'Invalid Date';
     }
-    return formatDateFn(date, 'yyyy-MM-dd');
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+    return `${year}-${month}`; // Returns "YYYY-MM"
   }, []);
 
   const sortedUniqueMonths = useMemo(() => {
@@ -58,21 +60,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
   }, [uniqueMonths]);
 
   useEffect(() => {
-    if (geoData && geoData.features) {
-      const commodityCounts = geoData.features.reduce((acc, feature) => {
-        const commodity = feature.properties.commodity.toLowerCase();
-        acc[commodity] = (acc[commodity] || 0) + 1;
-        return acc;
-      }, {});
-      console.log('Commodity counts:', commodityCounts);
-      console.log('Selected commodity (lowercase):', selectedCommodity.toLowerCase());
-      console.log('Commodity exists in data:', Object.prototype.hasOwnProperty.call(commodityCounts, selectedCommodity.toLowerCase()));
-    }
-  }, [geoData, selectedCommodity]);
-
-  useEffect(() => {
-    if (sortedUniqueMonths.length > 0 && geoData) {
-      const currentDate = new Date();
+    if (sortedUniqueMonths.length > 0 && geoData && !loading) {
       let latestValidDate = null;
       let latestValidIndex = -1;
 
@@ -80,36 +68,42 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
 
       for (let i = sortedUniqueMonths.length - 1; i >= 0; i--) {
         const month = sortedUniqueMonths[i];
-        if (month <= currentDate) {
-          const formattedDate = formatDate(month);
-          const matchingFeatures = geoData.features.filter(feature => 
-            feature.properties.commodity && 
-            feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
-            feature.properties.date === formattedDate
-          );
+        const formattedDate = formatDate(month);
+        console.log(`Checking for data in month: ${formattedDate}`);
 
-          if (matchingFeatures.length > 0) {
-            latestValidDate = month;
-            latestValidIndex = i;
-            console.log(`Found ${matchingFeatures.length} matching features for date ${formattedDate}`);
-            break;
-          } else {
-            console.log(`No matching features found for date ${formattedDate}`);
-          }
+        const matchingFeatures = geoData.features.filter(feature => {
+          const featureDateObj = new Date(feature.properties.date);
+          const featureYear = featureDateObj.getFullYear();
+          const featureMonth = String(featureDateObj.getMonth() + 1).padStart(2, '0');
+          const featureFormattedDate = `${featureYear}-${featureMonth}`;
+          return (
+            feature.properties.commodity &&
+            feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+            featureFormattedDate === formattedDate
+          );
+        });
+
+        if (matchingFeatures.length > 0) {
+          latestValidDate = month;
+          latestValidIndex = i;
+          console.log(`Found ${matchingFeatures.length} matching features for month ${formattedDate}`);
+          break;
+        } else {
+          console.log(`No matching features found for month ${formattedDate}`);
         }
       }
 
       if (latestValidDate) {
         setSelectedMonthIndex(latestValidIndex);
         setSelectedDate(latestValidDate);
-        console.log(`[Debug] setSelectedMonthIndex to ${latestValidIndex} (${latestValidDate})`);
+        console.log(`[Debug] setSelectedMonthIndex to ${latestValidIndex} (${formatDate(latestValidDate)})`);
       } else {
         console.warn(`No valid data found for ${selectedCommodity.toLowerCase()} in any month.`);
         setSelectedMonthIndex(null);
         setSelectedDate(null);
       }
     }
-  }, [sortedUniqueMonths, geoData, selectedCommodity, formatDate]);
+  }, [sortedUniqueMonths, geoData, selectedCommodity, formatDate, loading]);
 
   const filteredGeoData = useMemo(() => {
     if (!geoData || !selectedDate) {
@@ -121,16 +115,18 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     console.log('Formatting selected date:', selectedDate, 'to:', formattedSelectedDate);
 
     const filteredFeatures = geoData.features.filter((feature) => {
-      const featureDate = feature.properties.date;
-      const commodity = feature.properties.commodity;
-      const match = featureDate === formattedSelectedDate && 
-        commodity && 
-        commodity.toLowerCase() === selectedCommodity.toLowerCase();
-      
+      const featureDateObj = new Date(feature.properties.date);
+      const featureYear = featureDateObj.getFullYear();
+      const featureMonth = String(featureDateObj.getMonth() + 1).padStart(2, '0');
+      const featureFormattedDate = `${featureYear}-${featureMonth}`;
+      const match = featureFormattedDate === formattedSelectedDate && 
+        feature.properties.commodity && 
+        feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase();
+
       if (match) {
         console.log('Matched feature:', feature);
       }
-      
+
       return match;
     });
 
@@ -171,15 +167,21 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     const newIndex = sortedUniqueMonths.findIndex(month => month.getTime() === newDate.getTime());
     if (newIndex !== -1) {
       const formattedNewDate = formatDate(newDate);
-      const hasData = geoData.features.some(feature => 
-        feature.properties.commodity && 
-        feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
-        feature.properties.date === formattedNewDate
-      );
+      const hasData = geoData.features.some(feature => {
+        const featureDateObj = new Date(feature.properties.date);
+        const featureYear = featureDateObj.getFullYear();
+        const featureMonth = String(featureDateObj.getMonth() + 1).padStart(2, '0');
+        const featureFormattedDate = `${featureYear}-${featureMonth}`;
+        return (
+          feature.properties.commodity && 
+          feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase() &&
+          featureFormattedDate === formattedNewDate
+        );
+      });
       if (hasData) {
         setSelectedMonthIndex(newIndex);
         setSelectedDate(newDate);
-        console.log(`[Debug] setSelectedMonthIndex to ${newIndex} (${newDate})`);
+        console.log(`[Debug] setSelectedMonthIndex to ${newIndex} (${formattedNewDate})`);
       } else {
         console.warn(`No data available for ${selectedCommodity.toLowerCase()} on ${formattedNewDate}`);
       }
@@ -372,11 +374,28 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
               <li>Think about geographical factors: How might terrain, infrastructure, or political boundaries influence the observed patterns?</li>
               <li>Consider economic policies: How might different exchange rate regimes affect prices and trade flows?</li>
             </ul>
-            <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic' }}>
-            </Typography>
           </Typography>
         </AccordionDetails>
       </Accordion>
+
+      <Box sx={{ mt: 4, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+        <Typography variant="h6" gutterBottom>
+          Key Insights
+        </Typography>
+        {currentAnalysis ? (
+          <ul>
+            {generateKeyInsights(currentAnalysis, selectedCommodity).map((insight, index) => (
+              <li key={index}>
+                <Typography variant="body2">{insight}</Typography>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Typography variant="body2">
+            No analysis data available to generate insights.
+          </Typography>
+        )}
+      </Box>
     </Paper>
   );
 };
@@ -384,6 +403,35 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
 SpatialAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
   windowWidth: PropTypes.number.isRequired,
+};
+
+// Helper function to generate key insights
+const generateKeyInsights = (analysisData, commodity) => {
+  const insights = [];
+
+  if (analysisData.spatial_autocorrelation) {
+    const { Variable_1, Variable_2 } = analysisData.spatial_autocorrelation;
+    if (Variable_1.Moran_I > 0 && Variable_1.Moran_p_value < 0.05) {
+      insights.push(`There is significant positive spatial autocorrelation in ${commodity} prices (Moran's I: ${Variable_1.Moran_I.toFixed(3)}, p-value: ${Variable_1.Moran_p_value.toFixed(3)}), indicating that similar price levels tend to cluster geographically.`);
+    }
+    if (Variable_2.Moran_I > 0 && Variable_2.Moran_p_value < 0.05) {
+      insights.push(`Conflict intensity shows significant positive spatial autocorrelation (Moran's I: ${Variable_2.Moran_I.toFixed(3)}, p-value: ${Variable_2.Moran_p_value.toFixed(3)}), suggesting that areas of high conflict tend to be near each other.`);
+    }
+  }
+
+  if (analysisData.regression_results) {
+    const { coefficients, p_values } = analysisData.regression_results;
+    if (coefficients.conflict_intensity && p_values.conflict_intensity < 0.05) {
+      const effect = coefficients.conflict_intensity > 0 ? "positive" : "negative";
+      insights.push(`Conflict intensity has a statistically significant ${effect} effect on ${commodity} prices (coefficient: ${coefficients.conflict_intensity.toFixed(3)}, p-value: ${p_values.conflict_intensity.toFixed(3)}).`);
+    }
+  }
+
+  if (insights.length === 0) {
+    insights.push(`No statistically significant spatial patterns were found for ${commodity} prices or conflict intensity.`);
+  }
+
+  return insights;
 };
 
 export default SpatialAnalysis;
