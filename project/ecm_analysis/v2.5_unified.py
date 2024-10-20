@@ -1,4 +1,4 @@
-#ecm_analysis_v2.5_unified.py 
+# ecm_analysis_v2.5_unified.py
 
 import logging
 import json
@@ -20,6 +20,9 @@ from arch.unitroot import engle_granger
 from esda.moran import Moran
 from pysal.lib import weights
 from scipy.stats import shapiro
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+# --------------------------- Configuration and Setup ---------------------------
 
 # Load configuration
 def load_config(path='project/config/config.yaml'):
@@ -73,7 +76,119 @@ EXR_REGIMES = params['exchange_rate_regimes']
 STN_SIG = params['stationarity_significance_level']
 CIG_SIG = params['cointegration_significance_level']
 
-# Load spatial weights
+# --------------------------- Data Transformation Functions ---------------------------
+
+def handle_duplicates(df):
+    """
+    Handle duplicates by averaging numeric columns.
+    """
+    try:
+        # Identify numeric and non-numeric columns
+        numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+        non_numeric_cols = df.select_dtypes(exclude=['number']).columns.tolist()
+        
+        # Exclude grouping columns from non-numeric columns
+        grouping_cols = ['admin1', 'commodity', 'date', 'exchange_rate_regime']
+        non_numeric_cols = [col for col in non_numeric_cols if col not in grouping_cols]
+        
+        # Group by the specified columns and calculate mean for numeric columns
+        df_numeric = df.groupby(grouping_cols)[numeric_cols].mean().reset_index()
+        
+        # For non-numeric columns, take the first value
+        df_non_numeric = df.groupby(grouping_cols)[non_numeric_cols].first().reset_index()
+        
+        # Merge numeric and non-numeric data back together
+        df = pd.merge(df_numeric, df_non_numeric, on=grouping_cols, how='left')
+        
+        logger.info("Handled duplicates by averaging numeric columns and keeping first non-numeric values.")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to handle duplicates: {e}")
+        raise
+
+def perform_seasonal_adjustment_on_group(group, freq='M'):
+    """
+    Perform seasonal adjustment on a single group.
+    """
+    try:
+        group = group.sort_values('date')
+        group.set_index('date', inplace=True)
+
+        # Check if sufficient data points are available
+        if group.shape[0] < 2 * 12:  # At least two years of monthly data
+            logger.warning(f"Insufficient data points for seasonal adjustment for Commodity: {group['commodity'].iloc[0]}, Regime: {group['exchange_rate_regime'].iloc[0]}. Required: >=24, Available: {group.shape[0]}. Skipping adjustment.")
+            return group.reset_index()
+
+        # Perform seasonal decomposition
+        decomposition = seasonal_decompose(group['usdprice'], model='additive', period=12, extrapolate_trend='freq')
+
+        # Adjust the 'usdprice' by removing the seasonal component
+        group['usdprice'] = group['usdprice'] - decomposition.seasonal
+
+        group.reset_index(inplace=True)
+        logger.debug(f"Seasonal adjustment successful for Commodity: {group['commodity'].iloc[0]}, Regime: {group['exchange_rate_regime'].iloc[0]}.")
+        return group
+
+    except Exception as e:
+        logger.error(f"Seasonal adjustment failed for Commodity: {group['commodity'].iloc[0]}, Regime: {group['exchange_rate_regime'].iloc[0]}. Error: {e}")
+        return group.reset_index()  # Return the original group without adjustment
+
+def apply_seasonal_adjustment(df, frequency='M'):
+    """
+    Apply seasonal adjustment to the 'usdprice' column for each commodity-regime group.
+    """
+    try:
+        adjusted_groups = []
+        grouped = df.groupby(['commodity', 'exchange_rate_regime'])
+        total_groups = len(grouped)
+        processed_groups = 0
+
+        logger.info(f"Total groups to process for seasonal adjustment: {total_groups}")
+
+        for (commodity, regime), group in grouped:
+            logger.debug(f"Processing Commodity: {commodity}, Regime: {regime}, Records: {len(group)}")
+
+            # Drop rows with null 'usdprice' or 'date'
+            group = group.dropna(subset=['usdprice', 'date'])
+            if group.empty:
+                logger.warning(f"All records have null 'usdprice' or 'date' for Commodity: {commodity}, Regime: {regime}. Skipping adjustment.")
+                continue
+
+            adjusted = perform_seasonal_adjustment_on_group(group, freq=frequency)
+
+            adjusted_groups.append(adjusted)
+            processed_groups += 1
+
+        logger.info(f"Processed {processed_groups} out of {total_groups} groups.")
+
+        if not adjusted_groups:
+            logger.error("No groups were adjusted. 'adjusted_groups' is empty.")
+            raise ValueError("No groups to concatenate.")
+
+        df_adjusted = pd.concat(adjusted_groups, ignore_index=True)
+        logger.info("Seasonal adjustment applied successfully.")
+        return df_adjusted
+
+    except Exception as e:
+        logger.error(f"Failed to apply seasonal adjustment: {e}")
+        raise
+
+def apply_smoothing(df, window=3):
+    """
+    Apply moving average smoothing to the 'usdprice' column.
+    """
+    try:
+        logger.info(f"Applying moving average smoothing with window size {window}.")
+        df = df.sort_values(['commodity', 'exchange_rate_regime', 'date'])
+        df['usdprice'] = df.groupby(['commodity', 'exchange_rate_regime'])['usdprice'].transform(lambda x: x.rolling(window, min_periods=1, center=True).mean())
+        logger.info("Smoothing applied successfully.")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to apply smoothing: {e}")
+        raise
+
+# --------------------------- Data Loading and Preprocessing ---------------------------
+
 def load_spatial_weights(path):
     try:
         gdf = gpd.read_file(path)
@@ -87,12 +202,12 @@ def load_spatial_weights(path):
 
 spatial_weights, spatial_gdf = load_spatial_weights(files['spatial_geojson'])
 
-# Load and preprocess data
 def load_data():
     logger.debug(f"Loading data from {files['spatial_geojson']}")
     try:
         gdf = gpd.read_file(files['spatial_geojson'])
-        df = pd.DataFrame(gdf)
+        df = gdf.drop(columns='geometry')  # Remove spatial component
+
         required_columns = {'date', 'commodity', 'exchange_rate_regime', 'usdprice', 'conflict_intensity', 'admin1'}
         missing = required_columns - set(df.columns)
         if missing:
@@ -101,24 +216,37 @@ def load_data():
         df['date'] = pd.to_datetime(df['date'], errors='coerce')
         initial_length = len(df)
         df.drop_duplicates(inplace=True)
-        df.dropna(subset=['date'], inplace=True)
-        logger.info(f"Dropped {initial_length - len(df)} duplicate or NaN rows based on 'date'.")
+        df.dropna(subset=['date', 'usdprice'], inplace=True)
+        logger.info(f"Dropped {initial_length - len(df)} duplicate or NaN rows based on 'date' and 'usdprice'.")
 
+        # Exclude 'Amanat Al Asimah' if needed
         df = df[df['admin1'] != 'Amanat Al Asimah']
         logger.info("Excluded records from 'Amanat Al Asimah'.")
 
+        # Filter for specified commodities
         if COMMODITIES:
             df = df[df['commodity'].isin(COMMODITIES)]
             logger.info(f"Filtered data for specified commodities. Number of records: {len(df)}")
         else:
             logger.warning("No commodities specified in config. Using all available commodities.")
 
+        # Filter for exchange rate regimes
         if 'unified' in EXR_REGIMES:
             df['exchange_rate_regime'] = 'unified'
 
         df = df[df['exchange_rate_regime'].isin(EXR_REGIMES)]
         logger.debug(f"Data filtered for exchange rate regimes: {EXR_REGIMES}")
 
+        # Handle duplicates by averaging
+        df = handle_duplicates(df)
+
+        # Apply seasonal adjustment
+        df = apply_seasonal_adjustment(df, frequency='M')
+
+        # Apply smoothing
+        df = apply_smoothing(df, window=3)
+
+        # Proceed with grouping
         df['commodity'] = df['commodity'].astype('category')
         df['exchange_rate_regime'] = df['exchange_rate_regime'].astype('category')
 
@@ -140,23 +268,42 @@ def load_data():
         logger.debug(traceback.format_exc())
         raise
 
+# --------------------------- Analysis Functions ---------------------------
+
 # Stationarity Tests
+def apply_transformations(series):
+    transformations = {'original': series}
+    if series.isnull().all():
+        return transformations
+    if (series > 0).all():
+        transformations.update({
+            'log': np.log(series.replace(0, np.nan)).dropna(),
+            'diff': series.diff().dropna(),
+            'log_diff': np.log(series.replace(0, np.nan)).diff().dropna()
+        })
+    else:
+        transformations.update({
+            'diff': series.diff().dropna()
+        })
+    return transformations
+
 def run_stationarity_tests(series, variable):
     logger.debug(f"Running stationarity tests for {variable}")
     results = {}
-    transformations = {'original': series, 'diff': series.diff().dropna()}
-    if (series > 0).all():
-        transformations.update({'log': np.log(series), 'log_diff': np.log(series).diff().dropna()})
-        logger.debug("Applied log transformations.")
+    transformations = apply_transformations(series)
 
     selected_transformation = None
     for name, transformed in transformations.items():
         logger.debug(f"Testing transformation: {name}")
         try:
-            adf_stat, adf_p, _, _, critical_values, _ = adfuller(transformed, autolag='AIC')
-            kpss_stat, kpss_p, _, _ = kpss(transformed, regression='c', nlags='auto')
-
+            # Perform ADF test
+            adf_result = adfuller(transformed, autolag='AIC')
+            adf_stat, adf_p, usedlag, nobs, critical_values, icbest = adf_result
             adf_stationary = adf_p < STN_SIG
+
+            # Perform KPSS test
+            kpss_result = kpss(transformed, regression='c', nlags='auto', store=False)
+            kpss_stat, kpss_p, lags, critical_values_kpss = kpss_result
             kpss_stationary = kpss_p > STN_SIG
 
             results[name] = {
@@ -169,6 +316,7 @@ def run_stationarity_tests(series, variable):
                 'KPSS': {
                     'Statistic': kpss_stat,
                     'p-value': kpss_p,
+                    'Critical Values': critical_values_kpss,
                     'Stationary': kpss_stationary
                 }
             }
@@ -197,7 +345,10 @@ def run_stationarity_tests(series, variable):
 def run_cointegration_tests(y, x, stationarity_results):
     logger.debug("Running cointegration tests")
     try:
-        combined = pd.concat([y, x], axis=1).dropna()
+        y_transformed = pd.Series(stationarity_results['usdprice']['series'])
+        x_transformed = pd.Series(stationarity_results['conflict_intensity']['series'])
+
+        combined = pd.concat([y_transformed, x_transformed], axis=1).dropna()
         if combined.empty or len(combined) < 2:
             raise ValueError("Insufficient data for cointegration test.")
 
@@ -591,7 +742,8 @@ def run_ecm_analysis(data, stationarity_results, cointegration_results, gdf):
 def timed_log(msg):
     logger.info(f"{msg} at {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-# Main Workflow
+# --------------------------- Main Workflow ---------------------------
+
 def main():
     timed_log("Starting ECM analysis workflow")
     try:
