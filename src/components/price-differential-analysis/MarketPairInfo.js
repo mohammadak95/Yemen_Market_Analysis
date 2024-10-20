@@ -47,12 +47,11 @@ const MarketPairInfo = ({ data }) => {
     let interpretation = '';
 
     if (data.diagnostics?.distance_km != null) {
-      const distanceKm = (data.diagnostics.distance_km * 200).toFixed(2);
-      interpretation += `The distance between ${data.base_market} and ${data.other_market} is approximately ${distanceKm} km. This distance may influence the price differential due to transportation costs and market integration.\n\n`;
+      interpretation += `The distance between ${data.base_market} and ${data.other_market} is approximately ${(data.diagnostics.distance_km).toFixed(2)} km. This distance may influence the price differential due to transportation costs and market integration.\n\n`;
     }
 
     if (data.diagnostics?.common_dates != null) {
-      interpretation += `The analysis is based on ${data.diagnostics.common_dates} common dates, providing a robust dataset for comparison.`;
+      interpretation += `The analysis is based on ${data.diagnostics.common_dates} common dates, providing a robust dataset for comparison. This represents the number of time points where price data was available for both markets after preprocessing, including seasonal adjustment and smoothing.`;
     }
 
     return interpretation;
@@ -78,7 +77,7 @@ MarketPairInfo.propTypes = {
     commodity: PropTypes.string,
     diagnostics: PropTypes.shape({
       distance_km: PropTypes.number,
-      common_dates: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      common_dates: PropTypes.number,
     }),
   }),
 };

@@ -46,14 +46,12 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedData, setSelectedData] = useState(null);
 
-  // Update base markets when data loads
   useEffect(() => {
     if (data && markets.length > 0) {
       setBaseMarket(markets[0]);
     }
   }, [data, markets]);
 
-  // Update market pairs when base market or data changes
   useEffect(() => {
     if (data && baseMarket) {
       const commodityResults = data[baseMarket]?.commodity_results[selectedCommodity];
@@ -70,7 +68,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
     }
   }, [baseMarket, data, selectedCommodity]);
 
-  // Update selected data when selection changes
   useEffect(() => {
     if (
       data &&
@@ -111,7 +108,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
       Summary: {
         AIC: selectedData.regression_results?.aic?.toFixed(2) || 'N/A',
         BIC: selectedData.regression_results?.bic?.toFixed(2) || 'N/A',
-        HQIC: selectedData.regression_results?.hqic?.toFixed(2) || 'N/A',
         Intercept: selectedData.regression_results?.intercept?.toFixed(4) || 'N/A',
         Slope: selectedData.regression_results?.slope?.toFixed(4) || 'N/A',
         'R-squared': selectedData.regression_results?.r_squared?.toFixed(4) || 'N/A',
@@ -133,51 +129,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
       blob,
       `${selectedCommodity}_PriceDifferential_${selectedData.base_market}_vs_${selectedData.other_market}.csv`
     );
-  };
-
-  // Generate key insights
-  const generateKeyInsights = () => {
-    const insights = [];
-
-    if (selectedData) {
-      const { regression_results, diagnostics } = selectedData;
-
-      if (regression_results?.slope != null && regression_results?.p_value != null) {
-        const slopeSignificance =
-          regression_results.p_value < 0.05
-            ? 'statistically significant'
-            : 'not statistically significant';
-        insights.push(
-          `The slope (β) is ${regression_results.slope.toFixed(4)} and is ${slopeSignificance} (p-value: ${regression_results.p_value.toFixed(
-            4
-          )}), indicating ${
-            slopeSignificance === 'statistically significant' ? 'a significant trend' : 'no significant trend'
-          } in the price differential over time.`
-        );
-      }
-
-      if (diagnostics?.p_value != null) {
-        const stationarity = diagnostics.p_value < 0.05 ? 'stationary' : 'non-stationary';
-        insights.push(
-          `The price differential series is ${stationarity} (p-value: ${diagnostics.p_value.toFixed(
-            4
-          )}), indicating ${
-            stationarity === 'stationary' ? 'it does not have' : 'the presence of'
-          } a unit root.`
-        );
-      }
-
-      if (diagnostics?.conflict_correlation != null) {
-        const conflictPattern = diagnostics.conflict_correlation > 0 ? 'similar' : 'opposite';
-        insights.push(
-          `The conflict correlation between the markets is ${diagnostics.conflict_correlation.toFixed(
-            4
-          )}, suggesting ${conflictPattern} patterns of conflict intensity between the markets.`
-        );
-      }
-    }
-
-    return insights;
   };
 
   if (status === 'loading') {
@@ -336,10 +287,8 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
         <PriceDifferentialTutorial />
       </Box>
 
-      {/* Key Insights */}
-      <KeyInsights insights={generateKeyInsights()} />
+      <KeyInsights data={selectedData} />
 
-      {/* Tabs */}
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -409,7 +358,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
         />
       </Tabs>
 
-      {/* Tab Content */}
       <Box sx={{ mt: 2 }}>
         {activeTab === 0 && (
           <PriceDifferentialChart data={selectedData} isMobile={isMobile} />
@@ -419,7 +367,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
         {activeTab === 3 && <MarketPairInfo data={selectedData} isMobile={isMobile} />}
       </Box>
 
-      {/* Interpretation Guide */}
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="h6">Interpretation Guide</Typography>
@@ -429,18 +376,31 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
             This analysis helps you understand the price differences between two markets for a specific commodity. Key points to consider:
             <ul>
               <li>
-                The <strong>Price Differential Chart</strong> visualizes the price differences over time.
+                The <strong>Price Differential Chart</strong> visualizes the log price differences over time. Positive values indicate higher prices in the base market, while negative values indicate lower prices.
               </li>
               <li>
-                The <strong>Regression Results</strong> provide statistical analysis of trends.
+                The <strong>Regression Results</strong> show the trend in price differentials. A positive slope indicates widening price gaps over time, while a negative slope suggests convergence.
               </li>
               <li>
-                The <strong>Diagnostics</strong> tab offers statistical tests to validate the analysis.
+                The <strong>Diagnostics</strong> tab provides insights into the statistical properties of the price differential series and the relationship between markets.
               </li>
               <li>
-                The <strong>Market Pair Info</strong> gives context about the selected markets and commodity.
+                The <strong>Market Pair Info</strong> gives context about the selected markets, including their distance and the number of common dates analyzed.
+              </li>
+              <li>
+                <strong>Seasonal Adjustment:</strong> The data has been seasonally adjusted to remove cyclical patterns, allowing for a clearer view of the underlying trends.
+              </li>
+              <li>
+                <strong>Smoothing:</strong> A 3-month centered moving average has been applied to reduce short-term fluctuations and highlight longer-term trends.
+              </li>
+              <li>
+                <strong>Stationarity:</strong> The ADF test result indicates whether the price differential series is stable over time. A stationary series suggests that price differences tend to revert to a mean.
+              </li>
+              <li>
+                <strong>Conflict Correlation:</strong> This measure shows how conflict intensities in the two markets are related, which may help explain price differential patterns.
               </li>
             </ul>
+            When interpreting results, consider factors such as transportation costs, local supply and demand conditions, and conflict dynamics that might influence price differentials between markets.
           </Typography>
         </AccordionDetails>
       </Accordion>
@@ -449,8 +409,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity }) => {
 };
 
 PriceDifferentialAnalysis.propTypes = {
-  selectedCommodity: PropTypes.string.isRequired,
-  windowWidth: PropTypes.number.isRequired,
+selectedCommodity: PropTypes.string.isRequired,
 };
 
 export default PriceDifferentialAnalysis;

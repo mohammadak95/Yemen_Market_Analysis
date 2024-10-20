@@ -34,7 +34,7 @@ const DiagnosticsTable = ({ data }) => {
           : 'N/A',
     },
     {
-      name: 'P-Value (Stationarity Test)',
+      name: 'P-Value (ADF Test)',
       value:
         data.diagnostics.p_value != null ? data.diagnostics.p_value.toFixed(4) : 'N/A',
     },
@@ -48,20 +48,25 @@ const DiagnosticsTable = ({ data }) => {
   const interpretDiagnostics = () => {
     let interpretation = '';
 
-    if (data.diagnostics.p_value != null) {
-      const stationarity =
-        data.diagnostics.p_value < 0.05 ? 'stationary' : 'non-stationary';
-      interpretation += `The stationarity test indicates that the price differential series is ${stationarity} (p-value: ${data.diagnostics.p_value.toFixed(
-        4
-      )}).\n\n`;
+    if (data.diagnostics.p_value !== undefined) {
+      const stationarity = data.diagnostics.p_value < 0.05 ? 'stationary' : 'non-stationary';
+      interpretation += `The ADF test indicates that the price differential series is ${stationarity} (p-value: ${data.diagnostics.p_value.toFixed(4)}). `;
+      interpretation += stationarity === 'stationary' 
+        ? 'This suggests that shocks to the price differential tend to be temporary.' 
+        : 'This suggests that shocks to the price differential may have long-lasting effects.';
     }
 
-    if (data.diagnostics.conflict_correlation != null) {
-      const correlationType =
-        data.diagnostics.conflict_correlation > 0 ? 'positive' : 'negative';
-      interpretation += `The conflict correlation is ${data.diagnostics.conflict_correlation.toFixed(
-        4
-      )}, indicating a ${correlationType} relationship between conflicts in the markets.`;
+    if (data.diagnostics.conflict_correlation !== undefined) {
+      const correlationType = data.diagnostics.conflict_correlation > 0 ? 'positive' : 'negative';
+      interpretation += `\n\nThe conflict correlation of ${data.diagnostics.conflict_correlation.toFixed(4)} indicates a ${correlationType} relationship between conflicts in the two markets. `;
+      interpretation += data.diagnostics.conflict_correlation > 0 
+        ? 'This suggests that conflict intensities in both markets tend to move together.' 
+        : 'This suggests that as conflict increases in one market, it tends to decrease in the other.';
+    }
+
+    if (data.diagnostics.distance_km !== undefined) {
+      interpretation += `\n\nThe distance between markets is approximately ${data.diagnostics.distance_km.toFixed(2)} km. `;
+      interpretation += 'Greater distances may contribute to larger price differentials due to transportation costs and market segmentation.';
     }
 
     return interpretation;
@@ -84,7 +89,7 @@ DiagnosticsTable.propTypes = {
   data: PropTypes.shape({
     diagnostics: PropTypes.shape({
       conflict_correlation: PropTypes.number,
-      common_dates: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      common_dates: PropTypes.number,
       distance_km: PropTypes.number,
       p_value: PropTypes.number,
     }),

@@ -1,0 +1,5 @@
+2024-10-20 14:45:10,981 - INFO - Loading data from project/data/processed/unified_data.geojson
+2024-10-20 14:45:11,625 - INFO - Data loaded and sorted successfully.
+2024-10-20 14:45:11,628 - INFO - Filtered data for commodities: ['beans (kidney red)', 'beans (white)', 'eggs', 'exchange rate (unofficial)', 'fuel (diesel)', 'fuel (gas)', 'fuel (petrol-gasoline)', 'lentils', 'milling cost (wheat)', 'oil (vegetable)', 'onions', 'potatoes', 'rice (imported)', 'salt', 'sugar', 'tomatoes', 'wheat', 'wheat flour']
+2024-10-20 14:45:11,628 - INFO - Applying seasonal adjustment and smoothing to 'usdprice'.
+2024-10-20 14:45:11,635 - ERROR - Error loading and preprocessing data: cannot reindex on an axis with duplicate labels

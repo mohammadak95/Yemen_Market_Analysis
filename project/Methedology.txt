@@ -1,35 +1,48 @@
-**Methodology**
+# Methodology
 
-The Yemen Market Analysis project employs a comprehensive methodological framework that integrates advanced econometric and spatial analysis techniques to examine the influence of conflict intensity on commodity prices across different regions of Yemen. A key innovation in this project is the development of a **Time-Variant Market Integration Index (TV-MII)**, which quantifies the dynamic degree of market integration over time. This index captures fluctuations in market integration levels due to factors such as conflict intensity, policy changes, and other exogenous shocks, providing valuable insights for policymakers and stakeholders.
+The **Yemen Market Analysis** project employs a comprehensive methodological framework that integrates advanced econometric and spatial analysis techniques to examine the influence of conflict intensity on commodity prices across different regions of Yemen. A key innovation in this project is the development of a **Time-Variant Market Integration Index (TV-MII)**, which quantifies the dynamic degree of market integration over time. This index captures fluctuations in market integration levels due to factors such as conflict intensity, policy changes, and other exogenous shocks, providing valuable insights for policymakers and stakeholders.
 
-This section delineates the systematic approach undertaken, encompassing data preprocessing, econometric modeling, spatial analysis, the construction of the TV-MII, and data preparation for visualization. The methodology leverages robust statistical models, spatial econometric techniques, and parallel processing to ensure rigorous and scalable analyses.
+The methodology encompasses data collection and preprocessing, econometric modeling (including the construction of the TV-MII and Error Correction Models), spatial econometric analysis, and data preparation for visualization. It leverages robust statistical models, spatial econometric techniques, and parallel processing to ensure rigorous and scalable analyses. The analysis was implemented using the scripts developed and discussed, ensuring that all computational steps were executed as per the designed methodology.
 
 ---
 
-### **1. Data Collection and Preprocessing**
+## **1. Data Collection and Preprocessing**
 
-#### **1.1. Data Loading**
+Data preprocessing is crucial to ensure the integrity, consistency, and reliability of the analysis. The following steps were systematically applied to prepare the data for analysis, utilizing parameters specified in the configuration file (`config.yaml`).
+
+### **1.1. Data Loading**
 
 The analysis begins with the acquisition of spatial and temporal data encapsulated in GeoJSON files. The primary dataset, `unified_data.geojson`, contains detailed records of commodity prices, conflict intensity, and other relevant variables across multiple regions and time periods in Yemen.
 
-- **Loading Mechanism:** Utilizes GeoPandas to read GeoJSON files, ensuring efficient handling of geospatial data.
+- **Loading Mechanism:** Utilized **GeoPandas** to read GeoJSON files, ensuring efficient handling of geospatial data.
 
   ```python
   import geopandas as gpd
   gdf = gpd.read_file('unified_data.geojson')
   ```
 
-- **Configuration Management:** Employs a YAML configuration file (`config.yaml`) to manage file paths, directories, and analysis parameters, promoting flexibility and scalability.
+- **Configuration Management:** Employed a **YAML configuration file** (`config.yaml`) to manage file paths, directories, and analysis parameters, promoting flexibility and scalability.
 
-#### **1.2. Data Cleaning and Transformation**
+### **1.2. Data Cleaning and Transformation**
 
-- **Duplicate Removal:** Eliminates duplicate records to maintain data integrity.
+#### **1.2.1. Handling Duplicates**
+
+- **Objective:** Eliminate duplicate records to prevent bias and inaccuracies.
+- **Method:**
+  - Identified duplicate records based on key grouping columns (`admin1` or `region_id`, `commodity`, `date`, and `exchange_rate_regime`).
+  - For duplicates:
+    - **Numeric Columns:** Calculated the average (e.g., `usdprice`, `conflict_intensity`).
+    - **Non-Numeric Columns:** Retained the first occurrence.
+- **Outcome:** A cleaned dataset with consolidated records, ensuring uniqueness per group.
 
   ```python
   gdf.drop_duplicates(inplace=True)
   ```
 
-- **Missing Values Handling:** Addresses missing values through imputation strategies, such as replacing with median values, to prevent skewed analyses.
+#### **1.2.2. Missing Values Handling**
+
+- **Objective:** Address missing values to maintain data integrity.
+- **Method:** Employed imputation strategies, such as replacing missing values with median values, to prevent skewed analyses.
 
   ```python
   from sklearn.impute import SimpleImputer
@@ -37,52 +50,119 @@ The analysis begins with the acquisition of spatial and temporal data encapsulat
   gdf['usdprice'] = imputer.fit_transform(gdf[['usdprice']])
   ```
 
-- **Date Processing:** Converts date columns to datetime objects to facilitate time-series analyses.
+#### **1.2.3. Date Processing**
+
+- **Objective:** Ensure correct date formats for time-series analyses.
+- **Method:** Converted date columns to datetime objects.
 
   ```python
   gdf['date'] = pd.to_datetime(gdf['date'], errors='coerce')
   ```
 
-- **Categorical Data Encoding:** Transforms categorical variables (e.g., commodity, exchange_rate_regime) into suitable formats for modeling, including the creation of dummy variables.
+#### **1.2.4. Categorical Data Encoding**
+
+- **Objective:** Prepare categorical variables for modeling.
+- **Method:**
+  - Transformed categorical variables (e.g., `commodity`, `exchange_rate_regime`) into suitable formats.
+  - Created dummy variables where necessary.
 
   ```python
   gdf = pd.get_dummies(gdf, columns=['exchange_rate_regime'], drop_first=True)
   ```
 
-- **Regime Unification:** Consolidates specified exchange rate regimes into a unified category (`unified`) to streamline analyses across different economic conditions.
+#### **1.2.5. Unifying Exchange Rate Regimes**
+
+- **Objective:** Simplify analysis by combining specified exchange rate regimes.
+- **Method:**
+  - **Regimes to Unify:** 'north' and 'south' as per `regimes_to_unify` in the configuration.
+  - **New Regime Name:** Assigned 'unified' as per `new_regime_name`.
+  - **Implementation:** Replaced specified regimes with 'unified' in the data.
 
   ```python
   gdf.loc[gdf['exchange_rate_regime'].isin(['north', 'south']), 'exchange_rate_regime'] = 'unified'
   ```
 
-#### **1.3. Data Resampling and Alignment**
+- **Outcome:** Dataset with a unified exchange rate regime, simplifying comparisons.
 
-- **Frequency Alignment:** Resamples the dataset to a consistent temporal frequency (e.g., monthly) to ensure uniformity across time-series analyses.
+#### **1.2.6. Commodity Filtering**
+
+- **Objective:** Focus analysis on specific commodities.
+- **Method:**
+  - **Commodities List:** Used the list provided under `commodities` in the configuration.
+  - **Filtering:** Included only the specified commodities in the dataset.
+
+  ```python
+  commodities = config['parameters']['commodities']
+  gdf = gdf[gdf['commodity'].isin(commodities)]
+  ```
+
+- **Outcome:** Dataset containing only relevant commodities for analysis.
+
+### **1.3. Seasonal Adjustment**
+
+- **Objective:** Remove seasonal effects from `usdprice` to focus on underlying trends.
+- **Method:**
+  - **Frequency:** Set to monthly (`'M'`) as per the `frequency` parameter.
+  - **Grouping:** Data grouped by `commodity` and `admin1` (region identifier).
+  - **Decomposition:** Applied seasonal decomposition using an additive model with a period of 12.
+  - **Adjustment:** Subtracted the seasonal component from `usdprice` to obtain seasonally adjusted prices.
+- **Outcome:** Seasonally adjusted `usdprice` values, enhancing trend analysis.
+
+  ```python
+  from statsmodels.tsa.seasonal import seasonal_decompose
+  decomposition = seasonal_decompose(gdf['usdprice'], model='additive', period=12)
+  gdf['usdprice_adjusted'] = gdf['usdprice'] - decomposition.seasonal
+  ```
+
+### **1.4. Smoothing**
+
+- **Objective:** Reduce short-term volatility and noise in `usdprice`.
+- **Method:**
+  - **Moving Average:** Applied a centered moving average with a window size of 3 to the seasonally adjusted `usdprice`.
+  - **Grouping:** Performed within each `commodity` and region group.
+- **Outcome:** Smoothed `usdprice` series representing long-term trends.
+
+  ```python
+  gdf['usdprice_smoothed'] = gdf.groupby(['commodity', 'region_id'])['usdprice_adjusted'].transform(
+      lambda x: x.rolling(window=3, min_periods=1, center=True).mean()
+  )
+  ```
+
+### **1.5. Data Resampling and Alignment**
+
+- **Objective:** Align data to a consistent temporal frequency and prepare for time-series analyses.
+- **Method:**
+  - **Frequency Alignment:** Resampled the dataset to a consistent temporal frequency (e.g., monthly) as per `frequency`.
+  - **Grouping:** Aggregated data by `commodity`, `exchange_rate_regime`, and `region_id`.
+- **Outcome:** Uniform dataset ready for time-series and econometric analyses.
 
   ```python
   gdf.set_index('date', inplace=True)
-  gdf = gdf.groupby('region_id').resample('M').mean().reset_index()
-  ```
-
-- **Grouping:** Aggregates data by commodity and exchange_rate_regime to facilitate targeted analyses within specific market conditions.
-
-  ```python
-  grouped_data = gdf.groupby(['commodity', 'exchange_rate_regime'])
+  gdf = gdf.groupby(['commodity', 'exchange_rate_regime', 'region_id']).resample('M').mean().reset_index()
   ```
 
 ---
 
-### **2. Econometric Modeling**
+## **2. Econometric Modeling**
 
-The project integrates multiple econometric models to dissect the relationship between conflict intensity and commodity prices, as well as to construct the Time-Variant Market Integration Index.
+The project integrates multiple econometric models to dissect the relationship between conflict intensity and commodity prices, as well as to construct the **Time-Variant Market Integration Index (TV-MII)**.
 
-#### **2.1. Time-Variant Market Integration Index (TV-MII)**
+### **2.1. Time-Variant Market Integration Index (TV-MII)**
 
 **Objective:** Quantify the dynamic degree of market integration across different regions over time.
 
 **Methodological Approach:**
 
-##### **a. Price Differential Calculation**
+#### **2.1.1. Market Pair Selection**
+
+- **Objective:** Identify pairs of markets for comparison.
+- **Method:**
+  - **Base Markets:** Selected key markets (e.g., Aden, Sana'a) as reference points.
+  - **Other Markets:** Included all other markets available in the dataset.
+  - **Commodity Matching:** Ensured the same commodities are compared between markets.
+- **Outcome:** A set of market pairs for each commodity to be analyzed.
+
+#### **2.1.2. Price Differential Calculation**
 
 - **Compute Log Price Differentials between Market Pairs:**
 
@@ -93,7 +173,13 @@ The project integrates multiple econometric models to dissect the relationship b
   Where:
   - \( P_{it} \) and \( P_{jt} \) are the prices of the same commodity in regions \( i \) and \( j \) at time \( t \).
 
-##### **b. Rolling Correlation Analysis**
+- **Implementation:**
+
+  ```python
+  price_diff = np.log(price_i) - np.log(price_j)
+  ```
+
+#### **2.1.3. Rolling Correlation Analysis**
 
 - **Compute Rolling Correlations of Price Changes:**
 
@@ -107,7 +193,14 @@ The project integrates multiple econometric models to dissect the relationship b
 
 - **Interpretation:** Higher correlations indicate stronger market integration during the window.
 
-##### **c. Time-Varying Coefficient Models**
+- **Implementation:**
+
+  ```python
+  window_size = 12
+  rolling_corr = price_diff_series.rolling(window=window_size).corr()
+  ```
+
+#### **2.1.4. Time-Varying Coefficient Models**
 
 - **Employ State-Space Models or Kalman Filter to Estimate Time-Varying Parameters:**
 
@@ -122,13 +215,20 @@ The project integrates multiple econometric models to dissect the relationship b
   - \( \beta_t \) captures the degree of integration at time \( t \).
   - \( \epsilon_t \) and \( \eta_t \) are error terms representing observation and state noise, respectively.
 
-- **Estimation:** Use Kalman filtering techniques to estimate \( \beta_t \) recursively over time.
+- **Estimation:** Used **Kalman filtering techniques** to estimate \( \beta_t \) recursively over time.
 
-##### **d. Index Construction**
+- **Implementation:**
+
+  ```python
+  from statsmodels.tsa.statespace.kalman_filter import KalmanFilter
+  # Define and fit the state-space model
+  ```
+
+#### **2.1.5. Index Construction**
 
 - **Normalization:**
 
-  - Scale the estimated parameters to a 0–1 range to facilitate comparison and interpretation.
+  - Scaled the estimated parameters to a 0–1 range to facilitate comparison and interpretation.
 
   \[
   \text{TV-MII}_{ijt} = \frac{\beta_t - \min(\beta)}{\max(\beta) - \min(\beta)}
@@ -136,299 +236,339 @@ The project integrates multiple econometric models to dissect the relationship b
 
 - **Aggregation:**
 
-  - If analyzing multiple commodities or market pairs, aggregate the indices using weighted averages based on trade volumes or market sizes.
+  - If analyzing multiple commodities or market pairs, aggregated the indices using weighted averages based on trade volumes or market sizes.
 
-##### **e. Incorporating Exogenous Variables**
+- **Implementation:**
+
+  ```python
+  tv_mii = (beta_t - beta_t.min()) / (beta_t.max() - beta_t.min())
+  ```
+
+#### **2.1.6. Incorporating Exogenous Variables**
 
 - **Conflict Intensity as a Moderator:**
 
-  - Include interaction terms between conflict intensity and price differentials in the model to assess the impact of conflict on market integration.
+  - Included interaction terms between conflict intensity and price differentials in the model to assess the impact of conflict on market integration.
 
   \[
   \text{Price Differential}_{ijt} = \beta_t + \gamma_t \times \text{Conflict Intensity}_{ijt} + \epsilon_t
   \]
 
-  - Estimate time-varying coefficients \( \gamma_t \) to capture the changing influence of conflict intensity.
+  - Estimated time-varying coefficients \( \gamma_t \) to capture the changing influence of conflict intensity.
 
-##### **f. Visualization and Analysis**
+- **Implementation:**
 
-- **Time Series Plots:** Visualize the TV-MII over time for different market pairs to observe trends and shifts.
+  ```python
+  # Extend the state-space model to include conflict intensity
+  ```
 
-- **Spatial Plots:** Map the TV-MII geographically to identify regional patterns and areas of high or low integration.
+#### **2.1.7. Visualization and Analysis**
 
----
+- **Time Series Plots:** Visualized the TV-MII over time for different market pairs to observe trends and shifts.
 
-#### **2.2. Error Correction Model (ECM)**
+- **Spatial Plots:** Mapped the TV-MII geographically to identify regional patterns and areas of high or low integration.
+
+### **2.2. Error Correction Model (ECM)**
 
 **Purpose:** Capture both short-term dynamics and long-term equilibrium relationships between commodity prices and conflict intensity.
 
-##### **Model Specification**
+#### **2.2.1. Stationarity Tests**
 
-- **Vector Error Correction Model (VECM):**
+- **Objective:** Determine the integration order of the time series for `usdprice` and `conflict_intensity`.
+- **Method:**
+  - **Transformations:** Applied various transformations (original, logarithmic, differenced, log-differenced) to achieve stationarity.
+  - **Tests:**
+    - **Augmented Dickey-Fuller (ADF) Test:** Assesses the null hypothesis of a unit root (non-stationarity).
+    - **Kwiatkowski-Phillips-Schmidt-Shin (KPSS) Test:** Assesses the null hypothesis of stationarity.
+  - **Significance Level:** Used a 5% significance level as per `stationarity_significance_level`.
+  - **Decision Criteria:** Selected the transformation where both ADF and KPSS tests indicate stationarity.
+- **Outcome:** Stationary series suitable for cointegration testing.
 
-  \[
-  \Delta \mathbf{y}_t = \Pi \mathbf{y}_{t-1} + \sum_{i=1}^{k-1} \Gamma_i \Delta \mathbf{y}_{t-i} + \Phi \mathbf{x}_t + \epsilon_t
-  \]
+- **Implementation:**
 
-  Where:
-  - \( \Delta \) denotes the first difference operator.
-  - \( \mathbf{y}_t \) is a vector of endogenous variables (e.g., commodity prices).
-  - \( \Pi \) captures the long-term equilibrium relationships.
-  - \( \Gamma_i \) are short-term adjustment coefficients.
-  - \( \mathbf{x}_t \) represents exogenous variables (e.g., conflict intensity).
-  - \( \epsilon_t \) is the error term.
+  ```python
+  from statsmodels.tsa.stattools import adfuller, kpss
+  # Perform ADF and KPSS tests
+  ```
 
-##### **Stationarity and Cointegration Tests**
+#### **2.2.2. Cointegration Tests**
 
-- **Augmented Dickey-Fuller (ADF) Test:** To check for unit roots in the time series.
+- **Objective:** Test for a long-term equilibrium relationship between `usdprice` and `conflict_intensity`.
+- **Method:**
+  - **Engle-Granger Two-Step Method:**
+    - **First Step:** Estimate a long-run equilibrium relationship using Ordinary Least Squares (OLS).
+    - **Second Step:** Test the residuals from the first step for stationarity using the ADF test.
+  - **Max Lags:** Used up to 12 lags as per `cointegration_max_lags`.
+  - **Significance Level:** Used a 5% significance level as per `cointegration_significance_level`.
+- **Outcome:** Identification of cointegrated relationships suitable for ECM estimation.
 
-- **Johansen Test:** To identify the number of cointegrating relationships.
+- **Implementation:**
 
-##### **Model Estimation**
+  ```python
+  from statsmodels.tsa.stattools import coint
+  # Perform cointegration test
+  ```
 
-- **Determine Optimal Lag Length:** Based on Akaike Information Criterion (AIC) or Schwarz Bayesian Criterion (SBC).
+#### **2.2.3. ECM Estimation**
 
-- **Estimate VECM Parameters:** Using maximum likelihood estimation.
+- **Objective:** Model both the short-term dynamics and the long-term equilibrium relationship.
+- **Method:**
+  - **Vector Error Correction Model (VECM):**
+    - **Lag Selection:** Used the `lag_periods` parameter set to 2.
+    - **Cointegration Rank:** Determined using Johansen cointegration test.
+    - **Specification:** Included deterministic terms and exogenous variables.
+  - **Estimation:** Fitted the VECM to estimate adjustment coefficients.
+- **Outcome:** An ECM capturing the interplay between commodity prices and conflict intensity over time.
 
-##### **Diagnostics**
+- **Implementation:**
 
-- **Residual Analysis:** Check for autocorrelation, heteroskedasticity, and normality.
+  ```python
+  from statsmodels.tsa.vector_ar.vecm import VECM
+  # Define and fit the VECM
+  ```
 
-- **Impulse Response Functions (IRFs):** Assess the impact of shocks over time.
+#### **2.2.4. Model Diagnostics**
+
+- **Objective:** Validate the ECM's adequacy and robustness.
+- **Methods Applied:**
+  - **Breusch-Godfrey Serial Correlation LM Test**
+  - **ARCH Test for Heteroskedasticity**
+  - **Jarque-Bera and Shapiro-Wilk Tests for Normality**
+  - **Durbin-Watson Statistic for Autocorrelation**
+  - **White's Test for Heteroskedasticity**
+  - **Autocorrelation and Partial Autocorrelation Functions (ACF and PACF)**
+- **Outcome:** Diagnostic results confirming the validity of the model or indicating areas requiring attention.
+
+- **Implementation:**
+
+  ```python
+  # Perform residual diagnostics
+  ```
+
+#### **2.2.5. Impulse Response Functions (IRFs)**
+
+- **Objective:** Analyze the dynamic response of `usdprice` to shocks in `conflict_intensity`.
+- **Method:** Computed IRFs from the fitted VECM over a 10-period horizon.
+- **Outcome:** Insights into how shocks to conflict intensity affect commodity prices over time.
+
+- **Implementation:**
+
+  ```python
+  irf = vecm.irf(10)
+  irf.plot()
+  ```
+
+#### **2.2.6. Granger Causality Tests**
+
+- **Objective:** Determine the direction of causality between `usdprice` and `conflict_intensity`.
+- **Method:** Performed Granger causality tests using the time series data, with a maximum lag of 4 as per `granger_max_lags`.
+- **Outcome:** Understanding of causal relationships, aiding in model interpretation.
+
+- **Implementation:**
+
+  ```python
+  from statsmodels.tsa.stattools import grangercausalitytests
+  grangercausalitytests(data, maxlag=4)
+  ```
 
 ---
 
-#### **2.3. Price Differential Model**
-
-This model examines the price disparities between different markets, considering the influence of conflict intensity and geographic factors.
-
-##### **Regression Models**
-
-- **Ordinary Least Squares (OLS):**
-
-  \[
-  \text{Price Differential}_{ijt} = \alpha + \beta_1 \times \text{Distance}_{ij} + \beta_2 \times \text{Conflict Correlation}_{ij} + \epsilon_{ijt}
-  \]
-
-- **Fixed Effects (FE) Model:** Controls for unobserved heterogeneity by incorporating entity-specific effects.
-
-- **Random Effects (RE) Model:** Assumes random variations across entities.
-
-- **Instrumental Variables (IV) Model (IV2SLS):** Addresses potential endogeneity issues.
-
-##### **Diagnostics**
-
-- **Variance Inflation Factor (VIF):** To assess multicollinearity.
-
-- **Breusch-Pagan Test:** For heteroskedasticity.
-
-- **Durbin-Watson Test:** For autocorrelation.
-
-- **Jarque-Bera Test:** For normality of residuals.
-
-- **Ramsey RESET Test:** For model specification.
-
----
-
-### **3. Spatial Econometric Analysis**
+## **3. Spatial Econometric Analysis**
 
 Spatial econometric techniques are pivotal in understanding the geographical interdependencies and spatial spillover effects in the data.
 
-#### **3.1. Spatial Weights Matrix Construction**
+### **3.1. Spatial Weights Matrix Construction**
 
-- **K-Nearest Neighbors (KNN):** Constructs spatial weights matrices, dynamically adjusting the number of neighbors to ensure full connectivity.
+- **Objective:** Define spatial relationships between regions.
+- **Method:**
+  - **K-Nearest Neighbors (KNN):** Created spatial weights matrices using KNN with varying `k`.
+    - **Initial k:** Started with `initial_k` set to 5.
+    - **Maximum k:** Increased up to `max_k` set to 10 if the weights matrix was not fully connected.
+  - **Connectivity Check:** Ensured the spatial weights matrix is fully connected.
+  - **Threshold Multiplier:** Used `threshold_multiplier` set to 1 for distance-based weights (if applicable).
+  - **Self-Neighborhood Exclusion:** Ensured regions do not include themselves as neighbors.
+- **Outcome:** Spatial weights matrix representing spatial dependencies.
 
-  \[
-  w_{ij} = \begin{cases}
-  1 & \text{if } j \text{ is one of the k-nearest neighbors of } i \\
-  0 & \text{otherwise}
-  \end{cases}
-  \]
+- **Implementation:**
 
-- **Connectivity Verification:** Ensures that the spatial weights matrix is fully connected.
+  ```python
+  from libpysal.weights import KNN
+  w = KNN.from_dataframe(gdf, k=k)
+  ```
 
-#### **3.2. Spatial Lag Models**
+### **3.2. Spatial Lag Models**
 
-- **Spatial Lag of Variables:** Incorporates the influence of neighboring regions into the regression models.
+- **Objective:** Model spatial relationships considering multicollinearity.
+- **Method:**
+  - **Spatial Lag Calculation:** Computed the spatial lag of `usdprice`.
 
-  \[
-  \text{Price}_{it} = \rho \sum_{j} w_{ij} \text{Price}_{jt} + X_{it} \beta + \epsilon_{it}
-  \]
+    \[
+    \text{Spatial Lag of Price}_{it} = \sum_{j} w_{ij} \times \text{Price}_{jt}
+    \]
 
-  Where:
-  - \( \rho \) is the spatial autoregressive coefficient.
-  - \( w_{ij} \) are spatial weights.
+  - **Ridge Regression with Spatial Lag:** Performed Ridge regression to mitigate multicollinearity and stabilize coefficient estimates.
+    - **Independent Variables:** Spatial lag of `usdprice`.
+    - **Dependent Variable:** `usdprice`.
+    - **Imputation:** Handled missing values using median imputation.
+    - **Standardization:** Standardized features using `StandardScaler`.
+    - **Modeling:** Performed Ridge regression with `alpha` set to 1.0 as per `ridge_alpha`.
+- **Outcome:** Estimated coefficients reflecting spatial dependencies.
 
-- **Ridge Regression with Spatial Lag:** Mitigates multicollinearity and stabilizes coefficient estimates.
+- **Implementation:**
 
-#### **3.3. Spatial Autocorrelation Assessment**
+  ```python
+  from sklearn.linear_model import Ridge
+  model = Ridge(alpha=1.0)
+  model.fit(X, y)
+  ```
 
-- **Moran’s I:** Detects spatial dependencies in the residuals.
+### **3.3. Model Diagnostics**
 
-  \[
-  I = \frac{N}{\sum_{i} \sum_{j} w_{ij}} \cdot \frac{\sum_{i} \sum_{j} w_{ij}(y_i - \overline{y})(y_j - \overline{y})}{\sum_{i} (y_i - \overline{y})^2}
-  \]
+- **Objective:** Validate the spatial regression model.
+- **Methods Applied:**
+  - **Variance Inflation Factor (VIF):** Assessed multicollinearity among predictors.
+  - **P-Values Estimation:** Approximated p-values for Ridge regression coefficients.
+  - **Moran's I:** Calculated to assess spatial autocorrelation in residuals.
+
+    \[
+    I = \frac{N}{\sum_{i} \sum_{j} w_{ij}} \cdot \frac{\sum_{i} \sum_{j} w_{ij}(y_i - \overline{y})(y_j - \overline{y})}{\sum_{i} (y_i - \overline{y})^2}
+    \]
+
+- **Outcome:** Diagnostics confirming model validity or highlighting issues.
+
+- **Implementation:**
+
+  ```python
+  from esda.moran import Moran
+  moran = Moran(residuals, w)
+  ```
+
+### **3.4. Residual Analysis**
+
+- **Objective:** Analyze residuals for further insights.
+- **Method:**
+  - Extracted residuals from the regression model.
+  - Merged residuals back into the GeoDataFrame.
+- **Outcome:** Residuals associated with regions and dates for further analysis.
 
 ---
 
-### **4. Data Preparation for Visualization**
+## **4. Data Preparation for Visualization**
 
-Effective visualization is integral to interpreting the analytical outcomes and communicating findings.
+Prepared datasets for creating visualizations such as choropleth maps, time series plots, and network graphs.
 
-#### **4.1. Choropleth Maps**
+### **4.1. Choropleth Maps Data Preparation**
 
-- **Average Prices:** Maps the mean commodity prices across regions and time periods.
+- **Objective:** Prepare data for spatial visualizations.
+- **Methods:**
+  - **Average Prices:** Calculated average `usdprice` per region and date.
+  - **Conflict Intensity:** Calculated average `conflict_intensity` per region and date.
+  - **Price Changes:** Computed percentage change in `usdprice` over time.
+  - **Residuals:** Extracted residuals for mapping.
+- **Outcome:** CSV files containing data for generating choropleth maps.
 
-- **Conflict Intensity:** Visualizes the average conflict intensity per region.
+### **4.2. Time Series Data Preparation**
 
-- **Price Changes:** Illustrates percentage changes in prices over time.
+- **Objective:** Prepare time series data for analysis and visualization.
+- **Methods:**
+  - **Prices Time Series:** Pivoted data to create time series of `usdprice` per commodity and regime.
+  - **Conflict Intensity Time Series:** Aggregated conflict intensity over time.
+- **Outcome:** CSV files with time series data for prices and conflict intensity.
 
-- **Residuals:** Depicts residuals from econometric models.
+### **4.3. Network Data Preparation (Flow Maps)**
 
-#### **4.2. Time Series Data**
-
-- **Price and Conflict Intensity:** Prepares time series datasets for commodity prices and conflict intensity, enabling temporal trend analyses and forecasting.
-
-#### **4.3. Network Flow Maps**
-
-- **Spatial Relationships:** Constructs network graphs illustrating the flow of economic interactions and dependencies between regions, informed by the spatial weights matrices.
+- **Objective:** Generate data for network graphs illustrating spatial relationships.
+- **Methods:**
+  - **Flow Data Generation:** Created flow data using the spatial weights matrix, including source and target regions with coordinates.
+  - **Spatial Lag of Prices:** Included spatially lagged `usdprice` as weights.
+- **Outcome:** CSV file with flow map data for network visualizations.
 
 ---
 
-### **5. Parallel Processing and Optimization**
+## **5. Parallel Processing and Optimization**
 
 To handle computationally intensive tasks efficiently, the project leverages parallel processing techniques.
 
-- **Multiprocessing:** Utilizes Python’s `multiprocessing` and `concurrent.futures` modules to execute multiple analyses concurrently.
+- **Multiprocessing:** Utilized Python’s `multiprocessing` and `concurrent.futures` modules to execute multiple analyses concurrently, using up to 8 parallel processes as per `parallel_processes`.
 
   ```python
-  from concurrent.futures import ProcessPoolExecutor, as_completed
-  with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
-      futures = [executor.submit(analyze, args) for args in analysis_args]
-      for future in as_completed(futures):
-          results.append(future.result())
+  from concurrent.futures import ProcessPoolExecutor
+  with ProcessPoolExecutor(max_workers=8) as executor:
+      results = list(executor.map(analyze_market_pair, analysis_args))
   ```
 
-- **Caching Mechanisms:** Implements caching strategies using `joblib` to optimize repeated data loading and processing steps.
+- **Caching Mechanisms:** Implemented caching strategies using `joblib` to optimize repeated data loading and processing steps.
 
   ```python
   from joblib import Memory
-  memory = Memory(location='cache', verbose=0)
+  memory = Memory(location='cache_dir', verbose=0)
 
   @memory.cache
   def load_data(file_path):
-      return pd.read_csv(file_path)
+      # Data loading logic
   ```
 
-- **Data Optimization:** Simplifies geometries and optimizes data types to enhance performance and minimize memory usage.
+- **Data Optimization:** Simplified geometries and optimized data types to enhance performance and minimize memory usage.
 
   ```python
   gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
-  gdf['usdprice'] = gdf['usdprice'].astype('float32')
+  gdf = gdf.astype({'usdprice': 'float32', 'conflict_intensity': 'float32'})
   ```
+
+- **Resource Management:** Monitored memory usage per process, limiting to 4 GB as per `memory_per_process_gb`.
 
 ---
 
-### **6. Result Aggregation and Saving**
+## **6. Result Aggregation and Saving**
 
 All analytical outcomes are systematically aggregated and stored for downstream applications and reporting.
 
-- **JSON and CSV Outputs:** Saves results in JSON and CSV formats, facilitating ease of access and integration with visualization tools.
+- **JSON and CSV Outputs:** Saved results in JSON and CSV formats, facilitating ease of access and integration with visualization tools.
 
   ```python
   import json
-  with open('results.json', 'w') as f:
-      json.dump(results, f, indent=4, cls=NumpyEncoder)
+  with open('results/spatial_analysis_results.json', 'w') as f:
+      json.dump(results, f, indent=4)
   ```
 
-- **Logging:** Maintains detailed logs of all processes and analyses, ensuring transparency and facilitating debugging and reproducibility.
+- **Logging:** Maintained detailed logs of all processes and analyses, ensuring transparency and facilitating debugging and reproducibility.
 
   ```python
   import logging
-  logging.basicConfig(filename='analysis.log', level=logging.INFO)
+  logging.basicConfig(filename='results/logs/spatial_analysis.log', level=logging.DEBUG)
   logger = logging.getLogger(__name__)
   ```
 
 ---
 
-### **7. Implementation of the Time-Variant Market Integration Index**
+## **7. Considerations and Assumptions**
 
-**Integration with Existing Framework:**
-
-- **Data Utilization:** Leverages the existing preprocessed data (`gdf`) containing commodity prices and conflict intensity across regions and time.
-
-- **Market Pair Analysis:** For each pair of markets, calculates the log price differentials and conducts rolling correlation analyses to estimate the TV-MII.
-
-**Algorithm Steps:**
-
-1. **Market Pair Selection:** Identify all possible pairs of regions with sufficient data.
-
-2. **Price Differential Computation:**
-
-   - For each time period \( t \), compute the log price differential for each commodity.
-
-3. **Rolling Correlation Calculation:**
-
-   - Apply a rolling window (e.g., 12 months) to calculate the correlation of price changes between market pairs over time.
-
-4. **Time-Varying Parameter Estimation:**
-
-   - Use state-space models or the Kalman Filter to estimate time-varying coefficients that represent market integration levels.
-
-5. **Index Normalization:**
-
-   - Normalize the estimated parameters to a 0–1 scale to construct the TV-MII.
-
-6. **Incorporation of Conflict Intensity:**
-
-   - Include conflict intensity as an exogenous variable or interaction term to assess its impact on market integration.
-
-7. **Aggregation:**
-
-   - Aggregate the TV-MII across commodities and market pairs to obtain regional or national indices.
-
-8. **Visualization:**
-
-   - Generate time series plots and spatial maps to visualize the TV-MII, highlighting trends and regional disparities.
-
-**Technical Implementation:**
-
-- **Use of Efficient Data Structures:**
-
-  - Employ `pandas` and `numpy` for efficient data manipulation.
-
-- **Parallel Processing:**
-
-  - Utilize multiprocessing to handle computations across multiple market pairs concurrently.
-
-- **Robust Statistical Libraries:**
-
-  - Use `statsmodels` for state-space modeling and `scipy` for statistical functions.
-
-- **Handling Missing Data:**
-
-  - Apply interpolation or advanced imputation methods to address gaps in the data.
+- **Data Quality:** Assumed accuracy and representativeness of the provided data.
+- **Stationarity and Cointegration:** Relied on statistical tests to inform model specifications.
+- **Minimum Observations:**
+  - Required at least 20 common dates for price differential analysis (`min_common_dates`).
+  - Required at least 5 regions for spatial analysis (`min_regions`).
+- **Geographic Accuracy:** Assumed accurate geographic coordinates for spatial analysis.
+- **Model Selection:** Chose models appropriate for data characteristics (e.g., Ridge regression for multicollinearity).
+- **Resource Management:** Managed computational resources by limiting processes and memory usage per process.
 
 ---
 
-### **8. Conclusion**
+## **8. Limitations**
 
-By integrating the Time-Variant Market Integration Index into the existing methodological framework, the project enhances its ability to quantify and analyze the dynamics of market integration in Yemen. This comprehensive approach provides valuable insights into how conflict intensity and other factors influence market efficiency over time, supporting informed decision-making for economic development and policy interventions.
-
----
-
-### **References**
-
-- **Econometric Techniques:**
-
-  - Hamilton, J. D. (1994). *Time Series Analysis*. Princeton University Press.
-  - Durbin, J., & Koopman, S. J. (2012). *Time Series Analysis by State Space Methods*. Oxford University Press.
-
-- **Market Integration Studies:**
-
-  - Barrett, C. B. (2001). "Measuring integration and efficiency in international agricultural markets." *Review of Agricultural Economics*, 23(1), 19-32.
-  - Fackler, P. L., & Goodwin, B. K. (2001). "Spatial price analysis." In *Handbook of Agricultural Economics* (Vol. 1, pp. 971-1024). Elsevier.
+- **Data Availability:** Analyses limited by data completeness and coverage.
+- **Model Simplifications:** Models may not capture all complexities (e.g., non-linear relationships).
+- **External Factors:** Potentially influential external variables may not be included.
+- **Temporal Resolution:** Monthly data may not capture short-term dynamics.
+- **Spatial Resolution:** Spatial weights based on KNN may not capture all spatial dependencies.
+- **Parallel Processing Constraints:** Limited by computational resources and memory availability.
 
 ---
 
-**Note:** The integration of the TV-MII into the existing methodology enriches the analysis by providing a dynamic measure of market integration. This index can be tailored further based on data availability and specific project requirements, ensuring its relevance and applicability to the Yemen context.
+## **9. Conclusion**
+
+By integrating data preprocessing, the development of the **Time-Variant Market Integration Index (TV-MII)**, Error Correction Model (ECM) analysis, price differential analysis, spatial analysis, and data preparation for visualization, we provide a comprehensive examination of commodity prices in relation to conflict intensity and spatial dependencies in Yemen. The methodology incorporates detailed configurations to tailor the analysis appropriately, ensuring robust statistical practices, thorough exploration of spatial relationships, and preparation of data for effective visualization and communication of results. The execution of the analysis using the developed scripts ensures that all computational steps were performed accurately and efficiently.
+
+---
+
+**Note:** This methodology combines the initial approach with detailed implementation steps, integrating both the previously discussed scripts and the Time-Variant Market Integration Index (TV-MII) development. It provides a complete overview of the analytical steps taken, the parameters used, and the tools employed to conduct the analysis, ensuring that all aspects are covered comprehensively.
