@@ -1,17 +1,17 @@
 // src/components/spatial-analysis/ChoroplethMap.js
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import TimeSlider from './TimeSlider';
 
 const ChoroplethMap = ({ selectedCommodity, enhancedData, selectedDate, onDateChange, uniqueMonths }) => {
   const theme = useTheme();
+  const geoJsonLayerRef = useRef(null);
 
-  // Function to determine color based on usdprice value
   const getColor = (value) => {
     return value > 10 ? '#800026' :
            value > 8  ? '#BD0026' :
@@ -23,7 +23,6 @@ const ChoroplethMap = ({ selectedCommodity, enhancedData, selectedDate, onDateCh
                        '#FFEDA0';
   };
 
-  // Style function for GeoJSON features
   const style = (feature) => ({
     fillColor: feature.properties.usdprice !== null ? getColor(feature.properties.usdprice) : '#FFEDA0',
     weight: 2,
@@ -33,14 +32,12 @@ const ChoroplethMap = ({ selectedCommodity, enhancedData, selectedDate, onDateCh
     fillOpacity: 0.7,
   });
 
-  // Function to bind popups and tooltips to each feature
   const onEachFeature = (feature, layer) => {
     const regionName = feature.properties.region_name || feature.properties.shapeName || 'Unknown Region';
     const usdPrice = feature.properties.usdprice !== null ? `$${feature.properties.usdprice.toFixed(2)}` : 'N/A';
-    const conflictIntensity = feature.properties.conflict_intensity !== null ? feature.properties.conflict_intensity : 'N/A';
-    const residual = feature.properties.residual !== null ? feature.properties.residual : 'N/A';
+    const conflictIntensity = feature.properties.conflict_intensity !== null ? feature.properties.conflict_intensity.toFixed(2) : 'N/A';
+    const residual = feature.properties.residual !== null ? feature.properties.residual.toFixed(4) : 'N/A';
 
-    // Bind popup
     layer.bindPopup(`
       <strong>${regionName}</strong><br />
       USD Price: ${usdPrice}<br />
@@ -48,14 +45,25 @@ const ChoroplethMap = ({ selectedCommodity, enhancedData, selectedDate, onDateCh
       Residual: ${residual}
     `);
 
-    // Bind tooltip (optional)
     layer.bindTooltip(`
       <strong>${regionName}</strong><br />
       USD Price: ${usdPrice}
     `, { direction: 'auto' });
   };
 
-  // Legend Component
+  useEffect(() => {
+    if (enhancedData && selectedCommodity && geoJsonLayerRef.current) {
+      const filteredData = {
+        ...enhancedData,
+        features: enhancedData.features.filter(feature => 
+          feature.properties.commodity === selectedCommodity &&
+          new Date(feature.properties.date).toISOString().split('T')[0] === selectedDate.toISOString().split('T')[0]
+        )
+      };
+      geoJsonLayerRef.current.clearLayers().addData(filteredData);
+    }
+  }, [selectedCommodity, enhancedData, selectedDate]);
+
   const Legend = () => {
     const grades = [0, 1, 2, 4, 6, 8, 10];
     const colors = grades.map(getColor);
@@ -94,7 +102,6 @@ const ChoroplethMap = ({ selectedCommodity, enhancedData, selectedDate, onDateCh
     );
   };
 
-  // Conditional rendering based on data availability
   if (!enhancedData || !enhancedData.features || enhancedData.features.length === 0) {
     return (
       <Box sx={{ p: 2 }}>
@@ -106,52 +113,45 @@ const ChoroplethMap = ({ selectedCommodity, enhancedData, selectedDate, onDateCh
   }
 
   return (
-    <Box sx={{ width: '100%', height: '500px', mt: 2, position: 'relative' }}>
-      {/* Map Container */}
-      <MapContainer center={[15.3694, 44.1910]} zoom={6} style={{ height: '100%', width: '100%' }}>
-        {/* Tile Layer */}
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        {/* GeoJSON Layer */}
-        <GeoJSON data={enhancedData} style={style} onEachFeature={onEachFeature} />
-      </MapContainer>
-
-      {/* Integrated Time Slider */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: '10px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: { xs: '90%', sm: '60%' },
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          padding: '10px',
-          borderRadius: '5px',
-          boxShadow: theme.shadows[3],
-        }}
-      >
+    <Box sx={{ width: '100%', mt: 2 }}>
+      <Paper elevation={3} sx={{ mb: 2 }}>
+        <Box sx={{ height: '500px', position: 'relative' }}>
+          <MapContainer center={[15.3694, 44.1910]} zoom={6} style={{ height: '100%', width: '100%' }}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <GeoJSON 
+              data={enhancedData} 
+              style={style} 
+              onEachFeature={onEachFeature}
+              ref={geoJsonLayerRef}
+            />
+          </MapContainer>
+          <Legend />
+        </Box>
+      </Paper>
+      
+      <Paper elevation={3} sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Select Date
+        </Typography>
         <TimeSlider
-          months={uniqueMonths} // Passed as 'months' prop
+          months={uniqueMonths}
           selectedDate={selectedDate}
           onChange={onDateChange}
         />
-      </Box>
-
-      {/* Legend */}
-      <Legend />
+      </Paper>
     </Box>
   );
 };
 
 ChoroplethMap.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
-  enhancedData: PropTypes.object.isRequired, // This should be the filtered GeoJSON data
+  enhancedData: PropTypes.object.isRequired,
   selectedDate: PropTypes.instanceOf(Date).isRequired,
   onDateChange: PropTypes.func.isRequired,
-  uniqueMonths: PropTypes.arrayOf(PropTypes.instanceOf(Date)).isRequired, // Added uniqueMonths
+  uniqueMonths: PropTypes.arrayOf(PropTypes.instanceOf(Date)).isRequired,
 };
 
 export default ChoroplethMap;

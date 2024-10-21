@@ -1,7 +1,27 @@
-import React, { useState, useMemo, useEffect } from 'react';
+// src/components/TVMIIMarketPairsChart.js
+
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { Typography, Paper, Box, FormControl, InputLabel, Select, MenuItem, Grid } from '@mui/material';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
+} from 'recharts';
+import {
+  Typography,
+  Paper,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid
+} from '@mui/material';
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088FE', '#00C49F'];
 
@@ -9,13 +29,7 @@ const TVMIIMarketPairsChart = ({ data, selectedCommodity }) => {
   const [selectedMarket1, setSelectedMarket1] = useState('');
   const [selectedMarket2, setSelectedMarket2] = useState('');
 
-  // Debugging for construction and deconstruction
-  useEffect(() => {
-    console.debug('Market pair selector constructed.');
-    return () => {
-      console.debug('Market pair selector deconstructed.');
-    };
-  }, []);
+  // Construction and Deconstruction Logging Removed
 
   const uniqueMarkets = useMemo(() => {
     const markets = new Set();
@@ -24,46 +38,55 @@ const TVMIIMarketPairsChart = ({ data, selectedCommodity }) => {
       markets.add(market1.trim());
       markets.add(market2.trim());
     });
-    console.debug('Unique markets calculated:', Array.from(markets));
     return Array.from(markets).sort();
   }, [data]);
 
   const handleMarket1Change = (event) => {
-    console.debug('Market 1 changed to:', event.target.value);
     setSelectedMarket1(event.target.value);
   };
 
   const handleMarket2Change = (event) => {
-    console.debug('Market 2 changed to:', event.target.value);
     setSelectedMarket2(event.target.value);
   };
 
   const selectedPair = useMemo(() => {
     if (selectedMarket1 && selectedMarket2) {
-      const pair = `${selectedMarket1}-${selectedMarket2}`; // No spaces around the dash
-      console.debug('Selected market pair:', pair);
-      return pair;
+      return `${selectedMarket1}-${selectedMarket2}`; // No spaces around the dash
     }
     return null;
   }, [selectedMarket1, selectedMarket2]);
 
   const filteredData = useMemo(() => {
     if (!selectedPair) return [];
+
     let filtered = data.filter(item => item.market_pair === selectedPair);
     if (filtered.length === 0) {
       // Try flipping the market pair
       const flippedPair = `${selectedMarket2}-${selectedMarket1}`;
-      console.debug('No data for selected pair:', selectedPair, '. Trying flipped pair:', flippedPair);
       filtered = data.filter(item => item.market_pair === flippedPair);
-      if (filtered.length > 0) {
-        console.debug('Data found for flipped pair:', flippedPair);
-      } else {
-        console.debug('No data found for flipped pair:', flippedPair);
-      }
     }
-    console.debug('Filtered data for pair:', filtered);
     return filtered;
   }, [data, selectedPair, selectedMarket1, selectedMarket2]);
+
+  // Extract unique years from the data for XAxis ticks
+  const years = useMemo(() => {
+    const yearSet = new Set();
+    data.forEach(item => {
+      const date = new Date(item.date);
+      if (!isNaN(date)) {
+        yearSet.add(date.getFullYear());
+      }
+    });
+    return Array.from(yearSet).sort((a, b) => a - b);
+  }, [data]);
+
+  const tickFormatter = (tick) => {
+    const date = new Date(tick);
+    if (!isNaN(date)) {
+      return date.getFullYear();
+    }
+    return tick;
+  };
 
   return (
     <Paper sx={{ p: 2, mb: 2 }}>
@@ -110,9 +133,13 @@ const TVMIIMarketPairsChart = ({ data, selectedCommodity }) => {
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={filteredData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
+            <XAxis
+              dataKey="date"
+              tickFormatter={tickFormatter}
+              ticks={years.map(year => new Date(`${year}-01-01`).toISOString())}
+            />
             <YAxis domain={[0, 1]} />
-            <Tooltip />
+            <Tooltip labelFormatter={(label) => new Date(label).toLocaleDateString()} />
             <Legend />
             <Line
               type="monotone"

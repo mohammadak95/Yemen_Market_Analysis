@@ -1,4 +1,6 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+// src/components/spatial-analysis/SpatialAnalysis.js
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -38,21 +40,20 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  console.log('[Debug] SpatialAnalysis Props:', { selectedCommodity, windowWidth });
+  const [isFlowMapLoading, setIsFlowMapLoading] = useState(true);
+  const [isChoroplethLoading, setIsChoroplethLoading] = useState(true);
+  const [isNetworkGraphLoading, setIsNetworkGraphLoading] = useState(true);
+  const [isDiagnosticsLoading, setIsDiagnosticsLoading] = useState(true);
+  const [isRegressionLoading, setIsRegressionLoading] = useState(true);
 
-  useEffect(() => {
-    console.log('[Debug] Data fetched from useSpatialData:', { geoData, flowMaps, analysisResults, loading, error, uniqueMonths });
-  }, [geoData, flowMaps, analysisResults, loading, error, uniqueMonths]);
-
-  // Adjusted formatDate to return "YYYY-MM" for month-level comparison
   const formatDate = useCallback((date) => {
     if (!(date instanceof Date) || isNaN(date)) {
       console.warn('[Warning] Invalid date provided to formatDate:', date);
       return 'Invalid Date';
     }
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
-    return `${year}-${month}`; // Returns "YYYY-MM"
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
   }, []);
 
   const sortedUniqueMonths = useMemo(() => {
@@ -64,12 +65,9 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
       let latestValidDate = null;
       let latestValidIndex = -1;
 
-      console.log('Searching for data with commodity:', selectedCommodity.toLowerCase());
-
       for (let i = sortedUniqueMonths.length - 1; i >= 0; i--) {
         const month = sortedUniqueMonths[i];
         const formattedDate = formatDate(month);
-        console.log(`Checking for data in month: ${formattedDate}`);
 
         const matchingFeatures = geoData.features.filter(feature => {
           const featureDateObj = new Date(feature.properties.date);
@@ -86,17 +84,13 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         if (matchingFeatures.length > 0) {
           latestValidDate = month;
           latestValidIndex = i;
-          console.log(`Found ${matchingFeatures.length} matching features for month ${formattedDate}`);
           break;
-        } else {
-          console.log(`No matching features found for month ${formattedDate}`);
         }
       }
 
       if (latestValidDate) {
         setSelectedMonthIndex(latestValidIndex);
         setSelectedDate(latestValidDate);
-        console.log(`[Debug] setSelectedMonthIndex to ${latestValidIndex} (${formatDate(latestValidDate)})`);
       } else {
         console.warn(`No valid data found for ${selectedCommodity.toLowerCase()} in any month.`);
         setSelectedMonthIndex(null);
@@ -112,7 +106,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     }
 
     const formattedSelectedDate = formatDate(selectedDate);
-    console.log('Formatting selected date:', selectedDate, 'to:', formattedSelectedDate);
 
     const filteredFeatures = geoData.features.filter((feature) => {
       const featureDateObj = new Date(feature.properties.date);
@@ -123,14 +116,8 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         feature.properties.commodity && 
         feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase();
 
-      if (match) {
-        console.log('Matched feature:', feature);
-      }
-
       return match;
     });
-
-    console.log(`Filtered ${filteredFeatures.length} features for ${selectedCommodity.toLowerCase()} on ${formattedSelectedDate}`);
 
     return {
       ...geoData,
@@ -138,16 +125,20 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     };
   }, [geoData, selectedDate, formatDate, selectedCommodity]);
 
-  useEffect(() => {
-    console.log(`[Debug] selectedDate: ${selectedDate}, selectedMonthIndex: ${selectedMonthIndex}`);
-  }, [selectedDate, selectedMonthIndex]);
-
   const currentAnalysis = useMemo(() => {
     if (!analysisResults || !selectedCommodity) {
       return null;
     }
     return analysisResults.find(r => r.commodity.toLowerCase() === selectedCommodity.toLowerCase());
   }, [analysisResults, selectedCommodity]);
+
+  useEffect(() => {
+    setIsFlowMapLoading(!flowMaps);
+    setIsChoroplethLoading(!filteredGeoData);
+    setIsNetworkGraphLoading(!flowMaps || !filteredGeoData);
+    setIsDiagnosticsLoading(!currentAnalysis);
+    setIsRegressionLoading(!currentAnalysis);
+  }, [flowMaps, filteredGeoData, currentAnalysis]);
 
   const handleDownloadCsv = useCallback(() => {
     if (!currentAnalysis) {
@@ -181,7 +172,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
       if (hasData) {
         setSelectedMonthIndex(newIndex);
         setSelectedDate(newDate);
-        console.log(`[Debug] setSelectedMonthIndex to ${newIndex} (${formattedNewDate})`);
       } else {
         console.warn(`No data available for ${selectedCommodity.toLowerCase()} on ${formattedNewDate}`);
       }
@@ -206,10 +196,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
       </Box>
     );
   }
-
-  console.log('Filtered GeoData:', filteredGeoData);
-  console.log('Selected Date:', selectedDate);
-  console.log('Selected Commodity:', selectedCommodity);
 
   if (!filteredGeoData || filteredGeoData.features.length === 0) {
     return (
@@ -270,19 +256,21 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
       </Tabs>
 
       <Box sx={{ mt: 2 }}>
-        {activeTab === 0 && flowMaps && (
-          <>
+        {activeTab === 0 && (
+          isFlowMapLoading ? (
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Rendering Animated Flow Map...
+              Loading Animated Flow Map...
             </Typography>
+          ) : (
             <AnimatedFlowMap flowMaps={flowMaps} selectedCommodity={selectedCommodity} />
-          </>
+          )
         )}
         {activeTab === 1 && (
-          <>
+          isChoroplethLoading ? (
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Rendering Choropleth Map...
+              Loading Choropleth Map...
             </Typography>
+          ) : (
             <ChoroplethMap 
               selectedCommodity={selectedCommodity}
               enhancedData={filteredGeoData}
@@ -291,43 +279,46 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
               onDateChange={handleDateChange}
               uniqueMonths={sortedUniqueMonths}
             />
-          </>
+          )
         )}
-        {activeTab === 2 && flowMaps && filteredGeoData && (
-          <>
+        {activeTab === 2 && (
+          isNetworkGraphLoading ? (
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Rendering Spatial Network Graph...
+              Loading Spatial Network Graph...
             </Typography>
+          ) : (
             <SpatialNetworkGraph
               selectedCommodity={selectedCommodity}
               flowMaps={flowMaps}
               geoData={filteredGeoData}
             />
-          </>
+          )
         )}
-        {activeTab === 3 && currentAnalysis ? (
-          <>
+        {activeTab === 3 && (
+          isDiagnosticsLoading ? (
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Rendering Diagnostics Tests...
+              Loading Diagnostics Tests...
             </Typography>
+          ) : currentAnalysis ? (
             <DiagnosticsTests data={currentAnalysis} />
-          </>
-        ) : (
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            No diagnostics data available for the selected commodity.
-          </Typography>
-        )}
-        {activeTab === 4 && currentAnalysis ? (
-          <>
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Rendering Regression Results...
+          ) : (
+            <Typography variant="body1" sx={{ mt: 2 }}>
+              No diagnostics data available for the selected commodity.
             </Typography>
+          )
+        )}
+        {activeTab === 4 && (
+          isRegressionLoading ? (
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Loading Regression Results...
+            </Typography>
+          ) : currentAnalysis ? (
             <RegressionResults data={currentAnalysis} />
-          </>
-        ) : (
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            No regression results available for the selected commodity.
-          </Typography>
+          ) : (
+            <Typography variant="body1" sx={{ mt: 2 }}>
+              No regression results available for the selected commodity.
+            </Typography>
+          )
         )}
       </Box>
 
@@ -349,53 +340,15 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
               How to Interpret the Results:
             </Typography>
             <ul>
-              <li>
-                <strong>Animated Flow Map:</strong> Look for patterns in commodity movement. Strong flows may indicate established trade routes or areas of high demand.
-              </li>
-              <li>
-                <strong>Choropleth Map:</strong> Darker colors typically indicate higher prices or conflict intensity. Pay attention to regional clusters and outliers.
-              </li>
-              <li>
-                <strong>Network Graph:</strong> Larger nodes or thicker edges suggest more significant market connections. Isolated nodes may indicate less integrated markets.
-              </li>
-              <li>
-                <strong>Diagnostics:</strong> Look for statistically significant results (p-value &lt; 0.05) which indicate meaningful spatial relationships.
-              </li>
-              <li>
-                <strong>Regression Results:</strong> Coefficients show the strength and direction of relationships. Positive values indicate direct relationships, negative values inverse relationships.
-              </li>
-            </ul>
-            <Typography variant="subtitle2" sx={{ mt: 2, fontWeight: 'bold' }}>
-              Key Considerations:
-            </Typography>
-            <ul>
-              <li>Consider how conflict intensity correlates with {selectedCommodity} prices across different regions.</li>
-              <li>Look for temporal trends: How do patterns change over time? Are there seasonal effects?</li>
-              <li>Think about geographical factors: How might terrain, infrastructure, or political boundaries influence the observed patterns?</li>
-              <li>Consider economic policies: How might different exchange rate regimes affect prices and trade flows?</li>
+              <li>Look for patterns in commodity movement in the Animated Flow Map. Strong flows may indicate established trade routes or areas of high demand.</li>
+              <li>In the Choropleth Map, darker colors typically indicate higher prices or conflict intensity. Pay attention to regional clusters and outliers.</li>
+              <li>For the Network Graph, larger nodes or thicker edges suggest more significant market connections. Isolated nodes may indicate less integrated markets.</li>
+              <li>In the Diagnostics section, look for statistically significant results (p-value &lt; 0.05) which indicate meaningful spatial relationships.</li>
+              <li>In Regression Results, coefficients show the strength and direction of relationships. Positive values indicate direct relationships, negative values inverse relationships.</li>
             </ul>
           </Typography>
         </AccordionDetails>
       </Accordion>
-
-      <Box sx={{ mt: 4, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-        <Typography variant="h6" gutterBottom>
-          Key Insights
-        </Typography>
-        {currentAnalysis ? (
-          <ul>
-            {generateKeyInsights(currentAnalysis, selectedCommodity).map((insight, index) => (
-              <li key={index}>
-                <Typography variant="body2">{insight}</Typography>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Typography variant="body2">
-            No analysis data available to generate insights.
-          </Typography>
-        )}
-      </Box>
     </Paper>
   );
 };
@@ -403,35 +356,6 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
 SpatialAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
   windowWidth: PropTypes.number.isRequired,
-};
-
-// Helper function to generate key insights
-const generateKeyInsights = (analysisData, commodity) => {
-  const insights = [];
-
-  if (analysisData.spatial_autocorrelation) {
-    const { Variable_1, Variable_2 } = analysisData.spatial_autocorrelation;
-    if (Variable_1.Moran_I > 0 && Variable_1.Moran_p_value < 0.05) {
-      insights.push(`There is significant positive spatial autocorrelation in ${commodity} prices (Moran's I: ${Variable_1.Moran_I.toFixed(3)}, p-value: ${Variable_1.Moran_p_value.toFixed(3)}), indicating that similar price levels tend to cluster geographically.`);
-    }
-    if (Variable_2.Moran_I > 0 && Variable_2.Moran_p_value < 0.05) {
-      insights.push(`Conflict intensity shows significant positive spatial autocorrelation (Moran's I: ${Variable_2.Moran_I.toFixed(3)}, p-value: ${Variable_2.Moran_p_value.toFixed(3)}), suggesting that areas of high conflict tend to be near each other.`);
-    }
-  }
-
-  if (analysisData.regression_results) {
-    const { coefficients, p_values } = analysisData.regression_results;
-    if (coefficients.conflict_intensity && p_values.conflict_intensity < 0.05) {
-      const effect = coefficients.conflict_intensity > 0 ? "positive" : "negative";
-      insights.push(`Conflict intensity has a statistically significant ${effect} effect on ${commodity} prices (coefficient: ${coefficients.conflict_intensity.toFixed(3)}, p-value: ${p_values.conflict_intensity.toFixed(3)}).`);
-    }
-  }
-
-  if (insights.length === 0) {
-    insights.push(`No statistically significant spatial patterns were found for ${commodity} prices or conflict intensity.`);
-  }
-
-  return insights;
 };
 
 export default SpatialAnalysis;

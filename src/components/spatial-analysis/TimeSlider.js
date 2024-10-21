@@ -3,10 +3,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Slider, Typography, Box } from '@mui/material';
-import { format } from 'date-fns'; // Ensure date-fns is installed: npm install date-fns
+import { format } from 'date-fns';
 
 const TimeSlider = ({ months, selectedDate, onChange }) => {
-  // Find the index of the selected date
   const selectedIndex = React.useMemo(() => {
     return months.findIndex(month => month.getTime() === selectedDate.getTime());
   }, [months, selectedDate]);
@@ -18,23 +17,22 @@ const TimeSlider = ({ months, selectedDate, onChange }) => {
 
   const formatLabel = (index) => {
     const date = months[index];
-    return format(date, 'MMM yyyy'); // e.g., Jan 2020
+    return format(date, 'MMM yyyy');
   };
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Typography gutterBottom>Select Month</Typography>
       <Slider
         value={selectedIndex}
         min={0}
         max={months.length - 1}
         onChange={handleSliderChange}
-        valueLabelDisplay="on"
+        valueLabelDisplay="auto"
         valueLabelFormat={formatLabel}
         step={1}
         marks={months.map((month, index) => ({
           value: index,
-          label: format(month, 'MMM yyyy'),
+          label: index % 12 === 0 ? format(month, 'yyyy') : '',
         }))}
       />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
@@ -46,7 +44,7 @@ const TimeSlider = ({ months, selectedDate, onChange }) => {
 };
 
 TimeSlider.propTypes = {
-  months: PropTypes.arrayOf(PropTypes.instanceOf(Date)).isRequired, // Changed from uniqueMonths to months
+  months: PropTypes.arrayOf(PropTypes.instanceOf(Date)).isRequired,
   selectedDate: PropTypes.instanceOf(Date).isRequired,
   onChange: PropTypes.func.isRequired,
 };
