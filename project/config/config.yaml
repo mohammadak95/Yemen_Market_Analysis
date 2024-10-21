@@ -19,7 +19,7 @@ parameters:
   min_common_dates: 20
   lag_periods: 2  # Adjusted key from 'ecm_lags' to 'lag_periods'
   cointegration_max_lags: 12
-  frequency: 'M'
+  frequency: 'ME'
   granger_max_lags: 4
   distance_threshold: 200  # Example value
   regimes_to_unify:
