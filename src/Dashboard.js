@@ -1,5 +1,3 @@
-// src/Dashboard.js
-
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid } from '@mui/material';
@@ -17,6 +15,9 @@ const PriceDifferentialAnalysis = React.lazy(() =>
 );
 const SpatialAnalysis = React.lazy(() =>
   import('./components/spatial-analysis/SpatialAnalysis')
+);
+const TVMIIAnalysis = React.lazy(() =>
+  import('./components/tvmii-analysis/TVMIIAnalysis')
 );
 const Tutorials = React.lazy(() =>
   import('./components/tutorials/Tutorials')
@@ -76,6 +77,7 @@ const Dashboard = React.memo(
         ecm: ECMAnalysis,
         priceDiff: PriceDifferentialAnalysis,
         spatial: SpatialAnalysis,
+        tvmii: TVMIIAnalysis,
         tutorials: Tutorials,
       };
       return components[selectedAnalysis] || null;

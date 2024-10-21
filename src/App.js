@@ -76,7 +76,6 @@ const App = React.memo(function App() {
     setSidebarOpen((prevOpen) => !prevOpen);
   }, []);
 
-
   const handleShowMethodology = useCallback(() => {
     setMethodologyModalOpen(true);
   }, []);
@@ -103,6 +102,9 @@ const App = React.memo(function App() {
 
   const handleSetSelectedAnalysis = useCallback((analysis) => {
     setSelectedAnalysis(analysis);
+    if (analysis === 'tvmii') {
+      // Any specific actions needed for TV-MII analysis
+    }
   }, []);
 
   const handleSetSelectedGraphRegimes = useCallback((regimes) => {

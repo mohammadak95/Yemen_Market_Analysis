@@ -59,7 +59,9 @@ const prepareData = () => {
       'time_series_data/prices_time_series.csv',
       'ecm/ecm_results_north_to_south.json',
       'ecm/ecm_results_south_to_north.json',
-      'choropleth_data/geoBoundaries-YEM-ADM1.geojson'
+      'choropleth_data/geoBoundaries-YEM-ADM1.geojson',
+      'tv_mii_market_results.json',
+      'tv_mii_results.json'
     ];
 
     filesToEnsure.forEach(file => {

@@ -101,6 +101,14 @@ const Sidebar = ({
             >
               Spatial Analysis
             </Button>
+            <Button
+              variant={selectedAnalysis === 'tvmii' ? 'contained' : 'outlined'}
+              color="primary"
+              fullWidth
+              onClick={() => handleAnalysisChange('tvmii')}
+            >
+              TV-MII Analysis
+            </Button>
           </Stack>
 
           <Button
