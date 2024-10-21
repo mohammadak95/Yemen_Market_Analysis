@@ -466,19 +466,20 @@ def save_results(data, tv_mii_avg_results, tv_mii_market_results, adjusted_price
     """
     try:
         logging.info("Saving adjusted and smoothed price data.")
-        data.to_csv(adjusted_prices_path, index=False)
+        # Save adjusted prices as JSON with indentation
+        data.to_json(adjusted_prices_path, orient='records', date_format='iso', indent=4)
         logging.debug(f"Adjusted prices saved to {adjusted_prices_path}.")
 
         if not tv_mii_avg_results.empty:
             logging.info("Saving TV-MII average results.")
-            tv_mii_avg_results.to_json(tv_mii_results_path, orient='records', date_format='iso')
+            tv_mii_avg_results.to_json(tv_mii_results_path, orient='records', date_format='iso', indent=4)
             logging.debug(f"TV-MII average results saved to {tv_mii_results_path}.")
         else:
             logging.warning(f"No TV-MII average results to save at {tv_mii_results_path}.")
 
         if not tv_mii_market_results.empty:
             logging.info("Saving TV-MII market pair results.")
-            tv_mii_market_results.to_json(tv_mii_market_results_path, orient='records', date_format='iso')
+            tv_mii_market_results.to_json(tv_mii_market_results_path, orient='records', date_format='iso', indent=4)
             logging.debug(f"TV-MII market pair results saved to {tv_mii_market_results_path}.")
         else:
             logging.warning(f"No TV-MII market pair results to save at {tv_mii_market_results_path}.")
@@ -540,7 +541,7 @@ def main():
         spatial_geojson_path = config['files']['spatial_geojson']
         processed_data_dir = Path(config['directories']['processed_data_dir'])
         results_dir = Path(config['directories']['results_dir'])
-        adjusted_prices_path = processed_data_dir / 'adjusted_prices.csv'
+        adjusted_prices_path = processed_data_dir / 'adjusted_prices.json'  # Changed to .json
         tv_mii_results_path = results_dir / 'tv_mii_results.json'
         tv_mii_market_results_path = results_dir / 'tv_mii_market_results.json'
 

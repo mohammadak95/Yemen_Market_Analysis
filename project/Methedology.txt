@@ -1,4 +1,6 @@
-# Methodology
+
+
+# **Methodology**
 
 The **Yemen Market Analysis** project employs a comprehensive methodological framework that integrates advanced econometric and spatial analysis techniques to examine the influence of conflict intensity on commodity prices across different regions of Yemen. A key innovation in this project is the development of a **Time-Variant Market Integration Index (TV-MII)**, which quantifies the dynamic degree of market integration over time. This index captures fluctuations in market integration levels due to factors such as conflict intensity, policy changes, and other exogenous shocks, providing valuable insights for policymakers and stakeholders.
 
@@ -181,17 +183,19 @@ The project integrates multiple econometric models to dissect the relationship b
 
 #### **2.1.3. Rolling Correlation Analysis**
 
-- **Compute Rolling Correlations of Price Changes:**
+- **Objective:** Assess the co-movement between markets over time.
+- **Method:**
+  - **Compute Rolling Correlations of Log Price Changes:**
 
-  \[
-  \text{Correlation}_{ijt} = \text{Corr}(\Delta \ln P_{it}, \Delta \ln P_{jt}) \text{ over window } [t - w, t]
-  \]
+    \[
+    \text{Correlation}_{ijt} = \text{Corr}(\Delta \ln P_{it}, \Delta \ln P_{jt}) \text{ over window } [t - w, t]
+    \]
 
-  Where:
-  - \( \Delta \ln P_{it} \) is the log price change in region \( i \) at time \( t \).
-  - \( w \) is the window size (e.g., 12 months).
+    Where:
+    - \( \Delta \ln P_{it} \) is the log price change in region \( i \) at time \( t \).
+    - \( w \) is the window size (e.g., 12 months).
 
-- **Interpretation:** Higher correlations indicate stronger market integration during the window.
+  - **Interpretation:** Higher rolling correlations indicate stronger market integration during the window.
 
 - **Implementation:**
 
@@ -200,73 +204,120 @@ The project integrates multiple econometric models to dissect the relationship b
   rolling_corr = price_diff_series.rolling(window=window_size).corr()
   ```
 
+- **Considerations:**
+  - **Stationarity:** Ensure that the time series of log price changes are stationary to justify the use of correlation coefficients.
+  - **Window Length:** Balance between responsiveness and statistical reliability.
+
 #### **2.1.4. Time-Varying Coefficient Models**
 
-- **Employ State-Space Models or Kalman Filter to Estimate Time-Varying Parameters:**
+- **Objective:** Capture the dynamic relationship between price differentials and market integration.
+- **Method:**
+  - **Model Specification:**
 
-  \[
-  \text{Price Differential}_{ijt} = \beta_t + \epsilon_t
-  \]
-  \[
-  \beta_t = \beta_{t-1} + \eta_t
-  \]
+    \[
+    \text{Price Differential}_{ijt} = \beta_t + \gamma_t \times \text{Conflict Intensity}_{ijt} + \epsilon_t
+    \]
+    \[
+    \beta_t = \beta_{t-1} + \eta_t
+    \]
+    \[
+    \gamma_t = \gamma_{t-1} + \zeta_t
+    \]
 
-  Where:
-  - \( \beta_t \) captures the degree of integration at time \( t \).
-  - \( \epsilon_t \) and \( \eta_t \) are error terms representing observation and state noise, respectively.
+    Where:
+    - \( \beta_t \) captures the baseline degree of market integration at time \( t \).
+    - \( \gamma_t \) captures the time-varying influence of conflict intensity on market integration.
+    - \( \epsilon_t \) and \( \eta_t \) are error terms representing observation and state noise, respectively.
 
-- **Estimation:** Used **Kalman filtering techniques** to estimate \( \beta_t \) recursively over time.
+  - **Estimation:** Employed **State-Space Models** with the **Kalman Filter** to estimate the time-varying coefficients \( \beta_t \) and \( \gamma_t \).
 
 - **Implementation:**
 
   ```python
-  from statsmodels.tsa.statespace.kalman_filter import KalmanFilter
-  # Define and fit the state-space model
+  from statsmodels.tsa.statespace.mlemodel import MLEModel
+
+  class TVMIIModel(MLEModel):
+      def __init__(self, endog, exog):
+          super(TVMIIModel, self).__init__(endog, exog=exog, k_states=2, initialization='approximate_diffuse')
+          self.ssm['design'] = np.eye(2)
+          self.ssm['transition'] = np.eye(2)
+          self.ssm['selection'] = np.eye(2)
+          self.initialize_state()
+
+      def initialize_state(self):
+          self.ssm.initialize_known(np.array([0, 0]), np.eye(2))
+
+      @property
+      def start_params(self):
+          return np.log([1.0, 1.0, 1.0, 1.0])  # [obs_cov_beta, state_cov_beta, obs_cov_gamma, state_cov_gamma]
+
+      @property
+      def param_names(self):
+          return ['obs_cov_beta', 'state_cov_beta', 'obs_cov_gamma', 'state_cov_gamma']
+
+      def update(self, params, **kwargs):
+          transformed_params = np.exp(params)
+          super().update(transformed_params, **kwargs)
+          self.ssm['obs_cov', 0, 0] = transformed_params[0]
+          self.ssm['state_cov', 0, 0] = transformed_params[1]
+          self.ssm['obs_cov', 1, 1] = transformed_params[2]
+          self.ssm['state_cov', 1, 1] = transformed_params[3]
   ```
 
 #### **2.1.5. Index Construction**
 
 - **Normalization:**
 
-  - Scaled the estimated parameters to a 0–1 range to facilitate comparison and interpretation.
+  - **Formula:**
 
-  \[
-  \text{TV-MII}_{ijt} = \frac{\beta_t - \min(\beta)}{\max(\beta) - \min(\beta)}
-  \]
+    \[
+    \text{TV-MII}_{ijt} = \frac{\beta_t - \min(\beta)}{\max(\beta) - \min(\beta)}
+    \]
+
+  - **Purpose:** Scale the TV-MII to a [0, 1] range for comparability.
 
 - **Aggregation:**
 
-  - If analyzing multiple commodities or market pairs, aggregated the indices using weighted averages based on trade volumes or market sizes.
+  - **Weighted Averages:** If analyzing multiple commodities or market pairs, aggregated the indices using weighted averages based on trade volumes or market sizes.
 
-- **Implementation:**
+  - **Implementation:**
 
-  ```python
-  tv_mii = (beta_t - beta_t.min()) / (beta_t.max() - beta_t.min())
-  ```
+    ```python
+    from sklearn.preprocessing import MinMaxScaler
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    tv_mii_normalized = scaler.fit_transform(beta_t.reshape(-1, 1)).flatten()
+    ```
+
+- **Outcome:** The TV-MII provides a normalized measure of market integration, facilitating comparisons across different times and market pairs.
 
 #### **2.1.6. Incorporating Exogenous Variables**
 
-- **Conflict Intensity as a Moderator:**
+- **Objective:** Assess the impact of conflict intensity on market integration.
+- **Method:**
+  - **Extended Model:**
 
-  - Included interaction terms between conflict intensity and price differentials in the model to assess the impact of conflict on market integration.
+    \[
+    \text{Price Differential}_{ijt} = \beta_t + \gamma_t \times \text{Conflict Intensity}_{ijt} + \epsilon_t
+    \]
+    \[
+    \beta_t = \beta_{t-1} + \eta_t
+    \]
+    \[
+    \gamma_t = \gamma_{t-1} + \zeta_t
+    \]
 
-  \[
-  \text{Price Differential}_{ijt} = \beta_t + \gamma_t \times \text{Conflict Intensity}_{ijt} + \epsilon_t
-  \]
+  - **Estimation:** Extended the state-space model to include exogenous variables (conflict intensity) with time-varying coefficients using the Kalman Filter.
 
-  - Estimated time-varying coefficients \( \gamma_t \) to capture the changing influence of conflict intensity.
-
-- **Implementation:**
-
-  ```python
-  # Extend the state-space model to include conflict intensity
-  ```
+- **Implementation Considerations:**
+  - **Model Complexity:** Introducing additional time-varying coefficients increases model complexity. Ensure sufficient data points to reliably estimate these coefficients.
+  - **Regularization:** Consider Bayesian estimation or priors to stabilize coefficient estimates if necessary.
 
 #### **2.1.7. Visualization and Analysis**
 
-- **Time Series Plots:** Visualized the TV-MII over time for different market pairs to observe trends and shifts.
-
+- **Time Series Plots:** Visualized the TV-MII over time for different market pairs to observe trends and structural breaks.
 - **Spatial Plots:** Mapped the TV-MII geographically to identify regional patterns and areas of high or low integration.
+
+---
 
 ### **2.2. Error Correction Model (ECM)**
 
@@ -288,7 +339,11 @@ The project integrates multiple econometric models to dissect the relationship b
 
   ```python
   from statsmodels.tsa.stattools import adfuller, kpss
-  # Perform ADF and KPSS tests
+
+  def test_stationarity(series):
+      result_adf = adfuller(series.dropna())
+      result_kpss = kpss(series.dropna(), regression='c')
+      return result_adf[1] < 0.05 and result_kpss[1] > 0.05
   ```
 
 #### **2.2.2. Cointegration Tests**
@@ -306,7 +361,10 @@ The project integrates multiple econometric models to dissect the relationship b
 
   ```python
   from statsmodels.tsa.stattools import coint
-  # Perform cointegration test
+
+  score, pvalue, _ = coint(y, x, maxlag=12)
+  if pvalue < 0.05:
+      print("Cointegration exists")
   ```
 
 #### **2.2.3. ECM Estimation**
@@ -318,13 +376,16 @@ The project integrates multiple econometric models to dissect the relationship b
     - **Cointegration Rank:** Determined using Johansen cointegration test.
     - **Specification:** Included deterministic terms and exogenous variables.
   - **Estimation:** Fitted the VECM to estimate adjustment coefficients.
+
 - **Outcome:** An ECM capturing the interplay between commodity prices and conflict intensity over time.
 
 - **Implementation:**
 
   ```python
   from statsmodels.tsa.vector_ar.vecm import VECM
-  # Define and fit the VECM
+
+  vecm = VECM(data, k_ar_diff=2, coint_rank=1)
+  vecm_fit = vecm.fit()
   ```
 
 #### **2.2.4. Model Diagnostics**
@@ -342,7 +403,22 @@ The project integrates multiple econometric models to dissect the relationship b
 - **Implementation:**
 
   ```python
-  # Perform residual diagnostics
+  from statsmodels.stats.diagnostic import acorr_ljungbox, het_arch, het_white
+  from statsmodels.stats.stattools import jarque_bera
+  from statsmodels.stats.stattools import durbin_watson
+
+  residuals = vecm_fit.resid
+  lb_test = acorr_ljungbox(residuals, lags=[10], return_df=True)
+  arch_test = het_arch(residuals)
+  white_test = het_white(residuals)
+  jb_test = jarque_bera(residuals)
+  dw_stat = durbin_watson(residuals)
+
+  print(lb_test)
+  print(arch_test)
+  print(white_test)
+  print(jb_test)
+  print(dw_stat)
   ```
 
 #### **2.2.5. Impulse Response Functions (IRFs)**
@@ -354,8 +430,8 @@ The project integrates multiple econometric models to dissect the relationship b
 - **Implementation:**
 
   ```python
-  irf = vecm.irf(10)
-  irf.plot()
+  irf = vecm_fit.irf(10)
+  irf.plot(orth=False)
   ```
 
 #### **2.2.6. Granger Causality Tests**
@@ -368,7 +444,8 @@ The project integrates multiple econometric models to dissect the relationship b
 
   ```python
   from statsmodels.tsa.stattools import grangercausalitytests
-  grangercausalitytests(data, maxlag=4)
+
+  granger_results = grangercausalitytests(data[['usdprice', 'conflict_intensity']], maxlag=4)
   ```
 
 ---
@@ -393,14 +470,22 @@ Spatial econometric techniques are pivotal in understanding the geographical int
 
   ```python
   from libpysal.weights import KNN
-  w = KNN.from_dataframe(gdf, k=k)
+
+  k = 5
+  while True:
+      w = KNN.from_dataframe(gdf, k=k)
+      if w.is_connected:
+          break
+      k += 1
+      if k > 10:
+          raise ValueError("Unable to create a fully connected spatial weights matrix with k up to 10.")
   ```
 
 ### **3.2. Spatial Lag Models**
 
 - **Objective:** Model spatial relationships considering multicollinearity.
 - **Method:**
-  - **Spatial Lag Calculation:** Computed the spatial lag of `usdprice`.
+  - **Spatial Lag Calculation:**
 
     \[
     \text{Spatial Lag of Price}_{it} = \sum_{j} w_{ij} \times \text{Price}_{jt}
@@ -412,14 +497,28 @@ Spatial econometric techniques are pivotal in understanding the geographical int
     - **Imputation:** Handled missing values using median imputation.
     - **Standardization:** Standardized features using `StandardScaler`.
     - **Modeling:** Performed Ridge regression with `alpha` set to 1.0 as per `ridge_alpha`.
+
 - **Outcome:** Estimated coefficients reflecting spatial dependencies.
 
 - **Implementation:**
 
   ```python
   from sklearn.linear_model import Ridge
+  from sklearn.preprocessing import StandardScaler
+  from sklearn.impute import SimpleImputer
+
+  imputer = SimpleImputer(strategy='median')
+  scaler = StandardScaler()
+
+  X = w.sparse @ gdf['usdprice']
+  X = imputer.fit_transform(X.reshape(-1, 1))
+  X = scaler.fit_transform(X)
+
+  y = gdf['usdprice'].values
+
   model = Ridge(alpha=1.0)
   model.fit(X, y)
+  coefficients = model.coef_
   ```
 
 ### **3.3. Model Diagnostics**
@@ -439,8 +538,21 @@ Spatial econometric techniques are pivotal in understanding the geographical int
 - **Implementation:**
 
   ```python
+  from statsmodels.stats.outliers_influence import variance_inflation_factor
   from esda.moran import Moran
+
+  # Calculate VIF
+  vif_data = pd.DataFrame()
+  vif_data["feature"] = ["Spatial Lag"]
+  vif_data["VIF"] = [variance_inflation_factor(X, 0)]
+  print(vif_data)
+
+  # Calculate residuals
+  residuals = y - model.predict(X)
+
+  # Calculate Moran's I
   moran = Moran(residuals, w)
+  print(f"Moran's I: {moran.I}, p-value: {moran.p_sim}")
   ```
 
 ### **3.4. Residual Analysis**
@@ -450,6 +562,12 @@ Spatial econometric techniques are pivotal in understanding the geographical int
   - Extracted residuals from the regression model.
   - Merged residuals back into the GeoDataFrame.
 - **Outcome:** Residuals associated with regions and dates for further analysis.
+
+- **Implementation:**
+
+  ```python
+  gdf['residuals'] = residuals
+  ```
 
 ---
 
@@ -465,7 +583,7 @@ Prepared datasets for creating visualizations such as choropleth maps, time seri
   - **Conflict Intensity:** Calculated average `conflict_intensity` per region and date.
   - **Price Changes:** Computed percentage change in `usdprice` over time.
   - **Residuals:** Extracted residuals for mapping.
-- **Outcome:** CSV files containing data for generating choropleth maps.
+- **Outcome:** JSON files containing data for generating choropleth maps.
 
 ### **4.2. Time Series Data Preparation**
 
@@ -473,7 +591,7 @@ Prepared datasets for creating visualizations such as choropleth maps, time seri
 - **Methods:**
   - **Prices Time Series:** Pivoted data to create time series of `usdprice` per commodity and regime.
   - **Conflict Intensity Time Series:** Aggregated conflict intensity over time.
-- **Outcome:** CSV files with time series data for prices and conflict intensity.
+- **Outcome:** JSON files with time series data for prices and conflict intensity.
 
 ### **4.3. Network Data Preparation (Flow Maps)**
 
@@ -481,7 +599,7 @@ Prepared datasets for creating visualizations such as choropleth maps, time seri
 - **Methods:**
   - **Flow Data Generation:** Created flow data using the spatial weights matrix, including source and target regions with coordinates.
   - **Spatial Lag of Prices:** Included spatially lagged `usdprice` as weights.
-- **Outcome:** CSV file with flow map data for network visualizations.
+- **Outcome:** JSON file with flow map data for network visualizations.
 
 ---
 
@@ -506,6 +624,7 @@ To handle computationally intensive tasks efficiently, the project leverages par
   @memory.cache
   def load_data(file_path):
       # Data loading logic
+      return gpd.read_file(file_path)
   ```
 
 - **Data Optimization:** Simplified geometries and optimized data types to enhance performance and minimize memory usage.
@@ -523,52 +642,52 @@ To handle computationally intensive tasks efficiently, the project leverages par
 
 All analytical outcomes are systematically aggregated and stored for downstream applications and reporting.
 
-- **JSON and CSV Outputs:** Saved results in JSON and CSV formats, facilitating ease of access and integration with visualization tools.
+- **JSON Outputs:** Saved results in JSON format with indentation for readability, facilitating ease of access and integration with visualization tools.
 
   ```python
   import json
-  with open('results/spatial_analysis_results.json', 'w') as f:
-      json.dump(results, f, indent=4)
+  gdf.to_json('results/spatial_analysis_results.json', orient='records', date_format='iso', indent=4)
   ```
 
 - **Logging:** Maintained detailed logs of all processes and analyses, ensuring transparency and facilitating debugging and reproducibility.
 
   ```python
   import logging
-  logging.basicConfig(filename='results/logs/spatial_analysis.log', level=logging.DEBUG)
+  logging.basicConfig(filename='results/logs/spatial_analysis.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
   logger = logging.getLogger(__name__)
+  ```
+
+- **File Path Management:** Utilized Python’s `pathlib` for robust and cross-platform file path handling.
+
+  ```python
+  from pathlib import Path
+  results_dir = Path('results/')
+  results_dir.mkdir(parents=True, exist_ok=True)
   ```
 
 ---
 
 ## **7. Considerations and Assumptions**
 
-- **Data Quality:** Assumed accuracy and representativeness of the provided data.
-- **Stationarity and Cointegration:** Relied on statistical tests to inform model specifications.
+- **Data Quality:** Assumed accuracy and representativeness of the provided data. Addressed data quality through preprocessing steps such as handling duplicates and missing values.
+- **Stationarity and Cointegration:** Relied on statistical tests (ADF, KPSS, Cointegration tests) to inform model specifications, ensuring that the data meets the assumptions required for time-series analyses.
 - **Minimum Observations:**
   - Required at least 20 common dates for price differential analysis (`min_common_dates`).
   - Required at least 5 regions for spatial analysis (`min_regions`).
-- **Geographic Accuracy:** Assumed accurate geographic coordinates for spatial analysis.
-- **Model Selection:** Chose models appropriate for data characteristics (e.g., Ridge regression for multicollinearity).
-- **Resource Management:** Managed computational resources by limiting processes and memory usage per process.
+- **Geographic Accuracy:** Assumed accurate geographic coordinates for spatial analysis. Simplified geometries to optimize performance without significantly compromising spatial accuracy.
+- **Model Selection:** Chose models appropriate for data characteristics (e.g., Ridge regression for multicollinearity mitigation in spatial lag models).
+- **Resource Management:** Managed computational resources by limiting processes and memory usage per process, ensuring efficient use of available hardware.
+- **Configuration Flexibility:** Utilized a YAML configuration file to allow easy adjustment of parameters and paths, enhancing the scalability and adaptability of the analysis pipeline.
 
 ---
 
 ## **8. Limitations**
 
-- **Data Availability:** Analyses limited by data completeness and coverage.
-- **Model Simplifications:** Models may not capture all complexities (e.g., non-linear relationships).
-- **External Factors:** Potentially influential external variables may not be included.
-- **Temporal Resolution:** Monthly data may not capture short-term dynamics.
-- **Spatial Resolution:** Spatial weights based on KNN may not capture all spatial dependencies.
-- **Parallel Processing Constraints:** Limited by computational resources and memory availability.
+- **Data Availability:** Analyses are limited by data completeness and coverage. Missing regions or time periods may affect the robustness of the findings.
+- **Model Simplifications:** Models may not capture all complexities, such as non-linear relationships or interactions between multiple exogenous variables.
+- **External Factors:** Potentially influential external variables (e.g., policy changes, economic sanctions) may not be included, which could bias the results.
+- **Temporal Resolution:** Monthly data may not capture short-term dynamics or rapid changes in conflict intensity and market integration.
+- **Spatial Resolution:** Spatial weights based on KNN may not capture all spatial dependencies, especially in regions with irregular geographic distributions.
+- **Parallel Processing Constraints:** Limited by computational resources and memory availability, which may restrict the scalability of the analysis for larger datasets or more complex models.
+- **Normalization Sensitivity:** The normalization process for TV-MII is sensitive to outliers, which may distort the index if not properly addressed.
 
----
-
-## **9. Conclusion**
-
-By integrating data preprocessing, the development of the **Time-Variant Market Integration Index (TV-MII)**, Error Correction Model (ECM) analysis, price differential analysis, spatial analysis, and data preparation for visualization, we provide a comprehensive examination of commodity prices in relation to conflict intensity and spatial dependencies in Yemen. The methodology incorporates detailed configurations to tailor the analysis appropriately, ensuring robust statistical practices, thorough exploration of spatial relationships, and preparation of data for effective visualization and communication of results. The execution of the analysis using the developed scripts ensures that all computational steps were performed accurately and efficiently.
-
----
-
-**Note:** This methodology combines the initial approach with detailed implementation steps, integrating both the previously discussed scripts and the Time-Variant Market Integration Index (TV-MII) development. It provides a complete overview of the analytical steps taken, the parameters used, and the tools employed to conduct the analysis, ensuring that all aspects are covered comprehensively.
