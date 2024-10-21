@@ -1,1 +1,4217 @@
-[{"date":"2020-10-31T00:00:00.000","tv_mii":1.0,"commodity":"beans (kidney red)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.9419308045,"commodity":"beans (kidney red)"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.8369453898,"commodity":"beans (kidney red)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.6984795979,"commodity":"beans (kidney red)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.6117156224,"commodity":"beans (kidney red)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.6126805123,"commodity":"beans (kidney red)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.6525758396,"commodity":"beans (kidney red)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.6259523362,"commodity":"beans (kidney red)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.5711455678,"commodity":"beans (kidney red)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.5174973712,"commodity":"beans (kidney red)"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.4189991278,"commodity":"beans (kidney red)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.3440168357,"commodity":"beans (kidney red)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.2572858107,"commodity":"beans (kidney red)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.2382401552,"commodity":"beans (kidney red)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.2584444841,"commodity":"beans (kidney red)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.365794577,"commodity":"beans (kidney red)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.4675342255,"commodity":"beans (kidney red)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.5191327398,"commodity":"beans (kidney red)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.5261062753,"commodity":"beans (kidney red)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.5141582409,"commodity":"beans (kidney red)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.4999960422,"commodity":"beans (kidney red)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.4866145577,"commodity":"beans (kidney red)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.4544403156,"commodity":"beans (kidney red)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.4119745852,"commodity":"beans (kidney red)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.3531259929,"commodity":"beans (kidney red)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.3551915811,"commodity":"beans (kidney red)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.3498683805,"commodity":"beans (kidney red)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.3542510406,"commodity":"beans (kidney red)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.3406582419,"commodity":"beans (kidney red)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.340520243,"commodity":"beans (kidney red)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.3262998003,"commodity":"beans (kidney red)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.284364263,"commodity":"beans (kidney red)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.2162952226,"commodity":"beans (kidney red)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1706830376,"commodity":"beans (kidney red)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1409807758,"commodity":"beans (kidney red)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.1782852661,"commodity":"beans (kidney red)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.2232148468,"commodity":"beans (kidney red)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.2749067165,"commodity":"beans (kidney red)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.2465755664,"commodity":"beans (kidney red)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.1784901916,"commodity":"beans (kidney red)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0857289592,"commodity":"beans (kidney red)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0240609863,"commodity":"beans (kidney red)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0,"commodity":"beans (kidney red)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0045261212,"commodity":"beans (kidney red)"},{"date":"2020-07-31T00:00:00.000","tv_mii":0.6507649361,"commodity":"beans (white)"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.6249752763,"commodity":"beans (white)"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.6265039692,"commodity":"beans (white)"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.7016048186,"commodity":"beans (white)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.8510903059,"commodity":"beans (white)"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.8870368398,"commodity":"beans (white)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.8533999885,"commodity":"beans (white)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.7986261459,"commodity":"beans (white)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.8536568193,"commodity":"beans (white)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.9649555416,"commodity":"beans (white)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.989705145,"commodity":"beans (white)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.997108815,"commodity":"beans (white)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.9918690811,"commodity":"beans (white)"},{"date":"2021-08-31T00:00:00.000","tv_mii":1.0,"commodity":"beans (white)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.912071018,"commodity":"beans (white)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.7686012378,"commodity":"beans (white)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.6741101343,"commodity":"beans (white)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.6396034393,"commodity":"beans (white)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.7400497427,"commodity":"beans (white)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.8653095511,"commodity":"beans (white)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.9623367443,"commodity":"beans (white)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.9807318831,"commodity":"beans (white)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.9300407251,"commodity":"beans (white)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.8618592367,"commodity":"beans (white)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.8005448346,"commodity":"beans (white)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.7746497742,"commodity":"beans (white)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.7197998197,"commodity":"beans (white)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.689486116,"commodity":"beans (white)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.7068790435,"commodity":"beans (white)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.755081655,"commodity":"beans (white)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.7440377414,"commodity":"beans (white)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.6940299708,"commodity":"beans (white)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.6061891205,"commodity":"beans (white)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.5453187576,"commodity":"beans (white)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.4672687226,"commodity":"beans (white)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.3815409584,"commodity":"beans (white)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.3079607955,"commodity":"beans (white)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.2917718328,"commodity":"beans (white)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.3128777745,"commodity":"beans (white)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.3311353323,"commodity":"beans (white)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.3216226769,"commodity":"beans (white)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.2783999813,"commodity":"beans (white)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.2159461202,"commodity":"beans (white)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.1070324441,"commodity":"beans (white)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0344648313,"commodity":"beans (white)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0,"commodity":"beans (white)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0075365976,"commodity":"beans (white)"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"eggs"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9513936015,"commodity":"eggs"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.931551193,"commodity":"eggs"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.8582605277,"commodity":"eggs"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.8407500368,"commodity":"eggs"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.8113057794,"commodity":"eggs"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.7919784278,"commodity":"eggs"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.7660443623,"commodity":"eggs"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.7176033515,"commodity":"eggs"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.6791527099,"commodity":"eggs"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.6162913297,"commodity":"eggs"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.6261035518,"commodity":"eggs"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.6048181848,"commodity":"eggs"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.5461236115,"commodity":"eggs"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.4353726191,"commodity":"eggs"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.3411292873,"commodity":"eggs"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.3008550721,"commodity":"eggs"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.2405017674,"commodity":"eggs"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.2192118592,"commodity":"eggs"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.1984419274,"commodity":"eggs"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.2122549682,"commodity":"eggs"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.2155490294,"commodity":"eggs"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.198516762,"commodity":"eggs"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.1790734962,"commodity":"eggs"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.1492453457,"commodity":"eggs"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.1418575009,"commodity":"eggs"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.1332758353,"commodity":"eggs"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.1482147063,"commodity":"eggs"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.1586357076,"commodity":"eggs"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.1416132023,"commodity":"eggs"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.0927397885,"commodity":"eggs"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.0407607784,"commodity":"eggs"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.0371405856,"commodity":"eggs"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.0474309857,"commodity":"eggs"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.0622764657,"commodity":"eggs"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.0718313935,"commodity":"eggs"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.0811565257,"commodity":"eggs"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.0837569333,"commodity":"eggs"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.053936296,"commodity":"eggs"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.0450991638,"commodity":"eggs"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.0430910094,"commodity":"eggs"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.0392635805,"commodity":"eggs"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0251840049,"commodity":"eggs"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0025395357,"commodity":"eggs"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0003557099,"commodity":"eggs"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0,"commodity":"eggs"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0043699397,"commodity":"eggs"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"exchange rate (unofficial)"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9689746465,"commodity":"exchange rate (unofficial)"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.9645579586,"commodity":"exchange rate (unofficial)"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.9489621166,"commodity":"exchange rate (unofficial)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.9797684132,"commodity":"exchange rate (unofficial)"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.9594662344,"commodity":"exchange rate (unofficial)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.9366849721,"commodity":"exchange rate (unofficial)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.9011463934,"commodity":"exchange rate (unofficial)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.8721848222,"commodity":"exchange rate (unofficial)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.8379201486,"commodity":"exchange rate (unofficial)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.7638184751,"commodity":"exchange rate (unofficial)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.7359835972,"commodity":"exchange rate (unofficial)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.6910667588,"commodity":"exchange rate (unofficial)"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.6365199523,"commodity":"exchange rate (unofficial)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.5284183021,"commodity":"exchange rate (unofficial)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.4537267541,"commodity":"exchange rate (unofficial)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.4256154933,"commodity":"exchange rate (unofficial)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.4421469982,"commodity":"exchange rate (unofficial)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.4821721405,"commodity":"exchange rate (unofficial)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.5204454605,"commodity":"exchange rate (unofficial)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.5301235806,"commodity":"exchange rate (unofficial)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.5485064306,"commodity":"exchange rate (unofficial)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.5231327996,"commodity":"exchange rate (unofficial)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.5025964325,"commodity":"exchange rate (unofficial)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.4732694539,"commodity":"exchange rate (unofficial)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.4752143975,"commodity":"exchange rate (unofficial)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.4736466604,"commodity":"exchange rate (unofficial)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.4735685171,"commodity":"exchange rate (unofficial)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.4783612246,"commodity":"exchange rate (unofficial)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.4380773631,"commodity":"exchange rate (unofficial)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.3905053369,"commodity":"exchange rate (unofficial)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.323133982,"commodity":"exchange rate (unofficial)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.3053581154,"commodity":"exchange rate (unofficial)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.2772530455,"commodity":"exchange rate (unofficial)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.2612868217,"commodity":"exchange rate (unofficial)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.2301386314,"commodity":"exchange rate (unofficial)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.2079422587,"commodity":"exchange rate (unofficial)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1927983508,"commodity":"exchange rate (unofficial)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.172010069,"commodity":"exchange rate (unofficial)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.1533651508,"commodity":"exchange rate (unofficial)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.1251546583,"commodity":"exchange rate (unofficial)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.0874217283,"commodity":"exchange rate (unofficial)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0575584813,"commodity":"exchange rate (unofficial)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0077477251,"commodity":"exchange rate (unofficial)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0,"commodity":"exchange rate (unofficial)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0036560907,"commodity":"exchange rate (unofficial)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0208297079,"commodity":"exchange rate (unofficial)"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"fuel (diesel)"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9045070284,"commodity":"fuel (diesel)"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.8464922273,"commodity":"fuel (diesel)"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.7674751201,"commodity":"fuel (diesel)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.7964833853,"commodity":"fuel (diesel)"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.779669305,"commodity":"fuel (diesel)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.7677630326,"commodity":"fuel (diesel)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.7461587386,"commodity":"fuel (diesel)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.7334998415,"commodity":"fuel (diesel)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.7301613186,"commodity":"fuel (diesel)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.6718395137,"commodity":"fuel (diesel)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.6521710628,"commodity":"fuel (diesel)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.6292913902,"commodity":"fuel (diesel)"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.6011368221,"commodity":"fuel (diesel)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.5259846548,"commodity":"fuel (diesel)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.4445883497,"commodity":"fuel (diesel)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.4030381163,"commodity":"fuel (diesel)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.4009055765,"commodity":"fuel (diesel)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.4726463011,"commodity":"fuel (diesel)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.5115324715,"commodity":"fuel (diesel)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.5185584774,"commodity":"fuel (diesel)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.4754583483,"commodity":"fuel (diesel)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.4334386181,"commodity":"fuel (diesel)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.3925700188,"commodity":"fuel (diesel)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.3677961018,"commodity":"fuel (diesel)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.3514239499,"commodity":"fuel (diesel)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.341450969,"commodity":"fuel (diesel)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.3515044347,"commodity":"fuel (diesel)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.3701044285,"commodity":"fuel (diesel)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.363931138,"commodity":"fuel (diesel)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.3118936417,"commodity":"fuel (diesel)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.2278455888,"commodity":"fuel (diesel)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.1706960471,"commodity":"fuel (diesel)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.1576076096,"commodity":"fuel (diesel)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.1780828695,"commodity":"fuel (diesel)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.1768775214,"commodity":"fuel (diesel)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1688087284,"commodity":"fuel (diesel)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1629840633,"commodity":"fuel (diesel)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.159695508,"commodity":"fuel (diesel)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.1701389613,"commodity":"fuel (diesel)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.1604117856,"commodity":"fuel (diesel)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.1368823608,"commodity":"fuel (diesel)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0860477138,"commodity":"fuel (diesel)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0219225067,"commodity":"fuel (diesel)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0,"commodity":"fuel (diesel)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0248585023,"commodity":"fuel (diesel)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0540825692,"commodity":"fuel (diesel)"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"fuel (gas)"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9745380054,"commodity":"fuel (gas)"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.9402039383,"commodity":"fuel (gas)"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.9180463578,"commodity":"fuel (gas)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.8860813611,"commodity":"fuel (gas)"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.8528494785,"commodity":"fuel (gas)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.771157277,"commodity":"fuel (gas)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.7627412071,"commodity":"fuel (gas)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.7223717321,"commodity":"fuel (gas)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.726610611,"commodity":"fuel (gas)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.6271941238,"commodity":"fuel (gas)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.6167531874,"commodity":"fuel (gas)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.5813656743,"commodity":"fuel (gas)"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.5604232009,"commodity":"fuel (gas)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.4546928226,"commodity":"fuel (gas)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.3763022346,"commodity":"fuel (gas)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.3376211585,"commodity":"fuel (gas)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.3344816063,"commodity":"fuel (gas)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.3817249156,"commodity":"fuel (gas)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.4111720795,"commodity":"fuel (gas)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.4280366063,"commodity":"fuel (gas)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.3774879445,"commodity":"fuel (gas)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.2961384372,"commodity":"fuel (gas)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.2009067634,"commodity":"fuel (gas)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.1437265457,"commodity":"fuel (gas)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.1126670636,"commodity":"fuel (gas)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.1167468158,"commodity":"fuel (gas)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.1292573724,"commodity":"fuel (gas)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.169691495,"commodity":"fuel (gas)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.1508653141,"commodity":"fuel (gas)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.1472869758,"commodity":"fuel (gas)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.107525941,"commodity":"fuel (gas)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.1433651304,"commodity":"fuel (gas)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.1788439065,"commodity":"fuel (gas)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.2216987942,"commodity":"fuel (gas)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.2167706827,"commodity":"fuel (gas)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.2048981225,"commodity":"fuel (gas)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1849750696,"commodity":"fuel (gas)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.1637339511,"commodity":"fuel (gas)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.128860362,"commodity":"fuel (gas)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.1262624478,"commodity":"fuel (gas)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.1238641134,"commodity":"fuel (gas)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.10779367,"commodity":"fuel (gas)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0421768509,"commodity":"fuel (gas)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0,"commodity":"fuel (gas)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.001930024,"commodity":"fuel (gas)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.022475615,"commodity":"fuel (gas)"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"fuel (petrol-gasoline)"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.914981228,"commodity":"fuel (petrol-gasoline)"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.8724384328,"commodity":"fuel (petrol-gasoline)"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.8440330477,"commodity":"fuel (petrol-gasoline)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.9208685206,"commodity":"fuel (petrol-gasoline)"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.9219621867,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.9018722782,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.8698765293,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.840398673,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.80331434,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.6901763883,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.6763023532,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.6645301682,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.6414295887,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.5233133193,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.4290064431,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.3685431051,"commodity":"fuel (petrol-gasoline)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.3754874114,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.4264013835,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.462152848,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.4476661221,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.3799139303,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.3441322739,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.3449778136,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.3703407073,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.3660318042,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.3615008368,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.3657453942,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.3779036214,"commodity":"fuel (petrol-gasoline)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.3489738534,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.2725760817,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.1704055656,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.0742387907,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.0,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.0508773466,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.0981238494,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1351146182,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1229631384,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.1317873149,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.1517036116,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.1482976219,"commodity":"fuel (petrol-gasoline)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.1132011772,"commodity":"fuel (petrol-gasoline)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0695041855,"commodity":"fuel (petrol-gasoline)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.01303635,"commodity":"fuel (petrol-gasoline)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0845358194,"commodity":"fuel (petrol-gasoline)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.1834193927,"commodity":"fuel (petrol-gasoline)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.25205456,"commodity":"fuel (petrol-gasoline)"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"lentils"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.7988383433,"commodity":"lentils"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.5651442016,"commodity":"lentils"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.4332714708,"commodity":"lentils"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.5399049764,"commodity":"lentils"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.6886105942,"commodity":"lentils"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.697133497,"commodity":"lentils"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.6123531942,"commodity":"lentils"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.5457410259,"commodity":"lentils"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.5729186971,"commodity":"lentils"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.5492385321,"commodity":"lentils"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.544739588,"commodity":"lentils"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.4956876555,"commodity":"lentils"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.5369577893,"commodity":"lentils"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.5447945046,"commodity":"lentils"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.4719261732,"commodity":"lentils"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.316397183,"commodity":"lentils"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.1028838559,"commodity":"lentils"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.0714261045,"commodity":"lentils"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.211462942,"commodity":"lentils"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.3687037679,"commodity":"lentils"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.3502917743,"commodity":"lentils"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.2608964985,"commodity":"lentils"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.1595943653,"commodity":"lentils"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.1074456194,"commodity":"lentils"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.0811122589,"commodity":"lentils"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.0559013262,"commodity":"lentils"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.0463171303,"commodity":"lentils"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.0805544839,"commodity":"lentils"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.1308012747,"commodity":"lentils"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.1537544618,"commodity":"lentils"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.1206608034,"commodity":"lentils"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.1074310767,"commodity":"lentils"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.1226772342,"commodity":"lentils"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.1410112639,"commodity":"lentils"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.1212100862,"commodity":"lentils"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1202678013,"commodity":"lentils"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1216977069,"commodity":"lentils"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.1305928812,"commodity":"lentils"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.139342095,"commodity":"lentils"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.179018094,"commodity":"lentils"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.2144236182,"commodity":"lentils"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.1677693063,"commodity":"lentils"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0884838841,"commodity":"lentils"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0042062031,"commodity":"lentils"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0,"commodity":"lentils"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0048845623,"commodity":"lentils"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"milling cost (wheat)"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.8933653138,"commodity":"milling cost (wheat)"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.7503940372,"commodity":"milling cost (wheat)"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.5707288342,"commodity":"milling cost (wheat)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.5099539484,"commodity":"milling cost (wheat)"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.5341407827,"commodity":"milling cost (wheat)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.6515761628,"commodity":"milling cost (wheat)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.7300634335,"commodity":"milling cost (wheat)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.7577377135,"commodity":"milling cost (wheat)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.7685514101,"commodity":"milling cost (wheat)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.7224998734,"commodity":"milling cost (wheat)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.7771804554,"commodity":"milling cost (wheat)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.7907879388,"commodity":"milling cost (wheat)"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.7688340408,"commodity":"milling cost (wheat)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.6499281539,"commodity":"milling cost (wheat)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.5556673098,"commodity":"milling cost (wheat)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.4594540562,"commodity":"milling cost (wheat)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.2990570619,"commodity":"milling cost (wheat)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.0741760027,"commodity":"milling cost (wheat)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.0,"commodity":"milling cost (wheat)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.0045398347,"commodity":"milling cost (wheat)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.053540703,"commodity":"milling cost (wheat)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.0434964203,"commodity":"milling cost (wheat)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.032537172,"commodity":"milling cost (wheat)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.0303506818,"commodity":"milling cost (wheat)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.0652602436,"commodity":"milling cost (wheat)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.1343111996,"commodity":"milling cost (wheat)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.2669861687,"commodity":"milling cost (wheat)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.4126793674,"commodity":"milling cost (wheat)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.5198880371,"commodity":"milling cost (wheat)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.5840052921,"commodity":"milling cost (wheat)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.5966730592,"commodity":"milling cost (wheat)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.5886851182,"commodity":"milling cost (wheat)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.5588117086,"commodity":"milling cost (wheat)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.524504171,"commodity":"milling cost (wheat)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.5130704965,"commodity":"milling cost (wheat)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.4957045435,"commodity":"milling cost (wheat)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.4599430743,"commodity":"milling cost (wheat)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.3752282231,"commodity":"milling cost (wheat)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.2816506813,"commodity":"milling cost (wheat)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.2583493923,"commodity":"milling cost (wheat)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.280113811,"commodity":"milling cost (wheat)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.344897852,"commodity":"milling cost (wheat)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.3692391908,"commodity":"milling cost (wheat)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.3754143119,"commodity":"milling cost (wheat)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.3442879967,"commodity":"milling cost (wheat)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.3306827816,"commodity":"milling cost (wheat)"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"oil (vegetable)"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9277316672,"commodity":"oil (vegetable)"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.8936490429,"commodity":"oil (vegetable)"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.8458099004,"commodity":"oil (vegetable)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.8598198771,"commodity":"oil (vegetable)"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.7842729707,"commodity":"oil (vegetable)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.7315133573,"commodity":"oil (vegetable)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.7186404915,"commodity":"oil (vegetable)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.740248613,"commodity":"oil (vegetable)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.725358549,"commodity":"oil (vegetable)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.5899216921,"commodity":"oil (vegetable)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.5333358295,"commodity":"oil (vegetable)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.4669775776,"commodity":"oil (vegetable)"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.400688314,"commodity":"oil (vegetable)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.2722687421,"commodity":"oil (vegetable)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.1851733095,"commodity":"oil (vegetable)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.1429003463,"commodity":"oil (vegetable)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.1347783635,"commodity":"oil (vegetable)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.1500666319,"commodity":"oil (vegetable)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.1607868051,"commodity":"oil (vegetable)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.1591300159,"commodity":"oil (vegetable)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.1420991243,"commodity":"oil (vegetable)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.1336993254,"commodity":"oil (vegetable)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.1391945956,"commodity":"oil (vegetable)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.1551868984,"commodity":"oil (vegetable)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.1731747604,"commodity":"oil (vegetable)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.197326937,"commodity":"oil (vegetable)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.2474799192,"commodity":"oil (vegetable)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.2823132182,"commodity":"oil (vegetable)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.2530921509,"commodity":"oil (vegetable)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.1555505549,"commodity":"oil (vegetable)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.0466522371,"commodity":"oil (vegetable)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.0,"commodity":"oil (vegetable)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.0146751738,"commodity":"oil (vegetable)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.0630195498,"commodity":"oil (vegetable)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.1013727129,"commodity":"oil (vegetable)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1230011553,"commodity":"oil (vegetable)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1384711714,"commodity":"oil (vegetable)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.129626531,"commodity":"oil (vegetable)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.1026180954,"commodity":"oil (vegetable)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.0707076672,"commodity":"oil (vegetable)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.0610587244,"commodity":"oil (vegetable)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.080949318,"commodity":"oil (vegetable)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0857644807,"commodity":"oil (vegetable)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0802584818,"commodity":"oil (vegetable)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0652137605,"commodity":"oil (vegetable)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0625304509,"commodity":"oil (vegetable)"},{"date":"2020-07-31T00:00:00.000","tv_mii":0.998938165,"commodity":"onions"},{"date":"2020-08-31T00:00:00.000","tv_mii":1.0,"commodity":"onions"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.9834578117,"commodity":"onions"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.9391387653,"commodity":"onions"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.9162865453,"commodity":"onions"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.9210806304,"commodity":"onions"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.9262560092,"commodity":"onions"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.900545439,"commodity":"onions"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.862617796,"commodity":"onions"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.8042643935,"commodity":"onions"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.7465614163,"commodity":"onions"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.7368202415,"commodity":"onions"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.7162290656,"commodity":"onions"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.6497860974,"commodity":"onions"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.5235016717,"commodity":"onions"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.4434559042,"commodity":"onions"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.4163338465,"commodity":"onions"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.431703035,"commodity":"onions"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.5637915843,"commodity":"onions"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.6667834915,"commodity":"onions"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.7182418193,"commodity":"onions"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.7078722447,"commodity":"onions"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.6673624379,"commodity":"onions"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.6220902537,"commodity":"onions"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.5810991701,"commodity":"onions"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.562635099,"commodity":"onions"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.5437384491,"commodity":"onions"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.5099602905,"commodity":"onions"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.4962749822,"commodity":"onions"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.4186779405,"commodity":"onions"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.324901191,"commodity":"onions"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.1805205161,"commodity":"onions"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.1304780487,"commodity":"onions"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.0732577292,"commodity":"onions"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.073438589,"commodity":"onions"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.0477554779,"commodity":"onions"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.0437011488,"commodity":"onions"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.0,"commodity":"onions"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.0136219703,"commodity":"onions"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.0819046819,"commodity":"onions"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.1532138192,"commodity":"onions"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.1730106194,"commodity":"onions"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.1512197704,"commodity":"onions"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.1094217069,"commodity":"onions"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0633352852,"commodity":"onions"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0458977085,"commodity":"onions"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0438386726,"commodity":"onions"},{"date":"2020-07-31T00:00:00.000","tv_mii":0.9112648188,"commodity":"potatoes"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9483879831,"commodity":"potatoes"},{"date":"2020-09-30T00:00:00.000","tv_mii":1.0,"commodity":"potatoes"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.9641573303,"commodity":"potatoes"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.9260804949,"commodity":"potatoes"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.8488342726,"commodity":"potatoes"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.7795737326,"commodity":"potatoes"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.67616182,"commodity":"potatoes"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.586246744,"commodity":"potatoes"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.5420686672,"commodity":"potatoes"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.5633417187,"commodity":"potatoes"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.6382544861,"commodity":"potatoes"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.6735248515,"commodity":"potatoes"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.6387006238,"commodity":"potatoes"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.5126640895,"commodity":"potatoes"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.4104430836,"commodity":"potatoes"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.3616107675,"commodity":"potatoes"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.3374642782,"commodity":"potatoes"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.4006228312,"commodity":"potatoes"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.4993815655,"commodity":"potatoes"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.5793866393,"commodity":"potatoes"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.5798655691,"commodity":"potatoes"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.5285797023,"commodity":"potatoes"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.45187695,"commodity":"potatoes"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.3972967688,"commodity":"potatoes"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.360304027,"commodity":"potatoes"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.383568468,"commodity":"potatoes"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.4556907325,"commodity":"potatoes"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.5466967879,"commodity":"potatoes"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.5359987942,"commodity":"potatoes"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.4764059139,"commodity":"potatoes"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.3912205428,"commodity":"potatoes"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.3287007659,"commodity":"potatoes"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.2654316995,"commodity":"potatoes"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.2478983261,"commodity":"potatoes"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.2546509519,"commodity":"potatoes"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.2781837217,"commodity":"potatoes"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.2684180166,"commodity":"potatoes"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.2087993791,"commodity":"potatoes"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.1242782349,"commodity":"potatoes"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.0326254856,"commodity":"potatoes"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.0,"commodity":"potatoes"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0052480421,"commodity":"potatoes"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0098337986,"commodity":"potatoes"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0205855644,"commodity":"potatoes"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0455893094,"commodity":"potatoes"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0622993495,"commodity":"potatoes"},{"date":"2020-07-31T00:00:00.000","tv_mii":0.9922904663,"commodity":"rice (imported)"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9651467357,"commodity":"rice (imported)"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.9610100993,"commodity":"rice (imported)"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.9549556989,"commodity":"rice (imported)"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.9972776795,"commodity":"rice (imported)"},{"date":"2020-12-31T00:00:00.000","tv_mii":1.0,"commodity":"rice (imported)"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.9762932495,"commodity":"rice (imported)"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.9542588566,"commodity":"rice (imported)"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.925258152,"commodity":"rice (imported)"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.9004442794,"commodity":"rice (imported)"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.7987603752,"commodity":"rice (imported)"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.7852110935,"commodity":"rice (imported)"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.7620476757,"commodity":"rice (imported)"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.7336715523,"commodity":"rice (imported)"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.617717771,"commodity":"rice (imported)"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.4953590621,"commodity":"rice (imported)"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.4206440534,"commodity":"rice (imported)"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.3508651954,"commodity":"rice (imported)"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.3294562901,"commodity":"rice (imported)"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.3157268416,"commodity":"rice (imported)"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.315534677,"commodity":"rice (imported)"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.302646115,"commodity":"rice (imported)"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.2755621821,"commodity":"rice (imported)"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.2716487802,"commodity":"rice (imported)"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.2598182666,"commodity":"rice (imported)"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.2579090692,"commodity":"rice (imported)"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.2207386377,"commodity":"rice (imported)"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.1881146038,"commodity":"rice (imported)"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.1812328958,"commodity":"rice (imported)"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.1653239406,"commodity":"rice (imported)"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.1491524433,"commodity":"rice (imported)"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.1114504632,"commodity":"rice (imported)"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.1399813672,"commodity":"rice (imported)"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.1597199527,"commodity":"rice (imported)"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.1661120384,"commodity":"rice (imported)"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.1471416214,"commodity":"rice (imported)"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1223903415,"commodity":"rice (imported)"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1095836578,"commodity":"rice (imported)"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.088010332,"commodity":"rice (imported)"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.0879390931,"commodity":"rice (imported)"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.0976761753,"commodity":"rice (imported)"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.0884485746,"commodity":"rice (imported)"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0657161049,"commodity":"rice (imported)"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0234689046,"commodity":"rice (imported)"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.004400351,"commodity":"rice (imported)"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0,"commodity":"rice (imported)"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.00486356,"commodity":"rice (imported)"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"salt"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9733293868,"commodity":"salt"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.9154319087,"commodity":"salt"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.8936127235,"commodity":"salt"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.8916988742,"commodity":"salt"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.9124742901,"commodity":"salt"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.8934069336,"commodity":"salt"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.894975633,"commodity":"salt"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.9017471489,"commodity":"salt"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.9502976033,"commodity":"salt"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.9128739807,"commodity":"salt"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.9278047647,"commodity":"salt"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.9076709099,"commodity":"salt"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.8944445232,"commodity":"salt"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.7935965587,"commodity":"salt"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.6463878847,"commodity":"salt"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.5456679632,"commodity":"salt"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.4050104812,"commodity":"salt"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.3085622416,"commodity":"salt"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.2058703718,"commodity":"salt"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.1529463729,"commodity":"salt"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.0859345094,"commodity":"salt"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.04077008,"commodity":"salt"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.0263000073,"commodity":"salt"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.038206439,"commodity":"salt"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.0360053579,"commodity":"salt"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.0345498286,"commodity":"salt"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.0760496304,"commodity":"salt"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.1712452262,"commodity":"salt"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.2440370869,"commodity":"salt"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.2601931379,"commodity":"salt"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.2317199651,"commodity":"salt"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.1949580316,"commodity":"salt"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.1707896635,"commodity":"salt"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.1682971063,"commodity":"salt"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.2139157044,"commodity":"salt"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.2383360015,"commodity":"salt"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.2158507493,"commodity":"salt"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.1355585472,"commodity":"salt"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.0540938358,"commodity":"salt"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.0207827331,"commodity":"salt"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.0,"commodity":"salt"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0163837271,"commodity":"salt"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0245810768,"commodity":"salt"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0796585729,"commodity":"salt"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.117990581,"commodity":"salt"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.1435991362,"commodity":"salt"},{"date":"2020-07-31T00:00:00.000","tv_mii":0.98720709,"commodity":"sugar"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9553338808,"commodity":"sugar"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.9515798363,"commodity":"sugar"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.9471914219,"commodity":"sugar"},{"date":"2020-11-30T00:00:00.000","tv_mii":1.0,"commodity":"sugar"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.9978772838,"commodity":"sugar"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.9705155654,"commodity":"sugar"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.9341721188,"commodity":"sugar"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.9003308026,"commodity":"sugar"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.8819184991,"commodity":"sugar"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.7945800084,"commodity":"sugar"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.7839434027,"commodity":"sugar"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.7321436736,"commodity":"sugar"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.6527766771,"commodity":"sugar"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.5047794941,"commodity":"sugar"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.3689503934,"commodity":"sugar"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.2973541765,"commodity":"sugar"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.2590711616,"commodity":"sugar"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.3227368114,"commodity":"sugar"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.4134272244,"commodity":"sugar"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.4843434983,"commodity":"sugar"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.5060282246,"commodity":"sugar"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.4686351031,"commodity":"sugar"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.4249920871,"commodity":"sugar"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.3750004827,"commodity":"sugar"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.364071237,"commodity":"sugar"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.3372094705,"commodity":"sugar"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.3270054283,"commodity":"sugar"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.3272266597,"commodity":"sugar"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.3035460731,"commodity":"sugar"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.251597164,"commodity":"sugar"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.1911483271,"commodity":"sugar"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.1770308099,"commodity":"sugar"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.174913504,"commodity":"sugar"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.161404058,"commodity":"sugar"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.1391446116,"commodity":"sugar"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1275665441,"commodity":"sugar"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1416991006,"commodity":"sugar"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.1577664336,"commodity":"sugar"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.1884307257,"commodity":"sugar"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.2032334196,"commodity":"sugar"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.1850054274,"commodity":"sugar"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.1349972098,"commodity":"sugar"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0657062643,"commodity":"sugar"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0217882322,"commodity":"sugar"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0,"commodity":"sugar"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0017545528,"commodity":"sugar"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"tomatoes"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9527954412,"commodity":"tomatoes"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.91169357,"commodity":"tomatoes"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.8390896454,"commodity":"tomatoes"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.759930127,"commodity":"tomatoes"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.6036085704,"commodity":"tomatoes"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.4812973938,"commodity":"tomatoes"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.4226777499,"commodity":"tomatoes"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.3864439206,"commodity":"tomatoes"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.3897206872,"commodity":"tomatoes"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.408466761,"commodity":"tomatoes"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.4986412034,"commodity":"tomatoes"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.5670165963,"commodity":"tomatoes"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.606778796,"commodity":"tomatoes"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.530357143,"commodity":"tomatoes"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.4817587679,"commodity":"tomatoes"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.4653682263,"commodity":"tomatoes"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.4807850791,"commodity":"tomatoes"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.5132017464,"commodity":"tomatoes"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.5476929376,"commodity":"tomatoes"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.5694308527,"commodity":"tomatoes"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.549124643,"commodity":"tomatoes"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.4664881473,"commodity":"tomatoes"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.3598968067,"commodity":"tomatoes"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.2904033695,"commodity":"tomatoes"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.2652606625,"commodity":"tomatoes"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.2523586378,"commodity":"tomatoes"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.2300791057,"commodity":"tomatoes"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.2469189827,"commodity":"tomatoes"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.3110368033,"commodity":"tomatoes"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.3913922542,"commodity":"tomatoes"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.3857180076,"commodity":"tomatoes"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.3642008925,"commodity":"tomatoes"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.32664061,"commodity":"tomatoes"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.359200749,"commodity":"tomatoes"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.3373024822,"commodity":"tomatoes"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.2725235217,"commodity":"tomatoes"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1222447246,"commodity":"tomatoes"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.0,"commodity":"tomatoes"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.0285907751,"commodity":"tomatoes"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.160243479,"commodity":"tomatoes"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.2617266989,"commodity":"tomatoes"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.2693015328,"commodity":"tomatoes"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.2336148917,"commodity":"tomatoes"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.1792788103,"commodity":"tomatoes"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.1611045333,"commodity":"tomatoes"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.1594724079,"commodity":"tomatoes"},{"date":"2020-07-31T00:00:00.000","tv_mii":1.0,"commodity":"wheat"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9480567271,"commodity":"wheat"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.9370440933,"commodity":"wheat"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.9139151431,"commodity":"wheat"},{"date":"2020-11-30T00:00:00.000","tv_mii":0.9754066749,"commodity":"wheat"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.9663705597,"commodity":"wheat"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.9785339383,"commodity":"wheat"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.9371338345,"commodity":"wheat"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.8961830071,"commodity":"wheat"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.7966590634,"commodity":"wheat"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.6678018638,"commodity":"wheat"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.5832942916,"commodity":"wheat"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.4942260384,"commodity":"wheat"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.3895975427,"commodity":"wheat"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.3176866817,"commodity":"wheat"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.2760265347,"commodity":"wheat"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.2409025268,"commodity":"wheat"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.2017534853,"commodity":"wheat"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.1728981363,"commodity":"wheat"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.2217109496,"commodity":"wheat"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.2610523399,"commodity":"wheat"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.3159243294,"commodity":"wheat"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.3390035518,"commodity":"wheat"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.380769083,"commodity":"wheat"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.3892517371,"commodity":"wheat"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.4034444228,"commodity":"wheat"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.3837449754,"commodity":"wheat"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.3693407082,"commodity":"wheat"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.3610017012,"commodity":"wheat"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.3260825444,"commodity":"wheat"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.2655442713,"commodity":"wheat"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.1703864032,"commodity":"wheat"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.1170409251,"commodity":"wheat"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.0781964666,"commodity":"wheat"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.0790259168,"commodity":"wheat"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.088802631,"commodity":"wheat"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1141497656,"commodity":"wheat"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.1396905224,"commodity":"wheat"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.1227925812,"commodity":"wheat"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.1000470399,"commodity":"wheat"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.0626263718,"commodity":"wheat"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.0418672319,"commodity":"wheat"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0258240921,"commodity":"wheat"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.001090639,"commodity":"wheat"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0,"commodity":"wheat"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0002371999,"commodity":"wheat"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0107770452,"commodity":"wheat"},{"date":"2020-07-31T00:00:00.000","tv_mii":0.936984164,"commodity":"wheat flour"},{"date":"2020-08-31T00:00:00.000","tv_mii":0.9055779011,"commodity":"wheat flour"},{"date":"2020-09-30T00:00:00.000","tv_mii":0.9258768635,"commodity":"wheat flour"},{"date":"2020-10-31T00:00:00.000","tv_mii":0.9279135737,"commodity":"wheat flour"},{"date":"2020-11-30T00:00:00.000","tv_mii":1.0,"commodity":"wheat flour"},{"date":"2020-12-31T00:00:00.000","tv_mii":0.9782128547,"commodity":"wheat flour"},{"date":"2021-01-31T00:00:00.000","tv_mii":0.9542299179,"commodity":"wheat flour"},{"date":"2021-02-28T00:00:00.000","tv_mii":0.9123608279,"commodity":"wheat flour"},{"date":"2021-03-31T00:00:00.000","tv_mii":0.9005642768,"commodity":"wheat flour"},{"date":"2021-04-30T00:00:00.000","tv_mii":0.8838869901,"commodity":"wheat flour"},{"date":"2021-05-31T00:00:00.000","tv_mii":0.7927007892,"commodity":"wheat flour"},{"date":"2021-06-30T00:00:00.000","tv_mii":0.7607112878,"commodity":"wheat flour"},{"date":"2021-07-31T00:00:00.000","tv_mii":0.6861946603,"commodity":"wheat flour"},{"date":"2021-08-31T00:00:00.000","tv_mii":0.6104425559,"commodity":"wheat flour"},{"date":"2021-09-30T00:00:00.000","tv_mii":0.4779979015,"commodity":"wheat flour"},{"date":"2021-10-31T00:00:00.000","tv_mii":0.3964370732,"commodity":"wheat flour"},{"date":"2021-11-30T00:00:00.000","tv_mii":0.3617874402,"commodity":"wheat flour"},{"date":"2021-12-31T00:00:00.000","tv_mii":0.3667961453,"commodity":"wheat flour"},{"date":"2022-01-31T00:00:00.000","tv_mii":0.4111923695,"commodity":"wheat flour"},{"date":"2022-02-28T00:00:00.000","tv_mii":0.4534035567,"commodity":"wheat flour"},{"date":"2022-03-31T00:00:00.000","tv_mii":0.4683476932,"commodity":"wheat flour"},{"date":"2022-04-30T00:00:00.000","tv_mii":0.4763968267,"commodity":"wheat flour"},{"date":"2022-05-31T00:00:00.000","tv_mii":0.4631822486,"commodity":"wheat flour"},{"date":"2022-06-30T00:00:00.000","tv_mii":0.461817846,"commodity":"wheat flour"},{"date":"2022-07-31T00:00:00.000","tv_mii":0.4419890121,"commodity":"wheat flour"},{"date":"2022-08-31T00:00:00.000","tv_mii":0.4371801889,"commodity":"wheat flour"},{"date":"2022-09-30T00:00:00.000","tv_mii":0.4197833712,"commodity":"wheat flour"},{"date":"2022-10-31T00:00:00.000","tv_mii":0.4149205601,"commodity":"wheat flour"},{"date":"2022-11-30T00:00:00.000","tv_mii":0.4194783451,"commodity":"wheat flour"},{"date":"2022-12-31T00:00:00.000","tv_mii":0.3884626136,"commodity":"wheat flour"},{"date":"2023-01-31T00:00:00.000","tv_mii":0.3334398742,"commodity":"wheat flour"},{"date":"2023-02-28T00:00:00.000","tv_mii":0.2575245242,"commodity":"wheat flour"},{"date":"2023-03-31T00:00:00.000","tv_mii":0.229990564,"commodity":"wheat flour"},{"date":"2023-04-30T00:00:00.000","tv_mii":0.2093413158,"commodity":"wheat flour"},{"date":"2023-05-31T00:00:00.000","tv_mii":0.2019234059,"commodity":"wheat flour"},{"date":"2023-06-30T00:00:00.000","tv_mii":0.1848665889,"commodity":"wheat flour"},{"date":"2023-07-31T00:00:00.000","tv_mii":0.1917480976,"commodity":"wheat flour"},{"date":"2023-08-31T00:00:00.000","tv_mii":0.213359835,"commodity":"wheat flour"},{"date":"2023-09-30T00:00:00.000","tv_mii":0.2152347134,"commodity":"wheat flour"},{"date":"2023-10-31T00:00:00.000","tv_mii":0.1964274493,"commodity":"wheat flour"},{"date":"2023-11-30T00:00:00.000","tv_mii":0.1482062473,"commodity":"wheat flour"},{"date":"2023-12-31T00:00:00.000","tv_mii":0.1040079126,"commodity":"wheat flour"},{"date":"2024-01-31T00:00:00.000","tv_mii":0.0672829661,"commodity":"wheat flour"},{"date":"2024-02-29T00:00:00.000","tv_mii":0.0263336312,"commodity":"wheat flour"},{"date":"2024-03-31T00:00:00.000","tv_mii":0.0081367716,"commodity":"wheat flour"},{"date":"2024-04-30T00:00:00.000","tv_mii":0.0,"commodity":"wheat flour"},{"date":"2024-05-31T00:00:00.000","tv_mii":0.0057017844,"commodity":"wheat flour"}]
+[
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.9419308045,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.8369453898,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.6984795979,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.6117156224,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.6126805123,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.6525758396,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.6259523362,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.5711455678,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.5174973712,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.4189991278,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.3440168357,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.2572858107,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.2382401552,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.2584444841,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.365794577,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.4675342255,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.5191327398,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.5261062753,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.5141582409,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.4999960422,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.4866145577,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.4544403156,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.4119745852,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.3531259929,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.3551915811,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.3498683805,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.3542510406,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.3406582419,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.340520243,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.3262998003,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.284364263,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.2162952226,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1706830376,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1409807758,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.1782852661,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.2232148468,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.2749067165,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.2465755664,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.1784901916,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0857289592,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0240609863,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0045261212,
+        "commodity":"beans (kidney red)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":0.6507649361,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.6249752763,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.6265039692,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.7016048186,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.8510903059,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.8870368398,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.8533999885,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.7986261459,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.8536568193,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.9649555416,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.989705145,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.997108815,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.9918690811,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.912071018,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.7686012378,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.6741101343,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.6396034393,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.7400497427,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.8653095511,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.9623367443,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.9807318831,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.9300407251,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.8618592367,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.8005448346,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.7746497742,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.7197998197,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.689486116,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.7068790435,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.755081655,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.7440377414,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.6940299708,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.6061891205,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.5453187576,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.4672687226,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.3815409584,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.3079607955,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.2917718328,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.3128777745,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.3311353323,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.3216226769,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.2783999813,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.2159461202,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.1070324441,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0344648313,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0075365976,
+        "commodity":"beans (white)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9513936015,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.931551193,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.8582605277,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.8407500368,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.8113057794,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.7919784278,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.7660443623,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.7176033515,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.6791527099,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.6162913297,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.6261035518,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.6048181848,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.5461236115,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.4353726191,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.3411292873,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.3008550721,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.2405017674,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.2192118592,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.1984419274,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.2122549682,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.2155490294,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.198516762,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.1790734962,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.1492453457,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.1418575009,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.1332758353,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.1482147063,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.1586357076,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.1416132023,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.0927397885,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.0407607784,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.0371405856,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.0474309857,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.0622764657,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.0718313935,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.0811565257,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.0837569333,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.053936296,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.0450991638,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.0430910094,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.0392635805,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0251840049,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0025395357,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0003557099,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0043699397,
+        "commodity":"eggs"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9689746465,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.9645579586,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.9489621166,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.9797684132,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.9594662344,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.9366849721,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.9011463934,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.8721848222,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.8379201486,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.7638184751,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.7359835972,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.6910667588,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.6365199523,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.5284183021,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.4537267541,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.4256154933,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.4421469982,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.4821721405,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.5204454605,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.5301235806,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.5485064306,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.5231327996,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.5025964325,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.4732694539,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.4752143975,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.4736466604,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.4735685171,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.4783612246,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.4380773631,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.3905053369,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.323133982,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.3053581154,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.2772530455,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.2612868217,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.2301386314,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.2079422587,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1927983508,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.172010069,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.1533651508,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.1251546583,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.0874217283,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0575584813,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0077477251,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0036560907,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0208297079,
+        "commodity":"exchange rate (unofficial)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9045070284,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.8464922273,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.7674751201,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.7964833853,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.779669305,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.7677630326,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.7461587386,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.7334998415,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.7301613186,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.6718395137,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.6521710628,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.6292913902,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.6011368221,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.5259846548,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.4445883497,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.4030381163,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.4009055765,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.4726463011,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.5115324715,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.5185584774,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.4754583483,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.4334386181,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.3925700188,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.3677961018,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.3514239499,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.341450969,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.3515044347,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.3701044285,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.363931138,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.3118936417,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.2278455888,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.1706960471,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.1576076096,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.1780828695,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.1768775214,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1688087284,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1629840633,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.159695508,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.1701389613,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.1604117856,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.1368823608,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0860477138,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0219225067,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0248585023,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0540825692,
+        "commodity":"fuel (diesel)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9745380054,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.9402039383,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.9180463578,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.8860813611,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.8528494785,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.771157277,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.7627412071,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.7223717321,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.726610611,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.6271941238,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.6167531874,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.5813656743,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.5604232009,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.4546928226,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.3763022346,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.3376211585,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.3344816063,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.3817249156,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.4111720795,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.4280366063,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.3774879445,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.2961384372,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.2009067634,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.1437265457,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.1126670636,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.1167468158,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.1292573724,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.169691495,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.1508653141,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.1472869758,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.107525941,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.1433651304,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.1788439065,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.2216987942,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.2167706827,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.2048981225,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1849750696,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.1637339511,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.128860362,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.1262624478,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.1238641134,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.10779367,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0421768509,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.001930024,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.022475615,
+        "commodity":"fuel (gas)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.914981228,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.8724384328,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.8440330477,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.9208685206,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.9219621867,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.9018722782,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.8698765293,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.840398673,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.80331434,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.6901763883,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.6763023532,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.6645301682,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.6414295887,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.5233133193,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.4290064431,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.3685431051,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.3754874114,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.4264013835,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.462152848,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.4476661221,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.3799139303,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.3441322739,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.3449778136,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.3703407073,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.3660318042,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.3615008368,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.3657453942,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.3779036214,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.3489738534,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.2725760817,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.1704055656,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.0742387907,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.0508773466,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.0981238494,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1351146182,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1229631384,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.1317873149,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.1517036116,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.1482976219,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.1132011772,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0695041855,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.01303635,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0845358194,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.1834193927,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.25205456,
+        "commodity":"fuel (petrol-gasoline)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.7988383433,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.5651442016,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.4332714708,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.5399049764,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.6886105942,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.697133497,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.6123531942,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.5457410259,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.5729186971,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.5492385321,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.544739588,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.4956876555,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.5369577893,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.5447945046,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.4719261732,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.316397183,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.1028838559,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.0714261045,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.211462942,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.3687037679,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.3502917743,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.2608964985,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.1595943653,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.1074456194,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.0811122589,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.0559013262,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.0463171303,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.0805544839,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.1308012747,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.1537544618,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.1206608034,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.1074310767,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.1226772342,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.1410112639,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.1212100862,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1202678013,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1216977069,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.1305928812,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.139342095,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.179018094,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.2144236182,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.1677693063,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0884838841,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0042062031,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0048845623,
+        "commodity":"lentils"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.8933653138,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.7503940372,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.5707288342,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.5099539484,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.5341407827,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.6515761628,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.7300634335,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.7577377135,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.7685514101,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.7224998734,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.7771804554,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.7907879388,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.7688340408,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.6499281539,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.5556673098,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.4594540562,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.2990570619,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.0741760027,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.0045398347,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.053540703,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.0434964203,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.032537172,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.0303506818,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.0652602436,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.1343111996,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.2669861687,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.4126793674,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.5198880371,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.5840052921,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.5966730592,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.5886851182,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.5588117086,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.524504171,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.5130704965,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.4957045435,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.4599430743,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.3752282231,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.2816506813,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.2583493923,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.280113811,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.344897852,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.3692391908,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.3754143119,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.3442879967,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.3306827816,
+        "commodity":"milling cost (wheat)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9277316672,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.8936490429,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.8458099004,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.8598198771,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.7842729707,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.7315133573,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.7186404915,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.740248613,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.725358549,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.5899216921,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.5333358295,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.4669775776,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.400688314,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.2722687421,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.1851733095,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.1429003463,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.1347783635,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.1500666319,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.1607868051,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.1591300159,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.1420991243,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.1336993254,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.1391945956,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.1551868984,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.1731747604,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.197326937,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.2474799192,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.2823132182,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.2530921509,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.1555505549,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.0466522371,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.0146751738,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.0630195498,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.1013727129,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1230011553,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1384711714,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.129626531,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.1026180954,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.0707076672,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.0610587244,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.080949318,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0857644807,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0802584818,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0652137605,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0625304509,
+        "commodity":"oil (vegetable)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":0.998938165,
+        "commodity":"onions"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"onions"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.9834578117,
+        "commodity":"onions"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.9391387653,
+        "commodity":"onions"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.9162865453,
+        "commodity":"onions"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.9210806304,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.9262560092,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.900545439,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.862617796,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.8042643935,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.7465614163,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.7368202415,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.7162290656,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.6497860974,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.5235016717,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.4434559042,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.4163338465,
+        "commodity":"onions"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.431703035,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.5637915843,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.6667834915,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.7182418193,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.7078722447,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.6673624379,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.6220902537,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.5810991701,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.562635099,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.5437384491,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.5099602905,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.4962749822,
+        "commodity":"onions"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.4186779405,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.324901191,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.1805205161,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.1304780487,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.0732577292,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.073438589,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.0477554779,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.0437011488,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.0136219703,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.0819046819,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.1532138192,
+        "commodity":"onions"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.1730106194,
+        "commodity":"onions"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.1512197704,
+        "commodity":"onions"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.1094217069,
+        "commodity":"onions"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0633352852,
+        "commodity":"onions"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0458977085,
+        "commodity":"onions"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0438386726,
+        "commodity":"onions"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":0.9112648188,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9483879831,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.9641573303,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.9260804949,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.8488342726,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.7795737326,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.67616182,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.586246744,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.5420686672,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.5633417187,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.6382544861,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.6735248515,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.6387006238,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.5126640895,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.4104430836,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.3616107675,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.3374642782,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.4006228312,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.4993815655,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.5793866393,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.5798655691,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.5285797023,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.45187695,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.3972967688,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.360304027,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.383568468,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.4556907325,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.5466967879,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.5359987942,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.4764059139,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.3912205428,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.3287007659,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.2654316995,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.2478983261,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.2546509519,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.2781837217,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.2684180166,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.2087993791,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.1242782349,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.0326254856,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0052480421,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0098337986,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0205855644,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0455893094,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0622993495,
+        "commodity":"potatoes"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":0.9922904663,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9651467357,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.9610100993,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.9549556989,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.9972776795,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.9762932495,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.9542588566,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.925258152,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.9004442794,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.7987603752,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.7852110935,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.7620476757,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.7336715523,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.617717771,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.4953590621,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.4206440534,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.3508651954,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.3294562901,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.3157268416,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.315534677,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.302646115,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.2755621821,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.2716487802,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.2598182666,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.2579090692,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.2207386377,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.1881146038,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.1812328958,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.1653239406,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.1491524433,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.1114504632,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.1399813672,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.1597199527,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.1661120384,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.1471416214,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1223903415,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1095836578,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.088010332,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.0879390931,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.0976761753,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.0884485746,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0657161049,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0234689046,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.004400351,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.00486356,
+        "commodity":"rice (imported)"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"salt"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9733293868,
+        "commodity":"salt"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.9154319087,
+        "commodity":"salt"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.8936127235,
+        "commodity":"salt"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.8916988742,
+        "commodity":"salt"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.9124742901,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.8934069336,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.894975633,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.9017471489,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.9502976033,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.9128739807,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.9278047647,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.9076709099,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.8944445232,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.7935965587,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.6463878847,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.5456679632,
+        "commodity":"salt"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.4050104812,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.3085622416,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.2058703718,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.1529463729,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.0859345094,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.04077008,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.0263000073,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.038206439,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.0360053579,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.0345498286,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.0760496304,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.1712452262,
+        "commodity":"salt"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.2440370869,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.2601931379,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.2317199651,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.1949580316,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.1707896635,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.1682971063,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.2139157044,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.2383360015,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.2158507493,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.1355585472,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.0540938358,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.0207827331,
+        "commodity":"salt"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"salt"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0163837271,
+        "commodity":"salt"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0245810768,
+        "commodity":"salt"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0796585729,
+        "commodity":"salt"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.117990581,
+        "commodity":"salt"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.1435991362,
+        "commodity":"salt"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":0.98720709,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9553338808,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.9515798363,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.9471914219,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.9978772838,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.9705155654,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.9341721188,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.9003308026,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.8819184991,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.7945800084,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.7839434027,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.7321436736,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.6527766771,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.5047794941,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.3689503934,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.2973541765,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.2590711616,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.3227368114,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.4134272244,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.4843434983,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.5060282246,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.4686351031,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.4249920871,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.3750004827,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.364071237,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.3372094705,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.3270054283,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.3272266597,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.3035460731,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.251597164,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.1911483271,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.1770308099,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.174913504,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.161404058,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.1391446116,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1275665441,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1416991006,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.1577664336,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.1884307257,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.2032334196,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.1850054274,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.1349972098,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0657062643,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0217882322,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0017545528,
+        "commodity":"sugar"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9527954412,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.91169357,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.8390896454,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.759930127,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.6036085704,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.4812973938,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.4226777499,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.3864439206,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.3897206872,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.408466761,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.4986412034,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.5670165963,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.606778796,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.530357143,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.4817587679,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.4653682263,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.4807850791,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.5132017464,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.5476929376,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.5694308527,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.549124643,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.4664881473,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.3598968067,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.2904033695,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.2652606625,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.2523586378,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.2300791057,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.2469189827,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.3110368033,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.3913922542,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.3857180076,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.3642008925,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.32664061,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.359200749,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.3373024822,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.2725235217,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1222447246,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.0285907751,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.160243479,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.2617266989,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.2693015328,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.2336148917,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.1792788103,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.1611045333,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.1594724079,
+        "commodity":"tomatoes"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9480567271,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.9370440933,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.9139151431,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":0.9754066749,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.9663705597,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.9785339383,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.9371338345,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.8961830071,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.7966590634,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.6678018638,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.5832942916,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.4942260384,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.3895975427,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.3176866817,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.2760265347,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.2409025268,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.2017534853,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.1728981363,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.2217109496,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.2610523399,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.3159243294,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.3390035518,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.380769083,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.3892517371,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.4034444228,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.3837449754,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.3693407082,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.3610017012,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.3260825444,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.2655442713,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.1703864032,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.1170409251,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.0781964666,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.0790259168,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.088802631,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1141497656,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.1396905224,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.1227925812,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.1000470399,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.0626263718,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.0418672319,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0258240921,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.001090639,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0002371999,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0107770452,
+        "commodity":"wheat"
+    },
+    {
+        "date":"2020-07-31T00:00:00.000",
+        "tv_mii":0.936984164,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2020-08-31T00:00:00.000",
+        "tv_mii":0.9055779011,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2020-09-30T00:00:00.000",
+        "tv_mii":0.9258768635,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2020-10-31T00:00:00.000",
+        "tv_mii":0.9279135737,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2020-11-30T00:00:00.000",
+        "tv_mii":1.0,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2020-12-31T00:00:00.000",
+        "tv_mii":0.9782128547,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-01-31T00:00:00.000",
+        "tv_mii":0.9542299179,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-02-28T00:00:00.000",
+        "tv_mii":0.9123608279,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-03-31T00:00:00.000",
+        "tv_mii":0.9005642768,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-04-30T00:00:00.000",
+        "tv_mii":0.8838869901,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-05-31T00:00:00.000",
+        "tv_mii":0.7927007892,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-06-30T00:00:00.000",
+        "tv_mii":0.7607112878,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-07-31T00:00:00.000",
+        "tv_mii":0.6861946603,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-08-31T00:00:00.000",
+        "tv_mii":0.6104425559,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-09-30T00:00:00.000",
+        "tv_mii":0.4779979015,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-10-31T00:00:00.000",
+        "tv_mii":0.3964370732,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-11-30T00:00:00.000",
+        "tv_mii":0.3617874402,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2021-12-31T00:00:00.000",
+        "tv_mii":0.3667961453,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-01-31T00:00:00.000",
+        "tv_mii":0.4111923695,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-02-28T00:00:00.000",
+        "tv_mii":0.4534035567,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-03-31T00:00:00.000",
+        "tv_mii":0.4683476932,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-04-30T00:00:00.000",
+        "tv_mii":0.4763968267,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-05-31T00:00:00.000",
+        "tv_mii":0.4631822486,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-06-30T00:00:00.000",
+        "tv_mii":0.461817846,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-07-31T00:00:00.000",
+        "tv_mii":0.4419890121,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-08-31T00:00:00.000",
+        "tv_mii":0.4371801889,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-09-30T00:00:00.000",
+        "tv_mii":0.4197833712,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-10-31T00:00:00.000",
+        "tv_mii":0.4149205601,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-11-30T00:00:00.000",
+        "tv_mii":0.4194783451,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2022-12-31T00:00:00.000",
+        "tv_mii":0.3884626136,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-01-31T00:00:00.000",
+        "tv_mii":0.3334398742,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-02-28T00:00:00.000",
+        "tv_mii":0.2575245242,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-03-31T00:00:00.000",
+        "tv_mii":0.229990564,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-04-30T00:00:00.000",
+        "tv_mii":0.2093413158,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-05-31T00:00:00.000",
+        "tv_mii":0.2019234059,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-06-30T00:00:00.000",
+        "tv_mii":0.1848665889,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-07-31T00:00:00.000",
+        "tv_mii":0.1917480976,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-08-31T00:00:00.000",
+        "tv_mii":0.213359835,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-09-30T00:00:00.000",
+        "tv_mii":0.2152347134,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-10-31T00:00:00.000",
+        "tv_mii":0.1964274493,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-11-30T00:00:00.000",
+        "tv_mii":0.1482062473,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2023-12-31T00:00:00.000",
+        "tv_mii":0.1040079126,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2024-01-31T00:00:00.000",
+        "tv_mii":0.0672829661,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2024-02-29T00:00:00.000",
+        "tv_mii":0.0263336312,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2024-03-31T00:00:00.000",
+        "tv_mii":0.0081367716,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2024-04-30T00:00:00.000",
+        "tv_mii":0.0,
+        "commodity":"wheat flour"
+    },
+    {
+        "date":"2024-05-31T00:00:00.000",
+        "tv_mii":0.0057017844,
+        "commodity":"wheat flour"
+    }
+]
