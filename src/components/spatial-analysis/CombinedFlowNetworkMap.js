@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { Typography, Paper, Box, Slider, Tooltip as MuiTooltip, FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import * as d3 from 'd3';
+// Import proj4 if coordinate conversion is needed
+// import proj4 from 'proj4';
 
 const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
   const theme = useTheme();
@@ -25,6 +27,21 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
     if (validLng < -180 || validLng > 180) return null;
     
     return [validLat, validLng];
+  };
+
+  // Function to set SVG overlay size and position
+  const setSVGOverlay = () => {
+    if (!mapInstance.current || !svgRef.current) return;
+    
+    const bounds = mapInstance.current.getBounds();
+    const topLeft = mapInstance.current.latLngToLayerPoint(bounds.getNorthWest());
+    const bottomRight = mapInstance.current.latLngToLayerPoint(bounds.getSouthEast());
+
+    svgRef.current.svg
+      .attr("width", bottomRight.x - topLeft.x)
+      .attr("height", bottomRight.y - topLeft.y)
+      .style("left", `${topLeft.x}px`)
+      .style("top", `${topLeft.y}px`);
   };
 
   // Convert dateRange to timestamps for the slider
@@ -74,10 +91,21 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
       flowLayerGroup.current = L.layerGroup().addTo(mapInstance.current);
       networkLayerGroup.current = L.layerGroup().addTo(mapInstance.current);
 
+      // Initialize SVG overlay
       const svg = d3.select(mapInstance.current.getPanes().overlayPane)
-        .append("svg");
+        .append("svg")
+        .attr("class", "flow-overlay");
       const g = svg.append("g").attr("class", "leaflet-zoom-hide");
       svgRef.current = { svg, g };
+
+      // Initial SVG setup
+      setSVGOverlay();
+
+      // Update SVG on map events
+      mapInstance.current.on("zoomend moveend resize", () => {
+        setSVGOverlay();
+        updateElements();
+      });
     }
 
     // Filter flows based on date, region, and coordinate validation
@@ -244,10 +272,7 @@ Flow Weight: ${flow.flow_weight.toFixed(2)}`);
       .style("font-size", "12px")
       .style("fill", theme.palette.text.primary);
 
-    // Move tooltip updates inside the event handlers above
-    // (Already handled in the 'mouseover' and 'mousemove' events)
-
-    // Update on zoom/pan
+    // Update flow lines on map interactions
     const updateElements = () => {
       paths.attr("d", flow => {
         const sourceCoords = validateCoordinates(flow.source_lat, flow.source_lng);
@@ -260,12 +285,7 @@ Flow Weight: ${flow.flow_weight.toFixed(2)}`);
         
         return `M${source.x},${source.y}L${target.x},${target.y}`;
       });
-
-      // Update labels if implemented
-      // Assuming labels are managed similarly
     };
-
-    mapInstance.current.on("zoom moveend", updateElements);
 
     // Fit bounds with validated coordinates
     if (currentFlows.length > 0) {
@@ -286,10 +306,13 @@ Flow Weight: ${flow.flow_weight.toFixed(2)}`);
 
     return () => {
       if (mapInstance.current) {
-        mapInstance.current.off("zoom moveend", updateElements);
+        mapInstance.current.off("zoomend moveend resize", () => {
+          setSVGOverlay();
+          updateElements();
+        });
       }
     };
-  }, [flowMaps, currentDate, selectedRegion, theme, isDebugMode]); // Added isDebugMode to dependencies
+  }, [flowMaps, currentDate, selectedRegion, theme, isDebugMode]);
 
   const handleDateChange = (event, newValue) => {
     const newDate = new Date(Number(newValue));
@@ -337,10 +360,10 @@ Flow Weight: ${flow.flow_weight.toFixed(2)}`);
           label="Debug Mode"
         />
       </Box>
-      <div ref={mapRef} style={{ height: '400px', width: '100%' }} />
+      <div ref={mapRef} style={{ height: '400px', width: '100%', position: 'relative' }} />
       <Box sx={{ mt: 2 }}>
         <Slider
-          value={currentTimestamp}
+          value={Number(currentTimestamp)} // Ensure this is always a number
           min={timeRange.min}
           max={timeRange.max}
           onChange={handleDateChange}
