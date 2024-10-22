@@ -1,0 +1,331 @@
+{
+  "2020-07-31": {
+    "flow_count": 99,
+    "mean_price_diff": 1.188678209393699,
+    "max_price_diff": 7.095535702857141,
+    "mean_flow_weight": 1.188678209393699,
+    "active_regions": 21
+  },
+  "2020-08-31": {
+    "flow_count": 94,
+    "mean_price_diff": 1.2188808546191006,
+    "max_price_diff": 7.116882289357143,
+    "mean_flow_weight": 1.2188808546191006,
+    "active_regions": 21
+  },
+  "2020-09-30": {
+    "flow_count": 100,
+    "mean_price_diff": 1.2866790845864906,
+    "max_price_diff": 5.6628482192857135,
+    "mean_flow_weight": 1.2866790845864906,
+    "active_regions": 21
+  },
+  "2020-10-31": {
+    "flow_count": 93,
+    "mean_price_diff": 1.2579413585236072,
+    "max_price_diff": 4.852607824285714,
+    "mean_flow_weight": 1.2579413585236072,
+    "active_regions": 21
+  },
+  "2020-11-30": {
+    "flow_count": 97,
+    "mean_price_diff": 1.2716520684546417,
+    "max_price_diff": 4.848476428571429,
+    "mean_flow_weight": 1.2716520684546417,
+    "active_regions": 21
+  },
+  "2020-12-31": {
+    "flow_count": 97,
+    "mean_price_diff": 1.2800179892867996,
+    "max_price_diff": 6.4543762566666665,
+    "mean_flow_weight": 1.2800179892867996,
+    "active_regions": 21
+  },
+  "2021-01-31": {
+    "flow_count": 96,
+    "mean_price_diff": 1.580610572256879,
+    "max_price_diff": 7.5116283400000015,
+    "mean_flow_weight": 1.580610572256879,
+    "active_regions": 21
+  },
+  "2021-02-28": {
+    "flow_count": 102,
+    "mean_price_diff": 1.5879314177819794,
+    "max_price_diff": 7.578707399523808,
+    "mean_flow_weight": 1.5879314177819794,
+    "active_regions": 21
+  },
+  "2021-03-31": {
+    "flow_count": 101,
+    "mean_price_diff": 1.5308947630346539,
+    "max_price_diff": 6.739878955238097,
+    "mean_flow_weight": 1.5308947630346539,
+    "active_regions": 21
+  },
+  "2021-04-30": {
+    "flow_count": 101,
+    "mean_price_diff": 1.423034002380766,
+    "max_price_diff": 6.0452646057142845,
+    "mean_flow_weight": 1.423034002380766,
+    "active_regions": 21
+  },
+  "2021-05-31": {
+    "flow_count": 98,
+    "mean_price_diff": 1.4697530275350623,
+    "max_price_diff": 6.11480399,
+    "mean_flow_weight": 1.4697530275350623,
+    "active_regions": 21
+  },
+  "2021-06-30": {
+    "flow_count": 100,
+    "mean_price_diff": 1.509126585401203,
+    "max_price_diff": 6.316646003809524,
+    "mean_flow_weight": 1.509126585401203,
+    "active_regions": 21
+  },
+  "2021-07-31": {
+    "flow_count": 101,
+    "mean_price_diff": 1.4272736393864365,
+    "max_price_diff": 6.233769164285714,
+    "mean_flow_weight": 1.4272736393864365,
+    "active_regions": 21
+  },
+  "2021-08-31": {
+    "flow_count": 96,
+    "mean_price_diff": 1.625365703895311,
+    "max_price_diff": 7.0741528833333325,
+    "mean_flow_weight": 1.625365703895311,
+    "active_regions": 21
+  },
+  "2021-09-30": {
+    "flow_count": 98,
+    "mean_price_diff": 1.8988650415969517,
+    "max_price_diff": 7.943144254,
+    "mean_flow_weight": 1.8988650415969517,
+    "active_regions": 21
+  },
+  "2021-10-31": {
+    "flow_count": 101,
+    "mean_price_diff": 2.4535904871763936,
+    "max_price_diff": 10.1449942565,
+    "mean_flow_weight": 2.4535904871763936,
+    "active_regions": 21
+  },
+  "2021-11-30": {
+    "flow_count": 97,
+    "mean_price_diff": 2.7037691113469497,
+    "max_price_diff": 10.748605043000001,
+    "mean_flow_weight": 2.7037691113469497,
+    "active_regions": 21
+  },
+  "2021-12-31": {
+    "flow_count": 99,
+    "mean_price_diff": 2.00539060436175,
+    "max_price_diff": 7.8555302188333345,
+    "mean_flow_weight": 2.00539060436175,
+    "active_regions": 21
+  },
+  "2022-01-31": {
+    "flow_count": 100,
+    "mean_price_diff": 1.8984286565153508,
+    "max_price_diff": 7.780244129857142,
+    "mean_flow_weight": 1.8984286565153508,
+    "active_regions": 21
+  },
+  "2022-02-28": {
+    "flow_count": 101,
+    "mean_price_diff": 1.9077316014307426,
+    "max_price_diff": 6.70745106902381,
+    "mean_flow_weight": 1.9077316014307426,
+    "active_regions": 21
+  },
+  "2022-03-31": {
+    "flow_count": 104,
+    "mean_price_diff": 2.3441091991514846,
+    "max_price_diff": 8.60191684952381,
+    "mean_flow_weight": 2.3441091991514846,
+    "active_regions": 21
+  },
+  "2022-04-30": {
+    "flow_count": 102,
+    "mean_price_diff": 2.0207488043923654,
+    "max_price_diff": 7.131181585238094,
+    "mean_flow_weight": 2.0207488043923654,
+    "active_regions": 21
+  },
+  "2022-05-31": {
+    "flow_count": 99,
+    "mean_price_diff": 2.171833945046948,
+    "max_price_diff": 7.205745797333332,
+    "mean_flow_weight": 2.171833945046948,
+    "active_regions": 21
+  },
+  "2022-06-30": {
+    "flow_count": 98,
+    "mean_price_diff": 2.431508893367936,
+    "max_price_diff": 7.944119575476192,
+    "mean_flow_weight": 2.431508893367936,
+    "active_regions": 21
+  },
+  "2022-07-31": {
+    "flow_count": 101,
+    "mean_price_diff": 3.213384313199532,
+    "max_price_diff": 10.830406032666664,
+    "mean_flow_weight": 3.213384313199532,
+    "active_regions": 21
+  },
+  "2022-08-31": {
+    "flow_count": 103,
+    "mean_price_diff": 3.344265909117599,
+    "max_price_diff": 10.871190153166665,
+    "mean_flow_weight": 3.344265909117599,
+    "active_regions": 21
+  },
+  "2022-09-30": {
+    "flow_count": 104,
+    "mean_price_diff": 2.7550066951273133,
+    "max_price_diff": 9.518586744166665,
+    "mean_flow_weight": 2.7550066951273133,
+    "active_regions": 21
+  },
+  "2022-10-31": {
+    "flow_count": 102,
+    "mean_price_diff": 2.613169848332903,
+    "max_price_diff": 8.653634362666665,
+    "mean_flow_weight": 2.613169848332903,
+    "active_regions": 21
+  },
+  "2022-11-30": {
+    "flow_count": 100,
+    "mean_price_diff": 2.522426777835025,
+    "max_price_diff": 8.489045928833335,
+    "mean_flow_weight": 2.522426777835025,
+    "active_regions": 21
+  },
+  "2022-12-31": {
+    "flow_count": 100,
+    "mean_price_diff": 2.3606979154301633,
+    "max_price_diff": 7.629210321333334,
+    "mean_flow_weight": 2.3606979154301633,
+    "active_regions": 21
+  },
+  "2023-01-31": {
+    "flow_count": 102,
+    "mean_price_diff": 2.266192950310912,
+    "max_price_diff": 7.266873622166667,
+    "mean_flow_weight": 2.266192950310912,
+    "active_regions": 21
+  },
+  "2023-02-28": {
+    "flow_count": 104,
+    "mean_price_diff": 2.1901789857988483,
+    "max_price_diff": 7.515741016833333,
+    "mean_flow_weight": 2.1901789857988483,
+    "active_regions": 21
+  },
+  "2023-03-31": {
+    "flow_count": 105,
+    "mean_price_diff": 2.043879935186848,
+    "max_price_diff": 6.994220701,
+    "mean_flow_weight": 2.043879935186848,
+    "active_regions": 21
+  },
+  "2023-04-30": {
+    "flow_count": 100,
+    "mean_price_diff": 2.3302219980522056,
+    "max_price_diff": 8.2111515485,
+    "mean_flow_weight": 2.3302219980522056,
+    "active_regions": 21
+  },
+  "2023-05-31": {
+    "flow_count": 98,
+    "mean_price_diff": 2.4907650324328166,
+    "max_price_diff": 8.425398784666665,
+    "mean_flow_weight": 2.4907650324328166,
+    "active_regions": 21
+  },
+  "2023-06-30": {
+    "flow_count": 101,
+    "mean_price_diff": 2.4872822566633785,
+    "max_price_diff": 8.211611271666666,
+    "mean_flow_weight": 2.4872822566633785,
+    "active_regions": 21
+  },
+  "2023-07-31": {
+    "flow_count": 101,
+    "mean_price_diff": 2.490449303421127,
+    "max_price_diff": 8.525182323333333,
+    "mean_flow_weight": 2.490449303421127,
+    "active_regions": 21
+  },
+  "2023-08-31": {
+    "flow_count": 99,
+    "mean_price_diff": 2.598366676033075,
+    "max_price_diff": 8.688858346,
+    "mean_flow_weight": 2.598366676033075,
+    "active_regions": 21
+  },
+  "2023-09-30": {
+    "flow_count": 98,
+    "mean_price_diff": 2.8711337498770906,
+    "max_price_diff": 10.188837093666667,
+    "mean_flow_weight": 2.8711337498770906,
+    "active_regions": 21
+  },
+  "2023-10-31": {
+    "flow_count": 101,
+    "mean_price_diff": 2.75684823527188,
+    "max_price_diff": 9.714676284333333,
+    "mean_flow_weight": 2.75684823527188,
+    "active_regions": 21
+  },
+  "2023-11-30": {
+    "flow_count": 101,
+    "mean_price_diff": 2.7565460112321394,
+    "max_price_diff": 9.7634650055,
+    "mean_flow_weight": 2.7565460112321394,
+    "active_regions": 21
+  },
+  "2023-12-31": {
+    "flow_count": 98,
+    "mean_price_diff": 3.7233363662643595,
+    "max_price_diff": 12.314671569666666,
+    "mean_flow_weight": 3.7233363662643595,
+    "active_regions": 21
+  },
+  "2024-01-31": {
+    "flow_count": 99,
+    "mean_price_diff": 3.6855785433639405,
+    "max_price_diff": 12.504600252166668,
+    "mean_flow_weight": 3.6855785433639405,
+    "active_regions": 21
+  },
+  "2024-02-29": {
+    "flow_count": 102,
+    "mean_price_diff": 3.679431020700354,
+    "max_price_diff": 12.685472214999999,
+    "mean_flow_weight": 3.679431020700354,
+    "active_regions": 21
+  },
+  "2024-03-31": {
+    "flow_count": 101,
+    "mean_price_diff": 3.678008348451029,
+    "max_price_diff": 12.955190328666667,
+    "mean_flow_weight": 3.678008348451029,
+    "active_regions": 21
+  },
+  "2024-04-30": {
+    "flow_count": 98,
+    "mean_price_diff": 4.10697241740388,
+    "max_price_diff": 14.195083113333332,
+    "mean_flow_weight": 4.10697241740388,
+    "active_regions": 21
+  },
+  "2024-05-31": {
+    "flow_count": 97,
+    "mean_price_diff": 4.427695998311216,
+    "max_price_diff": 15.757843392333333,
+    "mean_flow_weight": 4.427695998311216,
+    "active_regions": 21
+  }
+}
