@@ -3193,3 +3193,1332 @@
 2024-10-20 13:50:57 - INFO - Results saved to results/spatial_analysis_results.json.
 2024-10-20 13:50:57 - INFO - Residuals are present in the analysis results.
 2024-10-20 13:50:57 - INFO - Spatial analysis pipeline completed successfully.
+2024-10-22 08:59:26 - INFO - Loading GeoJSON data from project/data/processed/unified_data.geojson.
+2024-10-22 08:59:27 - DEBUG - Converted 'date' to datetime.
+2024-10-22 08:59:27 - INFO - 'region_id' column assigned using 'admin1'.
+2024-10-22 08:59:27 - INFO - Dropped 0 duplicate rows.
+2024-10-22 08:59:27 - INFO - GeoJSON data loaded with 21355 records.
+2024-10-22 08:59:27 - DEBUG - Columns in the dataset: Index(['admin1', 'commodity', 'date', 'price', 'usdprice', 'latitude',
+       'longitude', 'events', 'fatalities', 'population',
+       'population_percentage', 'exchange_rate_regime', 'conflict_intensity',
+       'conflict_intensity_weighted', 'conflict_intensity_normalized',
+       'conflict_intensity_lag1', 'conflict_intensity_lag2',
+       'conflict_intensity_lag3', 'geometry', 'region_id'],
+      dtype='object')
+2024-10-22 08:59:27 - INFO - Found 2432 duplicate entries.
+2024-10-22 08:59:27 - DEBUG - Duplicate entries:
+       admin1           commodity       date  ...  conflict_intensity_lag3                        geometry  region_id
+16304  sana'a  beans (kidney red) 2020-09-01  ...                 0.543734  POINT (444268.525 1683424.525)     sana'a
+16305  sana'a  beans (kidney red) 2020-09-01  ...                 0.087477  POINT (444268.525 1683424.525)     sana'a
+16306  sana'a  beans (kidney red) 2020-10-01  ...                 0.541284  POINT (444268.525 1683424.525)     sana'a
+16307  sana'a  beans (kidney red) 2020-10-01  ...                 0.230145  POINT (444268.525 1683424.525)     sana'a
+16308  sana'a  beans (kidney red) 2020-11-01  ...                 0.631726  POINT (444268.525 1683424.525)     sana'a
+...       ...                 ...        ...  ...                      ...                             ...        ...
+18731  sana'a         wheat flour 2024-03-01  ...                 0.230145  POINT (444268.525 1683424.525)     sana'a
+18732  sana'a         wheat flour 2024-04-01  ...                 0.210134  POINT (444268.525 1683424.525)     sana'a
+18733  sana'a         wheat flour 2024-04-01  ...                 0.340528  POINT (444268.525 1683424.525)     sana'a
+18734  sana'a         wheat flour 2024-05-01  ...                 0.246123  POINT (444268.525 1683424.525)     sana'a
+18735  sana'a         wheat flour 2024-05-01  ...                 0.253052  POINT (444268.525 1683424.525)     sana'a
+
+[2432 rows x 20 columns]
+2024-10-22 08:59:27 - INFO - Handled duplicates by averaging numeric columns and keeping first non-numeric values.
+2024-10-22 08:59:27 - INFO - Total groups to process for seasonal adjustment: 425
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: abyan, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: aden, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: al bayda, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: al dhale'e, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: al hudaydah, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: al jawf, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: al maharah, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: al mahwit, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: amanat al asimah, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: amran, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: dhamar, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: hadramaut, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: hajjah, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: ibb, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: lahj, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: marib, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: raymah, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: sana'a, Records: 46
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: shabwah, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (kidney red), Region: taizz, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (kidney red), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (kidney red), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: beans (white), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: beans (white), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: beans (white), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: eggs, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: eggs, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: eggs, Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: socotra, Records: 44
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: exchange rate (unofficial), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: exchange rate (unofficial), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: exchange rate (unofficial), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (diesel), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (diesel), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (diesel), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (gas), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (gas), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (gas), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: fuel (petrol-gasoline), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: fuel (petrol-gasoline), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: fuel (petrol-gasoline), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: al dhale'e, Records: 46
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: lentils, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: lentils, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: lentils, Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: aden, Records: 46
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: milling cost (wheat), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: milling cost (wheat), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: milling cost (wheat), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: oil (vegetable), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: oil (vegetable), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: oil (vegetable), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: onions, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: onions, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: onions, Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: peas (yellow, split), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: peas (yellow, split), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: peas (yellow, split), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: potatoes, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: potatoes, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: potatoes, Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: rice (imported), Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: rice (imported), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: rice (imported), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: salt, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: salt, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: salt, Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: sugar, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: sugar, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: sugar, Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: tomatoes, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: tomatoes, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: tomatoes, Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (non-qualified labour), Region: taizz, Records: 46
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (non-qualified labour), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (non-qualified labour), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wage (qualified labour), Region: taizz, Records: 46
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wage (qualified labour), Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wage (qualified labour), Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: socotra, Records: 45
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat, Region: taizz
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: abyan, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: abyan.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: abyan
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: aden, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: aden.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: aden
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: al bayda, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: al bayda.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: al bayda
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: al dhale'e, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: al dhale'e.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: al dhale'e
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: al hudaydah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: al hudaydah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: al hudaydah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: al jawf, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: al jawf.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: al jawf
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: al maharah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: al maharah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: al maharah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: al mahwit, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: al mahwit.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: al mahwit
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: amanat al asimah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: amanat al asimah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: amanat al asimah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: amran, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: amran.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: amran
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: dhamar, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: dhamar.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: dhamar
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: hadramaut, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: hadramaut.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: hadramaut
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: hajjah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: hajjah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: hajjah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: ibb, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: ibb.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: ibb
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: lahj, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: lahj.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: lahj
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: marib, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: marib.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: marib
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: raymah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: raymah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: raymah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: sana'a, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: sana'a.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: sana'a
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: shabwah, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: shabwah.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: shabwah
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: socotra, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: socotra.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: socotra
+2024-10-22 08:59:27 - DEBUG - Processing Commodity: wheat flour, Region: taizz, Records: 47
+2024-10-22 08:59:27 - DEBUG - Seasonal adjustment successful for Commodity: wheat flour, Region: taizz.
+2024-10-22 08:59:27 - DEBUG - Adjusted Commodity: wheat flour, Region: taizz
+2024-10-22 08:59:27 - INFO - Processed 425 out of 425 groups.
+2024-10-22 08:59:27 - INFO - Seasonal adjustment concatenated successfully.
+2024-10-22 08:59:27 - INFO - Applying moving average smoothing with window size 3.
+2024-10-22 08:59:27 - INFO - Smoothing applied successfully.
+2024-10-22 08:59:27 - INFO - Unified regime 'unified' created.
+2024-10-22 08:59:27 - INFO - Working exclusively with the unified regime: unified
+2024-10-22 08:59:27 - INFO - Found 21 unique commodities for the unified regime.
+2024-10-22 08:59:30 - INFO - Residuals aggregated successfully.
+2024-10-22 08:59:30 - INFO - No duplicate residual entries found after aggregation.
+2024-10-22 08:59:30 - INFO - Simplifying geometries to reduce GeoJSON size.
+2024-10-22 08:59:30 - INFO - Geometries simplified successfully.
+2024-10-22 08:59:30 - INFO - Optimizing data types for memory efficiency.
+2024-10-22 08:59:30 - INFO - Data types optimized successfully.
+2024-10-22 08:59:30 - INFO - Selecting essential columns for the final GeoJSON.
+2024-10-22 08:59:30 - INFO - Essential columns selected.
+2024-10-22 08:59:30 - INFO - Saving enhanced GeoJSON to 'project/data/processed/enhanced_unified_data_with_residual.geojson'.
+2024-10-22 08:59:30 - INFO - Enhanced GeoJSON saved successfully.
+2024-10-22 08:59:30 - DEBUG - Spatial weights matrix created using KNN with k=5.
+2024-10-22 08:59:33 - INFO - Spatial weights saved to results/spatial_weights/spatial_weights.json.
+2024-10-22 08:59:39 - INFO - Flow map saved to results/network_data/flow_maps.csv.
+2024-10-22 08:59:39 - INFO - Average prices saved to results/choropleth_data/average_prices.csv.
+2024-10-22 08:59:39 - INFO - Results saved to results/spatial_analysis_results.json.
+2024-10-22 08:59:39 - INFO - Residuals are present in the analysis results.
+2024-10-22 08:59:39 - INFO - Spatial analysis pipeline completed successfully.
