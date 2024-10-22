@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { getDataPath } from '../utils/dataPath';
-import { transformToWGS84 } from '../utils/coordinateTransform';
 import { mergeSpatialDataWithMapping } from '../utils/mergeSpatialData';
 import { regionMapping, excludedRegions } from '../utils/regionMapping';
-import { parseISO } from 'date-fns'; // Ensure date-fns is installed: npm install date-fns
+import { parseISO } from 'date-fns';
+import { transformToWGS84 } from '../utils/coordinateTransform2'; // Use coordinateTransform2.js
 
 const useSpatialData = () => {
   const [state, setState] = useState({
@@ -12,6 +12,7 @@ const useSpatialData = () => {
     geoBoundaries: null,
     spatialWeights: null,
     flowMaps: null,
+    networkData: null,
     analysisResults: null,
     loading: true,
     error: null,
@@ -25,13 +26,22 @@ const useSpatialData = () => {
 
     const fetchSpatialData = async () => {
       try {
+        console.log('Starting to fetch spatial data...');
+
+        // Define the paths to your data files
         const geoBoundariesPath = getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson');
         const geoJsonURL = getDataPath('enhanced_unified_data_with_residual.geojson');
         const spatialWeightsURL = getDataPath('spatial_weights/transformed_spatial_weights.json');
         const flowMapsURL = getDataPath('network_data/flow_maps.csv');
         const analysisResultsURL = getDataPath('spatial_analysis_results.json');
 
-        console.log('Fetching data from:', geoBoundariesPath, geoJsonURL, spatialWeightsURL, flowMapsURL, analysisResultsURL);
+        console.log('Fetching data from:', {
+          geoBoundariesPath,
+          geoJsonURL,
+          spatialWeightsURL,
+          flowMapsURL,
+          analysisResultsURL,
+        });
 
         // Fetch all data concurrently
         const [
@@ -49,6 +59,14 @@ const useSpatialData = () => {
         ]);
 
         // Check for successful responses
+        console.log('Checking responses:', {
+          geoBoundariesResponseStatus: geoBoundariesResponse.status,
+          geoJsonResponseStatus: geoJsonResponse.status,
+          weightsResponseStatus: weightsResponse.status,
+          flowMapsResponseStatus: flowMapsResponse.status,
+          analysisResultsResponseStatus: analysisResultsResponse.status,
+        });
+
         if (!geoBoundariesResponse.ok) throw new Error('Failed to fetch GeoBoundaries data.');
         if (!geoJsonResponse.ok) throw new Error('Failed to fetch GeoJSON data.');
         if (!weightsResponse.ok) throw new Error('Failed to fetch spatial weights data.');
@@ -56,6 +74,7 @@ const useSpatialData = () => {
         if (!analysisResultsResponse.ok) throw new Error('Failed to fetch analysis results.');
 
         // Parse the fetched data
+        console.log('Parsing responses...');
         const [
           geoBoundariesData,
           geoJsonData,
@@ -70,56 +89,76 @@ const useSpatialData = () => {
           analysisResultsResponse.json(),
         ]);
 
+        console.log('Parsed data:', {
+          geoBoundariesData,
+          geoJsonData,
+          weightsData,
+          flowMapsTextLength: flowMapsText.length,
+          analysisResultsData,
+        });
+
         // Parse Flow Maps CSV using PapaParse
-        const { data: flowMapsData, errors } = Papa.parse(flowMapsText, {
+        console.log('Parsing flow maps CSV using PapaParse...');
+        const { data: flowMapsData, errors: flowMapsErrors } = Papa.parse(flowMapsText, {
           header: true,
           skipEmptyLines: true,
           dynamicTyping: true,
         });
 
-        if (errors.length > 0) {
-          throw new Error(`Error parsing flow maps CSV: ${errors[0].message}`);
+        if (flowMapsErrors.length > 0) {
+          throw new Error(`Error parsing flow maps CSV: ${flowMapsErrors[0].message}`);
         }
 
-        console.log('Flow maps data:', flowMapsData);
+        console.log('Flow maps data parsed successfully:', { flowMapsDataLength: flowMapsData.length });
 
         // Transform Flow Maps Coordinates to WGS84
+        console.log('Transforming flow maps coordinates to WGS84...');
         const transformedFlowMapsData = flowMapsData
           .map((flow, index) => {
-            if (
-              typeof flow.source_lng !== 'number' ||
-              typeof flow.source_lat !== 'number' ||
-              typeof flow.target_lng !== 'number' ||
-              typeof flow.target_lat !== 'number'
-            ) {
-              console.warn(`Invalid coordinates in flow map entry at index ${index}:`, flow);
+            try {
+              // Add date parsing and validation
+              const flowDate = new Date(flow.date);
+              if (isNaN(flowDate.getTime())) {
+                console.warn(`Invalid date in flow maps entry at index ${index}`);
+                return null;
+              }
+
+              const [sourceLng, sourceLat] = transformToWGS84(flow.source_lng, flow.source_lat);
+              const [targetLng, targetLat] = transformToWGS84(flow.target_lng, flow.target_lat);
+
+              return {
+                ...flow,
+                date: flowDate, // Store as Date object
+                source_lat: sourceLat,
+                source_lng: sourceLng,
+                target_lat: targetLat,
+                target_lng: targetLng,
+              };
+            } catch (error) {
+              console.error(`Error processing flow map entry at index ${index}:`, error);
               return null;
             }
-
-            const [sourceLng, sourceLat] = transformToWGS84(flow.source_lng, flow.source_lat);
-            const [targetLng, targetLat] = transformToWGS84(flow.target_lng, flow.target_lat);
-            return {
-              ...flow,
-              source_lat: sourceLat,
-              source_lng: sourceLng,
-              target_lat: targetLat,
-              target_lng: targetLng,
-            };
           })
           .filter(flow => flow !== null);
 
+        console.log('Flow maps coordinates transformed successfully:', { transformedFlowMapsData });
+
+        // Since you don't have network nodes data, we'll set networkData to an empty array
+        const transformedNetworkData = [];
+
         // Merge GeoBoundaries and Enhanced GeoJSON Data
+        console.log('Merging GeoBoundaries and GeoJSON data...');
         const mergedData = mergeSpatialDataWithMapping(
           geoBoundariesData,
           geoJsonData,
           regionMapping,
           excludedRegions
         );
-        
-        // Log mergedData to confirm the result
-        console.log('Merged GeoJSON Data:', mergedData);
+
+        console.log('Merged GeoJSON Data:', { mergedData });
 
         // Extract unique months from mergedData.features
+        console.log('Extracting unique months from merged GeoJSON data...');
         const dates = mergedData.features
           .map(feature => feature.properties.date)
           .filter(dateStr => {
@@ -143,14 +182,16 @@ const useSpatialData = () => {
           .map(monthStr => new Date(`${monthStr}-01`))
           .sort((a, b) => a - b);
 
-        console.log('Unique Months:', uniqueMonthDates);
+        console.log('Unique Months extracted:', { uniqueMonthDates });
 
         // Update state with merged data and unique months
+        console.log('Updating state with loaded data...');
         setState({
           geoData: mergedData,
           geoBoundaries: geoBoundariesData,
           spatialWeights: weightsData,
           flowMaps: transformedFlowMapsData,
+          networkData: transformedNetworkData, // Empty array since we don't have network nodes data
           analysisResults: analysisResultsData,
           loading: false,
           error: null,
@@ -174,6 +215,7 @@ const useSpatialData = () => {
     fetchSpatialData();
 
     return () => {
+      console.log('Aborting fetch requests if any');
       controller.abort();
     };
   }, []);
