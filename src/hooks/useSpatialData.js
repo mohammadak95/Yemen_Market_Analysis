@@ -26,22 +26,12 @@ const useSpatialData = () => {
 
     const fetchSpatialData = async () => {
       try {
-        console.log('Starting to fetch spatial data...');
-
-        // Define the paths to your data files
+        // Define paths
         const geoBoundariesPath = getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson');
         const geoJsonURL = getDataPath('enhanced_unified_data_with_residual.geojson');
         const spatialWeightsURL = getDataPath('spatial_weights/transformed_spatial_weights.json');
-        const flowMapsURL = getDataPath('network_data/flow_maps.csv');
+        const flowMapsURL = getDataPath('network_data/time_varying_flows.csv');
         const analysisResultsURL = getDataPath('spatial_analysis_results.json');
-
-        console.log('Fetching data from:', {
-          geoBoundariesPath,
-          geoJsonURL,
-          spatialWeightsURL,
-          flowMapsURL,
-          analysisResultsURL,
-        });
 
         // Fetch all data concurrently
         const [
@@ -59,22 +49,13 @@ const useSpatialData = () => {
         ]);
 
         // Check for successful responses
-        console.log('Checking responses:', {
-          geoBoundariesResponseStatus: geoBoundariesResponse.status,
-          geoJsonResponseStatus: geoJsonResponse.status,
-          weightsResponseStatus: weightsResponse.status,
-          flowMapsResponseStatus: flowMapsResponse.status,
-          analysisResultsResponseStatus: analysisResultsResponse.status,
-        });
-
         if (!geoBoundariesResponse.ok) throw new Error('Failed to fetch GeoBoundaries data.');
         if (!geoJsonResponse.ok) throw new Error('Failed to fetch GeoJSON data.');
         if (!weightsResponse.ok) throw new Error('Failed to fetch spatial weights data.');
         if (!flowMapsResponse.ok) throw new Error('Failed to fetch flow maps data.');
         if (!analysisResultsResponse.ok) throw new Error('Failed to fetch analysis results.');
 
-        // Parse the fetched data
-        console.log('Parsing responses...');
+        // Parse responses
         const [
           geoBoundariesData,
           geoJsonData,
@@ -89,16 +70,7 @@ const useSpatialData = () => {
           analysisResultsResponse.json(),
         ]);
 
-        console.log('Parsed data:', {
-          geoBoundariesData,
-          geoJsonData,
-          weightsData,
-          flowMapsTextLength: flowMapsText.length,
-          analysisResultsData,
-        });
-
         // Parse Flow Maps CSV using PapaParse
-        console.log('Parsing flow maps CSV using PapaParse...');
         const { data: flowMapsData, errors: flowMapsErrors } = Papa.parse(flowMapsText, {
           header: true,
           skipEmptyLines: true,
@@ -109,10 +81,7 @@ const useSpatialData = () => {
           throw new Error(`Error parsing flow maps CSV: ${flowMapsErrors[0].message}`);
         }
 
-        console.log('Flow maps data parsed successfully:', { flowMapsDataLength: flowMapsData.length });
-
         // Transform Flow Maps Coordinates to WGS84
-        console.log('Transforming flow maps coordinates to WGS84...');
         const transformedFlowMapsData = flowMapsData
           .map((flow, index) => {
             try {
@@ -128,7 +97,7 @@ const useSpatialData = () => {
 
               return {
                 ...flow,
-                date: flowDate, // Store as Date object
+                date: flowDate,
                 source_lat: sourceLat,
                 source_lng: sourceLng,
                 target_lat: targetLat,
@@ -141,13 +110,10 @@ const useSpatialData = () => {
           })
           .filter(flow => flow !== null);
 
-        console.log('Flow maps coordinates transformed successfully:', { transformedFlowMapsData });
-
-        // Since you don't have network nodes data, we'll set networkData to an empty array
+        // Empty network data (assuming)
         const transformedNetworkData = [];
 
         // Merge GeoBoundaries and Enhanced GeoJSON Data
-        console.log('Merging GeoBoundaries and GeoJSON data...');
         const mergedData = mergeSpatialDataWithMapping(
           geoBoundariesData,
           geoJsonData,
@@ -155,20 +121,13 @@ const useSpatialData = () => {
           excludedRegions
         );
 
-        console.log('Merged GeoJSON Data:', { mergedData });
-
-        // Extract unique months from mergedData.features
-        console.log('Extracting unique months from merged GeoJSON data...');
+        // Extract unique months from merged data
         const dates = mergedData.features
           .map(feature => feature.properties.date)
           .filter(dateStr => {
             if (!dateStr) return false;
             const parsedDate = parseISO(dateStr);
-            if (isNaN(parsedDate.getTime())) {
-              console.warn(`Invalid date format: ${dateStr}`);
-              return false;
-            }
-            return true;
+            return !isNaN(parsedDate.getTime());
           });
 
         const uniqueMonthSet = new Set(
@@ -182,27 +141,21 @@ const useSpatialData = () => {
           .map(monthStr => new Date(`${monthStr}-01`))
           .sort((a, b) => a - b);
 
-        console.log('Unique Months extracted:', { uniqueMonthDates });
-
         // Update state with merged data and unique months
-        console.log('Updating state with loaded data...');
         setState({
           geoData: mergedData,
           geoBoundaries: geoBoundariesData,
           spatialWeights: weightsData,
           flowMaps: transformedFlowMapsData,
-          networkData: transformedNetworkData, // Empty array since we don't have network nodes data
+          networkData: transformedNetworkData,
           analysisResults: analysisResultsData,
           loading: false,
           error: null,
         });
 
         setUniqueMonths(uniqueMonthDates.length > 0 ? uniqueMonthDates : []);
-
-        console.log('Spatial data loaded and merged successfully');
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('Error fetching spatial data:', err);
           setState(prevState => ({
             ...prevState,
             loading: false,
@@ -215,7 +168,6 @@ const useSpatialData = () => {
     fetchSpatialData();
 
     return () => {
-      console.log('Aborting fetch requests if any');
       controller.abort();
     };
   }, []);

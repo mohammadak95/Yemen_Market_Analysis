@@ -96,6 +96,9 @@ class TimeVaryingFlowGenerator:
         """Calculate flows for a specific time period."""
         flows = []
         
+        # Set time_period to the start of the month
+        time_period = time_period.normalize().replace(day=1)
+        
         for idx in range(len(self.unique_regions)):
             source_region = self.unique_regions.iloc[idx]
             source_id = source_region['region_id']

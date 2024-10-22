@@ -505,11 +505,10 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
               </Typography>
               <CombinedFlowNetworkMap
                 flowMaps={flowMaps}
-                networkData={networkData} // Ensure networkData is passed
                 selectedCommodity={selectedCommodity}
                 dateRange={[
-                  sortedUniqueMonths[0],
-                  sortedUniqueMonths[sortedUniqueMonths.length - 1],
+                  new Date(sortedUniqueMonths[0]),
+                  new Date(sortedUniqueMonths[sortedUniqueMonths.length - 1])
                 ]}
               />
             </>
