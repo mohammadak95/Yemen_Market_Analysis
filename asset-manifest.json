@@ -1,11 +1,11 @@
 {
   "files": {
     "main.css": "/Yemen_Market_Analysis/static/css/main.2226b50f.css",
-    "main.js": "/Yemen_Market_Analysis/static/js/main.8194d6ab.js",
+    "main.js": "/Yemen_Market_Analysis/static/js/main.6f7511b1.js",
     "static/js/68.5adf95b4.chunk.js": "/Yemen_Market_Analysis/static/js/68.5adf95b4.chunk.js",
     "static/js/980.cb04bb6d.chunk.js": "/Yemen_Market_Analysis/static/js/980.cb04bb6d.chunk.js",
     "static/css/505.188570ed.chunk.css": "/Yemen_Market_Analysis/static/css/505.188570ed.chunk.css",
-    "static/js/505.07547566.chunk.js": "/Yemen_Market_Analysis/static/js/505.07547566.chunk.js",
+    "static/js/505.5aa61641.chunk.js": "/Yemen_Market_Analysis/static/js/505.5aa61641.chunk.js",
     "static/js/48.28dfb4f2.chunk.js": "/Yemen_Market_Analysis/static/js/48.28dfb4f2.chunk.js",
     "static/js/471.cfe31d5c.chunk.js": "/Yemen_Market_Analysis/static/js/471.cfe31d5c.chunk.js",
     "static/js/461.2f3cfa6f.chunk.js": "/Yemen_Market_Analysis/static/js/461.2f3cfa6f.chunk.js",
@@ -74,11 +74,11 @@
     "static/media/KaTeX_Size3-Regular.woff2": "/Yemen_Market_Analysis/static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "/Yemen_Market_Analysis/index.html",
     "main.2226b50f.css.map": "/Yemen_Market_Analysis/static/css/main.2226b50f.css.map",
-    "main.8194d6ab.js.map": "/Yemen_Market_Analysis/static/js/main.8194d6ab.js.map",
+    "main.6f7511b1.js.map": "/Yemen_Market_Analysis/static/js/main.6f7511b1.js.map",
     "68.5adf95b4.chunk.js.map": "/Yemen_Market_Analysis/static/js/68.5adf95b4.chunk.js.map",
     "980.cb04bb6d.chunk.js.map": "/Yemen_Market_Analysis/static/js/980.cb04bb6d.chunk.js.map",
     "505.188570ed.chunk.css.map": "/Yemen_Market_Analysis/static/css/505.188570ed.chunk.css.map",
-    "505.07547566.chunk.js.map": "/Yemen_Market_Analysis/static/js/505.07547566.chunk.js.map",
+    "505.5aa61641.chunk.js.map": "/Yemen_Market_Analysis/static/js/505.5aa61641.chunk.js.map",
     "48.28dfb4f2.chunk.js.map": "/Yemen_Market_Analysis/static/js/48.28dfb4f2.chunk.js.map",
     "471.cfe31d5c.chunk.js.map": "/Yemen_Market_Analysis/static/js/471.cfe31d5c.chunk.js.map",
     "461.2f3cfa6f.chunk.js.map": "/Yemen_Market_Analysis/static/js/461.2f3cfa6f.chunk.js.map",
@@ -88,6 +88,6 @@
   },
   "entrypoints": [
     "static/css/main.2226b50f.css",
-    "static/js/main.8194d6ab.js"
+    "static/js/main.6f7511b1.js"
   ]
 }
