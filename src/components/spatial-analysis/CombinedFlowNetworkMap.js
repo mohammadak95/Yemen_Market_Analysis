@@ -16,6 +16,9 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
   const networkLayerGroup = useRef(null);
   const svgRef = useRef(null);
 
+  // Ref to store the current top-left point of the SVG overlay
+  const overlayTopLeft = useRef({ x: 0, y: 0 });
+
   // Utility function for coordinate validation
   const validateCoordinates = (lat, lng) => {
     const validLat = parseFloat(lat);
@@ -34,14 +37,20 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
     if (!mapInstance.current || !svgRef.current) return;
     
     const bounds = mapInstance.current.getBounds();
-    const topLeft = mapInstance.current.latLngToLayerPoint(bounds.getNorthWest());
-    const bottomRight = mapInstance.current.latLngToLayerPoint(bounds.getSouthEast());
+    const topLeftPoint = mapInstance.current.latLngToLayerPoint(bounds.getNorthWest());
+    const bottomRightPoint = mapInstance.current.latLngToLayerPoint(bounds.getSouthEast());
+
+    // Update the overlay's top-left reference
+    overlayTopLeft.current = {
+      x: topLeftPoint.x,
+      y: topLeftPoint.y
+    };
 
     svgRef.current.svg
-      .attr("width", bottomRight.x - topLeft.x)
-      .attr("height", bottomRight.y - topLeft.y)
-      .style("left", `${topLeft.x}px`)
-      .style("top", `${topLeft.y}px`);
+      .attr("width", bottomRightPoint.x - topLeftPoint.x)
+      .attr("height", bottomRightPoint.y - topLeftPoint.y)
+      .style("left", `${topLeftPoint.x}px`)
+      .style("top", `${topLeftPoint.y}px`);
   };
 
   // Convert dateRange to timestamps for the slider
@@ -94,7 +103,8 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
       // Initialize SVG overlay
       const svg = d3.select(mapInstance.current.getPanes().overlayPane)
         .append("svg")
-        .attr("class", "flow-overlay");
+        .attr("class", "flow-overlay")
+        .style("position", "absolute");
       const g = svg.append("g").attr("class", "leaflet-zoom-hide");
       svgRef.current = { svg, g };
 
@@ -206,6 +216,25 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
       .bindPopup(`<strong>Market: ${node.name}</strong>`);
     });
 
+    // Tooltip setup
+    const tooltip = svgRef.current.g.append("g")
+      .attr("class", "tooltip")
+      .style("display", "none");
+
+    tooltip.append("rect")
+      .attr("width", 200)
+      .attr("height", 60)
+      .attr("fill", "white")
+      .attr("stroke", theme.palette.divider)
+      .attr("rx", 4)
+      .attr("ry", 4);
+
+    const tooltipText = tooltip.append("text")
+      .attr("x", 10)
+      .attr("y", 20)
+      .style("font-size", "12px")
+      .style("fill", theme.palette.text.primary);
+
     // Draw flow lines with coordinate validation
     const paths = svgRef.current.g.selectAll("path")
       .data(currentFlows)
@@ -217,8 +246,18 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
         
         if (!sourceCoords || !targetCoords) return null;
 
-        const source = mapInstance.current.latLngToLayerPoint(sourceCoords);
-        const target = mapInstance.current.latLngToLayerPoint(targetCoords);
+        const sourcePoint = mapInstance.current.latLngToLayerPoint(sourceCoords);
+        const targetPoint = mapInstance.current.latLngToLayerPoint(targetCoords);
+
+        // Calculate relative positions
+        const relativeSource = {
+          x: sourcePoint.x - overlayTopLeft.current.x,
+          y: sourcePoint.y - overlayTopLeft.current.y
+        };
+        const relativeTarget = {
+          x: targetPoint.x - overlayTopLeft.current.x,
+          y: targetPoint.y - overlayTopLeft.current.y
+        };
 
         // Debug log for the flow being drawn
         if (isDebugMode) {
@@ -227,11 +266,11 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
             to: flow.target,
             sourceCoords,
             targetCoords,
-            screenPoints: { source, target }
+            screenPoints: { source: relativeSource, target: relativeTarget }
           });
         }
 
-        return `M${source.x},${source.y}L${target.x},${target.y}`;
+        return `M${relativeSource.x},${relativeSource.y}L${relativeTarget.x},${relativeTarget.y}`;
       })
       .style("stroke", theme.palette.secondary.main)
       .style("stroke-width", flow => Math.max(2, Math.sqrt(flow.flow_weight) * 2)) // Increased minimum width
@@ -253,26 +292,7 @@ Flow Weight: ${flow.flow_weight.toFixed(2)}`);
         tooltip.style("display", "none");
       });
 
-    // Tooltip setup
-    const tooltip = svgRef.current.g.append("g")
-      .attr("class", "tooltip")
-      .style("display", "none");
-
-    tooltip.append("rect")
-      .attr("width", 200)
-      .attr("height", 60)
-      .attr("fill", "white")
-      .attr("stroke", theme.palette.divider)
-      .attr("rx", 4)
-      .attr("ry", 4);
-
-    const tooltipText = tooltip.append("text")
-      .attr("x", 10)
-      .attr("y", 20)
-      .style("font-size", "12px")
-      .style("fill", theme.palette.text.primary);
-
-    // Update flow lines on map interactions
+    // Function to update flow lines on map interactions
     const updateElements = () => {
       paths.attr("d", flow => {
         const sourceCoords = validateCoordinates(flow.source_lat, flow.source_lng);
@@ -280,10 +300,20 @@ Flow Weight: ${flow.flow_weight.toFixed(2)}`);
         
         if (!sourceCoords || !targetCoords) return null;
 
-        const source = mapInstance.current.latLngToLayerPoint(sourceCoords);
-        const target = mapInstance.current.latLngToLayerPoint(targetCoords);
-        
-        return `M${source.x},${source.y}L${target.x},${target.y}`;
+        const sourcePoint = mapInstance.current.latLngToLayerPoint(sourceCoords);
+        const targetPoint = mapInstance.current.latLngToLayerPoint(targetCoords);
+
+        // Calculate relative positions
+        const relativeSource = {
+          x: sourcePoint.x - overlayTopLeft.current.x,
+          y: sourcePoint.y - overlayTopLeft.current.y
+        };
+        const relativeTarget = {
+          x: targetPoint.x - overlayTopLeft.current.x,
+          y: targetPoint.y - overlayTopLeft.current.y
+        };
+
+        return `M${relativeSource.x},${relativeSource.y}L${relativeTarget.x},${relativeTarget.y}`;
       });
     };
 
