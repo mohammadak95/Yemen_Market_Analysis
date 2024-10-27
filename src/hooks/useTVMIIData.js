@@ -1,7 +1,7 @@
 // src/hooks/useTVMIIData.js
 
 import { useState, useEffect } from 'react';
-import { fetchJson } from '../utils/fetchJson';
+import { getDataPath } from '../utils/dataPath';
 
 /**
  * Custom hook to fetch TV-MII data.
@@ -19,20 +19,31 @@ const useTVMIIData = () => {
       setStatus('loading');
 
       try {
-        const [fetchedTvmiiData, fetchedMarketPairsData] = await Promise.all([
-          fetchJson('tv_mii_results.json'),
-          fetchJson('tv_mii_market_results.json'),
+        const tvmiiPath = getDataPath('tv_mii_results.json');
+        const marketPairsPath = getDataPath('tv_mii_market_results.json');
+
+        const [tvmiiResponse, marketPairsResponse] = await Promise.all([
+          fetch(tvmiiPath),
+          fetch(marketPairsPath),
         ]);
 
-        // Convert the 'date' strings to JavaScript Date objects
-        const processedTvmiiData = fetchedTvmiiData.map(item => ({
+        if (!tvmiiResponse.ok) throw new Error(`HTTP error! status: ${tvmiiResponse.status}`);
+        if (!marketPairsResponse.ok) throw new Error(`HTTP error! status: ${marketPairsResponse.status}`);
+
+        const fetchedTvmiiData = await tvmiiResponse.json();
+        const fetchedMarketPairsData = await marketPairsResponse.json();
+
+        // Process and normalize data
+        const processedTvmiiData = fetchedTvmiiData.map((item) => ({
           ...item,
           date: new Date(item.date),
+          tvmii: item.tv_mii || item.tvmii || item.value,
         }));
 
-        const processedMarketPairsData = fetchedMarketPairsData.map(item => ({
+        const processedMarketPairsData = fetchedMarketPairsData.map((item) => ({
           ...item,
           date: new Date(item.date),
+          tvmii: item.tv_mii || item.tvmii || item.value,
         }));
 
         // Update state with fetched data

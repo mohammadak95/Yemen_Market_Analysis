@@ -5,7 +5,7 @@ const path = require('path');
 
 const sourceDir = path.join(__dirname, '../results');
 const publicSourceDir = path.join(__dirname, '../public/results');
-const destDir = path.join(__dirname, '../build/results');
+const destDir = path.join(__dirname, '../public/data'); // Copy data into 'public/data' for serving
 
 const ensureDirectoryExistence = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
@@ -40,7 +40,9 @@ const copyRecursiveSync = (source, destination) => {
 
 const prepareData = () => {
   try {
+    // Copy all files from 'results' to 'public/data'
     copyRecursiveSync(sourceDir, destDir);
+    // Copy all files from 'public/results' to 'public/data'
     copyRecursiveSync(publicSourceDir, destDir);
 
     const filesToEnsure = [
@@ -64,7 +66,7 @@ const prepareData = () => {
       'tv_mii_results.json'
     ];
 
-    filesToEnsure.forEach(file => {
+    filesToEnsure.forEach((file) => {
       const sourcePath = path.join(sourceDir, file);
       const publicSourcePath = path.join(publicSourceDir, file);
       const destPath = path.join(destDir, file);

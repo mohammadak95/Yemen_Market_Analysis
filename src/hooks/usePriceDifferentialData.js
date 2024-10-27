@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { getDataPath } from '../utils/dataPath';
 
-const usePriceDifferentialData = () => {
+const usePriceDifferentialData = (selectedCommodity) => {
   const [data, setData] = useState(null);
   const [markets, setMarkets] = useState([]);
+  const [commodities, setCommodities] = useState([]);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
 
@@ -14,42 +15,59 @@ const usePriceDifferentialData = () => {
       setStatus('loading');
       try {
         const path = getDataPath('price_diff_results/price_differential_results.json');
-        console.log('Fetching price differential data from:', path);
-
-        const response = await fetch(path, {
-          headers: {
-            Accept: 'application/json',
-          },
-        });
-
-        console.log('Price differential data response status:', response.status);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const response = await fetch(path);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const jsonData = await response.json();
-        console.log('Parsed price differential data:', jsonData);
 
-        // Extract markets data
-        const marketsData = jsonData.markets || {};
-        const marketsList = Object.keys(marketsData);
+        // Extract commodities
+        const commoditiesSet = new Set();
+        Object.values(jsonData.markets || {}).forEach((marketData) => {
+          const commodityResults = marketData.commodity_results || {};
+          Object.keys(commodityResults).forEach((commodity) => {
+            commoditiesSet.add(commodity);
+          });
+        });
 
-        setData(marketsData);
-        setMarkets(marketsList);
+        setCommodities(Array.from(commoditiesSet));
+
+        // Process and filter data based on the selected commodity
+        const filteredData = processPriceDifferentialData(jsonData, selectedCommodity);
+
+        setData(filteredData.data);
+        setMarkets(filteredData.markets);
         setStatus('succeeded');
       } catch (err) {
-        console.error('Error fetching price differential data:', err);
-        console.error('Error details:', err.message);
         setError(err.message);
         setStatus('failed');
       }
     };
 
     fetchData();
-  }, []);
+  }, [selectedCommodity]);
 
-  return { data, markets, status, error };
+  return { data, markets, commodities, status, error };
+};
+
+const processPriceDifferentialData = (jsonData, commodity) => {
+  const marketsData = jsonData.markets || {};
+  const marketsList = Object.keys(marketsData);
+
+  // Filter data for the selected commodity
+  const filteredData = {};
+  marketsList.forEach((market) => {
+    const commodityResults = marketsData[market].commodity_results[commodity];
+    if (commodityResults) {
+      filteredData[market] = {
+        ...marketsData[market],
+        commodity_results: {
+          [commodity]: commodityResults,
+        },
+      };
+    }
+  });
+
+  return { data: filteredData, markets: Object.keys(filteredData) };
 };
 
 export default usePriceDifferentialData;

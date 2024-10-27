@@ -31,3 +31,6 @@ build_dashboard.txt
 /node_modules
 
 /.git
+
+# Environment Variables
+.env.local

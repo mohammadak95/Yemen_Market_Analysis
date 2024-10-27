@@ -1,16 +1,49 @@
-// config-overrides.js
-const { override, addWebpackModuleRule } = require('customize-cra');
+const { override, addWebpackModuleRule, addWebpackPlugin, adjustStyleLoaders } = require('customize-cra');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = override(
-  // Add a rule for handling SVGs with @svgr/webpack
+  // SVG handling with @svgr/webpack
   addWebpackModuleRule({
     test: /\.svg$/,
     use: ['@svgr/webpack'],
   }),
+
+  // Handle Leaflet assets and other static files
+  addWebpackPlugin(
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'node_modules/leaflet/dist/images',
+          to: 'static/images',
+        },
+        // Add other static assets if needed
+      ],
+    })
+  ),
+
+  // Configure style loaders with source maps
+  adjustStyleLoaders(({ use: [, css, postcss, resolve, processor] }) => {
+    // Enable source maps for all style loaders
+    if (css) {
+      css.options.sourceMap = true;
+    }
+    if (postcss) {
+      postcss.options.sourceMap = true;
+    }
+    if (processor && processor.loader.includes('sass-loader')) {
+      processor.options.sourceMap = true;
+    }
+  }),
+
+  // Update webpack config with additional customizations
   (config) => {
-    // Ensure postcss-loader is updated and properly configured
-    const postcssLoader = config.module.rules.find((rule) =>
-      rule.oneOf && rule.oneOf.some((r) => r.use && r.use.some((u) => u.loader && u.loader.includes('postcss-loader')))
+    // Find and update PostCSS loader configuration
+    const postcssLoader = config.module.rules.find(
+      (rule) =>
+        rule.oneOf &&
+        rule.oneOf.some(
+          (r) => r.use && r.use.some((u) => u.loader && u.loader.includes('postcss-loader'))
+        )
     );
 
     if (postcssLoader) {
@@ -21,9 +54,20 @@ module.exports = override(
               use.options = {
                 postcssOptions: {
                   plugins: [
-                    require('autoprefixer'), // Add other PostCSS plugins if needed
+                    'postcss-flexbugs-fixes',
+                    [
+                      'postcss-preset-env',
+                      {
+                        autoprefixer: {
+                          flexbox: 'no-2009',
+                        },
+                        stage: 3,
+                      },
+                    ],
+                    'autoprefixer',
                   ],
                 },
+                sourceMap: true,
               };
             }
           });
@@ -31,8 +75,65 @@ module.exports = override(
       });
     }
 
-    // Update css-select and nth-check in existing rules if necessary
-    // (Assuming you've addressed them via overrides)
+    // Update resolve aliases for better module resolution
+    config.resolve = {
+      ...config.resolve,
+      fallback: {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+      },
+      alias: {
+        ...config.resolve.alias,
+        // Add any additional aliases here
+      },
+    };
+
+    // Configure output publicPath for GitHub Pages
+    if (process.env.PUBLIC_URL) {
+      config.output.publicPath = process.env.PUBLIC_URL + '/';
+    }
+
+    // Add support for source maps in development
+    if (process.env.NODE_ENV === 'development') {
+      config.devtool = 'source-map';
+    }
+
+    // Optimize chunks for better loading performance
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        name: false,
+        cacheGroups: {
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            priority: -10,
+            reuseExistingChunk: true,
+          },
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+        },
+      },
+    };
+
+    // Add rule for handling Leaflet marker images
+    config.module.rules.push({
+      test: /\.(png|jpe?g|gif)$/i,
+      include: /node_modules\/leaflet/,
+      use: [
+        {
+          loader: 'file-loader',
+          options: {
+            name: 'static/media/[name].[hash:8].[ext]',
+          },
+        },
+      ],
+    });
 
     return config;
   }
