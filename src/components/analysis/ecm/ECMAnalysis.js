@@ -27,13 +27,21 @@ import ECMResults from './ECMResults';
 import ECMTutorial from './ECMTutorial';
 import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
 
+/**
+ * ECMAnalysis Component
+ * 
+ * @param {string} selectedCommodity - The commodity selected by the user for analysis.
+ * @param {number} windowWidth - The current width of the browser window for responsive design.
+ */
 const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
   const isMobile = windowWidth < theme.breakpoints.values.sm;
 
+  // State for analysis type and direction
   const [analysisType, setAnalysisType] = useState('unified');
   const [direction, setDirection] = useState('northToSouth');
 
+  // Fetch ECM data using custom hook
   const {
     unifiedData,
     unifiedStatus,
@@ -45,8 +53,12 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   const { getTechnicalTooltip } = useTechnicalHelp('ecm');
 
+  // State to hold the selected data based on commodity and analysis type
   const [selectedData, setSelectedData] = useState(null);
 
+  /**
+   * Effect to update selectedData whenever analysisType, direction, or data changes.
+   */
   useEffect(() => {
     if (analysisType === 'unified' && unifiedStatus === 'succeeded' && unifiedData) {
       const foundData = unifiedData.find(
@@ -76,26 +88,68 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     direction,
   ]);
 
+  /**
+   * Function to handle CSV download of the selected ECM data.
+   */
   const handleDownloadCsv = () => {
     if (!selectedData) return;
 
-    const csv = jsonToCsv([selectedData]);
+    // Prepare data for CSV. Ensure that alpha, beta, gamma are included.
+    const {
+      commodity,
+      regime,
+      aic,
+      bic,
+      hqic,
+      alpha,
+      beta,
+      gamma,
+      // Include other fields as necessary
+      // For example, diagnostics, irf, etc., can be nested or flattened based on jsonToCsv implementation
+    } = selectedData;
+
+    const csvData = [{
+      commodity,
+      regime,
+      aic,
+      bic,
+      hqic,
+      alpha,
+      beta,
+      gamma,
+      // Add other fields as needed
+    }];
+
+    const csv = jsonToCsv(csvData); // Ensure jsonToCsv can handle nested objects or adjust accordingly
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     saveAs(blob, `${selectedCommodity}_ECM_Analysis.csv`);
   };
 
+  /**
+   * Handler for changing the analysis type (unified or directional).
+   */
   const handleAnalysisTypeChange = (event, newAnalysisType) => {
     if (newAnalysisType) {
       setAnalysisType(newAnalysisType);
+      // Reset direction when switching to unified
+      if (newAnalysisType === 'unified') {
+        setDirection('northToSouth'); // Default direction or maintain previous state
+      }
     }
   };
 
+  /**
+   * Handler for changing the direction in directional analysis.
+   */
   const handleDirectionChange = (event, newDirection) => {
     if (newDirection) {
       setDirection(newDirection);
     }
   };
 
+  /**
+   * Conditional rendering based on data fetching status and availability.
+   */
   if (unifiedStatus === 'loading' || directionalStatus === 'loading') {
     return (
       <Box display="flex" flexDirection="column" alignItems="center" minHeight="200px" mt={4}>

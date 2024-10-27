@@ -1,8 +1,12 @@
-// sr./hooks/useECMData.js
+// src/hooks/useECMData.js
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDataPath } from '../utils/dataPath';
 
+/**
+ * Custom hook to fetch and process ECM data.
+ * It handles both unified and directional analyses.
+ */
 export const useECMData = () => {
   const [unifiedData, setUnifiedData] = useState(null);
   const [unifiedStatus, setUnifiedStatus] = useState('idle');
@@ -14,6 +18,10 @@ export const useECMData = () => {
 
   const fetchInProgress = useRef(false);
 
+  /**
+   * Fetches JSON data from a given URL.
+   * Replaces 'NaN' strings with null to ensure JSON validity.
+   */
   const fetchData = useCallback(async (url) => {
     const response = await fetch(url, {
       headers: { Accept: 'application/json' },
@@ -25,6 +33,10 @@ export const useECMData = () => {
     return JSON.parse(text.replace(/NaN/g, 'null'));
   }, []);
 
+  /**
+   * Processes unified ECM data by extracting necessary fields,
+   * including alpha, beta, and gamma coefficients.
+   */
   const processUnifiedData = useCallback((data) => {
     return data.ecm_analysis.map((item) => ({
       ...item,
@@ -46,11 +58,20 @@ export const useECMData = () => {
             },
           }
         : null,
-      residuals: item.residuals || [],
-      fittedValues: item.fittedValues || [],
+      residuals: Array.isArray(item.residuals) ? item.residuals : [],
+      fittedValues: Array.isArray(item.fittedValues) ? item.fittedValues : [],
+      
+      // Adjusted extraction for alpha, beta, gamma from nested object or direct access
+      alpha: item.regression_results?.alpha !== undefined ? item.regression_results.alpha : item.alpha || null,
+      beta: item.regression_results?.beta !== undefined ? item.regression_results.beta : item.beta || null,
+      gamma: item.regression_results?.gamma !== undefined ? item.regression_results.gamma : item.gamma || null,
     }));
   }, []);
 
+  /**
+   * Processes directional ECM data by extracting necessary fields,
+   * including alpha, beta, and gamma coefficients.
+   */
   const processDirectionalData = useCallback((data) => {
     return data.map((item) => ({
       ...item,
@@ -72,11 +93,18 @@ export const useECMData = () => {
             },
           }
         : null,
-      residuals: item.residuals || [],
-      fittedValues: item.fittedValues || [],
+      residuals: Array.isArray(item.residuals) ? item.residuals : [],
+      fittedValues: Array.isArray(item.fittedValues) ? item.fittedValues : [],
+      alpha: item.alpha !== undefined ? item.alpha : null,
+      beta: item.beta !== undefined ? item.beta : null,
+      gamma: item.gamma !== undefined ? item.gamma : null,
     }));
   }, []);
 
+  /**
+   * useEffect to fetch data on component mount.
+   * It ensures that data fetching happens only once at a time.
+   */
   useEffect(() => {
     if (fetchInProgress.current) return;
 
@@ -96,10 +124,12 @@ export const useECMData = () => {
           fetchData(southToNorthPath),
         ]);
 
+        // Process unified data to include alpha, beta, gamma
         const processedUnifiedData = processUnifiedData(unifiedJsonData);
         setUnifiedData(processedUnifiedData);
         setUnifiedStatus('succeeded');
 
+        // Process directional data to include alpha, beta, gamma
         const processedDirectionalData = {
           northToSouth: processDirectionalData(northToSouthData),
           southToNorth: processDirectionalData(southToNorthData),

@@ -29,13 +29,23 @@ import {
 import { BarChart, Bar, Cell } from 'recharts';
 import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
 
+/**
+ * ECMResults Component
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.selectedData - ECM analysis data for a specific commodity/regime
+ * @param {boolean} props.isMobile - Flag to determine if the view is mobile
+ * @param {string} props.analysisType - Type of analysis ('unified' or 'directional')
+ * @param {string} props.direction - Direction of analysis ('northToSouth' or 'southToNorth')
+ */
 const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('ecm');
 
-  // Access regression results
-  const regressionResults = analysisType === 'unified'
-    ? selectedData.regression_results || {}
-    : selectedData; // For directional, regression results are at top level
+  // Debugging: Log selectedData to verify contents
+  console.log('Selected Data:', selectedData);
+
+  // Access regression results directly since alpha, beta, gamma are top-level
+  const regressionResults = selectedData || {};
 
   // Prepare data for charts
   const residualsData =
@@ -378,18 +388,39 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
           <ul>
             <li>
               <Typography variant="body2">
-                The <strong>Key Insights</strong> section highlights the most critical findings.
+                <strong>Key Insights:</strong> Highlights the most critical findings including
+                adjustment speed (Alpha), long-run relationship (Beta), and short-term dynamics
+                (Gamma).
               </Typography>
             </li>
             <li>
               <Typography variant="body2">
-                Charts visualize the dynamics and relationships between variables.
+                <strong>Residuals Analysis:</strong> Assesses the model's accuracy by visualizing
+                residuals against fitted values.
               </Typography>
             </li>
             <li>
               <Typography variant="body2">
-                The <strong>Model Diagnostics</strong> help assess the validity of the model
-                assumptions.
+                <strong>Impulse Response Function (IRF):</strong> Shows how variables respond
+                over time to a shock in one of the variables.
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Granger Causality:</strong> Tests whether one time series can predict
+                another.
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Spatial Autocorrelation (Moran's I):</strong> Indicates whether similar
+                values cluster spatially.
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Model Diagnostics:</strong> Evaluates the validity of model assumptions,
+                including normality of residuals and autocorrelation.
               </Typography>
             </li>
           </ul>
