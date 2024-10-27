@@ -37,7 +37,7 @@ config = load_config()
 
 # Validate configuration
 def validate_config(config):
-    required_sections = ['directories', 'files', 'parameters']
+    required_sections = ['directories', 'files', 'parameters', 'logging']
     for section in required_sections:
         if section not in config:
             raise ValueError(f"Missing '{section}' section in configuration.")
@@ -479,7 +479,7 @@ def compute_granger_causality(y, x):
         logger.debug(traceback.format_exc())
         return gc_results
 
-# Spatial Autocorrelatiion
+# Spatial Autocorrelation
 def compute_spatial_autocorrelation(residuals, spatial_weights, gdf, filter_indices):
     # Create an empty Series to hold the residuals with the same index as the gdf
     full_residuals = pd.Series(index=gdf.index, dtype=float)
@@ -509,7 +509,6 @@ def compute_spatial_autocorrelation(residuals, spatial_weights, gdf, filter_indi
         'Moran_I': moran.I,
         'Moran_p_value': moran.p_sim
     }
-
 
 def run_spatial_autocorrelation(residuals, spatial_weights, gdf, filter_indices):
     if spatial_weights is None:
@@ -642,16 +641,29 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         if isinstance(obj, (np.number, bool)):
             return obj.item()
+        if isinstance(obj, float) and np.isnan(obj):
+            return None  # JSON does not support NaN
         return super().default(obj)
 
-# Convert keys to strings recursively
+# Convert keys to strings recursively and handle NaN
 def convert_keys_to_str(data):
     if isinstance(data, dict):
         return {str(k): convert_keys_to_str(v) for k, v in data.items()}
     elif isinstance(data, list):
         return [convert_keys_to_str(i) for i in data]
+    elif isinstance(data, float) and np.isnan(data):
+        return None
     else:
         return data
+
+# Validate analysis result
+def validate_analysis_result(analysis_result):
+    required_fields = ['commodity', 'regime', 'aic', 'bic', 'hqic', 'alpha', 'beta', 'gamma', 'diagnostics', 'irf', 'granger_causality']
+    for field in required_fields:
+        if field not in analysis_result:
+            logger.warning(f"Missing field '{field}' in analysis result for {analysis_result.get('commodity', 'Unknown')}")
+            analysis_result[field] = None  # Assign a default value
+    return analysis_result
 
 # Save Results
 def save_results(ecm_results, residuals_storage):
@@ -717,22 +729,43 @@ def run_ecm_analysis(data, stationarity_results, cointegration_results, gdf):
             irf = compute_irfs(results)
             gc = compute_granger_causality(y, x)
 
+            # Extract Alpha, Beta, and Gamma coefficients
+            try:
+                alpha = results.alpha[0, 0]  # Assuming first cointegration relation
+                beta = results.beta[0, 0]    # Assuming first cointegration relation
+                gamma = results.gamma[0, 0]  # Assuming first equation
+                logger.debug(f"Extracted coefficients: alpha={alpha}, beta={beta}, gamma={gamma}")
+            except Exception as e:
+                logger.error(f"Failed to extract coefficients: {e}")
+                alpha = None  # Use None to represent null in JSON
+                beta = None
+                gamma = None
+
             residuals_storage[key] = results.resid
 
             filter_indices = df.index.tolist()
             spatial = run_spatial_autocorrelation(results.resid, spatial_weights, gdf, filter_indices)
 
-            all_results.append({
+            # Include Alpha, Beta, and Gamma in the results
+            analysis_result = {
                 'commodity': commodity,
                 'regime': regime,
                 'aic': aic,
                 'bic': bic,
                 'hqic': hqic,
+                'alpha': alpha,
+                'beta': beta,
+                'gamma': gamma,
                 'diagnostics': diagnostics,
                 'irf': irf,
                 'granger_causality': gc,
                 'spatial_autocorrelation': spatial,
-            })
+            }
+
+            # Validate analysis result
+            analysis_result = validate_analysis_result(analysis_result)
+
+            all_results.append(analysis_result)
         except Exception as e:
             logger.error(f"ECM analysis failed for {commodity} in {regime} regime: {e}")
             logger.debug(traceback.format_exc())

@@ -6,6 +6,9 @@
             "aic": 7068.367874165466,
             "bic": 7082.704228858522,
             "hqic": 7073.850661369027,
+            "alpha": -0.09955141767056536,
+            "beta": 1.0,
+            "gamma": 0.19084949653461608,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 158.05565940936515,
@@ -15,8 +18,8 @@
                     "jarque_bera_stat": 19.608342601075734,
                     "jarque_bera_pvalue": 5.522077589749634e-05,
                     "durbin_watson_stat": 2.0021071073699908,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9775980115505205,
                     "shapiro_wilk_pvalue": 2.271839930496524e-10,
                     "acf": [
@@ -74,8 +77,8 @@
                     "jarque_bera_stat": 16.311671461657138,
                     "jarque_bera_pvalue": 0.00028705528478900497,
                     "durbin_watson_stat": 1.998496524757412,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9839646490801219,
                     "shapiro_wilk_pvalue": 3.1425736214881586e-08,
                     "acf": [
@@ -291,11 +294,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0011389521640090762,
-                    "Moran_p_value": 0.002
+                    "Moran_p_value": 0.007
                 },
                 "Variable_2": {
                     "Moran_I": -0.0011389521640090923,
-                    "Moran_p_value": 0.008
+                    "Moran_p_value": 0.013
                 }
             }
         },
@@ -305,6 +308,9 @@
             "aic": 7134.945893373432,
             "bic": 7149.473943220148,
             "hqic": 7140.484973058028,
+            "alpha": -0.11618058580439093,
+            "beta": 0.9999999999999999,
+            "gamma": 0.14623660283582268,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 169.43407307548904,
@@ -314,8 +320,8 @@
                     "jarque_bera_stat": 60.58586946143174,
                     "jarque_bera_pvalue": 6.981449578397355e-14,
                     "durbin_watson_stat": 1.960725887848545,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9751716792950792,
                     "shapiro_wilk_pvalue": 1.483176399663042e-11,
                     "acf": [
@@ -373,8 +379,8 @@
                     "jarque_bera_stat": 19.726185455676422,
                     "jarque_bera_pvalue": 5.20610896563386e-05,
                     "durbin_watson_stat": 1.9962908578185734,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9777243964494521,
                     "shapiro_wilk_pvalue": 8.838580543352238e-11,
                     "acf": [
@@ -590,11 +596,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0010683760683760802,
-                    "Moran_p_value": 0.008
+                    "Moran_p_value": 0.004
                 },
                 "Variable_2": {
                     "Moran_I": -0.001068376068376062,
-                    "Moran_p_value": 0.003
+                    "Moran_p_value": 0.001
                 }
             }
         },
@@ -604,6 +610,9 @@
             "aic": 2588.4683082248894,
             "bic": 2602.996358071605,
             "hqic": 2594.0073879094857,
+            "alpha": -0.14335582375072672,
+            "beta": 1.0,
+            "gamma": 0.17708411052117168,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 141.7957960115779,
@@ -613,8 +622,8 @@
                     "jarque_bera_stat": 49.79660824861052,
                     "jarque_bera_pvalue": 1.5374602990810465e-11,
                     "durbin_watson_stat": 1.960911821441415,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9736249736738378,
                     "shapiro_wilk_pvalue": 5.322905293756094e-12,
                     "acf": [
@@ -672,8 +681,8 @@
                     "jarque_bera_stat": 20.820891091656964,
                     "jarque_bera_pvalue": 3.0116253582242238e-05,
                     "durbin_watson_stat": 1.9972009943970235,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9791716511746553,
                     "shapiro_wilk_pvalue": 2.5767355100631184e-10,
                     "acf": [
@@ -889,11 +898,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": 0.001766547581823333,
-                    "Moran_p_value": 0.078
+                    "Moran_p_value": 0.066
                 },
                 "Variable_2": {
                     "Moran_I": 0.00969863774356616,
-                    "Moran_p_value": 0.001
+                    "Moran_p_value": 0.002
                 }
             }
         },
@@ -903,6 +912,9 @@
             "aic": 6700.939016166279,
             "bic": 6715.604733544975,
             "hqic": 6706.518199406469,
+            "alpha": -0.12827690924706123,
+            "beta": 1.0,
+            "gamma": 0.12542607013939694,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 201.2268561022924,
@@ -912,8 +924,8 @@
                     "jarque_bera_stat": 56.16117434624519,
                     "jarque_bera_pvalue": 6.379049058144457e-13,
                     "durbin_watson_stat": 1.9217714407766169,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9681647437952533,
                     "shapiro_wilk_pvalue": 7.95661559823799e-14,
                     "acf": [
@@ -971,8 +983,8 @@
                     "jarque_bera_stat": 25.229627099128823,
                     "jarque_bera_pvalue": 3.3224318787984132e-06,
                     "durbin_watson_stat": 1.996514652066495,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9767151565559188,
                     "shapiro_wilk_pvalue": 1.9829442793431096e-11,
                     "acf": [
@@ -1192,7 +1204,7 @@
                 },
                 "Variable_2": {
                     "Moran_I": -0.001020408163265287,
-                    "Moran_p_value": 0.005
+                    "Moran_p_value": 0.007
                 }
             }
         },
@@ -1202,6 +1214,9 @@
             "aic": 6208.639065907732,
             "bic": 6223.167115754448,
             "hqic": 6214.178145592328,
+            "alpha": -0.09728743156553006,
+            "beta": 1.0,
+            "gamma": 0.1791844360021883,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 185.32071891845519,
@@ -1211,8 +1226,8 @@
                     "jarque_bera_stat": 41.09414216003622,
                     "jarque_bera_pvalue": 1.192670316840372e-09,
                     "durbin_watson_stat": 1.9845498956647665,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9703042364811922,
                     "shapiro_wilk_pvalue": 6.687351388594793e-13,
                     "acf": [
@@ -1270,8 +1285,8 @@
                     "jarque_bera_stat": 19.358513117543776,
                     "jarque_bera_pvalue": 6.256800212062201e-05,
                     "durbin_watson_stat": 2.006328758709257,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9820788703179412,
                     "shapiro_wilk_pvalue": 2.5625337968098214e-09,
                     "acf": [
@@ -1487,11 +1502,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": 0.006258424435170574,
-                    "Moran_p_value": 0.006
+                    "Moran_p_value": 0.001
                 },
                 "Variable_2": {
                     "Moran_I": 0.005531395151409299,
-                    "Moran_p_value": 0.007
+                    "Moran_p_value": 0.012
                 }
             }
         },
@@ -1501,6 +1516,9 @@
             "aic": 10872.20370851263,
             "bic": 10886.878586203788,
             "hqic": 10877.785550731269,
+            "alpha": -0.1447620730742859,
+            "beta": 1.0,
+            "gamma": 0.21247324468206838,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 179.75863547092007,
@@ -1510,8 +1528,8 @@
                     "jarque_bera_stat": 493.08341420584736,
                     "jarque_bera_pvalue": 8.478070939985497e-108,
                     "durbin_watson_stat": 1.9696125709760808,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9212010160971702,
                     "shapiro_wilk_pvalue": 2.9847397194376856e-22,
                     "acf": [
@@ -1569,8 +1587,8 @@
                     "jarque_bera_stat": 26.1696569945884,
                     "jarque_bera_pvalue": 2.076496421324365e-06,
                     "durbin_watson_stat": 1.999805291325082,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9770195313581446,
                     "shapiro_wilk_pvalue": 2.3444965587214717e-11,
                     "acf": [
@@ -1786,11 +1804,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": 0.0042105328094855345,
-                    "Moran_p_value": 0.014
+                    "Moran_p_value": 0.015
                 },
                 "Variable_2": {
                     "Moran_I": 0.004920762732282037,
-                    "Moran_p_value": 0.022
+                    "Moran_p_value": 0.007
                 }
             }
         },
@@ -1800,6 +1818,9 @@
             "aic": 7164.893433242081,
             "bic": 7179.568310933238,
             "hqic": 7170.47527546072,
+            "alpha": -0.11388464657554566,
+            "beta": 1.0,
+            "gamma": 0.37820601883405036,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 74.17984435503884,
@@ -1809,8 +1830,8 @@
                     "jarque_bera_stat": 76252.33229714826,
                     "jarque_bera_pvalue": 0.0,
                     "durbin_watson_stat": 2.0261598861672563,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.7331097309923531,
                     "shapiro_wilk_pvalue": 5.654962816323323e-37,
                     "acf": [
@@ -1868,8 +1889,8 @@
                     "jarque_bera_stat": 25.261664929475305,
                     "jarque_bera_pvalue": 3.2696341346671197e-06,
                     "durbin_watson_stat": 2.0018102507773747,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9732508665703982,
                     "shapiro_wilk_pvalue": 1.7465654830537506e-12,
                     "acf": [
@@ -2089,7 +2110,7 @@
                 },
                 "Variable_2": {
                     "Moran_I": 0.004070482529957941,
-                    "Moran_p_value": 0.037
+                    "Moran_p_value": 0.042
                 }
             }
         },
@@ -2099,6 +2120,9 @@
             "aic": 7427.497794930357,
             "bic": 7442.022641359789,
             "hqic": 7433.035938237475,
+            "alpha": -0.13397422099900716,
+            "beta": 1.0,
+            "gamma": 0.08397050548230212,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 185.20311615573465,
@@ -2108,8 +2132,8 @@
                     "jarque_bera_stat": 2736.2981376263324,
                     "jarque_bera_pvalue": 0.0,
                     "durbin_watson_stat": 1.859069946005228,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9221978396772822,
                     "shapiro_wilk_pvalue": 1.448244332524514e-21,
                     "acf": [
@@ -2167,8 +2191,8 @@
                     "jarque_bera_stat": 19.12733523730504,
                     "jarque_bera_pvalue": 7.02347314941367e-05,
                     "durbin_watson_stat": 2.003057032446898,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9837249880513408,
                     "shapiro_wilk_pvalue": 1.056737360451808e-08,
                     "acf": [
@@ -2384,7 +2408,7 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0010695187165775195,
-                    "Moran_p_value": 0.279
+                    "Moran_p_value": 0.287
                 },
                 "Variable_2": {
                     "Moran_I": -0.0010695187165775343,
@@ -2398,6 +2422,9 @@
             "aic": 8008.350530406004,
             "bic": 8022.720822112546,
             "hqic": 8013.8433219772105,
+            "alpha": -0.16072911216788277,
+            "beta": 1.0,
+            "gamma": 0.2068140462621514,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 179.10440976576547,
@@ -2407,8 +2434,8 @@
                     "jarque_bera_stat": 719.8534062248671,
                     "jarque_bera_pvalue": 4.8508623226595987e-157,
                     "durbin_watson_stat": 1.8716265163074657,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9219478711781628,
                     "shapiro_wilk_pvalue": 4.880885108523627e-21,
                     "acf": [
@@ -2466,8 +2493,8 @@
                     "jarque_bera_stat": 10.648527297674585,
                     "jarque_bera_pvalue": 0.004871937150325264,
                     "durbin_watson_stat": 1.9875624120987916,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9859687358101188,
                     "shapiro_wilk_pvalue": 1.6160900347193887e-07,
                     "acf": [
@@ -2683,7 +2710,7 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0011261261261261073,
-                    "Moran_p_value": 0.348
+                    "Moran_p_value": 0.34
                 },
                 "Variable_2": {
                     "Moran_I": -0.0011261261261260992,
@@ -2697,6 +2724,9 @@
             "aic": 7289.590333627332,
             "bic": 7304.265211318489,
             "hqic": 7295.172175845971,
+            "alpha": -0.08855974336218846,
+            "beta": 1.0,
+            "gamma": 0.22112180154803876,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 167.66815750589845,
@@ -2706,8 +2736,8 @@
                     "jarque_bera_stat": 63.544978962211154,
                     "jarque_bera_pvalue": 1.589948810104534e-14,
                     "durbin_watson_stat": 1.9775308020957896,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9677635290881893,
                     "shapiro_wilk_pvalue": 5.941011430668539e-14,
                     "acf": [
@@ -2765,8 +2795,8 @@
                     "jarque_bera_stat": 23.893814987168867,
                     "jarque_bera_pvalue": 6.479238994710844e-06,
                     "durbin_watson_stat": 1.9994332688905185,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9753194005486722,
                     "shapiro_wilk_pvalue": 7.037942102545769e-12,
                     "acf": [
@@ -2982,11 +3012,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0010172939979653883,
-                    "Moran_p_value": 0.469
+                    "Moran_p_value": 0.46
                 },
                 "Variable_2": {
                     "Moran_I": -0.0010172939979653742,
-                    "Moran_p_value": 0.002
+                    "Moran_p_value": 0.001
                 }
             }
         },
@@ -2996,6 +3026,9 @@
             "aic": 6779.957640781309,
             "bic": 6794.632518472466,
             "hqic": 6785.539482999948,
+            "alpha": -0.12167123888607535,
+            "beta": 1.0,
+            "gamma": 0.19726359025825138,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 178.17425987825712,
@@ -3005,8 +3038,8 @@
                     "jarque_bera_stat": 403.4167431142412,
                     "jarque_bera_pvalue": 2.507074727712059e-88,
                     "durbin_watson_stat": 2.026467194155219,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9347608815804739,
                     "shapiro_wilk_pvalue": 2.5302951151430454e-20,
                     "acf": [
@@ -3064,8 +3097,8 @@
                     "jarque_bera_stat": 25.885702235458908,
                     "jarque_bera_pvalue": 2.39326714863224e-06,
                     "durbin_watson_stat": 2.0030884928466315,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9726548804321715,
                     "shapiro_wilk_pvalue": 1.1844625328210476e-12,
                     "acf": [
@@ -3281,11 +3314,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0009683316789806462,
-                    "Moran_p_value": 0.322
+                    "Moran_p_value": 0.314
                 },
                 "Variable_2": {
                     "Moran_I": 0.005378142208453247,
-                    "Moran_p_value": 0.01
+                    "Moran_p_value": 0.012
                 }
             }
         },
@@ -3295,6 +3328,9 @@
             "aic": 6773.678688737772,
             "bic": 6788.353566428928,
             "hqic": 6779.260530956411,
+            "alpha": -0.18327034900632952,
+            "beta": 1.0,
+            "gamma": 0.18687262653150088,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 171.0876468728361,
@@ -3304,8 +3340,8 @@
                     "jarque_bera_stat": 336.7620493603742,
                     "jarque_bera_pvalue": 7.465349149059941e-74,
                     "durbin_watson_stat": 2.0033580716396626,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9566371352682133,
                     "shapiro_wilk_pvalue": 1.791581132940352e-16,
                     "acf": [
@@ -3363,8 +3399,8 @@
                     "jarque_bera_stat": 26.752454756866676,
                     "jarque_bera_pvalue": 1.5515946050143497e-06,
                     "durbin_watson_stat": 2.0022835359442497,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9732292162938445,
                     "shapiro_wilk_pvalue": 1.7219271909302238e-12,
                     "acf": [
@@ -3580,11 +3616,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0002041825655847966,
-                    "Moran_p_value": 0.193
+                    "Moran_p_value": 0.159
                 },
                 "Variable_2": {
                     "Moran_I": 0.0037238713134044622,
-                    "Moran_p_value": 0.018
+                    "Moran_p_value": 0.016
                 }
             }
         },
@@ -3594,6 +3630,9 @@
             "aic": 7391.667005833983,
             "bic": 7406.34188352514,
             "hqic": 7397.248848052622,
+            "alpha": -0.10967083071554494,
+            "beta": 1.0,
+            "gamma": 0.2270841838593944,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 190.94195411840084,
@@ -3603,8 +3642,8 @@
                     "jarque_bera_stat": 61.24810318700091,
                     "jarque_bera_pvalue": 5.013527245610615e-14,
                     "durbin_watson_stat": 1.9792815271770614,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9641024630965571,
                     "shapiro_wilk_pvalue": 7.69151115151551e-15,
                     "acf": [
@@ -3662,8 +3701,8 @@
                     "jarque_bera_stat": 23.804438796863394,
                     "jarque_bera_pvalue": 6.77535090508224e-06,
                     "durbin_watson_stat": 2.000500375628257,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9738541886732702,
                     "shapiro_wilk_pvalue": 2.6029190668147363e-12,
                     "acf": [
@@ -3879,11 +3918,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": 0.000762170421676652,
-                    "Moran_p_value": 0.089
+                    "Moran_p_value": 0.098
                 },
                 "Variable_2": {
                     "Moran_I": 0.0038544239770680905,
-                    "Moran_p_value": 0.012
+                    "Moran_p_value": 0.021
                 }
             }
         },
@@ -3893,6 +3932,9 @@
             "aic": 4763.918817202608,
             "bic": 4778.593694893764,
             "hqic": 4769.500659421246,
+            "alpha": -0.2097517589606082,
+            "beta": 0.9999999999999999,
+            "gamma": 0.2018311266266568,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 168.3311317761491,
@@ -3902,8 +3944,8 @@
                     "jarque_bera_stat": 172.8875344732134,
                     "jarque_bera_pvalue": 2.8704427815775853e-38,
                     "durbin_watson_stat": 1.971502922520108,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.966591279083086,
                     "shapiro_wilk_pvalue": 3.036758820851495e-14,
                     "acf": [
@@ -3961,8 +4003,8 @@
                     "jarque_bera_stat": 26.635993015099366,
                     "jarque_bera_pvalue": 1.6446277230255067e-06,
                     "durbin_watson_stat": 2.001373457946199,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9725954847628047,
                     "shapiro_wilk_pvalue": 1.1398447755794427e-12,
                     "acf": [
@@ -4178,11 +4220,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0014113242407313986,
-                    "Moran_p_value": 0.462
+                    "Moran_p_value": 0.435
                 },
                 "Variable_2": {
                     "Moran_I": 0.0024072186822156057,
-                    "Moran_p_value": 0.071
+                    "Moran_p_value": 0.077
                 }
             }
         },
@@ -4192,6 +4234,9 @@
             "aic": 6629.966161962522,
             "bic": 6644.6410396536785,
             "hqic": 6635.548004181161,
+            "alpha": -0.11733197426234712,
+            "beta": 1.0,
+            "gamma": 0.18659786732540617,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 197.20409404896046,
@@ -4201,8 +4246,8 @@
                     "jarque_bera_stat": 142.33983809739584,
                     "jarque_bera_pvalue": 1.2339480603478417e-31,
                     "durbin_watson_stat": 1.9696428849015488,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9460544575468022,
                     "shapiro_wilk_pvalue": 1.77585720379182e-18,
                     "acf": [
@@ -4260,8 +4305,8 @@
                     "jarque_bera_stat": 24.30691745679395,
                     "jarque_bera_pvalue": 5.270113132378232e-06,
                     "durbin_watson_stat": 2.0007239951780997,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9737503996329082,
                     "shapiro_wilk_pvalue": 2.4292192357663296e-12,
                     "acf": [
@@ -4477,11 +4522,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0021954209938350833,
-                    "Moran_p_value": 0.105
+                    "Moran_p_value": 0.083
                 },
                 "Variable_2": {
                     "Moran_I": -0.0015369147295815,
-                    "Moran_p_value": 0.479
+                    "Moran_p_value": 0.491
                 }
             }
         },
@@ -4491,6 +4536,9 @@
             "aic": 7160.259703524942,
             "bic": 7174.934581216098,
             "hqic": 7165.84154574358,
+            "alpha": -0.14957994423609566,
+            "beta": 1.0,
+            "gamma": 0.1591075041195239,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 166.6370699616552,
@@ -4500,8 +4548,8 @@
                     "jarque_bera_stat": 953.3123520437706,
                     "jarque_bera_pvalue": 9.791584780084093e-208,
                     "durbin_watson_stat": 2.038110663201183,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9266378103598111,
                     "shapiro_wilk_pvalue": 1.6441782876028825e-21,
                     "acf": [
@@ -4559,8 +4607,8 @@
                     "jarque_bera_stat": 27.79845482611297,
                     "jarque_bera_pvalue": 9.196916252327078e-07,
                     "durbin_watson_stat": 2.0030939719623526,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9738394117188096,
                     "shapiro_wilk_pvalue": 2.577421942835334e-12,
                     "acf": [
@@ -4776,11 +4824,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.0016104872692542327,
-                    "Moran_p_value": 0.442
+                    "Moran_p_value": 0.436
                 },
                 "Variable_2": {
                     "Moran_I": -0.0015795945817055881,
-                    "Moran_p_value": 0.48
+                    "Moran_p_value": 0.489
                 }
             }
         },
@@ -4790,6 +4838,9 @@
             "aic": 5862.372569785948,
             "bic": 5877.041343711012,
             "hqic": 5867.952640385709,
+            "alpha": -0.13949170848842973,
+            "beta": 1.0,
+            "gamma": 0.15943095536975302,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 179.98362295890655,
@@ -4799,8 +4850,8 @@
                     "jarque_bera_stat": 77.83868886469236,
                     "jarque_bera_pvalue": 1.251824576885903e-17,
                     "durbin_watson_stat": 1.9578281393032226,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9620094579316573,
                     "shapiro_wilk_pvalue": 2.655667964091312e-15,
                     "acf": [
@@ -4858,8 +4909,8 @@
                     "jarque_bera_stat": 25.74775078913782,
                     "jarque_bera_pvalue": 2.5641708304905848e-06,
                     "durbin_watson_stat": 1.9995505106742475,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9719574519355703,
                     "shapiro_wilk_pvalue": 7.859544883496204e-13,
                     "acf": [
@@ -5075,11 +5126,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": 0.00084611382740323,
-                    "Moran_p_value": 0.097
+                    "Moran_p_value": 0.08
                 },
                 "Variable_2": {
                     "Moran_I": -0.001594395039837332,
-                    "Moran_p_value": 0.466
+                    "Moran_p_value": 0.495
                 }
             }
         },
@@ -5089,6 +5140,9 @@
             "aic": 5801.435030892429,
             "bic": 5816.109908583585,
             "hqic": 5807.016873111067,
+            "alpha": -0.1124856694494073,
+            "beta": 0.9999999999999999,
+            "gamma": 0.23826113658409334,
             "diagnostics": {
                 "Variable_1": {
                     "breusch_godfrey_stat": 177.10326500242618,
@@ -5098,8 +5152,8 @@
                     "jarque_bera_stat": 36.771262564930495,
                     "jarque_bera_pvalue": 1.0356709333573194e-08,
                     "durbin_watson_stat": 1.9793088461150061,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9669720944908933,
                     "shapiro_wilk_pvalue": 3.7697914559867026e-14,
                     "acf": [
@@ -5157,8 +5211,8 @@
                     "jarque_bera_stat": 24.03085875345346,
                     "jarque_bera_pvalue": 6.05013860221612e-06,
                     "durbin_watson_stat": 2.0018433211194147,
-                    "white_test_stat": NaN,
-                    "white_test_pvalue": NaN,
+                    "white_test_stat": null,
+                    "white_test_pvalue": null,
                     "shapiro_wilk_stat": 0.9738977300714304,
                     "shapiro_wilk_pvalue": 2.679581074125335e-12,
                     "acf": [
@@ -5374,11 +5428,11 @@
             "spatial_autocorrelation": {
                 "Variable_1": {
                     "Moran_I": -0.00101729399796539,
-                    "Moran_p_value": 0.284
+                    "Moran_p_value": 0.293
                 },
                 "Variable_2": {
                     "Moran_I": -0.001017293997965396,
-                    "Moran_p_value": 0.014
+                    "Moran_p_value": 0.008
                 }
             }
         }
