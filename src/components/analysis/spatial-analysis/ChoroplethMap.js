@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { MapContainer, TileLayer, GeoJSON, Marker, useMap } from 'react-leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { parseISO, isValid } from 'date-fns';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -19,11 +21,23 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
-import { Info as InfoIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
+import { Info as InfoIcon } from '@mui/icons-material';
 import { renderToString } from 'react-dom/server';
 import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
 import TimeSlider from './TimeSlider';
 import chroma from 'chroma-js';
+
+// Fix the default icon issue
+const DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 // Helper function to create MUI Icon Marker
 const createMUIIconMarker = (IconComponent, color = 'red', size = 40) => {
@@ -44,9 +58,6 @@ const createMUIIconMarker = (IconComponent, color = 'red', size = 40) => {
     popupAnchor: [0, -size / 2],
   });
 };
-
-// Custom MUI icon marker
-const muiIconMarker = createMUIIconMarker(LocationOnIcon, 'blue', 40);
 
 // Map bounds adjustment component
 const MapBoundsComponent = ({ features }) => {
@@ -82,6 +93,14 @@ const ChoroplethMap = ({
   const [colorScheme, setColorScheme] = useState('sequential');
   const { getTechnicalTooltip } = useTechnicalHelp('spatial');
 
+  // Ensure selectedDate is a Date object
+  const validSelectedDate = useMemo(() => {
+    if (!selectedDate) {
+      return uniqueMonths[0] || new Date();
+    }
+    return selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
+  }, [selectedDate, uniqueMonths]);
+
   // Filter features based on selected date
   const filteredFeatures = useMemo(() => {
     if (!enhancedData?.features) return [];
@@ -92,7 +111,7 @@ const ChoroplethMap = ({
       
       try {
         const featureDate = typeof date === 'string' ? parseISO(date) : date;
-        const targetDate = typeof selectedDate === 'string' ? parseISO(selectedDate) : selectedDate;
+        const targetDate = validSelectedDate;
         
         if (!isValid(featureDate) || !isValid(targetDate)) {
           return false;
@@ -100,11 +119,11 @@ const ChoroplethMap = ({
 
         return featureDate.toISOString().split('T')[0] === targetDate.toISOString().split('T')[0];
       } catch (error) {
-        console.warn('Error comparing dates:', error, { featureDate: date, selectedDate });
+        console.warn('Error comparing dates:', error);
         return false;
       }
     });
-  }, [enhancedData, selectedDate]);
+  }, [enhancedData, validSelectedDate]);
 
   // Calculate value ranges for choropleth coloring
   const valueRange = useMemo(() => {
@@ -122,6 +141,22 @@ const ChoroplethMap = ({
       return chroma.scale(['#d73027', '#ffffbf', '#1a9850']).domain([valueRange[0], midpoint, valueRange[1]]);
     }
   }, [colorScheme, valueRange]);
+
+  // Ensure all months are Date objects
+  const validMonths = useMemo(() => {
+    return uniqueMonths.map(month => 
+      month instanceof Date ? month : new Date(month)
+    ).filter(date => isValid(date));
+  }, [uniqueMonths]);
+
+  // Handle date change with validation
+  const handleDateChange = useCallback((newDate) => {
+    if (newDate instanceof Date && isValid(newDate)) {
+      onDateChange(newDate);
+    } else {
+      console.warn('Invalid date selected:', newDate);
+    }
+  }, [onDateChange]);
 
   // Style function for GeoJSON features
   const getFeatureStyle = useCallback((feature) => {
@@ -230,19 +265,18 @@ const ChoroplethMap = ({
               onEachFeature={onEachFeature}
             />
             <MapBoundsComponent features={filteredFeatures} />
-            
-            {/* Example Marker with MUI Icon */}
-            <Marker position={[15.3694, 44.191]} icon={muiIconMarker} />
           </MapContainer>
         </Box>
       )}
 
       <Box sx={{ mt: 2 }}>
-        <TimeSlider
-          months={uniqueMonths}
-          selectedDate={selectedDate}
-          onChange={onDateChange}
-        />
+        {validMonths.length > 0 && (
+          <TimeSlider
+            months={validMonths}
+            selectedDate={validSelectedDate}
+            onChange={handleDateChange}
+          />
+        )}
       </Box>
     </Paper>
   );
