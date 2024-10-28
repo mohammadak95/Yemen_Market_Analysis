@@ -60,11 +60,9 @@ export const useECMData = () => {
         : null,
       residuals: Array.isArray(item.residuals) ? item.residuals : [],
       fittedValues: Array.isArray(item.fittedValues) ? item.fittedValues : [],
-      
-      // Adjusted extraction for alpha, beta, gamma from nested object or direct access
-      alpha: item.regression_results?.alpha !== undefined ? item.regression_results.alpha : item.alpha || null,
-      beta: item.regression_results?.beta !== undefined ? item.regression_results.beta : item.beta || null,
-      gamma: item.regression_results?.gamma !== undefined ? item.regression_results.gamma : item.gamma || null,
+      alpha: item.alpha !== undefined ? item.alpha : null,
+      beta: item.beta !== undefined ? item.beta : null,
+      gamma: item.gamma !== undefined ? item.gamma : null,
     }));
   }, []);
 

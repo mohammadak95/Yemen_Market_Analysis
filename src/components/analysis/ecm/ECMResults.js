@@ -11,7 +11,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Divider, // Import Divider
+  Divider,
 } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import {
@@ -25,12 +25,15 @@ import {
   ReferenceLine,
   ScatterChart,
   Scatter,
+  BarChart,
+  Bar,
+  Cell,
 } from 'recharts';
-import { BarChart, Bar, Cell } from 'recharts';
 import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
 
 /**
  * ECMResults Component
+ * Displays results from the ECM analysis.
  * 
  * @param {Object} props - Component props
  * @param {Object} props.selectedData - ECM analysis data for a specific commodity/regime
@@ -41,10 +44,7 @@ import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
 const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('ecm');
 
-  // Debugging: Log selectedData to verify contents
-  console.log('Selected Data:', selectedData);
-
-  // Access regression results directly since alpha, beta, gamma are top-level
+  // Access regression results directly since alpha, beta, gamma are top-level properties
   const regressionResults = selectedData || {};
 
   // Prepare data for charts
@@ -95,7 +95,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
       ]
     : [];
 
-  // Key Insights
+  // Key Insights - Alpha, Beta, Gamma
   const keyInsights = [
     {
       title: 'Adjustment Speed (Alpha)',

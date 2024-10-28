@@ -2,14 +2,16 @@
 
 const isDev = process.env.NODE_ENV === 'development';
 const isGitHubPages = window.location.hostname.includes('github.io');
+const repoName = '/Yemen_Market_Analysis'; // Add your repository name
 
 export const config = {
-  baseUrl: isGitHubPages ? '/Yemen_Market_Analysis' : '',
+  // Set baseUrl based on environment
+  baseUrl: isGitHubPages ? repoName : '',
   
-  // API paths
+  // API paths with baseUrl
   api: {
-    data: '/results',
-    assets: '/static',
+    data: isGitHubPages ? `${repoName}/results` : '/results',
+    assets: isGitHubPages ? `${repoName}/static` : '/static',
   },
 
   // Map configuration
@@ -37,9 +39,9 @@ export const config = {
     }
   },
 
-  // Service Worker
+  // Service Worker - disable for GitHub Pages
   serviceWorker: {
-    enabled: !isDev,
+    enabled: !isDev && !isGitHubPages, // Disable for GitHub Pages
     path: '/spatialServiceWorker.js',
     scope: '/',
   }
