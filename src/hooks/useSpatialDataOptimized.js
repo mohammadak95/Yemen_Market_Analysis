@@ -10,8 +10,9 @@ import {
   processFeatureProperties 
 } from '../utils/spatialDataUtils';
 import { regionMapping, excludedRegions } from '../utils/utils';
+import { debugSpatialData, trackCommodityData, validateFeatureData } from '../utils/spatialDebugUtils';
 
-const useSpatialDataOptimized = () => {
+const useSpatialDataOptimized = (selectedCommodity) => {
   const [state, setState] = useState({
     geoData: null,
     flowMaps: null,
@@ -28,10 +29,13 @@ const useSpatialDataOptimized = () => {
   const loadDataChunk = useCallback(async (path, type, signal) => {
     const cacheKey = `${type}-${path}`;
     if (dataCache.current.has(cacheKey)) {
+      console.log(`Using cached data for ${type}`);
       return dataCache.current.get(cacheKey);
     }
 
     try {
+      console.log(`Loading ${type} data from ${path}`);
+      
       if (type === 'flowMaps') {
         const response = await fetch(path, { signal });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -47,6 +51,7 @@ const useSpatialDataOptimized = () => {
           throw new Error(`CSV parsing errors: ${errors.map(e => e.message).join(', ')}`);
         }
 
+        console.log(`Successfully parsed ${data.length} flow map records`);
         dataCache.current.set(cacheKey, data);
         return data;
       }
@@ -54,6 +59,7 @@ const useSpatialDataOptimized = () => {
       const data = await fetchJson(path);
       
       if (type === 'geoData') {
+        console.log('Processing geo data features');
         const processedData = {
           ...data,
           features: data.features.map(f => ({
@@ -69,6 +75,7 @@ const useSpatialDataOptimized = () => {
       return data;
     } catch (error) {
       if (error.name === 'AbortError') {
+        console.log('Data loading aborted');
         throw error;
       }
       console.error(`Error loading ${type} data:`, error);
@@ -84,9 +91,11 @@ const useSpatialDataOptimized = () => {
       abortControllerRef.current = new AbortController();
 
       try {
+        console.group('Loading Spatial Data');
+        console.log('Starting data load for commodity:', selectedCommodity);
+        
         setState(prev => ({ ...prev, loading: true, error: null }));
 
-        // Define data paths
         const paths = {
           geoBoundaries: getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson'),
           unified: getDataPath('unified_data.geojson'),
@@ -95,7 +104,7 @@ const useSpatialDataOptimized = () => {
           analysis: getDataPath('spatial_analysis_results.json')
         };
 
-        // Load all data
+        // Load all data with progress tracking
         const [
           geoBoundariesData,
           unifiedData,
@@ -110,7 +119,14 @@ const useSpatialDataOptimized = () => {
           loadDataChunk(paths.analysis, 'analysis', abortControllerRef.current.signal)
         ]);
 
+        console.log('All data chunks loaded successfully');
+
+        // Debug spatial data processing
+        const debugResults = debugSpatialData(geoBoundariesData, unifiedData, selectedCommodity);
+        console.log('Debug Results:', debugResults);
+
         // Merge and process data
+        console.log('Merging geo data');
         const mergedData = mergeGeoData(
           geoBoundariesData,
           unifiedData,
@@ -118,8 +134,22 @@ const useSpatialDataOptimized = () => {
           excludedRegions
         );
 
+        // Track commodity-specific data
+        const commodityData = trackCommodityData(selectedCommodity, mergedData);
+        
+        if (commodityData?.length > 0) {
+          console.log('Validating feature data');
+          validateFeatureData(commodityData[0], selectedCommodity);
+        }
+
         // Extract unique months
+        console.log('Extracting unique months');
         const uniqueMonths = extractUniqueMonths(mergedData.features);
+        
+        console.log('Setting final state', {
+          featuresCount: mergedData.features.length,
+          uniqueMonthsCount: uniqueMonths.length
+        });
 
         setState(prev => ({
           ...prev,
@@ -131,8 +161,13 @@ const useSpatialDataOptimized = () => {
           loadingProgress: 100
         }));
 
+        console.log('Data loading completed successfully');
+
       } catch (error) {
-        if (error.name === 'AbortError') return;
+        if (error.name === 'AbortError') {
+          console.log('Data loading aborted');
+          return;
+        }
 
         console.error('Error in loadAllData:', error);
         setState(prev => ({
@@ -140,6 +175,8 @@ const useSpatialDataOptimized = () => {
           loading: false,
           error: error.message
         }));
+      } finally {
+        console.groupEnd();
       }
     };
 
@@ -150,11 +187,12 @@ const useSpatialDataOptimized = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [loadDataChunk]);
+  }, [loadDataChunk, selectedCommodity]);
 
   // Clear cache on unmount
   useEffect(() => {
     return () => {
+      console.log('Clearing data cache');
       dataCache.current.clear();
     };
   }, []);

@@ -1,92 +1,133 @@
-import React, { useMemo, useCallback } from 'react';
+// TimeSlider.jsx
+
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Slider, Typography } from '@mui/material';
 import { format } from 'date-fns';
 
 const TimeSlider = ({
   months = [],
-  selectedDate = null,
+  selectedDate,
   onChange
 }) => {
-  // Convert all dates to valid Date objects first
-  const validMonths = useMemo(() => {
-    return months
-      .map(month => month instanceof Date ? month : new Date(month))
-      .filter(date => !isNaN(date.getTime()))
-      .sort((a, b) => a.getTime() - b.getTime());
-  }, [months]);
+  // Convert dates to timestamps and sort them
+  const dates = useMemo(() => 
+    months
+      .map(m => m instanceof Date ? m : new Date(m))
+      .filter(m => !isNaN(m)) // Filter out invalid dates
+      .sort((a, b) => a - b),
+    [months]
+  );
+  
+  if (dates.length === 0) {
+    return <Typography>No dates available</Typography>;
+  }
 
-  // Get timestamps for range
-  const timeRange = useMemo(() => ({
-    min: Number(validMonths[0]?.getTime() || 0),
-    max: Number(validMonths[validMonths.length - 1]?.getTime() || 0)
-  }), [validMonths]);
+  const minTime = dates[0].getTime();
+  const maxTime = dates[dates.length - 1].getTime();
+  
+  // Ensure selectedDate is a valid Date and convert to timestamp
+  const selectedTime = useMemo(() => {
+    const time = new Date(selectedDate).getTime();
+    return isNaN(time) ? minTime : time;
+  }, [selectedDate, minTime]);
 
-  // Get current timestamp
-  const currentValue = useMemo(() => {
-    const date = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
-    return Number(date.getTime());
-  }, [selectedDate]);
-
-  // Create marks with explicit number conversion
+  // Create marks with improved spacing
   const marks = useMemo(() => {
-    return validMonths.map((date, index) => ({
-      value: Number(date.getTime()),
-      label: index % 3 === 0 ? format(date, 'MMM yyyy') : ''
-    }));
-  }, [validMonths]);
+    // If we have too many dates, show fewer marks
+    const stride = dates.length > 12 ? Math.ceil(dates.length / 12) : 1;
+    
+    return dates
+      .filter((_, index) => index % stride === 0)
+      .map(date => ({
+        value: date.getTime(),
+        label: format(date, dates.length > 12 ? 'MMM yy' : 'MMM yyyy')
+      }));
+  }, [dates]);
 
-  const handleChange = useCallback((_, newValue) => {
+  const handleChange = (_, newValue) => {
     // Ensure newValue is a number
     const numericValue = Number(newValue);
-    const nearestDate = validMonths.reduce((prev, curr) => {
+    if (isNaN(numericValue)) return;
+    
+    // Find the closest date to the slider value
+    const nearestDate = dates.reduce((prev, curr) => {
       return Math.abs(curr.getTime() - numericValue) < Math.abs(prev.getTime() - numericValue)
         ? curr
         : prev;
-    });
+    }, dates[0]);
+    
     onChange(nearestDate);
-  }, [validMonths, onChange]);
-
-  // Formatter that ensures numeric values
-  const formatLabel = useCallback((value) => {
-    const numericValue = Number(value);
-    return format(new Date(numericValue), 'MMM yyyy');
-  }, []);
-
-  if (!validMonths.length) return null;
+  };
 
   return (
-    <Box sx={{ width: '100%', px: 2, py: 1 }}>
-      <Slider
-        min={timeRange.min}
-        max={timeRange.max}
-        value={currentValue}
-        onChange={handleChange}
-        marks={marks}
-        step={null}
-        valueLabelFormat={formatLabel}
-        getAriaValueText={formatLabel}
-        valueLabelDisplay="auto"
-        scale={(x) => Number(x)}  // Ensure scale returns a number
-        aria-label="Time range"
-        slotProps={{
-          valueLabel: {
-            // Force value to be numeric in value label
-            value: Number(currentValue)
-          }
-        }}
-      />
+    <Box sx={{ width: '100%', mt: 4, px: 3 }}>
+      <Box sx={{ 
+        position: 'relative',
+        height: 50,
+        mb: 1
+      }}>
+        {/* Current date display - positioned above slider */}
+        <Typography 
+          variant="subtitle2" 
+          sx={{ 
+            position: 'absolute',
+            top: -30,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'background.paper',
+            padding: '4px 8px',
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'divider',
+            zIndex: 1
+          }}
+        >
+          {format(new Date(selectedTime), 'MMMM d, yyyy')}
+        </Typography>
+        
+        <Slider
+          value={selectedTime}
+          min={minTime}
+          max={maxTime}
+          onChange={handleChange}
+          marks={marks}
+          step={null}
+          valueLabelDisplay="auto"
+          valueLabelFormat={value => format(new Date(Number(value)), 'MMM d, yyyy')}
+          sx={{
+            '& .MuiSlider-mark': {
+              height: 8,
+            },
+            '& .MuiSlider-markLabel': {
+              fontSize: '0.75rem',
+              transform: 'translateY(20px) rotate(-45deg)',
+              transformOrigin: 'center',
+              whiteSpace: 'nowrap',
+              width: 'auto',
+              marginLeft: '-12px'
+            },
+            '& .MuiSlider-valueLabel': {
+              backgroundColor: 'background.paper',
+              color: 'text.primary',
+              border: '1px solid',
+              borderColor: 'divider',
+              fontSize: '0.75rem',
+              zIndex: 2
+            }
+          }}
+        />
+      </Box>
+      
+      {/* Range display */}
       <Box sx={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
-        mt: 1,
-        px: 1 
+        justifyContent: 'space-between',
+        mt: 3,
+        px: 1
       }}>
         <Typography variant="caption">
-          {format(validMonths[0], 'MMM yyyy')}
-        </Typography>
-        <Typography variant="caption">
-          {format(validMonths[validMonths.length - 1], 'MMM yyyy')}
+          Range: {format(new Date(minTime), 'MMMM yyyy')} - {format(new Date(maxTime), 'MMMM yyyy')}
         </Typography>
       </Box>
     </Box>
@@ -103,7 +144,7 @@ TimeSlider.propTypes = {
   selectedDate: PropTypes.oneOfType([
     PropTypes.instanceOf(Date),
     PropTypes.string
-  ]),
+  ]).isRequired,
   onChange: PropTypes.func.isRequired,
 };
 
