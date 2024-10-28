@@ -89,6 +89,18 @@ const ChoroplethMap = ({
   uniqueMonths, 
   isMobile 
 }) => {
+  // Add these debug logs
+  console.log('ChoroplethMap Props:', {
+    selectedDate,
+    uniqueMonths: uniqueMonths?.map(d => ({
+      value: d,
+      type: typeof d,
+      isDate: d instanceof Date,
+      timestamp: d instanceof Date ? d.getTime() : null
+    })),
+    dateType: typeof selectedDate,
+    isDateObject: selectedDate instanceof Date
+  });
   const [mapVariable, setMapVariable] = useState('usdprice');
   const [colorScheme, setColorScheme] = useState('sequential');
   const { getTechnicalTooltip } = useTechnicalHelp('spatial');

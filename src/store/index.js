@@ -2,10 +2,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { ecmReducer } from '../slices/index';
 import { themeReducer } from '../slices/index';
-import {priceDiffReducer } from '../slices/index';
-import { spatialReducer } from '../slices/index';
+import { priceDiffReducer } from '../slices/index';
+import spatialReducer  from '../slices/spatialSlice';
 
-export const store = configureStore({
+// Define the Redux store with integrated reducers and middleware
+const store = configureStore({
   reducer: {
     ecm: ecmReducer,
     theme: themeReducer,
@@ -15,12 +16,10 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignore these action types
-        ignoredActions: ['your/non-serializable/action'],
-        // Ignore these field paths in all actions
+        // Update these with actual non-serializable actions or paths as needed
+        ignoredActions: ['spatial/fetchSpatialData/rejected'],
         ignoredActionPaths: ['meta.arg', 'payload.timestamp'],
-        // Ignore these paths in the state
-        ignoredPaths: ['items.dates'],
+        ignoredPaths: ['spatial.flowMaps'],
       },
     }),
   devTools: process.env.NODE_ENV !== 'production',

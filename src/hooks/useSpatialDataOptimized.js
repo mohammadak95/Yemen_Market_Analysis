@@ -1,11 +1,17 @@
-//src/hooks/useSpatialDataOptimized.js
+// src/hooks/useSpatialDataOptimized.js
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { parseISO, format, isValid } from 'date-fns';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Papa from 'papaparse';
+import { fetchJson } from '../utils/utils';
 import { getDataPath } from '../utils/dataPath';
+import { 
+  mergeGeoData, 
+  extractUniqueMonths,
+  processFeatureProperties 
+} from '../utils/spatialDataUtils';
+import { regionMapping, excludedRegions } from '../utils/utils';
 
-export const useSpatialDataOptimized = () => {
+const useSpatialDataOptimized = () => {
   const [state, setState] = useState({
     geoData: null,
     flowMaps: null,
@@ -19,142 +25,59 @@ export const useSpatialDataOptimized = () => {
   const abortControllerRef = useRef(null);
   const dataCache = useRef(new Map());
 
-  const parseDates = useCallback((data) => {
-    if (!data?.features) return data;
-
-    return {
-      ...data,
-      features: data.features.map(feature => {
-        if (!feature.properties?.date) return feature;
-
-        try {
-          const dateStr = feature.properties.date;
-          let dateObj;
-
-          if (dateStr instanceof Date && !isNaN(dateStr.getTime())) {
-            dateObj = dateStr;
-          } else if (typeof dateStr === 'string') {
-            dateObj = parseISO(dateStr);
-            if (isNaN(dateObj.getTime())) {
-              throw new Error(`Invalid date string: ${dateStr}`);
-            }
-          } else {
-            throw new Error(`Unsupported date format: ${typeof dateStr}`);
-          }
-
-          return {
-            ...feature,
-            properties: {
-              ...feature.properties,
-              date: dateObj
-            }
-          };
-        } catch (error) {
-          console.error('Error parsing feature date:', error, 'Feature:', feature);
-          return {
-            ...feature,
-            properties: {
-              ...feature.properties,
-              date: null
-            }
-          };
-        }
-      })
-    };
-  }, []);
-
   const loadDataChunk = useCallback(async (path, type, signal) => {
-    // Check cache first
     const cacheKey = `${type}-${path}`;
     if (dataCache.current.has(cacheKey)) {
-      console.log(`Cache hit for ${cacheKey}`);
       return dataCache.current.get(cacheKey);
     }
 
-    console.log(`Fetching ${type} data from:`, path);
-
-    const response = await fetch(path, { signal });
-    if (!response.ok) throw new Error(`Failed to load ${type} data`);
-
-    let data;
-
     try {
       if (type === 'flowMaps') {
-        // Parse CSV data
+        const response = await fetch(path, { signal });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
         const csvText = await response.text();
-        data = Papa.parse(csvText, {
+        const { data, errors } = Papa.parse(csvText, {
           header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true
+          skipEmptyLines: true,
+          dynamicTyping: true
         });
 
-        if (data.errors.length) {
-          console.error(`Error parsing ${type} CSV:`, data.errors);
-          throw new Error(`Failed to parse ${type} CSV data.`);
+        if (errors.length > 0) {
+          throw new Error(`CSV parsing errors: ${errors.map(e => e.message).join(', ')}`);
         }
 
-        data = data.data; // Extract parsed data
-        console.log(`${type} CSV parsed successfully. Records count:`, data.length);
-      } else {
-        // For geoData and analysisResults, parse as JSON
-        const contentLength = response.headers.get('content-length');
-        if (contentLength && +contentLength > 1000000) {
-          // Stream large JSON files
-          const reader = response.body.getReader();
-          const chunks = [];
-          let receivedLength = 0;
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            chunks.push(value);
-            receivedLength += value.length;
-
-            // Update loading progress
-            setState(prev => ({
-              ...prev,
-              loadingProgress: Math.min((receivedLength / +contentLength) * 100, 100)
-            }));
-          }
-
-          const chunksAll = new Uint8Array(receivedLength);
-          let position = 0;
-          for (let chunk of chunks) {
-            chunksAll.set(chunk, position);
-            position += chunk.length;
-          }
-
-          const jsonString = new TextDecoder().decode(chunksAll);
-          data = JSON.parse(jsonString);
-
-          // Parse dates for geoData
-          if (type === 'geoData') {
-            data = parseDates(data);
-          }
-          
-          console.log(`${type} JSON parsed successfully.`);
-        } else {
-          // Small JSON files
-          data = await response.json();
-          if (type === 'geoData') {
-            data = parseDates(data);
-          }
-          console.log(`${type} JSON parsed successfully.`);
-        }
+        dataCache.current.set(cacheKey, data);
+        return data;
       }
 
-      // Cache the result
+      const data = await fetchJson(path);
+      
+      if (type === 'geoData') {
+        const processedData = {
+          ...data,
+          features: data.features.map(f => ({
+            ...f,
+            properties: processFeatureProperties(f.properties)
+          }))
+        };
+        dataCache.current.set(cacheKey, processedData);
+        return processedData;
+      }
+
       dataCache.current.set(cacheKey, data);
       return data;
-    } catch (parseError) {
-      console.error(`Error loading or parsing ${type} data:`, parseError);
-      throw parseError;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw error;
+      }
+      console.error(`Error loading ${type} data:`, error);
+      throw new Error(`Failed to load ${type} data: ${error.message}`);
     }
-  }, [parseDates]);
+  }, []);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadAllData = async () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -163,68 +86,55 @@ export const useSpatialDataOptimized = () => {
       try {
         setState(prev => ({ ...prev, loading: true, error: null }));
 
-        // Load critical geoData first
-        const geoData = await loadDataChunk(
-          getDataPath('unified_data.geojson'),
-          'geoData',
-          abortControllerRef.current.signal
-        );
+        // Define data paths
+        const paths = {
+          geoBoundaries: getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson'),
+          unified: getDataPath('unified_data.geojson'),
+          weights: getDataPath('spatial_weights/transformed_spatial_weights.json'),
+          flowMaps: getDataPath('network_data/time_varying_flows.csv'),
+          analysis: getDataPath('spatial_analysis_results.json')
+        };
 
-        // Extract unique months early
-        const months = new Set();
-        geoData.features.forEach(feature => {
-          if (feature.properties.date) {
-            const yearMonth = format(feature.properties.date, 'yyyy-MM');
-            months.add(yearMonth);
-          }
-        });
-
-        const uniqueMonthsArray = Array.from(months)
-          .map(monthStr => {
-            const date = parseISO(`${monthStr}-01`);
-            if (!isNaN(date.getTime())) {
-              return date;
-            } else {
-              console.error('Invalid month string:', monthStr);
-              return null;
-            }
-          })
-          .filter(date => date !== null)
-          .sort((a, b) => a - b);
-
-        setState(prev => ({
-          ...prev,
-          geoData,
-          uniqueMonths: uniqueMonthsArray,
-          loadingProgress: 40
-        }));
-
-        // Load remaining data in parallel
-        const [flowMaps, analysisResults] = await Promise.all([
-          loadDataChunk(
-            getDataPath('network_data/flow_maps.csv'),
-            'flowMaps',
-            abortControllerRef.current.signal
-          ),
-          loadDataChunk(
-            getDataPath('spatial_analysis_results.json'),
-            'analysisResults',
-            abortControllerRef.current.signal
-          )
+        // Load all data
+        const [
+          geoBoundariesData,
+          unifiedData,
+          weightsData,
+          flowMapsData,
+          analysisResultsData
+        ] = await Promise.all([
+          loadDataChunk(paths.geoBoundaries, 'geoBoundaries', abortControllerRef.current.signal),
+          loadDataChunk(paths.unified, 'geoData', abortControllerRef.current.signal),
+          loadDataChunk(paths.weights, 'weights', abortControllerRef.current.signal),
+          loadDataChunk(paths.flowMaps, 'flowMaps', abortControllerRef.current.signal),
+          loadDataChunk(paths.analysis, 'analysis', abortControllerRef.current.signal)
         ]);
 
+        // Merge and process data
+        const mergedData = mergeGeoData(
+          geoBoundariesData,
+          unifiedData,
+          regionMapping,
+          excludedRegions
+        );
+
+        // Extract unique months
+        const uniqueMonths = extractUniqueMonths(mergedData.features);
+
         setState(prev => ({
           ...prev,
-          flowMaps,
-          analysisResults,
+          geoData: mergedData,
+          flowMaps: flowMapsData,
+          analysisResults: analysisResultsData,
+          uniqueMonths,
           loading: false,
           loadingProgress: 100
         }));
 
-        console.log('All spatial data loaded successfully.');
       } catch (error) {
         if (error.name === 'AbortError') return;
-        console.error('Error loading spatial data:', error);
+
+        console.error('Error in loadAllData:', error);
         setState(prev => ({
           ...prev,
           loading: false,
@@ -233,24 +143,7 @@ export const useSpatialDataOptimized = () => {
       }
     };
 
-    const loadDataWithTimeout = async () => {
-      const timeoutId = setTimeout(() => {
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-          console.error('Data loading aborted due to timeout.');
-          setState(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Data loading timeout exceeded'
-          }));
-        }
-      }, 60000); // 60 seconds timeout
-
-      await loadData();
-      clearTimeout(timeoutId);
-    };
-
-    loadDataWithTimeout();
+    loadAllData();
 
     return () => {
       if (abortControllerRef.current) {
@@ -259,11 +152,10 @@ export const useSpatialDataOptimized = () => {
     };
   }, [loadDataChunk]);
 
-  // Clean up cache when component unmounts
+  // Clear cache on unmount
   useEffect(() => {
     return () => {
       dataCache.current.clear();
-      console.log('Data cache cleared.');
     };
   }, []);
 
