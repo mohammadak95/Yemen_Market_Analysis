@@ -8,7 +8,9 @@ module.exports = (env, argv) => {
   const isDevelopment = argv.mode === 'development';
   const envFile = isDevelopment ? '.env.local' : '.env.production';
   const envConfig = dotenv.config({ path: path.resolve(__dirname, envFile) }).parsed || {};
-  const publicPath = isDevelopment ? '/' : '/Yemen_Market_Analysis/';
+  const publicPath = process.env.NODE_ENV === 'production' 
+    ? '/Yemen_Market_Analysis/' 
+    : '/';
 
   return {
     entry: path.resolve(__dirname, 'src', 'index.js'),
