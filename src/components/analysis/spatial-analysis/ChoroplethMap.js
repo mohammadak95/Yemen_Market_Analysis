@@ -1,6 +1,8 @@
+//src/components/analysis/spatial-analysis/ChoroplethMap.js
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Marker, useMap } from 'react-leaflet';
 import { parseISO, isValid } from 'date-fns';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -17,10 +19,34 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
-import { Info as InfoIcon } from '@mui/icons-material';
+import { Info as InfoIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
+import { renderToString } from 'react-dom/server';
 import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
 import TimeSlider from './TimeSlider';
 import chroma from 'chroma-js';
+
+// Helper function to create MUI Icon Marker
+const createMUIIconMarker = (IconComponent, color = 'red', size = 40) => {
+  const iconHTML = renderToString(<IconComponent style={{ color, fontSize: size }} />);
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  
+  canvas.width = size;
+  canvas.height = size;
+  const img = new Image();
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconHTML)}`;
+  img.onload = () => context.drawImage(img, 0, 0);
+
+  return new L.Icon({
+    iconUrl: canvas.toDataURL(),
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size / 2],
+  });
+};
+
+// Custom MUI icon marker
+const muiIconMarker = createMUIIconMarker(LocationOnIcon, 'blue', 40);
 
 // Map bounds adjustment component
 const MapBoundsComponent = ({ features }) => {
@@ -65,7 +91,6 @@ const ChoroplethMap = ({
       if (!date) return false;
       
       try {
-        // Convert both dates to compare them properly
         const featureDate = typeof date === 'string' ? parseISO(date) : date;
         const targetDate = typeof selectedDate === 'string' ? parseISO(selectedDate) : selectedDate;
         
@@ -75,10 +100,7 @@ const ChoroplethMap = ({
 
         return featureDate.toISOString().split('T')[0] === targetDate.toISOString().split('T')[0];
       } catch (error) {
-        console.warn('Error comparing dates:', error, {
-          featureDate: date,
-          selectedDate: selectedDate
-        });
+        console.warn('Error comparing dates:', error, { featureDate: date, selectedDate });
         return false;
       }
     });
@@ -128,7 +150,6 @@ const ChoroplethMap = ({
   // Event handlers for features
   const onEachFeature = useCallback((feature, layer) => {
     layer.bindPopup(createPopupContent(feature));
-    
     layer.on({
       mouseover: (e) => {
         const layer = e.target;
@@ -147,12 +168,7 @@ const ChoroplethMap = ({
 
   return (
     <Paper sx={{ p: 2 }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 2 
-      }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">
           Spatial Distribution
           <Tooltip title={getTechnicalTooltip('choropleth')}>
@@ -214,37 +230,10 @@ const ChoroplethMap = ({
               onEachFeature={onEachFeature}
             />
             <MapBoundsComponent features={filteredFeatures} />
+            
+            {/* Example Marker with MUI Icon */}
+            <Marker position={[15.3694, 44.191]} icon={muiIconMarker} />
           </MapContainer>
-
-          {/* Legend */}
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 20,
-              right: 20,
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              padding: 1,
-              borderRadius: 1,
-              border: 1,
-              borderColor: 'divider'
-            }}
-          >
-            <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-              {mapVariable === 'usdprice' ? 'Price (USD)' :
-               mapVariable === 'conflict_intensity' ? 'Conflict Intensity' :
-               'Residuals'}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ 
-                width: 100, 
-                height: 10, 
-                background: `linear-gradient(to right, ${colorScale.colors(5).join(',')})`
-              }} />
-              <Typography variant="caption">
-                {valueRange[0].toFixed(1)} - {valueRange[1].toFixed(1)}
-              </Typography>
-            </Box>
-          </Box>
         </Box>
       )}
 

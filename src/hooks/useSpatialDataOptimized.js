@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+//src/hooks/useSpatialDataOptimized.js
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { parseISO, format, isValid } from 'date-fns';
 import Papa from 'papaparse';
 import { getDataPath } from '../utils/dataPath';
@@ -231,7 +233,24 @@ export const useSpatialDataOptimized = () => {
       }
     };
 
-    loadData();
+    const loadDataWithTimeout = async () => {
+      const timeoutId = setTimeout(() => {
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          console.error('Data loading aborted due to timeout.');
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Data loading timeout exceeded'
+          }));
+        }
+      }, 60000); // 60 seconds timeout
+
+      await loadData();
+      clearTimeout(timeoutId);
+    };
+
+    loadDataWithTimeout();
 
     return () => {
       if (abortControllerRef.current) {

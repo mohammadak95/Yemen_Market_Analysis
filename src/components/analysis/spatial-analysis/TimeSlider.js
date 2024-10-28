@@ -1,3 +1,5 @@
+//src/components/analysis/spatial-analysis/TimeSlider.js
+
 import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Slider, Typography } from '@mui/material';
@@ -37,14 +39,18 @@ const TimeSlider = ({ months, selectedDate, onChange }) => {
   return (
     <Box sx={{ width: '100%', px: 2, py: 1 }}>
       <Slider
-        value={currentIndex}
+        value={currentIndex >= 0 ? currentIndex : 0} // Ensure the value is in range
         onChange={handleChange}
         step={1}
         marks={marks}
         min={0}
         max={monthIndices.length - 1}
         valueLabelDisplay="auto"
-        valueLabelFormat={(index) => format(months[index], 'MMM yyyy')}
+        valueLabelFormat={(index) => (
+          index >= 0 && index < months.length
+            ? format(months[index], 'MMM yyyy')
+            : ''
+        )}
         aria-label="Time slider"
       />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
