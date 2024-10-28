@@ -2,20 +2,21 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { List, ListItem, ListItemIcon, ListItemText, Divider } from '@mui/material';
+import { List, ListItemIcon, ListItemText, Divider } from '@mui/material';
 import { School as SchoolIcon } from '@mui/icons-material';
+import NavigationItem from './NavigationItem'; // Adjust the path as necessary
 
 const DiscoveryMenu = ({ onTutorialsClick }) => {
   return (
     <List>
-      <ListItem button onClick={onTutorialsClick}>
+      <NavigationItem onClick={onTutorialsClick}>
         <ListItemIcon>
           <SchoolIcon />
         </ListItemIcon>
         <ListItemText primary="Tutorials" />
-      </ListItem>
+      </NavigationItem>
       <Divider />
-      {/* Other menu items */}
+      {/* Other menu items can be added here using <NavigationItem> */}
     </List>
   );
 };

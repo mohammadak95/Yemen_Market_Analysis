@@ -74,8 +74,6 @@
     "dev:react-query": "REACT_APP_REACT_QUERY_DEVTOOLS=true webpack serve --mode development"
   },
   "devDependencies": {
-    "ajv": "^8.12.0",
-    "ajv-keywords": "^5.1.0",
     "@babel/core": "^7.26.0",
     "@babel/eslint-parser": "^7.23.0",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
@@ -87,6 +85,8 @@
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.5.1",
+    "ajv": "^8.12.0",
+    "ajv-keywords": "^5.1.0",
     "autoprefixer": "^10.4.20",
     "babel-jest": "^29.7.0",
     "babel-loader": "^9.1.3",
