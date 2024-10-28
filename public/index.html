@@ -2,25 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="icon" href="favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Theme color will be set dynamically using JavaScript -->
+    <meta name="theme-color" content="#000000" />
     <meta
       name="description"
       content="Yemen Market Analysis Dashboard"
     />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="apple-touch-icon" href="logo192.png" />
+    <!-- Update the manifest link to use an absolute path -->
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
     <title>Yemen Market Analysis</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-  <script>
-    let themeColorMeta = document.createElement('meta');
-    themeColorMeta.name = 'theme-color';
-    themeColorMeta.content = '#000000';
-    document.head.appendChild(themeColorMeta);
-  </script>
-</body>
+  </body>
 </html>

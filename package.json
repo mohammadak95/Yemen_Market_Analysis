@@ -71,7 +71,9 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "transform-spatial-weights": "node scripts/transformSpatialWeights.js",
-    "dev:react-query": "REACT_APP_REACT_QUERY_DEVTOOLS=true webpack serve --mode development"
+    "dev:react-query": "REACT_APP_REACT_QUERY_DEVTOOLS=true webpack serve --mode development",
+    "check-files": "node fileCheck.js",
+    "start-debug": "NODE_ENV=development DEBUG=express:* npm start"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
