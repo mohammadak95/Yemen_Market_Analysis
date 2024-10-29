@@ -1,16 +1,17 @@
 // src/App.js
 
 import React, { useState, useCallback, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { ThemeProvider, useTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, Toolbar, IconButton, Box } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleDarkMode } from './slices/index';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 
-// Components
+// Import actions and selector
+import { toggleDarkMode } from './slices/themeSlice';
+
+// Import components
 import Header from './components/common/Header';
 import Sidebar from './components/common/Sidebar';
 import Dashboard from './Dashboard';
@@ -21,26 +22,24 @@ import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
 
-// Hooks
+// Import hooks
 import useMediaQuery from '@mui/material/useMediaQuery';
 import useWindowSize from './hooks/useWindowSize';
 import useData from './hooks/useData';
 
-// Styles and Theme
+// Import themes
 import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
 } from './styles/theme';
-import {
-  LayoutContainer,
-  MainContent,
-  SidebarWrapper,
-} from './styles/LayoutStyles';
 
-// Context
+// Import context providers
 import { DiscoveryProvider } from './context/DiscoveryContext';
+import { WorkerProvider } from './context/WorkerContext';
+import { SpatialDataProvider } from './context/SpatialDataContext';
 
-const drawerWidth = 240;
+// Constants
+const DRAWER_WIDTH = 240;
 
 const StyledAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
@@ -51,53 +50,36 @@ const StyledAppBar = styled(AppBar, {
     duration: theme.transitions.duration.leavingScreen,
   }),
   [theme.breakpoints.up('sm')]: {
-    width: `calc(100% - ${open ? drawerWidth : 0}px)`,
-    marginLeft: open ? `${drawerWidth}px` : 0,
+    width: `calc(100% - ${open ? DRAWER_WIDTH : 0}px)`,
+    marginLeft: open ? `${DRAWER_WIDTH}px` : 0,
   },
 }));
 
-const Providers = ({ children }) => {
-  const isDarkMode = useSelector((state) => state.theme.isDarkMode);
+const App = React.memo(function App() {
+  // Redux
+  const dispatch = useDispatch();
+  const isDarkMode = useSelector(state => state.theme?.isDarkMode ?? false);
+  
+  // Theme
   const theme = React.useMemo(
     () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
     [isDarkMode]
   );
-
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <DiscoveryProvider>
-        <ErrorBoundary>{children}</ErrorBoundary>
-      </DiscoveryProvider>
-    </ThemeProvider>
-  );
-};
-
-Providers.propTypes = {
-  children: PropTypes.node.isRequired,
-};
-
-const App = React.memo(function App() {
-  const dispatch = useDispatch();
-  const isDarkMode = useSelector((state) => state.theme.isDarkMode);
-
-  const handleToggleDarkMode = useCallback(() => {
-    dispatch(toggleDarkMode());
-  }, [dispatch]);
-
-  // Theme and media queries
-  const theme = useTheme();
+  
+  // Hooks
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
-
-  // Fetch data
-  const { data, loading, error } = useData();
   const windowSize = useWindowSize();
+  const { data, loading, error } = useData();
 
-  // State
+  // State Management
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedAnalysis, setSelectedAnalysis] = useState('');
   const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']);
+  const [spatialViewConfig, setSpatialViewConfig] = useState({
+    center: [15.3694, 44.191],
+    zoom: 6,
+  });
   const [modalStates, setModalStates] = useState({
     methodology: false,
     tutorials: false,
@@ -117,6 +99,10 @@ const App = React.memo(function App() {
   }, [isSmUp]);
 
   // Handlers
+  const handleToggleDarkMode = useCallback(() => {
+    dispatch(toggleDarkMode());
+  }, [dispatch]);
+
   const handleDrawerToggle = useCallback(() => {
     setSidebarOpen((prev) => !prev);
   }, []);
@@ -132,13 +118,18 @@ const App = React.memo(function App() {
     }
   }, []);
 
-  // Loading and Error states
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error.message} />;
+  // Content rendering
+  const renderContent = () => {
+    if (loading) {
+      return <LoadingSpinner />;
+    }
 
-  return (
-    <Providers>
-      <LayoutContainer>
+    if (error) {
+      return <ErrorMessage message={error.message} />;
+    }
+
+    return (
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
         <StyledAppBar position="fixed" open={sidebarOpen && isSmUp}>
           <Toolbar>
             <IconButton
@@ -153,53 +144,51 @@ const App = React.memo(function App() {
             <Header
               isDarkMode={isDarkMode}
               toggleDarkMode={handleToggleDarkMode}
-              onTutorialsClick={() => handleModalToggle('tutorials', true)} // Passes onTutorialsClick here
+              onTutorialsClick={() => handleModalToggle('tutorials', true)}
             />
           </Toolbar>
         </StyledAppBar>
 
-        <SidebarWrapper open={sidebarOpen && isSmUp}>
-          <Sidebar
-            commodities={data?.commodities || []}
-            regimes={data?.regimes || []}
-            selectedCommodity={selectedCommodity}
-            setSelectedCommodity={setSelectedCommodity}
-            selectedAnalysis={selectedAnalysis}
-            setSelectedAnalysis={setSelectedAnalysis}
-            sidebarOpen={sidebarOpen}
-            setSidebarOpen={setSidebarOpen}
-            isSmUp={isSmUp}
-            onMethodologyClick={() => handleModalToggle('methodology', true)}
-            onTutorialsClick={() => handleModalToggle('tutorials', true)}
-            selectedRegimes={selectedGraphRegimes}
-            setSelectedRegimes={setSelectedGraphRegimes}
-            onOpenWelcomeModal={() => handleModalToggle('welcome', true)}
-            handleDrawerToggle={handleDrawerToggle}
-          />
-        </SidebarWrapper>
+        <Sidebar
+          commodities={data?.commodities || []}
+          regimes={data?.regimes || []}
+          selectedCommodity={selectedCommodity}
+          setSelectedCommodity={setSelectedCommodity}
+          selectedAnalysis={selectedAnalysis}
+          setSelectedAnalysis={setSelectedAnalysis}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          isSmUp={isSmUp}
+          onMethodologyClick={() => handleModalToggle('methodology', true)}
+          onTutorialsClick={() => handleModalToggle('tutorials', true)}
+          selectedRegimes={selectedGraphRegimes}
+          setSelectedRegimes={setSelectedGraphRegimes}
+          onOpenWelcomeModal={() => handleModalToggle('welcome', true)}
+          handleDrawerToggle={handleDrawerToggle}
+        />
 
-        <MainContent>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+            ml: { sm: `${DRAWER_WIDTH}px` },
+          }}
+        >
           <Toolbar />
-          <Box
-            sx={{
-              flexGrow: 1,
-              overflow: 'auto',
-              height: 'calc(100vh - 64px)',
-              padding: theme.spacing(2),
-            }}
-          >
-            <Dashboard
-              data={data}
-              selectedCommodity={selectedCommodity}
-              selectedRegimes={selectedGraphRegimes}
-              selectedAnalysis={selectedAnalysis}
-              windowWidth={windowSize.width}
-              sidebarOpen={sidebarOpen}
-            />
-          </Box>
-        </MainContent>
+          <Dashboard
+            data={data}
+            selectedCommodity={selectedCommodity}
+            selectedRegimes={selectedGraphRegimes}
+            selectedAnalysis={selectedAnalysis}
+            windowWidth={windowSize.width}
+            sidebarOpen={sidebarOpen}
+            spatialViewConfig={spatialViewConfig}
+            onSpatialViewChange={setSpatialViewConfig}
+          />
+        </Box>
 
-        {/* Modals */}
         <MethodologyModal
           open={modalStates.methodology}
           onClose={() => handleModalToggle('methodology', false)}
@@ -212,9 +201,26 @@ const App = React.memo(function App() {
           open={modalStates.welcome}
           onClose={handleWelcomeModalClose}
         />
-      </LayoutContainer>
-    </Providers>
+      </Box>
+    );
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <WorkerProvider>
+        <SpatialDataProvider>
+          <DiscoveryProvider>
+            <ErrorBoundary>
+              {renderContent()}
+            </ErrorBoundary>
+          </DiscoveryProvider>
+        </SpatialDataProvider>
+      </WorkerProvider>
+    </ThemeProvider>
   );
 });
+
+App.displayName = 'App';
 
 export default App;

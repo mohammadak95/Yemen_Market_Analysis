@@ -8,15 +8,17 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import AnalysisWrapper from './utils/AnalysisWrapper';
 
-// Lazy load analysis components
+// Import enhanced spatial analysis
+const IntegratedSpatialAnalysis = React.lazy(() =>
+  import('./components/analysis/spatial-analysis')
+);
+
+// Other lazy loaded components remain the same
 const ECMAnalysis = React.lazy(() =>
   import('./components/analysis/ecm/ECMAnalysis')
 );
 const PriceDifferentialAnalysis = React.lazy(() =>
   import('./components/analysis/price-differential/PriceDifferentialAnalysis')
-);
-const SpatialAnalysis = React.lazy(() =>
-  import('./components/analysis/spatial-analysis/SpatialAnalysis')
 );
 const TVMIIAnalysis = React.lazy(() =>
   import('./components/analysis/tvmii/TVMIIAnalysis')
@@ -54,8 +56,9 @@ const Dashboard = React.memo(
     selectedCommodity,
     selectedRegimes,
     windowWidth,
+    spatialViewConfig,
+    onSpatialViewChange,
   }) => {
-
     // Memoize processedData to optimize performance
     const processedData = useMemo(() => {
       if (data?.features) {
@@ -70,12 +73,12 @@ const Dashboard = React.memo(
       return [];
     }, [data]);
 
-    // Determine which analysis component to render
+    // Update analysis component selection with enhanced spatial analysis
     const AnalysisComponent = useMemo(() => {
       const components = {
         ecm: ECMAnalysis,
         priceDiff: PriceDifferentialAnalysis,
-        spatial: SpatialAnalysis,
+        spatial: IntegratedSpatialAnalysis,
         tvmii: TVMIIAnalysis,
       };
       return components[selectedAnalysis] || null;
@@ -102,22 +105,41 @@ const Dashboard = React.memo(
       );
     }, [processedData, selectedCommodity, selectedRegimes]);
 
-    // Render the analysis component
+    // Update analysis component rendering with spatial-specific props
     const renderAnalysisComponent = useCallback(() => {
-      if (selectedAnalysis && AnalysisComponent) {
-        return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <AnalysisWrapper>
-              <AnalysisComponent
-                selectedCommodity={selectedCommodity}
-                windowWidth={windowWidth}
-              />
-            </AnalysisWrapper>
-          </Suspense>
-        );
-      }
-      return null;
-    }, [selectedAnalysis, AnalysisComponent, selectedCommodity, windowWidth]);
+      if (!selectedAnalysis || !AnalysisComponent) return null;
+
+      const commonProps = {
+        selectedCommodity,
+        windowWidth,
+      };
+
+      // Add spatial-specific props when needed
+      const analysisProps = selectedAnalysis === 'spatial' 
+        ? {
+            ...commonProps,
+            viewConfig: spatialViewConfig,
+            onViewConfigChange: onSpatialViewChange,
+            data: processedData,
+          }
+        : commonProps;
+
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <AnalysisWrapper>
+            <AnalysisComponent {...analysisProps} />
+          </AnalysisWrapper>
+        </Suspense>
+      );
+    }, [
+      selectedAnalysis,
+      AnalysisComponent,
+      selectedCommodity,
+      windowWidth,
+      spatialViewConfig,
+      onSpatialViewChange,
+      processedData,
+    ]);
 
     return (
       <Box
@@ -134,9 +156,9 @@ const Dashboard = React.memo(
             <Box
               sx={{
                 width: '100%',
-                height: { xs: '300px', sm: '400px', md: '500px' }, // Responsive height
+                height: { xs: '300px', sm: '400px', md: '500px' },
                 position: 'relative',
-                mb: 2 // Add bottom margin
+                mb: 2
               }}
             >
               {renderInteractiveChart()}
@@ -157,6 +179,7 @@ const Dashboard = React.memo(
 
 Dashboard.displayName = 'Dashboard';
 
+// Update PropTypes to include new spatial props
 Dashboard.propTypes = {
   data: PropTypes.shape({
     features: PropTypes.arrayOf(
@@ -189,6 +212,11 @@ Dashboard.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
   windowWidth: PropTypes.number.isRequired,
+  spatialViewConfig: PropTypes.shape({
+    center: PropTypes.arrayOf(PropTypes.number).isRequired,
+    zoom: PropTypes.number.isRequired,
+  }),
+  onSpatialViewChange: PropTypes.func,
 };
 
 export default Dashboard;

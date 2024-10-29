@@ -1,6 +1,6 @@
-// ChoroplethMap.jsx
+//src/components/analysis/spatial-analysis/ChoroplethMap.js
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -18,7 +18,6 @@ import {
   Stack,
 } from '@mui/material';
 import { Info as InfoIcon } from '@mui/icons-material';
-import { format } from 'date-fns';
 import chroma from 'chroma-js';
 import TimeSlider from './TimeSlider';
 
@@ -39,23 +38,39 @@ const ChoroplethMap = ({
   selectedDate, 
   onDateChange, 
   uniqueMonths, 
-  isMobile 
+  isMobile,
+  fetchData // For dynamic fetching
 }) => {
   const [mapVariable, setMapVariable] = useState('usdprice');
   const [colorScheme, setColorScheme] = useState('sequential');
+  const [data, setData] = useState(enhancedData); // Local state for enhanced data
+
+  // Fetch data based on selected date dynamically
+  useEffect(() => {
+    const handleDataFetch = async () => {
+      try {
+        const newData = await fetchData(selectedDate); // Fetch data for the selected date
+        setData(newData); // Update the local data state
+      } catch (error) {
+        console.error("Error fetching new data:", error);
+      }
+    };
+
+    if (selectedDate) {
+      handleDataFetch(); // Fetch when selectedDate changes
+    }
+  }, [selectedDate, fetchData]);
 
   // Filter features for the selected date and map 'shapeName' to 'name'
   const filteredFeatures = useMemo(() => {
-    if (!enhancedData?.features) return [];
-    
-    const processedFeatures = enhancedData.features.map(feature => ({
+    if (!data?.features) return [];
+
+    const processedFeatures = data.features.map(feature => ({
       ...feature,
       properties: {
         ...feature.properties,
-        // Map 'shapeName' to 'name' for consistent access
         name: feature.properties.name || feature.properties.shapeName || 'Unknown Region',
         date: formatDateForFeature(feature.properties.date),
-        // Ensure mapVariable is a number
         [mapVariable]: typeof feature.properties[mapVariable] === 'string' 
           ? parseFloat(feature.properties[mapVariable]) 
           : feature.properties[mapVariable]
@@ -67,9 +82,8 @@ const ChoroplethMap = ({
       return featureDate === targetDate;
     });
 
-    console.log('Processed Features:', processedFeatures);
     return processedFeatures;
-  }, [enhancedData, selectedDate, mapVariable]);
+  }, [data, selectedDate, mapVariable]);
 
   // Calculate the range of values for the selected map variable
   const valueRange = useMemo(() => {
@@ -126,7 +140,7 @@ const ChoroplethMap = ({
       <div style="padding: 8px;">
         <strong>${regionName}</strong><br/>
         ${mapVariable}: ${!isNaN(value) ? value.toFixed(2) : 'N/A'}<br/>
-        Date: ${format(new Date(props.date), 'MMM d, yyyy')}
+        Date: ${formatDateForFeature(props.date)}
       </div>
     `;
   }, [mapVariable]);
@@ -300,6 +314,7 @@ ChoroplethMap.propTypes = {
     ])
   ).isRequired,
   isMobile: PropTypes.bool,
+  fetchData: PropTypes.func.isRequired, // Dynamic data fetching
 };
 
 export default ChoroplethMap;

@@ -41,6 +41,10 @@ module.exports = (env, argv) => {
           test: /\.(woff(2)?|eot|ttf|otf)$/,
           type: 'asset/inline',
         },
+        {
+          test: /\.worker\.js$/,
+          use: { loader: 'worker-loader' }
+        }
       ],
     },
     plugins: [

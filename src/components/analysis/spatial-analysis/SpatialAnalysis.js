@@ -1,4 +1,4 @@
-// src/components/analysis/spatial-analysis/SpatialAnalysis.js
+//src/utils/dataPath.js
 
 import React, { useState, useEffect, useMemo, useCallback, Suspense, useRef } from 'react';
 import PropTypes from 'prop-types';

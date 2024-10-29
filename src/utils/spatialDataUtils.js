@@ -74,6 +74,75 @@ export const processFeatureProperties = (props) => {
 };
 
 /**
+ * Validates feature data against requirements and selected commodity
+ * @param {Object} feature - The feature to validate
+ * @param {string} selectedCommodity - The currently selected commodity
+ * @param {Object} regionMapping - The region mapping object
+ * @returns {Object} Validation result with isValid flag and any errors
+ */
+export const validateFeatureData = (feature, selectedCommodity, regionMapping) => {
+  if (!feature || !feature.properties) {
+    return {
+      isValid: false,
+      errors: ['Invalid feature structure']
+    };
+  }
+
+  const errors = [];
+  const { properties } = feature;
+
+  // Check required fields
+  if (!properties.date) errors.push('Missing date');
+  if (!properties.commodity) errors.push('Missing commodity');
+
+  const regionId = getRegionId(properties, regionMapping);
+  if (!regionId) errors.push('Missing or invalid region identifier');
+
+  // Validate date
+  if (properties.date) {
+    const dateObj = new Date(properties.date);
+    if (!isValid(dateObj)) {
+      errors.push('Invalid date format');
+    }
+  }
+
+  // Validate numeric fields
+  const numericFields = {
+    price: 'price',
+    usdprice: 'USD price',
+    conflict_intensity: 'conflict intensity'
+  };
+
+  Object.entries(numericFields).forEach(([field, label]) => {
+    if (properties[field] !== null && properties[field] !== undefined) {
+      if (typeof properties[field] !== 'number' || isNaN(properties[field])) {
+        errors.push(`Invalid ${label} value`);
+      }
+    }
+  });
+
+  // Validate commodity match if selectedCommodity is provided
+  if (selectedCommodity && properties.commodity) {
+    const normalizedSelected = selectedCommodity.toLowerCase().trim();
+    const normalizedFeature = properties.commodity.toLowerCase().trim();
+    if (normalizedSelected !== normalizedFeature) {
+      errors.push(`Commodity mismatch: expected ${selectedCommodity}, got ${properties.commodity}`);
+    }
+  }
+
+  // Validate geometry
+  if (!feature.geometry || !feature.geometry.type || !feature.geometry.coordinates) {
+    errors.push('Invalid or missing geometry');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    regionId // Return the resolved regionId for reference
+  };
+};
+
+/**
  * Enhanced merge function with better error handling
  */
 export const mergeGeoData = (geoBoundariesData, enhancedData, regionMapping, excludedRegions) => {
@@ -106,13 +175,14 @@ export const mergeGeoData = (geoBoundariesData, enhancedData, regionMapping, exc
   // Process enhanced data features
   enhancedData.features.forEach((enhancedFeature, index) => {
     try {
-      const regionId = getRegionId(enhancedFeature.properties, regionMapping);
+      const validationResult = validateFeatureData(enhancedFeature, null, regionMapping);
       
-      if (!regionId) {
-        console.debug('Could not determine region_id for feature:', enhancedFeature.properties);
+      if (!validationResult.isValid) {
+        console.warn(`Invalid feature at index ${index}:`, validationResult.errors);
         return;
       }
 
+      const regionId = validationResult.regionId;
       const geoBoundaryFeature = geoBoundariesMap.get(regionId);
       
       if (!geoBoundaryFeature) {

@@ -1,4 +1,4 @@
-// src/hooks/useSpatialDataOptimized.js
+//src/hooks/useSpatialDataOptimized.js
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Papa from 'papaparse';
@@ -85,6 +85,7 @@ const useSpatialDataOptimized = (selectedCommodity) => {
 
   useEffect(() => {
     const loadAllData = async () => {
+      // Abort previous fetch requests if a new one is triggered
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -94,7 +95,7 @@ const useSpatialDataOptimized = (selectedCommodity) => {
         console.group('Loading Spatial Data');
         console.log('Starting data load for commodity:', selectedCommodity);
         
-        setState(prev => ({ ...prev, loading: true, error: null }));
+        setState(prev => ({ ...prev, loading: true, error: null, loadingProgress: 0 }));
 
         const paths = {
           geoBoundaries: getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson'),
@@ -104,14 +105,8 @@ const useSpatialDataOptimized = (selectedCommodity) => {
           analysis: getDataPath('spatial_analysis_results.json')
         };
 
-        // Load all data with progress tracking
-        const [
-          geoBoundariesData,
-          unifiedData,
-          weightsData,
-          flowMapsData,
-          analysisResultsData
-        ] = await Promise.all([
+        // Track the progress of loading multiple data chunks
+        const dataChunks = await Promise.all([
           loadDataChunk(paths.geoBoundaries, 'geoBoundaries', abortControllerRef.current.signal),
           loadDataChunk(paths.unified, 'geoData', abortControllerRef.current.signal),
           loadDataChunk(paths.weights, 'weights', abortControllerRef.current.signal),
@@ -119,14 +114,15 @@ const useSpatialDataOptimized = (selectedCommodity) => {
           loadDataChunk(paths.analysis, 'analysis', abortControllerRef.current.signal)
         ]);
 
-        console.log('All data chunks loaded successfully');
+        const [geoBoundariesData, unifiedData, weightsData, flowMapsData, analysisResultsData] = dataChunks;
 
+        console.log('All data chunks loaded successfully');
+        
         // Debug spatial data processing
         const debugResults = debugSpatialData(geoBoundariesData, unifiedData, selectedCommodity);
         console.log('Debug Results:', debugResults);
 
         // Merge and process data
-        console.log('Merging geo data');
         const mergedData = mergeGeoData(
           geoBoundariesData,
           unifiedData,
@@ -143,7 +139,6 @@ const useSpatialDataOptimized = (selectedCommodity) => {
         }
 
         // Extract unique months
-        console.log('Extracting unique months');
         const uniqueMonths = extractUniqueMonths(mergedData.features);
         
         console.log('Setting final state', {
@@ -151,6 +146,7 @@ const useSpatialDataOptimized = (selectedCommodity) => {
           uniqueMonthsCount: uniqueMonths.length
         });
 
+        // Update state with loaded data
         setState(prev => ({
           ...prev,
           geoData: mergedData,
@@ -158,11 +154,10 @@ const useSpatialDataOptimized = (selectedCommodity) => {
           analysisResults: analysisResultsData,
           uniqueMonths,
           loading: false,
-          loadingProgress: 100
+          loadingProgress: 100 // Data loaded completely
         }));
 
         console.log('Data loading completed successfully');
-
       } catch (error) {
         if (error.name === 'AbortError') {
           console.log('Data loading aborted');

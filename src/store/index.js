@@ -1,28 +1,34 @@
 // src/store/index.js
-import { configureStore } from '@reduxjs/toolkit';
-import { ecmReducer } from '../slices/index';
-import { themeReducer } from '../slices/index';
-import { priceDiffReducer } from '../slices/index';
-import spatialReducer  from '../slices/spatialSlice';
 
-// Define the Redux store with integrated reducers and middleware
+import { configureStore } from '@reduxjs/toolkit';
+import themeReducer from '../slices/themeSlice';
+import ecmReducer from '../slices/ecmSlice';
+import priceDiffReducer from '../slices/priceDiffSlice';
+import spatialReducer from '../slices/spatialSlice';
+
+// Create store with middleware
 const store = configureStore({
   reducer: {
-    ecm: ecmReducer,
     theme: themeReducer,
+    ecm: ecmReducer,
     priceDiff: priceDiffReducer,
     spatial: spatialReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: {
-        // Update these with actual non-serializable actions or paths as needed
-        ignoredActions: ['spatial/fetchSpatialData/rejected'],
-        ignoredActionPaths: ['meta.arg', 'payload.timestamp'],
-        ignoredPaths: ['spatial.flowMaps'],
-      },
+      serializableCheck: false,
     }),
   devTools: process.env.NODE_ENV !== 'production',
 });
+
+// Debug: Log initial state
+if (process.env.NODE_ENV !== 'production') {
+  console.log('Initial Redux State:', store.getState());
+  
+  // Subscribe to state changes
+  store.subscribe(() => {
+    console.log('Updated Redux State:', store.getState());
+  });
+}
 
 export default store;

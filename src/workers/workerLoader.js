@@ -2,7 +2,25 @@
 
 export const createWorker = () => {
   if (typeof Worker !== 'undefined') {
-    return new Worker(new URL('./dataProcessor.worker.js', import.meta.url));
+    const workerCode = `
+      self.onmessage = async (event) => {
+        const { data } = event;
+        try {
+          const result = await processData(data);
+          self.postMessage({ success: true, data: result });
+        } catch (error) {
+          self.postMessage({ success: false, error: error.message });
+        }
+      };
+
+      async function processData(data) {
+        // Add your data processing logic here
+        return data;
+      }
+    `;
+
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    return new Worker(URL.createObjectURL(blob));
   }
   return null;
 };
@@ -18,7 +36,11 @@ export const processDataWithWorker = async (data) => {
 
     worker.onmessage = (event) => {
       worker.terminate();
-      resolve(event.data);
+      if (event.data.success) {
+        resolve(event.data.data);
+      } else {
+        reject(new Error(event.data.error));
+      }
     };
 
     worker.onerror = (error) => {

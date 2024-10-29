@@ -1,21 +1,35 @@
 // src/index.js
 
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import store from './store/index';
+import store from './store';
 import App from './App';
+import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
+// Debug: Log initial state
+console.log('Initial store state:', store.getState());
+
+const root = createRoot(document.getElementById('root'));
+
+const AppWithProviders = () => (
   <Provider store={store}>
-    <App />
+    <ReduxDebugWrapper>
+      <App />
+    </ReduxDebugWrapper>
   </Provider>
+);
+
+root.render(
+  <React.StrictMode>
+    <AppWithProviders />
+  </React.StrictMode>
 );
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/spatialServiceWorker.js')
+    navigator.serviceWorker
+      .register('/spatialServiceWorker.js')
       .then(registration => {
         console.log('SW registered:', registration);
       })
