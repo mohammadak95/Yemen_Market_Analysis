@@ -1,5 +1,5 @@
-//src/utils/enhancedDataFetcher.js
 
+// src/components/analysis/spatial-analysis/TimeSlider.js
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Slider, Typography } from '@mui/material';
@@ -113,7 +113,31 @@ const TimeSlider = ({
               border: '1px solid',
               borderColor: 'divider',
               fontSize: '0.75rem',
-              zIndex: 2
+              zIndex: 2,
+              padding: '4px 8px',
+              '&:before': {
+                display: 'none'
+              },
+              top: -6,
+              '&.MuiSlider-valueLabelOpen': {
+                transform: 'translate(-50%, -100%) scale(1)',
+              }
+            },
+            '& .MuiSlider-thumb': {
+              width: 12,
+              height: 12,
+              '&:hover, &.Mui-focusVisible': {
+                boxShadow: 'none'
+              },
+              '&.Mui-active': {
+                boxShadow: 'none'
+              }
+            },
+            '& .MuiSlider-rail': {
+              opacity: 0.5,
+            },
+            '& .MuiSlider-track': {
+              border: 'none',
             }
           }}
         />
@@ -128,6 +152,9 @@ const TimeSlider = ({
       }}>
         <Typography variant="caption">
           Range: {format(new Date(minTime), 'MMMM yyyy')} - {format(new Date(maxTime), 'MMMM yyyy')}
+        </Typography>
+        <Typography variant="caption">
+          {dates.length} time periods
         </Typography>
       </Box>
     </Box>
@@ -148,4 +175,4 @@ TimeSlider.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-export default TimeSlider;
+export default React.memo(TimeSlider);

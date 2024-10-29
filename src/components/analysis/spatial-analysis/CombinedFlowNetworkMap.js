@@ -7,19 +7,14 @@ import ForceGraph2D from 'react-force-graph-2d';
 import { format } from 'date-fns';
 
 const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
-  // Validate inputs
-  if (!Array.isArray(flowMaps) || flowMaps.length === 0) {
-    return (
-      <Alert severity="info">
-        No flow data available for {selectedCommodity}
-      </Alert>
-    );
-  }
-
   const [highlightedNode, setHighlightedNode] = useState(null);
 
   // Process flow data into nodes and links
   const graphData = useMemo(() => {
+    if (!Array.isArray(flowMaps) || flowMaps.length === 0) {
+      return { nodes: [], links: [] };
+    }
+
     const nodes = new Map();
     const uniqueRegions = new Set();
 
@@ -62,6 +57,14 @@ const CombinedFlowNetworkMap = ({ flowMaps, selectedCommodity, dateRange }) => {
   const handleNodeClick = useCallback(node => {
     setHighlightedNode(node);
   }, []);
+
+  if (!flowMaps || flowMaps.length === 0) {
+    return (
+      <Alert severity="info">
+        No flow data available for {selectedCommodity}
+      </Alert>
+    );
+  }
 
   return (
     <Paper sx={{ p: 2 }}>

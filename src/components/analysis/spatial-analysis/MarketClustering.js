@@ -18,12 +18,12 @@ import {
   Alert,
   Divider,
 } from '@mui/material';
-import { InfoIcon } from 'lucide-react';
+import { Info as InfoIcon } from 'lucide-react';
 import ForceGraph2D from 'react-force-graph-2d';
 import { scaleLinear } from 'd3-scale';
 import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
 
-const MarketClustering = ({ clusters, selectedCommodity, isMobile }) => {
+const MarketClustering = ({ data, selectedCommodity, isMobile }) => {
   const [selectedCluster, setSelectedCluster] = useState('all');
   const [selectedMetric, setSelectedMetric] = useState('integration');
   
@@ -31,60 +31,93 @@ const MarketClustering = ({ clusters, selectedCommodity, isMobile }) => {
 
   // Process cluster data for visualization
   const graphData = useMemo(() => {
-    if (!clusters) return { nodes: [], links: [] };
+    if (!data?.features) return { nodes: [], links: [] };
 
     const nodes = [];
     const links = [];
     const nodeMap = new Map();
 
-    clusters.forEach(cluster => {
-      cluster.markets.forEach(market => {
-        if (!nodeMap.has(market.id)) {
-          nodeMap.set(market.id, {
-            id: market.id,
-            name: market.name,
-            cluster: cluster.id,
-            integration: market.integration_score,
-            centrality: market.centrality_score,
-            size: market.market_size || 1
-          });
-          nodes.push(nodeMap.get(market.id));
-        }
-      });
+    // Process features into nodes
+    data.features.forEach(feature => {
+      const props = feature.properties;
+      if (!props?.region_id) return;
 
-      cluster.connections.forEach(conn => {
+      if (!nodeMap.has(props.region_id)) {
+        nodeMap.set(props.region_id, {
+          id: props.region_id,
+          name: props.name || props.region_id,
+          cluster: props.cluster || 'unclustered',
+          integration: props.integration_score || 0,
+          centrality: props.centrality_score || 0,
+          size: props.market_size || 1
+        });
+        nodes.push(nodeMap.get(props.region_id));
+      }
+    });
+
+    // Create links based on spatial relationships
+    data.features.forEach(feature => {
+      const props = feature.properties;
+      if (!props?.connections) return;
+
+      props.connections.forEach(conn => {
         if (
           nodeMap.has(conn.source) && 
           nodeMap.has(conn.target) &&
           (selectedCluster === 'all' || 
-           cluster.id === parseInt(selectedCluster))
+           props.cluster === parseInt(selectedCluster))
         ) {
           links.push({
             source: conn.source,
             target: conn.target,
-            value: conn.strength
+            value: conn.strength || 1
           });
         }
       });
     });
 
     return { nodes, links };
-  }, [clusters, selectedCluster]);
+  }, [data, selectedCluster]);
 
   // Calculate cluster statistics
   const clusterStats = useMemo(() => {
-    if (!clusters) return null;
+    if (!data?.features) return [];
 
-    return clusters.map(cluster => ({
+    const clusters = new Map();
+    
+    data.features.forEach(feature => {
+      const props = feature.properties;
+      const clusterId = props.cluster || 'unclustered';
+      
+      if (!clusters.has(clusterId)) {
+        clusters.set(clusterId, {
+          id: clusterId,
+          marketCount: 0,
+          totalIntegration: 0,
+          markets: [],
+          density: 0
+        });
+      }
+
+      const cluster = clusters.get(clusterId);
+      cluster.marketCount++;
+      cluster.totalIntegration += props.integration_score || 0;
+      cluster.markets.push({
+        name: props.name || props.region_id,
+        centrality: props.centrality_score || 0
+      });
+    });
+
+    return Array.from(clusters.values()).map(cluster => ({
       id: cluster.id,
-      marketCount: cluster.markets.length,
-      avgIntegration: cluster.markets.reduce((sum, m) => sum + m.integration_score, 0) / cluster.markets.length,
+      marketCount: cluster.marketCount,
+      avgIntegration: cluster.totalIntegration / cluster.marketCount,
       density: cluster.density,
       centralMarket: cluster.markets.reduce((max, market) => 
-        market.centrality_score > (max?.centrality_score || 0) ? market : max
+        market.centrality > (max?.centrality || 0) ? market : max
       , null)?.name
     }));
-  }, [clusters]);
+  }, [data]);
 
   // Node color scale based on selected metric
   const colorScale = useMemo(() => {
@@ -95,6 +128,14 @@ const MarketClustering = ({ clusters, selectedCommodity, isMobile }) => {
       .domain([Math.min(...values), Math.max(...values)])
       .range(['#ff9999', '#990000']);
   }, [graphData.nodes, selectedMetric]);
+
+  if (!data?.features?.length) {
+    return (
+      <Alert severity="info">
+        No clustering data available for analysis
+      </Alert>
+    );
+  }
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -118,7 +159,7 @@ const MarketClustering = ({ clusters, selectedCommodity, isMobile }) => {
                 label="Cluster Filter"
               >
                 <MenuItem value="all">All Clusters</MenuItem>
-                {clusters?.map((cluster) => (
+                {clusterStats.map((cluster) => (
                   <MenuItem key={cluster.id} value={cluster.id}>
                     Cluster {cluster.id}
                   </MenuItem>
@@ -142,20 +183,18 @@ const MarketClustering = ({ clusters, selectedCommodity, isMobile }) => {
           </Grid>
         </Grid>
 
-        {clusterStats && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Clustering Summary for {selectedCommodity}
-            </Typography>
-            <Typography variant="body2">
-              Identified {clusters.length} distinct market clusters with varying levels of integration.
-              {selectedCluster !== 'all' && clusterStats[parseInt(selectedCluster) - 1] && 
-                ` Selected cluster contains ${clusterStats[parseInt(selectedCluster) - 1].marketCount} markets 
-                with average integration of ${clusterStats[parseInt(selectedCluster) - 1].avgIntegration.toFixed(2)}.`
-              }
-            </Typography>
-          </Alert>
-        )}
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Clustering Summary for {selectedCommodity}
+          </Typography>
+          <Typography variant="body2">
+            Identified {clusterStats.length} distinct market clusters with varying levels of integration.
+            {selectedCluster !== 'all' && clusterStats[parseInt(selectedCluster) - 1] && 
+              ` Selected cluster contains ${clusterStats[parseInt(selectedCluster) - 1].marketCount} markets 
+              with average integration of ${clusterStats[parseInt(selectedCluster) - 1].avgIntegration.toFixed(2)}.`
+            }
+          </Typography>
+        </Alert>
       </Box>
 
       <Grid container spacing={3}>
@@ -171,7 +210,6 @@ const MarketClustering = ({ clusters, selectedCommodity, isMobile }) => {
                   linkWidth={link => Math.sqrt(link.value) * 2}
                   linkColor={() => '#999'}
                   nodeRelSize={6}
-                  width={isMobile ? 300 : 600}
                 />
               </Box>
             </CardContent>
@@ -185,7 +223,7 @@ const MarketClustering = ({ clusters, selectedCommodity, isMobile }) => {
               <Typography variant="subtitle1" gutterBottom>
                 Cluster Statistics
               </Typography>
-              {clusterStats?.map((stat) => (
+              {clusterStats.map((stat) => (
                 <Box key={stat.id} sx={{ mb: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
                     Cluster {stat.id}
@@ -216,24 +254,25 @@ const MarketClustering = ({ clusters, selectedCommodity, isMobile }) => {
 };
 
 MarketClustering.propTypes = {
-  clusters: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    markets: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      integration_score: PropTypes.number.isRequired,
-      centrality_score: PropTypes.number.isRequired,
-      market_size: PropTypes.number,
-    })).isRequired,
-    connections: PropTypes.arrayOf(PropTypes.shape({
-      source: PropTypes.string.isRequired,
-      target: PropTypes.string.isRequired,
-      strength: PropTypes.number.isRequired,
-    })).isRequired,
-    density: PropTypes.number.isRequired,
-  })).isRequired,
+  data: PropTypes.shape({
+    features: PropTypes.arrayOf(PropTypes.shape({
+      properties: PropTypes.shape({
+        region_id: PropTypes.string,
+        name: PropTypes.string,
+        cluster: PropTypes.number,
+        integration_score: PropTypes.number,
+        centrality_score: PropTypes.number,
+        market_size: PropTypes.number,
+        connections: PropTypes.arrayOf(PropTypes.shape({
+          source: PropTypes.string,
+          target: PropTypes.string,
+          strength: PropTypes.number,
+        })),
+      }),
+    })),
+  }),
   selectedCommodity: PropTypes.string.isRequired,
   isMobile: PropTypes.bool,
 };
 
-export default MarketClustering;
+export default React.memo(MarketClustering);

@@ -1,6 +1,5 @@
 // src/utils/spatialDebugUtils.js
 
-import { processData } from './utils';
 
 export const debugSpatialData = (geoBoundariesData, enhancedData, selectedCommodity) => {
   console.group('Spatial Data Processing Debug');

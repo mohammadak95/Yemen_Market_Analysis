@@ -22,6 +22,10 @@ export const MapLegend = ({ colorScale, variable, position = 'bottomright' }) =>
         zIndex: 1000,
         p: 1,
         minWidth: 150,
+        bgcolor: 'background.paper',
+        '&:hover': {
+          bgcolor: 'background.paper',
+        },
       }}
     >
       <Typography variant="caption" gutterBottom>

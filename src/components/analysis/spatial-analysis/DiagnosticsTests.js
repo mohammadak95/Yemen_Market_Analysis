@@ -13,15 +13,18 @@ import {
   TableRow,
   Tooltip,
   Box,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 
 const DiagnosticsTests = ({ data }) => {
   if (!data) {
     return (
-      <Typography variant="body1">
-        No diagnostic tests data available.
-      </Typography>
+      <Alert severity="info">
+        <AlertTitle>No Data Available</AlertTitle>
+        Diagnostic test results are not available at this time.
+      </Alert>
     );
   }
 
@@ -44,19 +47,13 @@ const DiagnosticsTests = ({ data }) => {
     return 'N/A';
   };
 
-  // Explanations for each test
   const explanations = {
-    moran_i:
-      "Moran&apos;s I assesses spatial autocorrelation in the residuals of the regression model. A significant Moran&apos;s I suggests that the residuals are spatially autocorrelated.",
-    observations:
-      'The number of observations used in the regression analysis.',
-    mse:
-      'Mean Squared Error (MSE) measures the average of the squares of the errors, indicating the quality of the regression model.',
-    r_squared:
-      'R-squared represents the proportion of the variance in the dependent variable that is predictable from the independent variables.',
-    adj_r_squared:
-      'Adjusted R-squared adjusts the R-squared value based on the number of predictors in the model, providing a more accurate measure for multiple regression.',
-    // Add more explanations as needed
+    moran_i: "Moran's I assesses spatial autocorrelation in the residuals of the regression model. A significant Moran's I suggests spatial autocorrelation.",
+    observations: 'The number of observations used in the regression analysis.',
+    mse: 'Mean Squared Error (MSE) measures the average squared difference between predicted and actual values.',
+    r_squared: 'R-squared represents the proportion of variance in the dependent variable explained by the independent variables.',
+    adj_r_squared: 'Adjusted R-squared adjusts R-squared based on the number of predictors, providing a more accurate measure for multiple regression.',
+    vif: 'Variance Inflation Factor (VIF) measures multicollinearity in the regression variables.',
   };
 
   return (
@@ -70,19 +67,13 @@ const DiagnosticsTests = ({ data }) => {
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle1" gutterBottom>
             <Tooltip title={explanations.moran_i} arrow>
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                }}
-              >
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
                 Moran&apos;s I <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
               </Box>
             </Tooltip>
           </Typography>
           <TableContainer component={Paper} variant="outlined">
-            <Table size="small" aria-label="Moran's I Table">
+            <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>Metric</TableCell>
@@ -91,14 +82,12 @@ const DiagnosticsTests = ({ data }) => {
               </TableHead>
               <TableBody>
                 <TableRow>
-                  <TableCell>I</TableCell>
-                  <TableCell align="right">{renderValue(moran_i.I)}</TableCell>
+                  <TableCell>I Statistic</TableCell>
+                  <TableCell align="right">{renderValue(moran_i.value)}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell>p-value</TableCell>
-                  <TableCell align="right">
-                    {renderValue(moran_i['p-value'])}
-                  </TableCell>
+                  <TableCell>P-value</TableCell>
+                  <TableCell align="right">{renderValue(moran_i.p_value)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -109,23 +98,10 @@ const DiagnosticsTests = ({ data }) => {
       {/* Model Statistics Table */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="subtitle1" gutterBottom>
-          <Tooltip
-            title="Model performance metrics indicating the fit and accuracy of the regression model."
-            arrow
-          >
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              Model Statistics <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
-            </Box>
-          </Tooltip>
+          Model Statistics
         </Typography>
         <TableContainer component={Paper} variant="outlined">
-          <Table size="small" aria-label="Model Statistics Table">
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Statistic</TableCell>
@@ -133,45 +109,46 @@ const DiagnosticsTests = ({ data }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {[
-                {
-                  label: 'Observations',
-                  value: observations,
-                  explanation: explanations.observations,
-                },
-                {
-                  label: 'Mean Squared Error (MSE)',
-                  value: mse,
-                  explanation: explanations.mse,
-                },
-                {
-                  label: 'R-squared',
-                  value: r_squared,
-                  explanation: explanations.r_squared,
-                },
-                {
-                  label: 'Adjusted R-squared',
-                  value: adj_r_squared,
-                  explanation: explanations.adj_r_squared,
-                },
-              ].map((stat) => (
-                <TableRow key={stat.label}>
-                  <TableCell>
-                    <Tooltip title={stat.explanation} arrow>
-                      <Box
-                        sx={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {stat.label} <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
-                      </Box>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell align="right">{renderValue(stat.value)}</TableCell>
-                </TableRow>
-              ))}
+              <TableRow>
+                <TableCell>
+                  <Tooltip title={explanations.observations} arrow>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                      Observations <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+                    </Box>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="right">{renderValue(observations)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <Tooltip title={explanations.mse} arrow>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                      MSE <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+                    </Box>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="right">{renderValue(mse)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <Tooltip title={explanations.r_squared} arrow>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                      R-squared <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+                    </Box>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="right">{renderValue(r_squared)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <Tooltip title={explanations.adj_r_squared} arrow>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                      Adjusted R-squared <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
+                    </Box>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align="right">{renderValue(adj_r_squared)}</TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </TableContainer>
@@ -181,24 +158,15 @@ const DiagnosticsTests = ({ data }) => {
       {vif && vif.length > 0 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle1" gutterBottom>
-            <Tooltip
-              title="Variance Inflation Factor (VIF) measures the multicollinearity in regression analysis."
-              arrow
-            >
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                Variance Inflation Factor (VIF)
+            <Tooltip title={explanations.vif} arrow>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                Variance Inflation Factors (VIF)
                 <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
               </Box>
             </Tooltip>
           </Typography>
           <TableContainer component={Paper} variant="outlined">
-            <Table size="small" aria-label="VIF Table">
+            <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>Variable</TableCell>
@@ -209,9 +177,7 @@ const DiagnosticsTests = ({ data }) => {
                 {vif.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell>{item.Variable}</TableCell>
-                    <TableCell align="right">
-                      {renderValue(item.VIF)}
-                    </TableCell>
+                    <TableCell align="right">{renderValue(item.VIF)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -226,8 +192,8 @@ const DiagnosticsTests = ({ data }) => {
 DiagnosticsTests.propTypes = {
   data: PropTypes.shape({
     moran_i: PropTypes.shape({
-      I: PropTypes.number,
-      'p-value': PropTypes.number,
+      value: PropTypes.number,
+      p_value: PropTypes.number,
     }),
     observations: PropTypes.number,
     mse: PropTypes.number,

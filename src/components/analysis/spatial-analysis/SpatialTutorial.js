@@ -1,7 +1,6 @@
 // src/components/spatial-analysis/SpatialTutorial.js
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import {
   Dialog,
   DialogTitle,
@@ -13,14 +12,11 @@ import {
   Box,
 } from '@mui/material';
 
-const SpatialTutorial = ({ onComplete }) => {
+const SpatialTutorial = () => {
   const [open, setOpen] = React.useState(false);
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => {
-    setOpen(false);
-    onComplete?.();
-  };
+  const handleClose = () => setOpen(false);
 
   return (
     <>
@@ -32,9 +28,8 @@ const SpatialTutorial = ({ onComplete }) => {
         onClose={handleClose}
         maxWidth="md"
         fullWidth
-        aria-labelledby="spatial-tutorial-title"
       >
-        <DialogTitle id="spatial-tutorial-title">Understanding Spatial Analysis</DialogTitle>
+        <DialogTitle>Understanding Spatial Analysis</DialogTitle>
         <DialogContent>
           <DialogContentText component="div">
             <Typography variant="h6" gutterBottom>
@@ -91,17 +86,13 @@ const SpatialTutorial = ({ onComplete }) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} variant="contained">
+          <Button onClick={handleClose}>
             Start Exploring
           </Button>
         </DialogActions>
       </Dialog>
     </>
   );
-};
-
-SpatialTutorial.propTypes = {
-  onComplete: PropTypes.func,
 };
 
 export default SpatialTutorial;

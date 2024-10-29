@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useMap } from 'react-leaflet';
 
-export const MapControls = ({ position = 'topright' }) => {
+const MapControls = ({ position = 'topright' }) => {
   const map = useMap();
 
   const handleZoomIn = () => {
@@ -70,4 +70,4 @@ MapControls.propTypes = {
   position: PropTypes.oneOf(['topleft', 'topright', 'bottomleft', 'bottomright']),
 };
 
-export default MapControls;
+export default MapControls

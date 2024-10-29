@@ -14,8 +14,7 @@ import {
   Chip,
   Box,
 } from '@mui/material';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 
 const RegressionResults = ({ data }) => {
   if (!data || !data.coefficients) {
@@ -51,9 +50,9 @@ const RegressionResults = ({ data }) => {
 
   const getCoefficientIcon = (coef) => {
     return coef > 0 ? (
-      <ArrowUpwardIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+      <TrendingUp size={16} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
     ) : (
-      <ArrowDownwardIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+      <TrendingDown size={16} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
     );
   };
 

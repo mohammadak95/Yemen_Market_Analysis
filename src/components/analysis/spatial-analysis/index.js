@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ErrorBoundary from '../../common/ErrorBoundary';
-import IntegratedSpatialAnalysis from './IntegratedSpatialAnalysis';
+import SpatialAnalysis from './SpatialAnalysis';
 import { WorkerProvider } from '../../../context/WorkerContext';
 import { SpatialDataProvider } from '../../../context/SpatialDataContext';
 
@@ -11,7 +11,7 @@ const SpatialAnalysisWrapper = (props) => {
     <ErrorBoundary>
       <WorkerProvider>
         <SpatialDataProvider>
-          <IntegratedSpatialAnalysis {...props} />
+          <SpatialAnalysis {...props} />
         </SpatialDataProvider>
       </WorkerProvider>
     </ErrorBoundary>
