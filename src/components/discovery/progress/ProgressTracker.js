@@ -23,7 +23,7 @@ import {
   Warning,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useDiscoveryData } from '../../../hooks/useDiscoveryData';
+import { useDiscoveryData } from '@/hooks';;
 
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString(undefined, {

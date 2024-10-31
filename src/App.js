@@ -24,8 +24,8 @@ import WelcomeModal from './components/common/WelcomeModal';
 
 // Import hooks
 import useMediaQuery from '@mui/material/useMediaQuery';
-import useWindowSize from './hooks/useWindowSize';
-import useData from './hooks/useData';
+import { useWindowSize } from '@/hooks';;
+import { useData } from '@/hooks';;
 
 // Import themes
 import {

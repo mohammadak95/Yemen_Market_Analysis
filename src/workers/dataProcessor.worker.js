@@ -1,8 +1,8 @@
 // src/workers/dataProcessor.worker.js
 
-import { transformToWGS84 } from '../utils/utils';
-import { mergeSpatialDataWithMapping } from '../utils/utils';
-import { regionMapping, excludedRegions } from '../utils/utils';
+import { transformToWGS84 } from '../utils/appUtils';
+import { mergeSpatialDataWithMapping } from '../utils/appUtils';
+import { regionMapping, excludedRegions } from '../utils/appUtils';
 
 self.onmessage = async (event) => {
   const { type, data } = event.data;

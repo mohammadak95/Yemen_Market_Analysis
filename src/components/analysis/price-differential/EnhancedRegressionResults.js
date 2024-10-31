@@ -12,7 +12,7 @@ import {
   Alert,
   Box,
 } from '@mui/material';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 const EnhancedRegressionResults = ({ regressionData }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');

@@ -2,7 +2,7 @@
 
 import * as d3 from 'd3-array';
 import { useMemo } from 'react';
-import { useWorkerProcessor } from '../hooks/useWorkerProcessor';
+import { useWorkerProcessor } from '@/hooks';;
 
 class SpatialDataService {
   constructor(worker) {

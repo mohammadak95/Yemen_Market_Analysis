@@ -36,7 +36,7 @@ import InteractiveDemoContainer from './InteractiveDemoContainer';
 import ProgressTracker from './progress/ProgressTracker';
 import ContentPreview from './ContentPreview';
 import { discoveryPaths } from '../../config/discoveryConfig';
-import { useDiscoveryIntegration } from '../../hooks/useDiscoveryIntegration';
+import { useDiscoveryIntegration } from '@/hooks';;
 
 // DiscoveryNavigation Component
 const DiscoveryNavigation = ({ onPathSelect, onSectionSelect }) => {

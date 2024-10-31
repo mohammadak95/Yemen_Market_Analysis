@@ -1,7 +1,12 @@
+// Debugging and analysis utilities
+
+// ===== ReduxDebugWrapper.js =====
+
 // src/utils/ReduxDebugWrapper.js
 
 import React, { useEffect } from 'react';
 import { useStore } from 'react-redux';
+import PropTypes from 'prop-types';
 
 const ReduxDebugWrapper = ({ children }) => {
   const store = useStore();
@@ -28,5 +33,22 @@ const ReduxDebugWrapper = ({ children }) => {
 
   return <>{children}</>;
 };
+ReduxDebugWrapper.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export default ReduxDebugWrapper;
+
+// ===== AnalysisWrapper.js =====
+
+// src/components/AnalysisWrapper.js
+
+const AnalysisWrapper = ({ children }) => {
+  return <>{children}</>; // Simply render children without additional wrappers or transitions
+};
+
+AnalysisWrapper.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+

@@ -26,7 +26,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Info as InfoIcon } from '@mui/icons-material';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 const TVMIIChart = ({ data, selectedCommodity, isMobile }) => {
   // Format the data for the chart

@@ -11,7 +11,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import MethodologyContentWrapper from './MethodologyContentWrapper';
 import { useTheme } from '@mui/material/styles';
-import useBodyScrollLock from '../../hooks/useBodyScrollLock'; // Import the custom hook
+import { useBodyScrollLock } from '@/hooks';; // Import the custom hook
 
 const MethodologyModal = ({ open, onClose }) => {
   const theme = useTheme();

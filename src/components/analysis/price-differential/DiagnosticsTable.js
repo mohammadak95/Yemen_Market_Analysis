@@ -22,7 +22,7 @@ import {
   Warning as WarningIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 const DiagnosticsTable = ({ data }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');

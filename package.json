@@ -73,8 +73,7 @@
     "deploy": "gh-pages -d build",
     "transform-spatial-weights": "node scripts/transformSpatialWeights.js",
     "dev:react-query": "REACT_APP_REACT_QUERY_DEVTOOLS=true webpack serve --mode development",
-    "check-files": "node fileCheck.js",
-    "start-debug": "NODE_ENV=development DEBUG=express:* npm start"
+    "check-files": "node fileCheck.js"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -105,6 +104,7 @@
     "file-loader": "^6.2.0",
     "fs-extra": "^11.2.0",
     "gh-pages": "^6.0.0",
+    "glob": "^11.0.0",
     "html-webpack-plugin": "^5.6.0",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
@@ -120,6 +120,7 @@
     "svgo": "^2.8.0",
     "terser-webpack-plugin": "^5.3.10",
     "ts-jest": "^29.1.0",
+    "ts-morph": "^24.0.0",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.0",

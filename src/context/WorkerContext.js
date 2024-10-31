@@ -1,7 +1,7 @@
 // src/context/WorkerContext.js
 
 import React, { createContext, useContext } from 'react';
-import { useWorkerProcessor } from '../hooks/useWorkerProcessor';
+import { useWorkerProcessor } from '@/hooks';;
 
 const WorkerContext = createContext(null);
 

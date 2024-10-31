@@ -29,8 +29,8 @@ import SpatialTutorial from './SpatialTutorial';
 import TimeSlider from './TimeSlider';
 
 // Import hooks and context
-import useSpatialDataOptimized from '../../../hooks/useSpatialDataOptimized';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useSpatialDataOptimized } from '@/hooks';;
+import { useTechnicalHelp } from '@/hooks';;
 import LoadingSpinner from '../../common/LoadingSpinner';
 
 const VARIABLE_OPTIONS = [

@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BlockMath } from 'react-katex';
-import { useDiscoveryData } from '../../../hooks/useDiscoveryData';
+import { useDiscoveryData } from '@/hooks';;
 import InteractiveDemoContainer from '../InteractiveDemoContainer';
 
 const LearningModule = ({ 

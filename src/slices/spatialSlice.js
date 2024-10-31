@@ -3,7 +3,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { parseISO, isValid } from 'date-fns';
 import Papa from 'papaparse';
-import { getDataPath } from '../utils/dataPath';
+import { getDataPath } from '../utils/dataUtils';
 import {
   fetchJson,
   mergeSpatialDataWithMapping,
@@ -11,7 +11,7 @@ import {
   regionMapping,
   excludedRegions,
   mergeResidualsIntoGeoData,
-} from '../utils/utils';
+} from '../utils/appUtils';
 
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',

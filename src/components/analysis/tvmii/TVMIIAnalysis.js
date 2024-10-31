@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { Info as InfoIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import useTVMIIData from '../../../hooks/useTVMIIData';
+import { useTVMIIData } from '@/hooks';;
 import TVMIIChart from './TVMIIChart';
 import TVMIIMarketPairsChart from './TVMIIMarketPairsChart';
 import TVMIIInterpretation from './TVMIIInterpretation';

@@ -3,7 +3,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
-import { capitalizeWords } from '../../utils/utils';
+import { capitalizeWords } from '../../utils/appUtils';
 
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   if (!commodities || commodities.length === 0) {

@@ -25,7 +25,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Info as InfoIcon } from '@mui/icons-material';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 const TVMIIMarketPairsChart = ({ data, selectedCommodity, isMobile }) => {
   const [selectedMarketPair, setSelectedMarketPair] = useState('');

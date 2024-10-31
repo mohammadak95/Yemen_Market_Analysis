@@ -1,13 +1,23 @@
 // src/setupTests.js
 import '@testing-library/jest-dom';
 import 'jest-styled-components';
+import jest from 'jest-mock';
+import PropTypes from 'prop-types';
+import React from 'react';
 
 
 
 // Mock react-router-dom
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
-  Link: ({ children, to }) => <a href={to}>{children}</a>,
+  Link: () => {
+    const Link = ({ children, to }) => <a href={to}>{children}</a>;
+    Link.propTypes = {
+      children: PropTypes.node.isRequired,
+      to: PropTypes.string.isRequired,
+    };
+    return Link;
+  },
 }));
 
 // Mock react-icons

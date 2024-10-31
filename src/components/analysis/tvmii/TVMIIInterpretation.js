@@ -19,7 +19,7 @@ import {
   TrendingDown as TrendingDownIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 import {
   LineChart,
   Line,

@@ -1,7 +1,7 @@
 // src/slices/priceDiffSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getDataPath } from '../utils/dataPath';
+import { getDataPath } from '../utils/dataUtils';
 
 export const fetchPriceDiffData = createAsyncThunk(
   'priceDiff/fetchData',

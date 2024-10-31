@@ -12,7 +12,7 @@ import {
   OutlinedInput,
   Typography,
 } from '@mui/material';
-import { capitalizeWords } from '../../utils/utils';
+import { capitalizeWords } from '../../utils/appUtils';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;

@@ -18,7 +18,7 @@ import {
   CompareArrows,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 const KeyInsights = ({ data, baseMarket, comparisonMarket, commodity }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');

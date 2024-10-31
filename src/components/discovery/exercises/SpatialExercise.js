@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import { BlockMath } from 'react-katex';
-import { getEquation } from '../../../utils/methodologyRegistry';
+import { getEquation } from '../../../utils/appUtils';
 import 'leaflet/dist/leaflet.css';
 
 const SpatialExercise = ({ data }) => {

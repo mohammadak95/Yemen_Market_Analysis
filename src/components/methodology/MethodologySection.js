@@ -19,12 +19,11 @@ const MethodologySection = ({ section, level }) => {
   };
 
   // Adjust heading variants to control font size
-  const headingVariant =
-    level === 1 ? 'h5' : level === 2 ? 'h6' : 'subtitle1';
+  const headingVariant = `h${Math.min(level, 6)}`;
 
   return (
     <Box sx={{ mb: 4 }}>
-      <Typography variant={headingVariant} sx={{ mb: 2, fontWeight: 'bold' }}>
+      <Typography component={headingVariant} variant={headingVariant} sx={{ mb: 2, fontWeight: 'bold' }}>
         {section.title}
       </Typography>
       {section.content && (

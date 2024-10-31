@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { Line } from 'react-chartjs-2';
 import { BlockMath } from 'react-katex';
-import { getEquation } from '../../../utils/methodologyRegistry';
+import { getEquation } from '../../../utils/appUtils';
 
 const TVMIIExercise = () => {
   const [correlation, setCorrelation] = useState(0.5);

@@ -10,7 +10,7 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { useTechnicalHelp } from '../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 import EquationWithHelp from '../common/EquationWithHelp';
 import TechnicalTooltip from '../common/TechnicalTooltip';
 import MethodologyLink from '../common/MethodologyLink';

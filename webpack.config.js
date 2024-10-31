@@ -40,10 +40,6 @@ module.exports = (env, argv) => {
         {
           test: /\.(woff(2)?|eot|ttf|otf)$/,
           type: 'asset/inline',
-        },
-        {
-          test: /\.worker\.js$/,
-          use: { loader: 'worker-loader' }
         }
       ],
     },
@@ -55,18 +51,6 @@ module.exports = (env, argv) => {
       }),
       new CopyWebpackPlugin({
         patterns: [
-          {
-            from: path.resolve(__dirname, 'public', 'manifest.json'),
-            to: path.resolve(__dirname, 'build', 'manifest.json'),
-            transform(content) {
-              const manifest = JSON.parse(content.toString());
-              manifest.icons.forEach(icon => {
-                icon.src = `${publicPath}${icon.src}`.replace('//', '/');
-              });
-              manifest.start_url = publicPath;
-              return JSON.stringify(manifest, null, 2);
-            },
-          },
           {
             from: path.resolve(__dirname, 'public'),
             to: path.resolve(__dirname, 'build'),
@@ -84,22 +68,13 @@ module.exports = (env, argv) => {
       new WebpackManifestPlugin({
         fileName: 'asset-manifest.json',
         publicPath: publicPath,
-        generate: (seed, files, entrypoints) => {
-          const manifestFiles = files.reduce((manifest, file) => {
-            manifest[file.name] = file.path;
-            return manifest;
-          }, seed);
-          const entrypointFiles = entrypoints.main.filter(
-            fileName => !fileName.endsWith('.map')
-          );
-
-          return {
-            files: manifestFiles,
-            entrypoints: entrypointFiles,
-          };
-        },
       }),
     ],
+    optimization: {
+      splitChunks: {
+        chunks: 'all',
+      },
+    },
     devServer: {
       static: {
         directory: path.resolve(__dirname, 'public'),
@@ -112,18 +87,9 @@ module.exports = (env, argv) => {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
         "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
-      },
-      devMiddleware: {
-        publicPath: publicPath,
-        writeToDisk: true,
-      },
+      }
     },
     devtool: isDevelopment ? 'eval-source-map' : 'source-map',
     mode: isDevelopment ? 'development' : 'production',
-    optimization: {
-      splitChunks: {
-        chunks: 'all',
-      },
-    },
   };
 };

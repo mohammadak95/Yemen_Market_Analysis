@@ -26,7 +26,7 @@ import {
 import {
   applySeasonalAdjustment,
   applySmoothing,
-} from '../../utils/utils';
+} from '../../utils/appUtils';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 const capitalizeWords = (str) => {

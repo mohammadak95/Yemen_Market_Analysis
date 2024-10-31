@@ -21,7 +21,7 @@ import {
 import { Info as InfoIcon } from 'lucide-react';
 import ForceGraph2D from 'react-force-graph-2d';
 import { scaleLinear } from 'd3-scale';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 const MarketClustering = ({ data, selectedCommodity, isMobile }) => {
   const [selectedCluster, setSelectedCluster] = useState('all');

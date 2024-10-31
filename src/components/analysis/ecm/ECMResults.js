@@ -29,7 +29,7 @@ import {
   Bar,
   Cell,
 } from 'recharts';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 /**
  * ECMResults Component

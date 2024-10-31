@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { Info as InfoIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import usePriceDifferentialData from '../../../hooks/usePriceDifferentialData';
+import { usePriceDifferentialData } from '@/hooks';;
 
 import PriceDifferentialChart from './PriceDifferentialChart';
 import EnhancedRegressionResults from './EnhancedRegressionResults';

@@ -14,7 +14,7 @@ import {
   useMediaQuery
 } from '@mui/material';
 import { BookOpen, X } from 'lucide-react';
-import { useMethodologyAccess } from '../../hooks/useMethodologyAccess';
+import { useMethodologyAccess } from '@/hooks';;
 import MethodologySection from '../methodology/MethodologySection';
 
 const MethodologyLink = ({ 

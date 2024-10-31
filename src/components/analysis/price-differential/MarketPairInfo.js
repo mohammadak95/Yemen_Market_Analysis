@@ -21,7 +21,7 @@ import {
   TrendingDown as TrendingDownIcon,
   SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 const MarketPairInfo = ({ data, baseMarket, comparisonMarket, isMobile }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');

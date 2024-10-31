@@ -20,12 +20,12 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { saveAs } from 'file-saver';
-import { jsonToCsv } from '../../../utils/utils';
-import { useECMData } from '../../../hooks/useECMData';
+import { jsonToCsv } from '../../../utils/appUtils';
+import { useECMData } from '@/hooks';;
 
 import ECMResults from './ECMResults';
 import ECMTutorial from './ECMTutorial';
-import { useTechnicalHelp } from '../../../hooks/useTechnicalHelp';
+import { useTechnicalHelp } from '@/hooks';;
 
 /**
  * ECMAnalysis Component

@@ -1,7 +1,7 @@
 // src/slices/ecmSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getDataPath } from '../utils/dataPath';
+import { getDataPath } from '../utils/dataUtils';
 
 export const fetchECMData = createAsyncThunk(
   'ecm/fetchData',

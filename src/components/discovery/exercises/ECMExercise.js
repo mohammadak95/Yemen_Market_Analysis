@@ -13,7 +13,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import 'chartjs-plugin-annotation';
 import { BlockMath } from 'react-katex';
-import { getEquation } from '../../../utils/methodologyRegistry';
+import { getEquation } from '../../../utils/appUtils';
 
 const ECMExercise = () => {
   // Initialize parameters

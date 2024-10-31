@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { Line } from 'react-chartjs-2';
 import { BlockMath } from 'react-katex';
-import { getEquation } from '../../../utils/methodologyRegistry';
+import { getEquation } from '../../../utils/appUtils';
 
 const PriceDifferentialExercise = ({ data }) => {
   const [marketA, setMarketA] = useState('Market 1');

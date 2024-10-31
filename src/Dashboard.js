@@ -6,7 +6,7 @@ import { Box, Grid } from '@mui/material';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
-import AnalysisWrapper from './utils/AnalysisWrapper';
+import AnalysisWrapper from './utils/debugUtils';
 
 // Import enhanced spatial analysis
 const IntegratedSpatialAnalysis = React.lazy(() =>
