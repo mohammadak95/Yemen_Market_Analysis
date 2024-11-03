@@ -1,19 +1,33 @@
 // src/utils/spatialDebugUtils.js
 
+const DEBUG = process.env.NODE_ENV === 'development';
+
 /**
- * Debug utility for spatial data inspection and validation
+ * Enhanced debug utility for spatial data inspection and validation
  */
 export class SpatialDataInspector {
   constructor() {
     this.debugCache = new Map();
     this.lastInspectionTime = null;
     this.INSPECTION_THROTTLE = 2000;
+    this.debugLog('Inspector initialized');
+  }
+
+  debugLog(message, data = null) {
+    if (DEBUG) {
+      console.group(`[SpatialDataInspector] ${message}`);
+      if (data) console.log(data);
+      console.groupEnd();
+    }
   }
 
   inspectGeoJSONStructure(data) {
+    this.debugLog('Starting GeoJSON inspection');
+    
     // Throttle inspections
     const now = Date.now();
     if (this.lastInspectionTime && (now - this.lastInspectionTime) < this.INSPECTION_THROTTLE) {
+      this.debugLog('Using cached inspection');
       return this.debugCache.get('lastInspection');
     }
 
@@ -25,13 +39,19 @@ export class SpatialDataInspector {
         geometryTypes: new Set(),
         propertyFields: new Set(),
         issues: [],
-        sampleFeatures: [] // Initialize this array
+        sampleFeatures: [], // Initialize this array
+        timestamp: new Date().toISOString()
       };
 
       if (!data?.features?.length) {
         analysis.issues.push('No features found in data');
+        this.debugLog('No features found');
         return this.cacheAndReturn(analysis, now);
       }
+
+      this.debugLog('Processing features', {
+        totalFeatures: data.features.length
+      });
 
       data.features.forEach((feature, index) => {
         const validation = this.validateFeature(feature, index);
@@ -68,11 +88,21 @@ export class SpatialDataInspector {
 
       if (analysis.invalidFeatures.length > 0) {
         analysis.issues.push(`${analysis.invalidFeatures.length} invalid features found`);
+        this.debugLog('Invalid features found', {
+          count: analysis.invalidFeatures.length
+        });
       }
+
+      this.debugLog('Inspection complete', {
+        validFeatures: analysis.validFeatures,
+        invalidFeatures: analysis.invalidFeatures.length,
+        geometryTypes: Array.from(analysis.geometryTypes),
+        issues: analysis.issues
+      });
 
       return this.cacheAndReturn(analysis, now);
     } catch (error) {
-      console.error('Error during GeoJSON inspection:', error);
+      this.debugLog('Inspection failed', error);
       return {
         error: error.message,
         featureCount: 0,
@@ -86,6 +116,12 @@ export class SpatialDataInspector {
   }
 
   validateFeature(feature) {
+    this.debugLog('Validating feature', {
+      type: feature?.type,
+      hasProperties: !!feature?.properties,
+      hasGeometry: !!feature?.geometry
+    });
+
     const validation = {
       isValid: false,
       issues: []
@@ -124,17 +160,27 @@ export class SpatialDataInspector {
       }
 
       validation.isValid = validation.issues.length === 0;
+
+      if (!validation.isValid) {
+        this.debugLog('Feature validation failed', {
+          issues: validation.issues
+        });
+      }
+
       return validation;
 
     } catch (error) {
+      this.debugLog('Validation error', error);
       validation.issues.push(`Validation error: ${error.message}`);
       return validation;
     }
   }
 
   inspectDataLoadingPipeline(data) {
+    this.debugLog('Inspecting data loading pipeline');
+    
     try {
-      return {
+      const inspection = {
         stages: [
           {
             stage: 'initialCheck',
@@ -154,7 +200,11 @@ export class SpatialDataInspector {
         ],
         timestamp: new Date().toISOString()
       };
+
+      this.debugLog('Pipeline inspection complete', inspection);
+      return inspection;
     } catch (error) {
+      this.debugLog('Pipeline inspection failed', error);
       return {
         stages: [],
         error: error.message,
@@ -170,6 +220,7 @@ export class SpatialDataInspector {
   }
 
   clearCache() {
+    this.debugLog('Clearing cache');
     this.debugCache.clear();
     this.lastInspectionTime = null;
   }

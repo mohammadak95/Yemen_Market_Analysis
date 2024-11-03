@@ -8,12 +8,10 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import AnalysisWrapper from './utils/debugUtils';
 
-// Import enhanced spatial analysis
-const IntegratedSpatialAnalysis = React.lazy(() =>
-  import('./components/analysis/spatial-analysis')
-);
+// Import the new SpatialAnalysis component
+import SpatialAnalysis from './components/analysis/spatial-analysis/SpatialAnalysis';
 
-// Other lazy loaded components remain the same
+// Lazy loaded components
 const ECMAnalysis = React.lazy(() =>
   import('./components/analysis/ecm/ECMAnalysis')
 );
@@ -24,7 +22,6 @@ const TVMIIAnalysis = React.lazy(() =>
   import('./components/analysis/tvmii/TVMIIAnalysis')
 );
 
-// Register Chart.js components
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -59,32 +56,27 @@ const Dashboard = React.memo(
     spatialViewConfig,
     onSpatialViewChange,
   }) => {
-    // Memoize processedData to optimize performance
     const processedData = useMemo(() => {
-      if (data?.features) {
-        return data.features.map((feature) => ({
-          ...feature,
-          date:
-            feature.date instanceof Date
-              ? feature.date.toISOString()
-              : feature.date,
-        }));
-      }
-      return [];
+      if (!data?.features) return [];
+      return data.features.map((feature) => ({
+        ...feature,
+        date:
+          feature.date instanceof Date
+            ? feature.date.toISOString()
+            : feature.date,
+      }));
     }, [data]);
 
-    // Update analysis component selection with enhanced spatial analysis
     const AnalysisComponent = useMemo(() => {
       const components = {
         ecm: ECMAnalysis,
         priceDiff: PriceDifferentialAnalysis,
-        spatial: IntegratedSpatialAnalysis,
+        spatial: SpatialAnalysis, // Use the new SpatialAnalysis component
         tvmii: TVMIIAnalysis,
       };
       return components[selectedAnalysis] || null;
     }, [selectedAnalysis]);
 
-    // Render the interactive chart component
     const renderInteractiveChart = useCallback(() => {
       if (!selectedCommodity || selectedRegimes.length === 0) {
         return (
@@ -92,7 +84,7 @@ const Dashboard = React.memo(
         );
       }
 
-      if (!processedData || processedData.length === 0) {
+      if (!processedData.length) {
         return <LoadingSpinner />;
       }
 
@@ -105,41 +97,24 @@ const Dashboard = React.memo(
       );
     }, [processedData, selectedCommodity, selectedRegimes]);
 
-    // Update analysis component rendering with spatial-specific props
     const renderAnalysisComponent = useCallback(() => {
-      if (!selectedAnalysis || !AnalysisComponent) return null;
+      if (!selectedAnalysis || !AnalysisComponent || !selectedCommodity) {
+        return null;
+      }
 
       const commonProps = {
         selectedCommodity,
         windowWidth,
       };
 
-      // Add spatial-specific props when needed
-      const analysisProps = selectedAnalysis === 'spatial' 
-        ? {
-            ...commonProps,
-            viewConfig: spatialViewConfig,
-            onViewConfigChange: onSpatialViewChange,
-            data: processedData,
-          }
-        : commonProps;
-
       return (
         <Suspense fallback={<LoadingSpinner />}>
           <AnalysisWrapper>
-            <AnalysisComponent {...analysisProps} />
+            <AnalysisComponent {...commonProps} />
           </AnalysisWrapper>
         </Suspense>
       );
-    }, [
-      selectedAnalysis,
-      AnalysisComponent,
-      selectedCommodity,
-      windowWidth,
-      spatialViewConfig,
-      onSpatialViewChange,
-      processedData,
-    ]);
+    }, [selectedAnalysis, AnalysisComponent, selectedCommodity, windowWidth]);
 
     return (
       <Box
@@ -158,7 +133,7 @@ const Dashboard = React.memo(
                 width: '100%',
                 height: { xs: '300px', sm: '400px', md: '500px' },
                 position: 'relative',
-                mb: 2
+                mb: 2,
               }}
             >
               {renderInteractiveChart()}
@@ -179,7 +154,6 @@ const Dashboard = React.memo(
 
 Dashboard.displayName = 'Dashboard';
 
-// Update PropTypes to include new spatial props
 Dashboard.propTypes = {
   data: PropTypes.shape({
     features: PropTypes.arrayOf(

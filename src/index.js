@@ -7,6 +7,7 @@ import store from './store';
 import App from './App';
 import ReduxDebugWrapper from './utils/debugUtils';
 import { backgroundMonitor } from './utils/backgroundMonitor';
+import 'leaflet/dist/leaflet.css';
 
 // Debug: Log initial state
 console.log('Initial store state:', store.getState());

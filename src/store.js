@@ -1,22 +1,19 @@
 // src/store.js
 
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import themeReducer from './slices/themeSlice';
 import spatialReducer from './slices/spatialSlice';
+
+const customizedMiddleware = getDefaultMiddleware({
+  serializableCheck: process.env.NODE_ENV !== 'development', // Disable the middleware causing performance issues in development
+});
 
 const store = configureStore({
   reducer: {
     theme: themeReducer,
     spatial: spatialReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        // Ignore certain non-serializable values in state
-        ignoredActions: ['spatial/setData'],
-        ignoredPaths: ['spatial.geoData'],
-      },
-    }),
+  middleware: customizedMiddleware,
 });
 
 // Debug middleware for development

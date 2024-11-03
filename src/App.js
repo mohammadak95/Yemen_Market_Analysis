@@ -1,6 +1,7 @@
 // src/App.js
 
 import React, { useState, useCallback, useEffect } from 'react';
+import 'leaflet/dist/leaflet.css';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, Toolbar, IconButton, Box } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';

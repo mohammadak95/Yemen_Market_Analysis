@@ -1,13 +1,14 @@
 // src/slices/spatialSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getDataPath } from '../utils/dataPath';
+import { getDataPath } from '../utils/dataUtils';
 import {
   normalizeRegionName,
   validateSpatialWeights,
-  mergeGeoDataChunked
+  mergeGeoDataChunked,
+  regionMapping,
+  excludedRegions,
 } from '../utils/spatialUtils';
-import { regionMapping, excludedRegions } from '../utils/spatialUtils';
 import Papa from 'papaparse';
 
 const CHUNK_SIZE = 1000;
@@ -19,16 +20,16 @@ const fetchWithHeaders = async (url) => {
       headers: {
         'Accept': 'application/json, text/csv, */*',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        'Pragma': 'no-cache',
       },
       mode: 'cors',
-      credentials: 'same-origin'
+      credentials: 'same-origin',
     });
-    
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status} while fetching ${url}`);
     }
-    
+
     return response;
   } catch (error) {
     console.error(`Error fetching ${url}:`, error);
@@ -36,7 +37,6 @@ const fetchWithHeaders = async (url) => {
   }
 };
 
-// Enhanced date processing
 const processDate = (dateString) => {
   if (!dateString || dateString === 'null') return null;
   try {
@@ -56,21 +56,27 @@ const processFeatures = (features, selectedCommodity) => {
   }
 
   return features
-    .filter(feature => {
+    .filter((feature) => {
       const commodity = feature.properties?.commodity?.toLowerCase();
       return commodity === selectedCommodity?.toLowerCase();
     })
-    .map(feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        date: processDate(feature.properties.date),
-        usdprice: Number(feature.properties.usdprice) || 0,
-        price: Number(feature.properties.price) || 0,
-        conflict_intensity: Number(feature.properties.conflict_intensity) || 0
-      }
-    }))
-    .filter(feature => feature.properties.date !== null);
+    .map((feature) => {
+      const date = processDate(feature.properties.date);
+      const regionId = normalizeRegionName(feature.properties.region_id);
+
+      return {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          region_id: regionId,
+          date,
+          usdprice: Number(feature.properties.usdprice) || 0,
+          price: Number(feature.properties.price) || 0,
+          conflict_intensity: Number(feature.properties.conflict_intensity) || 0,
+        },
+      };
+    })
+    .filter((feature) => feature.properties.date !== null);
 };
 
 export const fetchSpatialData = createAsyncThunk(
@@ -93,46 +99,46 @@ export const fetchSpatialData = createAsyncThunk(
     try {
       const paths = {
         geoBoundaries: getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson'),
-        unified: getDataPath('unified_data.geojson'),
+        unified: getDataPath('enhanced_unified_data_with_residual.geojson'),
         weights: getDataPath('spatial_weights/transformed_spatial_weights.json'),
         flowMaps: getDataPath('network_data/time_varying_flows.csv'),
-        analysis: getDataPath('spatial_analysis_results.json')
+        analysis: getDataPath('spatial_analysis_results.json'),
       };
 
-      // Fetch all data in parallel with proper headers
-      const [geoBoundariesResponse, unifiedResponse, weightsResponse, analysisResponse] = 
-        await Promise.all([
-          fetchWithHeaders(paths.geoBoundaries),
-          fetchWithHeaders(paths.unified),
-          fetchWithHeaders(paths.weights),
-          fetchWithHeaders(paths.analysis)
-        ]);
+      const [
+        geoBoundariesResponse,
+        unifiedResponse,
+        weightsResponse,
+        analysisResponse,
+        flowMapsResponse,
+      ] = await Promise.all([
+        fetchWithHeaders(paths.geoBoundaries),
+        fetchWithHeaders(paths.unified),
+        fetchWithHeaders(paths.weights),
+        fetchWithHeaders(paths.analysis),
+        fetchWithHeaders(paths.flowMaps),
+      ]);
 
-      // Parse JSON responses
-      [geoBoundariesData, unifiedData, weightsData, analysisResultsData] = 
-        await Promise.all([
-          geoBoundariesResponse.json(),
-          unifiedResponse.json(),
-          weightsResponse.json(),
-          analysisResponse.json()
-        ]);
+      [geoBoundariesData, unifiedData, weightsData, analysisResultsData] = await Promise.all([
+        geoBoundariesResponse.json(),
+        unifiedResponse.json(),
+        weightsResponse.json(),
+        analysisResponse.json(),
+      ]);
 
-      // Validate weights data
-      const weightsValidation = validateSpatialWeights(weightsData);
-      if (!weightsValidation.isValid) {
-        throw new Error(`Invalid spatial weights data: ${weightsValidation.errors.join(', ')}`);
-      }
-
-      // Process flow maps
-      const flowMapsResponse = await fetchWithHeaders(paths.flowMaps);
       const flowMapsText = await flowMapsResponse.text();
       const result = Papa.parse(flowMapsText, {
         header: true,
         dynamicTyping: true,
-        skipEmptyLines: true
+        skipEmptyLines: true,
       });
 
       flowMapsData = result.data;
+
+      const weightsValidation = validateSpatialWeights(weightsData);
+      if (!weightsValidation.isValid) {
+        throw new Error(`Invalid spatial weights data: ${weightsValidation.errors.join(', ')}`);
+      }
 
       if (!geoBoundariesData?.features?.length) {
         throw new Error('Invalid geoBoundaries data structure');
@@ -140,13 +146,13 @@ export const fetchSpatialData = createAsyncThunk(
 
       normalizedGeoBoundaries = {
         type: 'FeatureCollection',
-        features: geoBoundariesData.features.map(feature => ({
+        features: geoBoundariesData.features.map((feature) => ({
           ...feature,
           properties: {
             ...feature.properties,
             region_id: normalizeRegionName(feature.properties.shapeName || feature.properties.region_id),
           },
-        }))
+        })),
       };
 
       if (!unifiedData?.features?.length) {
@@ -167,11 +173,9 @@ export const fetchSpatialData = createAsyncThunk(
         throw new Error('Failed to merge geodata');
       }
 
-      uniqueMonthStrings = Array.from(new Set(
-        mergedGeoData.features
-          .map(f => f.properties?.date)
-          .filter(Boolean)
-      )).sort();
+      uniqueMonthStrings = Array.from(
+        new Set(mergedGeoData.features.map((f) => f.properties?.date).filter(Boolean))
+      ).sort();
 
       const metadata = {
         totalFeatures: mergedGeoData.features.length,
@@ -180,7 +184,7 @@ export const fetchSpatialData = createAsyncThunk(
         processedFeatures: filteredFeatures.length,
         totalDates: uniqueMonthStrings.length,
         flowMapsCount: flowMapsData.length,
-        processingTime: performance.now() - startTime
+        processingTime: performance.now() - startTime,
       };
 
       return {
@@ -189,9 +193,8 @@ export const fetchSpatialData = createAsyncThunk(
         flowMaps: flowMapsData,
         analysisResults: analysisResultsData,
         uniqueMonths: uniqueMonthStrings,
-        metadata
+        metadata,
       };
-
     } catch (error) {
       console.error('[fetchSpatialData] Error:', error);
       return rejectWithValue({
@@ -203,9 +206,9 @@ export const fetchSpatialData = createAsyncThunk(
             hasWeights: !!weightsData,
             hasAnalysis: !!analysisResultsData,
             flowMapsCount: flowMapsData?.length || 0,
-            featuresCount: filteredFeatures?.length || 0
-          }
-        }
+            featuresCount: filteredFeatures?.length || 0,
+          },
+        },
       });
     }
   }
@@ -220,7 +223,7 @@ const initialState = {
   status: 'idle',
   error: null,
   metadata: null,
-  loadingProgress: 0
+  loadingProgress: 0,
 };
 
 const spatialSlice = createSlice({
@@ -230,7 +233,7 @@ const spatialSlice = createSlice({
     updateLoadingProgress: (state, action) => {
       state.loadingProgress = action.payload;
     },
-    resetSpatialState: () => initialState
+    resetSpatialState: () => initialState,
   },
   extraReducers: (builder) => {
     builder

@@ -3,13 +3,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-// Cache key generator
 const generateCacheKey = (commodity) => `spatial_data_${commodity?.toLowerCase()}`;
 
-// In-memory cache
 const dataCache = new Map();
 
-export const useSpatialDataOptimized = () => {
+export const useSpatialDataOptimized = (selectedCommodity) => {
   const {
     geoData,
     spatialWeights,
@@ -21,42 +19,37 @@ export const useSpatialDataOptimized = () => {
   } = useSelector((state) => state.spatial);
 
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const mountedRef = useRef(true);
-  const lastCommodityRef = useRef(null);
+  const lastCommodityRef = useRef(selectedCommodity);
 
-  // Memoize processed data
+  useEffect(() => {
+    lastCommodityRef.current = selectedCommodity;
+  }, [selectedCommodity]);
+
   const processedData = useMemo(() => {
     if (!geoData?.features) return null;
 
-    const cacheKey = generateCacheKey(lastCommodityRef.current);
+    const cacheKey = generateCacheKey(selectedCommodity);
     if (dataCache.has(cacheKey)) {
       return dataCache.get(cacheKey);
     }
 
-    // Select the analysis result for the current commodity
     const selectedAnalysisResult = analysisResults.find(
-      (result) => result?.commodity?.toLowerCase() === lastCommodityRef.current?.toLowerCase()
+      (result) => result?.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
     );
 
     const processed = {
       geoData,
       spatialWeights,
       flowMaps: flowMaps.filter(
-        (flow) => flow?.commodity?.toLowerCase() === lastCommodityRef.current?.toLowerCase()
+        (flow) => flow?.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
       ),
-      analysisResults: selectedAnalysisResult, // Now an object instead of an array
+      analysisResults: selectedAnalysisResult,
       uniqueMonths,
     };
 
     dataCache.set(cacheKey, processed);
     return processed;
-  }, [geoData, spatialWeights, flowMaps, analysisResults, uniqueMonths]);
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  }, [geoData, spatialWeights, flowMaps, analysisResults, uniqueMonths, selectedCommodity]);
 
   useEffect(() => {
     if (status === 'loading') {
@@ -68,7 +61,6 @@ export const useSpatialDataOptimized = () => {
     }
   }, [status]);
 
-  // Cleanup old cache entries when cache grows too large
   useEffect(() => {
     if (dataCache.size > 10) {
       const keys = Array.from(dataCache.keys());

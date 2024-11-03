@@ -22,6 +22,7 @@ module.exports = (env, argv) => {
       extensions: ['.js', '.jsx', '.json'],
       alias: {
         '@': path.resolve(__dirname, 'src'),
+        'leaflet-images': path.resolve(__dirname, 'node_modules/leaflet/dist/images/')
       },
     },
     module: {
@@ -68,6 +69,10 @@ module.exports = (env, argv) => {
             from: path.resolve(__dirname, 'results'),
             to: path.resolve(__dirname, 'build/results'),
             noErrorOnMissing: true
+          },
+          {
+            from: 'node_modules/leaflet/dist/images',
+            to: 'images'
           }
         ],
       }),

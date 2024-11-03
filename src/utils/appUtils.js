@@ -1,6 +1,6 @@
-// ===== utils.js =====
+// ===== appUtils.js =====
 
-// src/utils/utils.js
+// src/utils/appUtils.js
 
 // ==========================
 // Imports
@@ -24,12 +24,57 @@ const WGS84 = 'EPSG:4326';
 proj4.defs(
   EPSG_2085,
   '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass ' +
-  '+towgs84=-76,-138,67,0,0,0,0 +units=m +no_defs'
+    '+towgs84=-76,-138,67,0,0,0,0 +units=m +no_defs'
 );
 proj4.defs(
   EPSG_2098,
   '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass +units=m +no_defs'
 );
+
+// ==========================
+// Region Mapping
+// ==========================
+
+/**
+ * Mapping between GeoBoundaries region identifiers and Enhanced data region identifiers.
+ */
+const regionMapping = {
+  "san'a'": "sana'a",
+  "san_a__governorate": "sana'a",
+  "lahij_governorate": "lahj",
+  "lahij": "lahj",
+  "_adan_governorate": "aden",
+  "al_hudaydah_governorate": "al hudaydah",
+  "ta_izz_governorate": "taizz",
+  "shabwah_governorate": "shabwah",
+  "hadhramaut": "hadramaut",
+  "abyan_governorate": "abyan",
+  "al_jawf_governorate": "al jawf",
+  "ibb_governorate": "ibb",
+  "al_bayda__governorate": "al bayda",
+  "ad_dali__governorate": "al dhale'e",
+  "al_mahwit_governorate": "al mahwit",
+  "hajjah_governorate": "hajjah",
+  "dhamar_governorate": "dhamar",
+  "_amran_governorate": "amran",
+  "al_mahrah_governorate": "al maharah",
+  "ma'rib_governorate": "marib",
+  "raymah_governorate": "raymah",
+  "amanat al asimah": "amanat al asimah", // Capital Municipality
+  // Add any additional mappings if necessary
+};
+
+// ==========================
+// Excluded Regions
+// ==========================
+
+/**
+ * List of regions to exclude from the mapping and merging process.
+ */
+const excludedRegions = [
+  'sa\'dah_governorate', // Example: Add the exact normalized region IDs
+  // Add other regions as needed
+];
 
 // ==========================
 // Coordinate Transformation Functions
@@ -332,17 +377,6 @@ export const normalizeRegionId = (regionId) => {
  * @param {Object} properties - The properties of a feature.
  * @returns {string|null} - The normalized region ID or null if not found.
  */
-
-import { regionMapping } from '../utils/spatialUtils';
-
-// appUtils.js
-
-// Utility function to retrieve region names considering "shapename"
-export function getRegionName(regionData) {
-  return regionData.shapename || regionData.name || regionData.id || 'unknown';
-}
-
-
 const getRegionId = (properties) => {
   if (!properties) return null;
 
@@ -366,54 +400,17 @@ const getRegionId = (properties) => {
   return null;
 };
 
-// ==========================
-// Data Processing Function
-// ==========================
-
 /**
- * Processes GeoJSON data by calculating average price for selected commodity.
+ * Processes properties of an enhanced feature.
  *
- * @param {Object} geoJsonData - The GeoJSON data.
- * @param {Object} enhancedData - The enhanced data features.
- * @param {string} selectedCommodity - The selected commodity to calculate average price.
- * @returns {Object} - The processed GeoJSON data with average prices.
+ * @param {Object} properties - The properties to process.
+ * @returns {Object} - The processed properties.
  */
-export const processData = (geoJsonData, enhancedData, selectedCommodity) => {
-  if (!geoJsonData || !enhancedData || !selectedCommodity) {
-    console.warn('processData received invalid arguments');
-    return geoJsonData;
-  }
-
-  // Group enhanced data by region and calculate average price for the selected commodity
-  const averagePrices = enhancedData.features.reduce((acc, feature) => {
-    const regionId = getRegionId(feature.properties);
-    if (!regionId) {
-      console.warn('Enhanced data feature missing region_id:', feature);
-      return acc;
-    }
-
-    if (!acc[regionId]) {
-      acc[regionId] = { sum: 0, count: 0 };
-    }
-    acc[regionId].sum += parseFloat(feature.properties.price) || 0;
-    acc[regionId].count += 1;
-    return acc;
-  }, {});
-
-  // Merge average prices with GeoJSON data
-  geoJsonData.features.forEach((feature) => {
-    const admin1 = feature.properties.ADM1_EN
-      ? normalizeRegionId(feature.properties.ADM1_EN)
-      : null;
-    if (admin1 && averagePrices[admin1]) {
-      feature.properties.averagePrice =
-        averagePrices[admin1].sum / averagePrices[admin1].count;
-    } else {
-      feature.properties.averagePrice = null; // or a default value
-    }
-  });
-
-  return geoJsonData;
+const processProperties = (properties) => {
+  // Implement the logic to process properties here
+  // For example, ensure necessary fields are present and normalized
+  // This is a placeholder implementation
+  return properties;
 };
 
 // ==========================
@@ -425,19 +422,17 @@ export const processData = (geoJsonData, enhancedData, selectedCommodity) => {
  *
  * @param {Object} geoBoundariesData - The GeoJSON data for geo boundaries.
  * @param {Object} enhancedData - The enhanced data features.
- * @param {Array<string>} excludedRegions - List of regions to exclude.
  * @returns {Object} - The merged GeoJSON data.
  */
-
-import { excludedRegions } from '../utils/spatialUtils';
-
 export const mergeSpatialDataWithMapping = (geoBoundariesData, enhancedData) => {
   const geoBoundariesMap = new Map();
   const unmatchedRegions = new Set();
   const mergedFeatures = [];
 
   // Normalize excluded regions (ensure `excludedRegions` is an array and normalize each one)
-  const normalizedExcludedRegions = Array.isArray(excludedRegions) ? excludedRegions.map(normalizeRegionId) : [];
+  const normalizedExcludedRegions = Array.isArray(excludedRegions)
+    ? excludedRegions.map(normalizeRegionId)
+    : [];
 
   // Create a map for geoBoundaries using normalized region_id
   geoBoundariesData.features.forEach((feature) => {
@@ -528,18 +523,6 @@ export const mergeSpatialDataWithMapping = (geoBoundariesData, enhancedData) => 
     type: 'FeatureCollection',
     features: mergedFeatures,
   };
-};
-
-
-/**
- * Processes properties of an enhanced feature.
- *
- * @param {Object} properties - The properties to process.
- * @returns {Object} - The processed properties.
- */
-const processProperties = (properties) => {
-  // Implement the logic to process properties here
-  return properties; // Example: return the properties as is
 };
 
 // ==========================
@@ -638,6 +621,24 @@ export const mergeResidualsIntoGeoData = (geoJsonData, residualsData) => {
 
   return geoJsonData;
 };
+
+// ==========================
+// Methodology Registry
+// ==========================
+
+// (Assuming this part remains unchanged or is handled elsewhere)
+
+// ==========================
+// Tooltip Registry
+// ==========================
+
+// (Assuming this part remains unchanged or is handled elsewhere)
+
+// ==========================
+// Scoring Functions
+// ==========================
+
+// (Assuming this part remains unchanged or is handled elsewhere)
 
 // ==========================
 // methodologyRegistry.js
