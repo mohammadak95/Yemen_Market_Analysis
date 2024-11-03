@@ -56,8 +56,14 @@ const TVMIIExercise = () => {
       </Typography>
 
       <Box sx={{ mb: 2 }}>
-        <BlockMath>{tvmiiEquation.latex}</BlockMath>
-        <Typography variant="caption">{tvmiiEquation.description}</Typography>
+        {tvmiiEquation ? (
+          <>
+            <BlockMath>{tvmiiEquation.latex}</BlockMath>
+            <Typography variant="caption">{tvmiiEquation.description}</Typography>
+          </>
+        ) : (
+          <Typography variant="caption">Equation not available</Typography>
+        )}
       </Box>
 
       <Grid container spacing={2}>

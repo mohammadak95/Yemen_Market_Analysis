@@ -40,9 +40,11 @@ const EquationWithHelp = ({
         </IconButton>
       </Box>
 
-      <Box sx={{ my: 2 }}>
-        <BlockMath>{latex}</BlockMath>
-      </Box>
+      {latex && (
+        <Box sx={{ my: 2 }}>
+          <BlockMath>{latex}</BlockMath>
+        </Box>
+      )}
 
       <Collapse in={expanded}>
         <Box sx={{ mt: 2 }}>
@@ -86,7 +88,7 @@ const EquationWithHelp = ({
 };
 
 EquationWithHelp.propTypes = {
-  latex: PropTypes.string.isRequired,
+  latex: PropTypes.string,
   description: PropTypes.string,
   variables: PropTypes.objectOf(PropTypes.string),
   title: PropTypes.string.isRequired,

@@ -47,8 +47,8 @@ const SpatialExercise = ({ data }) => {
       </Typography>
 
       <Box sx={{ mb: 2 }}>
-        <BlockMath>{moransEquation.latex}</BlockMath>
-        <Typography variant="caption">{moransEquation.description}</Typography>
+        {moransEquation && <BlockMath>{moransEquation.latex}</BlockMath>}
+        {moransEquation && <Typography variant="caption">{moransEquation.description}</Typography>}
       </Box>
 
       <Grid container spacing={2}>
