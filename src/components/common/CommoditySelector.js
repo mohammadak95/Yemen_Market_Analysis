@@ -6,23 +6,19 @@ import { FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/mate
 import { capitalizeWords } from '../../utils/appUtils';
 
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
-  if (!commodities || commodities.length === 0) {
-    return (
-      <Typography variant="body2" color="textSecondary">
-        No commodities available
-      </Typography>
-    );
-  }
-
   return (
     <FormControl fullWidth variant="outlined" size="small" margin="normal">
-      <InputLabel id="commodity-label">Commodity</InputLabel>
+      <InputLabel id="commodity-select-label">
+        Select Commodity
+      </InputLabel>
       <Select
-        labelId="commodity-label"
+        labelId="commodity-select-label"
         id="commodity-select"
+        name="commodity"
         value={selectedCommodity}
         onChange={(e) => onSelectCommodity(e.target.value)}
-        label="Commodity"
+        label="Select Commodity"
+        aria-label="Select commodity"
       >
         <MenuItem value="">
           <em>Select a commodity</em>

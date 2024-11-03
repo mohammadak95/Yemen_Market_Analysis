@@ -1,73 +1,111 @@
-
 // src/components/analysis/spatial-analysis/TimeSlider.js
-import React, { useMemo } from 'react';
+
+import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Slider, Typography } from '@mui/material';
-import { format } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 
 const TimeSlider = ({
   months = [],
   selectedDate,
   onChange
 }) => {
-  // Convert dates to timestamps and sort them
-  const dates = useMemo(() => 
-    months
-      .map(m => m instanceof Date ? m : new Date(m))
-      .filter(m => !isNaN(m)) // Filter out invalid dates
-      .sort((a, b) => a - b),
-    [months]
-  );
-  
+  // Memoized date processing with enhanced error handling
+  const dates = useMemo(() => {
+    if (!Array.isArray(months)) {
+      console.warn('TimeSlider: months prop must be an array');
+      return [];
+    }
+
+    return months
+      .map(dateStr => {
+        if (!dateStr) return null;
+        try {
+          const parsedDate = parseISO(dateStr);
+          if (!isValid(parsedDate)) {
+            console.warn(`TimeSlider: Invalid date string: "${dateStr}"`);
+            return null;
+          }
+          // Normalize to first day of month for consistent comparison
+          return new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1);
+        } catch (e) {
+          console.warn(`TimeSlider: Error parsing date: "${dateStr}"`, e);
+          return null;
+        }
+      })
+      .filter(Boolean) // Remove null values
+      .sort((a, b) => a.getTime() - b.getTime());
+  }, [months]);
+
+  // Handle empty state
   if (dates.length === 0) {
-    return <Typography>No dates available</Typography>;
+    return (
+      <Box sx={{ p: 2, textAlign: 'center' }}>
+        <Typography color="text.secondary">
+          No valid dates available for timeline
+        </Typography>
+      </Box>
+    );
   }
 
   const minTime = dates[0].getTime();
   const maxTime = dates[dates.length - 1].getTime();
-  
-  // Ensure selectedDate is a valid Date and convert to timestamp
+
+  // Safely parse selected date with fallback to minTime
   const selectedTime = useMemo(() => {
-    const time = new Date(selectedDate).getTime();
-    return isNaN(time) ? minTime : time;
+    if (!selectedDate) return minTime;
+    try {
+      const parsed = parseISO(selectedDate);
+      if (!isValid(parsed)) return minTime;
+      // Normalize to first day of month for consistent comparison
+      const normalizedDate = new Date(parsed.getFullYear(), parsed.getMonth(), 1);
+      return normalizedDate.getTime();
+    } catch (e) {
+      console.warn('TimeSlider: Error parsing selected date, using minimum date');
+      return minTime;
+    }
   }, [selectedDate, minTime]);
 
-  // Create marks with improved spacing
+  // Generate marks for the slider with consistent date formatting
   const marks = useMemo(() => {
-    // If we have too many dates, show fewer marks
-    const stride = dates.length > 12 ? Math.ceil(dates.length / 12) : 1;
+    const totalMonths = dates.length;
+    const stride = totalMonths > 12 ? Math.ceil(totalMonths / 12) : 1;
     
     return dates
       .filter((_, index) => index % stride === 0)
       .map(date => ({
         value: date.getTime(),
-        label: format(date, dates.length > 12 ? 'MMM yy' : 'MMM yyyy')
+        label: format(date, totalMonths > 12 ? 'MMM yy' : 'MMM yyyy')
       }));
   }, [dates]);
 
-  const handleChange = (_, newValue) => {
-    // Ensure newValue is a number
+  // Handle slider change with validation and normalization
+  const handleChange = useCallback((_, newValue) => {
     const numericValue = Number(newValue);
-    if (isNaN(numericValue)) return;
+    if (isNaN(numericValue)) {
+      console.warn('TimeSlider: Invalid slider value');
+      return;
+    }
     
-    // Find the closest date to the slider value
+    // Find nearest valid date
     const nearestDate = dates.reduce((prev, curr) => {
       return Math.abs(curr.getTime() - numericValue) < Math.abs(prev.getTime() - numericValue)
         ? curr
         : prev;
     }, dates[0]);
     
-    onChange(nearestDate);
-  };
+    // Return ISO string with validation
+    try {
+      const isoString = nearestDate.toISOString();
+      onChange(isoString);
+    } catch (e) {
+      console.error('TimeSlider: Error converting date to ISO string', e);
+    }
+  }, [dates, onChange]);
 
   return (
     <Box sx={{ width: '100%', mt: 4, px: 3 }}>
-      <Box sx={{ 
-        position: 'relative',
-        height: 50,
-        mb: 1
-      }}>
-        {/* Current date display - positioned above slider */}
+      <Box sx={{ position: 'relative', height: 50, mb: 1 }}>
         <Typography 
           variant="subtitle2" 
           sx={{ 
@@ -80,10 +118,12 @@ const TimeSlider = ({
             borderRadius: 1,
             border: '1px solid',
             borderColor: 'divider',
-            zIndex: 1
+            zIndex: 1,
+            minWidth: '150px',
+            textAlign: 'center'
           }}
         >
-          {format(new Date(selectedTime), 'MMMM d, yyyy')}
+          {format(new Date(selectedTime), 'MMMM yyyy')}
         </Typography>
         
         <Slider
@@ -94,7 +134,14 @@ const TimeSlider = ({
           marks={marks}
           step={null}
           valueLabelDisplay="auto"
-          valueLabelFormat={value => format(new Date(Number(value)), 'MMM d, yyyy')}
+          valueLabelFormat={value => {
+            try {
+              // Ensure value is treated as a number for the Date constructor
+              return format(new Date(Number(value)), 'MMM yyyy');
+            } catch (e) {
+              return 'Invalid date';
+            }
+          }}
           sx={{
             '& .MuiSlider-mark': {
               height: 8,
@@ -143,7 +190,6 @@ const TimeSlider = ({
         />
       </Box>
       
-      {/* Range display */}
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'space-between',
@@ -151,7 +197,7 @@ const TimeSlider = ({
         px: 1
       }}>
         <Typography variant="caption">
-          Range: {format(new Date(minTime), 'MMMM yyyy')} - {format(new Date(maxTime), 'MMMM yyyy')}
+          Range: {format(dates[0], 'MMMM yyyy')} - {format(dates[dates.length - 1], 'MMMM yyyy')}
         </Typography>
         <Typography variant="caption">
           {dates.length} time periods
@@ -162,17 +208,13 @@ const TimeSlider = ({
 };
 
 TimeSlider.propTypes = {
-  months: PropTypes.arrayOf(
-    PropTypes.oneOfType([
-      PropTypes.instanceOf(Date),
-      PropTypes.string
-    ])
-  ).isRequired,
-  selectedDate: PropTypes.oneOfType([
-    PropTypes.instanceOf(Date),
-    PropTypes.string
-  ]).isRequired,
+  months: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedDate: PropTypes.string,
   onChange: PropTypes.func.isRequired,
+};
+
+TimeSlider.defaultProps = {
+  selectedDate: null,
 };
 
 export default React.memo(TimeSlider);

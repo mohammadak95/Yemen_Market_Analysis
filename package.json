@@ -22,11 +22,13 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-annotation": "^3.1.0",
     "chroma-js": "^3.1.2",
+    "cors": "^2.8.5",
     "d3": "^7.9.0",
     "d3-scale": "^4.0.2",
     "d3-scale-chromatic": "^3.1.0",
     "date-fns": "^2.30.0",
     "dotenv": "^16.4.5",
+    "express": "^4.21.1",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.11.1",
     "html2canvas": "^1.4.1",
@@ -37,6 +39,7 @@
     "lucide-react": "^0.447.0",
     "lz-string": "^1.5.0",
     "papaparse": "^5.4.1",
+    "path": "^0.12.7",
     "proj4": "^2.14.0",
     "proj4leaflet": "^1.0.2",
     "puppeteer": "^23.5.3",
@@ -73,7 +76,9 @@
     "deploy": "gh-pages -d build",
     "transform-spatial-weights": "node scripts/transformSpatialWeights.js",
     "dev:react-query": "REACT_APP_REACT_QUERY_DEVTOOLS=true webpack serve --mode development",
-    "check-files": "node fileCheck.js"
+    "check-files": "node fileCheck.js",
+    "start:server": "node server/app.js",
+    "start:server:dev": "nodemon server/app.js"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

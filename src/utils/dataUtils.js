@@ -455,3 +455,22 @@ export const fetchAndValidateData = async (url, selectedCommodity) => {
     throw error;
   }
 };
+
+export const retryWithBackoff = async (fn, options) => {
+  const { maxRetries = 3, initialDelay = 1000, maxDelay = 5000 } = options;
+  let lastError;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt === maxRetries - 1) throw error;
+
+      const delay = Math.min(initialDelay * Math.pow(2, attempt), maxDelay);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+};

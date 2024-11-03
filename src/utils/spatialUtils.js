@@ -1,6 +1,35 @@
-// ===== spatialDataUtils.js =====
+// ===== spatialUtils.js =====
 
-// src/utils/spatialDataUtils.js
+// ==========================
+// Region Mapping and Exclusion
+// ==========================
+export const regionMapping = {
+  'Abyan Governorate': 'abyan',
+  '‘Adan Governorate': 'aden',
+  "Al Bayda' Governorate": 'al bayda',
+  "Ad Dali' Governorate": 'al dhale\'e',
+  'Al Hudaydah Governorate': 'al hudaydah',
+  'Al Jawf Governorate': 'al jawf',
+  'Al Mahrah Governorate': 'al maharah',
+  'Al Mahwit Governorate': 'al mahwit',
+  'Sanʿaʾ': 'amanat al asimah',
+  "'Amran Governorate": 'amran',
+  'Dhamar Governorate': 'dhamar',
+  'Hadhramaut': 'hadramaut',
+  'Hajjah Governorate': 'hajjah',
+  'Ibb Governorate': 'ibb',
+  'Lahij Governorate': 'lahj',
+  "Ma'rib Governorate": 'marib',
+  'Raymah Governorate': 'raymah',
+  'Sanʿaʾ Governorate': 'sana\'a',
+  'Shabwah Governorate': 'shabwah',
+  'Socotra': 'socotra',
+  "Ta'izz Governorate": 'taizz',
+};
+
+export const excludedRegions = ['Sa\'dah Governorate'];
+
+// src/utils/spatialUtils.js
 
 import { isValid } from 'date-fns';
 
@@ -11,55 +40,135 @@ import { isValid } from 'date-fns';
  */
 export const normalizeRegionName = (regionName) => {
   if (!regionName) return '';
-  
+
   return regionName
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
     .replace(/['']/g, "'")
     .replace(/\s+/g, '_')
     .replace(/governorate$/i, '')
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_') // Collapse multiple underscores
     .trim();
 };
 
 /**
- * Safely retrieves region ID from feature properties with fallbacks.
- * @param {Object} properties - The feature properties.
- * @param {Object} regionMapping - Mapping for region names.
- * @returns {string|null} Normalized region ID or null if not found.
+ * Validates spatial weights data structure
+ * @param {Object} weightsData - The spatial weights data to validate
+ * @returns {Object} Validation result with isValid flag and any errors
  */
-export const getRegionId = (properties, regionMapping) => {
-  if (!properties) return null;
-
-  // Check for region ID using different property names.
-  const regionOptions = ['region_id', 'admin1', 'shapeName', 'ADM1_EN'];
-  for (let option of regionOptions) {
-    const value = properties[option];
-    if (value && (option !== 'shapeName' || regionMapping[value])) {
-      return normalizeRegionName(regionMapping[value] || value);
-    }
+export const validateSpatialWeights = (weightsData) => {
+  const errors = [];
+  const regions = new Set();
+  
+  if (!weightsData || typeof weightsData !== 'object') {
+    return { isValid: false, errors: ['Invalid weights data structure'] };
   }
 
-  return null;
+  Object.entries(weightsData).forEach(([region, data]) => {
+    regions.add(region);
+    
+    if (!data || !Array.isArray(data.neighbors)) {
+      errors.push(`Invalid neighbors format for region: ${region}`);
+      return;
+    }
+
+    // Validate neighbor references
+    data.neighbors.forEach(neighbor => {
+      if (typeof neighbor !== 'string') {
+        errors.push(`Invalid neighbor type for region ${region}: expected string`);
+      }
+      if (!weightsData[neighbor]) {
+        errors.push(`Invalid neighbor reference: ${neighbor} in region ${region}`);
+      }
+    });
+  });
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    regionCount: regions.size
+  };
 };
 
 /**
- * Validates and processes feature properties.
- * @param {Object} props - The feature properties.
- * @returns {Object} Processed properties.
+ * Validates and processes feature properties
+ * @param {Object} feature - The GeoJSON feature to validate
+ * @param {string} selectedCommodity - Selected commodity for validation
+ * @returns {Object} Validation result
  */
-export const processFeatureProperties = (props) => ({
-  ...props,
-  date: props.date ? new Date(props.date) : null,
-  price: typeof props.price === 'number' ? props.price : null,
-  usdprice: typeof props.usdprice === 'number' ? props.usdprice : null,
-  conflict_intensity: typeof props.conflict_intensity === 'number' ? props.conflict_intensity : null,
-  residual: typeof props.residual === 'number' ? props.residual : null
-});
+export const validateFeature = (feature, selectedCommodity) => {
+  const validation = {
+    isValid: false,
+    issues: []
+  };
 
+  try {
+    // Basic structure validation
+    if (!feature?.type || feature.type !== 'Feature') {
+      validation.issues.push('Invalid feature type');
+      return validation;
+    }
+
+    // Geometry validation
+    if (!feature.geometry?.coordinates || !Array.isArray(feature.geometry.coordinates)) {
+      validation.issues.push('Invalid geometry coordinates');
+    } else {
+      // Validate coordinate ranges for Yemen
+      const [lon, lat] = feature.geometry.coordinates;
+      if (lon < 41 || lon > 55 || lat < 12 || lat > 19) {
+        validation.issues.push('Coordinates outside Yemen bounds');
+      }
+    }
+
+    // Properties validation
+    const props = feature.properties || {};
+    const required = {
+      date: (v) => !isNaN(new Date(v).getTime()),
+      commodity: (v) => typeof v === 'string' && v.length > 0,
+      price: (v) => typeof v === 'number' && !isNaN(v) && v >= 0,
+      usdprice: (v) => typeof v === 'number' && !isNaN(v) && v >= 0,
+      conflict_intensity: (v) => typeof v === 'number' && !isNaN(v) && v >= 0
+    };
+
+    Object.entries(required).forEach(([prop, validator]) => {
+      if (!props[prop] || !validator(props[prop])) {
+        validation.issues.push(`Invalid or missing ${prop}`);
+      }
+    });
+
+    // Commodity match validation if selected
+    if (selectedCommodity && props.commodity?.toLowerCase() !== selectedCommodity.toLowerCase()) {
+      validation.issues.push('Commodity mismatch');
+    }
+
+    validation.isValid = validation.issues.length === 0;
+    return validation;
+
+  } catch (error) {
+    validation.issues.push(`Validation error: ${error.message}`);
+    return validation;
+  }
+};
 
 /**
- * Merges GeoJSON data with enhanced data.
+ * Merges GeoJSON data in chunks while preserving correct structure and properties
+ * @param {Object} geoBoundariesData - GeoJSON from geoBoundaries-YEM-ADM1.geojson
+ * @param {Object} enhancedData - GeoJSON from unified_data.geojson
+ * @param {Object} regionMapping - Region name mapping object
+ * @param {Array<string>} excludedRegions - Regions to exclude from processing
+ * @param {number} chunkSize - Size of chunks for processing
+ * @returns {Promise<Object>} Merged GeoJSON data
  */
-export const mergeGeoData = (geoBoundariesData, enhancedData, regionMapping, excludedRegions) => {
+export const mergeGeoDataChunked = async (
+  geoBoundariesData,
+  enhancedData,
+  regionMapping,
+  excludedRegions,
+  chunkSize = 1000
+) => {
+  // Validate input data structure
   if (!geoBoundariesData?.features || !enhancedData?.features) {
     console.error('Invalid input data structure');
     return { type: 'FeatureCollection', features: [] };
@@ -71,282 +180,372 @@ export const mergeGeoData = (geoBoundariesData, enhancedData, regionMapping, exc
 
   // Process geoBoundaries first
   geoBoundariesData.features.forEach(feature => {
+    // Extract region identifier using actual property structure from your data
     const regionId = getRegionId(feature.properties, regionMapping);
-    
     if (!regionId || excludedRegions.includes(regionId)) return;
-    geoBoundariesMap.set(regionId, feature);
+    
+    geoBoundariesMap.set(regionId, {
+      geometry: feature.geometry,
+      baseProperties: {
+        ...feature.properties,
+        region_id: regionId
+      }
+    });
   });
 
-  // Merge features
-  enhancedData.features.forEach((enhancedFeature, index) => {
-    try {
-      const validationResult = validateFeatureData(enhancedFeature, null, regionMapping);
-      
-      if (!validationResult.isValid) {
-        console.warn(`Invalid feature at index ${index}:`, validationResult.errors);
-        return;
+  // Process enhanced data in chunks
+  const chunks = [];
+  for (let i = 0; i < enhancedData.features.length; i += chunkSize) {
+    chunks.push(enhancedData.features.slice(i, i + chunkSize));
+  }
+
+  // Process each chunk
+  for (const chunk of chunks) {
+    await new Promise(resolve => setTimeout(resolve, 0)); // Prevent UI blocking
+
+    chunk.forEach((enhancedFeature, index) => {
+      try {
+        // Validate and process enhanced feature data
+        const validationResult = validateFeatureData(enhancedFeature, null, regionMapping);
+        if (!validationResult.isValid) {
+          console.warn(`Invalid feature at index ${index}:`, validationResult.errors);
+          return;
+        }
+
+        const regionId = validationResult.regionId;
+        const geoBoundaryData = geoBoundariesMap.get(regionId);
+        
+        if (!geoBoundaryData) {
+          unmatchedRegions.add(regionId);
+          return;
+        }
+
+        // Process properties according to your unified_data.geojson structure
+        const processedProps = processFeatureProperties({
+          ...enhancedFeature.properties,
+          admin1: regionId,
+          // Convert coordinates if needed based on your CRS
+          latitude: enhancedFeature.properties.latitude,
+          longitude: enhancedFeature.properties.longitude
+        });
+
+        // Generate unique ID based on actual data properties
+        const date = processedProps.date ? 
+          new Date(processedProps.date).toISOString().split('T')[0] : 
+          'nodate';
+        const uniqueId = `${regionId}_${processedProps.commodity || 'unknown'}_${date}_${index}`;
+
+        // Create merged feature with correct structure
+        mergedFeatures.push({
+          type: 'Feature',
+          properties: {
+            ...geoBoundaryData.baseProperties,
+            ...processedProps,
+            id: uniqueId,
+            region_id: regionId
+          },
+          geometry: geoBoundaryData.geometry
+        });
+      } catch (error) {
+        console.error(`Error processing feature at index ${index}:`, error);
       }
+    });
+  }
 
-      const regionId = validationResult.regionId;
-      const geoBoundaryFeature = geoBoundariesMap.get(regionId);
-      
-      if (!geoBoundaryFeature) {
-        unmatchedRegions.add(regionId);
-        return;
-      }
-
-      const processedProps = processFeatureProperties(enhancedFeature.properties);
-      const date = processedProps.date ? processedProps.date.toISOString().split('T')[0] : 'nodate';
-      const uniqueId = `${regionId}_${processedProps.commodity || 'unknown'}_${date}_${index}`;
-
-      mergedFeatures.push({
-        type: 'Feature',
-        properties: { ...geoBoundaryFeature.properties, ...processedProps, region_id: regionId, id: uniqueId },
-        geometry: geoBoundaryFeature.geometry
-      });
-    } catch (error) {
-      console.error(`Error processing feature at index ${index}:`, error);
-    }
-  });
-
-  geoBoundariesMap.forEach((geoFeature, regionId) => {
+  // Add features for regions without data, preserving original properties
+  geoBoundariesMap.forEach((geoBoundaryData, regionId) => {
     if (!mergedFeatures.some(f => f.properties.region_id === regionId)) {
       mergedFeatures.push({
         type: 'Feature',
-        properties: { ...geoFeature.properties, region_id: regionId, commodity: 'unknown', date: null, usdprice: null, price: null, conflict_intensity: null, residual: null, id: `${regionId}_no_data` },
-        geometry: geoFeature.geometry
+        properties: {
+          ...geoBoundaryData.baseProperties,
+          commodity: 'unknown',
+          date: null,
+          usdprice: null,
+          price: null,
+          conflict_intensity: null,
+          residual: null,
+          id: `${regionId}_no_data`,
+          // Preserve original coordinate system
+          latitude: null,
+          longitude: null,
+          // Keep required properties from your data structure
+          exchange_rate_regime: 'unknown',
+          events: null,
+          fatalities: null,
+          population: null,
+          population_percentage: null
+        },
+        geometry: geoBoundaryData.geometry
       });
     }
   });
 
-  if (unmatchedRegions.size > 0) console.warn('Unmatched regions:', Array.from(unmatchedRegions));
-
-  return { type: 'FeatureCollection', features: mergedFeatures };
+  return {
+    type: 'FeatureCollection',
+    // Preserve CRS information from your data
+    crs: geoBoundariesData.crs || { 
+      type: "name", 
+      properties: { 
+        name: "urn:ogc:def:crs:OGC:1.3:CRS84" 
+      } 
+    },
+    features: mergedFeatures
+  };
 };
 
 /**
- * Extracts unique months from features.
+ * Validates feature data against expected structure
+ * @param {Object} feature - Feature to validate
+ * @param {string} selectedCommodity - Selected commodity
+ * @param {Object} regionMapping - Region mapping object
+ * @returns {Object} Validation result
+ */
+const validateFeatureData = (feature, selectedCommodity, regionMapping) => {
+  const errors = [];
+  if (!feature?.properties) {
+    return { isValid: false, errors: ['Missing properties'] };
+  }
+
+  const props = feature.properties;
+  const regionId = getRegionId(props, regionMapping);
+
+  if (!regionId) {
+    errors.push('Invalid or missing region identifier');
+  }
+
+  // Validate required numeric fields from your data structure
+  ['price', 'usdprice', 'conflict_intensity'].forEach(field => {
+    const value = props[field];
+    if (value !== undefined && value !== null) {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) {
+        errors.push(`Invalid ${field} value: ${value}`);
+      }
+    }
+  });
+
+  // Validate date format
+  if (props.date && isNaN(new Date(props.date).getTime())) {
+    errors.push(`Invalid date format: ${props.date}`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    regionId
+  };
+};
+
+/**
+ * Processes feature properties according to your data structure
+ * @param {Object} props - Properties to process
+ * @returns {Object} Processed properties
+ */
+const processFeatureProperties = (props) => {
+  return {
+    ...props,
+    // Convert numeric fields based on your data format
+    price: props.price !== undefined ? parseFloat(props.price) || null : null,
+    usdprice: props.usdprice !== undefined ? parseFloat(props.usdprice) || null : null,
+    conflict_intensity: props.conflict_intensity !== undefined ? 
+      parseFloat(props.conflict_intensity) || null : null,
+    // Handle dates in your format
+    date: props.date ? new Date(props.date).toISOString() : null,
+    // Process additional fields from your data structure
+    events: props.events !== undefined ? parseInt(props.events) || null : null,
+    fatalities: props.fatalities !== undefined ? parseInt(props.fatalities) || null : null,
+    population: props.population !== undefined ? parseFloat(props.population) || null : null,
+    population_percentage: props.population_percentage !== undefined ? 
+      parseFloat(props.population_percentage) || null : null,
+    exchange_rate_regime: props.exchange_rate_regime || 'unknown'
+  };
+};
+
+/**
+ * Gets region ID from feature properties with fallbacks
+ * @param {Object} properties - Feature properties
+ * @param {Object} regionMapping - Region name mapping
+ * @returns {string|null} Normalized region ID
+ */
+export const getRegionId = (properties, regionMapping) => {
+  if (!properties) return null;
+
+  const regionOptions = ['region_id', 'admin1', 'shapeName', 'ADM1_EN'];
+  
+  for (const option of regionOptions) {
+    const value = properties[option];
+    if (value) {
+      // Check for direct mapping first
+      if (regionMapping[value]) {
+        return normalizeRegionName(regionMapping[value]);
+      }
+      
+      // Try normalized version of the value
+      const normalizedValue = normalizeRegionName(value);
+      if (Object.values(regionMapping).includes(normalizedValue)) {
+        return normalizedValue;
+      }
+      
+      // If no mapping found but it's a valid region name, use it
+      if (option === 'region_id' || option === 'admin1') {
+        return normalizedValue;
+      }
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Extracts unique months from features
+ * @param {Array} features - Array of GeoJSON features
+ * @returns {Array<Date>} Array of unique dates
  */
 export const extractUniqueMonths = (features) => {
   if (!Array.isArray(features)) return [];
 
-  const validDates = features
-    .map(f => f.properties?.date)
-    .filter(date => date && isValid(new Date(date)));
+  const uniqueDates = new Set();
+  features.forEach(feature => {
+    const date = feature.properties?.date;
+    if (date && isValid(new Date(date))) {
+      const monthDate = new Date(date);
+      uniqueDates.add(
+        `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}-01`
+      );
+    }
+  });
 
-  const uniqueMonths = new Set(
-    validDates.map(date => {
-      const d = new Date(date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    })
-  );
-
-  return Array.from(uniqueMonths)
-    .map(monthStr => new Date(`${monthStr}-01`))
+  return Array.from(uniqueDates)
+    .map(dateStr => new Date(dateStr))
     .sort((a, b) => a - b);
 };
 
-
-export const debugSpatialData = (geoBoundariesData, enhancedData, selectedCommodity) => {
-  console.group('Spatial Data Processing Debug');
+/**
+ * Debug utility for monitoring spatial data processing
+ * @param {Object} data - Data being processed
+ * @param {string} stage - Processing stage identifier
+ * @returns {Object} Processing statistics
+ */
+export const monitorSpatialDataProcessing = (data, stage) => {
+  const startTime = performance.now();
   
-  // Log initial data state
-  console.log('Processing Data:', {
-    selectedCommodity,
-    hasGeoBoundaries: !!geoBoundariesData,
-    hasEnhancedData: !!enhancedData,
-    geoBoundariesFeatureCount: geoBoundariesData?.features?.length,
-    enhancedDataFeatureCount: enhancedData?.features?.length
+  const stats = {
+    stage,
+    timestamp: new Date().toISOString(),
+    featureCount: data?.features?.length || 0,
+    memoryUsage: process.memoryUsage ? {
+      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+      heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB'
+    } : 'Not available',
+    processingTime: null
+  };
+
+  console.group(`Spatial Data Processing - ${stage}`);
+  console.log('Processing Stats:', {
+    featureCount: stats.featureCount,
+    timestamp: stats.timestamp
   });
 
-  try {
-    // Check and log region mapping
-    const regions = new Set();
-    const regionDetails = [];
-    
-    geoBoundariesData?.features?.forEach(feature => {
-      const regionName = feature.properties?.shapeName || 
-                        feature.properties?.ADM1_EN ||
-                        'Unknown Region';
-      regions.add(regionName);
-      
-      regionDetails.push({
-        name: regionName,
-        properties: {
-          shapeName: feature.properties?.shapeName,
-          ADM1_EN: feature.properties?.ADM1_EN,
-          region_id: feature.properties?.region_id,
-          admin1: feature.properties?.admin1
-        },
-        hasGeometry: !!feature.geometry,
-        geometryType: feature.geometry?.type
-      });
-    });
-
-    console.log('Region Mapping Details:', {
-      totalRegions: regions.size,
-      details: regionDetails
-    });
-
-    // Analyze commodity data
-    const commodityData = enhancedData?.features?.filter(
-      f => f.properties?.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
-    );
-
-    const priceAnalysis = commodityData?.reduce((acc, feature) => {
-      const price = feature.properties?.usdprice;
-      if (typeof price === 'number' && !isNaN(price)) {
-        acc.prices.push(price);
-        acc.min = Math.min(acc.min, price);
-        acc.max = Math.max(acc.max, price);
-        acc.sum += price;
-        acc.count++;
-      }
-      return acc;
-    }, { prices: [], min: Infinity, max: -Infinity, sum: 0, count: 0 });
-
-    console.log('Commodity Data Analysis:', {
-      commodity: selectedCommodity,
-      totalFeatures: commodityData?.length,
-      priceStatistics: priceAnalysis.count > 0 ? {
-        uniquePrices: new Set(priceAnalysis.prices).size,
-        min: priceAnalysis.min,
-        max: priceAnalysis.max,
-        average: priceAnalysis.sum / priceAnalysis.count
-      } : null,
-      sampleFeature: commodityData?.[0]?.properties
-    });
-
-    // Analyze temporal coverage
-    const dates = commodityData
-      ?.map(f => f.properties?.date)
-      .filter(date => date && !isNaN(new Date(date).getTime()))
-      .map(date => new Date(date));
-
-    const temporalAnalysis = dates?.length ? {
-      earliest: new Date(Math.min(...dates)),
-      latest: new Date(Math.max(...dates)),
-      totalDates: new Set(dates.map(d => d.toISOString().split('T')[0])).size
-    } : null;
-
-    console.log('Temporal Coverage:', temporalAnalysis);
-
-    return {
-      regionsFound: Array.from(regions),
-      commodityAnalysis: {
-        features: commodityData?.length,
-        priceRange: priceAnalysis.count > 0 ? [priceAnalysis.min, priceAnalysis.max] : null,
-        temporalCoverage: temporalAnalysis
-      }
-    };
-
-  } catch (error) {
-    console.error('Error in spatial data debug:', error);
-    throw error;
-  } finally {
-    console.groupEnd();
+  if (stats.featureCount > 10000) {
+    console.warn('Large dataset detected - chunked processing recommended');
   }
+
+  return {
+    ...stats,
+    finish: () => {
+      stats.processingTime = `${((performance.now() - startTime) / 1000).toFixed(2)}s`;
+      console.log('Processing completed:', {
+        processingTime: stats.processingTime,
+        memoryUsage: stats.memoryUsage
+      });
+      console.groupEnd();
+      return stats;
+    }
+  };
 };
 
+/**
+ * Tracks commodity-specific data during processing
+ * @param {string} selectedCommodity - Selected commodity to track
+ * @param {Object} data - GeoJSON data being processed
+ * @returns {Object} Tracking results
+ */
 export const trackCommodityData = (selectedCommodity, data) => {
   if (!selectedCommodity || !data?.features) {
     console.warn('Invalid input for commodity tracking');
     return null;
   }
 
-  console.group(`Commodity Data Tracking: ${selectedCommodity}`);
-  
-  try {
-    const relevantFeatures = data.features.filter(
-      f => f.properties?.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
-    );
+  const tracking = {
+    commodity: selectedCommodity,
+    timestamp: new Date().toISOString(),
+    features: {
+      total: data.features.length,
+      matched: 0,
+      invalid: 0
+    },
+    prices: {
+      min: Infinity,
+      max: -Infinity,
+      average: 0,
+      count: 0
+    },
+    dates: {
+      min: null,
+      max: null,
+      uniqueCount: 0
+    }
+  };
 
-    const priceStats = relevantFeatures.reduce((acc, feature) => {
-      const price = feature.properties?.usdprice;
+  const dates = new Set();
+  let priceSum = 0;
+
+  data.features.forEach(feature => {
+    if (feature.properties?.commodity?.toLowerCase() === selectedCommodity.toLowerCase()) {
+      tracking.features.matched++;
+      
+      const price = feature.properties.usdprice;
       if (typeof price === 'number' && !isNaN(price)) {
-        acc.prices.add(price);
-        acc.min = Math.min(acc.min, price);
-        acc.max = Math.max(acc.max, price);
+        tracking.prices.min = Math.min(tracking.prices.min, price);
+        tracking.prices.max = Math.max(tracking.prices.max, price);
+        priceSum += price;
+        tracking.prices.count++;
       }
-      return acc;
-    }, { prices: new Set(), min: Infinity, max: -Infinity });
 
-    const dates = relevantFeatures
-      .map(f => f.properties?.date)
-      .filter(date => date && !isNaN(new Date(date).getTime()))
-      .map(d => new Date(d));
-
-    console.log('Tracking Results:', {
-      totalFeatures: data.features.length,
-      matchingFeatures: relevantFeatures.length,
-      priceStatistics: priceStats.prices.size > 0 ? {
-        uniquePrices: priceStats.prices.size,
-        range: [priceStats.min, priceStats.max]
-      } : null,
-      dateRange: dates.length ? {
-        min: new Date(Math.min(...dates)),
-        max: new Date(Math.max(...dates))
-      } : null
-    });
-
-    return relevantFeatures;
-  } finally {
-    console.groupEnd();
-  }
-};
-
-export const validateFeatureData = (feature, selectedCommodity) => {
-  if (!feature) {
-    console.warn('No feature provided for validation');
-    return null;
-  }
-
-  console.group(`Feature Validation: ${feature?.properties?.region_id || 'Unknown'}`);
-  
-  try {
-    const validation = {
-      structure: {
-        hasProperties: !!feature.properties,
-        hasGeometry: !!feature.geometry,
-        geometryType: feature.geometry?.type
-      },
-      properties: {
-        commodity: {
-          exists: 'commodity' in feature.properties,
-          value: feature.properties?.commodity,
-          matches: feature.properties?.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
-        },
-        price: {
-          exists: 'usdprice' in feature.properties,
-          value: feature.properties?.usdprice,
-          isValid: typeof feature.properties?.usdprice === 'number' && !isNaN(feature.properties?.usdprice)
-        },
-        date: {
-          exists: 'date' in feature.properties,
-          value: feature.properties?.date,
-          isValid: !!(feature.properties?.date && !isNaN(new Date(feature.properties.date).getTime()))
-        },
-        region: {
-          id: feature.properties?.region_id,
-          name: feature.properties?.shapeName || feature.properties?.ADM1_EN
+      const date = feature.properties.date;
+      if (date && isValid(new Date(date))) {
+        dates.add(date.split('T')[0]);
+        if (!tracking.dates.min || date < tracking.dates.min) {
+          tracking.dates.min = date;
+        }
+        if (!tracking.dates.max || date > tracking.dates.max) {
+          tracking.dates.max = date;
         }
       }
-    };
+    } else {
+      tracking.features.invalid++;
+    }
+  });
 
-    console.log('Validation Results:', validation);
-    
-    return validation;
-  } finally {
-    console.groupEnd();
-  }
+  tracking.prices.average = tracking.prices.count > 0 ? 
+    priceSum / tracking.prices.count : null;
+  tracking.dates.uniqueCount = dates.size;
+
+  if (tracking.prices.min === Infinity) tracking.prices.min = null;
+  if (tracking.prices.max === -Infinity) tracking.prices.max = null;
+
+  return tracking;
 };
-
 
 export default {
   normalizeRegionName,
-  getRegionId,
+  validateSpatialWeights,
+  validateFeature,
+  mergeGeoDataChunked,
   processFeatureProperties,
-  validateFeatureData,
-  mergeGeoData,
-  extractUniqueMonths
+  getRegionId,
+  extractUniqueMonths,
+  monitorSpatialDataProcessing,
+  trackCommodityData
 };

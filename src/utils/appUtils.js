@@ -15,35 +15,6 @@ const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const isGitHubPages = PUBLIC_URL.includes('github.io');
 
 // ==========================
-// Region Mapping and Exclusion
-// ==========================
-export const regionMapping = {
-  'Abyan Governorate': 'abyan',
-  '‘Adan Governorate': 'aden',
-  "Al Bayda' Governorate": 'al bayda',
-  "Ad Dali' Governorate": 'al dhale\'e',
-  'Al Hudaydah Governorate': 'al hudaydah',
-  'Al Jawf Governorate': 'al jawf',
-  'Al Mahrah Governorate': 'al maharah',
-  'Al Mahwit Governorate': 'al mahwit',
-  'Sanʿaʾ': 'amanat al asimah',
-  "'Amran Governorate": 'amran',
-  'Dhamar Governorate': 'dhamar',
-  'Hadhramaut': 'hadramaut',
-  'Hajjah Governorate': 'hajjah',
-  'Ibb Governorate': 'ibb',
-  'Lahij Governorate': 'lahj',
-  "Ma'rib Governorate": 'marib',
-  'Raymah Governorate': 'raymah',
-  'Sanʿaʾ Governorate': 'sana\'a',
-  'Shabwah Governorate': 'shabwah',
-  'Socotra': 'socotra',
-  "Ta'izz Governorate": 'taizz',
-};
-
-export const excludedRegions = ['Sa\'dah Governorate'];
-
-// ==========================
 // Projection Definitions
 // ==========================
 const EPSG_2085 = 'EPSG:2085';
@@ -346,7 +317,7 @@ export const applySmoothing = (
  * @param {string} regionId - The region ID to normalize.
  * @returns {string|null} - The normalized region ID or null if input is invalid.
  */
-const normalizeRegionId = (regionId) => {
+export const normalizeRegionId = (regionId) => {
   if (!regionId) return null;
   return regionId
     .toLowerCase()
@@ -361,6 +332,17 @@ const normalizeRegionId = (regionId) => {
  * @param {Object} properties - The properties of a feature.
  * @returns {string|null} - The normalized region ID or null if not found.
  */
+
+import { regionMapping } from '../utils/spatialUtils';
+
+// appUtils.js
+
+// Utility function to retrieve region names considering "shapename"
+export function getRegionName(regionData) {
+  return regionData.shapename || regionData.name || regionData.id || 'unknown';
+}
+
+
 const getRegionId = (properties) => {
   if (!properties) return null;
 
@@ -446,13 +428,16 @@ export const processData = (geoJsonData, enhancedData, selectedCommodity) => {
  * @param {Array<string>} excludedRegions - List of regions to exclude.
  * @returns {Object} - The merged GeoJSON data.
  */
-export const mergeSpatialDataWithMapping = (geoBoundariesData, enhancedData, excludedRegions) => {
+
+import { excludedRegions } from '../utils/spatialUtils';
+
+export const mergeSpatialDataWithMapping = (geoBoundariesData, enhancedData) => {
   const geoBoundariesMap = new Map();
   const unmatchedRegions = new Set();
   const mergedFeatures = [];
 
-  // Normalize excluded regions
-  const normalizedExcludedRegions = excludedRegions.map(normalizeRegionId);
+  // Normalize excluded regions (ensure `excludedRegions` is an array and normalize each one)
+  const normalizedExcludedRegions = Array.isArray(excludedRegions) ? excludedRegions.map(normalizeRegionId) : [];
 
   // Create a map for geoBoundaries using normalized region_id
   geoBoundariesData.features.forEach((feature) => {
@@ -544,6 +529,7 @@ export const mergeSpatialDataWithMapping = (geoBoundariesData, enhancedData, exc
     features: mergedFeatures,
   };
 };
+
 
 /**
  * Processes properties of an enhanced feature.

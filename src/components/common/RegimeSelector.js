@@ -26,37 +26,28 @@ const MenuProps = {
 };
 
 const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
-  if (!regimes || regimes.length === 0) {
-    return (
-      <Typography variant="body2" color="textSecondary">
-        No regimes available
-      </Typography>
-    );
-  }
-
-  const handleChange = (event) => {
-    const value = event.target.value;
-    onSelectRegimes(typeof value === 'string' ? value.split(',') : value);
-  };
-
   return (
     <FormControl fullWidth variant="outlined" size="small" margin="normal">
-      <InputLabel id="regime-selector-label">Regimes for Graph</InputLabel>
+      <InputLabel id="regime-select-label">
+        Select Regimes
+      </InputLabel>
       <Select
-        labelId="regime-selector-label"
-        id="regime-selector"
+        labelId="regime-select-label"
+        id="regime-select"
+        name="regimes"
         multiple
         value={selectedRegimes}
-        onChange={handleChange}
-        input={<OutlinedInput label="Regimes for Graph" />}
-        renderValue={(selected) =>
-          selected.map((regime) => capitalizeWords(regime)).join(', ')
-        }
-        MenuProps={MenuProps}
+        onChange={(e) => onSelectRegimes(e.target.value)}
+        label="Select Regimes"
+        aria-label="Select regimes"
+        renderValue={(selected) => selected.map(regime => capitalizeWords(regime)).join(', ')}
       >
         {regimes.map((regime) => (
           <MenuItem key={regime} value={regime}>
-            <Checkbox checked={selectedRegimes.indexOf(regime) > -1} />
+            <Checkbox
+              id={`regime-checkbox-${regime}`}
+              checked={selectedRegimes.indexOf(regime) > -1}
+            />
             <ListItemText primary={capitalizeWords(regime)} />
           </MenuItem>
         ))}

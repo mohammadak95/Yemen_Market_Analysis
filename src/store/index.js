@@ -6,7 +6,7 @@ import ecmReducer from '../slices/ecmSlice';
 import priceDiffReducer from '../slices/priceDiffSlice';
 import spatialReducer from '../slices/spatialSlice';
 
-// Create store with middleware
+// Create store with enhanced middleware configuration
 const store = configureStore({
   reducer: {
     theme: themeReducer,
@@ -16,18 +16,33 @@ const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
+      serializableCheck: {
+        // Ignore specific actions that contain non-serializable data
+        ignoredActions: [
+          'spatial/setData',
+          'spatial/processFeatures',
+          'spatial/fetchSpatialData/fulfilled'
+        ],
+        // Ignore specific paths that may contain non-serializable data
+        ignoredPaths: [
+          'spatial.geoData.features.*.properties.date',
+          'spatial.uniqueMonths',
+          'spatial.metadata.dataTimestamp'
+        ],
+      },
+      // Keep dev tools enabled for debugging
+      devTools: process.env.NODE_ENV !== 'production',
     }),
-  devTools: process.env.NODE_ENV !== 'production',
 });
 
 // Debug: Log initial state
-if (process.env.NODE_ENV !== 'production') {
-  console.log('Initial Redux State:', store.getState());
+if (process.env.NODE_ENV !== 'development') {
+  console.debug('Initial Redux State:', store.getState());
   
-  // Subscribe to state changes
+  // Subscribe to state changes for debugging
   store.subscribe(() => {
-    console.log('Updated Redux State:', store.getState());
+    const state = store.getState();
+    console.debug('Updated Redux State:', state);
   });
 }
 

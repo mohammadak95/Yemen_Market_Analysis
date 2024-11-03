@@ -1,23 +1,96 @@
 // src/slices/spatialSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { parseISO, isValid } from 'date-fns';
-import Papa from 'papaparse';
-import { getDataPath } from '../utils/dataUtils';
+import { getDataPath } from '../utils/dataPath';
 import {
-  fetchJson,
-  mergeSpatialDataWithMapping,
-  processData,
-  regionMapping,
-  excludedRegions,
-  mergeResidualsIntoGeoData,
-} from '../utils/appUtils';
+  normalizeRegionName,
+  validateSpatialWeights,
+  mergeGeoDataChunked
+} from '../utils/spatialUtils';
+import { regionMapping, excludedRegions } from '../utils/spatialUtils';
+import Papa from 'papaparse';
+
+const CHUNK_SIZE = 1000;
+
+const fetchWithHeaders = async (url) => {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json, text/csv, */*',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      mode: 'cors',
+      credentials: 'same-origin'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error(`Error fetching ${url}:`, error);
+    throw error;
+  }
+};
+
+// Enhanced date processing
+const processDate = (dateString) => {
+  if (!dateString || dateString === 'null') return null;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+    return new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
+  } catch (e) {
+    console.warn(`[processDate] Error processing date: "${dateString}"`, e);
+    return null;
+  }
+};
+
+const processFeatures = (features, selectedCommodity) => {
+  if (!Array.isArray(features)) {
+    console.warn('[processFeatures] Expected features array, received:', typeof features);
+    return [];
+  }
+
+  return features
+    .filter(feature => {
+      const commodity = feature.properties?.commodity?.toLowerCase();
+      return commodity === selectedCommodity?.toLowerCase();
+    })
+    .map(feature => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        date: processDate(feature.properties.date),
+        usdprice: Number(feature.properties.usdprice) || 0,
+        price: Number(feature.properties.price) || 0,
+        conflict_intensity: Number(feature.properties.conflict_intensity) || 0
+      }
+    }))
+    .filter(feature => feature.properties.date !== null);
+};
 
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
   async (selectedCommodity, { rejectWithValue }) => {
+    console.debug(`[fetchSpatialData] Initiated with selectedCommodity: "${selectedCommodity}"`);
+
+    let geoBoundariesData = null;
+    let unifiedData = null;
+    let weightsData = null;
+    let analysisResultsData = null;
+    let flowMapsData = [];
+    let filteredFeatures = [];
+    let mergedGeoData = null;
+    let normalizedGeoBoundaries = null;
+    let uniqueMonthStrings = [];
+
+    const startTime = performance.now();
+
     try {
-      // Fetch data paths
       const paths = {
         geoBoundaries: getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson'),
         unified: getDataPath('unified_data.geojson'),
@@ -26,124 +99,164 @@ export const fetchSpatialData = createAsyncThunk(
         analysis: getDataPath('spatial_analysis_results.json')
       };
 
-      // Fetch JSON data
-      const [geoBoundariesData, unifiedData, weightsData, analysisResultsData] = 
+      // Fetch all data in parallel with proper headers
+      const [geoBoundariesResponse, unifiedResponse, weightsResponse, analysisResponse] = 
         await Promise.all([
-          fetchJson(paths.geoBoundaries),
-          fetchJson(paths.unified),
-          fetchJson(paths.weights),
-          fetchJson(paths.analysis)
+          fetchWithHeaders(paths.geoBoundaries),
+          fetchWithHeaders(paths.unified),
+          fetchWithHeaders(paths.weights),
+          fetchWithHeaders(paths.analysis)
         ]);
 
-      // Fetch and parse CSV data
-      const flowMapsResponse = await fetch(paths.flowMaps);
-      if (!flowMapsResponse.ok) {
-        throw new Error(`Failed to fetch flow maps data: ${flowMapsResponse.statusText}`);
-      }
-      const flowMapsText = await flowMapsResponse.text();
+      // Parse JSON responses
+      [geoBoundariesData, unifiedData, weightsData, analysisResultsData] = 
+        await Promise.all([
+          geoBoundariesResponse.json(),
+          unifiedResponse.json(),
+          weightsResponse.json(),
+          analysisResponse.json()
+        ]);
 
-      const { data: flowMapsData, errors } = Papa.parse(flowMapsText, {
+      // Validate weights data
+      const weightsValidation = validateSpatialWeights(weightsData);
+      if (!weightsValidation.isValid) {
+        throw new Error(`Invalid spatial weights data: ${weightsValidation.errors.join(', ')}`);
+      }
+
+      // Process flow maps
+      const flowMapsResponse = await fetchWithHeaders(paths.flowMaps);
+      const flowMapsText = await flowMapsResponse.text();
+      const result = Papa.parse(flowMapsText, {
         header: true,
-        skipEmptyLines: true,
         dynamicTyping: true,
+        skipEmptyLines: true
       });
 
-      if (errors.length > 0) {
-        throw new Error(`Error parsing flow maps CSV: ${errors[0].message}`);
+      flowMapsData = result.data;
+
+      if (!geoBoundariesData?.features?.length) {
+        throw new Error('Invalid geoBoundaries data structure');
       }
 
-      // Process spatial data
-      const mergedData = mergeSpatialDataWithMapping(
-        geoBoundariesData,
-        unifiedData,
+      normalizedGeoBoundaries = {
+        type: 'FeatureCollection',
+        features: geoBoundariesData.features.map(feature => ({
+          ...feature,
+          properties: {
+            ...feature.properties,
+            region_id: normalizeRegionName(feature.properties.shapeName || feature.properties.region_id),
+          },
+        }))
+      };
+
+      if (!unifiedData?.features?.length) {
+        throw new Error('Invalid unified data structure');
+      }
+
+      filteredFeatures = processFeatures(unifiedData.features, selectedCommodity);
+
+      mergedGeoData = await mergeGeoDataChunked(
+        normalizedGeoBoundaries,
+        { ...unifiedData, features: filteredFeatures },
         regionMapping,
-        excludedRegions
+        excludedRegions,
+        CHUNK_SIZE
       );
 
-      const mergedDataWithResiduals = mergeResidualsIntoGeoData(
-        mergedData,
-        analysisResultsData
-      );
+      if (!mergedGeoData?.features) {
+        throw new Error('Failed to merge geodata');
+      }
 
-      // Extract dates
-      const dates = mergedDataWithResiduals.features
-        .map(feature => feature.properties.date)
-        .filter(dateStr => {
-          if (!dateStr) return false;
-          const parsedDate = parseISO(dateStr);
-          return isValid(parsedDate);
-        });
+      uniqueMonthStrings = Array.from(new Set(
+        mergedGeoData.features
+          .map(f => f.properties?.date)
+          .filter(Boolean)
+      )).sort();
 
-      // Create unique months set
-      const uniqueMonthSet = new Set(
-        dates.map(dateStr => {
-          const parsedDate = parseISO(dateStr);
-          return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}`;
-        })
-      );
-
-      const uniqueMonthDates = Array.from(uniqueMonthSet)
-        .map(monthStr => new Date(`${monthStr}-01`))
-        .sort((a, b) => a - b);
-
-      const processedGeoData = processData(
-        mergedDataWithResiduals,
-        unifiedData,
-        selectedCommodity
-      );
+      const metadata = {
+        totalFeatures: mergedGeoData.features.length,
+        dataTimestamp: new Date().toISOString(),
+        commodityFilter: selectedCommodity,
+        processedFeatures: filteredFeatures.length,
+        totalDates: uniqueMonthStrings.length,
+        flowMapsCount: flowMapsData.length,
+        processingTime: performance.now() - startTime
+      };
 
       return {
-        geoData: processedGeoData,
-        geoBoundaries: geoBoundariesData,
+        geoData: mergedGeoData,
         spatialWeights: weightsData,
         flowMaps: flowMapsData,
-        networkData: [],
         analysisResults: analysisResultsData,
-        uniqueMonths: uniqueMonthDates,
+        uniqueMonths: uniqueMonthStrings,
+        metadata
       };
+
     } catch (error) {
-      return rejectWithValue(error.message);
+      console.error('[fetchSpatialData] Error:', error);
+      return rejectWithValue({
+        message: error.message,
+        details: {
+          availableData: {
+            hasGeoBoundaries: !!geoBoundariesData,
+            hasUnified: !!unifiedData,
+            hasWeights: !!weightsData,
+            hasAnalysis: !!analysisResultsData,
+            flowMapsCount: flowMapsData?.length || 0,
+            featuresCount: filteredFeatures?.length || 0
+          }
+        }
+      });
     }
   }
 );
 
 const initialState = {
   geoData: null,
-  geoBoundaries: null,
   spatialWeights: null,
   flowMaps: null,
-  networkData: null,
   analysisResults: null,
   uniqueMonths: [],
   status: 'idle',
   error: null,
+  metadata: null,
+  loadingProgress: 0
 };
 
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
-  reducers: {},
+  reducers: {
+    updateLoadingProgress: (state, action) => {
+      state.loadingProgress = action.payload;
+    },
+    resetSpatialState: () => initialState
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchSpatialData.pending, (state) => {
         state.status = 'loading';
         state.error = null;
+        state.loadingProgress = 0;
       })
       .addCase(fetchSpatialData.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.geoData = action.payload.geoData;
-        state.geoBoundaries = action.payload.geoBoundaries;
         state.spatialWeights = action.payload.spatialWeights;
         state.flowMaps = action.payload.flowMaps;
-        state.networkData = action.payload.networkData;
         state.analysisResults = action.payload.analysisResults;
         state.uniqueMonths = action.payload.uniqueMonths;
+        state.metadata = action.payload.metadata;
+        state.loadingProgress = 100;
       })
       .addCase(fetchSpatialData.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload || action.error.message;
+        state.loadingProgress = 0;
       });
   },
 });
+
+export const { updateLoadingProgress, resetSpatialState } = spatialSlice.actions;
 
 export default spatialSlice.reducer;

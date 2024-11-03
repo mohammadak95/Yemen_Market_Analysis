@@ -1,128 +1,176 @@
 // public/spatialServiceWorker.js
 
-const CACHE_VERSION = 'spatial-analysis-cache-v1';
-const STATIC_CACHE = `static-cache-${CACHE_VERSION}`;
-const DATA_CACHE = `data-cache-${CACHE_VERSION}`;
+const CACHE_NAME = 'spatial-data-cache-v2';
+const API_CACHE_NAME = 'spatial-api-cache-v2';
 
+// Only cache local assets
 const STATIC_ASSETS = [
-  '/', // Ensure the root is cached
   '/index.html',
-  '/static/js/main.js',
-  '/static/css/main.css',
-  '/favicon.ico',
-  '/logo192.png',
-  '/logo512.png',
-  // Add other specific static asset files as needed
+  '/manifest.json',
+  '/favicon.ico'
 ];
 
-// Function to limit cache size
-const limitCacheSize = (cacheName, maxItems) => {
-  caches.open(cacheName).then((cache) => {
-    cache.keys().then((keys) => {
-      if (keys.length > maxItems) {
-        cache.delete(keys[0]).then(() => limitCacheSize(cacheName, maxItems));
-      }
-    });
-  });
-};
+// Define API endpoints that should be cached
+const API_ENDPOINTS = [
+  '/results/unified_data.geojson',
+  '/results/network_data/time_varying_flows.csv',
+  '/results/spatial_analysis_results.json',
+  '/results/choropleth_data/geoBoundaries-YEM-ADM1.geojson',
+  '/results/spatial_weights/transformed_spatial_weights.json'
+];
 
-// During the install phase, cache static assets
+// Cache first, then network strategy for API requests
+async function cacheFirstThenNetwork(request) {
+  try {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      const cache = await caches.open(API_CACHE_NAME);
+      await cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    console.error('[SW] Cache-first strategy failed:', error);
+    throw error;
+  }
+}
+
+// Network first, then cache strategy for static assets
+async function networkFirstThenCache(request) {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+      const networkResponse = await fetch(request);
+      await cache.put(request, networkResponse.clone());
+      return networkResponse;
+    } catch (error) {
+      const cachedResponse = await cache.match(request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('[SW] Network-first strategy failed:', error);
+    throw error;
+  }
+}
+
+// Install event handler
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Install');
+  
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      console.log('[Service Worker] Caching static assets');
-      return cache.addAll(STATIC_ASSETS);
-    }).then(() => {
-      // Force the waiting service worker to become the active service worker
-      return self.skipWaiting();
-    })
+    (async () => {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        console.log('[Service Worker] Caching static assets');
+        
+        // Cache static assets one by one
+        for (const asset of STATIC_ASSETS) {
+          try {
+            await cache.add(new Request(asset, { 
+              credentials: 'same-origin',
+              mode: 'no-cors'
+            }));
+            console.log(`[SW] Cached: ${asset}`);
+          } catch (error) {
+            console.warn(`[SW] Failed to cache ${asset}:`, error);
+          }
+        }
+
+        // Don't pre-cache API endpoints, they'll be cached on first use
+        console.log('[Service Worker] Installation complete');
+      } catch (error) {
+        console.error('[SW] Installation failed:', error);
+      }
+    })()
   );
+  
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
 });
 
-// During the activate phase, clean up old caches
+// Activate event handler
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activate');
+  
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== STATIC_CACHE && cacheName !== DATA_CACHE) {
-            console.log('[Service Worker] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-          return null;
-        })
-      );
-    }).then(() => {
-      // Claim clients so that the service worker starts controlling them immediately
-      return self.clients.claim();
-    })
+    (async () => {
+      try {
+        // Clear old caches
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames
+            .filter(name => name.startsWith('spatial-'))
+            .filter(name => name !== CACHE_NAME && name !== API_CACHE_NAME)
+            .map(name => caches.delete(name))
+        );
+
+        // Take control of all clients
+        await clients.claim();
+        console.log('[Service Worker] Activation complete');
+      } catch (error) {
+        console.error('[SW] Activation failed:', error);
+      }
+    })()
   );
 });
 
 // Fetch event handler
 self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-  
-  // Handle API/data requests differently
-  if (url.pathname.startsWith('/data/')) {
-    event.respondWith(
-      caches.open(DATA_CACHE).then((cache) => {
-        return fetch(request)
-          .then((response) => {
-            // If the response is good, clone it and store it in the cache.
-            if (response.status === 200) {
-              cache.put(request, response.clone());
-              limitCacheSize(DATA_CACHE, 100); // Example limit
-            }
-            return response;
-          })
-          .catch(() => {
-            // If the network request failed, try to get it from the cache.
-            return cache.match(request);
-          });
-      })
-    );
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // Handle API requests
+  if (API_ENDPOINTS.some(endpoint => url.pathname.includes(endpoint))) {
+    event.respondWith(cacheFirstThenNetwork(event.request));
     return;
   }
 
-  // For other requests, use Cache First strategy
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      // Return cached response if found
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+  // Handle static assets
+  if (STATIC_ASSETS.includes(url.pathname)) {
+    event.respondWith(networkFirstThenCache(event.request));
+    return;
+  }
 
-      // Else, fetch from network
-      return fetch(request).then((networkResponse) => {
-        // Check if we received a valid response
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
-        }
-
-        // Clone the response to add to cache
-        const responseToCache = networkResponse.clone();
-
-        caches.open(STATIC_CACHE).then((cache) => {
-          cache.put(request, responseToCache);
-          limitCacheSize(STATIC_CACHE, 50); // Example limit
-        });
-
-        return networkResponse;
-      }).catch(() => {
-        // Optional: Return a fallback page or asset if fetch fails
-        if (request.destination === 'document') {
-          return caches.match('/index.html');
-        }
-        return new Response('You are offline', {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: new Headers({ 'Content-Type': 'text/plain' }),
-        });
-      });
-    })
-  );
+  // Pass through all other requests
+  event.respondWith(fetch(event.request));
 });
+
+// Error handlers
+self.addEventListener('error', (event) => {
+  console.error('[Service Worker] Error:', event.error);
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('[Service Worker] Unhandled rejection:', event.reason);
+});
+
+// Message handler for debugging
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({ version: CACHE_NAME });
+  }
+});
+
+// Helper function to log cache contents (for debugging)
+async function logCacheContents() {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const keys = await cache.keys();
+    console.log('[SW] Cache contents:', keys.map(key => key.url));
+  } catch (error) {
+    console.error('[SW] Failed to log cache contents:', error);
+  }
+}

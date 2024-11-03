@@ -1,4 +1,4 @@
-//src/components/analysis/spatial-analysis/ChoroplethMap.js
+// src/components/analysis/spatial-analysis/ChoroplethMap.js (Updated Version)
 
 import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
@@ -25,11 +25,26 @@ const ChoroplethMap = ({
   zoom = 6,
   onViewChange
 }) => {
+  // Filter data based on selected date
+  const filteredData = useMemo(() => {
+    if (!data?.features?.length || !selectedDate) return { ...data, features: [] };
+
+    const targetDateString = new Date(selectedDate).toISOString().split('T')[0];
+
+    return {
+      ...data,
+      features: data.features.filter(feature => {
+        const featureDate = feature.properties?.date;
+        return featureDate && new Date(featureDate).toISOString().split('T')[0] === targetDateString;
+      })
+    };
+  }, [data, selectedDate]);
+
   // Create color scale for values
   const colorScale = useMemo(() => {
-    if (!data?.features?.length) return null;
+    if (!filteredData?.features?.length) return null;
     
-    const values = data.features
+    const values = filteredData.features
       .map(f => f.properties?.[variable])
       .filter(v => v != null && !isNaN(v));
       
@@ -38,7 +53,7 @@ const ChoroplethMap = ({
     return scaleSequential()
       .domain([Math.min(...values), Math.max(...values)])
       .interpolator(interpolateBlues);
-  }, [data, variable]);
+  }, [filteredData, variable]);
 
   // Style function for GeoJSON features
   const getFeatureStyle = useCallback((feature) => {
@@ -61,12 +76,13 @@ const ChoroplethMap = ({
     return `
       <div style="padding: 8px;">
         <strong>${props.name || 'Unknown Region'}</strong><br/>
-        ${variable}: ${formattedValue}
+        ${variable}: ${formattedValue}<br/>
+        Date: ${props.date || 'N/A'}
       </div>
     `;
   }, [variable]);
 
-  // Event handlers
+  // Event handlers for each feature
   const onEachFeature = useCallback((feature, layer) => {
     layer.bindPopup(createPopupContent(feature));
     
@@ -87,7 +103,7 @@ const ChoroplethMap = ({
     });
   }, [createPopupContent, getFeatureStyle]);
 
-  if (!data?.features?.length) {
+  if (!filteredData?.features?.length) {
     return (
       <Alert severity="info">
         No geographic data available for display
@@ -120,7 +136,7 @@ const ChoroplethMap = ({
           />
           
           <GeoJSON
-            data={data}
+            data={filteredData}
             style={getFeatureStyle}
             onEachFeature={onEachFeature}
           />
@@ -136,7 +152,7 @@ const ChoroplethMap = ({
       
       <TimeSlider
         selectedDate={selectedDate}
-        onChange={onViewChange}
+        onChange={(newDate) => onViewChange?.({ center, zoom, selectedDate: newDate })}
       />
     </Paper>
   );

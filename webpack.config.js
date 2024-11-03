@@ -1,3 +1,5 @@
+// webpack.config.js
+
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { DefinePlugin } = require('webpack');
@@ -40,6 +42,10 @@ module.exports = (env, argv) => {
         {
           test: /\.(woff(2)?|eot|ttf|otf)$/,
           type: 'asset/inline',
+        },
+        {
+          test: /\.(geojson|json|csv)$/,
+          type: 'asset/resource',
         }
       ],
     },
@@ -58,11 +64,17 @@ module.exports = (env, argv) => {
               ignore: ['**/index.html', '**/favicon.ico', '**/manifest.json'],
             },
           },
+          {
+            from: path.resolve(__dirname, 'results'),
+            to: path.resolve(__dirname, 'build/results'),
+            noErrorOnMissing: true
+          }
         ],
       }),
       new DefinePlugin({
         'process.env': JSON.stringify({
           PUBLIC_URL: publicPath.slice(0, -1),
+          NODE_ENV: process.env.NODE_ENV || 'development'
         }),
       }),
       new WebpackManifestPlugin({
@@ -76,9 +88,16 @@ module.exports = (env, argv) => {
       },
     },
     devServer: {
-      static: {
-        directory: path.resolve(__dirname, 'public'),
-      },
+      static: [
+        {
+          directory: path.resolve(__dirname, 'public'),
+          publicPath: '/',
+        },
+        {
+          directory: path.resolve(__dirname, 'results'),
+          publicPath: '/results',
+        }
+      ],
       compress: true,
       port: 3000,
       historyApiFallback: true,
@@ -87,6 +106,21 @@ module.exports = (env, argv) => {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
         "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
+      },
+      setupMiddlewares: (middlewares, devServer) => {
+        if (!devServer) {
+          throw new Error('webpack-dev-server is not defined');
+        }
+
+        // Add CORS headers to all responses
+        devServer.app.use((req, res, next) => {
+          res.header('Access-Control-Allow-Origin', '*');
+          res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+          res.header('Access-Control-Allow-Headers', 'X-Requested-With, content-type, Authorization');
+          next();
+        });
+
+        return middlewares;
       }
     },
     devtool: isDevelopment ? 'eval-source-map' : 'source-map',

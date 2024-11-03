@@ -3,9 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const sourceDir = path.join(__dirname, '../results');
-const publicSourceDir = path.join(__dirname, '../public/results');
-const destDir = path.join(__dirname, '../public/data'); // Copy data into 'public/data' for serving
+const sourceDir = path.join(__dirname, '../public/results'); // Use only public/results as source
+const destDir = path.join(__dirname, '../public/data'); // Destination remains public/data
 
 const ensureDirectoryExistence = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
@@ -16,10 +15,13 @@ const ensureDirectoryExistence = (dirPath) => {
 
 const copyFile = (source, destination) => {
   try {
+    if (fs.existsSync(destination)) {
+      console.warn(`[${new Date().toISOString()}] File already exists at destination: ${destination}. Overwriting...`);
+    }
     fs.copyFileSync(source, destination);
-    console.log(`Copied ${source} to ${destination}`);
+    console.log(`[${new Date().toISOString()}] Copied ${source} to ${destination}`);
   } catch (error) {
-    console.error(`Error copying ${source}: ${error.message}`);
+    console.error(`[${new Date().toISOString()}] Error copying ${source}: ${error.message}`);
   }
 };
 
@@ -40,10 +42,8 @@ const copyRecursiveSync = (source, destination) => {
 
 const prepareData = () => {
   try {
-    // Copy all files from 'results' to 'public/data'
-    copyRecursiveSync(sourceDir, destDir);
     // Copy all files from 'public/results' to 'public/data'
-    copyRecursiveSync(publicSourceDir, destDir);
+    copyRecursiveSync(sourceDir, destDir);
 
     const filesToEnsure = [
       'unified_data.geojson',
@@ -68,21 +68,18 @@ const prepareData = () => {
 
     filesToEnsure.forEach((file) => {
       const sourcePath = path.join(sourceDir, file);
-      const publicSourcePath = path.join(publicSourceDir, file);
       const destPath = path.join(destDir, file);
 
       if (fs.existsSync(sourcePath)) {
         copyFile(sourcePath, destPath);
-      } else if (fs.existsSync(publicSourcePath)) {
-        copyFile(publicSourcePath, destPath);
       } else {
-        console.warn(`File not found in either location: ${file}`);
+        console.warn(`[${new Date().toISOString()}] File not found in source directory: ${file}`);
       }
     });
 
-    console.log('Data preparation complete.');
+    console.log(`[${new Date().toISOString()}] Data preparation complete.`);
   } catch (error) {
-    console.error('Data preparation failed:', error.message);
+    console.error(`[${new Date().toISOString()}] Data preparation failed:`, error.message);
     process.exit(1);
   }
 };

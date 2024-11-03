@@ -7,38 +7,24 @@ import { useSelector, useDispatch } from 'react-redux';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
-
-// Import actions and selector
 import { toggleDarkMode } from './slices/themeSlice';
-
-// Import components
 import Header from './components/common/Header';
 import Sidebar from './components/common/Sidebar';
 import Dashboard from './Dashboard';
 import LoadingSpinner from './components/common/LoadingSpinner';
-import ErrorMessage from './components/common/ErrorMessage';
-import ErrorBoundary from './components/common/ErrorBoundary';
+import ErrorDisplay from './components/common/ErrorDisplay';
+import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
 import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
-
-// Import hooks
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useWindowSize } from '@/hooks';;
-import { useData } from '@/hooks';;
-
-// Import themes
-import {
-  lightThemeWithOverrides,
-  darkThemeWithOverrides,
-} from './styles/theme';
-
-// Import context providers
+import { useWindowSize } from '@/hooks';
+import { useData } from '@/hooks';
+import { lightThemeWithOverrides, darkThemeWithOverrides } from './styles/theme';
 import { DiscoveryProvider } from './context/DiscoveryContext';
 import { WorkerProvider } from './context/WorkerContext';
 import { SpatialDataProvider } from './context/SpatialDataContext';
 
-// Constants
 const DRAWER_WIDTH = 240;
 
 const StyledAppBar = styled(AppBar, {
@@ -55,23 +41,18 @@ const StyledAppBar = styled(AppBar, {
   },
 }));
 
-const App = React.memo(function App() {
-  // Redux
+const App = () => {
   const dispatch = useDispatch();
   const isDarkMode = useSelector(state => state.theme?.isDarkMode ?? false);
-  
-  // Theme
   const theme = React.useMemo(
     () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
     [isDarkMode]
   );
   
-  // Hooks
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
   const { data, loading, error } = useData();
 
-  // State Management
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedAnalysis, setSelectedAnalysis] = useState('');
@@ -86,7 +67,6 @@ const App = React.memo(function App() {
     welcome: false,
   });
 
-  // Effects
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
     if (!hasSeenWelcome) {
@@ -98,7 +78,6 @@ const App = React.memo(function App() {
     setSidebarOpen(isSmUp);
   }, [isSmUp]);
 
-  // Handlers
   const handleToggleDarkMode = useCallback(() => {
     dispatch(toggleDarkMode());
   }, [dispatch]);
@@ -118,14 +97,20 @@ const App = React.memo(function App() {
     }
   }, []);
 
-  // Content rendering
   const renderContent = () => {
     if (loading) {
       return <LoadingSpinner />;
     }
 
     if (error) {
-      return <ErrorMessage message={error.message} />;
+      return (
+        <ErrorDisplay 
+          error={error} 
+          title="Application Error"
+          showDetails={process.env.NODE_ENV !== 'production'}
+          onRetry={() => window.location.reload()}
+        />
+      );
     }
 
     return (
@@ -211,16 +196,14 @@ const App = React.memo(function App() {
       <WorkerProvider>
         <SpatialDataProvider>
           <DiscoveryProvider>
-            <ErrorBoundary>
+            <EnhancedErrorBoundary>
               {renderContent()}
-            </ErrorBoundary>
+            </EnhancedErrorBoundary>
           </DiscoveryProvider>
         </SpatialDataProvider>
       </WorkerProvider>
     </ThemeProvider>
   );
-});
-
-App.displayName = 'App';
+};
 
 export default App;
