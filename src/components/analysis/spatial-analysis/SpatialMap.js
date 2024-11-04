@@ -1,29 +1,136 @@
 // src/components/analysis/spatial-analysis/SpatialMap.js
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   MapContainer,
   TileLayer,
   GeoJSON,
-  useMap,
 } from 'react-leaflet';
 import { scaleSequential } from 'd3-scale';
-import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
+import { interpolateBlues } from 'd3-scale-chromatic';
 import L from 'leaflet';
-import { Box, Slider } from '@mui/material';
+import { Box } from '@mui/material';
 import MapLegend from './MapLegend';
 import MapControls from './MapControls';
-import 'leaflet/dist/leaflet.css';
+import { Slider, Typography } from '@mui/material';
 
-const SpatialMap = ({
+const MapContent = ({
   geoData,
   flowData,
   variable,
   selectedMonth,
+  colorScale,
+  spatialWeights,
+  showFlows,
+}) => {
+  const [hoveredRegion, setHoveredRegion] = useState(null);
+
+  const style = useMemo(
+    () => (feature) => {
+      const value = feature.properties?.[variable];
+      const isHighlighted = hoveredRegion === feature.properties.region_id;
+
+      return {
+        fillColor: value != null && colorScale ? colorScale(value) : '#ccc',
+        weight: isHighlighted ? 3 : 1,
+        opacity: 1,
+        color: isHighlighted ? '#666' : 'white',
+        fillOpacity: isHighlighted ? 0.9 : 0.7,
+      };
+    },
+    [colorScale, variable, hoveredRegion]
+  );
+
+  const onEachFeature = useMemo(
+    () => (feature, layer) => {
+      const props = feature.properties || {};
+      const neighbors = spatialWeights?.[props.region_id]?.neighbors || [];
+
+      const popupContent = `
+        <div style="min-width: 200px;">
+          <h4>${props.shapeName || 'Unknown Region'}</h4>
+          <p><strong>${variable.charAt(0).toUpperCase() + variable.slice(1)}:</strong> 
+             ${props[variable] != null ? props[variable].toFixed(2) : 'N/A'}</p>
+          <p><strong>Connected Regions:</strong> ${neighbors.join(', ') || 'None'}</p>
+        </div>
+      `;
+
+      layer.bindPopup(popupContent);
+
+      layer.on({
+        mouseover: () => setHoveredRegion(props.region_id),
+        mouseout: () => setHoveredRegion(null),
+      });
+    },
+    [variable, spatialWeights]
+  );
+
+  const flowLines = useMemo(() => {
+    if (!showFlows || !flowData) return null;
+
+    const currentFlows = flowData.filter(
+      (flow) =>
+        new Date(flow.date).toISOString().slice(0, 10) ===
+        new Date(selectedMonth).toISOString().slice(0, 10)
+    );
+
+    if (!currentFlows.length) return null;
+
+    const maxValue = Math.max(...currentFlows.map((f) => f.flow_weight));
+
+    return currentFlows.map((flow, idx) => {
+      const coordinates = [
+        [flow.source_lat, flow.source_lng],
+        [flow.target_lat, flow.target_lng],
+      ];
+
+      return (
+        <GeoJSON
+          key={`flow-${idx}`}
+          data={{
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: coordinates,
+            },
+            properties: flow,
+          }}
+          style={() => ({
+            color: '#2196f3',
+            weight: Math.max(1, (flow.flow_weight / maxValue) * 5),
+            opacity: 0.6,
+          })}
+        />
+      );
+    });
+  }, [showFlows, flowData, selectedMonth]);
+
+  return (
+    <>
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors"
+      />
+
+      {geoData && (
+        <GeoJSON data={geoData} style={style} onEachFeature={onEachFeature} />
+      )}
+
+      {flowLines}
+      <MapControls />
+    </>
+  );
+};
+
+const SpatialMap = ({
+  geoData,
+  flowData,
+  variable = 'price',
+  selectedMonth,
   onMonthChange,
   availableMonths,
   spatialWeights,
-  showFlows,
+  showFlows = false,
 }) => {
   const colorScale = useMemo(() => {
     if (!geoData?.features) return null;
@@ -36,34 +143,14 @@ const SpatialMap = ({
 
     return scaleSequential()
       .domain([Math.min(...values), Math.max(...values)])
-      .interpolator(
-        variable === 'residual' ? interpolateReds : interpolateBlues
-      );
+      .interpolator(interpolateBlues);
   }, [geoData, variable]);
 
-  const style = (feature) => {
-    const value = feature.properties?.[variable];
-
-    return {
-      fillColor: value != null && colorScale ? colorScale(value) : '#ccc',
-      weight: 1,
-      opacity: 1,
-      color: 'white',
-      fillOpacity: 0.7,
-    };
-  };
-
-  const onEachFeature = (feature, layer) => {
-    const props = feature.properties || {};
-    const popupContent = `
-      <div style="min-width: 200px;">
-        <h4>${props.shapeName || 'Unknown Region'}</h4>
-        <p><strong>${variable.charAt(0).toUpperCase() + variable.slice(1)}:</strong> ${
-      props[variable] != null ? props[variable].toFixed(2) : 'N/A'
-    }</p>
-      </div>
-    `;
-    layer.bindPopup(popupContent);
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -79,28 +166,22 @@ const SpatialMap = ({
           }
         }}
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
+        <MapContent
+          geoData={geoData}
+          flowData={flowData}
+          variable={variable}
+          selectedMonth={selectedMonth}
+          colorScale={colorScale}
+          spatialWeights={spatialWeights}
+          showFlows={showFlows}
         />
-
-        {geoData && (
-          <GeoJSON
-            data={geoData}
-            style={style}
-            onEachFeature={onEachFeature}
-          />
-        )}
-
-        <MapControls />
       </MapContainer>
 
       {colorScale && (
         <MapLegend
           colorScale={colorScale}
-          variable={
-            variable === 'price' ? 'Price (YER)' : 'Residuals'
-          }
+          variable={variable}
+          title={variable === 'price' ? 'Price (YER)' : 'Value'}
           position="bottomright"
         />
       )}
@@ -120,6 +201,9 @@ const SpatialMap = ({
             zIndex: 1000,
           }}
         >
+          <Typography variant="body2" gutterBottom>
+            Time Period
+          </Typography>
           <Slider
             value={availableMonths.indexOf(selectedMonth)}
             min={0}
@@ -129,21 +213,10 @@ const SpatialMap = ({
               onMonthChange(availableMonths[newValue])
             }
             valueLabelDisplay="auto"
-            valueLabelFormat={(value) =>
-              new Date(availableMonths[value]).toLocaleDateString(
-                'en-US',
-                {
-                  month: 'long',
-                  year: 'numeric',
-                }
-              )
-            }
+            valueLabelFormat={(value) => formatDate(availableMonths[value])}
             marks={availableMonths.map((date, index) => ({
               value: index,
-              label: new Date(date).toLocaleDateString('en-US', {
-                month: 'short',
-                year: '2-digit',
-              }),
+              label: formatDate(date),
             }))}
           />
         </Box>

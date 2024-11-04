@@ -26,8 +26,8 @@ import {
   Warning,
 } from '@mui/icons-material';
 
-const SpatialDiagnostics = ({ diagnostics }) => {
-  if (!diagnostics) {
+const SpatialDiagnostics = ({ data }) => {
+  if (!data) {
     return (
       <Alert severity="info">
         No diagnostics available
@@ -44,7 +44,7 @@ const SpatialDiagnostics = ({ diagnostics }) => {
     coefficients,
     p_values,
     vif,
-  } = diagnostics;
+  } = data;
 
   const explanations = {
     moran_i: "Moran's I measures spatial autocorrelation. Values range from -1 (dispersion) to 1 (clustering), with 0 indicating random distribution.",
@@ -226,7 +226,7 @@ const SpatialDiagnostics = ({ diagnostics }) => {
                       <TableCell>{name}</TableCell>
                       <TableCell>{value.toFixed(4)}</TableCell>
                       <TableCell>
-                        {p_values?.[name] ? (
+                        {p_values?.[name] !== undefined ? (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {p_values[name].toFixed(4)}
                             {p_values[name] < 0.05 && <CheckCircle color="success" fontSize="small" />}
@@ -248,7 +248,7 @@ const SpatialDiagnostics = ({ diagnostics }) => {
         <Grid item xs={12}>
           <Alert severity="info" sx={{ mt: 2 }}>
             Analysis based on {observations || 'unknown'} observations.
-            {pValue < 0.05 && moranIValue && 
+            {pValue < 0.05 && moranIValue !== undefined && 
               ` Significant spatial autocorrelation detected (${
                 moranIValue > 0 ? 'clustering' : 'dispersion'
               } pattern).`
@@ -261,7 +261,7 @@ const SpatialDiagnostics = ({ diagnostics }) => {
 };
 
 SpatialDiagnostics.propTypes = {
-  diagnostics: PropTypes.shape({
+  data: PropTypes.shape({
     moran_i: PropTypes.shape({
       I: PropTypes.number,
       value: PropTypes.number,

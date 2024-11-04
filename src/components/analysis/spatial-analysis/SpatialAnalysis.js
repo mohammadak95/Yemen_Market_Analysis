@@ -73,12 +73,13 @@ const SpatialAnalysis = ({ selectedCommodity }) => {
       features: geoData.features.map((feature) => {
         const regionId = feature.properties.region_id;
         const residual = residualsByRegion[regionId] || null;
+        const price = residual != null ? residual + analysisData.intercept : null;
         return {
           ...feature,
           properties: {
             ...feature.properties,
             residual,
-            price: residual != null ? residual + analysisData.intercept : null,
+            price,
           },
         };
       }),

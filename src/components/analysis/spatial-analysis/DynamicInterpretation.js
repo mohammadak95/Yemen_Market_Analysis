@@ -153,7 +153,7 @@ const DynamicInterpretation = ({ data, spatialWeights, selectedMonth }) => {
                   month: 'long',
                   year: 'numeric',
                 })}
-                . Based on {observations} observations.
+                . Based on {observations || 'unknown'} observations.
               </Typography>
             </Alert>
           </Grid>
