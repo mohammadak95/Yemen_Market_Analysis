@@ -1,295 +1,236 @@
 // src/utils/backgroundMonitor.js
 
 class BackgroundMonitor {
-    constructor() {
-      this.logs = [];
-      this.metrics = new Map();
-      this.startTime = Date.now();
-      this.isEnabled = process.env.NODE_ENV === 'development';
-      this.setupMonitoring();
-    }
-  
-    setupMonitoring() {
-      if (!this.isEnabled) return;
-  
-      // Monitor network requests
-      this.interceptNetworkRequests();
-  
-      // Monitor Redux actions and state
-      this.setupReduxMonitoring();
-  
-      // Monitor React renders
-      this.setupReactMonitoring();
-  
-      // Monitor console output
-      this.interceptConsole();
-  
-      // Setup performance monitoring
-      this.setupPerformanceMonitoring();
-  
-      // Monitor memory usage
-      this.startMemoryMonitoring();
-    }
-  
-    interceptNetworkRequests() {
-      const originalFetch = window.fetch;
-      window.fetch = async (...args) => {
-        const startTime = performance.now();
-        const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+  constructor() {
+    this.logs = [];
+    this.metrics = new Map();
+    this.startTime = Date.now();
+    this.isEnabled = process.env.NODE_ENV === 'development';
+    this.maxLogsPerCategory = 100; // Limit logs per category
+    this.spatialOperationsMetrics = new Map();
+    this.isMonitoring = false;
+  }
+
+  init() {
+    if (!this.isEnabled || this.isMonitoring) return;
+    this.isMonitoring = true;
+    
+    // Use WeakMap for memory-efficient storage of component metrics
+    this.componentMetrics = new WeakMap();
+    
+    this.setupMonitoring();
+  }
+
+  setupMonitoring() {
+    if (typeof window === 'undefined') return;
+
+    // Monitor only essential network requests
+    this.setupNetworkMonitoring();
+
+    // Efficient Redux monitoring
+    this.setupReduxMonitoring();
+
+    // Performance-focused monitoring
+    this.setupPerformanceMonitoring();
+
+    // Spatial operations monitoring
+    this.setupSpatialMonitoring();
+  }
+
+  setupNetworkMonitoring() {
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+      
+      // Only monitor spatial data related requests
+      if (!this.isSpatialRequest(url)) {
+        return originalFetch(...args);
+      }
+
+      const startTime = performance.now();
+      try {
+        const response = await originalFetch(...args);
+        const duration = performance.now() - startTime;
         
-        try {
-          const response = await originalFetch(...args);
-          const duration = performance.now() - startTime;
-          
-          this.logMetric('network', {
-            url,
-            duration,
-            status: response.status,
-            timestamp: Date.now()
-          });
-          
-          return response;
-        } catch (error) {
-          this.logError('network', {
-            url,
-            error: error.message,
-            timestamp: Date.now()
-          });
-          throw error;
-        }
-      };
-    }
-  
-    setupReduxMonitoring() {
-      if (typeof window !== 'undefined' && window.__REDUX_DEVTOOLS_EXTENSION__) {
-        const devTools = window.__REDUX_DEVTOOLS_EXTENSION__;
-        devTools.subscribe((message) => {
-          if (message.type === 'DISPATCH') {
-            this.logMetric('redux', {
-              action: message.payload.type,
-              timestamp: Date.now(),
-              state: message.state
-            });
-          }
+        this.logMetric('spatial-network', {
+          url,
+          duration,
+          status: response.status,
+          timestamp: Date.now()
+        });
+        
+        return response;
+      } catch (error) {
+        this.logError('spatial-network', {
+          url,
+          error: error.message
+        });
+        throw error;
+      }
+    };
+  }
+
+  setupReduxMonitoring() {
+    if (!window.__REDUX_DEVTOOLS_EXTENSION__) return;
+
+    const spatialActions = [
+      'spatial/fetchSpatialData',
+      'spatial/updateLoadingProgress',
+      'spatial/resetSpatialState'
+    ];
+
+    window.__REDUX_DEVTOOLS_EXTENSION__.subscribe((message) => {
+      if (message.type === 'DISPATCH' && 
+          spatialActions.some(action => message.payload.type?.includes(action))) {
+        this.logMetric('spatial-redux', {
+          action: message.payload.type,
+          timestamp: Date.now()
         });
       }
-    }
-  
-    setupReactMonitoring() {
-      if (typeof window !== 'undefined') {
-        // Monitor React render timing using Performance Observer
-        const observer = new PerformanceObserver((list) => {
-          list.getEntries().forEach((entry) => {
-            if (entry.entryType === 'measure' && entry.name.startsWith('⚛')) {
-              this.logMetric('react', {
-                component: entry.name,
-                duration: entry.duration,
-                timestamp: Date.now()
-              });
-            }
-          });
-        });
-  
-        observer.observe({ entryTypes: ['measure'] });
-      }
-    }
-  
-    interceptConsole() {
-      const originalConsole = {
-        log: console.log,
-        warn: console.warn,
-        error: console.error,
-        debug: console.debug
-      };
-  
-      Object.keys(originalConsole).forEach(method => {
-        console[method] = (...args) => {
-          this.logMetric('console', {
-            level: method,
-            message: args,
-            timestamp: Date.now()
-          });
-          originalConsole[method].apply(console, args);
-        };
-      });
-    }
-  
-    setupPerformanceMonitoring() {
-      // Monitor long tasks
-      const longTaskObserver = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry) => {
-          if (entry.duration > 50) { // Tasks longer than 50ms
-            this.logMetric('performance', {
-              type: 'long-task',
-              duration: entry.duration,
-              timestamp: Date.now()
-            });
-          }
-        });
-      });
-  
-      longTaskObserver.observe({ entryTypes: ['longtask'] });
-  
-      // Monitor resource loading
-      const resourceObserver = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry) => {
-          this.logMetric('resource', {
-            name: entry.name,
-            type: entry.initiatorType,
+    });
+  }
+
+  setupPerformanceMonitoring() {
+    // Monitor only long-running spatial operations
+    const observer = new PerformanceObserver((list) => {
+      list.getEntries()
+        .filter(entry => entry.duration > 100 && this.isSpatialOperation(entry.name))
+        .forEach(entry => {
+          this.logMetric('spatial-performance', {
+            operation: entry.name,
             duration: entry.duration,
             timestamp: Date.now()
           });
         });
-      });
-  
-      resourceObserver.observe({ entryTypes: ['resource'] });
-    }
-  
-    startMemoryMonitoring() {
-      if (performance.memory) {
-        setInterval(() => {
-          this.logMetric('memory', {
-            usedJSHeapSize: performance.memory.usedJSHeapSize,
-            totalJSHeapSize: performance.memory.totalJSHeapSize,
-            timestamp: Date.now()
-          });
-        }, 10000); // Every 10 seconds
-      }
-    }
-  
-    logMetric(category, data) {
-      if (!this.isEnabled) return;
-  
-      const metric = {
-        category,
-        data,
-        timestamp: Date.now(),
-        timeSinceStart: Date.now() - this.startTime
-      };
-  
-      this.logs.push(metric);
-      this.pruneOldLogs();
-  
-      // Store aggregated metrics
-      const key = `${category}-${Math.floor(Date.now() / 60000)}`; // Group by minute
-      const existingMetrics = this.metrics.get(key) || [];
-      existingMetrics.push(data);
-      this.metrics.set(key, existingMetrics);
-    }
-  
-    logError(category, error) {
-      this.logMetric('error', {
-        category,
-        error,
-        timestamp: Date.now()
-      });
-    }
-  
-    pruneOldLogs() {
-      // Keep last 1000 logs
-      if (this.logs.length > 1000) {
-        this.logs = this.logs.slice(-1000);
-      }
-    }
-  
-    getMetricsSummary() {
-      const summary = {
-        startTime: this.startTime,
-        endTime: Date.now(),
-        duration: Date.now() - this.startTime,
-        totalLogs: this.logs.length,
-        categories: {},
-        performance: {
-          networkRequests: {
-            total: 0,
-            averageDuration: 0,
-            errors: 0
-          },
-          reactRenders: {
-            total: 0,
-            averageDuration: 0
-          },
-          memory: {
-            average: 0,
-            peak: 0
-          }
-        }
-      };
-  
-      // Process logs
-      this.logs.forEach(log => {
-        if (!summary.categories[log.category]) {
-          summary.categories[log.category] = 0;
-        }
-        summary.categories[log.category]++;
-  
-        // Process specific metrics
-        switch (log.category) {
-          case 'network':
-            summary.performance.networkRequests.total++;
-            if (log.data.duration) {
-              summary.performance.networkRequests.averageDuration += log.data.duration;
-            }
-            break;
-          case 'react':
-            summary.performance.reactRenders.total++;
-            if (log.data.duration) {
-              summary.performance.reactRenders.averageDuration += log.data.duration;
-            }
-            break;
-          case 'memory':
-            if (log.data.usedJSHeapSize) {
-              summary.performance.memory.average += log.data.usedJSHeapSize;
-              summary.performance.memory.peak = Math.max(
-                summary.performance.memory.peak,
-                log.data.usedJSHeapSize
-              );
-            }
-            break;
-        }
-      });
-  
-      // Calculate averages
-      if (summary.performance.networkRequests.total > 0) {
-        summary.performance.networkRequests.averageDuration /= 
-          summary.performance.networkRequests.total;
-      }
-      if (summary.performance.reactRenders.total > 0) {
-        summary.performance.reactRenders.averageDuration /= 
-          summary.performance.reactRenders.total;
-      }
-      if (this.logs.length > 0) {
-        summary.performance.memory.average /= this.logs.length;
-      }
-  
-      return summary;
-    }
-  
-    exportLogs() {
-      return {
-        summary: this.getMetricsSummary(),
-        logs: this.logs,
-        metrics: Array.from(this.metrics.entries())
-      };
-    }
-  
-    downloadLogs() {
-      const data = this.exportLogs();
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json'
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `debug-logs-${new Date().toISOString()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
+    });
+
+    observer.observe({ entryTypes: ['measure', 'longtask'] });
   }
-  
-  export const backgroundMonitor = new BackgroundMonitor();
-  
-  // Add a global access point for console usage
-  if (process.env.NODE_ENV === 'development') {
-    window.__debugMonitor = backgroundMonitor;
+
+  setupSpatialMonitoring() {
+    // Track spatial operation statistics
+    this.spatialOperationsMetrics = {
+      transformations: 0,
+      validations: 0,
+      errors: 0,
+      startTime: Date.now()
+    };
   }
+
+  logMetric(category, data) {
+    if (!this.isEnabled) return;
+
+    const metric = {
+      category,
+      data,
+      timestamp: Date.now()
+    };
+
+    // Keep category-specific log limits
+    const categoryLogs = this.logs.filter(log => log.category === category);
+    if (categoryLogs.length >= this.maxLogsPerCategory) {
+      const oldestLogIndex = this.logs.findIndex(log => log.category === category);
+      if (oldestLogIndex !== -1) {
+        this.logs.splice(oldestLogIndex, 1);
+      }
+    }
+
+    this.logs.push(metric);
+    this.updateMetrics(category, data);
+  }
+
+  updateMetrics(category, data) {
+    const key = `${category}-${Math.floor(Date.now() / 60000)}`;
+    const metrics = this.metrics.get(key) || [];
+    metrics.push(data);
+    
+    // Keep only recent metrics
+    if (metrics.length > this.maxLogsPerCategory) {
+      metrics.shift();
+    }
+    
+    this.metrics.set(key, metrics);
+  }
+
+  logSpatialOperation(operation, duration) {
+    if (!this.isEnabled) return;
+
+    this.spatialOperationsMetrics[operation] = 
+      (this.spatialOperationsMetrics[operation] || 0) + 1;
+
+    this.logMetric('spatial-operation', {
+      operation,
+      duration,
+      timestamp: Date.now()
+    });
+  }
+
+  isSpatialRequest(url) {
+    const spatialPaths = [
+      'geojson',
+      'spatial_weights',
+      'flow_maps',
+      'spatial_analysis'
+    ];
+    return spatialPaths.some(path => url.includes(path));
+  }
+
+  isSpatialOperation(name) {
+    const spatialOperations = [
+      'transform',
+      'merge',
+      'process',
+      'validate'
+    ];
+    return spatialOperations.some(op => name.toLowerCase().includes(op));
+  }
+
+  getSpatialMetrics() {
+    return {
+      operations: this.spatialOperationsMetrics,
+      performance: {
+        averageTransformTime: this.calculateAverageMetric('spatial-operation', 'transform'),
+        averageProcessingTime: this.calculateAverageMetric('spatial-operation', 'process'),
+        totalOperations: Object.values(this.spatialOperationsMetrics).reduce((a, b) => a + b, 0)
+      },
+      errors: this.logs.filter(log => log.category === 'error').length
+    };
+  }
+
+  calculateAverageMetric(category, operation) {
+    const metrics = Array.from(this.metrics.values())
+      .flat()
+      .filter(m => m.operation === operation);
+    
+    if (!metrics.length) return 0;
+    
+    return metrics.reduce((sum, m) => sum + m.duration, 0) / metrics.length;
+  }
+
+  clearMetrics() {
+    this.logs = [];
+    this.metrics.clear();
+    this.spatialOperationsMetrics = {
+      transformations: 0,
+      validations: 0,
+      errors: 0,
+      startTime: Date.now()
+    };
+  }
+
+  exportSpatialMetrics() {
+    return {
+      metrics: this.getSpatialMetrics(),
+      logs: this.logs.filter(log => log.category.startsWith('spatial')),
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+export const backgroundMonitor = new BackgroundMonitor();
+
+// Development only global access
+if (process.env.NODE_ENV === 'development') {
+  window.__spatialMonitor = backgroundMonitor;
+  backgroundMonitor.init();
+}
