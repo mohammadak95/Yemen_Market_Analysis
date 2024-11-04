@@ -1,46 +1,51 @@
 // src/components/analysis/spatial-analysis/MapLegend.js
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Paper, Box, Typography } from '@mui/material';
+import {
+  Paper,
+  Box,
+  Typography,
+  Tooltip,
+  IconButton,
+} from '@mui/material';
+import { Info, ExpandMore, ExpandLess } from '@mui/icons-material';
 
-const MapLegend = ({ colorScale, variable, position = 'bottomright' }) => {
+const MapLegend = ({
+  colorScale,
+  variable,
+  position = 'bottomright',
+  format = (value) => value.toFixed(1),
+  steps = 5,
+  expanded = true,
+  unit = '',
+  description = '',
+}) => {
+  const [isExpanded, setIsExpanded] = useState(expanded);
+
   if (!colorScale) return null;
 
-  // Generate legend steps
   const domain = colorScale.domain();
-  const steps = 5; // Number of color boxes in the legend
-  const values = Array.from({ length: steps }, (_, i) =>
-    domain[0] + ((domain[1] - domain[0]) * i) / (steps - 1)
-  );
+  const range = domain[1] - domain[0];
+  const step = range / (steps - 1);
+  const values = Array.from({ length: steps }, (_, i) => domain[0] + step * i);
 
-  // Positioning styles based on the 'position' prop
   const getPositionStyle = () => {
     const styles = {
       position: 'absolute',
       zIndex: 1000,
     };
 
-    switch (position) {
-      case 'topleft':
-        styles.top = 10;
-        styles.left = 10;
-        break;
-      case 'topright':
-        styles.top = 10;
-        styles.right = 10;
-        break;
-      case 'bottomleft':
-        styles.bottom = 10;
-        styles.left = 10;
-        break;
-      case 'bottomright':
-        styles.bottom = 10;
-        styles.right = 10;
-        break;
-      default:
-        styles.bottom = 10;
-        styles.right = 10;
+    if (position.includes('top')) {
+      styles.top = 10;
+    } else {
+      styles.bottom = 10;
+    }
+
+    if (position.includes('left')) {
+      styles.left = 10;
+    } else {
+      styles.right = 10;
     }
 
     return styles;
@@ -50,35 +55,88 @@ const MapLegend = ({ colorScale, variable, position = 'bottomright' }) => {
     <Paper
       elevation={3}
       sx={{
-        p: 1,
-        minWidth: 150,
+        p: 1.5,
         bgcolor: 'background.paper',
         ...getPositionStyle(),
+        borderRadius: 1,
       }}
     >
-      <Typography variant="caption" gutterBottom>
-        {variable}
-      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 1,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Typography variant="caption" fontWeight="medium">
+            {variable}
+          </Typography>
+          {description && (
+            <Tooltip title={description} arrow>
+              <Info fontSize="small" />
+            </Tooltip>
+          )}
+        </Box>
+        <IconButton
+          size="small"
+          onClick={() => setIsExpanded(!isExpanded)}
+          sx={{ p: 0.5 }}
+        >
+          {isExpanded ? <ExpandLess /> : <ExpandMore />}
+        </IconButton>
+      </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-        {values.map((value, i) => (
+      {isExpanded && (
+        <>
+          <Box sx={{ display: 'flex', height: 20, mb: 0.5 }}>
+            {values.map((value, i) => (
+              <Tooltip
+                key={i}
+                title={`${format(value)}${unit}`}
+                arrow
+                placement="top"
+              >
+                <Box
+                  sx={{
+                    width: 24,
+                    height: '100%',
+                    bgcolor: colorScale(value),
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    '&:first-of-type': {
+                      borderTopLeftRadius: 2,
+                      borderBottomLeftRadius: 2,
+                    },
+                    '&:last-child': {
+                      borderTopRightRadius: 2,
+                      borderBottomRightRadius: 2,
+                    },
+                  }}
+                />
+              </Tooltip>
+            ))}
+          </Box>
           <Box
-            key={i}
             sx={{
-              width: 20,
-              height: 20,
-              bgcolor: colorScale(value),
-              border: '1px solid',
-              borderColor: 'divider',
+              display: 'flex',
+              justifyContent: 'space-between',
+              mt: 0.5,
+              px: 0.5,
             }}
-          />
-        ))}
-      </Box>
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-        <Typography variant="caption">{domain[0].toFixed(1)}</Typography>
-        <Typography variant="caption">{domain[1].toFixed(1)}</Typography>
-      </Box>
+          >
+            <Typography variant="caption">
+              {format(domain[0])}
+              {unit}
+            </Typography>
+            <Typography variant="caption">
+              {format(domain[1])}
+              {unit}
+            </Typography>
+          </Box>
+        </>
+      )}
     </Paper>
   );
 };
@@ -86,7 +144,17 @@ const MapLegend = ({ colorScale, variable, position = 'bottomright' }) => {
 MapLegend.propTypes = {
   colorScale: PropTypes.func.isRequired,
   variable: PropTypes.string.isRequired,
-  position: PropTypes.oneOf(['topleft', 'topright', 'bottomleft', 'bottomright']),
+  position: PropTypes.oneOf([
+    'topleft',
+    'topright',
+    'bottomleft',
+    'bottomright',
+  ]),
+  format: PropTypes.func,
+  steps: PropTypes.number,
+  expanded: PropTypes.bool,
+  unit: PropTypes.string,
+  description: PropTypes.string,
 };
 
 export default MapLegend;

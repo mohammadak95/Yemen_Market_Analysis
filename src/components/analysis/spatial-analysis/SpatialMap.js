@@ -1,72 +1,155 @@
 // src/components/analysis/spatial-analysis/SpatialMap.js
 
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
-import { Paper, Box } from '@mui/material';
-import 'leaflet/dist/leaflet.css';
+import {
+  MapContainer,
+  TileLayer,
+  GeoJSON,
+  useMap,
+} from 'react-leaflet';
+import { scaleSequential } from 'd3-scale';
+import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
+import L from 'leaflet';
+import { Box, Slider } from '@mui/material';
 import MapLegend from './MapLegend';
 import MapControls from './MapControls';
-import { scaleSequential } from 'd3-scale';
-import { interpolateOrRd } from 'd3-scale-chromatic';
+import 'leaflet/dist/leaflet.css';
 
-const SpatialMap = ({ data, viewConfig, onViewChange, windowWidth }) => {
-  const variable = 'price'; // You can make this dynamic based on user selection
-
-  // Create a color scale for the variable
+const SpatialMap = ({
+  geoData,
+  flowData,
+  variable,
+  selectedMonth,
+  onMonthChange,
+  availableMonths,
+  spatialWeights,
+  showFlows,
+}) => {
   const colorScale = useMemo(() => {
-    const values = data.features.map((feature) => feature.properties[variable]).filter(Boolean);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    return scaleSequential(interpolateOrRd).domain([min, max]);
-  }, [data, variable]);
+    if (!geoData?.features) return null;
+
+    const values = geoData.features
+      .map((f) => f.properties[variable])
+      .filter((v) => v != null && !isNaN(v));
+
+    if (values.length === 0) return null;
+
+    return scaleSequential()
+      .domain([Math.min(...values), Math.max(...values)])
+      .interpolator(
+        variable === 'residual' ? interpolateReds : interpolateBlues
+      );
+  }, [geoData, variable]);
 
   const style = (feature) => {
-    const value = feature.properties[variable];
+    const value = feature.properties?.[variable];
+
     return {
-      fillColor: value ? colorScale(value) : '#ccc',
+      fillColor: value != null && colorScale ? colorScale(value) : '#ccc',
       weight: 1,
+      opacity: 1,
       color: 'white',
       fillOpacity: 0.7,
     };
   };
 
   const onEachFeature = (feature, layer) => {
-    const { properties } = feature;
-    layer.bindPopup(
-      `<strong>Region:</strong> ${properties.shapeName || 'Unknown'}<br/>
-       <strong>${variable}:</strong> ${properties[variable] || 'N/A'}`
-    );
+    const props = feature.properties || {};
+    const popupContent = `
+      <div style="min-width: 200px;">
+        <h4>${props.shapeName || 'Unknown Region'}</h4>
+        <p><strong>${variable.charAt(0).toUpperCase() + variable.slice(1)}:</strong> ${
+      props[variable] != null ? props[variable].toFixed(2) : 'N/A'
+    }</p>
+      </div>
+    `;
+    layer.bindPopup(popupContent);
   };
 
   return (
-    <Box sx={{ position: 'relative', height: '500px', width: '100%' }}>
+    <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
       <MapContainer
-        center={viewConfig.center}
-        zoom={viewConfig.zoom}
+        center={[15.552727, 48.516388]}
+        zoom={6}
         style={{ height: '100%', width: '100%' }}
-        whenCreated={onViewChange}
+        whenCreated={(map) => {
+          if (geoData?.features?.length > 0) {
+            const bounds = L.geoJSON(geoData).getBounds();
+            map.fitBounds(bounds, { padding: [20, 20] });
+          }
+        }}
       >
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
         />
-        {data && <GeoJSON data={data} style={style} onEachFeature={onEachFeature} />}
-        <MapControls position="topright" />
+
+        {geoData && (
+          <GeoJSON
+            data={geoData}
+            style={style}
+            onEachFeature={onEachFeature}
+          />
+        )}
+
+        <MapControls />
       </MapContainer>
-      <MapLegend colorScale={colorScale} variable={variable} position="bottomright" />
+
+      {colorScale && (
+        <MapLegend
+          colorScale={colorScale}
+          variable={
+            variable === 'price' ? 'Price (YER)' : 'Residuals'
+          }
+          position="bottomright"
+        />
+      )}
+
+      {availableMonths?.length > 0 && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '80%',
+            bgcolor: 'background.paper',
+            p: 2,
+            borderRadius: 1,
+            boxShadow: 2,
+            zIndex: 1000,
+          }}
+        >
+          <Slider
+            value={availableMonths.indexOf(selectedMonth)}
+            min={0}
+            max={availableMonths.length - 1}
+            step={1}
+            onChange={(_, newValue) =>
+              onMonthChange(availableMonths[newValue])
+            }
+            valueLabelDisplay="auto"
+            valueLabelFormat={(value) =>
+              new Date(availableMonths[value]).toLocaleDateString(
+                'en-US',
+                {
+                  month: 'long',
+                  year: 'numeric',
+                }
+              )
+            }
+            marks={availableMonths.map((date, index) => ({
+              value: index,
+              label: new Date(date).toLocaleDateString('en-US', {
+                month: 'short',
+                year: '2-digit',
+              }),
+            }))}
+          />
+        </Box>
+      )}
     </Box>
   );
-};
-
-SpatialMap.propTypes = {
-  data: PropTypes.object.isRequired,
-  viewConfig: PropTypes.shape({
-    center: PropTypes.arrayOf(PropTypes.number).isRequired,
-    zoom: PropTypes.number.isRequired,
-  }).isRequired,
-  onViewChange: PropTypes.func,
-  windowWidth: PropTypes.number.isRequired,
 };
 
 export default SpatialMap;

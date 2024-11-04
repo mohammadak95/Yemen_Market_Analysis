@@ -1,13 +1,28 @@
 // src/components/analysis/spatial-analysis/MapControls.js
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Paper, IconButton, Tooltip } from '@mui/material';
-import { ZoomIn, ZoomOut, Home } from 'lucide-react';
+import { Paper, IconButton, Tooltip, Box } from '@mui/material';
+import {
+  ZoomIn,
+  ZoomOut,
+  Home,
+  Maximize,
+  Minimize,
+  Layers,
+} from '@mui/icons-material';
 import { useMap } from 'react-leaflet';
 
-const MapControls = ({ position = 'topright' }) => {
+const MapControls = ({
+  position = 'topright',
+  initialZoom = 6,
+  availableLayers = [],
+  onLayerToggle,
+}) => {
   const map = useMap();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showLayerControls, setShowLayerControls] = useState(false);
+  const containerRef = useRef(null);
 
   const handleZoomIn = () => {
     map.zoomIn();
@@ -18,69 +33,149 @@ const MapControls = ({ position = 'topright' }) => {
   };
 
   const handleReset = () => {
-    map.setView(map.options.center, map.options.zoom);
+    map.setView(map.options.center, initialZoom);
   };
 
-  // Positioning styles based on the 'position' prop
-  const getPositionStyle = () => {
-    const styles = {
-      position: 'absolute',
-      zIndex: 1000,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 1,
+  const handleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
     };
 
-    switch (position) {
-      case 'topleft':
-        styles.top = 10;
-        styles.left = 10;
-        break;
-      case 'topright':
-        styles.top = 10;
-        styles.right = 10;
-        break;
-      case 'bottomleft':
-        styles.bottom = 10;
-        styles.left = 10;
-        break;
-      case 'bottomright':
-        styles.bottom = 10;
-        styles.right = 10;
-        break;
-      default:
-        styles.top = 10;
-        styles.right = 10;
-    }
-
-    return styles;
-  };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener(
+        'fullscreenchange',
+        handleFullscreenChange
+      );
+    };
+  }, []);
 
   return (
-    <Paper elevation={3} sx={{ p: 1, ...getPositionStyle() }}>
-      <Tooltip title="Zoom In" placement="left">
-        <IconButton onClick={handleZoomIn} size="small">
-          <ZoomIn size={20} />
-        </IconButton>
-      </Tooltip>
+    <Box
+      ref={containerRef}
+      sx={{
+        position: 'absolute',
+        zIndex: 1000,
+        top: position.includes('top') ? 10 : 'unset',
+        bottom: position.includes('bottom') ? 10 : 'unset',
+        left: position.includes('left') ? 10 : 'unset',
+        right: position.includes('right') ? 10 : 'unset',
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          p: 0.5,
+          borderRadius: 1,
+          backgroundColor: 'background.paper',
+        }}
+      >
+        <Tooltip title="Zoom In">
+          <IconButton onClick={handleZoomIn} size="small">
+            <ZoomIn />
+          </IconButton>
+        </Tooltip>
 
-      <Tooltip title="Zoom Out" placement="left">
-        <IconButton onClick={handleZoomOut} size="small">
-          <ZoomOut size={20} />
-        </IconButton>
-      </Tooltip>
+        <Tooltip title="Zoom Out">
+          <IconButton onClick={handleZoomOut} size="small">
+            <ZoomOut />
+          </IconButton>
+        </Tooltip>
 
-      <Tooltip title="Reset View" placement="left">
-        <IconButton onClick={handleReset} size="small">
-          <Home size={20} />
-        </IconButton>
-      </Tooltip>
-    </Paper>
+        <Tooltip title="Reset View">
+          <IconButton onClick={handleReset} size="small">
+            <Home />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip
+          title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+        >
+          <IconButton onClick={handleFullscreen} size="small">
+            {isFullscreen ? <Minimize /> : <Maximize />}
+          </IconButton>
+        </Tooltip>
+
+        {availableLayers.length > 0 && (
+          <>
+            <Tooltip title="Toggle Layers">
+              <IconButton
+                onClick={() => setShowLayerControls(!showLayerControls)}
+                size="small"
+              >
+                <Layers />
+              </IconButton>
+            </Tooltip>
+            {showLayerControls && (
+              <Paper
+                elevation={3}
+                sx={{
+                  mt: 1,
+                  p: 1,
+                  minWidth: 150,
+                  backgroundColor: 'background.paper',
+                }}
+              >
+                {availableLayers.map((layer) => (
+                  <Box
+                    key={layer.id}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      py: 0.5,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      {layer.icon}
+                      {layer.name}
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => onLayerToggle(layer.id)}
+                    >
+                      {layer.active ? <Minimize /> : <Maximize />}
+                    </IconButton>
+                  </Box>
+                ))}
+              </Paper>
+            )}
+          </>
+        )}
+      </Paper>
+    </Box>
   );
 };
 
 MapControls.propTypes = {
-  position: PropTypes.oneOf(['topleft', 'topright', 'bottomleft', 'bottomright']),
+  position: PropTypes.oneOf([
+    'topleft',
+    'topright',
+    'bottomleft',
+    'bottomright',
+  ]),
+  initialZoom: PropTypes.number,
+  availableLayers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      icon: PropTypes.node,
+      active: PropTypes.bool,
+    })
+  ),
+  onLayerToggle: PropTypes.func,
 };
 
 export default MapControls;
