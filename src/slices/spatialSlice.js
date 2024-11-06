@@ -1,193 +1,15 @@
-// src/slices/spatialSlice.js
+//src/slices/spatialSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { isValid } from 'date-fns';
-import { transformCoordinates } from '../utils/coordinateTransforms';
+import Papa from 'papaparse';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
-import { dataLoadingMonitor, monitoredFetch, monitoredProcess } from '../utils/dataMonitoring';
-
-/**
- * Constructs the data path based on the environment.
- * @param {string} fileName - Name of the data file.
- * @returns {string} - Full path to the data file.
- */
-const getDataPath = (fileName) => {
-  const BASE_PATH = process.env.NODE_ENV === 'development' ? '' : process.env.PUBLIC_URL || '';
-  return `${BASE_PATH}/results/${fileName.replace(/^\/+/, '')}`;
-};
-
-/**
- * Processes GeoJSON features based on the selected commodity.
- * @param {Array} features - Array of GeoJSON features.
- * @param {string} selectedCommodity - The commodity to filter by.
- * @returns {Array} - Processed GeoJSON features.
- */
-const processFeatures = (features, selectedCommodity) => {
-  if (!features || !Array.isArray(features)) {
-    throw new Error('Invalid or missing features data');
-  }
-
-  return features
-    .filter(feature => {
-      const commodity = feature.properties?.commodity?.toLowerCase();
-      return commodity === selectedCommodity?.toLowerCase();
-    })
-    .map(feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        date: feature.properties.date ? 
-          new Date(feature.properties.date).toISOString() : null,
-        usdprice: parseFloat(feature.properties.usdprice) || 0,
-        price: parseFloat(feature.properties.price) || 0,
-        conflict_intensity: parseFloat(feature.properties.conflict_intensity) || 0,
-      },
-      geometry: transformCoordinates.transformGeometry(feature.geometry),
-    }))
-    .filter(feature => feature.properties.date !== null);
-};
-
-/**
- * Processes flow maps data based on the selected commodity.
- * @param {Array} flowData - Array of flow data objects.
- * @param {string} selectedCommodity - The commodity to filter by.
- * @returns {Array} - Processed flow data.
- */
-const processFlowData = (flowData, selectedCommodity) => {
-  if (!flowData || !Array.isArray(flowData)) {
-    throw new Error('Invalid or missing flow data');
-  }
-
-  return flowData
-    .filter(row => row.commodity?.toLowerCase() === selectedCommodity?.toLowerCase())
-    .map(row => ({
-      source_region: row.source,
-      target_region: row.target,
-      value: parseFloat(row.flow_weight) || 0,
-      date: row.date ? new Date(row.date).toISOString() : null,
-      source_price: parseFloat(row.source_price) || 0,
-      target_price: parseFloat(row.target_price) || 0,
-      price_differential: parseFloat(row.price_differential) || 0,
-    }))
-    .filter(flow => !isNaN(flow.value) && flow.date && isValid(new Date(flow.date)));
-};
-
-/**
- * Thunk to fetch and process spatial data.
- */
-export const fetchSpatialData = createAsyncThunk(
-  'spatial/fetchSpatialData',
-  async (selectedCommodity, { dispatch, rejectWithValue }) => {
-    console.log('Fetching spatial data for commodity:', selectedCommodity);
-
-    // Start timing for monitoring
-    const fetchStartTime = performance.now();
-
-    try {
-      const paths = {
-        geoBoundaries: getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson'),
-        unified: getDataPath('enhanced_unified_data_with_residual.geojson'),
-        weights: getDataPath('spatial_weights/transformed_spatial_weights.json'),
-        flowMaps: getDataPath('network_data/time_varying_flows.csv'),
-        analysis: getDataPath('spatial_analysis_results.json'),
-      };
-
-      console.log('Fetching from paths:', paths);
-      dispatch(updateLoadingProgress(10));
-
-      // Fetch all data using monitoredFetch
-      const [
-        geoBoundariesData,
-        unifiedData,
-        weightsData,
-        flowMapsData,
-        analysisData,
-      ] = await Promise.all([
-        monitoredFetch(paths.geoBoundaries),
-        monitoredFetch(paths.unified),
-        monitoredFetch(paths.weights),
-        monitoredFetch(paths.flowMaps),
-        monitoredFetch(paths.analysis),
-      ]);
-
-      dispatch(updateLoadingProgress(40));
-
-      console.log('Data fetched successfully, processing...');
-
-      // Process data using monitoredProcess
-      const processedFeatures = await monitoredProcess(
-        processFeatures,
-        unifiedData.features,
-        { type: 'process', name: 'processFeatures' }
-      );
-
-      const processedFlows = await monitoredProcess(
-        processFlowData,
-        flowMapsData,
-        { type: 'process', name: 'processFlowData' }
-      );
-
-      // Extract unique months from processed features
-      const uniqueMonths = Array.from(new Set(
-        processedFeatures
-          .map(f => f.properties.date.substring(0, 7))
-          .filter(Boolean)
-      )).sort();
-
-      dispatch(updateLoadingProgress(70));
-
-      const result = {
-        geoData: {
-          type: 'FeatureCollection',
-          features: processedFeatures,
-        },
-        flowMaps: processedFlows,
-        spatialWeights: weightsData,
-        analysisResults: analysisData,
-        uniqueMonths,
-        metadata: {
-          featureCount: processedFeatures.length,
-          flowCount: processedFlows.length,
-          dataTimestamp: new Date().toISOString(),
-          commodity: selectedCommodity,
-        },
-      };
-
-      dispatch(updateLoadingProgress(100));
-
-      // Finish timing and log metric
-      const fetchDuration = performance.now() - fetchStartTime;
-      backgroundMonitor.logMetric('spatial-fetch-complete', {
-        commodity: selectedCommodity,
-        duration: fetchDuration,
-        timestamp: new Date().toISOString(),
-      });
-
-      console.log('Processing complete:', {
-        features: result.geoData.features.length,
-        flows: result.flowMaps.length,
-        months: result.uniqueMonths.length,
-      });
-
-      return result;
-    } catch (error) {
-      console.error('Error fetching spatial data:', error);
-
-      // Log error using backgroundMonitor
-      backgroundMonitor.logError('spatial-fetch-error', {
-        commodity: selectedCommodity,
-        error: error.message,
-        stack: error.stack,
-        timestamp: new Date().toISOString(),
-      });
-
-      return rejectWithValue({
-        message: 'Failed to fetch spatial data',
-        details: error.message,
-      });
-    }
-  }
-);
+import { getDataPath } from '../utils/dataUtils';
+import {
+  normalizeRegionName,
+  mergeSpatialDataWithMapping,
+  extractUniqueMonths,
+} from '../utils/spatialUtils';
+import { transformCoordinates } from '../utils/coordinateTransforms';
 
 const initialState = {
   geoData: null,
@@ -197,94 +19,309 @@ const initialState = {
   uniqueMonths: [],
   status: 'idle',
   error: null,
-  metadata: null,
-  loadingProgress: 0,
   lastUpdated: null,
+  loadingProgress: 0,
 };
 
-/**
- * Redux slice for spatial data.
- */
+// Helper function to normalize dates
+const normalizeDate = (dateString) => {
+  if (!dateString) return null;
+  try {
+    // Handle different date formats
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date');
+    }
+    // Return ISO string but truncate to just the date portion
+    return date.toISOString().split('T')[0];
+  } catch (error) {
+    console.warn(`Invalid date format: ${dateString}`);
+    return null;
+  }
+};
+
+// Helper function to safely monitor async operations
+const monitoredFetch = async (path, description) => {
+  const metric = {
+    startTime: Date.now(),
+    path,
+    description
+  };
+  
+  try {
+    const response = await fetch(path);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${description}: ${response.statusText}`);
+    }
+    
+    // Handle different response types
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+    
+    backgroundMonitor.logMetric('data-fetch', {
+      path,
+      description,
+      duration: Date.now() - metric.startTime,
+      success: true,
+      contentType
+    });
+    
+    return data;
+  } catch (error) {
+    backgroundMonitor.logError('data-fetch', {
+      path,
+      description,
+      error: error.message,
+      duration: Date.now() - metric.startTime
+    });
+    throw error;
+  }
+};
+
+// Helper for progress updates
+const updateProgressWithLog = (dispatch, progress, description) => {
+  backgroundMonitor.logMetric('progress-update', { 
+    progress, 
+    description,
+    timestamp: new Date().toISOString()
+  });
+  dispatch(updateLoadingProgress(progress));
+};
+
+export const fetchSpatialData = createAsyncThunk(
+  'spatial/fetchSpatialData',
+  async (_, { dispatch, rejectWithValue }) => {
+    const mainMetric = {
+      startTime: Date.now(),
+      commodity: 'beans (kidney red)'
+    };
+
+    try {
+      updateProgressWithLog(dispatch, 10, 'Starting data fetch');
+      
+      const paths = {
+        geoBoundaries: getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson'),
+        unifiedData: getDataPath('enhanced_unified_data_with_residual.geojson'),
+        spatialWeights: getDataPath('spatial_weights/transformed_spatial_weights.json'),
+        flowMaps: getDataPath('network_data/time_varying_flows.csv'),
+        analysisResults: getDataPath('spatial_analysis_results.json'),
+      };
+
+      // Fetch geoBoundaries data
+      const geoBoundariesData = await monitoredFetch(paths.geoBoundaries, 'geoBoundaries');
+      if (!geoBoundariesData.features || !Array.isArray(geoBoundariesData.features)) {
+        throw new Error('Invalid geoBoundaries data structure');
+      }
+      updateProgressWithLog(dispatch, 30, 'GeoBoundaries data loaded');
+
+      // Fetch unified data
+      const unifiedData = await monitoredFetch(paths.unifiedData, 'unifiedData');
+      if (!unifiedData.features || !Array.isArray(unifiedData.features)) {
+        throw new Error('Invalid unified data structure');
+      }
+      updateProgressWithLog(dispatch, 50, 'Unified data loaded');
+
+      // Fetch spatial weights
+      const spatialWeightsData = await monitoredFetch(paths.spatialWeights, 'spatialWeights');
+      if (!spatialWeightsData || typeof spatialWeightsData !== 'object') {
+        throw new Error('Invalid spatial weights data structure');
+      }
+      updateProgressWithLog(dispatch, 60, 'Spatial weights loaded');
+
+      // Fetch analysis results
+      const analysisResultsData = await monitoredFetch(paths.analysisResults, 'analysisResults');
+      updateProgressWithLog(dispatch, 70, 'Analysis results loaded');
+
+      // Fetch and parse flow maps CSV
+      const flowMapsText = await monitoredFetch(paths.flowMaps, 'flowMaps');
+      updateProgressWithLog(dispatch, 80, 'Flow maps loaded');
+
+      const flowMapsResult = Papa.parse(flowMapsText, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim().toLowerCase(),
+        transform: (value) => {
+          if (typeof value === 'string') {
+            return value.trim();
+          }
+          return value;
+        }
+      });
+
+      if (flowMapsResult.errors.length > 0) {
+        console.warn('CSV parsing warnings:', flowMapsResult.errors);
+      }
+
+      // Process unified data features
+      unifiedData.features = unifiedData.features.map(feature => ({
+        ...feature,
+        properties: {
+          ...feature.properties,
+          region_id: normalizeRegionName(feature.properties.region_id || feature.properties.admin1),
+          date: normalizeDate(feature.properties.date),
+          usdprice: parseFloat(feature.properties.usdprice) || 0,
+          price: parseFloat(feature.properties.price) || 0,
+          conflict_intensity: parseFloat(feature.properties.conflict_intensity) || 0
+        }
+      })).filter(feature => feature.properties.date && !isNaN(feature.properties.usdprice));
+
+      // Process flow maps data
+      const processedFlowMaps = flowMapsResult.data
+        .map(row => {
+          try {
+            const sourceLng = parseFloat(row.source_lng);
+            const sourceLat = parseFloat(row.source_lat);
+            const targetLng = parseFloat(row.target_lng);
+            const targetLat = parseFloat(row.target_lat);
+
+            if (isNaN(sourceLng) || isNaN(sourceLat) || isNaN(targetLng) || isNaN(targetLat)) {
+              console.warn('Invalid coordinates in flow map row:', row);
+              return null;
+            }
+
+            return {
+              ...row,
+              source: normalizeRegionName(row.source),
+              target: normalizeRegionName(row.target),
+              date: normalizeDate(row.date),
+              price_differential: parseFloat(row.price_differential) || 0,
+              source_price: parseFloat(row.source_price) || 0,
+              target_price: parseFloat(row.target_price) || 0,
+              flow_weight: parseFloat(row.flow_weight) || 0,
+              sourceCoordinates: transformCoordinates.toWGS84(sourceLng, sourceLat, 'EPSG:32638'),
+              targetCoordinates: transformCoordinates.toWGS84(targetLng, targetLat, 'EPSG:32638')
+            };
+          } catch (error) {
+            console.warn('Error processing flow map row:', error);
+            return null;
+          }
+        })
+        .filter(Boolean); // Remove null entries
+
+      // Process and merge the data
+      const processedData = {
+        geoData: await mergeSpatialDataWithMapping(
+          geoBoundariesData,
+          unifiedData,
+          {},
+          [],
+          1000
+        ),
+        spatialWeights: spatialWeightsData,
+        flowMaps: processedFlowMaps,
+        analysisResults: analysisResultsData,
+      };
+
+      // Extract unique months after data is processed
+      processedData.uniqueMonths = extractUniqueMonths(processedData.geoData.features)
+        .sort((a, b) => new Date(a) - new Date(b));
+      
+      updateProgressWithLog(dispatch, 90, 'Data processing complete');
+
+      backgroundMonitor.logMetric('spatial-fetch-complete', {
+        duration: Date.now() - mainMetric.startTime,
+        dataSize: JSON.stringify(processedData).length,
+        featureCount: processedData.geoData.features.length,
+        flowCount: processedData.flowMaps.length,
+        monthCount: processedData.uniqueMonths.length
+      });
+
+      if (monitoring && monitoring.finish) {
+        monitoring.finish();
+      }
+
+      return processedData;
+
+    } catch (error) {
+      backgroundMonitor.logError('spatial-fetch-error', {
+        error: error.message,
+        code: error.code || 'UNKNOWN_ERROR',
+        duration: Date.now() - mainMetric.startTime
+      });
+      if (monitoring && monitoring.finish) {
+        monitoring.finish('spatial-fetch-error', { error: error.message });
+      }
+      return rejectWithValue({
+        message: error.message,
+        code: error.code || 'UNKNOWN_ERROR'
+      });
+    }
+  }
+);
+
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
   reducers: {
-    /**
-     * Updates the loading progress.
-     * @param {object} state - Current state.
-     * @param {object} action - Action containing the new progress value.
-     */
     updateLoadingProgress: (state, action) => {
       state.loadingProgress = action.payload;
-      if (state.status === 'idle') {
-        state.status = 'loading';
-      }
     },
-    /**
-     * Resets the spatial state to its initial values.
-     */
-    resetSpatialState: () => ({
-      ...initialState,
-      lastUpdated: new Date().toISOString(),
-    }),
+    resetSpatialState: () => initialState,
+    updateMetadata: (state, action) => {
+      state.metadata = {
+        ...(state.metadata || {}),
+        ...action.payload,
+        lastUpdated: new Date().toISOString(),
+      };
+    },
+    clearError: (state) => {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchSpatialData.pending, (state) => {
-        console.log('fetchSpatialData: pending');
         state.status = 'loading';
         state.error = null;
         state.loadingProgress = 0;
       })
       .addCase(fetchSpatialData.fulfilled, (state, action) => {
-        console.log('fetchSpatialData: fulfilled');
-        return {
-          ...state,
-          ...action.payload,
-          status: 'succeeded',
-          error: null,
-          loadingProgress: 100,
-          lastUpdated: new Date().toISOString(),
-        };
+        state.status = 'succeeded';
+        state.geoData = action.payload.geoData;
+        state.spatialWeights = action.payload.spatialWeights;
+        state.flowMaps = action.payload.flowMaps;
+        state.analysisResults = action.payload.analysisResults;
+        state.uniqueMonths = action.payload.uniqueMonths;
+        state.loadingProgress = 100;
+        state.lastUpdated = new Date().toISOString();
+        state.error = null;
       })
       .addCase(fetchSpatialData.rejected, (state, action) => {
-        console.log('fetchSpatialData: rejected', action.payload);
         state.status = 'failed';
-        state.error = action.payload;
-        state.loadingProgress = 100; // Set to 100 to indicate completion, even if failed
-        state.lastUpdated = new Date().toISOString();
+        state.error = action.payload?.message || action.error?.message || 'An unknown error occurred';
+        state.loadingProgress = 0;
       });
   },
 });
 
-// Selectors
+export const {
+  updateLoadingProgress,
+  resetSpatialState,
+  updateMetadata,
+  clearError,
+} = spatialSlice.actions;
 
-/**
- * Selector to get the current spatial status.
- * @param {object} state - Redux state.
- * @returns {object} - Spatial status.
- */
+export const selectSpatialData = (state) => ({
+  geoData: state.spatial.geoData,
+  spatialWeights: state.spatial.spatialWeights,
+  flowMaps: state.spatial.flowMaps,
+  analysisResults: state.spatial.analysisResults,
+  uniqueMonths: state.spatial.uniqueMonths,
+});
+
 export const selectSpatialStatus = (state) => ({
   status: state.spatial.status,
   error: state.spatial.error,
   loadingProgress: state.spatial.loadingProgress,
-  lastUpdated: state.spatial.lastUpdated,
+  lastUpdated: state.lastUpdated,
 });
 
-/**
- * Selector to get the spatial data.
- * @param {object} state - Redux state.
- * @returns {object} - Spatial data.
- */
-export const selectSpatialData = (state) => ({
-  geoData: state.spatial.geoData,
-  flowMaps: state.spatial.flowMaps,
-  spatialWeights: state.spatial.spatialWeights,
-  analysisResults: state.spatial.analysisResults,
-  uniqueMonths: state.spatial.uniqueMonths,
-  metadata: state.spatial.metadata,
-});
+export const selectAnalysisResults = (state) => state.spatial.analysisResults;
 
-// Export actions and reducer
-export const { updateLoadingProgress, resetSpatialState } = spatialSlice.actions;
 export default spatialSlice.reducer;

@@ -3,9 +3,6 @@
 import { backgroundMonitor } from './backgroundMonitor';
 import Papa from 'papaparse';
 
-/**
- * Class to monitor data loading operations.
- */
 export class DataLoadingMonitor {
   constructor() {
     this.requests = new Map();
@@ -17,11 +14,6 @@ export class DataLoadingMonitor {
     };
   }
 
-  /**
-   * Starts monitoring a new data request.
-   * @param {string} id - Unique identifier for the request.
-   * @param {string} type - Type of the request (e.g., 'fetch', 'process').
-   */
   startRequest(id, type) {
     const request = {
       id,
@@ -39,11 +31,6 @@ export class DataLoadingMonitor {
     return request;
   }
 
-  /**
-   * Completes monitoring of a data request.
-   * @param {string} id - Unique identifier for the request.
-   * @param {*} data - Data returned from the request.
-   */
   completeRequest(id, data) {
     const request = this.requests.get(id);
     if (request) {
@@ -74,11 +61,6 @@ export class DataLoadingMonitor {
     }
   }
 
-  /**
-   * Logs an error that occurred during a data request.
-   * @param {string} id - Unique identifier for the request.
-   * @param {Error} error - Error object.
-   */
   logError(id, error) {
     this.errors.set(id, {
       error,
@@ -93,11 +75,6 @@ export class DataLoadingMonitor {
     });
   }
 
-  /**
-   * Calculates the size of the data.
-   * @param {*} data - Data whose size is to be calculated.
-   * @returns {string} - Size of the data in KB or an error message.
-   */
   getDataSize(data) {
     try {
       const jsonData = JSON.stringify(data);
@@ -109,10 +86,6 @@ export class DataLoadingMonitor {
     }
   }
 
-  /**
-   * Retrieves performance statistics.
-   * @returns {object} - Performance statistics.
-   */
   getPerformanceStats() {
     return {
       averageLoadTime: this.calculateAverage(this.performance.loadTimes),
@@ -124,19 +97,11 @@ export class DataLoadingMonitor {
     };
   }
 
-  /**
-   * Calculates the average duration from an array of time entries.
-   * @param {Array} times - Array of time entries.
-   * @returns {number} - Average duration.
-   */
   calculateAverage(times) {
     if (!times.length) return 0;
     return times.reduce((sum, time) => sum + time.duration, 0) / times.length;
   }
 
-  /**
-   * Resets all monitoring data.
-   */
   reset() {
     this.requests.clear();
     this.errors.clear();
@@ -150,13 +115,6 @@ export class DataLoadingMonitor {
 
 export const dataLoadingMonitor = new DataLoadingMonitor();
 
-/**
- * Monitoring wrapper for fetch operations.
- * Handles fetching data with monitoring and error logging.
- * @param {string} url - URL to fetch.
- * @param {object} options - Fetch options.
- * @returns {*} - Parsed data from the response.
- */
 export const monitoredFetch = async (url, options = {}) => {
   const requestId = `fetch-${Date.now()}`;
   dataLoadingMonitor.startRequest(requestId, 'fetch');
@@ -201,7 +159,6 @@ export const monitoredFetch = async (url, options = {}) => {
         });
         if (parseResult.errors.length > 0) {
           console.warn(`CSV parsing errors for ${url}:`, parseResult.errors);
-          // Optionally, handle parseResult.errors
         }
         data = parseResult.data;
       } catch (parseError) {
@@ -210,7 +167,6 @@ export const monitoredFetch = async (url, options = {}) => {
         throw parseError;
       }
     } else {
-      // Handle other content types if necessary
       data = await response.text();
       console.warn(`Unsupported content-type for ${url}: ${contentType}`);
     }
@@ -223,13 +179,6 @@ export const monitoredFetch = async (url, options = {}) => {
   }
 };
 
-/**
- * Monitoring wrapper for data processing operations.
- * @param {Function} operation - The data processing function.
- * @param {*} data - Data to process.
- * @param {object} options - Additional options.
- * @returns {*} - Result of the processing operation.
- */
 export const monitoredProcess = async (operation, data, options = {}) => {
   const processId = `process-${Date.now()}`;
   dataLoadingMonitor.startRequest(processId, 'process');

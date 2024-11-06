@@ -132,7 +132,9 @@ export const fetchSpatialData = createAsyncThunk(
       };
 
       dispatch(updateLoadingProgress(100));
-      monitoring.finish();
+      if (monitoring && monitoring.finish) {
+        monitoring.finish();
+      }
 
       console.log('Processing complete:', {
         features: result.geoData.features.length,
@@ -144,6 +146,9 @@ export const fetchSpatialData = createAsyncThunk(
     } catch (error) {
       console.error('Error fetching spatial data:', error);
       monitoring.logError(error);
+      if (monitoring && monitoring.finish) {
+        monitoring.finish('spatial-fetch-error', { error: error.message });
+      }
       return rejectWithValue({
         message: 'Failed to fetch spatial data',
         details: error.message,

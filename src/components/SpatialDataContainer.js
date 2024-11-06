@@ -1,70 +1,84 @@
-// src/components/SpatialDataContainer.js
+import React, { useEffect, useState } from 'react';
+import { Box, CircularProgress, Alert } from '@mui/material';
+import { spatialProcessor } from '../utils/enhancedSpatialProcessor';
+import { useDispatch } from 'react-redux';
+import { updateLoadingProgress } from '../slices/spatialSlice';
 
-import React, { useEffect, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchSpatialData } from '../slices/spatialSlice';
-import LoadingSpinner from './common/LoadingSpinner';
-import ErrorMessage from './common/ErrorMessage';
-
-const SpatialDataContainer = ({ selectedCommodity, children }) => {
+export default function SpatialDataContainer({ selectedCommodity, children }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
   const dispatch = useDispatch();
-  const {
-    status,
-    error,
-    loadingProgress,
-    geoData
-  } = useSelector(state => state.spatial);
 
-  const loadData = useCallback(() => {
-    if (selectedCommodity && (status === 'idle' || status === 'failed')) {
-      console.log('Initiating data fetch for commodity:', selectedCommodity);
-      dispatch(fetchSpatialData(selectedCommodity));
-    }
-  }, [dispatch, selectedCommodity, status]);
-
-  // Initial load
   useEffect(() => {
+    let mounted = true;
+
+    const loadData = async () => {
+      if (!selectedCommodity) return;
+
+      try {
+        setLoading(true);
+        dispatch(updateLoadingProgress(10));
+
+        const processedData = await spatialProcessor.processSpatialData(selectedCommodity);
+        
+        if (mounted) {
+          setData(processedData);
+          setError(null);
+          dispatch(updateLoadingProgress(100));
+        }
+      } catch (err) {
+        console.error('Error loading spatial data:', err);
+        if (mounted) {
+          setError(err.message);
+          dispatch(updateLoadingProgress(0));
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
     loadData();
-  }, [loadData]);
 
-  // Monitor state changes
-  useEffect(() => {
-    console.log('Spatial state updated:', {
-      status,
-      hasData: !!geoData,
-      progress: loadingProgress,
-      commodity: selectedCommodity
-    });
-  }, [status, geoData, loadingProgress, selectedCommodity]);
+    return () => {
+      mounted = false;
+    };
+  }, [selectedCommodity, dispatch]);
 
   if (!selectedCommodity) {
-    return <div>Please select a commodity to analyze</div>;
-  }
-
-  if (status === 'loading') {
     return (
-      <LoadingSpinner 
-        progress={loadingProgress}
-        message={`Loading data for ${selectedCommodity}...`}
-      />
+      <Alert severity="info">
+        Please select a commodity to analyze
+      </Alert>
     );
   }
 
-  if (status === 'failed') {
+  if (loading) {
     return (
-      <ErrorMessage
-        message={`Failed to load data for ${selectedCommodity}`}
-        details={error?.details || error?.message}
-        onRetry={loadData}
-      />
+      <Box 
+        display="flex" 
+        justifyContent="center" 
+        alignItems="center" 
+        minHeight={400}
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
-  if (!geoData) {
-    return null;
+  if (error) {
+    return (
+      <Alert severity="error">
+        Error loading data: {error}
+      </Alert>
+    );
   }
 
-  return <>{children}</>;
-};
+  if (!data) return null;
 
-export default SpatialDataContainer;
+  return React.Children.map(children, child =>
+    React.cloneElement(child, { spatialData: data })
+  );
+}
