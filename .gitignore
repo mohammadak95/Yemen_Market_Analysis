@@ -29,6 +29,8 @@ Miniforge3-MacOSX-arm64.sh
 /cache
 build_dashboard.txt
 /node_modules
+/genaisrc
+/.genaiscript
 
 /.git
 
