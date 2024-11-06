@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Paper, IconButton, Tooltip, Box } from '@mui/material';
+import { Paper, IconButton, Tooltip, Box, Checkbox, FormControlLabel } from '@mui/material';
 import {
   ZoomIn,
   ZoomOut,
   Home,
-  Maximize,
-  Minimize,
-  Layers,
+  Fullscreen,
+  FullscreenExit,
+  Layers, // Correctly imported Layers icon
+  Refresh,
 } from '@mui/icons-material';
 import { useMap } from 'react-leaflet';
 
@@ -82,6 +83,7 @@ const MapControls = ({
           backgroundColor: 'background.paper',
         }}
       >
+        {/* Zoom Controls */}
         <Tooltip title="Zoom In">
           <IconButton onClick={handleZoomIn} size="small">
             <ZoomIn />
@@ -100,14 +102,14 @@ const MapControls = ({
           </IconButton>
         </Tooltip>
 
-        <Tooltip
-          title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-        >
+        {/* Fullscreen Control */}
+        <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
           <IconButton onClick={handleFullscreen} size="small">
-            {isFullscreen ? <Minimize /> : <Maximize />}
+            {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
           </IconButton>
         </Tooltip>
 
+        {/* Layer Controls */}
         {availableLayers.length > 0 && (
           <>
             <Tooltip title="Toggle Layers">
@@ -125,31 +127,34 @@ const MapControls = ({
                   mt: 1,
                   p: 1,
                   minWidth: 150,
+                  maxHeight: 200,
+                  overflowY: 'auto',
                   backgroundColor: 'background.paper',
                 }}
               >
                 {availableLayers.map((layer) => (
-                  <Box
+                  <FormControlLabel
                     key={layer.id}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      py: 0.5,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      {layer.icon}
-                      {layer.name}
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => onLayerToggle(layer.id)}
-                    >
-                      {layer.active ? <Minimize /> : <Maximize />}
-                    </IconButton>
-                  </Box>
+                    control={
+                      <Checkbox
+                        checked={layer.active}
+                        onChange={() => onLayerToggle(layer.id)}
+                        name={layer.name}
+                        color="primary"
+                      />
+                    }
+                    label={layer.name}
+                  />
                 ))}
+                <Tooltip title="Refresh Layers">
+                  <IconButton
+                    onClick={() => window.location.reload()}
+                    size="small"
+                    sx={{ mt: 1 }}
+                  >
+                    <Refresh />
+                  </IconButton>
+                </Tooltip>
               </Paper>
             )}
           </>
@@ -175,7 +180,7 @@ MapControls.propTypes = {
       active: PropTypes.bool,
     })
   ),
-  onLayerToggle: PropTypes.func,
+  onLayerToggle: PropTypes.func.isRequired,
 };
 
 export default MapControls;

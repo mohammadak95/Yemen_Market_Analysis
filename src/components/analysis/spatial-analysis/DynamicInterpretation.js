@@ -49,11 +49,25 @@ const DynamicInterpretation = ({ data, spatialWeights, selectedMonth }) => {
         ? 'negative spatial autocorrelation'
         : 'no spatial autocorrelation';
 
+    // Macroeconomic Interpretation
+    let macroInsight = '';
+    if (moranIValue > 0 && pValue < 0.05) {
+      macroInsight =
+        'The positive spatial autocorrelation suggests that regions with high commodity prices are clustered together, possibly due to regional trade agreements or similar economic policies.';
+    } else if (moranIValue < 0 && pValue < 0.05) {
+      macroInsight =
+        'The negative spatial autocorrelation indicates that high and low commodity prices are interspersed, potentially reflecting competitive markets or differing regional economic conditions.';
+    } else {
+      macroInsight =
+        'There is no significant spatial autocorrelation, implying that commodity prices are randomly distributed across regions, possibly due to uniform economic policies or lack of regional interactions.';
+    }
+
     return {
       summary: `${pattern.charAt(0).toUpperCase() + pattern.slice(1)} detected`,
       details: `Moran's I: ${moranIValue.toFixed(3)} (p-value: ${pValue.toFixed(
         3
       )}), indicating ${significance} spatial dependence.`,
+      macroInsight,
       severity: pValue < 0.05 ? 'info' : 'warning',
       icon:
         moranIValue > 0 ? (
@@ -73,11 +87,25 @@ const DynamicInterpretation = ({ data, spatialWeights, selectedMonth }) => {
     const quality =
       r_squared > 0.7 ? 'excellent' : r_squared > 0.5 ? 'good' : 'moderate';
 
+    // Macroeconomic Interpretation
+    let macroInsight = '';
+    if (r_squared > 0.7) {
+      macroInsight =
+        'The model explains a large portion of the variance, indicating that the spatial factors are strong determinants of commodity prices.';
+    } else if (r_squared > 0.5) {
+      macroInsight =
+        'The model has a good fit, suggesting that spatial dependencies play a significant role in influencing commodity prices.';
+    } else {
+      macroInsight =
+        'The model has a moderate fit, implying that while spatial factors are relevant, other variables may also significantly impact commodity prices.';
+    }
+
     return {
       summary: `${quality.charAt(0).toUpperCase() + quality.slice(1)} model fit`,
       details: `R²: ${r_squared.toFixed(3)}, Adjusted R²: ${adj_r_squared.toFixed(
         3
       )}, explaining ${(r_squared * 100).toFixed(1)}% of the variance.`,
+      macroInsight,
       severity: r_squared > 0.5 ? 'success' : 'warning',
       icon: <Functions />,
       chips: [quality],
@@ -96,6 +124,16 @@ const DynamicInterpretation = ({ data, spatialWeights, selectedMonth }) => {
         ? 'moderate'
         : 'weak';
 
+    // Macroeconomic Interpretation
+    let macroInsight = '';
+    if (lagCoef > 0) {
+      macroInsight =
+        'A positive spatial lag coefficient indicates that an increase in commodity price in one region positively influences neighboring regions, suggesting interconnected markets.';
+    } else {
+      macroInsight =
+        'A negative spatial lag coefficient implies that an increase in commodity price in one region negatively affects neighboring regions, potentially due to competitive pricing or substitution effects.';
+    }
+
     return {
       summary: `Spatial price transmission is ${strength}`,
       details: `Spatial lag coefficient: ${lagCoef.toFixed(
@@ -103,6 +141,7 @@ const DynamicInterpretation = ({ data, spatialWeights, selectedMonth }) => {
       )} (p-value: ${lagPValue.toFixed(3)}), indicating ${
         lagCoef > 0 ? 'positive' : 'negative'
       } transmission.`,
+      macroInsight,
       severity: Math.abs(lagCoef) > 0.5 ? 'success' : 'info',
       icon: <Hub />,
       chips: [strength, lagCoef > 0 ? 'positive' : 'negative'],
@@ -128,6 +167,9 @@ const DynamicInterpretation = ({ data, spatialWeights, selectedMonth }) => {
               <AlertTitle>{analysis.summary}</AlertTitle>
               <Typography variant="body2" gutterBottom>
                 {analysis.details}
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {analysis.macroInsight}
               </Typography>
               <Box sx={{ mt: 1 }}>
                 {analysis.chips.map((chip, index) => (

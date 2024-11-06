@@ -137,6 +137,16 @@ const SpatialDiagnostics = ({ data, selectedMonth }) => {
                 </TableBody>
               </Table>
             </TableContainer>
+            {/* Macroeconomic Insight */}
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="body2" color="textSecondary">
+                {moranIValue > 0 && pValue < 0.05
+                  ? 'Positive spatial autocorrelation indicates clustering of similar commodity prices across regions, which may be due to regional trade networks or similar economic policies.'
+                  : moranIValue < 0 && pValue < 0.05
+                  ? 'Negative spatial autocorrelation suggests a dispersion of commodity prices, possibly reflecting competitive markets or varying regional economic conditions.'
+                  : 'No significant spatial autocorrelation detected, implying random distribution of commodity prices across regions.'}
+              </Typography>
+            </Box>
           </Box>
         </Grid>
 
@@ -197,6 +207,18 @@ const SpatialDiagnostics = ({ data, selectedMonth }) => {
                 </TableBody>
               </Table>
             </TableContainer>
+            {/* Macroeconomic Insight */}
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="body2" color="textSecondary">
+                {r_squared > 0.7
+                  ? 'The model explains a large portion of the variance, indicating that spatial factors are strong determinants of commodity prices.'
+                  : r_squared > 0.5
+                  ? 'The model has a good fit, suggesting that spatial dependencies play a significant role in influencing commodity prices.'
+                  : r_squared > 0.3
+                  ? 'The model has a moderate fit, implying that while spatial factors are relevant, other variables may also significantly impact commodity prices.'
+                  : 'The model has a poor fit, indicating that spatial factors alone do not sufficiently explain the variations in commodity prices.'}
+              </Typography>
+            </Box>
           </Box>
         </Grid>
 
@@ -226,7 +248,7 @@ const SpatialDiagnostics = ({ data, selectedMonth }) => {
                         {p_values?.[name] !== undefined ? (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {p_values[name].toFixed(4)}
-                            {p_values[name] < 0.05 && <CheckCircle color="success" fontSize="small" />}
+                            {p_values[name] < 0.05 ? <CheckCircle color="success" fontSize="small" /> : <Warning color="warning" fontSize="small" />}
                           </Box>
                         ) : 'N/A'}
                       </TableCell>
@@ -238,6 +260,16 @@ const SpatialDiagnostics = ({ data, selectedMonth }) => {
                 </TableBody>
               </Table>
             </TableContainer>
+            {/* Macroeconomic Insight */}
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="body2" color="textSecondary">
+                {coefficients.spatial_lag_price > 0
+                  ? 'A positive spatial lag coefficient indicates that an increase in commodity price in one region positively influences neighboring regions, suggesting interconnected markets.'
+                  : coefficients.spatial_lag_price < 0
+                  ? 'A negative spatial lag coefficient implies that an increase in commodity price in one region negatively affects neighboring regions, potentially due to competitive pricing or substitution effects.'
+                  : 'No significant spatial lag effect detected.'}
+              </Typography>
+            </Box>
           </Grid>
         )}
 
@@ -246,9 +278,7 @@ const SpatialDiagnostics = ({ data, selectedMonth }) => {
           <Alert severity="info" sx={{ mt: 2 }}>
             Analysis based on {observations || 'unknown'} observations.
             {pValue < 0.05 && moranIValue !== undefined && 
-              ` Significant spatial autocorrelation detected (${
-                moranIValue > 0 ? 'clustering' : 'dispersion'
-              } pattern).`
+              ` Significant spatial autocorrelation detected (${moranIValue > 0 ? 'clustering' : 'dispersion'} pattern).`
             }
           </Alert>
         </Grid>

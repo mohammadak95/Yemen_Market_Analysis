@@ -5,8 +5,11 @@ import {
   MapContainer,
   TileLayer,
   GeoJSON,
-  useMap
+  Marker,
+  Tooltip as LeafletTooltip,
+  useMap,
 } from 'react-leaflet';
+
 import { scaleSequential } from 'd3-scale';
 import { interpolateBlues } from 'd3-scale-chromatic';
 import L from 'leaflet';
@@ -16,7 +19,10 @@ import MapControls from './MapControls';
 import { Slider, Typography } from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import '../../../styles/leaflet.css';
+import '../../../styles/leaflet-overrides.css';
 import '../../../utils/leafletSetup';
+import { createCustomIcon } from '../../../utils/leafletSetup'; // Import the function
+import { Layers } from '@mui/icons-material';
 
 const MapContent = ({
   geoData,
@@ -26,6 +32,7 @@ const MapContent = ({
   colorScale,
   spatialWeights,
   showFlows,
+  createIcon, // Pass the createIcon function
 }) => {
   const map = useMap();
   const [hoveredRegion, setHoveredRegion] = useState(null);
@@ -108,14 +115,44 @@ const MapContent = ({
             properties: flow,
           }}
           style={() => ({
-            color: '#2196f3',
+            color: '#FF5722', // A distinct color for flows
             weight: Math.max(1, (flow.flow_weight / maxValue) * 5),
             opacity: 0.6,
+            dashArray: '5, 5', // Optional: Adds dashed lines for flows
           })}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties;
+            layer.bindTooltip(
+              `From: ${props.source} (${props.source_price})<br/>To: ${props.target} (${props.target_price})<br/>Differential: ${props.price_differential.toFixed(2)}`,
+              { sticky: true }
+            );
+          }}
         />
       );
     });
   }, [showFlows, flowData, selectedMonth]);
+
+  // Extract marker positions if needed
+  const markers = useMemo(() => {
+    if (!geoData?.features) return [];
+
+    return geoData.features.map((feature) => {
+      const { latitude, longitude, region_id, shapeName, [variable]: varValue } = feature.properties;
+      if (latitude == null || longitude == null) return null;
+
+      return (
+        <Marker
+          key={region_id}
+          position={[latitude, longitude]}
+          icon={createIcon('blue')} // You can change color as needed
+        >
+          <LeafletTooltip direction="top" offset={[0, -20]} opacity={1} permanent>
+            {shapeName || 'Unknown Region'}
+          </LeafletTooltip>
+        </Marker>
+      );
+    });
+  }, [geoData, variable, createIcon]);
 
   return (
     <>
@@ -129,7 +166,24 @@ const MapContent = ({
       )}
 
       {flowLines}
-      <MapControls />
+
+      {markers.length > 0 && <>{markers}</>}
+
+      <MapControls
+        availableLayers={[
+          {
+            id: 'flows',
+            name: 'Show Flows',
+            icon: <Layers />, // Ensure Layers is correctly imported in MapControls.js
+            active: showFlows,
+          },
+        ]}
+        onLayerToggle={(layerId) => {
+          if (layerId === 'flows') {
+            setShowFlows((prev) => !prev);
+          }
+        }}
+      />
     </>
   );
 };
@@ -142,8 +196,9 @@ const SpatialMap = ({
   onMonthChange,
   availableMonths,
   spatialWeights,
-  showFlows = false,
 }) => {
+  const [showFlows, setShowFlows] = useState(true); // Manage showFlows state
+
   const colorScale = useMemo(() => {
     if (!geoData?.features) return null;
 
@@ -160,9 +215,16 @@ const SpatialMap = ({
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'long',
+      month: 'short',
       year: 'numeric',
     });
+  };
+
+  const handleLayerToggle = (layerId) => {
+    if (layerId === 'flows') {
+      setShowFlows((prev) => !prev);
+    }
+    // Handle other layers if added in the future
   };
 
   return (
@@ -180,6 +242,7 @@ const SpatialMap = ({
           colorScale={colorScale}
           spatialWeights={spatialWeights}
           showFlows={showFlows}
+          createIcon={createCustomIcon} // Pass the createIcon function
         />
       </MapContainer>
 
@@ -187,8 +250,9 @@ const SpatialMap = ({
         <MapLegend
           colorScale={colorScale}
           variable={variable}
-          title={variable === 'price' ? 'Price (YER)' : 'Value'}
           position="bottomright"
+          unit={variable === 'price' ? ' YER' : ''}
+          description={`Color scale representing ${variable} levels across regions.`}
         />
       )}
 
@@ -196,10 +260,10 @@ const SpatialMap = ({
         <Box
           sx={{
             position: 'absolute',
-            bottom: 20,
+            bottom: showFlows ? 80 : 20, // Adjust bottom position if flows are toggled
             left: '50%',
             transform: 'translateX(-50%)',
-            width: '80%',
+            width: { xs: '90%', sm: '80%', md: '60%' }, // Responsive width
             bgcolor: 'background.paper',
             p: 2,
             borderRadius: 1,
@@ -208,7 +272,7 @@ const SpatialMap = ({
           }}
         >
           <Typography variant="body2" gutterBottom>
-            Time Period
+            Time Period: {formatDate(selectedMonth)}
           </Typography>
           <Slider
             value={availableMonths.indexOf(selectedMonth)}
@@ -224,6 +288,7 @@ const SpatialMap = ({
               value: index,
               label: formatDate(date),
             }))}
+            aria-labelledby="time-period-slider"
           />
         </Box>
       )}

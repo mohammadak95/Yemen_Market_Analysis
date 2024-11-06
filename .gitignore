@@ -1,7 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
 /.pnp
 .pnp.js
 
@@ -12,20 +11,21 @@
 /build
 
 # misc
+# macOS
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
+# misc
+.env.test.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# IDE-specific files
+.vscode
+
 
 Miniforge3-MacOSX-arm64.sh
 .venv
-.vscode
 /cache
 build_dashboard.txt
 /node_modules
@@ -34,8 +34,9 @@ build_dashboard.txt
 
 # Environment Variables
 .env.local
+.env.local
 .env.development.local
 .env.test.local
-.env.production.local
 .husky
+.env
 new_venv

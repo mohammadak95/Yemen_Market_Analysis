@@ -1,0 +1,15 @@
+script,status,cost,total_tokens,prompt_tokens,completion_tokens,trace,version
+undefined,success,0,0,0,0,,1.71.2
+undefined,success,0,0,0,0,2024-11-06T15-35-18-599Z.trace.md,1.71.2
+undefined,success,0,0,0,0,2024-11-06T15-44-02-934Z.trace.md,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+undefined,success,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2
+copilotchat,error,0,0,0,0,,1.71.2

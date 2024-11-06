@@ -14,9 +14,12 @@ import {
   Grid,
   Alert,
   Chip,
+  Divider,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { TrendingUp, TrendingDown, ErrorOutline } from '@mui/icons-material';
+import { Bar, BoxPlot } from 'react-chartjs-2';
+import 'chart.js/auto';
 
 const DiagnosticsTests = ({ data, selectedMonth }) => {
   if (!data) return null;
@@ -33,6 +36,7 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
     vif,
   } = data;
 
+  // Filter residuals for the selected month
   const currentPeriodResiduals = useMemo(() => {
     if (!residual || !selectedMonth) return [];
     return residual.filter(
@@ -42,6 +46,7 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
     );
   }, [residual, selectedMonth]);
 
+  // Calculate residual statistics
   const residualStats = useMemo(() => {
     if (!currentPeriodResiduals.length) return null;
 
@@ -66,6 +71,7 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
       max,
       q1,
       q3,
+      values, // For visualization
     };
   }, [currentPeriodResiduals]);
 
@@ -116,7 +122,7 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
                     {(
                       moran_i?.['p-value'] ||
                       moran_i?.p_value ||
-                      'N/A'
+                      0
                     ).toFixed(4)}
                   </TableCell>
                 </TableRow>
@@ -185,12 +191,45 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
                         {value?.toFixed(4) || 'N/A'}
                       </TableCell>
                       <TableCell align="right">
-                        {p_values?.[name]?.toFixed(4) || 'N/A'}
+                        {p_values?.[name] !== undefined
+                          ? p_values[name] < 0.001
+                            ? '<0.001'
+                            : p_values[name].toFixed(4)
+                          : 'N/A'}
                       </TableCell>
                       <TableCell align="right">
                         {vif?.find((v) => v.Variable === name)?.VIF?.toFixed(
                           2
                         ) || 'N/A'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Grid>
+
+        {/* VIF Details */}
+        <Grid item xs={12}>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle1" gutterBottom>
+            Variance Inflation Factor (VIF)
+          </Typography>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Variable</TableCell>
+                  <TableCell align="right">VIF</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {vif &&
+                  vif.map((v) => (
+                    <TableRow key={v.Variable}>
+                      <TableCell>{v.Variable}</TableCell>
+                      <TableCell align="right">
+                        {v.VIF?.toFixed(2) || 'N/A'}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -206,38 +245,92 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
               <Typography variant="subtitle1" gutterBottom>
                 Current Period Residual Statistics
               </Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>Mean</TableCell>
-                      <TableCell align="right">
-                        {residualStats.mean.toFixed(4)}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Standard Deviation</TableCell>
-                      <TableCell align="right">
-                        {residualStats.std.toFixed(4)}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Min / Max</TableCell>
-                      <TableCell align="right">
-                        {residualStats.min.toFixed(4)} /{' '}
-                        {residualStats.max.toFixed(4)}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Q1 / Q3</TableCell>
-                      <TableCell align="right">
-                        {residualStats.q1.toFixed(4)} /{' '}
-                        {residualStats.q3.toFixed(4)}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Mean</TableCell>
+                          <TableCell align="right">
+                            {residualStats.mean.toFixed(4)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Standard Deviation</TableCell>
+                          <TableCell align="right">
+                            {residualStats.std.toFixed(4)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Min / Max</TableCell>
+                          <TableCell align="right">
+                            {residualStats.min.toFixed(4)} /{' '}
+                            {residualStats.max.toFixed(4)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Q1 / Q3</TableCell>
+                          <TableCell align="right">
+                            {residualStats.q1.toFixed(4)} /{' '}
+                            {residualStats.q3.toFixed(4)}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  {/* Histogram */}
+                  <Typography variant="subtitle2" gutterBottom>
+                    Residual Distribution
+                  </Typography>
+                  <Bar
+                    data={{
+                      labels: ['Residuals'],
+                      datasets: [
+                        {
+                          label: 'Frequency',
+                          data: [residualStats.values.length],
+                          backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        },
+                      ],
+                    }}
+                    options={{
+                      plugins: {
+                        legend: { display: false },
+                      },
+                      scales: {
+                        x: { display: false },
+                        y: { display: true, title: { display: true, text: 'Count' } },
+                      },
+                    }}
+                  />
+
+                  {/* Box Plot */}
+                  <BoxPlot
+                    data={{
+                      labels: ['Residuals'],
+                      datasets: [
+                        {
+                          label: 'Residuals',
+                          data: residualStats.values,
+                          backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      plugins: {
+                        legend: { display: false },
+                      },
+                      scales: {
+                        y: { title: { display: true, text: 'Residual Value' } },
+                      },
+                    }}
+                  />
+                </Grid>
+              </Grid>
             </Paper>
           </Grid>
         )}

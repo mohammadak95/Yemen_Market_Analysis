@@ -8,6 +8,10 @@ import {
   Typography,
   Tooltip,
   IconButton,
+  Collapse,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import { Info, ExpandMore, ExpandLess } from '@mui/icons-material';
 
@@ -59,6 +63,7 @@ const MapLegend = ({
         bgcolor: 'background.paper',
         ...getPositionStyle(),
         borderRadius: 1,
+        maxWidth: 250,
       }}
     >
       <Box
@@ -88,55 +93,53 @@ const MapLegend = ({
         </IconButton>
       </Box>
 
-      {isExpanded && (
-        <>
-          <Box sx={{ display: 'flex', height: 20, mb: 0.5 }}>
-            {values.map((value, i) => (
-              <Tooltip
-                key={i}
-                title={`${format(value)}${unit}`}
-                arrow
-                placement="top"
-              >
-                <Box
-                  sx={{
-                    width: 24,
-                    height: '100%',
-                    bgcolor: colorScale(value),
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    '&:first-of-type': {
-                      borderTopLeftRadius: 2,
-                      borderBottomLeftRadius: 2,
-                    },
-                    '&:last-child': {
-                      borderTopRightRadius: 2,
-                      borderBottomRightRadius: 2,
-                    },
-                  }}
-                />
-              </Tooltip>
-            ))}
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              mt: 0.5,
-              px: 0.5,
-            }}
-          >
-            <Typography variant="caption">
-              {format(domain[0])}
-              {unit}
-            </Typography>
-            <Typography variant="caption">
-              {format(domain[1])}
-              {unit}
-            </Typography>
-          </Box>
-        </>
-      )}
+      <Collapse in={isExpanded}>
+        <Box sx={{ display: 'flex', height: 20, mb: 0.5 }}>
+          {values.map((value, i) => (
+            <Tooltip
+              key={i}
+              title={`${format(value)}${unit}`}
+              arrow
+              placement="top"
+            >
+              <Box
+                sx={{
+                  width: 24,
+                  height: '100%',
+                  bgcolor: colorScale(value),
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  '&:first-of-type': {
+                    borderTopLeftRadius: 2,
+                    borderBottomLeftRadius: 2,
+                  },
+                  '&:last-child': {
+                    borderTopRightRadius: 2,
+                    borderBottomRightRadius: 2,
+                  },
+                }}
+              />
+            </Tooltip>
+          ))}
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mt: 0.5,
+            px: 0.5,
+          }}
+        >
+          <Typography variant="caption">
+            {format(domain[0])}
+            {unit}
+          </Typography>
+          <Typography variant="caption">
+            {format(domain[1])}
+            {unit}
+          </Typography>
+        </Box>
+      </Collapse>
     </Paper>
   );
 };

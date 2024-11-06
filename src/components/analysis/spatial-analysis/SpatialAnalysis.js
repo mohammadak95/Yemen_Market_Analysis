@@ -2,45 +2,35 @@
 
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateLoadingProgress } from '../../../slices/spatialSlice';
+import { fetchSpatialData, updateLoadingProgress } from '../../../slices/spatialSlice';
+import useSpatialData from '../../../hooks/useSpatialData';
 import LoadingSpinner from '../../common/LoadingSpinner';
 import { Box, Alert, AlertTitle } from '@mui/material';
 import SpatialMap from './SpatialMap';
 import SpatialDiagnostics from './SpatialDiagnostics';
 import DynamicInterpretation from './DynamicInterpretation';
-import { useSpatialData } from '../../../context/SpatialDataContext';
 
 const SpatialAnalysis = ({ selectedCommodity }) => {
   const dispatch = useDispatch();
-  const { loadingProgress } = useSelector(state => state.spatial);
-  const { loading, error, data, fetchSpatialData } = useSpatialData();
+  const { geoData, analysis, flows, weights, uniqueMonths, status, error, loadingProgress } = useSpatialData(selectedCommodity);
 
   const [selectedMonth, setSelectedMonth] = useState(null);
 
   useEffect(() => {
-    if (!selectedCommodity) return;
-
-    const loadData = async () => {
-      dispatch(updateLoadingProgress(10));
-      await fetchSpatialData(selectedCommodity);
-      dispatch(updateLoadingProgress(100));
-    };
-
-    loadData();
-
-    return () => {
+    if (selectedCommodity) {
       dispatch(updateLoadingProgress(0));
-    };
-  }, [selectedCommodity, fetchSpatialData, dispatch]);
+      dispatch(fetchSpatialData());
+    }
+  }, [dispatch, selectedCommodity]);
 
   useEffect(() => {
-    // Set initial selected month when data is loaded
-    if (data && data.uniqueMonths?.length > 0) {
-      setSelectedMonth(data.uniqueMonths[data.uniqueMonths.length - 1]);
+    // Set the latest month as the initial selected month once data is loaded
+    if (uniqueMonths?.length > 0) {
+      setSelectedMonth(uniqueMonths[uniqueMonths.length - 1]);
     }
-  }, [data]);
+  }, [uniqueMonths]);
 
-  if (loading) {
+  if (status === 'loading') {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
         <LoadingSpinner progress={loadingProgress} />
@@ -48,7 +38,7 @@ const SpatialAnalysis = ({ selectedCommodity }) => {
     );
   }
 
-  if (error) {
+  if (status === 'failed') {
     return (
       <Alert severity="error" sx={{ mt: 2 }}>
         <AlertTitle>Error Loading Data</AlertTitle>
@@ -57,7 +47,7 @@ const SpatialAnalysis = ({ selectedCommodity }) => {
     );
   }
 
-  if (!data) {
+  if (!geoData) {
     return (
       <Alert severity="info" sx={{ mt: 2 }}>
         <AlertTitle>No Data Available</AlertTitle>
@@ -71,28 +61,23 @@ const SpatialAnalysis = ({ selectedCommodity }) => {
       <Box sx={{ p: 2, mt: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
         <h2>Spatial Analysis: {selectedCommodity}</h2>
 
-        {/* Map Section */}
         <Box sx={{ height: 500, mb: 3 }}>
           <SpatialMap
-            geoData={data.geoData}
-            flowData={data.flowMaps}
+            geoData={geoData}
+            flowData={flows}
             selectedMonth={selectedMonth}
             onMonthChange={setSelectedMonth}
-            availableMonths={data.uniqueMonths}
-            spatialWeights={data.spatialWeights}
+            availableMonths={uniqueMonths}
+            spatialWeights={weights}
           />
         </Box>
 
-        {/* Analysis Results */}
-        {data.analysisResults && (
+        {analysis && (
           <>
-            <SpatialDiagnostics 
-              data={data.analysisResults} 
-              selectedMonth={selectedMonth} 
-            />
+            <SpatialDiagnostics data={analysis} selectedMonth={selectedMonth} />
             <DynamicInterpretation
-              data={data.analysisResults}
-              spatialWeights={data.spatialWeights}
+              data={analysis}
+              spatialWeights={weights}
               selectedMonth={selectedMonth}
             />
           </>
