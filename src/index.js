@@ -11,7 +11,7 @@ import { backgroundMonitor } from './utils/backgroundMonitor';
 import './utils/leafletSetup';
 import 'leaflet/dist/leaflet.css';
 import './styles/leaflet-overrides.css';
-import { fetchSpatialData } from './store/spatialSlice'; // Import the thunk
+import { fetchSpatialData } from './slices/spatialSlice'; // Import the thunk
 
 // Initialize Redux Debugger
 setupReduxDebugger(store);

@@ -1,66 +1,44 @@
 // src/components/analysis/spatial-analysis/SpatialAnalysis.js
 
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux'; // Added useSelector
+import { useDispatch, useSelector } from 'react-redux';
 import { updateLoadingProgress } from '../../../slices/spatialSlice';
-import { useSpatialDataService } from '../../../services/spatialDataService';
 import LoadingSpinner from '../../common/LoadingSpinner';
 import { Box, Alert, AlertTitle } from '@mui/material';
 import SpatialMap from './SpatialMap';
 import SpatialDiagnostics from './SpatialDiagnostics';
 import DynamicInterpretation from './DynamicInterpretation';
+import { useSpatialData } from '../../../context/SpatialDataContext';
 
 const SpatialAnalysis = ({ selectedCommodity }) => {
-  const spatialService = useSpatialDataService();
   const dispatch = useDispatch();
-  
-  // Get loading progress from Redux state
-  const loadingProgress = useSelector(state => state.spatial.loadingProgress);
-  
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
+  const { loadingProgress } = useSelector(state => state.spatial);
+  const { loading, error, data, fetchSpatialData } = useSpatialData();
+
   const [selectedMonth, setSelectedMonth] = useState(null);
 
   useEffect(() => {
-    let mounted = true;
+    if (!selectedCommodity) return;
 
     const loadData = async () => {
-      if (!selectedCommodity) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-        dispatch(updateLoadingProgress(50));
-
-        const processedData = await spatialService.processSpatialData(selectedCommodity);
-        
-        if (mounted) {
-          setData(processedData);
-          // Set initial selected month to the latest month
-          if (processedData.uniqueMonths?.length > 0) {
-            setSelectedMonth(processedData.uniqueMonths[processedData.uniqueMonths.length - 1]);
-          }
-          dispatch(updateLoadingProgress(100));
-        }
-      } catch (error) {
-        if (mounted) {
-          setError(error);
-          dispatch(updateLoadingProgress(0));
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
+      dispatch(updateLoadingProgress(10));
+      await fetchSpatialData(selectedCommodity);
+      dispatch(updateLoadingProgress(100));
     };
 
     loadData();
 
     return () => {
-      mounted = false;
+      dispatch(updateLoadingProgress(0));
     };
-  }, [selectedCommodity, spatialService, dispatch]);
+  }, [selectedCommodity, fetchSpatialData, dispatch]);
+
+  useEffect(() => {
+    // Set initial selected month when data is loaded
+    if (data && data.uniqueMonths?.length > 0) {
+      setSelectedMonth(data.uniqueMonths[data.uniqueMonths.length - 1]);
+    }
+  }, [data]);
 
   if (loading) {
     return (
@@ -72,12 +50,9 @@ const SpatialAnalysis = ({ selectedCommodity }) => {
 
   if (error) {
     return (
-      <Alert 
-        severity="error"
-        sx={{ mt: 2 }}
-      >
+      <Alert severity="error" sx={{ mt: 2 }}>
         <AlertTitle>Error Loading Data</AlertTitle>
-        {error.message || 'An unexpected error occurred while loading spatial data.'}
+        {error || 'An unexpected error occurred while loading spatial data.'}
       </Alert>
     );
   }

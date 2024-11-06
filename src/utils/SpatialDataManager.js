@@ -1,48 +1,73 @@
-// src/services/spatialDataService.js
+// src/utils/SpatialDataManager.js
 
-import { backgroundMonitor } from '../utils/backgroundMonitor';
-import { createWorker, processDataWithWorker } from '../workers/workerLoader';
-import LZString from 'lz-string';
-import { normalizeRegionName, validateSpatialWeights } from '../utils/spatialUtils';
-import { transformCoordinates } from '../utils/coordinateTransforms';
-import { enhanceFetchError } from '../utils/errorUtils';
-import { getDataPath } from '../utils/dataUtils';
 import Papa from 'papaparse';
 import { parseISO, isValid } from 'date-fns';
+import LZString from 'lz-string';
+import proj4 from 'proj4';
+import { createWorker, processDataWithWorker } from '../workers/workerLoader';
+import { backgroundMonitor } from '../utils/backgroundMonitor';
 
-class SpatialDataService {
+// Projection setup
+const WGS84 = 'EPSG:4326';
+const UTM_ZONE_38N = 'EPSG:32638';
+const YEMEN_TM = 'EPSG:2098';
+proj4.defs(UTM_ZONE_38N, '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs');
+proj4.defs(YEMEN_TM, '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass +units=m +no_defs');
+
+// Config
+const CACHE_DURATION = 30 * 60 * 1000;
+const RETRY_ATTEMPTS = 3;
+const RETRY_DELAY = 1000;
+
+// Normalize region names to ensure consistency
+const normalizeRegionName = (regionName) => {
+  if (!regionName) return '';
+  return regionName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['']/g, '').replace(/[\s-]+/g, '_').trim();
+};
+
+// Validate spatial weights data structure
+const validateSpatialWeights = (weights) => {
+  const errors = [];
+  if (!weights || typeof weights !== 'object') return { isValid: false, errors: ['Invalid structure'] };
+  Object.entries(weights).forEach(([region, data]) => {
+    if (!data.neighbors?.every(neighbor => typeof neighbor === 'string' && weights[neighbor])) {
+      errors.push(`Invalid neighbors for region ${region}`);
+    }
+  });
+  return { isValid: errors.length === 0, errors };
+};
+
+// Get data path based on environment
+const getDataPath = (fileName) => {
+  const PUBLIC_URL = process.env.PUBLIC_URL || '';
+  const isGitHubPages = PUBLIC_URL.includes('github.io');
+  const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
+  let basePath = isOffline ? '/results' :
+                 isGitHubPages ? `${PUBLIC_URL}/results` :
+                 process.env.NODE_ENV === 'production' ? '/Yemen_Market_Analysis/results' : '/results';
+  return `${basePath}/${fileName.replace(/^\/+/, '')}`;
+};
+
+// Centralized spatial data manager with cache, retry, and workers
+class SpatialDataManager {
   constructor() {
     this.cache = new Map();
-    this.pendingRequests = new Map();
     this.circuitBreakers = new Map();
-    this.retryQueue = new Map();
     this.worker = null;
     this.monitor = backgroundMonitor;
-    
-    // Configuration
+
+    // Configurations
     this.config = {
-      cache: {
-        maxSize: 50,
-        ttl: 30 * 60 * 1000, // 30 minutes
-        cleanupInterval: 5 * 60 * 1000 // 5 minutes
-      },
-      circuitBreaker: {
-        failureThreshold: 5,
-        resetTimeout: 30000
-      },
-      retry: {
-        maxAttempts: 3,
-        baseDelay: 1000
-      },
-      worker: {
-        timeout: 30000
-      }
+      cache: { maxSize: 50, ttl: CACHE_DURATION, cleanupInterval: 300000 },
+      circuitBreaker: { failureThreshold: 5, resetTimeout: 30000 },
+      retry: { maxAttempts: RETRY_ATTEMPTS, baseDelay: RETRY_DELAY },
+      worker: { timeout: 30000 }
     };
 
-    this.initializeService();
+    this.initialize();
   }
 
-  async initializeService() {
+  async initialize() {
     try {
       this.worker = await createWorker();
       this.initializeCleanupInterval();
@@ -56,67 +81,45 @@ class SpatialDataService {
     setInterval(() => this.cleanupCache(), this.config.cache.cleanupInterval);
   }
 
-  // Cache Management
-  async getCachedData(key) {
+  // Cache management
+  getCachedData(key) {
     const cached = this.cache.get(key);
     if (!cached) return null;
-
     if (Date.now() - cached.timestamp > this.config.cache.ttl) {
       this.cache.delete(key);
       return null;
     }
-
-    try {
-      return cached.compressed ? 
-        JSON.parse(LZString.decompressFromUTF16(cached.data)) : 
-        cached.data;
-    } catch (error) {
-      this.cache.delete(key);
-      return null;
-    }
+    return cached.compressed ? JSON.parse(LZString.decompressFromUTF16(cached.data)) : cached.data;
   }
 
   setCachedData(key, data) {
     const shouldCompress = JSON.stringify(data).length > 100000;
     const cachedData = {
-      data: shouldCompress ? 
-        LZString.compressToUTF16(JSON.stringify(data)) : 
-        data,
+      data: shouldCompress ? LZString.compressToUTF16(JSON.stringify(data)) : data,
       timestamp: Date.now(),
       compressed: shouldCompress
     };
-
     this.cache.set(key, cachedData);
     this.enforceMaxCacheSize();
   }
 
   enforceMaxCacheSize() {
-    if (this.cache.size > this.config.cache.maxSize) {
-      const entries = Array.from(this.cache.entries())
-        .sort((a, b) => a[1].timestamp - b[1].timestamp);
-      
-      while (this.cache.size > this.config.cache.maxSize) {
-        const [oldestKey] = entries.shift();
-        this.cache.delete(oldestKey);
-      }
+    while (this.cache.size > this.config.cache.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      this.cache.delete(oldestKey);
     }
   }
 
-  // Circuit Breaker
+  // Circuit breaker
   getCircuitBreaker(key) {
     if (!this.circuitBreakers.has(key)) {
-      this.circuitBreakers.set(key, {
-        failures: 0,
-        lastFailure: null,
-        isOpen: false
-      });
+      this.circuitBreakers.set(key, { failures: 0, lastFailure: null, isOpen: false });
     }
     return this.circuitBreakers.get(key);
   }
 
   async executeWithCircuitBreaker(key, operation) {
     const breaker = this.getCircuitBreaker(key);
-    
     if (breaker.isOpen) {
       if (Date.now() - breaker.lastFailure > this.config.circuitBreaker.resetTimeout) {
         breaker.isOpen = false;
@@ -134,7 +137,6 @@ class SpatialDataService {
     } catch (error) {
       breaker.failures++;
       breaker.lastFailure = Date.now();
-      
       if (breaker.failures >= this.config.circuitBreaker.failureThreshold) {
         breaker.isOpen = true;
       }
@@ -142,14 +144,11 @@ class SpatialDataService {
     }
   }
 
-  // Data Processing
+  // Data processing with workers
   async processSpatialData(selectedCommodity) {
     const cacheKey = `spatial_data_${selectedCommodity?.toLowerCase()}`;
-    const cachedData = await this.getCachedData(cacheKey);
-    
-    if (cachedData) {
-      return cachedData;
-    }
+    const cachedData = this.getCachedData(cacheKey);
+    if (cachedData) return cachedData;
 
     return this.executeWithCircuitBreaker(cacheKey, async () => {
       const paths = {
@@ -160,18 +159,11 @@ class SpatialDataService {
         analysis: getDataPath('spatial_analysis_results.json')
       };
 
-      // Fetch all data with monitoring
       const startTime = performance.now();
       this.monitor.logMetric('spatial-fetch-start', { selectedCommodity });
 
       try {
-        const [
-          geoBoundariesData,
-          unifiedData,
-          weightsData,
-          flowMapsData,
-          analysisResultsData
-        ] = await Promise.all([
+        const [geoBoundariesData, unifiedData, weightsData, flowMapsData, analysisResultsData] = await Promise.all([
           this.fetchWithRetry(paths.geoBoundaries),
           this.fetchWithRetry(paths.unified),
           this.fetchWithRetry(paths.weights),
@@ -206,7 +198,7 @@ class SpatialDataService {
   async fetchWithRetry(url, isCsv = false, attempts = 0) {
     try {
       const response = await fetch(url);
-      await enhanceFetchError(response);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       if (isCsv) {
         const text = await response.text();
@@ -225,9 +217,7 @@ class SpatialDataService {
 
     } catch (error) {
       if (attempts < this.config.retry.maxAttempts) {
-        await new Promise(resolve => 
-          setTimeout(resolve, this.config.retry.baseDelay * Math.pow(2, attempts))
-        );
+        await new Promise(resolve => setTimeout(resolve, this.config.retry.baseDelay * Math.pow(2, attempts)));
         return this.fetchWithRetry(url, isCsv, attempts + 1);
       }
       throw error;
@@ -242,7 +232,6 @@ class SpatialDataService {
     analysisResultsData,
     selectedCommodity
   }) {
-    // Validate inputs
     if (!geoBoundariesData?.features || !unifiedData?.features) {
       throw new Error('Invalid GeoJSON structure');
     }
@@ -252,13 +241,13 @@ class SpatialDataService {
       throw new Error(`Invalid spatial weights: ${weightsValidation.errors.join(', ')}`);
     }
 
-    // Process features
-    const filteredFeatures = this.processFeatures(unifiedData.features, selectedCommodity);
-    
-    // Transform coordinates
+    const filteredFeatures = unifiedData.features.filter(
+      feature => feature.properties?.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
+    );
+
     const transformedFeatures = filteredFeatures.map(feature => ({
       ...feature,
-      geometry: transformCoordinates.transformGeometry(feature.geometry),
+      geometry: this.transformGeometry(feature.geometry),
       properties: {
         ...feature.properties,
         date: this.processDate(feature.properties.date),
@@ -266,7 +255,6 @@ class SpatialDataService {
       }
     }));
 
-    // Process flow maps
     const processedFlowMaps = flowMapsData.map(flow => ({
       ...flow,
       date: this.processDate(flow.date),
@@ -274,18 +262,10 @@ class SpatialDataService {
       target_region: normalizeRegionName(flow.target)
     })).filter(flow => flow.source_region && flow.target_region);
 
-    // Extract unique months
-    const uniqueMonths = Array.from(new Set(
-      transformedFeatures
-        .map(f => f.properties.date?.slice(0, 7))
-        .filter(Boolean)
-    )).sort();
+    const uniqueMonths = Array.from(new Set(transformedFeatures.map(f => f.properties.date?.slice(0, 7)).filter(Boolean))).sort();
 
     return {
-      geoData: {
-        type: 'FeatureCollection',
-        features: transformedFeatures
-      },
+      geoData: { type: 'FeatureCollection', features: transformedFeatures },
       flowMaps: processedFlowMaps,
       spatialWeights: weightsData,
       analysisResults: analysisResultsData,
@@ -294,32 +274,38 @@ class SpatialDataService {
         processingTimestamp: new Date().toISOString(),
         featureCount: transformedFeatures.length,
         flowCount: processedFlowMaps.length,
-        timeRange: {
-          start: uniqueMonths[0],
-          end: uniqueMonths[uniqueMonths.length - 1]
-        }
+        timeRange: { start: uniqueMonths[0], end: uniqueMonths[uniqueMonths.length - 1] }
       }
     };
   }
 
-  processFeatures(features, selectedCommodity) {
-    return features.filter(feature => {
-      const commodity = feature.properties?.commodity?.toLowerCase();
-      return commodity === selectedCommodity?.toLowerCase();
-    });
-  }
-
-  processDate(dateString) {
-    if (!dateString) return null;
-    try {
-      const date = parseISO(dateString);
-      return isValid(date) ? date.toISOString() : null;
-    } catch {
-      return null;
+  transformGeometry(geometry) {
+    if (!geometry || !geometry.type || !geometry.coordinates) return geometry;
+    switch (geometry.type) {
+      case 'Point':
+        return { ...geometry, coordinates: this.transformCoordinates(geometry.coordinates) };
+      case 'Polygon':
+      case 'MultiPolygon':
+        return { ...geometry, coordinates: geometry.coordinates.map(ring => ring.map(coord => this.transformCoordinates(coord))) };
+      default:
+        return geometry;
     }
   }
 
-  // Cleanup
+  transformCoordinates([x, y], sourceCRS = UTM_ZONE_38N) {
+    try {
+      return proj4(sourceCRS, WGS84, [x, y]);
+    } catch (error) {
+      console.error('Coordinate transformation error:', error);
+      return [x, y];
+    }
+  }
+
+  processDate(dateString) {
+    const date = parseISO(dateString);
+    return isValid(date) ? date.toISOString() : null;
+  }
+
   cleanupCache() {
     const now = Date.now();
     for (const [key, value] of this.cache.entries()) {
@@ -333,15 +319,9 @@ class SpatialDataService {
     this.worker?.terminate();
     this.cache.clear();
     this.circuitBreakers.clear();
-    this.pendingRequests.clear();
-    this.retryQueue.clear();
   }
 }
 
 // Export singleton instance
-export const spatialDataService = new SpatialDataService();
-
-// React hook for using the service
-export const useSpatialDataService = () => {
-  return spatialDataService;
-};
+export const spatialDataManager = new SpatialDataManager();
+export const useSpatialDataManager = () => spatialDataManager;

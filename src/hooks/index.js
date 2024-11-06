@@ -1,4 +1,4 @@
-import { useSpatialDataOptimized } from './spatialHooks';
+import useSpatialData from './useSpatialData';
 import { useData } from './dataHooks';
 import { useECMData } from './dataHooks';
 import { usePriceDifferentialData } from './dataHooks';
@@ -13,7 +13,7 @@ import { useTechnicalHelp } from './uiHooks';
 import { useWorkerProcessor } from './uiHooks';
 
 export {
-  useSpatialDataOptimized,
+  useSpatialData,
   useData,
   useECMData,
   usePriceDifferentialData,

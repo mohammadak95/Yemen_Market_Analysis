@@ -1,22 +1,31 @@
 // src/context/SpatialDataContext.js
 
-import React, { createContext, useContext, useState } from 'react';
-import { useSpatialDataService } from '../services/spatialDataService';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { spatialDataManager } from '../utils/SpatialDataManager';
 
 const SpatialDataContext = createContext(null);
 
 export const SpatialDataProvider = ({ children }) => {
-  const spatialService = useSpatialDataService();
   const [state, setState] = useState({
     loading: false,
     error: null,
     data: null
   });
 
+  const fetchSpatialData = useCallback(async (selectedCommodity) => {
+    setState({ loading: true, error: null, data: null });
+    try {
+      const data = await spatialDataManager.processSpatialData(selectedCommodity);
+      setState({ loading: false, error: null, data });
+    } catch (error) {
+      console.error('Error fetching spatial data:', error);
+      setState({ loading: false, error: error.message, data: null });
+    }
+  }, []);
+
   const value = {
     ...state,
-    spatialService,
-    setState
+    fetchSpatialData
   };
 
   return (

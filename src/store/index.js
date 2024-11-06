@@ -5,8 +5,8 @@ import themeReducer from './slices/themeSlice';
 import spatialReducer from './slices/spatialSlice';
 
 // Custom middleware to log spatial actions in development
-const spatialLogger = store => next => action => {
-  if (process.env.NODE_ENV === 'development' && 
+const spatialLogger = (store) => (next) => (action) => {
+  if (process.env.NODE_ENV === 'development' &&
       (action.type?.startsWith('spatial/') || action.type?.includes('spatial'))) {
     console.group(`Action: ${action.type}`);
     console.log('Payload:', action.payload);
@@ -26,12 +26,15 @@ const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
+      serializableCheck: {
+        ignoredPaths: ['spatial.geoData', 'spatial.spatialWeights', 'spatial.flowMaps'],
+      },
       immutableCheck: process.env.NODE_ENV === 'development'
     }).concat(spatialLogger),
   devTools: process.env.NODE_ENV === 'development'
 });
 
+// Attach the store to the window for debugging purposes in development
 if (process.env.NODE_ENV === 'development') {
   window.__REDUX_STORE__ = store;
 }
