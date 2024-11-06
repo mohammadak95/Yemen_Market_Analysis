@@ -10,8 +10,7 @@ from typing import List, Tuple, Dict
 try:
     import pathspec
 except ImportError:
-    print("The 'pathspec' library is not installed. Please install it using 'pip install pathspec'")
-    sys.exit(1)
+    sys.exit("The 'pathspec' library is not installed. Please install it using 'pip install pathspec'")
 
 try:
     from colorama import Fore, Style, init
@@ -19,7 +18,8 @@ try:
     COLORAMA_AVAILABLE = True
 except ImportError:
     COLORAMA_AVAILABLE = False
-
+    sys.stderr.write("The 'colorama' library is not installed. Please install it using 'pip install colorama'\n")
+    sys.exit(1)
 try:
     from tabulate import tabulate
     TABULATE_AVAILABLE = True
@@ -115,13 +115,14 @@ def print_tree(
     git_info: bool,
     repo_root: Path,
     prefix: str = "",
-    is_last: bool = True,
-    file_commits: Dict[Path, Tuple[str, str]] = {}
+    is_last: bool = True
 ):
     """
     Recursively print the directory tree.
     """
-    items = sorted([item for item in current_path.iterdir() if not is_ignored(item, spec, repo_root)])
+    print(f"Processing directory: {current_path}")  # Debug print
+    items = sorted(item for item in current_path.iterdir() if not is_ignored(item, spec, repo_root))
+    print(f"Items in directory: {items}")  # Debug print
 
     for index, item in enumerate(items):
         is_last_item = index == len(items) - 1
@@ -148,7 +149,7 @@ def print_tree(
 
         if item.is_dir():
             extension = "    " if is_last_item else "│   "
-            print_tree(item, spec, git_info, repo_root, prefix + extension, is_last_item, file_commits)
+            print_tree(item, spec, git_info, repo_root, prefix + extension, is_last_item)
 
 def generate_tree_lines(
     root_path: Path,
@@ -160,8 +161,8 @@ def generate_tree_lines(
     """
     lines = []
 
-    def recurse(current_path: Path, current_prefix: str, is_last: bool):
-        items = sorted([item for item in current_path.iterdir() if not is_ignored(item, spec, root_path)])
+    def recurse(current_path: Path, current_prefix: str):
+        items = sorted(item for item in current_path.iterdir() if not is_ignored(item, spec, root_path))
         for index, item in enumerate(items):
             is_last_item = index == len(items) - 1
             connector = "└── " if is_last_item else "├── "
@@ -176,9 +177,9 @@ def generate_tree_lines(
 
             if item.is_dir():
                 extension = "    " if is_last_item else "│   "
-                recurse(item, current_prefix + extension, is_last_item)
+                recurse(item, current_prefix + extension)
 
-    recurse(root_path, "", True)
+    recurse(root_path, "")
     return lines
 
 def save_tree_to_file(lines: List[str], output_file: str):
@@ -190,9 +191,8 @@ def save_tree_to_file(lines: List[str], output_file: str):
             for line in lines:
                 f.write(line + '\n')
         print(f"Repository tree saved to {output_file}")
-    except IOError as e:
-        print(f"Error writing to file {output_file}: {e}")
-
+    except Exception as e:
+        sys.stderr.write(f"Error writing to file {output_file}: {e}\n")
 def main():
     parser = argparse.ArgumentParser(description="Map and visualize your Git repository's structure excluding .gitignore items.")
     parser.add_argument(
@@ -210,8 +210,8 @@ def main():
 
     repo_root = Path(os.getcwd())
 
-    if not (repo_root / '.git').is_dir():
-        print("Error: This script must be run from the root of a Git repository.")
+    if not (repo_root / ".git").exists():
+        sys.stderr.write("Error: This script must be run from the root of a Git repository.\n")
         sys.exit(1)
 
     # Load and compile .gitignore patterns
@@ -222,6 +222,7 @@ def main():
         tree_lines = generate_tree_lines(repo_root, spec, args.git_info)
         save_tree_to_file(tree_lines, args.output)
     else:
+        print("Printing repository tree to terminal...")  # Debug print
         print_tree(repo_root, spec, args.git_info, repo_root)
 
 if __name__ == "__main__":

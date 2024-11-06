@@ -47,22 +47,35 @@ const monitoredFetch = async (path, description) => {
     path,
     description
   };
-  
+
   try {
     const response = await fetch(path);
     if (!response.ok) {
       throw new Error(`Failed to fetch ${description}: ${response.statusText}`);
     }
-    
+
+    // Log the raw response for debugging
+    const rawResponse = await response.clone().text();
+    console.log('Raw response:', rawResponse);
+
     // Handle different response types
     let data;
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
+    } else if (contentType && contentType.includes('application/geo+json')) {
+      data = await response.json();
+      // Validate GeoJSON structure
+      if (!data.type || data.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
+        throw new Error(`Invalid GeoJSON structure for ${description}`);
+      }
     } else {
       data = await response.text();
     }
-    
+
+    // Log the parsed data for debugging
+    console.log('Parsed data:', data);
+
     backgroundMonitor.logMetric('data-fetch', {
       path,
       description,
@@ -70,7 +83,7 @@ const monitoredFetch = async (path, description) => {
       success: true,
       contentType
     });
-    
+
     return data;
   } catch (error) {
     backgroundMonitor.logError('data-fetch', {
