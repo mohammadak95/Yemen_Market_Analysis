@@ -1,6 +1,9 @@
 // src/hooks/useSpatialData.js
 
 import { useSelector } from 'react-redux';
+import { useMemo } from 'react';
+
+
 
 export const useSpatialData = (selectedCommodity) => {
   const {
@@ -8,18 +11,35 @@ export const useSpatialData = (selectedCommodity) => {
     analysisResults,
     status,
     error,
+    spatialWeights,
+    flowMaps
   } = useSelector((state) => state.spatial);
 
-  const selectedAnalysis = analysisResults?.find(
-    (analysis) =>
-      analysis.commodity?.toLowerCase() === selectedCommodity?.toLowerCase() &&
-      analysis.regime === 'unified'
-  );
+  const processedData = useMemo(() => {
+    if (!analysisResults || !Array.isArray(analysisResults)) {
+      return null;
+    }
+
+    const selectedAnalysis = analysisResults.find(
+      (analysis) =>
+        analysis?.commodity?.toLowerCase() === selectedCommodity?.toLowerCase() &&
+        analysis?.regime === 'unified'
+    );
+
+    return {
+      analysis: selectedAnalysis,
+      flows: flowMaps?.filter(
+        flow => flow.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
+      ) || [],
+      weights: spatialWeights
+    };
+  }, [analysisResults, flowMaps, spatialWeights, selectedCommodity]);
 
   return {
-    geoData,
-    diagnostics: selectedAnalysis,
+    geoData: geoData || null,
+    ...processedData,
     loading: status === 'loading',
-    error,
+    error: error || null,
+    hasData: Boolean(geoData && processedData?.analysis)
   };
 };

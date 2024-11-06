@@ -18,7 +18,6 @@ import {
   Divider,
   Chip,
 } from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
 import {
   TrendingUp,
   TrendingDown,
@@ -26,11 +25,24 @@ import {
   Warning,
 } from '@mui/icons-material';
 
-const SpatialDiagnostics = ({ data }) => {
+const SpatialDiagnostics = ({ data, selectedMonth }) => {
   if (!data) {
     return (
       <Alert severity="info">
         No diagnostics available
+      </Alert>
+    );
+  }
+
+  // Ensure we're accessing the correct analysis result
+  const currentAnalysis = Array.isArray(data) ? 
+    data.find(d => d.regime === 'unified') : 
+    data;
+
+  if (!currentAnalysis) {
+    return (
+      <Alert severity="warning">
+        No unified analysis results available
       </Alert>
     );
   }
@@ -44,17 +56,7 @@ const SpatialDiagnostics = ({ data }) => {
     coefficients,
     p_values,
     vif,
-  } = data;
-
-  const explanations = {
-    moran_i: "Moran's I measures spatial autocorrelation. Values range from -1 (dispersion) to 1 (clustering), with 0 indicating random distribution.",
-    'p-value': 'P-value indicates statistical significance. Values < 0.05 suggest significant spatial patterns.',
-    r_squared: 'R-squared indicates the proportion of variance explained by the model (0-1). Higher values indicate better fit.',
-    adj_r_squared: 'Adjusted R-squared modifies R-squared to account for model complexity, preventing overfitting.',
-    mse: 'Mean Squared Error measures prediction accuracy. Lower values indicate better model performance.',
-    vif: 'Variance Inflation Factor measures multicollinearity. Values > 5 suggest problematic correlation.',
-    spatial_lag: 'Spatial lag coefficient indicates strength and direction of spatial price relationships.',
-  };
+  } = currentAnalysis;
 
   const moranIValue = moran_i?.I || moran_i?.value;
   const pValue = moran_i?.['p-value'] || moran_i?.p_value;
@@ -75,7 +77,7 @@ const SpatialDiagnostics = ({ data }) => {
 
   return (
     <Paper sx={{ p: 2, mt: 2 }}>
-      <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+      <Typography variant="h6" gutterBottom>
         Spatial Diagnostics
       </Typography>
 
@@ -91,10 +93,9 @@ const SpatialDiagnostics = ({ data }) => {
                 <TableBody>
                   <TableRow>
                     <TableCell>
-                      <Tooltip title={explanations.moran_i} arrow>
-                        <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                      <Tooltip title="Measures spatial autocorrelation from -1 (dispersion) to 1 (clustering)" arrow>
+                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
                           Moran's I
-                          <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
                         </Box>
                       </Tooltip>
                     </TableCell>
@@ -114,10 +115,9 @@ const SpatialDiagnostics = ({ data }) => {
                   </TableRow>
                   <TableRow>
                     <TableCell>
-                      <Tooltip title={explanations['p-value']} arrow>
-                        <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                      <Tooltip title="Statistical significance level" arrow>
+                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
                           P-Value
-                          <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
                         </Box>
                       </Tooltip>
                     </TableCell>
@@ -151,10 +151,9 @@ const SpatialDiagnostics = ({ data }) => {
                 <TableBody>
                   <TableRow>
                     <TableCell>
-                      <Tooltip title={explanations.r_squared} arrow>
-                        <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                      <Tooltip title="Proportion of variance explained by the model" arrow>
+                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
                           R-Squared
-                          <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
                         </Box>
                       </Tooltip>
                     </TableCell>
@@ -173,10 +172,9 @@ const SpatialDiagnostics = ({ data }) => {
                   </TableRow>
                   <TableRow>
                     <TableCell>
-                      <Tooltip title={explanations.adj_r_squared} arrow>
-                        <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                      <Tooltip title="R-squared adjusted for model complexity" arrow>
+                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
                           Adjusted R-Squared
-                          <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
                         </Box>
                       </Tooltip>
                     </TableCell>
@@ -187,10 +185,9 @@ const SpatialDiagnostics = ({ data }) => {
                   {mse !== undefined && (
                     <TableRow>
                       <TableCell>
-                        <Tooltip title={explanations.mse} arrow>
-                          <Box sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+                        <Tooltip title="Mean Squared Error" arrow>
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
                             MSE
-                            <InfoIcon fontSize="small" sx={{ ml: 0.5 }} />
                           </Box>
                         </Tooltip>
                       </TableCell>
@@ -244,7 +241,7 @@ const SpatialDiagnostics = ({ data }) => {
           </Grid>
         )}
 
-        {/* Sample Information */}
+        {/* Analysis Summary */}
         <Grid item xs={12}>
           <Alert severity="info" sx={{ mt: 2 }}>
             Analysis based on {observations || 'unknown'} observations.
@@ -261,24 +258,29 @@ const SpatialDiagnostics = ({ data }) => {
 };
 
 SpatialDiagnostics.propTypes = {
-  data: PropTypes.shape({
-    moran_i: PropTypes.shape({
-      I: PropTypes.number,
-      value: PropTypes.number,
-      'p-value': PropTypes.number,
-      p_value: PropTypes.number,
+  data: PropTypes.oneOfType([
+    PropTypes.shape({
+      moran_i: PropTypes.shape({
+        I: PropTypes.number,
+        value: PropTypes.number,
+        'p-value': PropTypes.number,
+        p_value: PropTypes.number,
+      }),
+      r_squared: PropTypes.number,
+      adj_r_squared: PropTypes.number,
+      observations: PropTypes.number,
+      mse: PropTypes.number,
+      coefficients: PropTypes.object,
+      p_values: PropTypes.object,
+      vif: PropTypes.arrayOf(PropTypes.shape({
+        Variable: PropTypes.string,
+        VIF: PropTypes.number
+      })),
+      regime: PropTypes.string
     }),
-    r_squared: PropTypes.number,
-    adj_r_squared: PropTypes.number,
-    observations: PropTypes.number,
-    mse: PropTypes.number,
-    coefficients: PropTypes.object,
-    p_values: PropTypes.object,
-    vif: PropTypes.arrayOf(PropTypes.shape({
-      Variable: PropTypes.string,
-      VIF: PropTypes.number
-    }))
-  }),
+    PropTypes.arrayOf(PropTypes.object)
+  ]),
+  selectedMonth: PropTypes.string
 };
 
-export default SpatialDiagnostics;
+export default React.memo(SpatialDiagnostics);

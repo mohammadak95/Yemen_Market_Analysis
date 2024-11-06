@@ -1,4 +1,4 @@
-// src/slices/spatialSlice.js
+// src/store/spatialSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getDataPath } from '../utils/dataUtils';
@@ -10,52 +10,68 @@ import {
   excludedRegions,
 } from '../utils/spatialUtils';
 import Papa from 'papaparse';
-import { transformCoordinates, processFlowMapWithTransform } from '../utils/coordinateTransforms';
+import {
+  transformCoordinates,
+  processFlowMapWithTransform,
+} from '../utils/coordinateTransforms';
+import { parseISO, isValid } from 'date-fns';
 
 const CHUNK_SIZE = 1000;
 
-// Enhanced fetch with comprehensive error handling
-const fetchWithHeaders = async (url) => {
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json, text/csv, */*',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-      mode: 'cors',
-      credentials: 'same-origin',
-    });
+// Single instance for request tracking
+const requestTracker = {
+  pending: new Map(),
+  cache: new Map(),
+  clear() {
+    this.pending.clear();
+    this.cache.clear();
+  },
+};
 
+// Fetch with built-in deduplication
+const fetchWithDeduplication = async (url, options = {}) => {
+  const key = `${url}_${JSON.stringify(options)}`;
+
+  if (requestTracker.pending.has(key)) {
+    return requestTracker.pending.get(key);
+  }
+
+  const promise = fetch(url, {
+    ...options,
+    headers: {
+      'Accept': '*/*',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      ...(options.headers || {}),
+    },
+  }).then(async (response) => {
     if (!response.ok) {
-      const errorText = await response.text().catch(() => 'No error details available');
-      throw new Error(`HTTP error! status: ${response.status}, url: ${url}, details: ${errorText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-
-    const contentType = response.headers.get('content-type');
-    if (!contentType) {
-      throw new Error(`Missing content-type header for ${url}`);
-    }
-
     return response;
-  } catch (error) {
-    console.error(`Error fetching ${url}:`, error);
-    throw error;
+  });
+
+  requestTracker.pending.set(key, promise);
+
+  try {
+    const response = await promise;
+    return response;
+  } finally {
+    requestTracker.pending.delete(key);
   }
 };
 
 // Enhanced date processing with validation
 const processDate = (dateString) => {
   if (!dateString || dateString === 'null') return null;
-  
+
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
       console.warn(`Invalid date format: "${dateString}"`);
       return null;
     }
-    
+
     // Normalize to first day of month
     return new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
   } catch (e) {
@@ -64,7 +80,7 @@ const processDate = (dateString) => {
   }
 };
 
-// Enhanced feature processing with validation
+// Enhanced feature processing with commodity filtering
 const processFeatures = (features, selectedCommodity) => {
   if (!Array.isArray(features)) {
     console.warn('[processFeatures] Expected features array, received:', typeof features);
@@ -85,17 +101,8 @@ const processFeatures = (features, selectedCommodity) => {
       const date = processDate(feature.properties.date);
       const regionId = normalizeRegionName(feature.properties.region_id);
 
-      // Transform geometry to Yemen TM
-      const transformedGeometry = transformCoordinates.transformGeometry(feature.geometry);
-      
-      if (!transformedGeometry) {
-        console.warn('Failed to transform geometry for feature:', feature);
-        return null;
-      }
-
       return {
         ...feature,
-        geometry: transformedGeometry,
         properties: {
           ...feature.properties,
           region_id: regionId,
@@ -103,21 +110,20 @@ const processFeatures = (features, selectedCommodity) => {
           usdprice: parseFloat(feature.properties.usdprice) || 0,
           price: parseFloat(feature.properties.price) || 0,
           conflict_intensity: parseFloat(feature.properties.conflict_intensity) || 0,
-          // Store coordinate system information
-          crs: {
-            original: 'EPSG:4326',
-            transformed: 'EPSG:2098'
-          }
-        }
+        },
       };
     })
-    .filter(feature => feature !== null);
+    .filter((feature) => feature !== null);
 };
 
-// Process flow maps data
-const processFlowMaps = (csvData) => {
+// Process flow maps data with commodity filtering
+const processFlowMaps = (csvData, selectedCommodity) => {
   return csvData
-    .map(row => {
+    .filter((row) => {
+      const commodity = row.commodity?.toLowerCase();
+      return commodity === selectedCommodity?.toLowerCase();
+    })
+    .map((row) => {
       const processed = processFlowMapWithTransform({
         source_lat: parseFloat(row.source_lat),
         source_lng: parseFloat(row.source_lng),
@@ -126,56 +132,126 @@ const processFlowMaps = (csvData) => {
         flow_weight: parseFloat(row.flow_weight),
         date: processDate(row.date),
         commodity: row.commodity?.toLowerCase(),
-        // Map the source and target columns to region fields
         source_region: normalizeRegionName(row.source),
         target_region: normalizeRegionName(row.target),
-        // Add additional price information
         source_price: parseFloat(row.source_price),
         target_price: parseFloat(row.target_price),
-        price_differential: parseFloat(row.price_differential)
+        price_differential: parseFloat(row.price_differential),
       });
 
-      // Validate the processed data
       if (!processed.source_region || !processed.target_region) {
         console.warn('Missing region information:', {
           source: row.source,
           target: row.target,
           processed_source: processed.source_region,
-          processed_target: processed.target_region
+          processed_target: processed.target_region,
         });
       }
 
       return processed;
     })
-    .filter(flow => {
-      // Only keep flows with valid region information
-      return flow !== null && 
-             flow.source_region && 
-             flow.target_region && 
-             !isNaN(flow.flow_weight);
+    .filter((flow) => {
+      return (
+        flow !== null &&
+        flow.source_region &&
+        flow.target_region &&
+        !isNaN(flow.flow_weight)
+      );
     });
 };
 
-// Enhanced spatial data fetch
+// Process all data in a single function to ensure consistency
+const processAllData = async (
+  geoBoundariesData,
+  unifiedData,
+  weightsData,
+  flowMapsData,
+  analysisData,
+  selectedCommodity
+) => {
+  // Validate weights
+  const weightsValidation = validateSpatialWeights(weightsData);
+  if (!weightsValidation.isValid) {
+    throw new Error(`Invalid spatial weights: ${weightsValidation.errors.join(', ')}`);
+  }
+
+  // Process features with commodity filtering
+  const filteredFeatures = processFeatures(unifiedData.features, selectedCommodity);
+
+  if (!filteredFeatures.length) {
+    throw new Error(`No features found for commodity: ${selectedCommodity}`);
+  }
+
+  // Normalize boundaries
+  const normalizedBoundaries = {
+    type: 'FeatureCollection',
+    features: geoBoundariesData.features.map((feature) => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        region_id: normalizeRegionName(
+          feature.properties.shapeName || feature.properties.region_id
+        ),
+      },
+    })),
+  };
+
+  // Merge data
+  const mergedGeoData = await mergeGeoDataChunked(
+    normalizedBoundaries,
+    { ...unifiedData, features: filteredFeatures },
+    regionMapping,
+    excludedRegions,
+    CHUNK_SIZE
+  );
+
+  if (!mergedGeoData?.features?.length) {
+    throw new Error('Failed to merge geodata');
+  }
+
+  // Process flow maps with commodity filtering
+  const processedFlowMaps = processFlowMaps(flowMapsData, selectedCommodity);
+
+  // Extract unique months
+  const uniqueMonths = Array.from(
+    new Set(
+      mergedGeoData.features
+        .map((f) => f.properties?.date?.slice(0, 7))
+        .filter(Boolean)
+    )
+  ).sort();
+
+  return {
+    geoData: mergedGeoData,
+    spatialWeights: weightsData,
+    flowMaps: processedFlowMaps,
+    analysisResults: analysisData,
+    uniqueMonths,
+    metadata: {
+      totalFeatures: mergedGeoData.features.length,
+      dataTimestamp: new Date().toISOString(),
+      commodityFilter: selectedCommodity,
+      processedFeatures: filteredFeatures.length,
+      totalDates: uniqueMonths.length,
+      flowMapsCount: processedFlowMaps.length,
+    },
+  };
+};
+
+// Export for testing
+export const __testing = {
+  processAllData,
+  fetchWithDeduplication,
+  requestTracker,
+};
+
+// Create thunk
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
-  async (selectedCommodity, { rejectWithValue }) => {
-    console.debug(`[fetchSpatialData] Initiated with selectedCommodity: "${selectedCommodity}"`);
-
-    let geoBoundariesData = null;
-    let unifiedData = null;
-    let weightsData = null;
-    let analysisResultsData = null;
-    let flowMapsData = [];
-    let filteredFeatures = [];
-    let mergedGeoData = null;
-    let normalizedGeoBoundaries = null;
-    let uniqueMonthStrings = [];
-
-    const startTime = performance.now();
-
+  async (selectedCommodity, { rejectWithValue, dispatch }) => {
     try {
-      // Define all data paths
+      dispatch(updateLoadingProgress(10));
+
       const paths = {
         geoBoundaries: getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson'),
         unified: getDataPath('enhanced_unified_data_with_residual.geojson'),
@@ -184,7 +260,7 @@ export const fetchSpatialData = createAsyncThunk(
         analysis: getDataPath('spatial_analysis_results.json'),
       };
 
-      // Fetch all data in parallel
+      // Fetch all data
       const [
         geoBoundariesResponse,
         unifiedResponse,
@@ -192,130 +268,64 @@ export const fetchSpatialData = createAsyncThunk(
         analysisResponse,
         flowMapsResponse,
       ] = await Promise.all([
-        fetchWithHeaders(paths.geoBoundaries),
-        fetchWithHeaders(paths.unified),
-        fetchWithHeaders(paths.weights),
-        fetchWithHeaders(paths.analysis),
-        fetchWithHeaders(paths.flowMaps),
+        fetchWithDeduplication(paths.geoBoundaries),
+        fetchWithDeduplication(paths.unified),
+        fetchWithDeduplication(paths.weights),
+        fetchWithDeduplication(paths.analysis),
+        fetchWithDeduplication(paths.flowMaps),
       ]);
 
-      // Parse JSON responses
-      [geoBoundariesData, unifiedData, weightsData, analysisResultsData] = await Promise.all([
-        geoBoundariesResponse.json(),
-        unifiedResponse.json(),
-        weightsResponse.json(),
-        analysisResponse.json(),
-      ]);
+      dispatch(updateLoadingProgress(40));
 
-      // Parse CSV flow maps data
+      // Parse responses
+      const geoBoundariesData = await geoBoundariesResponse.json();
+      const unifiedData = await unifiedResponse.json();
+      const weightsData = await weightsResponse.json();
+      const analysisData = await analysisResponse.json();
+
+      dispatch(updateLoadingProgress(60));
+
+      // Parse CSV
       const flowMapsText = await flowMapsResponse.text();
-      const result = Papa.parse(flowMapsText, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        error: (error) => {
-          throw new Error(`CSV parsing error: ${error.message}`);
-        }
+      const flowMapsData = await new Promise((resolve, reject) => {
+        Papa.parse(flowMapsText, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: (results) => resolve(results.data),
+          error: (error) => reject(new Error(`CSV parsing error: ${error.message}`)),
+        });
       });
 
-      flowMapsData = processFlowMaps(result.data);
+      dispatch(updateLoadingProgress(80));
 
-      // Validate spatial weights
-      const weightsValidation = validateSpatialWeights(weightsData);
-      if (!weightsValidation.isValid) {
-        throw new Error(`Invalid spatial weights data: ${weightsValidation.errors.join(', ')}`);
-      }
-
-      // Validate geoBoundaries data
-      if (!geoBoundariesData?.features?.length) {
-        throw new Error('Invalid geoBoundaries data structure');
-      }
-
-      // Normalize geoBoundaries
-      normalizedGeoBoundaries = {
-        type: 'FeatureCollection',
-        features: geoBoundariesData.features.map((feature) => ({
-          ...feature,
-          properties: {
-            ...feature.properties,
-            region_id: normalizeRegionName(feature.properties.shapeName || feature.properties.region_id),
-          },
-        })),
-      };
-
-      // Validate unified data
-      if (!unifiedData?.features?.length) {
-        throw new Error('Invalid unified data structure');
-      }
-
-      // Process features
-      filteredFeatures = processFeatures(unifiedData.features, selectedCommodity);
-
-      if (filteredFeatures.length === 0) {
-        throw new Error(`No valid features found for commodity: ${selectedCommodity}`);
-      }
-
-      // Merge geodata
-      mergedGeoData = await mergeGeoDataChunked(
-        normalizedGeoBoundaries,
-        { ...unifiedData, features: filteredFeatures },
-        regionMapping,
-        excludedRegions,
-        CHUNK_SIZE
+      // Process all data
+      const processed = await processAllData(
+        geoBoundariesData,
+        unifiedData,
+        weightsData,
+        flowMapsData,
+        analysisData,
+        selectedCommodity
       );
 
-      if (!mergedGeoData?.features) {
-        throw new Error('Failed to merge geodata');
-      }
+      dispatch(updateLoadingProgress(100));
 
-      // Extract unique months
-      uniqueMonthStrings = Array.from(
-        new Set(mergedGeoData.features.map((f) => f.properties?.date).filter(Boolean))
-      ).sort();
-
-      // Calculate metadata
-      const metadata = {
-        totalFeatures: mergedGeoData.features.length,
-        dataTimestamp: new Date().toISOString(),
-        commodityFilter: selectedCommodity,
-        processedFeatures: filteredFeatures.length,
-        totalDates: uniqueMonthStrings.length,
-        flowMapsCount: flowMapsData.length,
-        processingTime: performance.now() - startTime,
-        coverage: {
-          startDate: uniqueMonthStrings[0],
-          endDate: uniqueMonthStrings[uniqueMonthStrings.length - 1],
-          regionCount: new Set(mergedGeoData.features.map(f => f.properties.region_id)).size
-        }
-      };
-
-      return {
-        geoData: mergedGeoData,
-        spatialWeights: weightsData,
-        flowMaps: flowMapsData,
-        analysisResults: analysisResultsData,
-        uniqueMonths: uniqueMonthStrings,
-        metadata,
-      };
+      return processed;
     } catch (error) {
-      console.error('[fetchSpatialData] Error:', error);
+      console.error('Failed to fetch spatial data:', error);
       return rejectWithValue({
-        message: error.message,
+        message: error.message || 'Failed to fetch spatial data',
         details: {
-          availableData: {
-            hasGeoBoundaries: !!geoBoundariesData,
-            hasUnified: !!unifiedData,
-            hasWeights: !!weightsData,
-            hasAnalysis: !!analysisResultsData,
-            flowMapsCount: flowMapsData?.length || 0,
-            featuresCount: filteredFeatures?.length || 0,
-          },
+          timestamp: new Date().toISOString(),
+          error: error.toString(),
         },
       });
     }
   }
 );
 
+// Initial state
 const initialState = {
   geoData: null,
   spatialWeights: null,
@@ -326,8 +336,10 @@ const initialState = {
   error: null,
   metadata: null,
   loadingProgress: 0,
+  lastUpdated: null,
 };
 
+// Create slice
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
@@ -335,7 +347,10 @@ const spatialSlice = createSlice({
     updateLoadingProgress: (state, action) => {
       state.loadingProgress = action.payload;
     },
-    resetSpatialState: () => initialState,
+    resetSpatialState: () => ({
+      ...initialState,
+      lastUpdated: new Date().toISOString(),
+    }),
   },
   extraReducers: (builder) => {
     builder
@@ -345,23 +360,22 @@ const spatialSlice = createSlice({
         state.loadingProgress = 0;
       })
       .addCase(fetchSpatialData.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.geoData = action.payload.geoData;
-        state.spatialWeights = action.payload.spatialWeights;
-        state.flowMaps = action.payload.flowMaps;
-        state.analysisResults = action.payload.analysisResults;
-        state.uniqueMonths = action.payload.uniqueMonths;
-        state.metadata = action.payload.metadata;
-        state.loadingProgress = 100;
+        return {
+          ...state,
+          ...action.payload,
+          status: 'succeeded',
+          error: null,
+          loadingProgress: 100,
+          lastUpdated: new Date().toISOString(),
+        };
       })
       .addCase(fetchSpatialData.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload || action.error.message;
+        state.error = action.payload;
         state.loadingProgress = 0;
       });
   },
 });
 
 export const { updateLoadingProgress, resetSpatialState } = spatialSlice.actions;
-
 export default spatialSlice.reducer;

@@ -22,7 +22,8 @@ module.exports = (env, argv) => {
       extensions: ['.js', '.jsx', '.json'],
       alias: {
         '@': path.resolve(__dirname, 'src'),
-        'leaflet-images': path.resolve(__dirname, 'node_modules/leaflet/dist/images/')
+        'leaflet': path.resolve(__dirname, 'node_modules/leaflet'),
+        'assets': path.resolve(__dirname, 'src/assets')
       },
     },
     module: {
@@ -37,16 +38,18 @@ module.exports = (env, argv) => {
           use: ['style-loader', 'css-loader'],
         },
         {
-          test: /\.(png|jpe?g|gif|svg)$/i,
+          test: /\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/,
           type: 'asset/resource',
-        },
-        {
-          test: /\.(woff(2)?|eot|ttf|otf)$/,
-          type: 'asset/inline',
+          generator: {
+            filename: 'static/media/[name].[hash:8][ext]'
+          }
         },
         {
           test: /\.(geojson|json|csv)$/,
           type: 'asset/resource',
+          generator: {
+            filename: 'static/data/[name].[hash:8][ext]'
+          }
         }
       ],
     },
@@ -62,7 +65,7 @@ module.exports = (env, argv) => {
             from: path.resolve(__dirname, 'public'),
             to: path.resolve(__dirname, 'build'),
             globOptions: {
-              ignore: ['**/index.html', '**/favicon.ico', '**/manifest.json'],
+              ignore: ['**/index.html', '**/favicon.ico'],
             },
           },
           {
@@ -71,8 +74,8 @@ module.exports = (env, argv) => {
             noErrorOnMissing: true
           },
           {
-            from: 'node_modules/leaflet/dist/images',
-            to: 'images'
+            from: path.resolve(__dirname, 'node_modules/leaflet/dist/images'),
+            to: path.resolve(__dirname, 'build/static/media')
           }
         ],
       }),
@@ -101,6 +104,10 @@ module.exports = (env, argv) => {
         {
           directory: path.resolve(__dirname, 'results'),
           publicPath: '/results',
+        },
+        {
+          directory: path.resolve(__dirname, 'node_modules/leaflet/dist/images'),
+          publicPath: '/static/media',
         }
       ],
       compress: true,
@@ -111,21 +118,6 @@ module.exports = (env, argv) => {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
         "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
-      },
-      setupMiddlewares: (middlewares, devServer) => {
-        if (!devServer) {
-          throw new Error('webpack-dev-server is not defined');
-        }
-
-        // Add CORS headers to all responses
-        devServer.app.use((req, res, next) => {
-          res.header('Access-Control-Allow-Origin', '*');
-          res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-          res.header('Access-Control-Allow-Headers', 'X-Requested-With, content-type, Authorization');
-          next();
-        });
-
-        return middlewares;
       }
     },
     devtool: isDevelopment ? 'eval-source-map' : 'source-map',

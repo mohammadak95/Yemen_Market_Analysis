@@ -1,10 +1,11 @@
 // src/components/analysis/spatial-analysis/SpatialMap.js
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   MapContainer,
   TileLayer,
   GeoJSON,
+  useMap
 } from 'react-leaflet';
 import { scaleSequential } from 'd3-scale';
 import { interpolateBlues } from 'd3-scale-chromatic';
@@ -13,6 +14,9 @@ import { Box } from '@mui/material';
 import MapLegend from './MapLegend';
 import MapControls from './MapControls';
 import { Slider, Typography } from '@mui/material';
+import 'leaflet/dist/leaflet.css';
+import '../../../styles/leaflet.css';
+import '../../../utils/leafletSetup';
 
 const MapContent = ({
   geoData,
@@ -23,7 +27,15 @@ const MapContent = ({
   spatialWeights,
   showFlows,
 }) => {
+  const map = useMap();
   const [hoveredRegion, setHoveredRegion] = useState(null);
+
+  useEffect(() => {
+    if (geoData?.features?.length > 0) {
+      const bounds = L.geoJSON(geoData).getBounds();
+      map.fitBounds(bounds, { padding: [20, 20] });
+    }
+  }, [geoData, map]);
 
   const style = useMemo(
     () => (feature) => {
@@ -159,12 +171,6 @@ const SpatialMap = ({
         center={[15.552727, 48.516388]}
         zoom={6}
         style={{ height: '100%', width: '100%' }}
-        whenCreated={(map) => {
-          if (geoData?.features?.length > 0) {
-            const bounds = L.geoJSON(geoData).getBounds();
-            map.fitBounds(bounds, { padding: [20, 20] });
-          }
-        }}
       >
         <MapContent
           geoData={geoData}
