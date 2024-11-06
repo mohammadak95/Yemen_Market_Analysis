@@ -12,10 +12,6 @@ jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   Link: () => {
     const Link = ({ children, to }) => <a href={to}>{children}</a>;
-    Link.propTypes = {
-      children: PropTypes.node.isRequired,
-      to: PropTypes.string.isRequired,
-    };
     return Link;
   },
 }));
