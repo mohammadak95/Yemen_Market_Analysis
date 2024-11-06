@@ -1,32 +1,20 @@
 // src/slices/spatialSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { isValid } from 'date-fns';
+import { parseISO, isValid } from 'date-fns';
 import { transformCoordinates } from '../utils/coordinateTransforms';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 import { dataLoadingMonitor, monitoredFetch, monitoredProcess } from '../utils/dataMonitoring';
+import Papa from 'papaparse';
 
-/**
- * Constructs the data path based on the environment.
- * @param {string} fileName - Name of the data file.
- * @returns {string} - Full path to the data file.
- */
+// Function to get data paths
 const getDataPath = (fileName) => {
   const BASE_PATH = process.env.NODE_ENV === 'development' ? '' : process.env.PUBLIC_URL || '';
   return `${BASE_PATH}/results/${fileName.replace(/^\/+/, '')}`;
 };
 
-/**
- * Processes GeoJSON features based on the selected commodity.
- * @param {Array} features - Array of GeoJSON features.
- * @param {string} selectedCommodity - The commodity to filter by.
- * @returns {Array} - Processed GeoJSON features.
- */
+// Process GeoJSON features based on selected commodity
 const processFeatures = (features, selectedCommodity) => {
-  if (!features || !Array.isArray(features)) {
-    throw new Error('Invalid or missing features data');
-  }
-
   return features
     .filter(feature => {
       const commodity = feature.properties?.commodity?.toLowerCase();
@@ -47,17 +35,8 @@ const processFeatures = (features, selectedCommodity) => {
     .filter(feature => feature.properties.date !== null);
 };
 
-/**
- * Processes flow maps data based on the selected commodity.
- * @param {Array} flowData - Array of flow data objects.
- * @param {string} selectedCommodity - The commodity to filter by.
- * @returns {Array} - Processed flow data.
- */
+// Process flow maps data based on selected commodity
 const processFlowData = (flowData, selectedCommodity) => {
-  if (!flowData || !Array.isArray(flowData)) {
-    throw new Error('Invalid or missing flow data');
-  }
-
   return flowData
     .filter(row => row.commodity?.toLowerCase() === selectedCommodity?.toLowerCase())
     .map(row => ({
@@ -72,16 +51,15 @@ const processFlowData = (flowData, selectedCommodity) => {
     .filter(flow => !isNaN(flow.value) && flow.date && isValid(new Date(flow.date)));
 };
 
-/**
- * Thunk to fetch and process spatial data.
- */
+// Thunk to fetch spatial data
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
   async (selectedCommodity, { dispatch, rejectWithValue }) => {
     console.log('Fetching spatial data for commodity:', selectedCommodity);
-
-    // Start timing for monitoring
-    const fetchStartTime = performance.now();
+    const monitoring = backgroundMonitor.logMetric('spatial-fetch', {
+      commodity: selectedCommodity,
+      timestamp: new Date().toISOString(),
+    });
 
     try {
       const paths = {
@@ -154,14 +132,7 @@ export const fetchSpatialData = createAsyncThunk(
       };
 
       dispatch(updateLoadingProgress(100));
-
-      // Finish timing and log metric
-      const fetchDuration = performance.now() - fetchStartTime;
-      backgroundMonitor.logMetric('spatial-fetch-complete', {
-        commodity: selectedCommodity,
-        duration: fetchDuration,
-        timestamp: new Date().toISOString(),
-      });
+      monitoring.finish();
 
       console.log('Processing complete:', {
         features: result.geoData.features.length,
@@ -172,15 +143,7 @@ export const fetchSpatialData = createAsyncThunk(
       return result;
     } catch (error) {
       console.error('Error fetching spatial data:', error);
-
-      // Log error using backgroundMonitor
-      backgroundMonitor.logError('spatial-fetch-error', {
-        commodity: selectedCommodity,
-        error: error.message,
-        stack: error.stack,
-        timestamp: new Date().toISOString(),
-      });
-
+      monitoring.logError(error);
       return rejectWithValue({
         message: 'Failed to fetch spatial data',
         details: error.message,
@@ -202,27 +165,16 @@ const initialState = {
   lastUpdated: null,
 };
 
-/**
- * Redux slice for spatial data.
- */
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
   reducers: {
-    /**
-     * Updates the loading progress.
-     * @param {object} state - Current state.
-     * @param {object} action - Action containing the new progress value.
-     */
     updateLoadingProgress: (state, action) => {
       state.loadingProgress = action.payload;
       if (state.status === 'idle') {
         state.status = 'loading';
       }
     },
-    /**
-     * Resets the spatial state to its initial values.
-     */
     resetSpatialState: () => ({
       ...initialState,
       lastUpdated: new Date().toISOString(),
@@ -251,19 +203,12 @@ const spatialSlice = createSlice({
         console.log('fetchSpatialData: rejected', action.payload);
         state.status = 'failed';
         state.error = action.payload;
-        state.loadingProgress = 100; // Set to 100 to indicate completion, even if failed
-        state.lastUpdated = new Date().toISOString();
+        state.loadingProgress = 0;
       });
   },
 });
 
 // Selectors
-
-/**
- * Selector to get the current spatial status.
- * @param {object} state - Redux state.
- * @returns {object} - Spatial status.
- */
 export const selectSpatialStatus = (state) => ({
   status: state.spatial.status,
   error: state.spatial.error,
@@ -271,11 +216,6 @@ export const selectSpatialStatus = (state) => ({
   lastUpdated: state.spatial.lastUpdated,
 });
 
-/**
- * Selector to get the spatial data.
- * @param {object} state - Redux state.
- * @returns {object} - Spatial data.
- */
 export const selectSpatialData = (state) => ({
   geoData: state.spatial.geoData,
   flowMaps: state.spatial.flowMaps,

@@ -3,11 +3,13 @@
 import proj4 from 'proj4';
 
 const WGS84 = 'EPSG:4326';
+const UTM_ZONE_38N = 'EPSG:32638';
 const YEMEN_TM = 'EPSG:2098';
 
-// Define Yemen Transverse Mercator projection
+// Add projection definitions
+proj4.defs(UTM_ZONE_38N, '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs');
 proj4.defs(YEMEN_TM,
-  '+proj=tmerc +lat_0=12 +lon_0=45 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs'
+  '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass +units=m +no_defs'
 );
 
 // Bounds for different coordinate systems
@@ -18,12 +20,17 @@ const BOUNDS = {
     minLon: 42,
     maxLon: 54
   },
-  // Expanded bounds for Yemen TM to account for all possible transformed coordinates
+  UTM_38N: {
+    minX: 166021,
+    maxX: 833978,
+    minY: 1500000,
+    maxY: 2100000
+  },
   YEMEN_TM: {
-    minX: 0,         // Expanded minimum
-    maxX: 1500000,   // Expanded maximum
-    minY: 1000000,   // Expanded minimum
-    maxY: 2500000    // Expanded maximum
+    minX: 0,
+    maxX: 1500000,
+    minY: 1000000,
+    maxY: 2500000
   }
 };
 
@@ -33,15 +40,22 @@ const detectCoordinateSystem = (x, y) => {
     return null;
   }
 
-  // Check if coordinates are in WGS84 range
+  // Check UTM Zone 38N bounds
+  if (x >= BOUNDS.UTM_38N.minX && x <= BOUNDS.UTM_38N.maxX &&
+      y >= BOUNDS.UTM_38N.minY && y <= BOUNDS.UTM_38N.maxY) {
+    return UTM_ZONE_38N;
+  }
+
+  // Check Yemen TM bounds
+  if (x >= BOUNDS.YEMEN_TM.minX && x <= BOUNDS.YEMEN_TM.maxX &&
+      y >= BOUNDS.YEMEN_TM.minY && y <= BOUNDS.YEMEN_TM.maxY) {
+    return YEMEN_TM;
+  }
+
+  // Check WGS84 bounds
   if (x >= BOUNDS.WGS84.minLon && x <= BOUNDS.WGS84.maxLon &&
       y >= BOUNDS.WGS84.minLat && y <= BOUNDS.WGS84.maxLat) {
     return WGS84;
-  }
-
-  // Check if coordinates are in projected range (Yemen TM)
-  if (Math.abs(x) > 100 && Math.abs(y) > 100) {
-    return YEMEN_TM; // Assume projected if values are large
   }
 
   console.warn('Coordinates outside expected ranges:', { x, y });
@@ -49,29 +63,27 @@ const detectCoordinateSystem = (x, y) => {
 };
 
 export const transformCoordinates = {
-  toYemenTM: (x, y) => {
+  toWGS84: (x, y, sourceCRS) => {
     if (typeof x !== 'number' || typeof y !== 'number') {
       console.warn('Invalid coordinates:', { x, y });
-      return [x, y]; // Return original coordinates if invalid
+      return [x, y];
     }
 
     try {
-      const sourceSystem = detectCoordinateSystem(x, y);
+      const sourceSystem = sourceCRS || detectCoordinateSystem(x, y);
       
-      // If already in projected coordinates, return as is
-      if (!sourceSystem || sourceSystem === YEMEN_TM) {
+      if (!sourceSystem || sourceSystem === WGS84) {
         return [x, y];
       }
 
-      // Convert from WGS84 to Yemen TM
-      return proj4(WGS84, YEMEN_TM, [x, y]);
+      return proj4(sourceSystem, WGS84, [x, y]);
     } catch (error) {
       console.error('Coordinate transformation error:', error);
-      return [x, y]; // Return original coordinates on error
+      return [x, y];
     }
   },
 
-  fromYemenTM: (x, y) => {
+  fromWGS84: (x, y, targetCRS = YEMEN_TM) => {
     if (typeof x !== 'number' || typeof y !== 'number') {
       console.warn('Invalid coordinates:', { x, y });
       return [x, y];
@@ -80,12 +92,11 @@ export const transformCoordinates = {
     try {
       const sourceSystem = detectCoordinateSystem(x, y);
       
-      // If already in WGS84 or can't detect, return as is
-      if (!sourceSystem || sourceSystem === WGS84) {
+      if (!sourceSystem || sourceSystem === targetCRS) {
         return [x, y];
       }
 
-      return proj4(YEMEN_TM, WGS84, [x, y]);
+      return proj4(WGS84, targetCRS, [x, y]);
     } catch (error) {
       console.error('Coordinate transformation error:', error);
       return [x, y];
@@ -103,7 +114,7 @@ export const transformCoordinates = {
           if (!Array.isArray(geometry.coordinates) || geometry.coordinates.length !== 2) {
             return geometry;
           }
-          const transformed = transformCoordinates.toYemenTM(
+          const transformed = transformCoordinates.toWGS84(
             geometry.coordinates[0],
             geometry.coordinates[1]
           );
@@ -143,7 +154,7 @@ const transformPolygonCoordinates = (polygonCoordinates) => {
     
     return ring.map(coord => {
       if (!Array.isArray(coord) || coord.length !== 2) return coord;
-      return transformCoordinates.toYemenTM(coord[0], coord[1]);
+      return transformCoordinates.toWGS84(coord[0], coord[1]);
     });
   });
 };
@@ -157,21 +168,29 @@ export const processFlowMapWithTransform = (flow) => {
     return flow;
   }
 
-  const sourceCoords = transformCoordinates.toYemenTM(
+  const sourceCoords = transformCoordinates.toWGS84(
     flow.source_lng,
     flow.source_lat
   );
 
-  const targetCoords = transformCoordinates.toYemenTM(
+  const targetCoords = transformCoordinates.toWGS84(
     flow.target_lng,
     flow.target_lat
   );
 
   return {
     ...flow,
-    source_x: sourceCoords[0],
-    source_y: sourceCoords[1],
-    target_x: targetCoords[0],
-    target_y: targetCoords[1]
+    source_lat: sourceCoords[1],
+    source_lng: sourceCoords[0],
+    target_lat: targetCoords[1],
+    target_lng: targetCoords[0]
   };
+};
+
+// Export coordinate systems and bounds for use in other modules
+export const CoordinateSystems = {
+  WGS84,
+  UTM_ZONE_38N,
+  YEMEN_TM,
+  BOUNDS
 };

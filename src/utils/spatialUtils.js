@@ -1,11 +1,14 @@
-// ===== spatialUtils.js =====
+// src/utils/spatialUtils.js
 
-// ==========================
-// Region Mapping and Exclusion
-// ==========================
+import { transformCoordinates, processFlowMapWithTransform } from './coordinateTransforms';
+import { parseISO, isValid } from 'date-fns';
+
+/**
+ * Enhanced region mapping with additional entries for Yemen governorates
+ */
 export const regionMapping = {
   'Abyan Governorate': 'abyan',
-  '‘Adan Governorate': 'aden',
+  'Adan Governorate': 'aden',
   "Al Bayda' Governorate": 'al bayda',
   "Ad Dali' Governorate": 'al dhale\'e',
   'Al Hudaydah Governorate': 'al hudaydah',
@@ -25,38 +28,54 @@ export const regionMapping = {
   'Shabwah Governorate': 'shabwah',
   'Socotra': 'socotra',
   "Ta'izz Governorate": 'taizz',
+  // Additional mappings for variations
+  'sanʿaʾ': 'sana\'a',
+  'san_a_': 'sana\'a',
+  'san_a': 'sana\'a',
+  'sanaa': 'sana\'a',
+  'lahij': 'lahj',
+  'aden': 'aden',
+  'hudaydah': 'al hudaydah',
+  'taizz': 'taizz',
+  'shabwah': 'shabwah',
+  'hadramaut': 'hadramaut',
+  'abyan': 'abyan',
+  'al_jawf': 'al jawf',
+  'ibb': 'ibb',
+  'al_bayda': 'al bayda',
+  'al_dhale': 'al dhale\'e',
+  'al_mahwit': 'al mahwit',
+  'hajjah': 'hajjah',
+  'dhamar': 'dhamar',
+  'amran': 'amran',
+  'al_maharah': 'al maharah',
+  'marib': 'marib',
+  'raymah': 'raymah'
 };
 
 export const excludedRegions = ['Sa\'dah Governorate'];
 
-// src/utils/spatialUtils.js
-
-import { isValid } from 'date-fns';
-
 /**
- * Normalizes region names for consistent comparison.
- * @param {string} regionName - Name of the region to normalize.
- * @returns {string} Normalized region name.
+ * Normalizes region names by removing diacritics and standardizing format
  */
 export const normalizeRegionName = (regionName) => {
   if (!regionName) return '';
 
-  return regionName
+  const normalized = regionName
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-    .replace(/['']/g, "'")
-    .replace(/\s+/g, '_')
-    .replace(/governorate$/i, '')
-    .replace(/[^a-z0-9_]/g, '_')
-    .replace(/_+/g, '_') // Collapse multiple underscores
+    .replace(/[''']/g, "'") // Standardize apostrophes
+    .replace(/[\s-]+/g, '_') // Replace spaces and hyphens with underscores
+    .replace(/[^a-z0-9_']/g, '') // Remove invalid characters
     .trim();
+
+  // Check if the normalized name has a mapping
+  return regionMapping[normalized] || normalized;
 };
 
 /**
  * Validates spatial weights data structure
- * @param {Object} weightsData - The spatial weights data to validate
- * @returns {Object} Validation result with isValid flag and any errors
  */
 export const validateSpatialWeights = (weightsData) => {
   const errors = [];
@@ -93,82 +112,48 @@ export const validateSpatialWeights = (weightsData) => {
 };
 
 /**
- * Validates and processes feature properties
- * @param {Object} feature - The GeoJSON feature to validate
- * @param {string} selectedCommodity - Selected commodity for validation
- * @returns {Object} Validation result
+ * Processes and validates feature properties
  */
-export const validateFeature = (feature, selectedCommodity) => {
-  const validation = {
-    isValid: false,
-    issues: []
-  };
+const processFeatureProperties = (properties) => {
+  const processed = { ...properties };
 
-  try {
-    // Basic structure validation
-    if (!feature?.type || feature.type !== 'Feature') {
-      validation.issues.push('Invalid feature type');
-      return validation;
-    }
-
-    // Geometry validation
-    if (!feature.geometry?.coordinates || !Array.isArray(feature.geometry.coordinates)) {
-      validation.issues.push('Invalid geometry coordinates');
+  // Convert numeric fields
+  const numericFields = ['price', 'usdprice', 'conflict_intensity'];
+  numericFields.forEach(field => {
+    if (properties[field] !== undefined) {
+      const value = parseFloat(properties[field]);
+      processed[field] = isNaN(value) ? null : value;
     } else {
-      // Validate coordinate ranges for Yemen
-      const [lon, lat] = feature.geometry.coordinates;
-      if (lon < 41 || lon > 55 || lat < 12 || lat > 19) {
-        validation.issues.push('Coordinates outside Yemen bounds');
-      }
+      processed[field] = null;
     }
+  });
 
-    // Properties validation
-    const props = feature.properties || {};
-    const required = {
-      date: (v) => !isNaN(new Date(v).getTime()),
-      commodity: (v) => typeof v === 'string' && v.length > 0,
-      price: (v) => typeof v === 'number' && !isNaN(v) && v >= 0,
-      usdprice: (v) => typeof v === 'number' && !isNaN(v) && v >= 0,
-      conflict_intensity: (v) => typeof v === 'number' && !isNaN(v) && v >= 0
-    };
-
-    Object.entries(required).forEach(([prop, validator]) => {
-      if (!props[prop] || !validator(props[prop])) {
-        validation.issues.push(`Invalid or missing ${prop}`);
-      }
-    });
-
-    // Commodity match validation if selected
-    if (selectedCommodity && props.commodity?.toLowerCase() !== selectedCommodity.toLowerCase()) {
-      validation.issues.push('Commodity mismatch');
-    }
-
-    validation.isValid = validation.issues.length === 0;
-    return validation;
-
-  } catch (error) {
-    validation.issues.push(`Validation error: ${error.message}`);
-    return validation;
+  // Process date
+  if (properties.date) {
+    const parsedDate = parseISO(properties.date);
+    processed.date = isValid(parsedDate) ? parsedDate.toISOString() : null;
+  } else {
+    processed.date = null;
   }
+
+  // Normalize region ID
+  if (properties.region_id) {
+    processed.region_id = normalizeRegionName(properties.region_id);
+  }
+
+  return processed;
 };
 
 /**
- * Merges GeoJSON data in chunks while preserving correct structure and properties
- * @param {Object} geoBoundariesData - GeoJSON from geoBoundaries-YEM-ADM1.geojson
- * @param {Object} enhancedData - GeoJSON from unified_data.geojson
- * @param {Object} regionMapping - Region name mapping object
- * @param {Array<string>} excludedRegions - Regions to exclude from processing
- * @param {number} chunkSize - Size of chunks for processing
- * @returns {Promise<Object>} Merged GeoJSON data
+ * Merges GeoJSON data with mapping and exclusion logic
  */
-export const mergeGeoDataChunked = async (
+export const mergeSpatialDataWithMapping = async (
   geoBoundariesData,
   enhancedData,
   regionMapping,
   excludedRegions,
   chunkSize = 1000
 ) => {
-  // Validate input data structure
   if (!geoBoundariesData?.features || !enhancedData?.features) {
     console.error('Invalid input data structure');
     return { type: 'FeatureCollection', features: [] };
@@ -180,8 +165,7 @@ export const mergeGeoDataChunked = async (
 
   // Process geoBoundaries first
   geoBoundariesData.features.forEach(feature => {
-    // Extract region identifier using actual property structure from your data
-    const regionId = getRegionId(feature.properties, regionMapping);
+    const regionId = normalizeRegionName(feature.properties?.shapeName);
     if (!regionId || excludedRegions.includes(regionId)) return;
     
     geoBoundariesMap.set(regionId, {
@@ -199,20 +183,13 @@ export const mergeGeoDataChunked = async (
     chunks.push(enhancedData.features.slice(i, i + chunkSize));
   }
 
-  // Process each chunk
   for (const chunk of chunks) {
     await new Promise(resolve => setTimeout(resolve, 0)); // Prevent UI blocking
 
     chunk.forEach((enhancedFeature, index) => {
       try {
-        // Validate and process enhanced feature data
-        const validationResult = validateFeatureData(enhancedFeature, null, regionMapping);
-        if (!validationResult.isValid) {
-          console.warn(`Invalid feature at index ${index}:`, validationResult.errors);
-          return;
-        }
-
-        const regionId = validationResult.regionId;
+        const processedProps = processFeatureProperties(enhancedFeature.properties);
+        const regionId = processedProps.region_id;
         const geoBoundaryData = geoBoundariesMap.get(regionId);
         
         if (!geoBoundaryData) {
@@ -220,29 +197,14 @@ export const mergeGeoDataChunked = async (
           return;
         }
 
-        // Process properties according to your unified_data.geojson structure
-        const processedProps = processFeatureProperties({
-          ...enhancedFeature.properties,
-          admin1: regionId,
-          // Convert coordinates if needed based on your CRS
-          latitude: enhancedFeature.properties.latitude,
-          longitude: enhancedFeature.properties.longitude
-        });
+        const uniqueId = `${regionId}_${processedProps.commodity || 'unknown'}_${processedProps.date || 'nodate'}_${index}`;
 
-        // Generate unique ID based on actual data properties
-        const date = processedProps.date ? 
-          new Date(processedProps.date).toISOString().split('T')[0] : 
-          'nodate';
-        const uniqueId = `${regionId}_${processedProps.commodity || 'unknown'}_${date}_${index}`;
-
-        // Create merged feature with correct structure
         mergedFeatures.push({
           type: 'Feature',
           properties: {
             ...geoBoundaryData.baseProperties,
             ...processedProps,
-            id: uniqueId,
-            region_id: regionId
+            id: uniqueId
           },
           geometry: geoBoundaryData.geometry
         });
@@ -250,9 +212,9 @@ export const mergeGeoDataChunked = async (
         console.error(`Error processing feature at index ${index}:`, error);
       }
     });
-  }
+  } // Correctly close the for-of loop
 
-  // Add features for regions without data, preserving original properties
+  // Add features for regions without data
   geoBoundariesMap.forEach((geoBoundaryData, regionId) => {
     if (!mergedFeatures.some(f => f.properties.region_id === regionId)) {
       mergedFeatures.push({
@@ -266,10 +228,6 @@ export const mergeGeoDataChunked = async (
           conflict_intensity: null,
           residual: null,
           id: `${regionId}_no_data`,
-          // Preserve original coordinate system
-          latitude: null,
-          longitude: null,
-          // Keep required properties from your data structure
           exchange_rate_regime: 'unknown',
           events: null,
           fatalities: null,
@@ -281,126 +239,24 @@ export const mergeGeoDataChunked = async (
     }
   });
 
+  if (unmatchedRegions.size > 0) {
+    console.warn('Unmatched regions:', Array.from(unmatchedRegions));
+  }
+
   return {
     type: 'FeatureCollection',
-    // Preserve CRS information from your data
-    crs: geoBoundariesData.crs || { 
-      type: "name", 
-      properties: { 
-        name: "urn:ogc:def:crs:OGC:1.3:CRS84" 
-      } 
+    crs: geoBoundariesData.crs || {
+      type: "name",
+      properties: {
+        name: "urn:ogc:def:crs:OGC:1.3:CRS84"
+      }
     },
     features: mergedFeatures
   };
 };
 
 /**
- * Validates feature data against expected structure
- * @param {Object} feature - Feature to validate
- * @param {string} selectedCommodity - Selected commodity
- * @param {Object} regionMapping - Region mapping object
- * @returns {Object} Validation result
- */
-const validateFeatureData = (feature, selectedCommodity, regionMapping) => {
-  const errors = [];
-  if (!feature?.properties) {
-    return { isValid: false, errors: ['Missing properties'] };
-  }
-
-  const props = feature.properties;
-  const regionId = getRegionId(props, regionMapping);
-
-  if (!regionId) {
-    errors.push('Invalid or missing region identifier');
-  }
-
-  // Validate required numeric fields from your data structure
-  ['price', 'usdprice', 'conflict_intensity'].forEach(field => {
-    const value = props[field];
-    if (value !== undefined && value !== null) {
-      const numValue = parseFloat(value);
-      if (isNaN(numValue)) {
-        errors.push(`Invalid ${field} value: ${value}`);
-      }
-    }
-  });
-
-  // Validate date format
-  if (props.date && isNaN(new Date(props.date).getTime())) {
-    errors.push(`Invalid date format: ${props.date}`);
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-    regionId
-  };
-};
-
-/**
- * Processes feature properties according to your data structure
- * @param {Object} props - Properties to process
- * @returns {Object} Processed properties
- */
-const processFeatureProperties = (props) => {
-  return {
-    ...props,
-    // Convert numeric fields based on your data format
-    price: props.price !== undefined ? parseFloat(props.price) || null : null,
-    usdprice: props.usdprice !== undefined ? parseFloat(props.usdprice) || null : null,
-    conflict_intensity: props.conflict_intensity !== undefined ? 
-      parseFloat(props.conflict_intensity) || null : null,
-    // Handle dates in your format
-    date: props.date ? new Date(props.date).toISOString() : null,
-    // Process additional fields from your data structure
-    events: props.events !== undefined ? parseInt(props.events) || null : null,
-    fatalities: props.fatalities !== undefined ? parseInt(props.fatalities) || null : null,
-    population: props.population !== undefined ? parseFloat(props.population) || null : null,
-    population_percentage: props.population_percentage !== undefined ? 
-      parseFloat(props.population_percentage) || null : null,
-    exchange_rate_regime: props.exchange_rate_regime || 'unknown'
-  };
-};
-
-/**
- * Gets region ID from feature properties with fallbacks
- * @param {Object} properties - Feature properties
- * @param {Object} regionMapping - Region name mapping
- * @returns {string|null} Normalized region ID
- */
-export const getRegionId = (properties, regionMapping) => {
-  if (!properties) return null;
-
-  const regionOptions = ['region_id', 'admin1', 'shapeName', 'ADM1_EN'];
-  
-  for (const option of regionOptions) {
-    const value = properties[option];
-    if (value) {
-      // Check for direct mapping first
-      if (regionMapping[value]) {
-        return normalizeRegionName(regionMapping[value]);
-      }
-      
-      // Try normalized version of the value
-      const normalizedValue = normalizeRegionName(value);
-      if (Object.values(regionMapping).includes(normalizedValue)) {
-        return normalizedValue;
-      }
-      
-      // If no mapping found but it's a valid region name, use it
-      if (option === 'region_id' || option === 'admin1') {
-        return normalizedValue;
-      }
-    }
-  }
-
-  return null;
-};
-
-/**
  * Extracts unique months from features
- * @param {Array} features - Array of GeoJSON features
- * @returns {Array<Date>} Array of unique dates
  */
 export const extractUniqueMonths = (features) => {
   if (!Array.isArray(features)) return [];
@@ -422,10 +278,7 @@ export const extractUniqueMonths = (features) => {
 };
 
 /**
- * Debug utility for monitoring spatial data processing
- * @param {Object} data - Data being processed
- * @param {string} stage - Processing stage identifier
- * @returns {Object} Processing statistics
+ * Monitors spatial data processing performance
  */
 export const monitorSpatialDataProcessing = (data, stage) => {
   const startTime = performance.now();
@@ -434,7 +287,7 @@ export const monitorSpatialDataProcessing = (data, stage) => {
     stage,
     timestamp: new Date().toISOString(),
     featureCount: data?.features?.length || 0,
-    memoryUsage: process.memoryUsage ? {
+    memoryUsage: typeof process !== 'undefined' && process.memoryUsage ? {
       heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
       heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB'
     } : 'Not available',
@@ -467,9 +320,6 @@ export const monitorSpatialDataProcessing = (data, stage) => {
 
 /**
  * Tracks commodity-specific data during processing
- * @param {string} selectedCommodity - Selected commodity to track
- * @param {Object} data - GeoJSON data being processed
- * @returns {Object} Tracking results
  */
 export const trackCommodityData = (selectedCommodity, data) => {
   if (!selectedCommodity || !data?.features) {
@@ -538,14 +388,39 @@ export const trackCommodityData = (selectedCommodity, data) => {
   return tracking;
 };
 
+/**
+ * Merges residuals into GeoJSON data
+ */
+export const mergeResidualsIntoGeoData = (geoJsonData, residualsData) => {
+  if (!geoJsonData?.features || !residualsData) {
+    console.warn('Invalid input for residuals merge');
+    return geoJsonData;
+  }
+
+  geoJsonData.features.forEach(feature => {
+    const region = feature.properties.region_id ||
+      (feature.properties.ADM1_EN ? normalizeRegionName(feature.properties.ADM1_EN) : null);
+    const date = feature.properties.date;
+
+    if (region && date && residualsData[region]?.[date] !== undefined) {
+      feature.properties.residual = residualsData[region][date];
+    } else {
+      feature.properties.residual = null;
+    }
+  });
+
+  return geoJsonData;
+};
+
 export default {
   normalizeRegionName,
   validateSpatialWeights,
-  validateFeature,
-  mergeGeoDataChunked,
+  mergeSpatialDataWithMapping,
   processFeatureProperties,
-  getRegionId,
   extractUniqueMonths,
   monitorSpatialDataProcessing,
-  trackCommodityData
+  trackCommodityData,
+  mergeResidualsIntoGeoData,
+  regionMapping,
+  excludedRegions
 };
