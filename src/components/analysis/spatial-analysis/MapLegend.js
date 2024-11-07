@@ -8,6 +8,7 @@ import {
   Box,
   Tooltip,
   IconButton,
+  Divider,
 } from '@mui/material';
 import { Info, ExpandMore, ExpandLess } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
@@ -19,19 +20,20 @@ const MapLegend = ({
   unit = '',
   description = '',
   position = 'bottomright',
+  statistics = null,
 }) => {
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
 
-  if (!colorScale) return null;
+  if (typeof colorScale !== 'function' || typeof colorScale.domain !== 'function') return null;
 
-  // Calculate legend values
+  // Calculate legend values with domain from colorScale
   const domain = colorScale.domain();
   const range = domain[1] - domain[0];
   const stepSize = range / (steps - 1);
   const values = Array.from({ length: steps }, (_, i) => domain[0] + stepSize * i);
 
-  // Format numbers nicely
+  // Format numbers nicely with appropriate precision
   const formatValue = (value) => {
     if (Math.abs(value) < 0.01) return value.toExponential(2);
     return value.toLocaleString(undefined, {
@@ -49,34 +51,23 @@ const MapLegend = ({
         [position.includes('left') ? 'left' : 'right']: 20,
         p: 1.5,
         minWidth: 150,
-        maxWidth: 200,
+        maxWidth: 250,
         backgroundColor: 'background.paper',
         borderRadius: 1,
         zIndex: 1000,
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 1,
-        }}
-      >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Typography variant="subtitle2">{title}</Typography>
           {description && (
-            <Tooltip title={description} arrow>
+            <Tooltip title={description} arrow placement="top">
               <Info fontSize="small" color="action" />
             </Tooltip>
           )}
         </Box>
-        <IconButton
-          size="small"
-          onClick={() => setIsExpanded(!isExpanded)}
-          sx={{ p: 0.5 }}
-        >
+        <IconButton size="small" onClick={() => setIsExpanded(!isExpanded)} sx={{ p: 0.5 }}>
           {isExpanded ? <ExpandLess /> : <ExpandMore />}
         </IconButton>
       </Box>
@@ -86,12 +77,7 @@ const MapLegend = ({
         <>
           <Box sx={{ display: 'flex', height: 20, mb: 0.5 }}>
             {values.map((value, i) => (
-              <Tooltip
-                key={i}
-                title={`${formatValue(value)}${unit}`}
-                arrow
-                placement="top"
-              >
+              <Tooltip key={i} title={`${formatValue(value)}${unit}`} arrow placement="top">
                 <Box
                   sx={{
                     flex: 1,
@@ -112,13 +98,7 @@ const MapLegend = ({
           </Box>
 
           {/* Range Labels */}
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              px: 0.5,
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 0.5 }}>
             <Typography variant="caption">
               {formatValue(domain[0])}
               {unit}
@@ -128,6 +108,26 @@ const MapLegend = ({
               {unit}
             </Typography>
           </Box>
+
+          {/* Statistics if provided */}
+          {statistics && (
+            <>
+              <Divider sx={{ my: 1 }} />
+              <Box sx={{ pt: 1 }}>
+                {Object.entries(statistics).map(([key, value]) => (
+                  <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {key}:
+                    </Typography>
+                    <Typography variant="caption">
+                      {typeof value === 'number' ? formatValue(value) : value}
+                      {unit}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </>
+          )}
         </>
       )}
     </Paper>
@@ -140,12 +140,8 @@ MapLegend.propTypes = {
   steps: PropTypes.number,
   unit: PropTypes.string,
   description: PropTypes.string,
-  position: PropTypes.oneOf([
-    'topleft',
-    'topright',
-    'bottomleft',
-    'bottomright',
-  ]),
+  position: PropTypes.oneOf(['topleft', 'topright', 'bottomleft', 'bottomright']),
+  statistics: PropTypes.object,
 };
 
 export default React.memo(MapLegend);

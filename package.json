@@ -61,6 +61,7 @@
     "react-transition-group": "^4.4.5",
     "react-window": "^1.8.10",
     "recharts": "^2.13.0",
+    "redux-logger": "^3.0.6",
     "styled-components": "^5.3.11",
     "web-vitals": "^3.3.1"
   },

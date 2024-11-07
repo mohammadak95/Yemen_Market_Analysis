@@ -376,11 +376,25 @@ const DynamicInterpretation = ({
 };
 
 DynamicInterpretation.propTypes = {
-  data: PropTypes.object.isRequired,
-  spatialWeights: PropTypes.object.isRequired,
+  data: PropTypes.object.isRequired, // Change from array to object
+  spatialWeights: PropTypes.object,
   selectedRegion: PropTypes.string,
-  marketMetrics: PropTypes.object.isRequired,
-  timeSeriesData: PropTypes.array.isRequired,
+  marketMetrics: PropTypes.shape({
+    marketCoverage: PropTypes.number,
+    integrationLevel: PropTypes.number,
+    transmissionEfficiency: PropTypes.number
+  }),
+  timeSeriesData: PropTypes.array
+};
+
+DynamicInterpretation.defaultProps = {
+  spatialWeights: {},
+  marketMetrics: {
+    marketCoverage: 0,
+    integrationLevel: 0,
+    transmissionEfficiency: 0
+  },
+  timeSeriesData: []
 };
 
 export default DynamicInterpretation;

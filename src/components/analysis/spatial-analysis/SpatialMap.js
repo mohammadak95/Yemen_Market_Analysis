@@ -24,7 +24,6 @@ import {
   Chip
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { scaleSequential } from 'd3-scale';
 import { 
   interpolateBlues, 
   interpolateReds, 
@@ -43,6 +42,7 @@ import LoadingSpinner from '../../common/LoadingSpinner';
 const DEFAULT_CENTER = [15.3694, 44.191];
 const DEFAULT_ZOOM = 6;
 
+// Visualization Modes
 const VISUALIZATION_MODES = {
   PRICES: 'prices',
   MARKET_INTEGRATION: 'integration',
@@ -94,7 +94,7 @@ const TimeControls = ({
           Time Period: {formatDate(selectedMonth)}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {detectedShocks?.some(shock => shock.month === selectedMonth) && (
+          {detectedShocks?.some(shock => shock.date === selectedMonth) && (
             <MuiTooltip title="Market shock detected in this period">
               <WarningAmber color="warning" />
             </MuiTooltip>
@@ -214,14 +214,14 @@ const AnalysisPanels = ({
         >
           <Box sx={{ p: 1 }}>
             {detectedShocks
-              .filter(shock => shock.month === selectedMonth)
+              .filter(shock => shock.date === selectedMonth)
               .map((shock, index) => (
                 <Alert 
                   key={index}
                   severity={shock.severity === 'high' ? "error" : "warning"}
                   sx={{ mb: 1 }}
                 >
-                  <AlertTitle>{shock.type === 'price_surge' ? 'Price Surge' : 'Price Drop'}</AlertTitle>
+                  <AlertTitle>{shock.type === 'surge' ? 'Price Surge' : 'Price Drop'}</AlertTitle>
                   Region: {shock.region}<br/>
                   Magnitude: {(shock.magnitude * 100).toFixed(1)}%
                 </Alert>
@@ -279,136 +279,143 @@ const MapContent = ({
   geoData,
   flowMaps,
   selectedMonth,
-  selectedCommodity,
   spatialWeights,
   showFlows,
-  analysis,
   onRegionSelect,
   marketClusters,
   detectedShocks,
-  visualizationMode,
-  setVisualizationMode,
-  setShowFlows
+  visualizationMode
 }) => {
-  const map = useMap();
+  useMap();
   const [hoveredRegion, setHoveredRegion] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState(null);
   const geoJsonLayerRef = useRef();
 
-  // Color scales for different visualization modes
-  const colorScales = useMemo(() => {
-    if (!geoData?.features) return {};
+  // Optimize style calculations with memoization
+  const visualizationStyles = useMemo(() => ({
+    base: {
+      weight: 1,
+      opacity: 1,
+      color: 'white',
+      dashArray: '3'
+    },
+    hover: {
+      weight: 2,
+      color: '#666',
+      dashArray: ''
+    },
+    selected: {
+      weight: 3,
+      color: '#ff4081',
+      dashArray: ''
+    }
+  }), []);
 
-    const priceValues = geoData.features
-      .map(f => f.properties.price)
-      .filter(v => v != null);
-
-    const integrationValues = Object.values(spatialWeights || {}).map(w => 
-      w.neighbors.length / Object.keys(spatialWeights).length
-    );
-
-    const clusterSizes = marketClusters?.map(c => c.marketCount) || [];
-    const shockValues = detectedShocks?.map(s => s.magnitude) || [];
-
-    return {
-      [VISUALIZATION_MODES.PRICES]: scaleSequential()
-        .domain([Math.min(...priceValues) || 0, Math.max(...priceValues) || 1])
-        .interpolator(interpolateBlues),
-      [VISUALIZATION_MODES.MARKET_INTEGRATION]: scaleSequential()
-        .domain([0, Math.max(...integrationValues) || 1])
-        .interpolator(interpolateGreens),
-      [VISUALIZATION_MODES.CLUSTERS]: scaleSequential()
-        .domain([1, Math.max(...clusterSizes) || 2])
-        .interpolator(interpolateOranges),
-      [VISUALIZATION_MODES.SHOCKS]: scaleSequential()
-        .domain([0, Math.max(...shockValues) || 1])
-        .interpolator(interpolateReds)
-    };
-  }, [geoData, spatialWeights, marketClusters, detectedShocks]);
-
-  // Flow line styling
-  const flowLineStyle = useCallback((flow) => {
+  // Optimize flow line style calculation
+  const getFlowLineStyle = useCallback((flow) => {
     if (!flow) return null;
+    
+    const baseStyle = {
+      weight: Math.max(1, (flow.flow_weight || 0) / 2),
+      opacity: 0.6
+    };
 
-    try {
-      const baseStyle = {
-        weight: Math.max(1, (flow.flow_weight || 0) / 2),
-        opacity: 0.6
-      };
-
+    const getStyleByMode = () => {
       switch (visualizationMode) {
         case VISUALIZATION_MODES.MARKET_INTEGRATION:
           return {
-            ...baseStyle,
             color: interpolateGreens((flow.flow_weight || 0) / 10),
             dashArray: (flow.flow_weight || 0) > 5 ? '' : '5,5'
           };
         case VISUALIZATION_MODES.CLUSTERS: {
           const cluster = marketClusters?.find(c => 
-            c.connectedMarkets?.has(flow.source_region) && 
-            c.connectedMarkets?.has(flow.target_region)
+            c.connectedMarkets?.has(flow.source) && 
+            c.connectedMarkets?.has(flow.target)
           );
           return {
-            ...baseStyle,
             color: cluster ? interpolateOranges((cluster.marketCount || 0) / 10) : '#999'
           };
         }
         case VISUALIZATION_MODES.SHOCKS: {
           const shock = detectedShocks?.find(s => 
-            s.month === selectedMonth && 
-            (s.region === flow.source_region || s.region === flow.target_region)
+            s.date === selectedMonth && 
+            (s.region === flow.source || s.region === flow.target)
           );
           return {
-            ...baseStyle,
             color: shock ? interpolateReds(shock.magnitude || 0) : '#999'
           };
         }
         default:
           return {
-            ...baseStyle,
             color: interpolateBlues((flow.flow_weight || 0) / 10)
           };
       }
-    } catch (error) {
-      console.error('Error computing flow line style:', error);
-      return null;
-    }
+    };
+
+    return { ...baseStyle, ...getStyleByMode() };
   }, [visualizationMode, marketClusters, detectedShocks, selectedMonth]);
 
-  // Define getTooltipContent function
-  const getTooltipContent = (feature) => {
-    const regionId = feature.properties.region_id;
-    const regionData = feature.properties;
-    let content = '';
+  // Optimize tooltip content generation
+  const tooltipContent = useCallback((feature) => {
+    const { region_id, shapeName } = feature.properties;
+    const baseContent = `<strong>${shapeName || region_id}</strong><br/>`;
+    
+    const getContentByMode = () => {
+      switch (visualizationMode) {
+        case VISUALIZATION_MODES.PRICES:
+          return `Price: ${feature.properties.price?.toFixed(2) || 'N/A'} YER`;
+        case VISUALIZATION_MODES.MARKET_INTEGRATION:
+          return `Connections: ${spatialWeights[region_id]?.neighbors?.length || 0}`;
+        case VISUALIZATION_MODES.CLUSTERS: {
+          const cluster = marketClusters?.find(c => 
+            c.mainMarket === region_id || c.connectedMarkets?.has(region_id)
+          );
+          return `Cluster Size: ${cluster?.marketCount || 'N/A'}`;
+        }
+        case VISUALIZATION_MODES.SHOCKS: {
+          const shock = detectedShocks?.find(s => 
+            s.date === selectedMonth && s.region === region_id
+          );
+          return shock ? `Shock Magnitude: ${(shock.magnitude * 100).toFixed(1)}%` : '';
+        }
+        default:
+          return '';
+      }
+    };
 
-    switch (visualizationMode) {
-      case VISUALIZATION_MODES.PRICES:
-        content += `Price: ${regionData.price?.toFixed(2) || 'N/A'} YER<br/>`;
-        break;
-      case VISUALIZATION_MODES.MARKET_INTEGRATION:
-        const connections = spatialWeights[regionId]?.neighbors?.length || 0;
-        content += `Connections: ${connections}<br/>`;
-        break;
-      case VISUALIZATION_MODES.CLUSTERS:
-        const cluster = marketClusters?.find(c => 
-          c.mainMarket === regionId || c.connectedMarkets?.has(regionId)
-        );
-        content += `Cluster Size: ${cluster?.marketCount || 'N/A'}<br/>`;
-        break;
-      case VISUALIZATION_MODES.SHOCKS:
-        const shock = detectedShocks?.find(s => 
-          s.month === selectedMonth && s.region === regionId
-        );
-        content += shock 
-          ? `Shock Magnitude: ${(shock.magnitude * 100).toFixed(1)}%<br/>`
-          : '';
-        break;
-      default:
-        break;
-    }
+    return baseContent + getContentByMode();
+  }, [visualizationMode, spatialWeights, marketClusters, detectedShocks, selectedMonth]);
 
-    return content;
-  };
+  // Render functions
+  const renderFlows = useCallback(() => {
+    if (!showFlows || !flowMaps?.length) return null;
+    
+    return flowMaps.map((flow, idx) => {
+      const style = getFlowLineStyle(flow);
+      if (!style || !flow.source_lat || !flow.source_lng || !flow.target_lat || !flow.target_lng) {
+        return null;
+      }
+
+      return (
+        <Polyline
+          key={`flow-${idx}`}
+          positions={[
+            [flow.source_lat, flow.source_lng],
+            [flow.target_lat, flow.target_lng]
+          ]}
+          pathOptions={style}
+        >
+          <LeafletTooltip sticky>
+            <div>
+              <strong>{flow.source} → {flow.target}</strong><br/>
+              Flow Weight: {flow.flow_weight?.toFixed(2) || 'N/A'}<br/>
+              Price Differential: {flow.price_differential?.toFixed(2) || 'N/A'}
+            </div>
+          </LeafletTooltip>
+        </Polyline>
+      );
+    });
+  }, [flowMaps, showFlows, getFlowLineStyle]);
 
   // Region style
   const getRegionStyle = useCallback((feature) => {
@@ -420,14 +427,18 @@ const MapContent = ({
       const isSelected = selectedRegion === regionId;
 
       const baseStyle = {
-        weight: isSelected ? 3 : isHovered ? 2 : 1,
-        opacity: 1,
-        color: isSelected ? '#ff4081' : isHovered ? '#666' : 'white',
-        dashArray: isSelected || isHovered ? '' : '3'
+        weight: isSelected ? visualizationStyles.selected.weight : 
+               isHovered ? visualizationStyles.hover.weight : 
+               visualizationStyles.base.weight,
+        opacity: visualizationStyles.base.opacity,
+        color: isSelected ? visualizationStyles.selected.color : 
+               isHovered ? visualizationStyles.hover.color : 
+               visualizationStyles.base.color,
+        dashArray: isSelected || isHovered ? visualizationStyles.selected.dashArray : visualizationStyles.base.dashArray
       };
 
       const getVisualizationColor = () => {
-        const scale = colorScales[visualizationMode];
+        const scale = visualizationStyles[visualizationMode]?.getColor;
         if (!scale) return '#ccc';
 
         switch (visualizationMode) {
@@ -445,7 +456,7 @@ const MapContent = ({
           }
           case VISUALIZATION_MODES.SHOCKS: {
             const shock = detectedShocks?.find(s => 
-              s.month === selectedMonth && s.region === regionId
+              s.date === selectedMonth && s.region === regionId
             );
             return shock ? scale(shock.magnitude) : '#ccc';
           }
@@ -467,7 +478,7 @@ const MapContent = ({
     hoveredRegion,
     selectedRegion,
     visualizationMode,
-    colorScales,
+    visualizationStyles,
     spatialWeights,
     marketClusters,
     detectedShocks,
@@ -480,7 +491,6 @@ const MapContent = ({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; OpenStreetMap contributors'
       />
-
       {geoData?.features && (
         <GeoJSON
           ref={geoJsonLayerRef}
@@ -496,90 +506,78 @@ const MapContent = ({
                   onRegionSelect?.(feature.properties.region_id);
                 }
               });
-              
-              // Create tooltip content
-              const content = `
-                <strong>${feature.properties.shapeName || feature.properties.region_id}</strong><br/>
-                ${getTooltipContent(feature)}
-              `;
-              layer.bindTooltip(content, { sticky: true });
+              layer.bindTooltip(tooltipContent(feature), { sticky: true });
             }
           }}
         />
       )}
-
-      {showFlows && flowMaps?.length > 0 && flowMaps.map((flow, idx) => {
-        const style = flowLineStyle(flow);
-        if (!style || !flow.source_lat || !flow.source_lng || !flow.target_lat || !flow.target_lng) {
-          return null;
-        }
-
-        return (
-          <Polyline
-            key={`flow-${idx}`}
-            positions={[
-              [flow.source_lat, flow.source_lng],
-              [flow.target_lat, flow.target_lng]
-            ]}
-            pathOptions={style}
-          >
-            <LeafletTooltip sticky>
-              <div>
-                <strong>{flow.source} → {flow.target}</strong><br/>
-                Flow Weight: {flow.flow_weight?.toFixed(2) || 'N/A'}<br/>
-                Price Differential: {flow.price_differential?.toFixed(2) || 'N/A'}
-              </div>
-            </LeafletTooltip>
-          </Polyline>
-        );
-      })}
-
+      {renderFlows()}
       {/* Shock Indicators */}
       {visualizationMode === VISUALIZATION_MODES.SHOCKS && 
-       detectedShocks?.filter(shock => shock.month === selectedMonth)
-         .map((shock, idx) => (
-           <CircleMarker
-             key={`shock-${idx}`}
-             center={[shock.lat, shock.lng]}
-             radius={10 * (shock.magnitude || 0.5)}
-             color={shock.severity === 'high' ? '#ff4444' : '#ffbb33'}
-             fillOpacity={0.6}
-           >
-             <LeafletTooltip>
-               <div>
-                 <strong>Market Shock</strong><br/>
-                 Type: {shock.type}<br/>
-                 Magnitude: {(shock.magnitude * 100).toFixed(1)}%<br/>
-                 Severity: {shock.severity}
-               </div>
-             </LeafletTooltip>
-           </CircleMarker>
-         ))}
-
+        detectedShocks?.filter(shock => shock.date === selectedMonth && shock.coordinates)
+          .map((shock, idx) => (
+            <CircleMarker
+              key={`shock-${idx}`}
+              center={[shock.coordinates[1], shock.coordinates[0]]} // [lat, lng]
+              radius={10 * (shock.magnitude || 0.5)}
+              color={shock.severity === 'high' ? '#ff4444' : '#ffbb33'}
+              fillOpacity={0.6}
+            >
+              <LeafletTooltip>
+                <div>
+                  <strong>Market Shock</strong><br/>
+                  Type: {shock.type}<br/>
+                  Magnitude: {(shock.magnitude * 100).toFixed(1)}%<br/>
+                  Severity: {shock.severity}
+                </div>
+              </LeafletTooltip>
+            </CircleMarker>
+          ))
+      }
       <ScaleControl position="bottomleft" />
     </>
   );
 };
 
-// Main SpatialMap Component
 const SpatialMap = ({
   geoData,
-  flowMaps,
+  flowMaps = [],
   selectedMonth,
-  onMonthChange,
-  availableMonths,
-  spatialWeights,
+  onMonthChange = () => {},
+  availableMonths = [],
+  spatialWeights = {},
   showFlows: initialShowFlows = true,
-  onToggleFlows,
-  analysisResults,
-  selectedCommodity,
+  onToggleFlows = () => {}, 
+  analysisResults = null,
   marketClusters = [],
-  detectedShocks = []
+  detectedShocks = [],
+  onRegionSelect = () => {}, // Add default value
 }) => {
   // State management
   const [error, setError] = useState(null);
   const [showFlows, setShowFlows] = useState(initialShowFlows);
   const [visualizationMode, setVisualizationMode] = useState(VISUALIZATION_MODES.PRICES);
+
+  const handleMonthChange = useCallback((newMonth) => {
+    if (onMonthChange && typeof onMonthChange === 'function') {
+      onMonthChange(newMonth);
+    }
+  }, [onMonthChange]);
+
+  // Handle toggle flows
+  const toggleFlows = useCallback(() => {
+    setShowFlows(prev => {
+      const newState = !prev;
+      onToggleFlows(newState); // Pass the new state to the callback
+      return newState;
+    });
+  }, [onToggleFlows]);
+
+  // Handle region selection
+  const handleRegionSelect = useCallback((region) => {
+    onRegionSelect(region);
+  }, [onRegionSelect]);
+
 
   // Data validation
   useEffect(() => {
@@ -712,16 +710,12 @@ const SpatialMap = ({
           geoData={processedGeoData}
           flowMaps={flowMaps}
           selectedMonth={selectedMonth}
-          selectedCommodity={selectedCommodity}
           spatialWeights={spatialWeights}
           showFlows={showFlows}
-          analysis={analysisResults}
+          onRegionSelect={handleRegionSelect}
           marketClusters={marketClusters}
           detectedShocks={detectedShocks}
           visualizationMode={visualizationMode}
-          setVisualizationMode={setVisualizationMode}
-          setShowFlows={setShowFlows}
-          onRegionSelect={() => {}}
         />
       </MapContainer>
 
@@ -729,7 +723,7 @@ const SpatialMap = ({
       <TimeControls
         selectedMonth={selectedMonth}
         availableMonths={availableMonths}
-        onMonthChange={onMonthChange}
+        onMonthChange={handleMonthChange}
         analysisResults={analysisResults}
         spatialWeights={spatialWeights}
         detectedShocks={detectedShocks}
@@ -747,8 +741,11 @@ const SpatialMap = ({
   );
 };
 
-// PropTypes
-SpatialMap.propTypes = {
+// PropTypes and DefaultProps for SpatialMap
+
+// Main component PropTypes
+const propTypes = {
+  // GeoJSON Data Structure
   geoData: PropTypes.shape({
     type: PropTypes.string,
     features: PropTypes.arrayOf(PropTypes.shape({
@@ -757,10 +754,19 @@ SpatialMap.propTypes = {
         region_id: PropTypes.string,
         shapeName: PropTypes.string,
         price: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        date: PropTypes.string,
+        commodity: PropTypes.string,
+        regime: PropTypes.string,
+        conflict_intensity: PropTypes.number,
       }),
-      geometry: PropTypes.object
+      geometry: PropTypes.shape({
+        type: PropTypes.string,
+        coordinates: PropTypes.array
+      })
     }))
   }),
+
+  // Flow Maps Data
   flowMaps: PropTypes.arrayOf(PropTypes.shape({
     source_lat: PropTypes.number,
     source_lng: PropTypes.number,
@@ -770,46 +776,179 @@ SpatialMap.propTypes = {
     target: PropTypes.string,
     flow_weight: PropTypes.number,
     price_differential: PropTypes.number,
+    date: PropTypes.string
   })),
+
+  // Required Props
   selectedMonth: PropTypes.string.isRequired,
-  onMonthChange: PropTypes.func.isRequired,
-  availableMonths: PropTypes.arrayOf(PropTypes.string).isRequired,
+  
+  // Optional Props with Callbacks
+  onMonthChange: PropTypes.func,
+  onToggleFlows: PropTypes.func,
+  onRegionSelect: PropTypes.func,
+
+  // Control Props
+  showFlows: PropTypes.bool,
+  availableMonths: PropTypes.arrayOf(PropTypes.string),
+  visualizationMode: PropTypes.oneOf(Object.values(VISUALIZATION_MODES)),
+
+  // Analysis Data
+  spatialWeights: PropTypes.objectOf(PropTypes.shape({
+    neighbors: PropTypes.arrayOf(PropTypes.string),
+    geometry: PropTypes.object,
+    properties: PropTypes.object
+  })),
+
+  analysisResults: PropTypes.shape({
+    coefficients: PropTypes.shape({
+      spatial_lag_price: PropTypes.number,
+      intercept: PropTypes.number
+    }),
+    r_squared: PropTypes.number,
+    adj_r_squared: PropTypes.number,
+    moran_i: PropTypes.shape({
+      I: PropTypes.number,
+      'p-value': PropTypes.number,
+      z_score: PropTypes.number
+    }),
+    observations: PropTypes.number,
+    p_values: PropTypes.object,
+    residual: PropTypes.arrayOf(PropTypes.shape({
+      region_id: PropTypes.string,
+      date: PropTypes.string,
+      residual: PropTypes.number
+    }))
+  }),
+
+  // Market Analysis Data
+  marketClusters: PropTypes.arrayOf(PropTypes.shape({
+    mainMarket: PropTypes.string.isRequired,
+    connectedMarkets: PropTypes.instanceOf(Set).isRequired,
+    marketCount: PropTypes.number.isRequired,
+    avgFlow: PropTypes.number,
+    totalFlow: PropTypes.number
+  })),
+
+  detectedShocks: PropTypes.arrayOf(PropTypes.shape({
+    region: PropTypes.string.isRequired,
+    date: PropTypes.string.isRequired,
+    magnitude: PropTypes.number.isRequired,
+    type: PropTypes.string.isRequired,
+    severity: PropTypes.string.isRequired,
+    coordinates: PropTypes.arrayOf(PropTypes.number),
+    price_change: PropTypes.number,
+    volatility: PropTypes.number
+  }))
+};
+
+// Main component DefaultProps
+const defaultProps = {
+  geoData: null,
+  flowMaps: [],
+  spatialWeights: {},
+  analysisResults: null,
+  marketClusters: [],
+  detectedShocks: [],
+  showFlows: true,
+  availableMonths: [],
+  visualizationMode: VISUALIZATION_MODES.PRICES,
+  onMonthChange: () => {},
+  onToggleFlows: () => {},
+  onRegionSelect: () => {}
+};
+
+// MapContent PropTypes
+MapContent.propTypes = {
+  geoData: PropTypes.shape({
+    features: PropTypes.array.isRequired
+  }),
+  flowMaps: PropTypes.array,
+  selectedMonth: PropTypes.string.isRequired,
   spatialWeights: PropTypes.object,
   showFlows: PropTypes.bool,
-  onToggleFlows: PropTypes.func,
+  onRegionSelect: PropTypes.func.isRequired,
+  marketClusters: PropTypes.array,
+  detectedShocks: PropTypes.array,
+  visualizationMode: PropTypes.oneOf(Object.values(VISUALIZATION_MODES)).isRequired
+};
+
+// MapContent DefaultProps
+MapContent.defaultProps = {
+  geoData: null,
+  flowMaps: [],
+  spatialWeights: {},
+  showFlows: true,
+  marketClusters: [],
+  detectedShocks: []
+};
+
+// TimeControls PropTypes
+TimeControls.propTypes = {
+  selectedMonth: PropTypes.string.isRequired,
+  availableMonths: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onMonthChange: PropTypes.func.isRequired,
   analysisResults: PropTypes.shape({
-    coefficients: PropTypes.object,
+    coefficients: PropTypes.shape({
+      spatial_lag_price: PropTypes.number
+    }),
     r_squared: PropTypes.number,
     moran_i: PropTypes.shape({
       I: PropTypes.number,
       'p-value': PropTypes.number
     })
   }),
-  selectedCommodity: PropTypes.string.isRequired,
-  marketClusters: PropTypes.arrayOf(PropTypes.shape({
-    mainMarket: PropTypes.string.isRequired,
-    connectedMarkets: PropTypes.instanceOf(Set).isRequired,
-    marketCount: PropTypes.number.isRequired,
-  })),
+  spatialWeights: PropTypes.object,
   detectedShocks: PropTypes.arrayOf(PropTypes.shape({
-    month: PropTypes.string.isRequired,
-    region: PropTypes.string.isRequired,
-    magnitude: PropTypes.number.isRequired,
-    type: PropTypes.string.isRequired,
-    severity: PropTypes.string.isRequired,
-    lat: PropTypes.number,
-    lng: PropTypes.number
+    date: PropTypes.string,
+    region: PropTypes.string,
+    magnitude: PropTypes.number
   }))
 };
 
-// Default Props
-SpatialMap.defaultProps = {
-  showFlows: true,
-  onToggleFlows: () => {},
+// TimeControls DefaultProps
+TimeControls.defaultProps = {
+  analysisResults: null,
   spatialWeights: {},
+  detectedShocks: []
+};
+
+// AnalysisPanels PropTypes
+AnalysisPanels.propTypes = {
+  analysisResults: PropTypes.shape({
+    moran_i: PropTypes.shape({
+      I: PropTypes.number,
+      'p-value': PropTypes.number
+    }),
+    r_squared: PropTypes.number,
+    coefficients: PropTypes.shape({
+      spatial_lag_price: PropTypes.number
+    })
+  }),
+  visualizationMode: PropTypes.oneOf(Object.values(VISUALIZATION_MODES)).isRequired,
+  marketClusters: PropTypes.arrayOf(PropTypes.shape({
+    marketCount: PropTypes.number,
+    mainMarket: PropTypes.string,
+    connectedMarkets: PropTypes.instanceOf(Set)
+  })),
+  detectedShocks: PropTypes.arrayOf(PropTypes.shape({
+    date: PropTypes.string,
+    region: PropTypes.string,
+    magnitude: PropTypes.number,
+    type: PropTypes.string,
+    severity: PropTypes.string
+  })),
+  selectedMonth: PropTypes.string.isRequired
+};
+
+// AnalysisPanels DefaultProps
+AnalysisPanels.defaultProps = {
   analysisResults: null,
   marketClusters: [],
   detectedShocks: []
 };
+
+// Apply PropTypes and DefaultProps to SpatialMap
+SpatialMap.propTypes = propTypes;
+SpatialMap.defaultProps = defaultProps;
 
 export default React.memo(SpatialMap);
