@@ -6,7 +6,7 @@ import { IconButton, Typography, Box } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { styled } from '@mui/material/styles';
-import DiscoveryMenu from './DiscoveryMenu';
+import { DiscoveryMenu } from './Navigation';
 
 const TitleTypography = styled(Typography)(({ theme }) => ({
   flexGrow: 1,

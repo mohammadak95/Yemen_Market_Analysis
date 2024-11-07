@@ -1,112 +1,254 @@
-// src/hooks/useSpatialData.js
+// src/hooks/useSpatialAnalysis.js
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { spatialDataManager } from '../utils/SpatialDataManager';
+import { useEffect, useMemo, useCallback, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { 
+  fetchSpatialData, 
+  selectSpatialState, 
+  selectAnalysisData,
+  selectFlowsForPeriod,
+  setSelectedRegion,
+  setView,
+  clearCache
+} from '../slices/spatialSlice';
 
-// Cache settings
-const CACHE_LIMIT = 10;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const dataCache = new Map();
+export const useSpatialAnalysis = ({
+  selectedCommodity,
+  selectedDate,
+  options = {}
+}) => {
+  const dispatch = useDispatch();
+  const prevDataRef = useRef(null);
+  const processingTimeoutRef = useRef(null);
+  
+  // Selector for spatial state
+  const {
+    data,
+    ui,
+    status,
+    metadata
+  } = useSelector(selectSpatialState);
 
-// Generate unique cache keys based on commodity
-const generateCacheKey = (commodity) => `spatial_data_${commodity?.toLowerCase()}`;
+  // Memoized analysis data
+  const analysisData = useSelector(
+    state => selectAnalysisData(state, selectedCommodity)
+  );
 
-const useSpatialData = (selectedCommodity) => {
-  const [geoData, setGeoData] = useState(null);
-  const [status, setStatus] = useState('idle');
-  const [error, setError] = useState(null);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const lastCommodityRef = useRef(selectedCommodity);
+  // Memoized flows data
+  const flowsData = useSelector(
+    state => selectFlowsForPeriod(state, selectedDate)
+  );
 
-  // Cache cleanup function
-  const cleanupCache = useCallback(() => {
-    const now = Date.now();
-    const keys = Array.from(dataCache.keys());
-
-    // Remove expired entries
-    keys.forEach((key) => {
-      const entry = dataCache.get(key);
-      if (now - entry.timestamp > CACHE_DURATION) {
-        dataCache.delete(key);
-      }
-    });
-
-    // Remove oldest entries if cache is too large
-    if (dataCache.size > CACHE_LIMIT) {
-      const oldestKeys = Array.from(dataCache.keys())
-        .sort((a, b) => dataCache.get(a).timestamp - dataCache.get(b).timestamp)
-        .slice(0, dataCache.size - CACHE_LIMIT);
-      
-      oldestKeys.forEach((key) => dataCache.delete(key));
-    }
-  }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setStatus('loading');
-      setLoadingProgress(0);
-      setError(null);
-
-      try {
-        const cacheKey = generateCacheKey(selectedCommodity);
-        const cachedData = dataCache.get(cacheKey) || spatialDataManager.getCachedData(cacheKey);
-
-        if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
-          setGeoData(cachedData);
-          setLoadingProgress(100);
-          setStatus('succeeded');
-        } else {
-          setLoadingProgress(50);
-          const mergedData = await spatialDataManager.processSpatialData(selectedCommodity);
-
-          // Cache and update data
-          spatialDataManager.setCachedData(cacheKey, mergedData);
-          dataCache.set(cacheKey, { data: mergedData, timestamp: Date.now() });
-          
-          setGeoData(mergedData);
-          setLoadingProgress(100);
-          setStatus('succeeded');
-        }
-      } catch (err) {
-        setError('Failed to fetch spatial data');
-        console.error(err);
-        setStatus('failed');
-      } finally {
-        cleanupCache();
-      }
-    };
-
-    if (selectedCommodity && selectedCommodity !== lastCommodityRef.current) {
-      lastCommodityRef.current = selectedCommodity;
-      fetchData();
-    }
-  }, [selectedCommodity, cleanupCache]);
-
-  // Process and memoize the geoData when it changes
-  const processedData = useMemo(() => {
-    if (!geoData) return null;
-
-    const selectedAnalysis = geoData.analysisResults?.find(
-      (analysis) => analysis?.commodity?.toLowerCase() === selectedCommodity?.toLowerCase() && analysis?.regime === 'unified'
-    );
+  // Compute derived statistics
+  const statistics = useMemo(() => {
+    if (!analysisData || !flowsData) return null;
 
     return {
-      geoData: geoData.geoData?.features || null,
-      analysis: selectedAnalysis,
-      flows: geoData.flowMaps?.filter(
-        (flow) => flow.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
-      ) || [],
-      weights: geoData.spatialWeights,
-      uniqueMonths: geoData.uniqueMonths,
+      marketIntegration: calculateMarketIntegration(analysisData),
+      spatialCorrelation: calculateSpatialCorrelation(analysisData),
+      flowDynamics: analyzeFlowDynamics(flowsData),
+      temporalTrends: analyzeTemporalTrends(analysisData)
     };
-  }, [geoData, selectedCommodity]);
+  }, [analysisData, flowsData]);
+
+  // Handle data fetching
+  useEffect(() => {
+    if (!selectedCommodity || !selectedDate) return;
+
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchSpatialData({ 
+          selectedCommodity, 
+          selectedDate 
+        }));
+      } catch (error) {
+        console.error('Error fetching spatial data:', error);
+      }
+    };
+
+    fetchData();
+
+    // Cleanup
+    return () => {
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+      }
+    };
+  }, [selectedCommodity, selectedDate, dispatch]);
+
+  // Monitor data changes
+  useEffect(() => {
+    const hasDataChanged = prevDataRef.current !== data;
+    if (hasDataChanged && data) {
+      prevDataRef.current = data;
+      
+      // Perform any necessary post-processing
+      processingTimeoutRef.current = setTimeout(() => {
+        console.debug('Processing new spatial data:', {
+          features: data.geoData?.features?.length,
+          flows: data.flows?.length,
+          timestamp: new Date().toISOString()
+        });
+      }, 0);
+    }
+  }, [data]);
+
+  // Handlers
+  const handleRegionSelect = useCallback((region) => {
+    dispatch(setSelectedRegion(region));
+  }, [dispatch]);
+
+  const handleViewChange = useCallback((view) => {
+    dispatch(setView(view));
+  }, [dispatch]);
+
+  const clearAnalysisCache = useCallback(() => {
+    dispatch(clearCache());
+  }, [dispatch]);
+
+  // Calculate additional metrics
+  const metrics = useMemo(() => {
+    if (!data || !statistics) return null;
+
+    return {
+      marketCoverage: calculateMarketCoverage(data.weights),
+      integrationEfficiency: calculateIntegrationEfficiency(statistics),
+      spatialConnectivity: analyzeSpatialConnectivity(data.weights),
+      temporalStability: assessTemporalStability(statistics)
+    };
+  }, [data, statistics]);
 
   return {
-    ...processedData,
-    status,
-    error,
-    loadingProgress,
+    // Data
+    data,
+    analysisData,
+    flowsData,
+    statistics,
+    metrics,
+    
+    // UI State
+    selectedRegion: ui.selectedRegion,
+    view: ui.view,
+    
+    // Status
+    isLoading: status.loading,
+    error: status.error,
+    progress: status.progress,
+    stage: status.stage,
+    
+    // Metadata
+    processingStats: metadata.processingStats,
+    lastUpdated: metadata.lastUpdated,
+    
+    // Handlers
+    onRegionSelect: handleRegionSelect,
+    onViewChange: handleViewChange,
+    clearCache: clearAnalysisCache
   };
 };
 
-export default useSpatialData;
+// Utility functions for calculations
+const calculateMarketIntegration = (analysisData) => {
+  if (!analysisData) return null;
+  
+  const { coefficients, r_squared, moran_i } = analysisData;
+  return {
+    spatialLagCoefficient: coefficients?.spatial_lag_price || 0,
+    rSquared: r_squared || 0,
+    moranI: moran_i?.I || 0,
+    significance: moran_i?.['p-value'] || 1
+  };
+};
+
+const calculateSpatialCorrelation = (analysisData) => {
+  if (!analysisData?.moran_i) return null;
+  
+  return {
+    globalIndex: analysisData.moran_i.I,
+    pValue: analysisData.moran_i['p-value'],
+    zScore: analysisData.moran_i.z_score
+  };
+};
+
+const analyzeFlowDynamics = (flows) => {
+  if (!flows?.length) return null;
+
+  return {
+    totalFlows: flows.length,
+    averageWeight: flows.reduce((acc, flow) => acc + (flow.flow_weight || 0), 0) / flows.length,
+    maxFlow: Math.max(...flows.map(f => f.flow_weight || 0)),
+    minFlow: Math.min(...flows.map(f => f.flow_weight || 0))
+  };
+};
+
+const analyzeTemporalTrends = (analysisData) => {
+  if (!analysisData?.residuals) return null;
+
+  const residuals = analysisData.residuals;
+  return {
+    trend: calculateTrend(residuals),
+    seasonality: detectSeasonality(residuals),
+    volatility: calculateVolatility(residuals)
+  };
+};
+
+const calculateMarketCoverage = (weights) => {
+  if (!weights) return 0;
+  
+  const regions = Object.keys(weights);
+  const totalConnections = regions.reduce((acc, region) => {
+    return acc + (weights[region].neighbors?.length || 0);
+  }, 0);
+  
+  return totalConnections / (regions.length * (regions.length - 1));
+};
+
+const calculateIntegrationEfficiency = (statistics) => {
+  if (!statistics?.marketIntegration) return null;
+  
+  const { spatialLagCoefficient, rSquared } = statistics.marketIntegration;
+  return {
+    transmissionEfficiency: spatialLagCoefficient,
+    marketEfficiency: rSquared,
+    overallEfficiency: (spatialLagCoefficient + rSquared) / 2
+  };
+};
+
+const analyzeSpatialConnectivity = (weights) => {
+  if (!weights) return null;
+  
+  const regions = Object.keys(weights);
+  return {
+    totalRegions: regions.length,
+    averageConnections: regions.reduce((acc, region) => 
+      acc + (weights[region].neighbors?.length || 0), 0) / regions.length,
+    isolatedRegions: regions.filter(r => 
+      !weights[r].neighbors?.length).length
+  };
+};
+
+const assessTemporalStability = (statistics) => {
+  if (!statistics?.temporalTrends) return null;
+  
+  return {
+    trendStrength: statistics.temporalTrends.trend,
+    seasonalityScore: statistics.temporalTrends.seasonality,
+    volatilityIndex: statistics.temporalTrends.volatility
+  };
+};
+
+// Helper functions for trend analysis
+const calculateTrend = (residuals) => {
+  // Implement linear trend calculation
+  return 0;
+};
+
+const detectSeasonality = (residuals) => {
+  // Implement seasonality detection
+  return 0;
+};
+
+const calculateVolatility = (residuals) => {
+  // Implement volatility calculation
+  return 0;
+};

@@ -1,5 +1,11 @@
 const { override, addWebpackModuleRule, addWebpackPlugin, adjustStyleLoaders } = require('customize-cra');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load environment variables from the appropriate .env file
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+dotenv.config({ path: path.resolve(__dirname, envFile) });
 
 module.exports = override(
   // SVG handling with @svgr/webpack
@@ -86,7 +92,13 @@ module.exports = override(
       },
       alias: {
         ...config.resolve.alias,
-        // Add any additional aliases here
+        '@': path.resolve(__dirname, 'src'),
+        'leaflet': path.resolve(__dirname, 'node_modules/leaflet'),
+        'assets': path.resolve(__dirname, 'src/assets'),
+        'utils': path.resolve(__dirname, 'src/utils'),
+        'components': path.resolve(__dirname, 'src/components'),
+        'hooks': path.resolve(__dirname, 'src/hooks'),
+        'slices': path.resolve(__dirname, 'src/slices'),
       },
     };
 

@@ -10,7 +10,7 @@ import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import { toggleDarkMode } from './slices/themeSlice';
 import Header from './components/common/Header';
-import Sidebar from './components/common/Sidebar';
+import { Sidebar} from './components/common/Navigation';
 import Dashboard from './Dashboard';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorDisplay from './components/common/ErrorDisplay';

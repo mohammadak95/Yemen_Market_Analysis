@@ -30,12 +30,12 @@ module.exports = (env, argv) => {
   };
 
   return {
-    entry: path.resolve(__dirname, 'src', 'index.js'),
+    entry: './src/index.js', // Adjust this to your main entry file
     output: {
       path: path.resolve(__dirname, 'build'),
-      filename: 'static/js/[name].[contenthash:8].js',
+      filename: '[name].[contenthash].js', // Use unique names for each chunk
       publicPath: publicPath,
-      clean: true,
+      clean: true, // Clean the output directory before emit
     },
     resolve: {
       extensions: ['.js', '.jsx', '.json'],
@@ -73,12 +73,18 @@ module.exports = (env, argv) => {
           generator: {
             filename: 'static/data/[name].[hash:8][ext]'
           }
+        },
+        {
+          test: /\.js$/,
+          use: 'babel-loader',
+          exclude: /node_modules/
         }
       ],
     },
     plugins: [
       new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, 'public', 'index.html'),
+        template: './public/index.html', // Adjust this to your HTML template file
+        filename: 'index.html',
         favicon: path.resolve(__dirname, 'public', 'favicon.ico'),
         publicPath: publicPath,
         env: isDevelopment ? 'development' : 'production'
@@ -162,7 +168,7 @@ module.exports = (env, argv) => {
         },
       },
     },
-    devtool: isDevelopment ? 'eval-source-map' : 'source-map',
+    devtool: 'source-map',
     mode: isDevelopment ? 'development' : 'production',
   };
 };

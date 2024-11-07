@@ -1,6 +1,7 @@
 // src/components/analysis/spatial-analysis/DiagnosticsTests.js
 
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import {
   Paper,
   Typography,
@@ -13,12 +14,10 @@ import {
   Box,
   Grid,
   Alert,
-  Chip,
   Divider,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
-import { TrendingUp, TrendingDown, ErrorOutline } from '@mui/icons-material';
-import { Bar, BoxPlot } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import 'chart.js/auto';
 
 const DiagnosticsTests = ({ data, selectedMonth }) => {
@@ -40,9 +39,7 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
   const currentPeriodResiduals = useMemo(() => {
     if (!residual || !selectedMonth) return [];
     return residual.filter(
-      (r) =>
-        new Date(r.date).toISOString().split('T')[0] ===
-        new Date(selectedMonth).toISOString().split('T')[0]
+      (r) => r.date.slice(0, 7) === selectedMonth
     );
   }, [residual, selectedMonth]);
 
@@ -60,17 +57,12 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
       ) || 0;
     const min = Math.min(...values);
     const max = Math.max(...values);
-    const sortedValues = values.slice().sort((a, b) => a - b);
-    const q1 = sortedValues[Math.floor(values.length * 0.25)];
-    const q3 = sortedValues[Math.floor(values.length * 0.75)];
 
     return {
       mean,
       std,
       min,
       max,
-      q1,
-      q3,
       values, // For visualization
     };
   }, [currentPeriodResiduals]);
@@ -113,9 +105,7 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
                     </Tooltip>
                   </TableCell>
                   <TableCell align="right">
-                    {moran_i?.I?.toFixed(4) ||
-                      moran_i?.value?.toFixed(4) ||
-                      'N/A'}
+                    {moran_i?.I?.toFixed(4) || 'N/A'}
                   </TableCell>
                   <TableCell align="right">
                     p ={' '}
@@ -179,7 +169,6 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
                   <TableCell>Variable</TableCell>
                   <TableCell align="right">Coefficient</TableCell>
                   <TableCell align="right">P-value</TableCell>
-                  <TableCell align="right">VIF</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -197,11 +186,6 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
                             : p_values[name].toFixed(4)
                           : 'N/A'}
                       </TableCell>
-                      <TableCell align="right">
-                        {vif?.find((v) => v.Variable === name)?.VIF?.toFixed(
-                          2
-                        ) || 'N/A'}
-                      </TableCell>
                     </TableRow>
                   ))}
               </TableBody>
@@ -210,22 +194,22 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
         </Grid>
 
         {/* VIF Details */}
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="subtitle1" gutterBottom>
-            Variance Inflation Factor (VIF)
-          </Typography>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Variable</TableCell>
-                  <TableCell align="right">VIF</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {vif &&
-                  vif.map((v) => (
+        {vif && (
+          <Grid item xs={12}>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" gutterBottom>
+              Variance Inflation Factor (VIF)
+            </Typography>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Variable</TableCell>
+                    <TableCell align="right">VIF</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {vif.map((v) => (
                     <TableRow key={v.Variable}>
                       <TableCell>{v.Variable}</TableCell>
                       <TableCell align="right">
@@ -233,17 +217,18 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
                       </TableCell>
                     </TableRow>
                   ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Grid>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+        )}
 
         {/* Residual Statistics */}
         {residualStats && (
           <Grid item xs={12}>
             <Paper sx={{ p: 2, mt: 2 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Current Period Residual Statistics
+                Residual Statistics for {selectedMonth}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
@@ -269,13 +254,6 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
                             {residualStats.max.toFixed(4)}
                           </TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell>Q1 / Q3</TableCell>
-                          <TableCell align="right">
-                            {residualStats.q1.toFixed(4)} /{' '}
-                            {residualStats.q3.toFixed(4)}
-                          </TableCell>
-                        </TableRow>
                       </TableBody>
                     </Table>
                   </TableContainer>
@@ -287,45 +265,22 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
                   </Typography>
                   <Bar
                     data={{
-                      labels: ['Residuals'],
+                      labels: residualStats.values.map((_, idx) => idx + 1),
                       datasets: [
                         {
-                          label: 'Frequency',
-                          data: [residualStats.values.length],
+                          label: 'Residuals',
+                          data: residualStats.values,
                           backgroundColor: 'rgba(75, 192, 192, 0.6)',
                         },
                       ],
                     }}
                     options={{
-                      plugins: {
-                        legend: { display: false },
-                      },
                       scales: {
                         x: { display: false },
-                        y: { display: true, title: { display: true, text: 'Count' } },
+                        y: { display: true },
                       },
-                    }}
-                  />
-
-                  {/* Box Plot */}
-                  <BoxPlot
-                    data={{
-                      labels: ['Residuals'],
-                      datasets: [
-                        {
-                          label: 'Residuals',
-                          data: residualStats.values,
-                          backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
                       plugins: {
                         legend: { display: false },
-                      },
-                      scales: {
-                        y: { title: { display: true, text: 'Residual Value' } },
                       },
                     }}
                   />
@@ -358,6 +313,11 @@ const DiagnosticsTests = ({ data, selectedMonth }) => {
       </Grid>
     </Paper>
   );
+};
+
+DiagnosticsTests.propTypes = {
+  data: PropTypes.object.isRequired,
+  selectedMonth: PropTypes.string.isRequired,
 };
 
 export default DiagnosticsTests;

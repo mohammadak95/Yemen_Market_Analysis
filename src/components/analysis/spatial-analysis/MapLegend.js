@@ -1,71 +1,61 @@
 // src/components/analysis/spatial-analysis/MapLegend.js
 
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Paper,
-  Box,
   Typography,
+  Box,
   Tooltip,
   IconButton,
-  Collapse,
-  List,
-  ListItem,
-  ListItemText,
 } from '@mui/material';
 import { Info, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 
 const MapLegend = ({
+  title,
   colorScale,
-  variable,
-  position = 'bottomright',
-  format = (value) => value.toFixed(1),
   steps = 5,
-  expanded = true,
   unit = '',
   description = '',
+  position = 'bottomright',
 }) => {
-  const [isExpanded, setIsExpanded] = useState(expanded);
+  const theme = useTheme();
+  const [isExpanded, setIsExpanded] = React.useState(true);
 
   if (!colorScale) return null;
 
+  // Calculate legend values
   const domain = colorScale.domain();
   const range = domain[1] - domain[0];
-  const step = range / (steps - 1);
-  const values = Array.from({ length: steps }, (_, i) => domain[0] + step * i);
+  const stepSize = range / (steps - 1);
+  const values = Array.from({ length: steps }, (_, i) => domain[0] + stepSize * i);
 
-  const getPositionStyle = () => {
-    const styles = {
-      position: 'absolute',
-      zIndex: 1000,
-    };
-
-    if (position.includes('top')) {
-      styles.top = 10;
-    } else {
-      styles.bottom = 10;
-    }
-
-    if (position.includes('left')) {
-      styles.left = 10;
-    } else {
-      styles.right = 10;
-    }
-
-    return styles;
+  // Format numbers nicely
+  const formatValue = (value) => {
+    if (Math.abs(value) < 0.01) return value.toExponential(2);
+    return value.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
   };
 
   return (
     <Paper
       elevation={3}
       sx={{
+        position: 'absolute',
+        [position.includes('top') ? 'top' : 'bottom']: 20,
+        [position.includes('left') ? 'left' : 'right']: 20,
         p: 1.5,
-        bgcolor: 'background.paper',
-        ...getPositionStyle(),
+        minWidth: 150,
+        maxWidth: 200,
+        backgroundColor: 'background.paper',
         borderRadius: 1,
-        maxWidth: 250,
+        zIndex: 1000,
       }}
     >
+      {/* Header */}
       <Box
         sx={{
           display: 'flex',
@@ -75,12 +65,10 @@ const MapLegend = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Typography variant="caption" fontWeight="medium">
-            {variable}
-          </Typography>
+          <Typography variant="subtitle2">{title}</Typography>
           {description && (
             <Tooltip title={description} arrow>
-              <Info fontSize="small" />
+              <Info fontSize="small" color="action" />
             </Tooltip>
           )}
         </Box>
@@ -93,71 +81,71 @@ const MapLegend = ({
         </IconButton>
       </Box>
 
-      <Collapse in={isExpanded}>
-        <Box sx={{ display: 'flex', height: 20, mb: 0.5 }}>
-          {values.map((value, i) => (
-            <Tooltip
-              key={i}
-              title={`${format(value)}${unit}`}
-              arrow
-              placement="top"
-            >
-              <Box
-                sx={{
-                  width: 24,
-                  height: '100%',
-                  bgcolor: colorScale(value),
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&:first-of-type': {
-                    borderTopLeftRadius: 2,
-                    borderBottomLeftRadius: 2,
-                  },
-                  '&:last-child': {
-                    borderTopRightRadius: 2,
-                    borderBottomRightRadius: 2,
-                  },
-                }}
-              />
-            </Tooltip>
-          ))}
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            mt: 0.5,
-            px: 0.5,
-          }}
-        >
-          <Typography variant="caption">
-            {format(domain[0])}
-            {unit}
-          </Typography>
-          <Typography variant="caption">
-            {format(domain[1])}
-            {unit}
-          </Typography>
-        </Box>
-      </Collapse>
+      {/* Color Scale */}
+      {isExpanded && (
+        <>
+          <Box sx={{ display: 'flex', height: 20, mb: 0.5 }}>
+            {values.map((value, i) => (
+              <Tooltip
+                key={i}
+                title={`${formatValue(value)}${unit}`}
+                arrow
+                placement="top"
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    bgcolor: colorScale(value),
+                    border: `1px solid ${theme.palette.divider}`,
+                    '&:first-of-type': {
+                      borderTopLeftRadius: 2,
+                      borderBottomLeftRadius: 2,
+                    },
+                    '&:last-child': {
+                      borderTopRightRadius: 2,
+                      borderBottomRightRadius: 2,
+                    },
+                  }}
+                />
+              </Tooltip>
+            ))}
+          </Box>
+
+          {/* Range Labels */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              px: 0.5,
+            }}
+          >
+            <Typography variant="caption">
+              {formatValue(domain[0])}
+              {unit}
+            </Typography>
+            <Typography variant="caption">
+              {formatValue(domain[1])}
+              {unit}
+            </Typography>
+          </Box>
+        </>
+      )}
     </Paper>
   );
 };
 
 MapLegend.propTypes = {
+  title: PropTypes.string.isRequired,
   colorScale: PropTypes.func.isRequired,
-  variable: PropTypes.string.isRequired,
+  steps: PropTypes.number,
+  unit: PropTypes.string,
+  description: PropTypes.string,
   position: PropTypes.oneOf([
     'topleft',
     'topright',
     'bottomleft',
     'bottomright',
   ]),
-  format: PropTypes.func,
-  steps: PropTypes.number,
-  expanded: PropTypes.bool,
-  unit: PropTypes.string,
-  description: PropTypes.string,
 };
 
-export default MapLegend;
+export default React.memo(MapLegend);
