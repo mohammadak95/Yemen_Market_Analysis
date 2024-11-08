@@ -1,25 +1,37 @@
 // public/spatialServiceWorker.js
 
-const CACHE_NAME = 'spatial-data-cache-v2';
-const API_CACHE_NAME = 'spatial-api-cache-v2';
+const CACHE_NAME = 'spatial-data-cache-v3';
+const API_CACHE_NAME = 'spatial-api-cache-v3';
 
 // Only cache local assets
 const STATIC_ASSETS = [
   '/index.html',
   '/manifest.json',
-  '/favicon.ico'
+  '/favicon.ico',
+  // Add other assets as needed
 ];
 
 // Define API endpoints that should be cached
 const API_ENDPOINTS = [
   '/results/unified_data.geojson',
-  '/results/network_data/time_varying_flows.csv',
+  '/results/network_data/flow_maps.csv',
   '/results/spatial_analysis_results.json',
   '/results/choropleth_data/geoBoundaries-YEM-ADM1.geojson',
-  '/results/spatial_weights/transformed_spatial_weights.json'
+  '/results/spatial_weights/spatial_weights.json',
+  // Add other API endpoints as needed
 ];
 
-// Cache first, then network strategy for API requests
+// Limit the cache size by removing old entries
+const limitCacheSize = async (cacheName, maxItems) => {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxItems) {
+    await cache.delete(keys[0]);
+    await limitCacheSize(cacheName, maxItems);
+  }
+};
+
+// Cache-first strategy for API requests
 async function cacheFirstThenNetwork(request) {
   try {
     const cachedResponse = await caches.match(request);
@@ -31,6 +43,7 @@ async function cacheFirstThenNetwork(request) {
     if (networkResponse.ok) {
       const cache = await caches.open(API_CACHE_NAME);
       await cache.put(request, networkResponse.clone());
+      await limitCacheSize(API_CACHE_NAME, 50); // Limit API cache size
     }
     return networkResponse;
   } catch (error) {
@@ -39,13 +52,16 @@ async function cacheFirstThenNetwork(request) {
   }
 }
 
-// Network first, then cache strategy for static assets
+// Network-first strategy for static assets
 async function networkFirstThenCache(request) {
   try {
     const cache = await caches.open(CACHE_NAME);
     try {
       const networkResponse = await fetch(request);
-      await cache.put(request, networkResponse.clone());
+      if (networkResponse.ok) {
+        await cache.put(request, networkResponse.clone());
+        await limitCacheSize(CACHE_NAME, 50); // Limit static cache size
+      }
       return networkResponse;
     } catch (error) {
       const cachedResponse = await cache.match(request);
@@ -63,34 +79,23 @@ async function networkFirstThenCache(request) {
 // Install event handler
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Install');
-  
+
   event.waitUntil(
     (async () => {
       try {
         const cache = await caches.open(CACHE_NAME);
         console.log('[Service Worker] Caching static assets');
-        
-        // Cache static assets one by one
-        for (const asset of STATIC_ASSETS) {
-          try {
-            await cache.add(new Request(asset, { 
-              credentials: 'same-origin',
-              mode: 'no-cors'
-            }));
-            console.log(`[SW] Cached: ${asset}`);
-          } catch (error) {
-            console.warn(`[SW] Failed to cache ${asset}:`, error);
-          }
-        }
 
-        // Don't pre-cache API endpoints, they'll be cached on first use
+        // Cache static assets one by one
+        await cache.addAll(STATIC_ASSETS);
+
         console.log('[Service Worker] Installation complete');
       } catch (error) {
         console.error('[SW] Installation failed:', error);
       }
     })()
   );
-  
+
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 });
@@ -98,7 +103,7 @@ self.addEventListener('install', (event) => {
 // Activate event handler
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activate');
-  
+
   event.waitUntil(
     (async () => {
       try {
@@ -112,7 +117,7 @@ self.addEventListener('activate', (event) => {
         );
 
         // Take control of all clients
-        await clients.claim();
+        await self.clients.claim();
         console.log('[Service Worker] Activation complete');
       } catch (error) {
         console.error('[SW] Activation failed:', error);
@@ -163,14 +168,3 @@ self.addEventListener('message', (event) => {
     event.ports[0].postMessage({ version: CACHE_NAME });
   }
 });
-
-// Helper function to log cache contents (for debugging)
-async function logCacheContents() {
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    const keys = await cache.keys();
-    console.log('[SW] Cache contents:', keys.map(key => key.url));
-  } catch (error) {
-    console.error('[SW] Failed to log cache contents:', error);
-  }
-}

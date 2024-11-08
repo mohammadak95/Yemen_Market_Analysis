@@ -1,10 +1,7 @@
 // src/utils/spatialUtils.js
 
 import proj4 from 'proj4';
-
-// Cache for transformed coordinates
-const coordinateCache = new Map();
-const CACHE_SIZE_LIMIT = 1000;
+import * as turf from '@turf/turf';
 
 // Define projections
 const WGS84 = 'EPSG:4326';
@@ -13,98 +10,118 @@ const UTM_ZONE_38N = '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs';
 // Initialize proj4 with the required projection
 proj4.defs('UTM38N', UTM_ZONE_38N);
 
-// Memoized coordinate transformation
+// Cache for transformed coordinates
+const coordinateCache = new Map();
+const CACHE_SIZE_LIMIT = 1000;
+
+/**
+ * Memoized coordinate transformation function.
+ * Transforms coordinates from WGS84 to UTM Zone 38N.
+ * Utilizes a cache to store and retrieve previously transformed coordinates.
+ * 
+ * @param {Array<number>} coordinates - [longitude, latitude] to transform.
+ * @returns {Array<number>} Transformed [x, y] coordinates.
+ */
 export const transformCoordinates = (coordinates) => {
-  const cacheKey = JSON.stringify(coordinates);
-  
-  if (coordinateCache.has(cacheKey)) {
-    return coordinateCache.get(cacheKey);
+  if (!Array.isArray(coordinates) || coordinates.length !== 2) {
+    throw new Error('Invalid coordinates format. Expected [longitude, latitude].');
   }
 
-  let result;
-  if (Array.isArray(coordinates[0]) && Array.isArray(coordinates[0][0])) {
-    result = coordinates.map(ring => ring.map(coord => transformCoordinates(coord)));
-  } else if (Array.isArray(coordinates[0])) {
-    result = coordinates.map(coord => transformCoordinates(coord));
-  } else {
-    try {
-      const [x, y] = coordinates;
-      const [lon, lat] = proj4('UTM38N', 'EPSG:4326', [x, y]);
-      result = [lat, lon];
-    } catch (error) {
-      console.error('Coordinate transformation error:', error);
-      result = coordinates;
-    }
+  const key = coordinates.join(',');
+
+  if (coordinateCache.has(key)) {
+    return coordinateCache.get(key);
   }
+
+  const transformed = proj4(WGS84, 'UTM38N', coordinates);
 
   // Manage cache size
   if (coordinateCache.size >= CACHE_SIZE_LIMIT) {
+    // Remove the first inserted key (FIFO)
     const firstKey = coordinateCache.keys().next().value;
     coordinateCache.delete(firstKey);
   }
-  
-  coordinateCache.set(cacheKey, result);
-  return result;
+
+  coordinateCache.set(key, transformed);
+
+  return transformed;
 };
 
-// Use WeakMap for cluster caching to avoid memory leaks
-const clusterCache = new WeakMap();
-
 /**
- * Compute market clusters based on flow data and spatial weights
+ * Compute market clusters based on flow data and spatial weights.
+ * @param {Array<Object>} flows - Array of flow data. Each flow should have `source`, `target`, and `flow_weight`.
+ * @param {Object} weights - Spatial weights object. Each key is a region ID, and its value is an array of neighboring region IDs.
+ * @returns {Array<Object>} Array of market clusters.
  */
 export const memoizedComputeClusters = (flows, weights) => {
-  if (!flows || !weights) return [];
-  
-  const cacheKey = { flows, weights };
-  if (clusterCache.has(cacheKey)) {
-    return clusterCache.get(cacheKey);
-  }
+  if (!flows?.length || !weights) return [];
 
-  const clusters = new Map();
+  const clusters = [];
   const visited = new Set();
 
-  const addToCluster = (region, cluster) => {
+  /**
+   * Recursive function to perform Depth-First Search (DFS) for clustering.
+   * @param {string} region - Current region ID.
+   * @param {Set<string>} clusterMarkets - Set of connected markets in the current cluster.
+   */
+  const dfs = (region, clusterMarkets) => {
     if (visited.has(region)) return;
     visited.add(region);
-    cluster.connectedMarkets.add(region);
+    clusterMarkets.add(region);
 
-    const neighbors = weights[region]?.neighbors || [];
+    const neighbors = weights[region] || [];
     neighbors.forEach(neighbor => {
       if (!visited.has(neighbor)) {
-        addToCluster(neighbor, cluster);
+        dfs(neighbor, clusterMarkets);
       }
     });
   };
 
   Object.keys(weights).forEach(region => {
     if (!visited.has(region)) {
-      const cluster = {
-        mainMarket: region,
-        connectedMarkets: new Set(),
-        avgFlow: 0,
-        totalFlow: 0
-      };
+      const clusterMarkets = new Set();
+      dfs(region, clusterMarkets);
 
-      addToCluster(region, cluster);
-      clusters.set(region, cluster);
+      // Calculate flow metrics for the cluster
+      const relevantFlows = flows.filter(flow => 
+        clusterMarkets.has(flow.source) || 
+        clusterMarkets.has(flow.target)
+      );
+
+      const totalFlow = relevantFlows.reduce((sum, flow) => sum + (flow.flow_weight || 0), 0);
+      const marketCount = clusterMarkets.size;
+      const avgFlow = marketCount > 0 ? totalFlow / marketCount : 0;
+
+      // Identify the main market (could be based on criteria, here we choose the first one)
+      const mainMarket = clusterMarkets.values().next().value || '';
+
+      clusters.push({
+        mainMarket,
+        connectedMarkets: clusterMarkets,
+        marketCount,
+        avgFlow,
+        totalFlow
+      });
     }
   });
 
-  clusterCache.set(cacheKey, clusters);
-  return Array.from(clusters.values());
+  return clusters;
 };
 
 /**
- * Detect market shocks based on price changes and volatility
+ * Detect market shocks based on significant price changes.
+ * @param {Array<Object>} features - Array of GeoJSON features.
+ * @param {string} selectedDate - Selected date in 'YYYY-MM' format.
+ * @returns {Array<Object>} Array of market shocks.
  */
 export const detectMarketShocks = (features, selectedDate) => {
   if (!features) return [];
 
   const shocks = [];
-  const volatilityThreshold = 0.05;
-  const priceChangeThreshold = 0.15;
+  const volatilityThreshold = 0.05; // 5%
+  const priceChangeThreshold = 0.15; // 15%
 
+  // Group features by region
   const regionData = features.reduce((acc, feature) => {
     const region = feature.properties.region_id || feature.properties.region;
     if (!acc[region]) acc[region] = [];
@@ -112,8 +129,9 @@ export const detectMarketShocks = (features, selectedDate) => {
     return acc;
   }, {});
 
-  Object.entries(regionData).forEach(([region, features]) => {
-    const sortedFeatures = features.sort(
+  Object.entries(regionData).forEach(([region, regionFeatures]) => {
+    // Sort features by date
+    const sortedFeatures = regionFeatures.sort(
       (a, b) => new Date(a.properties.date) - new Date(b.properties.date)
     );
 
@@ -123,7 +141,7 @@ export const detectMarketShocks = (features, selectedDate) => {
       const currentPrice = parseFloat(current.properties.price);
       const previousPrice = parseFloat(previous.properties.price);
 
-      if (!currentPrice || !previousPrice) continue;
+      if (isNaN(currentPrice) || isNaN(previousPrice)) continue;
 
       const priceChange = (currentPrice - previousPrice) / previousPrice;
       const volatility = Math.abs(priceChange);
@@ -137,7 +155,7 @@ export const detectMarketShocks = (features, selectedDate) => {
           severity: volatility > volatilityThreshold ? 'high' : 'medium',
           coordinates: current.geometry.coordinates,
           price_change: priceChange,
-          volatility
+          volatility,
         });
       }
     }
@@ -147,56 +165,59 @@ export const detectMarketShocks = (features, selectedDate) => {
 };
 
 /**
- * Calculate spatial weights matrix
+ * Calculate spatial weights matrix by analyzing shared boundaries.
+ * @param {Array<Object>} features - Array of GeoJSON features.
+ * @returns {Object} Spatial weights object. Each key is a region ID, and its value is an array of neighboring region IDs.
  */
 export const calculateSpatialWeights = (features) => {
-  if (!features) return {};
-
   const weights = {};
-  
-  // Initialize weights object with features
+
+  // Initialize weights with empty arrays
   features.forEach(feature => {
     const regionId = feature.properties.region_id;
+    if (!regionId) return; // Skip if no region_id
     if (!weights[regionId]) {
-      weights[regionId] = {
-        neighbors: [],
-        geometry: feature.geometry,
-        properties: feature.properties
-      };
+      weights[regionId] = [];
     }
   });
 
-  // Calculate neighbors based on shared boundaries
-  features.forEach(feature1 => {
+  // Compare each pair of features to determine shared boundaries
+  for (let i = 0; i < features.length; i++) {
+    const feature1 = features[i];
     const region1 = feature1.properties.region_id;
-    features.forEach(feature2 => {
+    if (!region1) continue;
+
+    for (let j = i + 1; j < features.length; j++) {
+      const feature2 = features[j];
       const region2 = feature2.properties.region_id;
-      if (region1 !== region2 && sharesBoundary(feature1, feature2)) {
-        if (!weights[region1].neighbors.includes(region2)) {
-          weights[region1].neighbors.push(region2);
+      if (!region2 || region1 === region2) continue;
+
+      if (sharesBoundary(feature1, feature2)) {
+        if (!weights[region1].includes(region2)) {
+          weights[region1].push(region2);
+        }
+        if (!weights[region2].includes(region1)) {
+          weights[region2].push(region1);
         }
       }
-    });
-  });
+    }
+  }
 
   return weights;
 };
 
-// Helper function to check if two regions share a boundary
+/**
+ * Check if two regions share a boundary using Turf.js.
+ * @param {Object} feature1 - First GeoJSON feature.
+ * @param {Object} feature2 - Second GeoJSON feature.
+ * @returns {boolean} True if they share a boundary, false otherwise.
+ */
 const sharesBoundary = (feature1, feature2) => {
-  // Simple implementation - can be enhanced with more sophisticated spatial analysis
-  const coords1 = feature1.geometry.coordinates[0];
-  const coords2 = feature2.geometry.coordinates[0];
-
-  for (let i = 0; i < coords1.length; i++) {
-    for (let j = 0; j < coords2.length; j++) {
-      if (
-        Math.abs(coords1[i][0] - coords2[j][0]) < 0.001 &&
-        Math.abs(coords1[i][1] - coords2[j][1]) < 0.001
-      ) {
-        return true;
-      }
-    }
+  try {
+    const intersection = turf.intersect(feature1, feature2);
+    return !!intersection;
+  } catch (error) {
+    console.error('Error checking shared boundary:', error);
+    return false;
   }
-  return false;
 };

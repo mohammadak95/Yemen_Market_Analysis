@@ -8,17 +8,23 @@ const ReduxDebugWrapper = ({ children }) => {
   const store = useStore();
 
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') {
+      return; // Exit if not in development mode
+    }
+
     console.group('Redux Debug Info');
     console.log('Initial State:', store.getState());
-    // Uncomment if you have a theme slice
-    // console.log('Theme State:', store.getState().theme);
     console.groupEnd();
 
     const unsubscribe = store.subscribe(() => {
-      console.group('Redux State Update');
-      console.log('New State:', store.getState());
-      // Removed 'lastAction' logging
-      console.groupEnd();
+      const state = store.getState();
+      const lastAction = state.lastAction;
+      if (lastAction) {
+        console.group('Redux State Update');
+        console.log('Action:', lastAction);
+        console.log('New State:', state);
+        console.groupEnd();
+      }
     });
 
     return () => {

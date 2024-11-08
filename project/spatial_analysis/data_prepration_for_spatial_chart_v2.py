@@ -1,4 +1,4 @@
-# project/spatial_analysis/data_prepration_for_spatial_chart.py
+# project/spatial_analysis/data_preparation_for_spatial_chart.py
 
 import os
 import sys
@@ -7,7 +7,6 @@ import pandas as pd
 import geopandas as gpd
 from pathlib import Path
 from libpysal.weights import KNN
-from esda.moran import Moran
 import logging
 import networkx as nx  # For connectivity checks
 from libpysal.weights.spatial_lag import lag_spatial
@@ -27,21 +26,30 @@ RESIDUALS_OUTPUT_DIR = RESULTS_DIR / "residuals_data"
 NETWORK_DATA_OUTPUT_DIR = RESULTS_DIR / "network_data"
 
 # Create output directories if they don't exist
-for directory in [CHOROPLETH_OUTPUT_DIR, WEIGHTS_OUTPUT_DIR, TIME_SERIES_OUTPUT_DIR, RESIDUALS_OUTPUT_DIR, NETWORK_DATA_OUTPUT_DIR]:
+for directory in [
+    CHOROPLETH_OUTPUT_DIR,
+    WEIGHTS_OUTPUT_DIR,
+    TIME_SERIES_OUTPUT_DIR,
+    RESIDUALS_OUTPUT_DIR,
+    NETWORK_DATA_OUTPUT_DIR,
+]:
     directory.mkdir(parents=True, exist_ok=True)
+
 
 def load_geojson_data(file_path, logger):
     """
     Load GeoJSON data and apply consistent sorting.
+
+    Parameters:
+        file_path (str or Path): Path to the GeoJSON file.
+        logger (logging.Logger): Logger for logging messages.
+
+    Returns:
+        gpd.GeoDataFrame: Loaded and sorted GeoDataFrame.
     """
     try:
         gdf = gpd.read_file(file_path)
         logger.info(f"Loaded GeoJSON data from {file_path} with {len(gdf)} records")
-        
-        # Rename 'residual' column to 'residuals' if it exists
-
-        # Log GeoDataFrame columns for debugging
-        logger.debug(f"GeoDataFrame columns: {gdf.columns.tolist()}")
 
         # Ensure 'date' is in datetime format
         if 'date' in gdf.columns:
@@ -57,9 +65,17 @@ def load_geojson_data(file_path, logger):
         logger.error(f"Failed to load GeoJSON data from '{file_path}': {e}")
         sys.exit(1)
 
+
 def check_unique_identifier(gdf, identifier='region_id', logger=logger):
     """
     Check if the specified identifier is unique in the GeoDataFrame.
+
+    Parameters:
+        gdf (gpd.GeoDataFrame): The GeoDataFrame to check.
+        identifier (str): The column name to check for uniqueness.
+
+    Returns:
+        bool: True if unique, False otherwise.
     """
     if gdf[identifier].is_unique:
         logger.info(f"All '{identifier}'s are unique.")
@@ -69,18 +85,32 @@ def check_unique_identifier(gdf, identifier='region_id', logger=logger):
         logger.warning(f"Duplicate '{identifier}'s found: {duplicate_ids}")
         return False
 
+
 def prepare_unique_regions_gdf(gdf, identifier='region_id', logger=logger):
     """
     Create a GeoDataFrame with unique regions based on the specified identifier.
-    Assumes that all entries for a given region_id have the same geometry.
+
+    Parameters:
+        gdf (gpd.GeoDataFrame): The original GeoDataFrame.
+        identifier (str): The column name to use for uniqueness.
+
+    Returns:
+        gpd.GeoDataFrame: GeoDataFrame with unique regions.
     """
     unique_regions_gdf = gdf.drop_duplicates(subset=[identifier]).copy().reset_index(drop=True)
     logger.info(f"Created unique regions GeoDataFrame with {len(unique_regions_gdf)} records based on '{identifier}'.")
     return unique_regions_gdf
 
+
 def is_fully_connected(w, logger=logger):
     """
     Check if the spatial weights matrix is fully connected.
+
+    Parameters:
+        w (libpysal.weights.W): Spatial weights object.
+
+    Returns:
+        bool: True if fully connected, False otherwise.
     """
     try:
         G = w.to_networkx()
@@ -95,9 +125,15 @@ def is_fully_connected(w, logger=logger):
         logger.error(f"Error checking connectivity: {e}")
         return False
 
+
 def inspect_neighbors(w, unique_gdf, sample_size=5, logger=logger):
     """
     Inspect a sample of neighbors to ensure no region includes itself.
+
+    Parameters:
+        w (libpysal.weights.W): Spatial weights object.
+        unique_gdf (gpd.GeoDataFrame): GeoDataFrame with unique regions.
+        sample_size (int): Number of samples to inspect.
     """
     region_ids = unique_gdf['region_id'].tolist()
     sample_indices = range(min(sample_size, len(region_ids)))
@@ -110,9 +146,15 @@ def inspect_neighbors(w, unique_gdf, sample_size=5, logger=logger):
         else:
             logger.info(f"Region '{region}' neighbors: {neighbors}")
 
+
 def verify_spatial_weights(w, unique_gdf, sample_size=5, logger=logger):
     """
     Verify that no region includes itself as a neighbor and that neighbors are distinct.
+
+    Parameters:
+        w (libpysal.weights.W): Spatial weights object.
+        unique_gdf (gpd.GeoDataFrame): GeoDataFrame with unique regions.
+        sample_size (int): Number of samples to verify.
     """
     region_ids = unique_gdf['region_id'].tolist()
     sample_indices = range(min(sample_size, len(region_ids)))
@@ -125,9 +167,19 @@ def verify_spatial_weights(w, unique_gdf, sample_size=5, logger=logger):
         else:
             logger.info(f"Region '{region}' neighbors: {neighbors}")
 
+
 def export_spatial_weights(unique_gdf, initial_k=5, max_k=20, identifier='region_id', logger=logger):
     """
     Export spatial weights matrix as JSON, automatically increasing k until connected.
+
+    Parameters:
+        unique_gdf (gpd.GeoDataFrame): GeoDataFrame with unique regions.
+        initial_k (int): Initial number of neighbors.
+        max_k (int): Maximum number of neighbors to attempt.
+        identifier (str): Column name used as the identifier.
+
+    Returns:
+        libpysal.weights.W: Spatial weights object.
     """
     try:
         # Ensure the GeoDataFrame is sorted by the identifier for consistent indexing
@@ -138,7 +190,7 @@ def export_spatial_weights(unique_gdf, initial_k=5, max_k=20, identifier='region
         while k <= max_k:
             logger.info(f"Attempting to create KNN weights with k={k}...")
             w = KNN.from_dataframe(unique_gdf, k=k)
-            
+
             logger.info("Checking if the weights matrix is fully connected...")
             if is_fully_connected(w, logger):
                 logger.info(f"Spatial weights matrix is fully connected with k={k}.")
@@ -149,28 +201,22 @@ def export_spatial_weights(unique_gdf, initial_k=5, max_k=20, identifier='region
 
         if k > max_k:
             logger.error(f"Failed to create a fully connected spatial weights matrix with k up to {max_k}.")
-            k_final = k-1
+            k_final = k - 1
             logger.warning(f"Proceeding with k={k_final} which may have disconnected components.")
             w = KNN.from_dataframe(unique_gdf, k=k_final)
 
-        neighbors_dict = w.neighbors
-        weights_dict = {}
-
-        for region_idx, neighbors in neighbors_dict.items():
-            if region_idx >= len(region_ids):
-                logger.error(f"Region index {region_idx} exceeds the number of unique regions.")
-                continue
-            
+        neighbors_dict = {}
+        for region_idx, neighbors in w.neighbors.items():
             region = region_ids[region_idx]
             neighbor_regions = [region_ids[n] for n in neighbors if n != region_idx and n < len(region_ids)]
 
             if not neighbor_regions:
                 logger.warning(f"Region '{region}' has no valid neighbors.")
             else:
-                weights_dict[region] = neighbor_regions
+                neighbors_dict[region] = neighbor_regions
 
         with open(WEIGHTS_OUTPUT_DIR / "spatial_weights.json", 'w') as f:
-            json.dump(weights_dict, f, indent=2)
+            json.dump(neighbors_dict, f, indent=2)
 
         logger.info("Spatial weights matrix exported to JSON.")
         inspect_neighbors(w, unique_gdf, sample_size=5, logger=logger)
@@ -181,9 +227,14 @@ def export_spatial_weights(unique_gdf, initial_k=5, max_k=20, identifier='region
         logger.error(f"Failed to export spatial weights matrix: {e}")
         raise
 
+
 def prepare_choropleth_data(gdf, choropleth_output_dir, logger=logger):
     """
     Prepare data for choropleth maps: Average prices, Conflict intensity, Price changes, Residuals.
+
+    Parameters:
+        gdf (gpd.GeoDataFrame): The main GeoDataFrame.
+        choropleth_output_dir (Path): Output directory for choropleth data.
     """
     try:
         # Ensure 'date' is in datetime format
@@ -230,17 +281,22 @@ def prepare_choropleth_data(gdf, choropleth_output_dir, logger=logger):
         logger.error(f"Failed to prepare residuals: {e}")
         raise
 
+
 def prepare_time_series_data(gdf, time_series_output_dir, logger=logger):
     """
     Prepare time series data for prices and conflict intensity.
+
+    Parameters:
+        gdf (gpd.GeoDataFrame): The main GeoDataFrame.
+        time_series_output_dir (Path): Output directory for time series data.
     """
     try:
         gdf = gdf.sort_values(by=['region_id', 'date']).reset_index(drop=True)
-        
+
         # Time series per Commodity and Regime
         prices_ts = gdf.pivot_table(
-            index=['region_id', 'date'], 
-            columns=['commodity', 'regime'], 
+            index=['region_id', 'date'],
+            columns=['commodity', 'regime'],
             values='usdprice'
         ).reset_index()
         prices_ts.to_csv(time_series_output_dir / "prices_time_series.csv", index=False)
@@ -258,9 +314,16 @@ def prepare_time_series_data(gdf, time_series_output_dir, logger=logger):
         logger.error(f"Failed to prepare conflict intensity time series data: {e}")
         raise
 
+
 def generate_network_data(gdf, unique_regions_gdf, w, network_data_output_dir, logger=logger):
     """
     Generate flow maps using the spatial weights matrix and include latitude/longitude.
+
+    Parameters:
+        gdf (gpd.GeoDataFrame): The main GeoDataFrame.
+        unique_regions_gdf (gpd.GeoDataFrame): GeoDataFrame with unique regions.
+        w (libpysal.weights.W): Spatial weights object.
+        network_data_output_dir (Path): Output directory for network data.
     """
     flow_data = []
     try:
@@ -287,7 +350,7 @@ def generate_network_data(gdf, unique_regions_gdf, w, network_data_output_dir, l
             neighbors = w.neighbors[idx]
             for neighbor_idx in neighbors:
                 target = id_to_region_map[neighbor_idx]
-                weight = unique_gdf.loc[idx, 'spatial_lag_usdprice']  # Adjusted to use 'avg_usdprice'
+                weight = unique_gdf.loc[idx, 'spatial_lag_usdprice']  # Adjusted to use 'spatial_lag_usdprice'
 
                 # Retrieve latitude and longitude for both source and target from the unique GeoDataFrame
                 source_coords = unique_gdf.loc[idx, ['latitude', 'longitude']].values
@@ -311,16 +374,17 @@ def generate_network_data(gdf, unique_regions_gdf, w, network_data_output_dir, l
         logger.error(f"Failed to generate network data: {e}")
         raise
 
+
 def main():
     # Load GeoJSON data
     gdf = load_geojson_data(ENHANCED_GEOJSON_FILE, logger)
 
-    # Check if 'usdprice' and 'conflict_intensity' columns exist
+    # Check if required columns exist
     required_columns = ['region_id', 'date', 'usdprice', 'conflict_intensity', 'residual']
-    for col in required_columns:
-        if col not in gdf.columns:
-            logger.error(f"Required column '{col}' not found in GeoJSON data.")
-            sys.exit(1)
+    missing_columns = [col for col in required_columns if col not in gdf.columns]
+    if missing_columns:
+        logger.error(f"Required columns missing in GeoJSON data: {missing_columns}")
+        sys.exit(1)
 
     # Prepare unique regions GeoDataFrame
     unique_regions_gdf = prepare_unique_regions_gdf(gdf, identifier='region_id', logger=logger)
@@ -343,6 +407,7 @@ def main():
     generate_network_data(gdf, unique_regions_gdf, w, NETWORK_DATA_OUTPUT_DIR, logger)
 
     logger.info("All data files generated successfully.")
+
 
 if __name__ == "__main__":
     main()

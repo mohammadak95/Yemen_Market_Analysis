@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import { 
   Box, 
-  Grid2 as Grid, 
+  Grid, 
   Alert, 
   AlertTitle, 
   Paper, 
@@ -31,9 +31,10 @@ import {
   selectSpatialData,
   selectAnalysisData,
   selectFlowsForPeriod,
-  selectCurrentAnalysis,
   selectSpatialMetrics,
-  setSelectedRegion 
+  setSelectedRegion,
+  setSelectedCommodity,
+  setSelectedDate
 } from '../../../slices/spatialSlice';
 import { backgroundMonitor } from '../../../utils/backgroundMonitor';
 import MapControls from './MapControls';
@@ -42,11 +43,10 @@ import TimeControls from './TimeControls';
 import LoadingSpinner from '../../common/LoadingSpinner';
 import ErrorDisplay from '../../common/ErrorDisplay';
 import SpatialMap from './SpatialMap';
-import SpatialDiagnostics from './SpatialDiagnostics';
-import DynamicInterpretation from './DynamicInterpretation';
 import ErrorBoundary from './SpatialErrorBoundary';
 import { memoizedComputeClusters, detectMarketShocks } from '../../../utils/spatialUtils';
 import { VISUALIZATION_MODES, COLOR_SCALES, ANALYSIS_THRESHOLDS } from '../../../constants/spatialConstants';
+import { useWorkerManager } from '../../../workers/enhancedWorkerSystem';
 
 // Format month strings for charts
 const formatMonth = (monthStr) => {
@@ -56,64 +56,121 @@ const formatMonth = (monthStr) => {
 
 const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) => {
   const dispatch = useDispatch();
+  
+  // Select necessary data from Redux store
   const {
     geoData,
     analysis,
     flows,
     weights,
-    uniqueMonths,
-    commodities,
+    uniqueMonths = [],
+    regimes = [],
+    commodities = [],
     status,
     error,
-    loadingProgress
+    loadingProgress,
+    selectedCommodity: storeCommodity,
+    selectedDate: storeDate
   } = useSelector(selectSpatialData);
 
-  // Local state management
-  const [visualizationMode, setVisualizationMode] = useState(VISUALIZATION_MODES.PRICES);
-  const [showFlows, setShowFlows] = useState(true);
-  const [selectedRegion, setSelectedRegionLocal] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(initialDate);
-  const [dateError, setDateError] = useState(null);
-  const [analysisTab, setAnalysisTab] = useState(0);
-  const [detectedShocks, setDetectedShocks] = useState([]);
-
-  // Get additional analysis data from Redux
-  const currentAnalysis = useSelector(state => selectCurrentAnalysis(state, selectedCommodity));
-  const spatialMetrics = useSelector(state => 
-    selectSpatialMetrics(state, selectedCommodity, selectedDate)
+  // Ensure commodity is valid
+  const validCommodity = useMemo(() => 
+    commodities.includes(selectedCommodity) ? selectedCommodity : commodities[0] || '',
+    [commodities, selectedCommodity]
   );
 
-  // Initialize date on component mount or when uniqueMonths changes
+  // Initialize date
+  const [selectedDate, setSelectedDateLocal] = useState(initialDate);
+  const validDate = useMemo(() => 
+    uniqueMonths.includes(selectedDate) ? selectedDate : uniqueMonths[0],
+    [uniqueMonths, selectedDate]
+  );
+
+  // Date error state
+  const [dateError, setDateError] = useState(null);
+
+  // Handle date initialization and validation
   useEffect(() => {
     if (uniqueMonths?.length) {
       if (!selectedDate) {
         const sortedMonths = [...uniqueMonths].sort((a, b) => new Date(b) - new Date(a));
-        setSelectedDate(sortedMonths[0]);
+        setSelectedDateLocal(sortedMonths[0]);
+        dispatch(setSelectedDate(sortedMonths[0]));
       } else if (!uniqueMonths.includes(selectedDate)) {
         const sortedMonths = [...uniqueMonths].sort((a, b) => new Date(b) - new Date(a));
-        setSelectedDate(sortedMonths[0]);
+        setSelectedDateLocal(sortedMonths[0]);
+        dispatch(setSelectedDate(sortedMonths[0]));
         setDateError('Selected date not available. Defaulting to most recent.');
       } else {
         setDateError(null);
       }
     }
-  }, [uniqueMonths, selectedDate]);
+  }, [uniqueMonths, selectedDate, dispatch]);
 
-  // Initialize monitoring
+  // Dispatch fetchSpatialData on component mount
   useEffect(() => {
-    const metric = backgroundMonitor.startMetric('spatial-analysis-load', {
-      commodity: selectedCommodity,
-      date: selectedDate
-    });
-    return () => metric.finish();
-  }, [selectedCommodity, selectedDate]);
-
-  // Fetch data when commodity or date changes
-  useEffect(() => {
-    if (selectedCommodity && selectedDate) {
-      dispatch(fetchSpatialData({ selectedCommodity, selectedDate }));
+    if (status !== 'loading' && !geoData) {
+      dispatch(fetchSpatialData());
     }
-  }, [selectedCommodity, selectedDate, dispatch]);
+  }, [dispatch, status, geoData]);
+
+  // Safe background monitor usage
+  useEffect(() => {
+    let metric;
+    try {
+      metric = backgroundMonitor?.startMetric('spatial-analysis-load', {
+        commodity: validCommodity,
+        date: validDate
+      });
+    } catch (err) {
+      console.warn('Background monitor not available:', err);
+    }
+    
+    return () => {
+      try {
+        metric?.finish();
+      } catch (err) {
+        console.warn('Error finishing metric:', err);
+      }
+    };
+  }, [validCommodity, validDate]);
+
+  // Get additional analysis data from Redux
+  const analysisData = useSelector(state => selectAnalysisData(state, validCommodity));
+  const spatialMetrics = useSelector(state => 
+    selectSpatialMetrics(state, validCommodity)
+  );
+  const currentFlows = useSelector(state => selectFlowsForPeriod(state, validDate, validCommodity));
+
+  // Local state management
+  const [visualizationMode, setVisualizationMode] = useState(VISUALIZATION_MODES.PRICES);
+  const [showFlows, setShowFlows] = useState(true);
+  const [selectedRegion, setSelectedRegionLocal] = useState(null);
+  const [analysisTab, setAnalysisTab] = useState(0);
+
+  // Define callback functions before useMemo that uses them
+
+  // Callback for handling commodity change
+  const handleCommodityChange = useCallback((commodity) => {
+    if (commodities.includes(commodity)) {
+      dispatch(setSelectedCommodity(commodity));
+      // Optionally, fetch data again if necessary
+      // dispatch(fetchSpatialData());
+    }
+  }, [dispatch, commodities]);
+
+  // Callback for handling month change
+  const handleMonthChange = useCallback((newMonth) => {
+    if (validCommodity && uniqueMonths?.includes(newMonth)) {
+      setSelectedDateLocal(newMonth);
+      dispatch(setSelectedDate(newMonth));
+    }
+  }, [validCommodity, dispatch, uniqueMonths]);
+
+  // Callback for refreshing data
+  const handleRefresh = useCallback(() => {
+    dispatch(fetchSpatialData());
+  }, [dispatch]);
 
   // Handle Tab Change
   const handleTabChange = (event, newValue) => {
@@ -126,41 +183,16 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
     dispatch(setSelectedRegion(region));
   }, [dispatch]);
 
-  // Handle Month Change
-  const handleMonthChange = useCallback((newMonth) => {
-    if (selectedCommodity && uniqueMonths?.includes(newMonth)) {
-      setSelectedDate(newMonth);
-      dispatch(fetchSpatialData({ 
-        selectedCommodity, 
-        selectedDate: newMonth 
-      }));
-    }
-  }, [selectedCommodity, dispatch, uniqueMonths]);
-
-  // Add missing handler for commodity change
-  const handleCommodityChange = useCallback((commodity) => {
-    dispatch(fetchSpatialData({ selectedCommodity: commodity, selectedDate }));
-  }, [dispatch, selectedDate]);
-
-  // Add refresh handler
-  const handleRefresh = useCallback(() => {
-    dispatch(fetchSpatialData({ selectedCommodity, selectedDate }));
-  }, [dispatch, selectedCommodity, selectedDate]);
-
   // Memoized computations
   const marketClusters = useMemo(() => {
-    if (!flows || !weights) return [];
-    return memoizedComputeClusters(flows, weights);
-  }, [flows, weights]);
+    if (!currentFlows || !weights) return [];
+    return memoizedComputeClusters(currentFlows, weights);
+  }, [currentFlows, weights]);
 
-  const detectedShocksMemo = useMemo(() => {
+  const detectedShocks = useMemo(() => {
     if (!geoData?.features) return [];
-    return detectMarketShocks(geoData.features, selectedDate);
-  }, [geoData?.features, selectedDate]);
-
-  useEffect(() => {
-    setDetectedShocks(detectedShocksMemo);
-  }, [detectedShocksMemo]);
+    return detectMarketShocks(geoData.features, validDate);
+  }, [geoData?.features, validDate]);
 
   const timeSeriesData = useMemo(() => {
     if (!geoData?.features) return [];
@@ -204,21 +236,21 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
   }, [geoData]);
 
   const marketComparison = useMemo(() => {
-    if (!analysis || !flows || !marketClusters.length) return null;
+    if (!analysisData || !marketClusters.length) return null;
 
     return {
-      integrationEfficiency: (analysis?.r_squared || 0),
-      transmissionEfficiency: (analysis?.coefficients?.spatial_lag_price || 0),
-      marketCoverage: marketClusters.length / (Object.keys(weights || {}).length || 1),
-      priceConvergence: analysis?.moran_i?.I ?? null,
+      integrationEfficiency: (analysisData?.r_squared || 0),
+      transmissionEfficiency: (analysisData?.coefficients?.spatial_lag_price || 0),
+      marketCoverage: marketClusters.length / (Object.keys(spatialMetrics?.weights || {}).length || 1),
+      priceConvergence: analysisData?.moran_i?.I ?? null,
     };
-  }, [analysis, flows, marketClusters, weights]);
+  }, [analysisData, marketClusters, spatialMetrics]);
 
   // Export Analysis Data
   const exportAnalysis = useCallback(() => {
     const exportData = {
-      commodity: selectedCommodity,
-      date: selectedDate,
+      commodity: validCommodity,
+      date: validDate,
       timeSeriesAnalysis: timeSeriesData,
       marketShocks: detectedShocks,
       marketClusters: marketClusters.map(cluster => ({
@@ -227,30 +259,21 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
         marketCount: cluster.marketCount,
       })),
       comparison: marketComparison,
-      spatialAnalysis: analysis,
+      spatialAnalysis: analysisData,
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `market-analysis-${selectedCommodity}-${selectedDate}.json`;
+    a.download = `market-analysis-${validCommodity}-${validDate}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [selectedCommodity, selectedDate, timeSeriesData, detectedShocks, marketClusters, marketComparison, analysis]);
+  }, [validCommodity, validDate, timeSeriesData, detectedShocks, marketClusters, marketComparison, analysisData]);
 
-  // Fix the analysis results type by selecting the correct data
-  const currentAnalysisResults = useMemo(() => {
-    if (!analysis?.length) return null;
-    return analysis.find(a => 
-      a.commodity === selectedCommodity && 
-      a.regime === 'unified'
-    ) || null;
-  }, [analysis, selectedCommodity]);
-
-  // Fix color scales to handle missing properties
+  // Define color scales based on visualization mode
   const colorScales = useMemo(() => {
     if (!geoData?.features) return {};
 
@@ -275,19 +298,57 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
         };
         break;
 
-      // ... other visualization modes ...
+      case VISUALIZATION_MODES.VOLATILITY:
+        const volatilities = geoData.features
+          .map(feature => feature.properties?.volatility)
+          .filter(vol => vol != null && !isNaN(vol));
+
+        if (!volatilities.length) return { getColor: () => '#ccc' };
+
+        const minVol = Math.min(...volatilities);
+        const maxVol = Math.max(...volatilities);
+
+        scales.getColor = feature => {
+          const vol = feature.properties?.volatility;
+          if (vol == null || isNaN(vol)) return '#ccc';
+          const ratio = (vol - minVol) / (maxVol - minVol || 1);
+          return COLOR_SCALES.VOLATILITY[Math.floor(ratio * (COLOR_SCALES.VOLATILITY.length - 1))];
+        };
+        break;
+
+      case VISUALIZATION_MODES.RESIDUALS:
+        const residuals = geoData.features
+          .map(feature => feature.properties?.residual)
+          .filter(res => res != null && !isNaN(res));
+
+        if (!residuals.length) return { getColor: () => '#ccc' };
+
+        const minRes = Math.min(...residuals);
+        const maxRes = Math.max(...residuals);
+
+        scales.getColor = feature => {
+          const res = feature.properties?.residual;
+          if (res == null || isNaN(res)) return '#ccc';
+          const ratio = (res - minRes) / (maxRes - minRes || 1);
+          return COLOR_SCALES.RESIDUALS[Math.floor(ratio * (COLOR_SCALES.RESIDUALS.length - 1))];
+        };
+        break;
+
+      // Add more visualization modes here if needed
+
+      default:
+        scales.getColor = () => '#ccc';
     }
 
     return scales;
-  }, [geoData, visualizationMode, marketClusters, detectedShocks]);
+  }, [geoData, visualizationMode]);
 
-  // Update MapControls props
+  // Define Map Controls props using the callbacks
   const mapControlsProps = useMemo(() => ({
-    selectedCommodity,
-    selectedDate,
+    selectedCommodity: validCommodity,
+    selectedDate: validDate,
     uniqueMonths,
     commodities,
-    analysisResults: currentAnalysisResults,
     onDateChange: handleMonthChange,
     onCommodityChange: handleCommodityChange,
     onRefresh: handleRefresh,
@@ -296,26 +357,73 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
     showFlows,
     onToggleFlows: () => setShowFlows(prev => !prev)
   }), [
-    selectedCommodity,
-    selectedDate,
+    validCommodity,
+    validDate,
     uniqueMonths,
     commodities,
-    currentAnalysisResults,
+    visualizationMode,
+    showFlows,
     handleMonthChange,
     handleCommodityChange,
-    handleRefresh,
-    visualizationMode,
-    showFlows
+    handleRefresh
   ]);
 
-  // Fix MapLegend null check
+  // Map props
+  const mapProps = useMemo(() => ({
+    geoData,
+    flowMaps: currentFlows,
+    selectedMonth: validDate,
+    onMonthChange: handleMonthChange,
+    availableMonths: uniqueMonths,
+    spatialWeights: weights,
+    showFlows,
+    analysisResults: analysisData,
+    selectedCommodity: validCommodity,
+    marketClusters,
+    detectedShocks,
+    visualizationMode,
+    colorScales,
+    onRegionSelect: handleRegionSelect
+  }), [
+    geoData,
+    currentFlows,
+    validDate,
+    handleMonthChange,
+    uniqueMonths,
+    weights,
+    showFlows,
+    analysisData,
+    validCommodity,
+    marketClusters,
+    detectedShocks,
+    visualizationMode,
+    colorScales,
+    handleRegionSelect
+  ]);
+
+  // Time controls props
+  const timeControlsProps = useMemo(() => ({
+    availableMonths: uniqueMonths,
+    selectedMonth: validDate,
+    onMonthChange: handleMonthChange,
+    analysisResults: analysisData,
+    spatialWeights: spatialMetrics?.weights
+  }), [
+    uniqueMonths,
+    validDate,
+    handleMonthChange,
+    analysisData,
+    spatialMetrics
+  ]);
+
+  // Determine if legend should be shown
   const shouldShowLegend = useMemo(() => 
     colorScales?.getColor && geoData?.features?.length > 0, 
     [colorScales, geoData]
   );
 
   // Loading state
-  if (status === 'loading') {
+  if (status === 'loading' || !geoData || !uniqueMonths.length) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
         <LoadingSpinner progress={loadingProgress} />
@@ -329,7 +437,7 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
       <ErrorDisplay
         error={error}
         title="Analysis Error"
-        onRetry={() => dispatch(fetchSpatialData({ selectedCommodity, selectedDate }))}
+        onRetry={() => dispatch(fetchSpatialData())}
       />
     );
   }
@@ -337,11 +445,11 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
   return (
     <ErrorBoundary>
       <Box sx={{ width: '100%' }}>
-        <Grid container spacing={2} />
+        <Grid container spacing={2}>
           {/* Title and Export Button */}
           <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h5">
-              Market Integration Analysis: {selectedCommodity}
+              Market Integration Analysis: {validCommodity}
             </Typography>
             <Tooltip title="Export Analysis">
               <IconButton onClick={exportAnalysis}>
@@ -377,7 +485,7 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
             </Grid>
           )}
 
-          {/* Updated MapControls */}
+          {/* Map Controls with valid props */}
           <Grid item xs={12}>
             <MapControls {...mapControlsProps} />
           </Grid>
@@ -385,23 +493,13 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
           {/* Map Component */}
           <Grid item xs={12}>
             <Box sx={{ height: 500, position: 'relative' }}>
-              <SpatialMap
-                geoData={geoData}
-                flowMaps={flows}
-                selectedMonth={selectedDate}
-                onMonthChange={handleMonthChange}
-                availableMonths={uniqueMonths}
-                spatialWeights={weights}
-                showFlows={showFlows}
-                analysisResults={analysis}
-                selectedCommodity={selectedCommodity}
-                marketClusters={marketClusters}
-                detectedShocks={detectedShocks}
-                visualizationMode={visualizationMode}
-                colorScales={colorScales}
-                onRegionSelect={handleRegionSelect}
-              />
+              <SpatialMap {...mapProps} />
             </Box>
+          </Grid>
+
+          {/* Time Controls */}
+          <Grid item xs={12}>
+            <TimeControls {...timeControlsProps} />
           </Grid>
 
           {/* Analysis Tabs */}
@@ -412,7 +510,9 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
               <Tab icon={<GroupWork />} label="Market Clusters" />
               <Tab icon={<CompareArrows />} label="Market Integration" />
             </Tabs>
-            {/* Tab Panels */}
+          </Grid>
+
+          {/* Tab Panels */}
           <Grid item xs={12}>
             {analysisTab === 0 && (
               // Time Series Analysis Panel
@@ -665,33 +765,30 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
                 )}
               </Paper>
             )}
+
           </Grid>
 
-          {/* Updated MapLegend */}
+          {/* Map Legend */}
           {shouldShowLegend && (
-            <MapLegend
-              title={`${selectedCommodity} Distribution`}
-              colorScale={colorScales.getColor}
-              unit={currentAnalysisResults?.units || ''}
-              description="Spatial distribution of values"
-              position="bottomright"
-              statistics={{
-                'Spatial Effect': currentAnalysisResults?.coefficients?.spatial_lag_price,
-                'Integration': currentAnalysisResults?.r_squared,
-                'Correlation': currentAnalysisResults?.moran_i?.I
-              }}
-            />
+            <Grid item xs={12}>
+              <MapLegend
+                title={`${validCommodity} Distribution`}
+                colorScale={colorScales.getColor}
+                unit={analysisData?.units || ''}
+                description="Spatial distribution of values"
+                position="bottomright"
+                statistics={{
+                  'Spatial Effect': analysisData?.coefficients?.spatial_lag_price,
+                  'Integration': analysisData?.r_squared,
+                  'Correlation': analysisData?.moran_i?.I
+                }}
+              />
+            </Grid>
           )}
 
           {/* Time Controls */}
           <Grid item xs={12}>
-            <TimeControls
-              availableMonths={uniqueMonths}
-              selectedMonth={selectedDate}
-              onMonthChange={handleMonthChange}
-              analysisResults={analysis}
-              spatialWeights={weights}
-            />
+            <TimeControls {...timeControlsProps} />
           </Grid>
         </Grid>
       </Box>

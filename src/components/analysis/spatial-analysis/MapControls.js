@@ -1,4 +1,4 @@
-//src/components/analysis/spatial-analysis/MapControls.js
+// src/components/analysis/spatial-analysis/MapControls.js
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
@@ -19,7 +19,8 @@ import {
   LayersOutlined,
   HubOutlined,
   ShowChartOutlined,
-  WarningAmber
+  WarningAmber,
+  MapOutlined
 } from '@mui/icons-material';
 
 const MapControls = ({
@@ -38,7 +39,7 @@ const MapControls = ({
 }) => {
   // Format date for display
   const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(`${dateStr}-01`).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
     });
@@ -126,17 +127,15 @@ const MapControls = ({
               <WarningAmber />
             </IconButton>
           </Tooltip>
+          <Tooltip title={showFlows ? "Hide Flows" : "Show Flows"}>
+            <IconButton
+              onClick={onToggleFlows}
+              color={showFlows ? "primary" : "default"}
+            >
+              <MapOutlined />
+            </IconButton>
+          </Tooltip>
         </ButtonGroup>
-
-        {/* Flow Toggle */}
-        <Tooltip title={showFlows ? "Hide Flows" : "Show Flows"}>
-          <IconButton 
-            onClick={onToggleFlows}
-            color={showFlows ? "primary" : "default"}
-          >
-            <LayersOutlined />
-          </IconButton>
-        </Tooltip>
 
         {/* Refresh Button */}
         <Tooltip title="Refresh Data">
@@ -148,13 +147,13 @@ const MapControls = ({
 
       {/* Analysis Metrics */}
       {analysisMetrics && (
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 3, 
-          mt: 2, 
-          pt: 2, 
-          borderTop: '1px solid', 
-          borderColor: 'divider' 
+        <Box sx={{
+          display: 'flex',
+          gap: 3,
+          mt: 2,
+          pt: 2,
+          borderTop: '1px solid',
+          borderColor: 'divider'
         }}>
           <Typography variant="body2" color="text.secondary">
             Integration: {analysisMetrics.integration}%
@@ -164,11 +163,11 @@ const MapControls = ({
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Moran's I: {analysisMetrics.moranI}
-            {analysisMetrics.significance && 
+            {analysisMetrics.significance &&
               <Tooltip title="Statistically Significant">
-                <Typography 
-                  component="span" 
-                  color="success.main" 
+                <Typography
+                  component="span"
+                  color="success.main"
                   sx={{ ml: 0.5 }}
                 >
                   *

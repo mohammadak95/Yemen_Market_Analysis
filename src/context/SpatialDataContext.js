@@ -9,23 +9,29 @@ export const SpatialDataProvider = ({ children }) => {
   const [state, setState] = useState({
     loading: false,
     error: null,
-    data: null
+    data: null,
   });
 
-  const fetchSpatialData = useCallback(async (selectedCommodity) => {
-    setState({ loading: true, error: null, data: null });
-    try {
-      const data = await spatialDataManager.processSpatialData(selectedCommodity);
-      setState({ loading: false, error: null, data });
-    } catch (error) {
-      console.error('Error fetching spatial data:', error);
-      setState({ loading: false, error: error.message, data: null });
-    }
-  }, []);
+  const fetchSpatialData = useCallback(
+    async (selectedCommodity, selectedDate) => {
+      setState({ loading: true, error: null, data: null });
+      try {
+        const data = await spatialDataManager.processSpatialData(
+          selectedCommodity,
+          selectedDate
+        );
+        setState({ loading: false, error: null, data });
+      } catch (error) {
+        console.error('Error fetching spatial data:', error);
+        setState({ loading: false, error: error.message, data: null });
+      }
+    },
+    []
+  );
 
   const value = {
     ...state,
-    fetchSpatialData
+    fetchSpatialData,
   };
 
   return (
@@ -38,7 +44,9 @@ export const SpatialDataProvider = ({ children }) => {
 export const useSpatialData = () => {
   const context = useContext(SpatialDataContext);
   if (!context) {
-    throw new Error('useSpatialData must be used within a SpatialDataProvider');
+    throw new Error(
+      'useSpatialData must be used within a SpatialDataProvider'
+    );
   }
   return context;
 };

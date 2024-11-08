@@ -4,7 +4,7 @@ import Papa from 'papaparse';
 import { parseISO, isValid } from 'date-fns';
 import LZString from 'lz-string';
 import proj4 from 'proj4';
-import { createWorker } from '../workers/workerLoader';
+import { workerManager } from '../workers/enhancedWorkerSystem';
 import { backgroundMonitor } from './backgroundMonitor';
 
 // Projection setup
@@ -96,7 +96,7 @@ class SpatialDataManager {
   constructor() {
     this.cache = new Map();
     this.circuitBreakers = new Map();
-    this.worker = null;
+    this.worker = workerManager; // Use the WorkerManager instance
     this.monitor = backgroundMonitor;
 
     // Configurations
@@ -114,15 +114,17 @@ class SpatialDataManager {
 
   async initialize() {
     try {
-      this.worker = await createWorker();
-      if (!this.worker) {
-        throw new Error('Worker initialization failed.');
+      if (typeof this.worker.initialize === 'function') {
+        await this.worker.initialize();
+      } else {
+        console.warn('Worker manager does not have an initialize method.');
       }
       this.initializeCleanupInterval();
       this.monitor.init();
       console.log('SpatialDataManager initialized successfully.');
     } catch (error) {
       console.error('Failed to initialize SpatialDataManager:', error);
+      this.monitor.logError('spatial-manager-init-failed', { error });
     }
   }
 
@@ -211,83 +213,104 @@ class SpatialDataManager {
     }
   }
 
-  // Data processing with workers
-  async processSpatialData(selectedCommodity) {
-    const cacheKey = `spatial_data_${selectedCommodity?.toLowerCase()}`;
-    const cachedData = this.getCachedData(cacheKey);
-    if (cachedData) {
-      console.log(
-        `Serving spatial data from cache for commodity: ${selectedCommodity}`
-      );
-      return cachedData;
-    }
+  // Data processing
+  async processSpatialData(selectedCommodity, selectedDate) {
+    const cacheKey = `spatial_data_${selectedCommodity?.toLowerCase()}_${selectedDate}`;
+    const metric = this.monitor.startMetric('process-spatial-data');
 
-    return this.executeWithCircuitBreaker(cacheKey, async () => {
-      const paths = {
-        geoBoundaries: getDataPath(
-          'choropleth_data/geoBoundaries-YEM-ADM1.geojson'
-        ),
-        unified: getDataPath('enhanced_unified_data_with_residual.geojson'),
-        weights: getDataPath(
-          'spatial_weights/transformed_spatial_weights.json'
-        ),
-        flowMaps: getDataPath('network_data/time_varying_flows.csv'),
-        analysis: getDataPath('spatial_analysis_results.json'),
-      };
-
-      const startTime = performance.now();
-      this.monitor.logMetric('spatial-fetch-start', { selectedCommodity });
-
-      try {
-        const data = await this.fetchData(paths);
-
-        // Offload processing to the worker
-        const processedData = await this.workerProcessAllData({
-          data,
-          selectedCommodity,
-        });
-
-        if (!processedData) {
-          throw new Error('Processed data is undefined');
-        }
-
-        this.monitor.logMetric('spatial-fetch-complete', {
-          duration: performance.now() - startTime,
-          dataSize: JSON.stringify(processedData).length,
-        });
-
-        this.setCachedData(cacheKey, processedData);
-        return processedData;
-      } catch (error) {
-        console.error('Error in processSpatialData:', error);
-        this.monitor.logError('spatial-fetch-failed', { error });
-        throw error;
+    try {
+      // Check cache
+      const cachedData = this.getCachedData(cacheKey);
+      if (cachedData) {
+        metric.finish({ status: 'success', source: 'cache' });
+        return cachedData;
       }
-    });
+
+      // Execute with circuit breaker
+      return await this.executeWithCircuitBreaker(cacheKey, async () => {
+        const paths = {
+          geoBoundaries: getDataPath(
+            'choropleth_data/geoBoundaries-YEM-ADM1.geojson'
+          ),
+          unified: getDataPath('enhanced_unified_data_with_residual.geojson'),
+          weights: getDataPath(
+            'spatial_weights/transformed_spatial_weights.json'
+          ),
+          flowMaps: getDataPath('network_data/time_varying_flows.csv'),
+          analysis: getDataPath('spatial_analysis_results.json'),
+        };
+
+        // Fetch data
+        const rawData = await this.fetchData(paths);
+
+        // Use worker for heavy processing
+        const processedData = await this.worker.postMessage(
+          'dataProcessor',
+          'PROCESS_SPATIAL_DATA',
+          {
+            geoData: rawData.unifiedData,
+            flows: rawData.flowMapsData,
+            weights: rawData.weightsData,
+            selectedCommodity,
+            selectedDate,
+          }
+        );
+
+        // Extract metadata using worker if necessary
+        // Example:
+        // const metadata = await this.worker.postMessage('dataProcessor', 'EXTRACT_METADATA', { ... });
+
+        // Compile the processed data
+        const finalData = {
+          ...processedData,
+          // ...metadata,
+          // analysis: metadata.filteredAnalysis
+        };
+
+        // Cache the results
+        this.setCachedData(cacheKey, finalData);
+
+        metric.finish({ status: 'success', source: 'processed' });
+        return finalData;
+      });
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      this.monitor.logError('process-spatial-data-failed', { error });
+      throw error;
+    }
   }
 
   async fetchData(paths) {
-    const [
-      geoBoundariesData,
-      unifiedData,
-      weightsData,
-      flowMapsData,
-      analysisResultsData,
-    ] = await Promise.all([
-      this.fetchWithRetry(paths.geoBoundaries),
-      this.fetchWithRetry(paths.unified),
-      this.fetchWithRetry(paths.weights),
-      this.fetchWithRetry(paths.flowMaps, true),
-      this.fetchWithRetry(paths.analysis),
-    ]);
+    const fetchMetric = this.monitor.startMetric('fetch-spatial-data');
 
-    return {
-      geoBoundariesData,
-      unifiedData,
-      weightsData,
-      flowMapsData,
-      analysisResultsData,
-    };
+    try {
+      const [
+        geoBoundariesData,
+        unifiedData,
+        weightsData,
+        flowMapsData,
+        analysisResultsData,
+      ] = await Promise.all([
+        this.fetchWithRetry(paths.geoBoundaries),
+        this.fetchWithRetry(paths.unified),
+        this.fetchWithRetry(paths.weights),
+        this.fetchWithRetry(paths.flowMaps, true),
+        this.fetchWithRetry(paths.analysis),
+      ]);
+
+      fetchMetric.finish({ status: 'success' });
+
+      return {
+        geoBoundariesData,
+        unifiedData,
+        weightsData,
+        flowMapsData,
+        analysisResultsData,
+      };
+    } catch (error) {
+      fetchMetric.finish({ status: 'error', error: error.message });
+      throw error;
+    }
   }
 
   async fetchWithRetry(url, isCsv = false, attempts = 0) {
@@ -298,15 +321,12 @@ class SpatialDataManager {
 
       if (isCsv) {
         const text = await response.text();
-        return new Promise((resolve, reject) => {
-          Papa.parse(text, {
-            header: true,
-            dynamicTyping: true,
-            skipEmptyLines: true,
-            complete: (results) => resolve(results.data),
-            error: reject,
-          });
-        });
+        const parsedData = Papa.parse(text, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+        }).data;
+        return parsedData;
       }
 
       return await response.json();
@@ -326,47 +346,96 @@ class SpatialDataManager {
     }
   }
 
-  async workerProcessAllData({ data, selectedCommodity }) {
-    return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error('Worker timed out'));
-      }, this.config.worker.timeout);
+  // Process flow data to meet component requirements
+  processFlowData(flowMapsData, selectedCommodity, selectedDate) {
+    if (!flowMapsData) return [];
 
-      const handleMessage = (event) => {
-        clearTimeout(timeoutId);
-        if (event.data.error) {
-          console.error('Error from worker:', event.data.error);
-          reject(new Error(event.data.error));
-        } else if (event.data.result) {
-          resolve(event.data.result);
-        } else {
-          reject(new Error('Worker returned an unexpected message'));
-        }
-        this.worker.removeEventListener('message', handleMessage);
-        this.worker.removeEventListener('error', handleError);
-      };
+    // Filter flows by commodity and date
+    const filteredFlows = flowMapsData.filter(
+      (flow) =>
+        flow.commodity === selectedCommodity &&
+        flow.date.startsWith(selectedDate)
+    );
 
-      const handleError = (error) => {
-        clearTimeout(timeoutId);
-        console.error('Worker encountered an error:', error);
-        reject(error);
-        this.worker.removeEventListener('message', handleMessage);
-        this.worker.removeEventListener('error', handleError);
-      };
+    // Normalize and parse numeric fields
+    const processedFlows = filteredFlows.map((flow) => ({
+      date: flow.date,
+      source: normalizeRegionName(flow.source),
+      source_lat: parseFloat(flow.source_lat),
+      source_lng: parseFloat(flow.source_lng),
+      target: normalizeRegionName(flow.target),
+      target_lat: parseFloat(flow.target_lat),
+      target_lng: parseFloat(flow.target_lng),
+      price_differential: parseFloat(flow.price_differential),
+      source_price: parseFloat(flow.source_price),
+      target_price: parseFloat(flow.target_price),
+      flow_weight: parseFloat(flow.flow_weight),
+    }));
 
-      this.worker.addEventListener('message', handleMessage);
-      this.worker.addEventListener('error', handleError);
+    return processedFlows;
+  }
 
-      console.log('Posting message to worker:', {
-        action: 'processAllData',
-        payload: { data, selectedCommodity },
-      });
+  // Process geo data
+  processGeoData(unifiedData, selectedCommodity, selectedDate) {
+    if (!unifiedData || !unifiedData.features) return { features: [] };
 
-      this.worker.postMessage({
-        action: 'processAllData',
-        payload: { data, selectedCommodity },
-      });
+    // Filter features by commodity and date
+    const filteredFeatures = unifiedData.features.filter(
+      (feature) =>
+        feature.properties?.commodity === selectedCommodity &&
+        feature.properties?.date?.startsWith(selectedDate)
+    );
+
+    return { ...unifiedData, features: filteredFeatures };
+  }
+
+  // Process analysis data
+  processAnalysisData(analysisData, selectedCommodity) {
+    if (!analysisData) return [];
+
+    // Filter analysis data by commodity
+    const filteredAnalysis = analysisData.filter(
+      (a) => a.commodity === selectedCommodity && a.regime === 'unified'
+    );
+
+    return filteredAnalysis;
+  }
+
+  // Extract unique months from geo data
+  extractUniqueMonths(geoData) {
+    const months = new Set();
+    geoData.features.forEach((feature) => {
+      const dateStr = feature.properties?.date;
+      if (dateStr) {
+        const month = dateStr.slice(0, 7); // Extract YYYY-MM
+        months.add(month);
+      }
     });
+    return Array.from(months).sort();
+  }
+
+  // Extract unique commodities from geo data
+  extractUniqueCommodities(geoData) {
+    const commodities = new Set();
+    geoData.features.forEach((feature) => {
+      const commodity = feature.properties?.commodity;
+      if (commodity) {
+        commodities.add(commodity);
+      }
+    });
+    return Array.from(commodities).sort();
+  }
+
+  // Extract unique regimes from geo data
+  extractUniqueRegimes(geoData) {
+    const regimes = new Set();
+    geoData.features.forEach((feature) => {
+      const regime = feature.properties?.regime;
+      if (regime) {
+        regimes.add(regime);
+      }
+    });
+    return Array.from(regimes).sort();
   }
 
   processDate(dateString) {
@@ -440,7 +509,6 @@ class SpatialDataManager {
   }
 
   destroy() {
-    this.worker?.terminate();
     this.cache.clear();
     this.circuitBreakers.clear();
     this.geometryCache.clear();

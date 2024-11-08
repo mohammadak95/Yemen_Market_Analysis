@@ -1,6 +1,7 @@
 // src/components/common/Navigation.js
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import {
   Drawer,
@@ -26,6 +27,7 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
+import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
 
 // Utility function to capitalize words
 const capitalizeWords = (str) => {
@@ -70,6 +72,20 @@ NavigationItem.propTypes = {
  * - onSelectCommodity: Function to handle commodity selection.
  */
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
+  const dispatch = useDispatch();
+  const { uniqueMonths } = useSelector(selectSpatialData);
+  const [selectedDate, setSelectedDate] = useState(uniqueMonths[0]);
+
+  const handleCommoditySelect = useCallback((commodity) => {
+    if (commodity) {
+      dispatch(fetchSpatialData({ 
+        selectedCommodity: commodity,
+        selectedDate: selectedDate || uniqueMonths[0]
+      }));
+      onSelectCommodity(commodity); // Keep the original callback
+    }
+  }, [dispatch, selectedDate, uniqueMonths, onSelectCommodity]);
+
   return (
     <FormControl fullWidth variant="outlined" size="small" margin="normal">
       <InputLabel id="commodity-select-label">
@@ -80,7 +96,7 @@ const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }
         id="commodity-select"
         name="commodity"
         value={selectedCommodity}
-        onChange={(e) => onSelectCommodity(e.target.value)}
+        onChange={(e) => handleCommoditySelect(e.target.value)}
         label="Select Commodity"
         aria-label="Select commodity"
       >
@@ -229,6 +245,8 @@ export const Sidebar = ({
   const theme = useTheme();
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const dispatch = useDispatch();
+  const { geoData, flows, analysis, uniqueMonths } = useSelector(selectSpatialData);
 
   const handleAnalysisChange = useCallback(
     (analysis) => {
@@ -236,8 +254,16 @@ export const Sidebar = ({
       if (!isSmUp) {
         setSidebarOpen(false);
       }
+
+      // If spatial analysis is selected, fetch data if we have a commodity
+      if (analysis === 'spatial' && selectedCommodity) {
+        dispatch(fetchSpatialData({
+          selectedCommodity,
+          selectedDate: uniqueMonths[0]
+        }));
+      }
     },
-    [setSelectedAnalysis, isSmUp, setSidebarOpen]
+    [setSelectedAnalysis, isSmUp, setSidebarOpen, dispatch, selectedCommodity, uniqueMonths]
   );
 
   const handleCommoditySelect = useCallback(

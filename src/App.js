@@ -3,14 +3,20 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline, Toolbar, IconButton, Box } from '@mui/material';
+import {
+  CssBaseline,
+  Toolbar,
+  IconButton,
+  Box,
+  useMediaQuery,
+} from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import { toggleDarkMode } from './slices/themeSlice';
 import Header from './components/common/Header';
-import { Sidebar} from './components/common/Navigation';
+import { Sidebar } from './components/common/Navigation';
 import Dashboard from './Dashboard';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorDisplay from './components/common/ErrorDisplay';
@@ -18,10 +24,12 @@ import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
 import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useWindowSize } from '@/hooks';
-import { useData } from '@/hooks';
-import { lightThemeWithOverrides, darkThemeWithOverrides } from './styles/theme';
+import { useWindowSize } from './hooks';
+import { useData } from './hooks';
+import {
+  lightThemeWithOverrides,
+  darkThemeWithOverrides,
+} from './styles/theme';
 import { DiscoveryProvider } from './context/DiscoveryContext';
 import { WorkerProvider } from './context/WorkerContext';
 import { SpatialDataProvider } from './context/SpatialDataContext';
@@ -44,20 +52,25 @@ const StyledAppBar = styled(AppBar, {
 
 const App = () => {
   const dispatch = useDispatch();
-  const isDarkMode = useSelector(state => state.theme?.isDarkMode ?? false);
+  const isDarkMode = useSelector(
+    (state) => state.theme?.isDarkMode ?? false
+  );
   const theme = React.useMemo(
     () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
     [isDarkMode]
   );
-  
+
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
   const { data, loading, error } = useData();
 
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedAnalysis, setSelectedAnalysis] = useState('');
-  const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']);
+  const [selectedGraphRegimes, setSelectedGraphRegimes] = useState([
+    'unified',
+  ]);
   const [spatialViewConfig, setSpatialViewConfig] = useState({
     center: [15.3694, 44.191],
     zoom: 6,
@@ -105,8 +118,8 @@ const App = () => {
 
     if (error) {
       return (
-        <ErrorDisplay 
-          error={error} 
+        <ErrorDisplay
+          error={error}
           title="Application Error"
           showDetails={process.env.NODE_ENV !== 'production'}
           onRetry={() => window.location.reload()}
@@ -140,6 +153,8 @@ const App = () => {
           regimes={data?.regimes || []}
           selectedCommodity={selectedCommodity}
           setSelectedCommodity={setSelectedCommodity}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
           selectedAnalysis={selectedAnalysis}
           setSelectedAnalysis={setSelectedAnalysis}
           sidebarOpen={sidebarOpen}
@@ -166,6 +181,7 @@ const App = () => {
           <Dashboard
             data={data}
             selectedCommodity={selectedCommodity}
+            selectedDate={selectedDate}
             selectedRegimes={selectedGraphRegimes}
             selectedAnalysis={selectedAnalysis}
             windowWidth={windowSize.width}
@@ -197,9 +213,7 @@ const App = () => {
       <WorkerProvider>
         <SpatialDataProvider>
           <DiscoveryProvider>
-            <EnhancedErrorBoundary>
-              {renderContent()}
-            </EnhancedErrorBoundary>
+            <EnhancedErrorBoundary>{renderContent()}</EnhancedErrorBoundary>
           </DiscoveryProvider>
         </SpatialDataProvider>
       </WorkerProvider>

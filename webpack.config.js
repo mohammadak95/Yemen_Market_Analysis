@@ -15,6 +15,21 @@ module.exports = (env, argv) => {
   const envConfig = dotenv.config({ path: path.resolve(__dirname, envFile) }).parsed || {};
   const publicPath = isDevelopment ? '/' : '/Yemen_Market_Analysis/';
 
+  // Process env variables
+  const processedEnv = {
+    'process.env': {
+      NODE_ENV: JSON.stringify(isDevelopment ? 'development' : 'production'),
+      PUBLIC_URL: JSON.stringify(publicPath.slice(0, -1)),
+    }
+  };
+
+  // Add all REACT_APP_ prefixed variables
+  Object.keys(envConfig).forEach(key => {
+    if (key.startsWith('REACT_APP_')) {
+      processedEnv['process.env'][key] = JSON.stringify(envConfig[key]);
+    }
+  });
+
   return {
     entry: './src/index.js',
     output: {
@@ -46,7 +61,11 @@ module.exports = (env, argv) => {
             compress: {
               drop_console: !isDevelopment,
             },
+            format: {
+              comments: false,
+            },
           },
+          extractComments: false,
         }),
       ],
       splitChunks: isDevelopment ? false : {
@@ -97,7 +116,13 @@ module.exports = (env, argv) => {
           test: /\.css$/,
           use: [
             isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
-            'css-loader',
+            {
+              loader: 'css-loader',
+              options: {
+                sourceMap: isDevelopment,
+                importLoaders: 1,
+              },
+            },
           ],
         },
         {
@@ -130,7 +155,7 @@ module.exports = (env, argv) => {
           use: {
             loader: 'worker-loader',
             options: {
-              filename: '[name].[contenthash:8].worker.js'
+              filename: isDevelopment ? '[name].worker.js' : '[name].[contenthash:8].worker.js'
             }
           }
         }
@@ -143,7 +168,21 @@ module.exports = (env, argv) => {
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'public/index.html'),
         inject: true,
-        minify: !isDevelopment,
+        minify: !isDevelopment && {
+          removeComments: true,
+          collapseWhitespace: true,
+          removeRedundantAttributes: true,
+          useShortDoctype: true,
+          removeEmptyAttributes: true,
+          removeStyleLinkTypeAttributes: true,
+          keepClosingSlash: true,
+          minifyJS: true,
+          minifyCSS: true,
+          minifyURLs: true,
+        },
+        templateParameters: {
+          PUBLIC_URL: publicPath.slice(0, -1)
+        }
       }),
 
       new CopyWebpackPlugin({
@@ -154,6 +193,15 @@ module.exports = (env, argv) => {
             globOptions: {
               ignore: ['**/index.html'],
             },
+            transform(content, absoluteFrom) {
+              if (absoluteFrom.endsWith('manifest.json')) {
+                const manifestContent = content.toString();
+                return Buffer.from(
+                  manifestContent.replace(/%PUBLIC_URL%/g, publicPath.slice(0, -1))
+                );
+              }
+              return content;
+            },
           },
           {
             from: 'node_modules/leaflet/dist/images',
@@ -162,26 +210,26 @@ module.exports = (env, argv) => {
         ],
       }),
 
-      new DefinePlugin({
-        'process.env': {
-          NODE_ENV: JSON.stringify(isDevelopment ? 'development' : 'production'),
-          PUBLIC_URL: JSON.stringify(publicPath.slice(0, -1)),
-          ...Object.keys(envConfig).reduce((acc, key) => {
-            acc[key] = JSON.stringify(envConfig[key]);
-            return acc;
-          }, {})
-        },
-      }),
+      new DefinePlugin(processedEnv),
 
       new WebpackManifestPlugin({
         fileName: 'asset-manifest.json',
         publicPath,
+        generate: (seed, files, entrypoints) => ({
+          files: files.reduce((manifest, file) => ({
+            ...manifest,
+            [file.name]: file.path,
+          }), seed),
+          entrypoints: entrypoints.main || [],
+        }),
       }),
 
       ...(!isDevelopment ? [
         new CompressionPlugin({
           test: /\.(js|css|html|svg)$/,
           threshold: 10240,
+          algorithm: 'gzip',
+          compressionOptions: { level: 9 },
         }),
         new MiniCssExtractPlugin({
           filename: 'static/css/[name].[contenthash:8].css',
@@ -193,6 +241,7 @@ module.exports = (env, argv) => {
     devServer: {
       static: {
         directory: path.join(__dirname, 'public'),
+        publicPath: '/',
       },
       compress: true,
       port: 3000,
@@ -206,6 +255,9 @@ module.exports = (env, argv) => {
           errors: true,
           warnings: false,
         },
+      },
+      devMiddleware: {
+        writeToDisk: true,
       },
     },
 
@@ -225,6 +277,11 @@ module.exports = (env, argv) => {
         config: [__filename],
       },
       compression: 'gzip',
+      cacheLocation: path.resolve(__dirname, 'node_modules/.cache/webpack'),
     } : false,
+
+    stats: {
+      errorDetails: true,
+    },
   };
 };

@@ -1,11 +1,15 @@
 // src/slices/spatialSlice.js
 
-import { createSlice, createAsyncThunk, createSelector, createAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
+import Papa from 'papaparse';
+import { getDataPath } from '../utils/dataUtils';
+import { workerManager, WorkerMessageTypes } from '../workers/enhancedWorkerSystem';
+import { backgroundMonitor } from '../utils/backgroundMonitor';
 
 const initialState = {
   data: {
     geoData: null,
-    analysis: null,
+    analysis: [],
     flows: [],
     weights: {},
     uniqueMonths: [],
@@ -30,75 +34,113 @@ const initialState = {
   }
 };
 
+const processFlowData = (flowsResponse) => {
+  try {
+    if (!flowsResponse) return [];
+
+    const flowsData = Papa.parse(flowsResponse, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      transform: (value) => value?.trim(),
+      complete: (results) => {
+        if (results.errors.length > 0) {
+          console.warn('CSV parsing warnings:', results.errors);
+        }
+      }
+    });
+
+    return flowsData.data.filter(flow =>
+      flow && flow.source && flow.target &&
+      !isNaN(parseFloat(flow.flow_weight))
+    );
+  } catch (error) {
+    console.error('Error processing flow data:', error);
+    return [];
+  }
+};
+
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
-  async ({ selectedCommodity, selectedDate }, { rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue }) => {
+    const metric = backgroundMonitor.startMetric('spatial-data-fetch');
+
     try {
-      const [geoJsonResponse, weightsResponse, analysisResponse, flowsResponse] = await Promise.all([
-        fetch('/results/unified_data.geojson'),
-        fetch('/results/spatial_weights/transformed_spatial_weights.json'),
-        fetch('/results/spatial_analysis_results.json'),
-        fetch('/results/network_data/time_varying_flows.csv')
+      dispatch(setLoadingStage('Fetching spatial data'));
+      dispatch(setProgress(0));
+
+      const [geoResponse, weightsResponse, analysisResponse, flowsResponse] = await Promise.all([
+        fetch(getDataPath('unified_data.geojson')),
+        fetch(getDataPath('spatial_weights/transformed_spatial_weights.json')),
+        fetch(getDataPath('spatial_analysis_results.json')),
+        fetch(getDataPath('network_data/time_varying_flows.csv'))
       ]);
 
-      if (!geoJsonResponse.ok) throw new Error('Failed to fetch GeoJSON data');
-      if (!weightsResponse.ok) throw new Error('Failed to fetch weights data');
-      if (!analysisResponse.ok) throw new Error('Failed to fetch analysis data');
-      if (!flowsResponse.ok) throw new Error('Failed to fetch flows data');
+      if (!geoResponse.ok || !weightsResponse.ok || !analysisResponse.ok || !flowsResponse.ok) {
+        throw new Error('One or more data fetches failed');
+      }
 
-      const [geoData, weights, analysis, flowsText] = await Promise.all([
-        geoJsonResponse.json(),
+      dispatch(setProgress(30));
+
+      const [geoData, weights, analysisData, flowsText] = await Promise.all([
+        geoResponse.json(),
         weightsResponse.json(),
         analysisResponse.json(),
         flowsResponse.text()
       ]);
 
-      // Parse CSV flows data
-      const flows = flowsText.split('\n')
-        .slice(1) // Skip header
-        .filter(line => line.trim())
-        .map(line => {
-          const [date, source, target, flow_weight, price_differential] = line.split(',');
-          return {
-            date,
-            source,
-            target,
-            flow_weight: parseFloat(flow_weight),
-            price_differential: parseFloat(price_differential)
-          };
-        });
+      dispatch(setProgress(50));
 
-      // Extract unique months from geo data
-      const uniqueMonths = [...new Set(
-        geoData.features
-          .map(f => f.properties.date?.slice(0, 7))
+      const flowsData = processFlowData(flowsText);
+
+      dispatch(setProgress(70));
+
+      const processedData = await workerManager.processData(
+        WorkerMessageTypes.PROCESS_SPATIAL,
+        {
+          geoData,
+          flows: flowsData,
+          weights
+        }
+      );
+
+      // Extract unique commodities, months, and regimes from the data
+      const regimes = [...new Set(
+        processedData.geoData.features
+          .map(f => f.properties?.regime)
           .filter(Boolean)
       )].sort();
 
-      // Extract regimes and commodities
-      const regimes = [...new Set(
-        geoData.features
-          .map(f => f.properties.regime)
-          .filter(Boolean)
-      )];
-
       const commodities = [...new Set(
-        geoData.features
-          .map(f => f.properties.commodity)
+        processedData.geoData.features
+          .map(f => f.properties?.commodity)
           .filter(Boolean)
-      )];
+      )].sort();
+
+      const uniqueMonths = [...new Set(
+        processedData.geoData.features
+          .map(f => f.properties?.date?.slice(0, 7))
+          .filter(Boolean)
+      )].sort();
+
+      dispatch(setProgress(100));
+
+      metric.finish({ status: 'success' });
 
       return {
-        geoData,
-        weights,
-        analysis,
-        flows,
+        geoData: processedData.geoData,
+        weights: processedData.weights,
+        flows: processedData.flows,
+        analysis: analysisData,
         uniqueMonths,
-        regimes,
-        commodities
+        commodities,
+        regimes
       };
+
     } catch (error) {
       console.error('Error fetching spatial data:', error);
+      metric.finish({ status: 'error', error: error.message });
+      backgroundMonitor.logError('spatial-data-fetch-error', { error });
       return rejectWithValue(error.message);
     }
   }
@@ -123,7 +165,15 @@ const spatialSlice = createSlice({
     clearCache: (state) => {
       state.data = initialState.data;
     },
-    // Add new reducers if needed
+    setSelectedDate: (state, action) => {
+      state.ui.selectedDate = action.payload;
+    },
+    setSelectedCommodity: (state, action) => {
+      state.ui.selectedCommodity = action.payload;
+    },
+    setSelectedRegimes: (state, action) => {
+      state.ui.selectedRegimes = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -134,11 +184,9 @@ const spatialSlice = createSlice({
       })
       .addCase(fetchSpatialData.fulfilled, (state, action) => {
         state.status.loading = false;
-        state.data = {
-          ...state.data,
-          ...action.payload
-        };
+        state.data = { ...state.data, ...action.payload };
         state.status.progress = 100;
+        state.status.error = null;
       })
       .addCase(fetchSpatialData.rejected, (state, action) => {
         state.status.loading = false;
@@ -148,9 +196,10 @@ const spatialSlice = createSlice({
   }
 });
 
-// Selectors
+export const selectSpatialState = state => state.spatial;
+
 export const selectSpatialData = createSelector(
-  [(state) => state.spatial],
+  [selectSpatialState],
   (spatial) => ({
     geoData: spatial.data.geoData,
     analysis: spatial.data.analysis,
@@ -161,67 +210,68 @@ export const selectSpatialData = createSelector(
     commodities: spatial.data.commodities,
     status: spatial.status.loading ? 'loading' : spatial.status.error ? 'failed' : 'succeeded',
     error: spatial.status.error,
-    loadingProgress: spatial.status.progress
+    loadingProgress: spatial.status.progress,
+    selectedCommodity: spatial.ui.selectedCommodity,
+    selectedDate: spatial.ui.selectedDate
   })
 );
 
-export const selectSpatialState = (state) => state.spatial;
-
+// Adjusted selectAnalysisData remains the same
 export const selectAnalysisData = createSelector(
   [selectSpatialState, (_, selectedCommodity) => selectedCommodity],
   (spatialState, selectedCommodity) => {
-    const key = `${selectedCommodity}_unified`;
-    return spatialState.data.analysis?.[key] || null;
+    if (!selectedCommodity || !spatialState.data.analysis) return null;
+    return spatialState.data.analysis.find(a =>
+      a.commodity === selectedCommodity && a.regime === 'unified'
+    ) || null;
   }
 );
 
+// Adjusted selectFlowsForPeriod
 export const selectFlowsForPeriod = createSelector(
-  [selectSpatialState, (_, period) => period],
-  (spatialState, period) => {
-    return spatialState.data.flows?.filter(flow => flow.date === period) || [];
+  [selectSpatialState, (state, selectedDate) => selectedDate, (state, selectedDate, selectedCommodity) => selectedCommodity],
+  (spatialState, selectedDate, selectedCommodity) => {
+    if (!selectedDate || !selectedCommodity || !spatialState.data.flows) return [];
+    return spatialState.data.flows.filter(flow =>
+      flow.date?.startsWith(selectedDate) &&
+      flow.commodity?.toLowerCase() === selectedCommodity.toLowerCase()
+    );
   }
 );
 
-// New selectors
-export const selectCurrentAnalysis = (state, selectedCommodity) => {
-  const { analysis } = state.spatial.data;
-  if (!analysis || !selectedCommodity) return null;
-  return analysis.find(a => 
-    a.commodity === selectedCommodity && 
-    a.regime === 'unified'
-  );
-};
+// Adjusted selectSpatialMetrics
+export const selectSpatialMetrics = createSelector(
+  [selectSpatialState, (state, selectedCommodity) => selectedCommodity],
+  (spatialState, selectedCommodity) => {
+    const analysis = spatialState.data.analysis?.find(a =>
+      a.commodity === selectedCommodity && a.regime === 'unified'
+    );
 
-export const selectSpatialMetrics = (state, selectedCommodity, selectedDate) => {
-  const analysis = selectCurrentAnalysis(state, selectedCommodity);
-  const { weights } = state.spatial.data;
-  
-  if (!analysis || !weights) return null;
+    if (!analysis || !spatialState.data.weights) return null;
 
-  const totalConnections = Object.values(weights).reduce(
-    (sum, region) => sum + (region.neighbors?.length || 0), 
-    0
-  );
-  const avgConnections = totalConnections / (Object.keys(weights).length * 2);
+    const totalConnections = Object.values(spatialState.data.weights).reduce(
+      (sum, region) => sum + (region.neighbors?.length || 0),
+      0
+    );
 
-  return {
-    integration: analysis.r_squared || 0,
-    spatialEffect: analysis.coefficients?.spatial_lag_price || 0,
-    correlation: analysis.moran_i?.I || 0,
-    avgConnections
-  };
-};
-
-// New actions
-export const setVisualizationMode = createAction('spatial/setVisualizationMode');
-export const setTimeRange = createAction('spatial/setTimeRange');
+    return {
+      integration: analysis.r_squared || 0,
+      spatialEffect: analysis.coefficients?.spatial_lag_price || 0,
+      correlation: analysis.moran_i?.I || 0,
+      avgConnections: totalConnections / (Object.keys(spatialState.data.weights).length || 1)
+    };
+  }
+);
 
 export const {
   setSelectedRegion,
   setView,
   setLoadingStage,
   setProgress,
-  clearCache
+  clearCache,
+  setSelectedDate,
+  setSelectedCommodity,
+  setSelectedRegimes
 } = spatialSlice.actions;
 
 export default spatialSlice.reducer;

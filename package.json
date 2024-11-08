@@ -14,6 +14,7 @@
     "@reduxjs/toolkit": "^1.9.7",
     "@sentry/react": "^7.59.0",
     "@sentry/tracing": "^7.59.0",
+    "@turf/turf": "^7.1.0",
     "@types/leaflet": "^1.9.8",
     "@welldone-software/why-did-you-render": "^8.0.3",
     "axios": "^1.7.7",
@@ -22,6 +23,7 @@
     "chartjs-plugin-annotation": "^3.1.0",
     "chroma-js": "^3.1.2",
     "clsx": "^2.1.1",
+    "comlink": "^4.4.1",
     "cors": "^2.8.5",
     "d3": "^7.9.0",
     "d3-scale": "^4.0.2",
@@ -66,7 +68,8 @@
     "recharts": "^2.13.3",
     "redux-logger": "^3.0.6",
     "styled-components": "^5.3.11",
-    "web-vitals": "^3.3.1"
+    "web-vitals": "^3.3.1",
+    "web-worker": "^1.2.0"
   },
   "scripts": {
     "prestart": "node scripts/setup.js",
