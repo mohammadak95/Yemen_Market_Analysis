@@ -31,7 +31,7 @@ import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
 
 // Utility function to capitalize words
 const capitalizeWords = (str) => {
-  return str.replace(/\b\w/g, char => char.toUpperCase());
+  return str.replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 // Constant for drawer width
@@ -76,21 +76,25 @@ const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }
   const { uniqueMonths } = useSelector(selectSpatialData);
   const [selectedDate, setSelectedDate] = useState(uniqueMonths[0]);
 
-  const handleCommoditySelect = useCallback((commodity) => {
-    if (commodity) {
-      dispatch(fetchSpatialData({ 
-        selectedCommodity: commodity,
-        selectedDate: selectedDate || uniqueMonths[0]
-      }));
-      onSelectCommodity(commodity); // Keep the original callback
-    }
-  }, [dispatch, selectedDate, uniqueMonths, onSelectCommodity]);
+  const handleCommoditySelect = useCallback(
+    (commodity) => {
+      if (commodity) {
+        const lowercaseCommodity = commodity.toLowerCase(); // Convert to lowercase
+        dispatch(
+          fetchSpatialData({
+            selectedCommodity: lowercaseCommodity,
+            selectedDate: selectedDate || uniqueMonths[0],
+          })
+        );
+        onSelectCommodity(lowercaseCommodity); // Pass lowercase commodity to the callback
+      }
+    },
+    [dispatch, selectedDate, uniqueMonths, onSelectCommodity]
+  );
 
   return (
     <FormControl fullWidth variant="outlined" size="small" margin="normal">
-      <InputLabel id="commodity-select-label">
-        Select Commodity
-      </InputLabel>
+      <InputLabel id="commodity-select-label">Select Commodity</InputLabel>
       <Select
         labelId="commodity-select-label"
         id="commodity-select"
@@ -143,9 +147,7 @@ const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
 
   return (
     <FormControl fullWidth variant="outlined" size="small" margin="normal">
-      <InputLabel id="regime-select-label">
-        Select Regimes
-      </InputLabel>
+      <InputLabel id="regime-select-label">Select Regimes</InputLabel>
       <Select
         labelId="regime-select-label"
         id="regime-select"
@@ -155,15 +157,12 @@ const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
         onChange={(e) => onSelectRegimes(e.target.value)}
         label="Select Regimes"
         aria-label="Select regimes"
-        renderValue={(selected) => selected.map(regime => capitalizeWords(regime)).join(', ')}
+        renderValue={(selected) => selected.map((regime) => capitalizeWords(regime)).join(', ')}
         MenuProps={MenuProps}
       >
         {regimes.map((regime) => (
           <MenuItem key={regime} value={regime}>
-            <Checkbox
-              id={`regime-checkbox-${regime}`}
-              checked={selectedRegimes.indexOf(regime) > -1}
-            />
+            <Checkbox id={`regime-checkbox-${regime}`} checked={selectedRegimes.indexOf(regime) > -1} />
             <ListItemText primary={capitalizeWords(regime)} />
           </MenuItem>
         ))}
@@ -206,7 +205,7 @@ DiscoveryMenu.propTypes = {
 };
 
 /**
- * Navigation Component
+ * Sidebar Component
  *
  * The main navigation sidebar component.
  *
@@ -249,33 +248,28 @@ export const Sidebar = ({
   const { geoData, flows, analysis, uniqueMonths } = useSelector(selectSpatialData);
 
   const handleAnalysisChange = useCallback(
-    (analysis) => {
-      setSelectedAnalysis(analysis);
+    (analysisType) => {
+      setSelectedAnalysis(analysisType);
       if (!isSmUp) {
         setSidebarOpen(false);
       }
 
       // If spatial analysis is selected, fetch data if we have a commodity
-      if (analysis === 'spatial' && selectedCommodity) {
-        dispatch(fetchSpatialData({
-          selectedCommodity,
-          selectedDate: uniqueMonths[0]
-        }));
+      if (analysisType === 'spatial' && selectedCommodity) {
+        dispatch(
+          fetchSpatialData({
+            selectedCommodity,
+            selectedDate: uniqueMonths[0],
+          })
+        );
       }
     },
     [setSelectedAnalysis, isSmUp, setSidebarOpen, dispatch, selectedCommodity, uniqueMonths]
   );
 
-  const handleCommoditySelect = useCallback(
-    (commodity) => {
-      setSelectedCommodity(commodity);
-    },
-    [setSelectedCommodity]
-  );
-
   const handleRegimesSelect = useCallback(
-    (regimes) => {
-      setSelectedRegimes(regimes);
+    (regimesSelected) => {
+      setSelectedRegimes(regimesSelected);
     },
     [setSelectedRegimes]
   );
@@ -287,7 +281,7 @@ export const Sidebar = ({
           <CommoditySelector
             commodities={commodities}
             selectedCommodity={selectedCommodity}
-            onSelectCommodity={handleCommoditySelect}
+            onSelectCommodity={setSelectedCommodity} // Ensure this receives the lowercase value
           />
 
           <RegimeSelector
@@ -366,7 +360,7 @@ export const Sidebar = ({
     [
       commodities,
       selectedCommodity,
-      handleCommoditySelect,
+      setSelectedCommodity,
       regimes,
       selectedRegimes,
       handleRegimesSelect,
@@ -420,4 +414,3 @@ Sidebar.propTypes = {
   onOpenWelcomeModal: PropTypes.func.isRequired,
   handleDrawerToggle: PropTypes.func.isRequired,
 };
-

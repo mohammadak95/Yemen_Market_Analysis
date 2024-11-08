@@ -5,6 +5,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const dotenv = require('dotenv');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
@@ -15,7 +16,7 @@ module.exports = (env, argv) => {
   const envConfig = dotenv.config({ path: path.resolve(__dirname, envFile) }).parsed || {};
   const publicPath = isDevelopment ? '/' : '/Yemen_Market_Analysis/';
 
-  // Process env variables
+  // Process environment variables
   const processedEnv = {
     'process.env': {
       NODE_ENV: JSON.stringify(isDevelopment ? 'development' : 'production'),
@@ -23,7 +24,7 @@ module.exports = (env, argv) => {
     }
   };
 
-  // Add all REACT_APP_ prefixed variables
+  // Add all REACT_APP_ prefixed variables from .env
   Object.keys(envConfig).forEach(key => {
     if (key.startsWith('REACT_APP_')) {
       processedEnv['process.env'][key] = JSON.stringify(envConfig[key]);
@@ -40,6 +41,7 @@ module.exports = (env, argv) => {
       clean: true,
     },
 
+    // Resolve settings for path aliases and compatibility
     resolve: {
       extensions: ['.js', '.jsx', '.json'],
       alias: {
@@ -53,6 +55,7 @@ module.exports = (env, argv) => {
       }
     },
 
+    // Optimization settings, including SplitChunks and minimizers
     optimization: {
       minimizer: [
         new TerserPlugin({
@@ -67,30 +70,26 @@ module.exports = (env, argv) => {
           },
           extractComments: false,
         }),
+        ...(isDevelopment ? [] : [new CssMinimizerPlugin()]),
       ],
       splitChunks: isDevelopment ? false : {
         chunks: 'all',
         maxInitialRequests: 25,
         minSize: 20000,
         cacheGroups: {
-          defaultVendors: false,
-          default: false,
+          reactVendor: {
+            test: /[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/,
+            name: 'reactVendor',
+            priority: 40,
+          },
           mui: {
             test: /[\\/]node_modules[\\/]@mui[\\/]/,
             name: 'mui',
-            chunks: 'all',
             priority: 30,
           },
-          core: {
-            test: /[\\/]node_modules[\\/](react|react-dom|redux|react-redux)[\\/]/,
-            name: 'core',
-            chunks: 'all',
-            priority: 40,
-          },
-          lib: {
+          vendors: {
             test: /[\\/]node_modules[\\/]/,
-            name: 'lib',
-            chunks: 'all',
+            name: 'vendors',
             priority: 20,
           }
         }
@@ -99,18 +98,28 @@ module.exports = (env, argv) => {
       runtimeChunk: isDevelopment ? false : 'single',
     },
 
+    // Module rules for handling different file types
     module: {
       rules: [
         {
           test: /\.(js|jsx)$/,
           exclude: /node_modules/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true,
-              cacheCompression: false,
+          use: [
+            {
+              loader: 'thread-loader',
+              options: {
+                workers: require('os').cpus().length - 1,
+                poolTimeout: isDevelopment ? Infinity : 2000,
+              },
             },
-          },
+            {
+              loader: 'babel-loader',
+              options: {
+                cacheDirectory: true,
+                cacheCompression: false,
+              },
+            },
+          ],
         },
         {
           test: /\.css$/,
@@ -162,6 +171,7 @@ module.exports = (env, argv) => {
       ],
     },
 
+    // Plugins for enhanced functionality
     plugins: [
       new CleanWebpackPlugin(),
 
@@ -238,6 +248,7 @@ module.exports = (env, argv) => {
       ] : []),
     ].filter(Boolean),
 
+    // Dev server configuration for local development
     devServer: {
       static: {
         directory: path.join(__dirname, 'public'),
@@ -261,15 +272,18 @@ module.exports = (env, argv) => {
       },
     },
 
+    // Performance settings to manage asset sizes
     performance: {
       maxAssetSize: 512000,
       maxEntrypointSize: 512000,
       hints: isDevelopment ? false : 'warning',
     },
 
+    // Source maps for better debugging in development
     devtool: isDevelopment ? 'eval-cheap-module-source-map' : false,
     mode: isDevelopment ? 'development' : 'production',
 
+    // Cache configuration to improve build speed
     cache: isDevelopment ? {
       type: 'filesystem',
       name: 'development-cache',
@@ -278,10 +292,10 @@ module.exports = (env, argv) => {
       },
       compression: 'gzip',
       cacheLocation: path.resolve(__dirname, 'node_modules/.cache/webpack'),
+      store: 'pack',
     } : false,
 
-    stats: {
-      errorDetails: true,
-    },
+    // Minimal stats in development for cleaner console output
+    stats: isDevelopment ? 'minimal' : 'normal',
   };
 };
