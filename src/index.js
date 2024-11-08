@@ -5,69 +5,61 @@ import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import store from './store';
 import App from './App';
-import ReduxDebugWrapper from './utils/ReduxDebugWrapper'; // Correct import path
-import { setupReduxDebugger } from './utils/debugUtils'; // Import setup function
+import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
+import { setupReduxDebugger } from './utils/debugUtils';
 import { backgroundMonitor } from './utils/backgroundMonitor';
 import './utils/leafletSetup';
 import 'leaflet/dist/leaflet.css';
 import './styles/leaflet-overrides.css';
-import { fetchSpatialData } from './slices/spatialSlice'; // Import the thunk
+import { fetchSpatialData } from './slices/spatialSlice';
 
 // Initialize Redux Debugger
 setupReduxDebugger(store);
-
-// Debug: Log initial state
-console.log('Initial store state:', store.getState());
 
 const root = createRoot(document.getElementById('root'));
 
 /**
  * Component to dispatch the fetchSpatialData thunk on mount.
- * @param {object} props - Component props.
- * @param {string} props.selectedCommodity - The selected commodity to fetch data for.
  */
-const DataLoader = ({ selectedCommodity }) => {
-  const dispatch = store.dispatch; // Use store.dispatch instead of useDispatch
+const DataLoader = React.memo(({ selectedCommodity }) => {
+  const [hasLoaded, setHasLoaded] = React.useState(false);
 
   React.useEffect(() => {
-    if (selectedCommodity) {
+    if (selectedCommodity && !hasLoaded) {
       console.log(`Dispatching fetchSpatialData for commodity: ${selectedCommodity}`);
-      dispatch(fetchSpatialData(selectedCommodity));
-    } else {
-      console.warn('No commodity selected. Skipping fetchSpatialData dispatch.');
+      store.dispatch(fetchSpatialData(selectedCommodity));
+      setHasLoaded(true);
     }
-  }, [dispatch, selectedCommodity]);
+  }, [selectedCommodity, hasLoaded]);
 
-  return null; // This component doesn't render anything
-};
+  return null;
+});
 
 /**
  * Wraps the App component with Redux Provider and Debugging Tools.
- * @param {object} props - Component props.
- * @param {string} props.selectedCommodity - The selected commodity to fetch data for.
  */
-const AppWithProviders = ({ selectedCommodity }) => (
-  <Provider store={store}>
-    <ReduxDebugWrapper>
-      {/* Dispatch the thunk for testing */}
-      <DataLoader selectedCommodity={selectedCommodity} />
-      <App />
-    </ReduxDebugWrapper>
-  </Provider>
-);
+const AppWithProviders = React.memo(() => {
+  // Move selectedCommodity inside the component to prevent re-renders
+  const selectedCommodity = React.useMemo(() => 'beans (kidney red)', []);
 
-// Replace 'beans (kidney red)' with the actual commodity you want to load
-const selectedCommodity = 'beans (kidney red)';
+  return (
+    <Provider store={store}>
+      <ReduxDebugWrapper>
+        <DataLoader selectedCommodity={selectedCommodity} />
+        <App />
+      </ReduxDebugWrapper>
+    </Provider>
+  );
+});
 
 root.render(
   <React.StrictMode>
-    <AppWithProviders selectedCommodity={selectedCommodity} />
+    <AppWithProviders />
   </React.StrictMode>
 );
 
-// Initialize monitoring in development
+// Development monitoring
 if (process.env.NODE_ENV === 'development') {
-  // Log app initialization metric
   backgroundMonitor.logMetric('app', {
     event: 'initialization',
     timestamp: Date.now(),

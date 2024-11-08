@@ -1,5 +1,3 @@
-// src/components/analysis/spatial-analysis/DynamicInterpretation.js
-
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -11,8 +9,8 @@ import {
   Grid,
   Chip,
   Divider,
-  Tooltip,
   LinearProgress,
+  Stack
 } from '@mui/material';
 import {
   TrendingUp,
@@ -22,143 +20,93 @@ import {
   Warning,
   Speed,
   CompareArrows,
+  AccountTree,
+  Analytics
 } from '@mui/icons-material';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip as ChartTooltip,
-  CartesianGrid,
-} from 'recharts';
+import { Line } from 'react-chartjs-2';
+import { calculatePriceTrend, calculateVolatility, determineStability, generatePolicyImplications, calculateTrend, formatTimeSeriesData, getChartOptions, getPriceAlertSeverity, generatePriceTrendMessage } from '../../../utils/marketAnalysisHelpers';
+
+const MetricCard = ({ title, value, icon: Icon, color, subtitle, trend }) => (
+  <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+      <Icon sx={{ mr: 1, color: `${color}.main` }} />
+      <Typography variant="subtitle2">{title}</Typography>
+    </Box>
+    <Typography variant="h6" color={`${color}.main`}>
+      {typeof value === 'number' ? `${(value * 100).toFixed(1)}%` : value}
+    </Typography>
+    {subtitle && (
+      <Typography variant="caption" color="text.secondary">
+        {subtitle}
+      </Typography>
+    )}
+    {trend && (
+      <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
+        {trend > 0 ? <TrendingUp color="success" /> : <TrendingDown color="error" />}
+        <Typography variant="caption" sx={{ ml: 0.5 }}>
+          {Math.abs(trend).toFixed(1)}% {trend > 0 ? 'increase' : 'decrease'}
+        </Typography>
+      </Box>
+    )}
+  </Box>
+);
 
 const DynamicInterpretation = ({
   data,
   spatialWeights,
   selectedRegion,
   marketMetrics,
-  timeSeriesData,
+  timeSeriesData
 }) => {
-  if (!data) return null;
-
   const {
-    moran_i,
-    r_squared,
-    coefficients,
-    residual,
-    p_values,
-  } = data;
+    integrationAnalysis,
+    priceAnalysis,
+    regionalAnalysis,
+    policyImplications
+  } = useMemo(() => {
+    if (!data) return {};
 
-  // Market Integration Analysis
-  const integrationAnalysis = useMemo(() => {
-    const spatialLag = coefficients?.spatial_lag_price || 0;
-    const significance = p_values?.spatial_lag_price < 0.05;
-    const marketCoverage = marketMetrics?.marketCoverage || 0;
-
-    let status = 'fragmented';
-    if (spatialLag > 0.7 && significance) status = 'highly_integrated';
-    else if (spatialLag > 0.4 && significance) status = 'moderately_integrated';
-
-    return {
-      status,
-      efficiency: r_squared,
-      transmission: spatialLag,
-      coverage: marketCoverage,
-      significance,
+    // Market Integration Analysis
+    const integrationAnalysis = {
+      status: data.moran_i?.I > 0.3 ? 'high' : data.moran_i?.I > 0 ? 'moderate' : 'low',
+      efficiency: data.r_squared || 0,
+      transmission: data.coefficients?.spatial_lag_price || 0,
+      coverage: marketMetrics?.marketCoverage || 0,
+      significance: data.moran_i?.['p-value'] < 0.05
     };
-  }, [coefficients, p_values, r_squared, marketMetrics]);
 
-  // Price Dynamics Analysis
-  const priceAnalysis = useMemo(() => {
-    if (!timeSeriesData?.length) return null;
+    // Price Dynamics Analysis
+    const priceAnalysis = timeSeriesData ? {
+      trend: calculatePriceTrend(timeSeriesData),
+      volatility: calculateVolatility(timeSeriesData),
+      stability: determineStability(timeSeriesData),
+      convergence: data.moran_i?.I > 0
+    } : null;
 
-    const recentPrices = timeSeriesData.slice(-6);
-    const priceChanges = recentPrices.map((data, i) => {
-      if (i === 0) return 0;
-      return (
-        ((data.avgPrice - recentPrices[i - 1].avgPrice) /
-          recentPrices[i - 1].avgPrice) *
-        100
-      );
-    });
-    const avgChange =
-      priceChanges.reduce((a, b) => a + b, 0) / priceChanges.length;
-    const volatility = Math.sqrt(
-      priceChanges.reduce((acc, val) => acc + Math.pow(val - avgChange, 2), 0) /
-        priceChanges.length
+    // Regional Market Analysis
+    const regionalAnalysis = selectedRegion ? {
+      connections: getRegionalConnections(selectedRegion, spatialWeights),
+      role: determineMarketRole(selectedRegion, spatialWeights),
+      importance: calculateMarketImportance(selectedRegion, spatialWeights),
+      performance: analyzeRegionalPerformance(selectedRegion, data.residual)
+    } : null;
+
+    // Policy Implications
+    const policyImplications = generatePolicyImplications(
+      integrationAnalysis,
+      priceAnalysis,
+      regionalAnalysis
     );
 
     return {
-      trend: avgChange,
-      volatility,
-      stability:
-        volatility < 5 ? 'stable' : volatility < 10 ? 'moderate' : 'volatile',
-      convergence: moran_i?.I > 0,
+      integrationAnalysis,
+      priceAnalysis,
+      regionalAnalysis,
+      policyImplications
     };
-  }, [timeSeriesData, moran_i]);
+  }, [data, spatialWeights, selectedRegion, marketMetrics, timeSeriesData]);
 
-  // Regional Market Analysis
-  const regionalAnalysis = useMemo(() => {
-    if (!selectedRegion || !spatialWeights) return null;
-
-    const regionalWeights = spatialWeights[selectedRegion];
-    if (!regionalWeights) return null;
-
-    const connectedMarkets = regionalWeights.neighbors.length;
-    const marketRole =
-      connectedMarkets > 3
-        ? 'hub'
-        : connectedMarkets > 1
-        ? 'intermediary'
-        : 'peripheral';
-
-    return {
-      connections: connectedMarkets,
-      role: marketRole,
-      importance: connectedMarkets / Object.keys(spatialWeights).length,
-      residuals: residual?.filter((r) => r.region_id === selectedRegion) || [],
-    };
-  }, [selectedRegion, spatialWeights, residual]);
-
-  // Policy Implications
-  const policyImplications = useMemo(() => {
-    const implications = [];
-
-    // Market Integration Implications
-    if (integrationAnalysis.status === 'fragmented') {
-      implications.push({
-        type: 'warning',
-        title: 'Market Integration',
-        message:
-          'Market fragmentation indicates need for improved trade infrastructure and reduced barriers.',
-        priority: 'high',
-      });
-    }
-
-    // Price Stability Implications
-    if (priceAnalysis?.stability === 'volatile') {
-      implications.push({
-        type: 'error',
-        title: 'Price Stability',
-        message:
-          'High price volatility suggests need for price stabilization mechanisms.',
-        priority: 'high',
-      });
-    }
-
-    // Regional Development Implications
-    if (regionalAnalysis?.role === 'peripheral') {
-      implications.push({
-        type: 'info',
-        title: 'Regional Development',
-        message:
-          'Low market connectivity indicates opportunity for regional market development.',
-        priority: 'medium',
-      });
-    }
-
-    return implications;
-  }, [integrationAnalysis, priceAnalysis, regionalAnalysis]);
+  if (!data) return null;
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -167,85 +115,46 @@ const DynamicInterpretation = ({
       </Typography>
 
       {/* Market Integration Status */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Market Integration Status
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Tooltip title="Overall market integration efficiency">
-              <Box>
-                <Typography variant="body2" color="textSecondary">
-                  Integration Level
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={integrationAnalysis.efficiency * 100}
-                  color={
-                    integrationAnalysis.efficiency > 0.5 ? 'success' : 'warning'
-                  }
-                  sx={{ mt: 1, mb: 0.5 }}
-                />
-                <Typography variant="caption">
-                  {(integrationAnalysis.efficiency * 100).toFixed(1)}%
-                </Typography>
-              </Box>
-            </Tooltip>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Tooltip title="Speed of price transmission between markets">
-              <Box>
-                <Typography variant="body2" color="textSecondary">
-                  Price Transmission
-                </Typography>
-                <Chip
-                  icon={<Speed />}
-                  label={`${(integrationAnalysis.transmission * 100).toFixed(
-                    1
-                  )}%`}
-                  color={
-                    integrationAnalysis.transmission > 0.5 ? 'success' : 'warning'
-                  }
-                  size="small"
-                  sx={{ mt: 1 }}
-                />
-              </Box>
-            </Tooltip>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Tooltip title="Market coverage and connectivity">
-              <Box>
-                <Typography variant="body2" color="textSecondary">
-                  Market Coverage
-                </Typography>
-                <Chip
-                  icon={<Hub />}
-                  label={`${(integrationAnalysis.coverage * 100).toFixed(1)}%`}
-                  color={integrationAnalysis.coverage > 0.6 ? 'success' : 'warning'}
-                  size="small"
-                  sx={{ mt: 1 }}
-                />
-              </Box>
-            </Tooltip>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Tooltip title="Statistical significance of market integration">
-              <Box>
-                <Typography variant="body2" color="textSecondary">
-                  Significance
-                </Typography>
-                <Chip
-                  icon={integrationAnalysis.significance ? <Functions /> : <Warning />}
-                  label={integrationAnalysis.significance ? 'Significant' : 'Not Significant'}
-                  color={integrationAnalysis.significance ? 'success' : 'default'}
-                  size="small"
-                  sx={{ mt: 1 }}
-                />
-              </Box>
-            </Tooltip>
-          </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Integration Level"
+            value={integrationAnalysis.efficiency}
+            icon={Functions}
+            color="primary"
+            subtitle="Overall market efficiency"
+            trend={calculateTrend(timeSeriesData, 'integration')}
+          />
         </Grid>
-      </Box>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Price Transmission"
+            value={integrationAnalysis.transmission}
+            icon={Speed}
+            color="success"
+            subtitle="Speed of price adjustments"
+            trend={calculateTrend(timeSeriesData, 'transmission')}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Market Coverage"
+            value={integrationAnalysis.coverage}
+            icon={Hub}
+            color="info"
+            subtitle="Network connectivity"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Market Stability"
+            value={priceAnalysis?.stability === 'stable' ? 1 : 0}
+            icon={CompareArrows}
+            color={priceAnalysis?.stability === 'stable' ? 'success' : 'warning'}
+            subtitle={`Volatility: ${(priceAnalysis?.volatility || 0).toFixed(1)}%`}
+          />
+        </Grid>
+      </Grid>
 
       <Divider sx={{ my: 2 }} />
 
@@ -258,50 +167,37 @@ const DynamicInterpretation = ({
           <Grid container spacing={2}>
             <Grid item xs={12} md={8}>
               <Box sx={{ height: 200 }}>
-                <LineChart
-                  data={timeSeriesData}
-                  width={600}
-                  height={200}
-                  margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <ChartTooltip />
-                  <Line type="monotone" dataKey="avgPrice" stroke="#8884d8" />
-                </LineChart>
+                <Line
+                  data={formatTimeSeriesData(timeSeriesData)}
+                  options={getChartOptions()}
+                />
               </Box>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                <Typography variant="body2" gutterBottom>
-                  Price Trend
-                </Typography>
-                <Chip
-                  icon={
-                    priceAnalysis.trend > 0 ? <TrendingUp /> : <TrendingDown />
-                  }
-                  label={`${priceAnalysis.trend.toFixed(1)}%`}
-                  color={Math.abs(priceAnalysis.trend) < 5 ? 'success' : 'warning'}
-                  size="small"
-                  sx={{ mb: 1 }}
-                />
-                <Typography variant="body2" gutterBottom>
-                  Volatility
-                </Typography>
-                <Chip
-                  icon={<CompareArrows />}
-                  label={priceAnalysis.stability}
-                  color={
-                    priceAnalysis.stability === 'stable'
-                      ? 'success'
-                      : priceAnalysis.stability === 'moderate'
-                      ? 'warning'
-                      : 'error'
-                  }
-                  size="small"
-                />
-              </Paper>
+              <Stack spacing={1}>
+                <Alert 
+                  severity={getPriceAlertSeverity(priceAnalysis)}
+                  icon={<Analytics />}
+                >
+                  <AlertTitle>Price Trend Analysis</AlertTitle>
+                  {generatePriceTrendMessage(priceAnalysis)}
+                </Alert>
+                <Box sx={{ p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
+                  <Typography variant="body2" gutterBottom>
+                    Market Stability Indicators
+                  </Typography>
+                  <Stack spacing={1}>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={(1 - priceAnalysis.volatility) * 100}
+                      color={priceAnalysis.stability === 'stable' ? 'success' : 'warning'}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      Price Stability: {priceAnalysis.stability}
+                    </Typography>
+                  </Stack>
+                </Box>
+              </Stack>
             </Grid>
           </Grid>
         </Box>
@@ -323,11 +219,9 @@ const DynamicInterpretation = ({
                   icon={<Hub />}
                   label={regionalAnalysis.role}
                   color={
-                    regionalAnalysis.role === 'hub'
-                      ? 'success'
-                      : regionalAnalysis.role === 'intermediary'
-                      ? 'primary'
-                      : 'default'
+                    regionalAnalysis.role === 'hub' ? 'success' :
+                    regionalAnalysis.role === 'intermediary' ? 'primary' :
+                    'default'
                   }
                   size="small"
                 />
@@ -341,18 +235,16 @@ const DynamicInterpretation = ({
                 <Typography variant="body2" gutterBottom>
                   Market Importance
                 </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={regionalAnalysis.importance * 100}
-                  color={
-                    regionalAnalysis.importance > 0.3 ? 'success' : 'warning'
-                  }
-                  sx={{ mt: 1, mb: 0.5 }}
-                />
-                <Typography variant="caption">
-                  {(regionalAnalysis.importance * 100).toFixed(1)}% of total
-                  market connections
-                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={regionalAnalysis.importance * 100}
+                    color={regionalAnalysis.importance > 0.3 ? 'success' : 'warning'}
+                  />
+                  <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
+                    {(regionalAnalysis.importance * 100).toFixed(1)}% of total market connections
+                  </Typography>
+                </Box>
               </Paper>
             </Grid>
           </Grid>
@@ -364,19 +256,44 @@ const DynamicInterpretation = ({
         <Typography variant="subtitle1" gutterBottom>
           Policy Implications
         </Typography>
-        {policyImplications.map((implication, index) => (
-          <Alert key={index} severity={implication.type} sx={{ mb: 1 }}>
-            <AlertTitle>{implication.title}</AlertTitle>
-            {implication.message}
-          </Alert>
-        ))}
+        <Grid container spacing={2}>
+          {policyImplications.map((implication, index) => (
+            <Grid item xs={12} key={index}>
+              <Alert severity={implication.severity}>
+                <AlertTitle>{implication.title}</AlertTitle>
+                {implication.message}
+                {implication.recommendation && (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    Recommendation: {implication.recommendation}
+                  </Typography>
+                )}
+              </Alert>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
     </Paper>
   );
 };
 
+// Helper functions would go here (calculatePriceTrend, calculateVolatility, etc.)
+
 DynamicInterpretation.propTypes = {
-  data: PropTypes.object.isRequired, // Change from array to object
+  data: PropTypes.shape({
+    moran_i: PropTypes.shape({
+      I: PropTypes.number,
+      'p-value': PropTypes.number,
+    }),
+    r_squared: PropTypes.number,
+    coefficients: PropTypes.shape({
+      spatial_lag_price: PropTypes.number
+    }),
+    residual: PropTypes.arrayOf(PropTypes.shape({
+      region_id: PropTypes.string,
+      date: PropTypes.string,
+      residual: PropTypes.number
+    }))
+  }),
   spatialWeights: PropTypes.object,
   selectedRegion: PropTypes.string,
   marketMetrics: PropTypes.shape({
@@ -384,17 +301,11 @@ DynamicInterpretation.propTypes = {
     integrationLevel: PropTypes.number,
     transmissionEfficiency: PropTypes.number
   }),
-  timeSeriesData: PropTypes.array
+  timeSeriesData: PropTypes.arrayOf(PropTypes.shape({
+    date: PropTypes.string,
+    price: PropTypes.number,
+    region_id: PropTypes.string
+  }))
 };
 
-DynamicInterpretation.defaultProps = {
-  spatialWeights: {},
-  marketMetrics: {
-    marketCoverage: 0,
-    integrationLevel: 0,
-    transmissionEfficiency: 0
-  },
-  timeSeriesData: []
-};
-
-export default DynamicInterpretation;
+export default React.memo(DynamicInterpretation);

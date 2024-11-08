@@ -1,6 +1,4 @@
-// src/components/analysis/spatial-analysis/MapLegend.js
-
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Paper,
@@ -9,32 +7,65 @@ import {
   Tooltip,
   IconButton,
   Divider,
+  Collapse,
+  Stack,
+  useTheme
 } from '@mui/material';
-import { Info, ExpandMore, ExpandLess } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
+import {
+  Info,
+  ExpandMore,
+  ExpandLess,
+  Circle,
+  TrendingUp,
+  Warning
+} from '@mui/icons-material';
+import { interpolateRgb } from 'd3-interpolate';
 
 const MapLegend = ({
   title,
   colorScale,
-  steps = 5,
+  steps = 7,
   unit = '',
   description = '',
   position = 'bottomright',
   statistics = null,
+  domain = null,
+  mode = 'continuous',
+  categories = null
 }) => {
   const theme = useTheme();
-  const [isExpanded, setIsExpanded] = React.useState(true);
+  const [isExpanded, setIsExpanded] = useState(true);
 
-  if (typeof colorScale !== 'function' || typeof colorScale.domain !== 'function') return null;
+  const legendData = useMemo(() => {
+    // Define the color scale domain based on provided domain or statistics data
+    let computedDomain;
+    
+    if (mode === 'categorical' && categories) {
+      // Set domain based on categorical categories
+      return categories.map(category => ({
+        label: category.label,
+        color: category.color
+      }));
+    } else {
+      // Continuous scale: Calculate domain based on provided statistics or custom domain
+      computedDomain = domain || [
+        statistics?.min || 0,
+        statistics?.max || 1
+      ];
 
-  // Calculate legend values with domain from colorScale
-  const domain = colorScale.domain();
-  const range = domain[1] - domain[0];
-  const stepSize = range / (steps - 1);
-  const values = Array.from({ length: steps }, (_, i) => domain[0] + stepSize * i);
+      // Calculate range and step size for gradient scale
+      const range = computedDomain[1] - computedDomain[0];
+      const stepSize = range / (steps - 1);
 
-  // Format numbers nicely with appropriate precision
+      return Array.from({ length: steps }, (_, i) => ({
+        value: computedDomain[0] + stepSize * i,
+        color: colorScale(computedDomain[0] + stepSize * i)
+      }));
+    }
+  }, [colorScale, steps, mode, categories, domain, statistics]);
+
   const formatValue = (value) => {
+    if (typeof value !== 'number') return value;
     if (Math.abs(value) < 0.01) return value.toExponential(2);
     return value.toLocaleString(undefined, {
       minimumFractionDigits: 0,
@@ -50,8 +81,8 @@ const MapLegend = ({
         [position.includes('top') ? 'top' : 'bottom']: 20,
         [position.includes('left') ? 'left' : 'right']: 20,
         p: 1.5,
-        minWidth: 150,
-        maxWidth: 250,
+        minWidth: 200,
+        maxWidth: 300,
         backgroundColor: 'background.paper',
         borderRadius: 1,
         zIndex: 1000,
@@ -59,77 +90,131 @@ const MapLegend = ({
     >
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="subtitle2">{title}</Typography>
           {description && (
             <Tooltip title={description} arrow placement="top">
               <Info fontSize="small" color="action" />
             </Tooltip>
           )}
-        </Box>
-        <IconButton size="small" onClick={() => setIsExpanded(!isExpanded)} sx={{ p: 0.5 }}>
+        </Stack>
+        <IconButton 
+          size="small" 
+          onClick={() => setIsExpanded(!isExpanded)}
+          sx={{ p: 0.5 }}
+        >
           {isExpanded ? <ExpandLess /> : <ExpandMore />}
         </IconButton>
       </Box>
 
-      {/* Color Scale */}
-      {isExpanded && (
-        <>
-          <Box sx={{ display: 'flex', height: 20, mb: 0.5 }}>
-            {values.map((value, i) => (
-              <Tooltip key={i} title={`${formatValue(value)}${unit}`} arrow placement="top">
+      <Collapse in={isExpanded}>
+        {/* Color Scale */}
+        {mode === 'continuous' ? (
+          <Box sx={{ mb: 1 }}>
+            <Box sx={{ display: 'flex', height: 20 }}>
+              {legendData.map((item, i) => (
+                <Tooltip
+                  key={i}
+                  title={`${formatValue(item.value)}${unit}`}
+                  arrow
+                  placement="top"
+                >
+                  <Box
+                    sx={{
+                      flex: 1,
+                      bgcolor: item.color,
+                      border: `1px solid ${theme.palette.divider}`,
+                      '&:first-of-type': {
+                        borderTopLeftRadius: 2,
+                        borderBottomLeftRadius: 2,
+                      },
+                      '&:last-child': {
+                        borderTopRightRadius: 2,
+                        borderBottomRightRadius: 2,
+                      },
+                    }}
+                  />
+                </Tooltip>
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+              <Typography variant="caption">
+                {formatValue(legendData[0].value)}
+                {unit}
+              </Typography>
+              <Typography variant="caption">
+                {formatValue(legendData[legendData.length - 1].value)}
+                {unit}
+              </Typography>
+            </Box>
+          </Box>
+        ) : (
+          <Stack spacing={0.5} sx={{ mb: 1 }}>
+            {legendData.map((category, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
                 <Box
                   sx={{
-                    flex: 1,
-                    bgcolor: colorScale(value),
-                    border: `1px solid ${theme.palette.divider}`,
-                    '&:first-of-type': {
-                      borderTopLeftRadius: 2,
-                      borderBottomLeftRadius: 2,
-                    },
-                    '&:last-child': {
-                      borderTopRightRadius: 2,
-                      borderBottomRightRadius: 2,
-                    },
+                    width: 16,
+                    height: 16,
+                    backgroundColor: category.color,
+                    borderRadius: '50%'
                   }}
                 />
-              </Tooltip>
+                <Typography variant="caption">
+                  {category.label}
+                </Typography>
+              </Box>
             ))}
-          </Box>
+          </Stack>
+        )}
 
-          {/* Range Labels */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 0.5 }}>
-            <Typography variant="caption">
-              {formatValue(domain[0])}
-              {unit}
-            </Typography>
-            <Typography variant="caption">
-              {formatValue(domain[1])}
-              {unit}
-            </Typography>
-          </Box>
-
-          {/* Statistics if provided */}
-          {statistics && (
-            <>
-              <Divider sx={{ my: 1 }} />
-              <Box sx={{ pt: 1 }}>
-                {Object.entries(statistics).map(([key, value]) => (
-                  <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      {key}:
-                    </Typography>
+        {/* Statistics */}
+        {statistics && (
+          <>
+            <Divider sx={{ my: 1 }} />
+            <Stack spacing={0.5}>
+              {Object.entries(statistics).map(([key, value]) => (
+                <Box
+                  key={key}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {key}:
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {typeof value === 'number' && (
+                      <Box
+                        component="span"
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: value > 0 ? 'success.main' : 'error.main'
+                        }}
+                      >
+                        {value > 0 ? <TrendingUp fontSize="small" /> : <Warning fontSize="small" />}
+                      </Box>
+                    )}
                     <Typography variant="caption">
-                      {typeof value === 'number' ? formatValue(value) : value}
-                      {unit}
+                      {typeof value === 'number' ? formatValue(value) + unit : value}
                     </Typography>
                   </Box>
-                ))}
-              </Box>
-            </>
-          )}
-        </>
-      )}
+                </Box>
+              ))}
+            </Stack>
+          </>
+        )}
+      </Collapse>
     </Paper>
   );
 };
@@ -142,6 +227,13 @@ MapLegend.propTypes = {
   description: PropTypes.string,
   position: PropTypes.oneOf(['topleft', 'topright', 'bottomleft', 'bottomright']),
   statistics: PropTypes.object,
+  domain: PropTypes.arrayOf(PropTypes.number),
+  mode: PropTypes.oneOf(['continuous', 'categorical']),
+  categories: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    color: PropTypes.string.isRequired,
+    value: PropTypes.any
+  }))
 };
 
 export default React.memo(MapLegend);

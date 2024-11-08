@@ -25,7 +25,6 @@ def load_gitignore(root_path: Path) -> pathspec.PathSpec:
     for gitignore_file in root_path.rglob('.gitignore'):
         with gitignore_file.open('r') as f:
             gitignore_patterns.extend(f.readlines())
-    gitignore_patterns.append('project/')  # Exclude the project folder
     spec = pathspec.PathSpec.from_lines('gitwildmatch', gitignore_patterns)
     return spec
 

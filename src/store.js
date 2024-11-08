@@ -89,31 +89,41 @@ const stateValidator = (store) => (next) => (action) => {
 // Configure middleware based on environment
 const getMiddleware = () => {
   const middleware = [...getDefaultMiddleware({
-    serializableCheck: process.env.NODE_ENV === 'production' ? {
+    serializableCheck: {
+      // Ignore these paths in all environments
       ignoredPaths: [
         'spatial.data.geoData',
         'spatial.data.weights',
         'spatial.data.flows'
       ],
-    } : false,
-    immutableCheck: process.env.NODE_ENV === 'development'
+      warnAfter: 128
+    },
+    immutableCheck: {
+      // Reduce checks in development
+      warnAfter: 128
+    },
+    // Increase thunk timeout for large data operations
+    thunk: {
+      extraArgument: undefined,
+      timeout: 20000
+    }
   })];
 
-  // Add development middleware
-  if (process.env.NODE_ENV === 'development') {
-    middleware.push(spatialLogger);
-    middleware.push(performanceMonitor);
+  // Only add logger in development and when explicitly enabled
+  if (process.env.NODE_ENV === 'development' && 
+      process.env.REACT_APP_ENABLE_REDUX_LOGGER === 'true') {
     middleware.push(createLogger({
       collapsed: true,
       duration: true,
       timestamp: true,
-      diff: true
+      diff: true,
+      predicate: (getState, action) => {
+        // Skip logging for frequent actions
+        const skipActions = ['@@router/LOCATION_CHANGE', '@@redux-form'];
+        return !skipActions.some(type => action.type.includes(type));
+      }
     }));
   }
-
-  // Add production middleware
-  middleware.push(errorBoundary);
-  middleware.push(stateValidator);
 
   return middleware;
 };
@@ -139,11 +149,7 @@ const store = configureStore({
     spatial: spatialReducer
   },
   middleware: getMiddleware(),
-  devTools: process.env.NODE_ENV === 'development' && {
-    name: 'Yemen Market Analysis',
-    trace: true,
-    traceLimit: 25
-  },
+  devTools: process.env.NODE_ENV === 'development',
   preloadedState: undefined,
   enhancers: undefined
 });

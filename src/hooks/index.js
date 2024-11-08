@@ -1,10 +1,7 @@
 // src/hooks/index.js
 
-// Spatial Analysis Hooks
-import { useSpatialData } from './useSpatialData';
-export { useSpatialData as useSpatialDataOptimized };
-
-// Data Analysis Hooks
+// Import hooks from their respective files
+import { useSpatialAnalysis } from './useSpatialAnalysis';
 import {
   useData,
   useECMData,
@@ -12,7 +9,6 @@ import {
   useTVMIIData
 } from './dataHooks';
 
-// Discovery & Methodology Hooks
 import {
   useDiscoveryData,
   useDiscoveryIntegration,
@@ -20,7 +16,6 @@ import {
   useMethodologyAccess
 } from './discoveryHooks';
 
-// UI & Utility Hooks
 import {
   useWindowSize,
   useBodyScrollLock,
@@ -28,20 +23,26 @@ import {
   useWorkerProcessor
 } from './uiHooks';
 
-// Export all hooks
+// Export hooks with aliases where needed
+export const useSpatialDataOptimized = useSpatialAnalysis; // Alias for backward compatibility
+
+// Export all other hooks
 export {
+  // Spatial Analysis
+  useSpatialAnalysis,
+
   // Data Analysis
   useData,
   useECMData,
   usePriceDifferentialData,
   useTVMIIData,
-  
+
   // Discovery & Methodology
   useDiscoveryData,
   useDiscoveryIntegration,
   useLaunchDiscovery,
   useMethodologyAccess,
-  
+
   // UI & Utility
   useWindowSize,
   useBodyScrollLock,

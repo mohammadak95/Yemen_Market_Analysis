@@ -2,25 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>
-      const setThemeColor = () => {
-        const themeColor = document.querySelector('meta[name="theme-color"]') || document.createElement('meta');
-        themeColor.name = 'theme-color';
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          themeColor.content = '#ffffff';
-        } else {
-          themeColor.content = '#000000';
-        }
-        document.head.appendChild(themeColor);
-      };
-      setThemeColor();
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setThemeColor);
-    </script>
+    <meta name="theme-color" content="#000000" />
     <meta name="description" content="Yemen Market Analysis Dashboard" />
-    <link rel="icon" href="favicon.ico" />
-    <link rel="apple-touch-icon" href="logo192.png" />
-    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>Yemen Market Analysis</title>
   </head>
   <body>

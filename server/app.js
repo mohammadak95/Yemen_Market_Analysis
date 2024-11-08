@@ -7,19 +7,21 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-// Environment variables
-const PORT = process.env.PORT || 5000;
+// Environment variables with fallback ports
+const SERVER_PORT = process.env.SERVER_PORT || 5001;
+const CLIENT_PORT = process.env.CLIENT_PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+
 const ALLOWED_ORIGINS = {
-  development: ['http://localhost:3000'],
+  development: [`http://localhost:${CLIENT_PORT}`],
   production: ['https://mohammadak95.github.io']
 };
+
 
 // CORS Configuration
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = ALLOWED_ORIGINS[NODE_ENV];
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -35,13 +37,11 @@ const corsOptions = {
     'Authorization'
   ],
   credentials: true,
-  maxAge: 86400 // 24 hours
+  maxAge: 86400
 };
 
-// Apply CORS middleware
+// Apply middleware
 app.use(cors(corsOptions));
-
-// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -66,89 +66,58 @@ const staticOptions = {
   }
 };
 
-// Serve static files from results directory
+// Serve static files
 app.use('/results', express.static(path.join(__dirname, '..', 'results'), staticOptions));
 app.use('/data', express.static(path.join(__dirname, '..', 'public', 'data'), staticOptions));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: NODE_ENV
-  });
-});
-
-// Route to get available data files
-app.get('/api/available-data', (req, res) => {
+// Start server with error handling
+const startServer = async () => {
   try {
-    const dataTypes = {
-      spatial: [
-        'unified_data.geojson',
-        'spatial_analysis_results.json',
-        'network_data/time_varying_flows.csv'
-      ],
-      choropleth: [
-        'choropleth_data/average_prices.csv',
-        'choropleth_data/conflict_intensity.csv',
-        'choropleth_data/geoBoundaries-YEM-ADM1.geojson'
-      ],
-      ecm: [
-        'ecm/ecm_analysis_results.json',
-        'ecm/ecm_results_north_to_south.json',
-        'ecm/ecm_results_south_to_north.json'
-      ]
-    };
-
-    res.json({
-      status: 'success',
-      data: dataTypes
+    const server = app.listen(SERVER_PORT, () => {
+      console.log(`Server running in ${NODE_ENV} mode on port ${SERVER_PORT}`);
+      console.log(`Client running on port ${CLIENT_PORT}`);
+      console.log(`Allowed origins: ${ALLOWED_ORIGINS[NODE_ENV].join(', ')}`);
     });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received. Shutting down gracefully...');
+      server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+      });
+    });
+
   } catch (error) {
-    next(error);
+    if (error.code === 'EADDRINUSE') {
+      console.log(`Port ${SERVER_PORT} is busy, trying ${SERVER_PORT + 1}...`);
+      // Try next port
+      process.env.SERVER_PORT = SERVER_PORT + 1;
+      startServer();
+    } else {
+      console.error('Server failed to start:', error);
+      process.exit(1);
+    }
   }
-});
+};
 
-// Catch-all route for SPA
-app.get('*', (req, res) => {
-  // In production, serve the index.html for client-side routing
-  if (NODE_ENV === 'production') {
-    res.sendFile(path.join(__dirname, '..', 'build', 'index.html'));
-  } else {
-    res.status(404).json({
-      status: 'error',
-      message: 'Not Found'
-    });
-  }
-});
-
-// Error handling
-app.use((req, res, next) => {
-  const error = new Error('Not Found');
-  error.status = 404;
-  next(error);
-});
-
+// Error handling middleware
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
-  console.log(`Allowed origins: ${ALLOWED_ORIGINS[NODE_ENV].join(', ')}`);
-});
+// Start the server
+startServer();
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
-});
-
+// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  process.exit(1);
+  if (error.code === 'EADDRINUSE') {
+    console.log('Address in use, retrying...');
+    setTimeout(() => {
+      process.exit(1);
+    }, 1000);
+  } else {
+    console.error('Uncaught Exception:', error);
+    process.exit(1);
+  }
 });
 
 process.on('unhandledRejection', (reason, promise) => {
