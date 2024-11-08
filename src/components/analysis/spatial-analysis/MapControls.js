@@ -1,3 +1,5 @@
+//src/components/analysis/spatial-analysis/MapControls.js
+
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
