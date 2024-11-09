@@ -40,11 +40,18 @@ const initialState = {
 };
 
 // Async thunk for fetching spatial data
-
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
   async ({ selectedCommodity, selectedDate }, { dispatch, rejectWithValue }) => {
+    let metric;
     try {
+      // Start monitoring
+      metric = backgroundMonitor.startMetric('spatial-data-fetch', {
+        commodity: selectedCommodity,
+        date: selectedDate
+      });
+
+      // Validate inputs
       if (!selectedCommodity || typeof selectedCommodity !== 'string') {
         console.warn('Commodity parameter missing or invalid.');
       }
@@ -53,36 +60,43 @@ export const fetchSpatialData = createAsyncThunk(
         throw new Error('Invalid date parameter');
       }
 
+      // Process data
       const result = await spatialDataManager.processSpatialData(
         selectedCommodity?.toLowerCase() || '',
         selectedDate || ''
       );
 
+      // Validate response
       if (!result || !result.geoData) {
         throw new Error('Invalid data structure returned from processing');
       }
 
+      // Update progress and finish metric
       dispatch(setProgress(100));
-      if (typeof metric !== 'undefined') {
-        metric.finish({ status: 'success' });
-      }
+      metric?.finish({ status: 'success' });
 
+      // Update selected values if provided
       if (selectedCommodity) dispatch(setSelectedCommodity(selectedCommodity));
       if (selectedDate) dispatch(setSelectedDate(selectedDate));
 
       return result;
     } catch (error) {
       console.error('Error fetching spatial data:', error);
-      if (typeof metric !== 'undefined') {
-        metric.finish({ status: 'error', error: error.message });
-      }
+      
+      // Finish metric with error
+      metric?.finish({ 
+        status: 'error', 
+        error: error.message 
+      });
 
+      // Log error to background monitor
       backgroundMonitor.logError('spatial-data-fetch-failed', {
         commodity: selectedCommodity,
         date: selectedDate,
         error: error.message
       });
 
+      // Return structured error
       return rejectWithValue({
         message: error.message,
         commodity: selectedCommodity,

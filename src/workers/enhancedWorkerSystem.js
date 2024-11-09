@@ -18,7 +18,8 @@ export const WorkerMessageTypes = {
   PROCESS_CLUSTERS: 'PROCESS_CLUSTERS',
   PROCESS_SHOCKS: 'PROCESS_SHOCKS',
   ERROR: 'ERROR',
-  PROGRESS: 'PROGRESS'
+  PROGRESS: 'PROGRESS',
+  PROCESS_TIME_SERIES: 'PROCESS_TIME_SERIES'
 };
 
 // Singleton instance handling
@@ -112,6 +113,9 @@ class WorkerManager extends EventEmitter {
               break;
             case 'PROCESS_SHOCKS':
               result = processShocks(data, taskId);
+              break;
+            case 'PROCESS_TIME_SERIES':
+              result = await processTimeSeries(data);
               break;
             default:
               throw new Error(\`Unknown message type: \${type}\`);
@@ -246,6 +250,132 @@ class WorkerManager extends EventEmitter {
           }
         });
         return shocks;
+      }
+
+      async function processTimeSeries(data) {
+        const { features, commodity, selectedDate } = data;
+        let progress = 0;
+        reportProgress(progress);
+
+        try {
+          // Group features by month
+          const monthlyData = features.reduce((acc, feature) => {
+            const { properties } = feature;
+            if (!properties?.date) return acc;
+
+            const date = new Date(properties.date);
+            if (isNaN(date.getTime())) return acc;
+
+            const month = date.toISOString().slice(0, 7);
+            
+            if (!acc[month]) {
+              acc[month] = {
+                prices: [],
+                conflictIntensity: [],
+                usdPrices: [],
+                count: 0
+              };
+            }
+
+            // Validate and add numerical values
+            if (!isNaN(properties.price)) {
+              acc[month].prices.push(properties.price);
+            }
+            if (!isNaN(properties.conflict_intensity)) {
+              acc[month].conflictIntensity.push(properties.conflict_intensity);
+            }
+            if (!isNaN(properties.usdprice)) {
+              acc[month].usdPrices.push(properties.usdprice);
+            }
+            
+            acc[month].count++;
+            return acc;
+          }, {});
+
+          progress = 50;
+          reportProgress(progress);
+
+          // Calculate statistics for each month
+          const timeSeriesData = Object.entries(monthlyData)
+            .filter(([_, data]) => data.count >= 3) // Minimum data points threshold
+            .map(([month, data]) => {
+              const stats = calculateMonthlyStats(data);
+              return {
+                month,
+                ...stats,
+                sampleSize: data.count
+              };
+            })
+            .sort((a, b) => a.month.localeCompare(b.month));
+
+          progress = 100;
+          reportProgress(progress);
+
+          return timeSeriesData;
+        } catch (error) {
+          throw new Error(\`Time series processing error: \${error.message}\`);
+        }
+      }
+
+      function calculateMonthlyStats(data) {
+        const stats = {
+          avgPrice: null,
+          volatility: null,
+          avgConflictIntensity: null,
+          avgUsdPrice: null,
+          priceRange: { min: null, max: null }
+        };
+
+        try {
+          if (data.prices.length > 0) {
+            const cleanPrices = removeOutliers(data.prices);
+            stats.avgPrice = calculateMean(cleanPrices);
+            const stdDev = calculateStandardDeviation(cleanPrices);
+            stats.volatility = (stdDev / stats.avgPrice) * 100;
+            stats.priceRange = {
+              min: Math.min(...cleanPrices),
+              max: Math.max(...cleanPrices)
+            };
+          }
+
+          if (data.conflictIntensity.length > 0) {
+            stats.avgConflictIntensity = calculateMean(data.conflictIntensity);
+          }
+
+          if (data.usdPrices.length > 0) {
+            const cleanUsdPrices = removeOutliers(data.usdPrices);
+            stats.avgUsdPrice = calculateMean(cleanUsdPrices);
+          }
+
+          return stats;
+        } catch (error) {
+          console.error('Error calculating monthly statistics:', error);
+          return stats;
+        }
+      }
+
+      function calculateMean(values) {
+        if (!values?.length) return null;
+        return values.reduce((sum, val) => sum + val, 0) / values.length;
+      }
+
+      function calculateStandardDeviation(values) {
+        if (!values?.length) return null;
+        const mean = calculateMean(values);
+        const squaredDiffs = values.map(val => Math.pow(val - mean, 2));
+        const variance = calculateMean(squaredDiffs);
+        return Math.sqrt(variance);
+      }
+
+      function removeOutliers(values) {
+        if (!values?.length) return [];
+        const mean = calculateMean(values);
+        const stdDev = calculateStandardDeviation(values);
+        const maxDeviations = 3;
+        
+        return values.filter(value => 
+          Math.abs(value - mean) <= maxDeviations * stdDev
+        );
       }
     `;
 
@@ -396,11 +526,23 @@ export const initializeWorkerManager = async () => {
 };
 
 export const useWorkerManager = () => {
-  const ensureInitialized = useCallback(async () => {
-    if (!workerManager.isInitialized) {
-      await workerManager.initialize();
+  const initialize = useCallback(async () => {
+    try {
+      if (!workerManager.isInitialized) {
+        await workerManager.initialize();
+      }
+      return true;
+    } catch (error) {
+      console.error('Worker initialization failed:', error);
+      throw error;
     }
   }, []);
+
+  const ensureInitialized = useCallback(async () => {
+    if (!workerManager.isInitialized) {
+      await initialize();
+    }
+  }, [initialize]);
 
   const processGeoJSON = useCallback(async (data, onProgress) => {
     await ensureInitialized();
@@ -437,6 +579,11 @@ export const useWorkerManager = () => {
     return workerManager.processData(WorkerMessageTypes.PROCESS_SHOCKS, data, onProgress);
   }, [ensureInitialized]);
 
+  const processTimeSeries = useCallback(async (data, onProgress) => {
+    await ensureInitialized();
+    return workerManager.processData(WorkerMessageTypes.PROCESS_TIME_SERIES, data, onProgress);
+  }, [ensureInitialized]);
+
   const subscribeToProgress = useCallback((callback) => {
     const handleProgress = ({ taskId, progress }) => {
       callback(taskId, progress);
@@ -467,7 +614,20 @@ export const useWorkerManager = () => {
     };
   }, []);
 
+  const terminate = useCallback(() => {
+    if (workerManager.isInitialized) {
+      workerManager.terminate();
+    }
+  }, []);
+
+  const isInitialized = useCallback(() => {
+    return workerManager.isInitialized;
+  }, []);
+
   return {
+    initialize,
+    terminate,
+    isInitialized,
     processGeoJSON,
     processFlowData,
     processSpatialData,
@@ -475,6 +635,7 @@ export const useWorkerManager = () => {
     calculateStatistics,
     processClusters,
     processShocks,
+    processTimeSeries,
     subscribeToProgress,
     subscribeToCompletion,
     subscribeToError

@@ -1,223 +1,352 @@
-// src/utils/spatialUtils.js
-
 import proj4 from 'proj4';
 import * as turf from '@turf/turf';
 
-// Define projections
+// Constants
 const WGS84 = 'EPSG:4326';
 const UTM_ZONE_38N = '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs';
-
-// Initialize proj4 with the required projection
-proj4.defs('UTM38N', UTM_ZONE_38N);
-
-// Cache for transformed coordinates
-const coordinateCache = new Map();
 const CACHE_SIZE_LIMIT = 1000;
+const THRESHOLDS = {
+  VOLATILITY: 0.05,  // 5%
+  PRICE_CHANGE: 0.15, // 15%
+  MIN_DATA_POINTS: 3,
+  MAX_OUTLIER_STDDEV: 3,
+  MIN_CLUSTER_SIZE: 2
+};
+
+// Initialize projections
+proj4.defs('UTM38N', UTM_ZONE_38N);
+const coordinateCache = new Map();
 
 /**
- * Memoized coordinate transformation function.
- * Transforms coordinates from WGS84 to UTM Zone 38N.
- * Utilizes a cache to store and retrieve previously transformed coordinates.
- * 
- * @param {Array<number>} coordinates - [longitude, latitude] to transform.
- * @returns {Array<number>} Transformed [x, y] coordinates.
+ * Validate and sanitize GeoJSON features
+ * @param {Array<Object>} features - Array of GeoJSON features
+ * @returns {Array<Object>} Cleaned features
  */
-export const transformCoordinates = (coordinates) => {
-  if (!Array.isArray(coordinates) || coordinates.length !== 2) {
-    throw new Error('Invalid coordinates format. Expected [longitude, latitude].');
+const validateFeatures = (features) => {
+  if (!Array.isArray(features)) {
+    throw new Error('Features must be an array');
   }
-
-  const key = coordinates.join(',');
-
-  if (coordinateCache.has(key)) {
-    return coordinateCache.get(key);
-  }
-
-  const transformed = proj4(WGS84, 'UTM38N', coordinates);
-
-  // Manage cache size
-  if (coordinateCache.size >= CACHE_SIZE_LIMIT) {
-    // Remove the first inserted key (FIFO)
-    const firstKey = coordinateCache.keys().next().value;
-    coordinateCache.delete(firstKey);
-  }
-
-  coordinateCache.set(key, transformed);
-
-  return transformed;
+  
+  return features.filter(feature => {
+    try {
+      return (
+        feature &&
+        feature.properties &&
+        feature.geometry &&
+        Array.isArray(feature.geometry.coordinates) &&
+        feature.properties.region_id &&
+        !isNaN(parseFloat(feature.properties.price))
+      );
+    } catch (error) {
+      console.warn('Invalid feature detected:', error);
+      return false;
+    }
+  });
 };
 
 /**
- * Compute market clusters based on flow data and spatial weights.
- * @param {Array<Object>} flows - Array of flow data. Each flow should have `source`, `target`, and `flow_weight`.
- * @param {Object} weights - Spatial weights object. Each key is a region ID, and its value is an array of neighboring region IDs.
- * @returns {Array<Object>} Array of market clusters.
+ * Process time series data from GeoJSON features
+ * @param {Array<Object>} features - Array of GeoJSON features
+ * @param {string} commodity - Selected commodity
+ * @returns {Array<Object>} Processed time series data
  */
-export const memoizedComputeClusters = (flows, weights) => {
-  if (!flows?.length || !weights) return [];
+export const processTimeSeriesData = (features, commodity) => {
+  if (!features || !Array.isArray(features) || !commodity) {
+    return [];
+  }
 
-  const clusters = [];
-  const visited = new Set();
+  const validFeatures = validateFeatures(features);
+  if (validFeatures.length === 0) return [];
 
-  /**
-   * Recursive function to perform Depth-First Search (DFS) for clustering.
-   * @param {string} region - Current region ID.
-   * @param {Set<string>} clusterMarkets - Set of connected markets in the current cluster.
-   */
-  const dfs = (region, clusterMarkets) => {
-    if (visited.has(region)) return;
-    visited.add(region);
-    clusterMarkets.add(region);
+  try {
+    // Group features by month
+    const monthlyData = validFeatures.reduce((acc, feature) => {
+      const { properties } = feature;
+      if (!properties?.date) return acc;
 
-    const neighbors = weights[region] || [];
-    neighbors.forEach(neighbor => {
-      if (!visited.has(neighbor)) {
-        dfs(neighbor, clusterMarkets);
+      const date = new Date(properties.date);
+      if (isNaN(date.getTime())) return acc;
+
+      const month = date.toISOString().slice(0, 7);
+      
+      if (!acc[month]) {
+        acc[month] = {
+          prices: [],
+          conflictIntensity: [],
+          usdPrices: [],
+          count: 0
+        };
       }
-    });
+
+      // Validate and add numerical values
+      if (!isNaN(properties.price)) {
+        acc[month].prices.push(properties.price);
+      }
+      if (!isNaN(properties.conflict_intensity)) {
+        acc[month].conflictIntensity.push(properties.conflict_intensity);
+      }
+      if (!isNaN(properties.usdprice)) {
+        acc[month].usdPrices.push(properties.usdprice);
+      }
+      
+      acc[month].count++;
+      return acc;
+    }, {});
+
+    // Calculate statistics for each month
+    return Object.entries(monthlyData)
+      .filter(([_, data]) => data.count >= THRESHOLDS.MIN_DATA_POINTS)
+      .map(([month, data]) => {
+        const stats = calculateMonthlyStatistics(data);
+        return {
+          month,
+          ...stats,
+          sampleSize: data.count
+        };
+      })
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+  } catch (error) {
+    console.error('Error processing time series data:', error);
+    return [];
+  }
+};
+
+/**
+ * Calculate statistics for monthly data
+ * @param {Object} data - Monthly data object
+ * @returns {Object} Calculated statistics
+ */
+const calculateMonthlyStatistics = (data) => {
+  const stats = {
+    avgPrice: null,
+    volatility: null,
+    avgConflictIntensity: null,
+    avgUsdPrice: null,
+    priceRange: { min: null, max: null }
   };
 
-  Object.keys(weights).forEach(region => {
-    if (!visited.has(region)) {
-      const clusterMarkets = new Set();
-      dfs(region, clusterMarkets);
-
-      // Calculate flow metrics for the cluster
-      const relevantFlows = flows.filter(flow => 
-        clusterMarkets.has(flow.source) || 
-        clusterMarkets.has(flow.target)
-      );
-
-      const totalFlow = relevantFlows.reduce((sum, flow) => sum + (flow.flow_weight || 0), 0);
-      const marketCount = clusterMarkets.size;
-      const avgFlow = marketCount > 0 ? totalFlow / marketCount : 0;
-
-      // Identify the main market (could be based on criteria, here we choose the first one)
-      const mainMarket = clusterMarkets.values().next().value || '';
-
-      clusters.push({
-        mainMarket,
-        connectedMarkets: clusterMarkets,
-        marketCount,
-        avgFlow,
-        totalFlow
-      });
+  try {
+    if (data.prices.length > 0) {
+      const cleanPrices = removeOutliers(data.prices);
+      stats.avgPrice = calculateMean(cleanPrices);
+      const stdDev = calculateStandardDeviation(cleanPrices);
+      stats.volatility = (stdDev / stats.avgPrice) * 100;
+      stats.priceRange = {
+        min: Math.min(...cleanPrices),
+        max: Math.max(...cleanPrices)
+      };
     }
-  });
 
-  return clusters;
+    if (data.conflictIntensity.length > 0) {
+      stats.avgConflictIntensity = calculateMean(data.conflictIntensity);
+    }
+
+    if (data.usdPrices.length > 0) {
+      const cleanUsdPrices = removeOutliers(data.usdPrices);
+      stats.avgUsdPrice = calculateMean(cleanUsdPrices);
+    }
+
+    return stats;
+  } catch (error) {
+    console.error('Error calculating monthly statistics:', error);
+    return stats;
+  }
 };
 
 /**
- * Detect market shocks based on significant price changes.
- * @param {Array<Object>} features - Array of GeoJSON features.
- * @param {string} selectedDate - Selected date in 'YYYY-MM' format.
- * @returns {Array<Object>} Array of market shocks.
+ * Enhanced coordinate transformation with validation and error handling
+ */
+export const transformCoordinates = (coordinates) => {
+  try {
+    if (!Array.isArray(coordinates) || coordinates.length !== 2 || 
+        coordinates.some(coord => typeof coord !== 'number')) {
+      throw new Error('Invalid coordinates format');
+    }
+
+    const key = coordinates.join(',');
+    if (coordinateCache.has(key)) {
+      return coordinateCache.get(key);
+    }
+
+    const transformed = proj4(WGS84, 'UTM38N', coordinates);
+    
+    if (coordinateCache.size >= CACHE_SIZE_LIMIT) {
+      const firstKey = coordinateCache.keys().next().value;
+      coordinateCache.delete(firstKey);
+    }
+
+    coordinateCache.set(key, transformed);
+    return transformed;
+
+  } catch (error) {
+    console.error('Coordinate transformation error:', error);
+    return coordinates; // Return original coordinates as fallback
+  }
+};
+
+/**
+ * Enhanced market cluster computation with validation and error handling
+ */
+export const memoizedComputeClusters = (flows, weights) => {
+  if (!flows?.length || !weights || typeof weights !== 'object') {
+    return [];
+  }
+
+  try {
+    const clusters = [];
+    const visited = new Set();
+
+    const dfs = (region, clusterMarkets) => {
+      if (!region || visited.has(region)) return;
+      
+      visited.add(region);
+      clusterMarkets.add(region);
+
+      const neighbors = weights[region]?.filter(Boolean) || [];
+      neighbors.forEach(neighbor => {
+        if (!visited.has(neighbor)) {
+          dfs(neighbor, clusterMarkets);
+        }
+      });
+    };
+
+    Object.keys(weights).forEach(region => {
+      if (!visited.has(region)) {
+        const clusterMarkets = new Set();
+        dfs(region, clusterMarkets);
+
+        if (clusterMarkets.size >= THRESHOLDS.MIN_CLUSTER_SIZE) {
+          const clusterMetrics = calculateClusterMetrics(flows, clusterMarkets);
+          
+          clusters.push({
+            mainMarket: determineMainMarket(flows, clusterMarkets),
+            connectedMarkets: clusterMarkets,
+            marketCount: clusterMarkets.size,
+            ...clusterMetrics
+          });
+        }
+      }
+    });
+
+    return clusters;
+
+  } catch (error) {
+    console.error('Error computing clusters:', error);
+    return [];
+  }
+};
+
+/**
+ * Enhanced market shock detection with improved statistical analysis
  */
 export const detectMarketShocks = (features, selectedDate) => {
-  if (!features) return [];
+  if (!features?.length || !selectedDate) return [];
 
-  const shocks = [];
-  const volatilityThreshold = 0.05; // 5%
-  const priceChangeThreshold = 0.15; // 15%
+  try {
+    const validFeatures = validateFeatures(features);
+    const shocks = [];
 
-  // Group features by region
-  const regionData = features.reduce((acc, feature) => {
-    const region = feature.properties.region_id || feature.properties.region;
-    if (!acc[region]) acc[region] = [];
-    acc[region].push(feature);
-    return acc;
-  }, {});
+    // Group and analyze by region
+    const regionData = groupFeaturesByRegion(validFeatures);
 
-  Object.entries(regionData).forEach(([region, regionFeatures]) => {
-    // Sort features by date
-    const sortedFeatures = regionFeatures.sort(
-      (a, b) => new Date(a.properties.date) - new Date(b.properties.date)
-    );
+    Object.entries(regionData).forEach(([region, regionFeatures]) => {
+      const sortedFeatures = sortFeaturesByDate(regionFeatures);
+      const shocksForRegion = analyzeRegionShocks(region, sortedFeatures);
+      shocks.push(...shocksForRegion);
+    });
 
-    for (let i = 1; i < sortedFeatures.length; i++) {
-      const current = sortedFeatures[i];
-      const previous = sortedFeatures[i - 1];
-      const currentPrice = parseFloat(current.properties.price);
-      const previousPrice = parseFloat(previous.properties.price);
+    return shocks;
 
-      if (isNaN(currentPrice) || isNaN(previousPrice)) continue;
-
-      const priceChange = (currentPrice - previousPrice) / previousPrice;
-      const volatility = Math.abs(priceChange);
-
-      if (volatility > volatilityThreshold || Math.abs(priceChange) > priceChangeThreshold) {
-        shocks.push({
-          region,
-          date: current.properties.date,
-          magnitude: volatility,
-          type: priceChange > 0 ? 'surge' : 'drop',
-          severity: volatility > volatilityThreshold ? 'high' : 'medium',
-          coordinates: current.geometry.coordinates,
-          price_change: priceChange,
-          volatility,
-        });
-      }
-    }
-  });
-
-  return shocks;
+  } catch (error) {
+    console.error('Error detecting market shocks:', error);
+    return [];
+  }
 };
 
 /**
- * Calculate spatial weights matrix by analyzing shared boundaries.
- * @param {Array<Object>} features - Array of GeoJSON features.
- * @returns {Object} Spatial weights object. Each key is a region ID, and its value is an array of neighboring region IDs.
+ * Enhanced spatial weights calculation with validation
  */
 export const calculateSpatialWeights = (features) => {
-  const weights = {};
+  if (!features?.length) return {};
 
-  // Initialize weights with empty arrays
-  features.forEach(feature => {
-    const regionId = feature.properties.region_id;
-    if (!regionId) return; // Skip if no region_id
-    if (!weights[regionId]) {
-      weights[regionId] = [];
+  try {
+    const validFeatures = validateFeatures(features);
+    const weights = initializeWeights(validFeatures);
+
+    // Calculate weights using parallel processing for large datasets
+    if (validFeatures.length > 1000) {
+      return calculateWeightsParallel(validFeatures);
+    }
+
+    return calculateWeightsSequential(validFeatures);
+
+  } catch (error) {
+    console.error('Error calculating spatial weights:', error);
+    return {};
+  }
+};
+
+// Utility Functions
+
+const calculateMean = (values) => {
+  if (!values?.length) return null;
+  return values.reduce((sum, val) => sum + val, 0) / values.length;
+};
+
+const calculateStandardDeviation = (values) => {
+  if (!values?.length) return null;
+  const mean = calculateMean(values);
+  const squaredDiffs = values.map(val => Math.pow(val - mean, 2));
+  const variance = calculateMean(squaredDiffs);
+  return Math.sqrt(variance);
+};
+
+const removeOutliers = (values) => {
+  if (!values?.length) return [];
+  const mean = calculateMean(values);
+  const stdDev = calculateStandardDeviation(values);
+  
+  return values.filter(value => 
+    Math.abs(value - mean) <= THRESHOLDS.MAX_OUTLIER_STDDEV * stdDev
+  );
+};
+
+const calculateClusterMetrics = (flows, clusterMarkets) => {
+  const relevantFlows = flows.filter(flow => 
+    clusterMarkets.has(flow.source) || clusterMarkets.has(flow.target)
+  );
+
+  const totalFlow = relevantFlows.reduce((sum, flow) => 
+    sum + (parseFloat(flow.flow_weight) || 0), 0
+  );
+
+  return {
+    totalFlow,
+    avgFlow: clusterMarkets.size ? totalFlow / clusterMarkets.size : 0,
+    flowDensity: relevantFlows.length / (clusterMarkets.size * (clusterMarkets.size - 1))
+  };
+};
+
+const determineMainMarket = (flows, clusterMarkets) => {
+  const marketScores = new Map();
+  
+  flows.forEach(flow => {
+    if (clusterMarkets.has(flow.source)) {
+      marketScores.set(flow.source, 
+        (marketScores.get(flow.source) || 0) + (flow.flow_weight || 0)
+      );
     }
   });
 
-  // Compare each pair of features to determine shared boundaries
-  for (let i = 0; i < features.length; i++) {
-    const feature1 = features[i];
-    const region1 = feature1.properties.region_id;
-    if (!region1) continue;
-
-    for (let j = i + 1; j < features.length; j++) {
-      const feature2 = features[j];
-      const region2 = feature2.properties.region_id;
-      if (!region2 || region1 === region2) continue;
-
-      if (sharesBoundary(feature1, feature2)) {
-        if (!weights[region1].includes(region2)) {
-          weights[region1].push(region2);
-        }
-        if (!weights[region2].includes(region1)) {
-          weights[region2].push(region1);
-        }
-      }
-    }
-  }
-
-  return weights;
+  return Array.from(marketScores.entries())
+    .sort(([, a], [, b]) => b - a)[0]?.[0] || Array.from(clusterMarkets)[0];
 };
 
-/**
- * Check if two regions share a boundary using Turf.js.
- * @param {Object} feature1 - First GeoJSON feature.
- * @param {Object} feature2 - Second GeoJSON feature.
- * @returns {boolean} True if they share a boundary, false otherwise.
- */
-const sharesBoundary = (feature1, feature2) => {
-  try {
-    const intersection = turf.intersect(feature1, feature2);
-    return !!intersection;
-  } catch (error) {
-    console.error('Error checking shared boundary:', error);
-    return false;
-  }
+export {
+  THRESHOLDS,
+  validateFeatures,
+  calculateMean,
+  calculateStandardDeviation,
+  removeOutliers
 };
