@@ -9,7 +9,6 @@ import {
   calculateSpatialWeights 
 } from '../utils/spatialUtils';
 
-// Initial state structure
 const initialState = {
   data: {
     geoData: null,
@@ -18,7 +17,8 @@ const initialState = {
     weights: {},
     uniqueMonths: [],
     regimes: [],
-    commodities: []
+    commodities: [],
+    flowMaps: []
   },
   ui: {
     selectedCommodity: '',
@@ -36,77 +36,116 @@ const initialState = {
     progress: 0,
     stage: null
   },
-  lastAction: null // Track last action for debugging
+  lastAction: null
 };
 
-// Async thunk for fetching spatial data
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
-  async ({ selectedCommodity, selectedDate }, { dispatch, rejectWithValue }) => {
+  async (params, { dispatch, rejectWithValue, getState }) => {
     let metric;
     try {
-      // Start monitoring
+      // Handle both string and object parameters
+      const selectedCommodity = typeof params === 'string' ? params : params?.selectedCommodity;
+      const selectedDate = params?.selectedDate;
+
       metric = backgroundMonitor.startMetric('spatial-data-fetch', {
         commodity: selectedCommodity,
         date: selectedDate
       });
 
-      // Validate inputs
-      if (!selectedCommodity || typeof selectedCommodity !== 'string') {
-        console.warn('Commodity parameter missing or invalid.');
+      if (!selectedCommodity) {
+        throw new Error('Commodity parameter is required');
       }
 
-      if (selectedDate && isNaN(new Date(selectedDate).getTime())) {
-        throw new Error('Invalid date parameter');
-      }
+      // Get current state
+      const state = getState();
+      const currentData = state.spatial.data;
 
-      // Process data
+      // Process data with loading stages
+      dispatch(setLoadingStage('Processing spatial data'));
+      const processMetric = backgroundMonitor.startMetric('process-spatial-data');
+
       const result = await spatialDataManager.processSpatialData(
-        selectedCommodity?.toLowerCase() || '',
-        selectedDate || ''
+        selectedCommodity.toLowerCase(),
+        selectedDate || '',
+        {
+          previousData: currentData,
+          onProgress: (progress) => dispatch(setProgress(progress))
+        }
       );
 
-      // Validate response
+      processMetric.finish({ 
+        status: 'success',
+        source: result.fromCache ? 'cache' : 'processed'
+      });
+
+      // Validate response structure
       if (!result || !result.geoData) {
         throw new Error('Invalid data structure returned from processing');
       }
 
+      // Process additional data
+      dispatch(setLoadingStage('Computing market metrics'));
+      
+      const enhancedResult = {
+        ...result,
+        flowMaps: result.flows || [],
+        analysis: result.analysis || [],
+        weights: result.weights || {},
+        uniqueMonths: Array.from(new Set(
+          result.geoData.features
+            .map(f => f.properties?.date?.substring(0, 7))
+            .filter(Boolean)
+        )).sort(),
+        regimes: Array.from(new Set(
+          result.geoData.features
+            .map(f => f.properties?.regime)
+            .filter(Boolean)
+        )),
+        commodities: Array.from(new Set(
+          result.geoData.features
+            .map(f => f.properties?.commodity)
+            .filter(Boolean)
+        )).sort(),
+        selectedCommodity,
+        selectedDate
+      };
+
       // Update progress and finish metric
       dispatch(setProgress(100));
-      metric?.finish({ status: 'success' });
+      metric?.finish({ 
+        status: 'success',
+        commodity: selectedCommodity,
+        date: selectedDate
+      });
 
-      // Update selected values if provided
-      if (selectedCommodity) dispatch(setSelectedCommodity(selectedCommodity));
-      if (selectedDate) dispatch(setSelectedDate(selectedDate));
+      return enhancedResult;
 
-      return result;
     } catch (error) {
       console.error('Error fetching spatial data:', error);
       
-      // Finish metric with error
       metric?.finish({ 
         status: 'error', 
-        error: error.message 
+        error: error.message,
+        commodity: params?.selectedCommodity,
+        date: params?.selectedDate
       });
 
-      // Log error to background monitor
       backgroundMonitor.logError('spatial-data-fetch-failed', {
-        commodity: selectedCommodity,
-        date: selectedDate,
-        error: error.message
+        error: error.message,
+        commodity: params?.selectedCommodity,
+        date: params?.selectedDate
       });
 
-      // Return structured error
       return rejectWithValue({
         message: error.message,
-        commodity: selectedCommodity,
-        date: selectedDate
+        commodity: params?.selectedCommodity,
+        date: params?.selectedDate
       });
     }
   }
 );
 
-// Create the slice with reducers and extra reducers
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
@@ -153,7 +192,32 @@ const spatialSlice = createSlice({
         state.lastAction = 'fetchSpatialData.pending';
       })
       .addCase(fetchSpatialData.fulfilled, (state, action) => {
-        state.data = { ...state.data, ...action.payload };
+        if (action.payload) {
+          // Update data state while preserving structure
+          state.data = {
+            geoData: action.payload.geoData || null,
+            analysis: action.payload.analysis || [],
+            flows: action.payload.flows || [],
+            weights: action.payload.weights || {},
+            uniqueMonths: action.payload.uniqueMonths || [],
+            regimes: action.payload.regimes || [],
+            commodities: action.payload.commodities || [],
+            flowMaps: action.payload.flowMaps || []
+          };
+
+          // Update UI state
+          if (action.payload.selectedCommodity) {
+            state.ui.selectedCommodity = action.payload.selectedCommodity;
+          }
+          if (action.payload.selectedDate) {
+            state.ui.selectedDate = action.payload.selectedDate;
+          }
+          
+          // If no date is selected but we have months, select the first one
+          if (!state.ui.selectedDate && action.payload.uniqueMonths?.length > 0) {
+            state.ui.selectedDate = action.payload.uniqueMonths[0];
+          }
+        }
         state.status.loading = false;
         state.status.error = null;
         state.status.progress = 100;
@@ -163,12 +227,15 @@ const spatialSlice = createSlice({
         state.status.loading = false;
         state.status.error = action.payload;
         state.status.progress = 0;
-        state.lastAction = `fetchSpatialData.rejected: ${action.payload}`;
+        state.lastAction = `fetchSpatialData.rejected: ${JSON.stringify(action.payload)}`;
+        // Preserve existing data on error
+        if (!state.data.geoData) {
+          state.data = { ...initialState.data };
+        }
       });
   }
 });
 
-// Memoized selectors
 export const selectSpatialData = createSelector(
   [state => state.spatial],
   (spatial) => ({
@@ -179,6 +246,7 @@ export const selectSpatialData = createSelector(
     uniqueMonths: spatial.data.uniqueMonths,
     regimes: spatial.data.regimes,
     commodities: spatial.data.commodities,
+    flowMaps: spatial.data.flowMaps,
     status: spatial.status.loading ? 'loading' : spatial.status.error ? 'failed' : 'succeeded',
     error: spatial.status.error,
     loadingProgress: spatial.status.progress,
@@ -236,7 +304,6 @@ export const selectFlowsForPeriod = createSelector(
   }
 );
 
-// Export actions
 export const {
   setLoadingStage,
   setProgress,
@@ -248,5 +315,4 @@ export const {
   resetState
 } = spatialSlice.actions;
 
-// Export reducer
 export default spatialSlice.reducer;

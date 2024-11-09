@@ -66,8 +66,7 @@ const validateFeatures = (features) => {
     !isNaN(parseFloat(feature.properties?.price))
   );
 };
-const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) => {
-  // Initialize hooks at the top level with consistent order
+const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: initialDate = '' }) => {
   const dispatch = useDispatch();
   
   // Redux selectors
@@ -77,7 +76,6 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
     flows,
     weights,
     uniqueMonths = [],
-    regimes = [],
     commodities = [],
     status,
     error,
@@ -85,6 +83,93 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
     selectedCommodity: storeCommodity,
     selectedDate: storeDate
   } = useSelector(selectSpatialData);
+
+  // Local state for tracking initialization
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Ensure we have valid commodity and date
+  const validCommodity = useMemo(() => {
+    if (!initialCommodity && commodities.length > 0) {
+      return commodities[0];
+    }
+    return initialCommodity && commodities.includes(initialCommodity) 
+      ? initialCommodity 
+      : commodities[0] || '';
+  }, [initialCommodity, commodities]);
+
+  const validDate = useMemo(() => {
+    if (!initialDate && uniqueMonths.length > 0) {
+      return uniqueMonths[0];
+    }
+    return initialDate && uniqueMonths.includes(initialDate)
+      ? initialDate
+      : uniqueMonths[0] || '';
+  }, [initialDate, uniqueMonths]);
+
+  // Initialize data loading
+  useEffect(() => {
+    if (!isInitialized && validCommodity) {
+      const loadData = async () => {
+        try {
+          await dispatch(setSelectedCommodity(validCommodity));
+          if (validDate) {
+            await dispatch(setSelectedDate(validDate));
+          }
+          await dispatch(fetchSpatialData({ 
+            selectedCommodity: validCommodity,
+            selectedDate: validDate
+          }));
+          setIsInitialized(true);
+        } catch (error) {
+          console.error('Error initializing spatial data:', error);
+        }
+      };
+
+      loadData();
+    }
+  }, [dispatch, validCommodity, validDate, isInitialized]);
+
+  // Handle commodity change with proper data fetching
+  const handleCommodityChange = useCallback(async (commodity) => {
+    if (commodities.includes(commodity)) {
+      try {
+        await dispatch(setSelectedCommodity(commodity));
+        await dispatch(fetchSpatialData({ 
+          selectedCommodity: commodity,
+          selectedDate: validDate 
+        }));
+      } catch (error) {
+        console.error('Error changing commodity:', error);
+      }
+    }
+  }, [dispatch, validDate, commodities]);
+
+  // Handle date change with proper data fetching
+  const handleDateChange = useCallback(async (date) => {
+    if (uniqueMonths.includes(date)) {
+      try {
+        await dispatch(setSelectedDate(date));
+        await dispatch(fetchSpatialData({
+          selectedCommodity: validCommodity,
+          selectedDate: date
+        }));
+      } catch (error) {
+        console.error('Error changing date:', error);
+      }
+    }
+  }, [dispatch, validCommodity, uniqueMonths]);
+
+  // Handle manual refresh
+  const handleRefresh = useCallback(async () => {
+    try {
+      await dispatch(fetchSpatialData({
+        selectedCommodity: validCommodity,
+        selectedDate: validDate
+      }));
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  }, [dispatch, validCommodity, validDate]);
 
   // Worker manager hooks
   const { 
@@ -112,17 +197,6 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
   const [showFlows, setShowFlows] = useState(true);
   const [selectedRegion, setSelectedRegionLocal] = useState(null);
   const [analysisTab, setAnalysisTab] = useState(0);
-
-  // Memoized values
-  const validCommodity = useMemo(() => 
-    commodities.includes(selectedCommodity) ? selectedCommodity : commodities[0] || '',
-    [commodities, selectedCommodity]
-  );
-
-  const validDate = useMemo(() => 
-    uniqueMonths.includes(selectedDate) ? selectedDate : uniqueMonths[0],
-    [uniqueMonths, selectedDate]
-  );
 
   // Worker initialization effect
   useEffect(() => {
@@ -221,15 +295,6 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
   );
   const currentFlows = useSelector(state => selectFlowsForPeriod(state, validDate, validCommodity));
 
-  // Callback for handling commodity change with debounce
-  const handleCommodityChange = useCallback(debounce((commodity) => {
-    if (commodities.includes(commodity)) {
-      dispatch(setSelectedCommodity(commodity));
-      // Optionally, fetch data again if necessary
-      dispatch(fetchSpatialData());
-    }
-  }, 300), [dispatch, commodities]);
-
   // Callback for handling month change with debounce
   const handleMonthChange = useCallback(debounce((newMonth) => {
     if (validCommodity && uniqueMonths?.includes(newMonth)) {
@@ -237,11 +302,6 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
       dispatch(setSelectedDate(newMonth));
     }
   }, 300), [validCommodity, dispatch, uniqueMonths]);
-
-  // Callback for refreshing data
-  const handleRefresh = useCallback(() => {
-    dispatch(fetchSpatialData());
-  }, [dispatch]);
 
   // Handle Tab Change
   const handleTabChange = (event, newValue) => {
