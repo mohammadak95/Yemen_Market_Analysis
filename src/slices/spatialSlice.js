@@ -1,11 +1,15 @@
 // src/slices/spatialSlice.js
 
 import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
-import Papa from 'papaparse';
-import { getDataPath } from '../utils/dataUtils';
-import { workerManager, WorkerMessageTypes } from '../workers/enhancedWorkerSystem';
+import { spatialDataManager } from '../utils/SpatialDataManager';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { 
+  memoizedComputeClusters,
+  detectMarketShocks,
+  calculateSpatialWeights 
+} from '../utils/spatialUtils';
 
+// Initial state structure
 const initialState = {
   data: {
     geoData: null,
@@ -31,148 +35,99 @@ const initialState = {
     error: null,
     progress: 0,
     stage: null
-  }
+  },
+  lastAction: null // Track last action for debugging
 };
 
-const processFlowData = (flowsResponse) => {
-  try {
-    if (!flowsResponse) return [];
-
-    const flowsData = Papa.parse(flowsResponse, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      transform: (value) => value?.trim(),
-      complete: (results) => {
-        if (results.errors.length > 0) {
-          console.warn('CSV parsing warnings:', results.errors);
-        }
-      }
-    });
-
-    return flowsData.data.filter(flow =>
-      flow && flow.source && flow.target &&
-      !isNaN(parseFloat(flow.flow_weight))
-    );
-  } catch (error) {
-    console.error('Error processing flow data:', error);
-    return [];
-  }
-};
+// Async thunk for fetching spatial data
 
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
-  async (_, { dispatch, rejectWithValue }) => {
-    const metric = backgroundMonitor.startMetric('spatial-data-fetch');
-
+  async ({ selectedCommodity, selectedDate }, { dispatch, rejectWithValue }) => {
     try {
-      dispatch(setLoadingStage('Fetching spatial data'));
-      dispatch(setProgress(0));
-
-      const [geoResponse, weightsResponse, analysisResponse, flowsResponse] = await Promise.all([
-        fetch(getDataPath('unified_data.geojson')),
-        fetch(getDataPath('spatial_weights/transformed_spatial_weights.json')),
-        fetch(getDataPath('spatial_analysis_results.json')),
-        fetch(getDataPath('network_data/time_varying_flows.csv'))
-      ]);
-
-      if (!geoResponse.ok || !weightsResponse.ok || !analysisResponse.ok || !flowsResponse.ok) {
-        throw new Error('One or more data fetches failed');
+      if (!selectedCommodity || typeof selectedCommodity !== 'string') {
+        console.warn('Commodity parameter missing or invalid.');
       }
 
-      dispatch(setProgress(30));
+      if (selectedDate && isNaN(new Date(selectedDate).getTime())) {
+        throw new Error('Invalid date parameter');
+      }
 
-      const [geoData, weights, analysisData, flowsText] = await Promise.all([
-        geoResponse.json(),
-        weightsResponse.json(),
-        analysisResponse.json(),
-        flowsResponse.text()
-      ]);
-
-      dispatch(setProgress(50));
-
-      const flowsData = processFlowData(flowsText);
-
-      dispatch(setProgress(70));
-
-      const processedData = await workerManager.processData(
-        WorkerMessageTypes.PROCESS_SPATIAL,
-        {
-          geoData,
-          flows: flowsData,
-          weights
-        }
+      const result = await spatialDataManager.processSpatialData(
+        selectedCommodity?.toLowerCase() || '',
+        selectedDate || ''
       );
 
-      // Extract unique commodities, months, and regimes from the data
-      const regimes = [...new Set(
-        processedData.geoData.features
-          .map(f => f.properties?.regime)
-          .filter(Boolean)
-      )].sort();
-
-      const commodities = [...new Set(
-        processedData.geoData.features
-          .map(f => f.properties?.commodity)
-          .filter(Boolean)
-      )].sort();
-
-      const uniqueMonths = [...new Set(
-        processedData.geoData.features
-          .map(f => f.properties?.date?.slice(0, 7))
-          .filter(Boolean)
-      )].sort();
+      if (!result || !result.geoData) {
+        throw new Error('Invalid data structure returned from processing');
+      }
 
       dispatch(setProgress(100));
+      if (typeof metric !== 'undefined') {
+        metric.finish({ status: 'success' });
+      }
 
-      metric.finish({ status: 'success' });
+      if (selectedCommodity) dispatch(setSelectedCommodity(selectedCommodity));
+      if (selectedDate) dispatch(setSelectedDate(selectedDate));
 
-      return {
-        geoData: processedData.geoData,
-        weights: processedData.weights,
-        flows: processedData.flows,
-        analysis: analysisData,
-        uniqueMonths,
-        commodities,
-        regimes
-      };
-
+      return result;
     } catch (error) {
       console.error('Error fetching spatial data:', error);
-      metric.finish({ status: 'error', error: error.message });
-      backgroundMonitor.logError('spatial-data-fetch-error', { error });
-      return rejectWithValue(error.message);
+      if (typeof metric !== 'undefined') {
+        metric.finish({ status: 'error', error: error.message });
+      }
+
+      backgroundMonitor.logError('spatial-data-fetch-failed', {
+        commodity: selectedCommodity,
+        date: selectedDate,
+        error: error.message
+      });
+
+      return rejectWithValue({
+        message: error.message,
+        commodity: selectedCommodity,
+        date: selectedDate
+      });
     }
   }
 );
 
+// Create the slice with reducers and extra reducers
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
   reducers: {
-    setSelectedRegion: (state, action) => {
-      state.ui.selectedRegion = action.payload;
-    },
-    setView: (state, action) => {
-      state.ui.view = action.payload;
-    },
     setLoadingStage: (state, action) => {
       state.status.stage = action.payload;
+      state.lastAction = `setLoadingStage: ${action.payload}`;
     },
     setProgress: (state, action) => {
       state.status.progress = action.payload;
+      state.lastAction = `setProgress: ${action.payload}`;
     },
-    clearCache: (state) => {
-      state.data = initialState.data;
+    setSelectedRegion: (state, action) => {
+      state.ui.selectedRegion = action.payload;
+      state.lastAction = `setSelectedRegion: ${action.payload}`;
+    },
+    setView: (state, action) => {
+      state.ui.view = action.payload;
+      state.lastAction = `setView: ${JSON.stringify(action.payload)}`;
     },
     setSelectedDate: (state, action) => {
       state.ui.selectedDate = action.payload;
+      state.lastAction = `setSelectedDate: ${action.payload}`;
     },
     setSelectedCommodity: (state, action) => {
       state.ui.selectedCommodity = action.payload;
+      state.lastAction = `setSelectedCommodity: ${action.payload}`;
     },
     setSelectedRegimes: (state, action) => {
       state.ui.selectedRegimes = action.payload;
+      state.lastAction = `setSelectedRegimes: ${action.payload}`;
+    },
+    resetState: (state) => {
+      Object.assign(state, initialState);
+      state.lastAction = 'resetState';
     }
   },
   extraReducers: (builder) => {
@@ -181,25 +136,27 @@ const spatialSlice = createSlice({
         state.status.loading = true;
         state.status.error = null;
         state.status.progress = 0;
+        state.lastAction = 'fetchSpatialData.pending';
       })
       .addCase(fetchSpatialData.fulfilled, (state, action) => {
-        state.status.loading = false;
         state.data = { ...state.data, ...action.payload };
-        state.status.progress = 100;
+        state.status.loading = false;
         state.status.error = null;
+        state.status.progress = 100;
+        state.lastAction = 'fetchSpatialData.fulfilled';
       })
       .addCase(fetchSpatialData.rejected, (state, action) => {
         state.status.loading = false;
         state.status.error = action.payload;
         state.status.progress = 0;
+        state.lastAction = `fetchSpatialData.rejected: ${action.payload}`;
       });
   }
 });
 
-export const selectSpatialState = state => state.spatial;
-
+// Memoized selectors
 export const selectSpatialData = createSelector(
-  [selectSpatialState],
+  [state => state.spatial],
   (spatial) => ({
     geoData: spatial.data.geoData,
     analysis: spatial.data.analysis,
@@ -216,62 +173,66 @@ export const selectSpatialData = createSelector(
   })
 );
 
-// Adjusted selectAnalysisData remains the same
-export const selectAnalysisData = createSelector(
-  [selectSpatialState, (_, selectedCommodity) => selectedCommodity],
-  (spatialState, selectedCommodity) => {
-    if (!selectedCommodity || !spatialState.data.analysis) return null;
-    return spatialState.data.analysis.find(a =>
-      a.commodity === selectedCommodity && a.regime === 'unified'
-    ) || null;
-  }
-);
-
-// Adjusted selectFlowsForPeriod
-export const selectFlowsForPeriod = createSelector(
-  [selectSpatialState, (state, selectedDate) => selectedDate, (state, selectedDate, selectedCommodity) => selectedCommodity],
-  (spatialState, selectedDate, selectedCommodity) => {
-    if (!selectedDate || !selectedCommodity || !spatialState.data.flows) return [];
-    return spatialState.data.flows.filter(flow =>
-      flow.date?.startsWith(selectedDate) &&
-      flow.commodity?.toLowerCase() === selectedCommodity.toLowerCase()
-    );
-  }
-);
-
-// Adjusted selectSpatialMetrics
 export const selectSpatialMetrics = createSelector(
-  [selectSpatialState, (state, selectedCommodity) => selectedCommodity],
-  (spatialState, selectedCommodity) => {
-    const analysis = spatialState.data.analysis?.find(a =>
-      a.commodity === selectedCommodity && a.regime === 'unified'
-    );
+  [
+    state => state.spatial.data.geoData?.features || [],
+    (_, selectedCommodity) => selectedCommodity,
+    state => state.spatial.data.flows || []
+  ],
+  (features, selectedCommodity, flows) => {
+    if (!features.length || !selectedCommodity) return null;
 
-    if (!analysis || !spatialState.data.weights) return null;
-
-    const totalConnections = Object.values(spatialState.data.weights).reduce(
-      (sum, region) => sum + (region.neighbors?.length || 0),
-      0
-    );
+    const clusters = memoizedComputeClusters(flows, features);
+    const shocks = detectMarketShocks(features, selectedCommodity);
+    const weights = calculateSpatialWeights(features);
 
     return {
-      integration: analysis.r_squared || 0,
-      spatialEffect: analysis.coefficients?.spatial_lag_price || 0,
-      correlation: analysis.moran_i?.I || 0,
-      avgConnections: totalConnections / (Object.keys(spatialState.data.weights).length || 1)
+      clusters,
+      shocks,
+      weights,
+      marketConnectivity: clusters.length > 0 ? 
+        clusters.reduce((sum, c) => sum + c.connectedMarkets.size, 0) / clusters.length : 
+        0
     };
   }
 );
 
+export const selectAnalysisData = createSelector(
+  [state => state.spatial.data.analysis, (_, selectedCommodity) => selectedCommodity],
+  (analysisData, selectedCommodity) => {
+    if (!selectedCommodity || !analysisData) return null;
+    return analysisData.find(a => 
+      a.commodity === selectedCommodity && a.regime === 'unified'
+    );
+  }
+);
+
+export const selectFlowsForPeriod = createSelector(
+  [
+    state => state.spatial.data.flows,
+    (_, selectedDate) => selectedDate,
+    (_, __, selectedCommodity) => selectedCommodity
+  ],
+  (flows, selectedDate, selectedCommodity) => {
+    if (!selectedDate || !selectedCommodity || !flows) return [];
+    return flows.filter(flow =>
+      flow.date?.startsWith(selectedDate) &&
+      flow.commodity?.toLowerCase() === selectedCommodity?.toLowerCase()
+    );
+  }
+);
+
+// Export actions
 export const {
-  setSelectedRegion,
-  setView,
   setLoadingStage,
   setProgress,
-  clearCache,
+  setSelectedRegion,
+  setView,
   setSelectedDate,
   setSelectedCommodity,
-  setSelectedRegimes
+  setSelectedRegimes,
+  resetState
 } = spatialSlice.actions;
 
+// Export reducer
 export default spatialSlice.reducer;

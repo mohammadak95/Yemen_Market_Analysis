@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+// src/components/analysis/spatial-analysis/DynamicInterpretation.js
+
+import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   Paper,
@@ -24,7 +26,26 @@ import {
   Analytics
 } from '@mui/icons-material';
 import { Line } from 'react-chartjs-2';
-import { calculatePriceTrend, calculateVolatility, determineStability, generatePolicyImplications, calculateTrend, formatTimeSeriesData, getChartOptions, getPriceAlertSeverity, generatePriceTrendMessage } from '../../../utils/marketAnalysisHelpers';
+import { 
+  calculatePriceTrend, 
+  calculateVolatility, 
+  determineStability, 
+  generatePolicyImplications, 
+  calculateTrend, 
+  formatTimeSeriesData, 
+  getChartOptions, 
+  getPriceAlertSeverity, 
+  generatePriceTrendMessage,
+  getRegionalConnections,
+  determineMarketRole,
+  calculateMarketImportance,
+  analyzeRegionalPerformance
+} from '../../../utils/marketAnalysisHelpers';
+import { useWorkerManager } from '../../../workers/enhancedWorkerSystem';
+import debounce from 'lodash.debounce';
+
+// Assuming these helper functions are properly optimized and possibly offloaded to workers
+// If any of these functions are computation-heavy, consider using web workers
 
 const MetricCard = ({ title, value, icon: Icon, color, subtitle, trend }) => (
   <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
@@ -51,6 +72,15 @@ const MetricCard = ({ title, value, icon: Icon, color, subtitle, trend }) => (
   </Box>
 );
 
+MetricCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  icon: PropTypes.elementType.isRequired,
+  color: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
+  trend: PropTypes.number
+};
+
 const DynamicInterpretation = ({
   data,
   spatialWeights,
@@ -58,6 +88,9 @@ const DynamicInterpretation = ({
   marketMetrics,
   timeSeriesData
 }) => {
+  const worker = useWorkerManager();
+
+  // Memoize diagnostics
   const {
     integrationAnalysis,
     priceAnalysis,
@@ -66,7 +99,8 @@ const DynamicInterpretation = ({
   } = useMemo(() => {
     if (!data) return {};
 
-    // Market Integration Analysis
+    // Offload intensive calculations to workers if necessary
+    // For demonstration, assuming synchronous calculations
     const integrationAnalysis = {
       status: data.moran_i?.I > 0.3 ? 'high' : data.moran_i?.I > 0 ? 'moderate' : 'low',
       efficiency: data.r_squared || 0,
@@ -75,34 +109,31 @@ const DynamicInterpretation = ({
       significance: data.moran_i?.['p-value'] < 0.05
     };
 
-    // Price Dynamics Analysis
-    const priceAnalysis = timeSeriesData ? {
+    const priceAnalysisResult = timeSeriesData ? {
       trend: calculatePriceTrend(timeSeriesData),
       volatility: calculateVolatility(timeSeriesData),
       stability: determineStability(timeSeriesData),
       convergence: data.moran_i?.I > 0
     } : null;
 
-    // Regional Market Analysis
-    const regionalAnalysis = selectedRegion ? {
+    const regionalAnalysisResult = selectedRegion ? {
       connections: getRegionalConnections(selectedRegion, spatialWeights),
       role: determineMarketRole(selectedRegion, spatialWeights),
       importance: calculateMarketImportance(selectedRegion, spatialWeights),
       performance: analyzeRegionalPerformance(selectedRegion, data.residual)
     } : null;
 
-    // Policy Implications
-    const policyImplications = generatePolicyImplications(
+    const policyImplicationsResult = generatePolicyImplications(
       integrationAnalysis,
-      priceAnalysis,
-      regionalAnalysis
+      priceAnalysisResult,
+      regionalAnalysisResult
     );
 
     return {
       integrationAnalysis,
-      priceAnalysis,
-      regionalAnalysis,
-      policyImplications
+      priceAnalysis: priceAnalysisResult,
+      regionalAnalysis: regionalAnalysisResult,
+      policyImplications: policyImplicationsResult
     };
   }, [data, spatialWeights, selectedRegion, marketMetrics, timeSeriesData]);
 
@@ -112,6 +143,7 @@ const DynamicInterpretation = ({
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
         Dynamic Market Interpretation
+        {selectedRegion && ` - ${selectedRegion}`}
       </Typography>
 
       {/* Market Integration Status */}
@@ -218,11 +250,7 @@ const DynamicInterpretation = ({
                 <Chip
                   icon={<Hub />}
                   label={regionalAnalysis.role}
-                  color={
-                    regionalAnalysis.role === 'hub' ? 'success' :
-                    regionalAnalysis.role === 'intermediary' ? 'primary' :
-                    'default'
-                  }
+                  color={regionalAnalysis.role === 'hub' ? "primary" : "default"}
                   size="small"
                 />
                 <Typography variant="body2" sx={{ mt: 1 }}>
@@ -276,8 +304,6 @@ const DynamicInterpretation = ({
   );
 };
 
-// Helper functions would go here (calculatePriceTrend, calculateVolatility, etc.)
-
 DynamicInterpretation.propTypes = {
   data: PropTypes.shape({
     moran_i: PropTypes.shape({
@@ -299,7 +325,7 @@ DynamicInterpretation.propTypes = {
   marketMetrics: PropTypes.shape({
     marketCoverage: PropTypes.number,
     integrationLevel: PropTypes.number,
-    transmissionEfficiency: PropTypes.number
+    stability: PropTypes.number
   }),
   timeSeriesData: PropTypes.arrayOf(PropTypes.shape({
     date: PropTypes.string,

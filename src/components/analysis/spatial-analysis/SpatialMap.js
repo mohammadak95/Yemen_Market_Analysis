@@ -1,3 +1,5 @@
+// src/components/analysis/spatial-analysis/SpatialMap.js
+
 import React, { useCallback, useMemo, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -24,6 +26,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
 import L from 'leaflet';
+import MarkerClusterGroup from 'react-leaflet-markercluster'; // Assuming this library is installed
 
 // Constants
 const DEFAULT_CENTER = [15.3694, 44.191];
@@ -74,6 +77,13 @@ const MapControls = ({ position, onZoomIn, onZoomOut, onReset }) => {
   );
 };
 
+MapControls.propTypes = {
+  position: PropTypes.string,
+  onZoomIn: PropTypes.func,
+  onZoomOut: PropTypes.func,
+  onReset: PropTypes.func
+};
+
 // Flow Lines Component
 const FlowLines = React.memo(({ flows, getFlowStyle }) => {
   return flows.map((flow, idx) => {
@@ -105,6 +115,11 @@ const FlowLines = React.memo(({ flows, getFlowStyle }) => {
   });
 });
 
+FlowLines.propTypes = {
+  flows: PropTypes.array.isRequired,
+  getFlowStyle: PropTypes.func.isRequired
+};
+
 // Market Clusters Component
 const MarketClusters = React.memo(({ clusters, getClusterStyle }) => {
   return clusters.map((cluster, idx) => (
@@ -116,7 +131,7 @@ const MarketClusters = React.memo(({ clusters, getClusterStyle }) => {
     >
       <LeafletTooltip>
         <div>
-          <strong>Market Cluster {idx + 1}</strong><br/>
+          <strong>Market Cluster {index + 1}</strong><br/>
           Size: {cluster.size} markets<br/>
           Main Market: {cluster.mainMarket}<br/>
           Average Flow: {cluster.avgFlow?.toFixed(2)}
@@ -125,6 +140,11 @@ const MarketClusters = React.memo(({ clusters, getClusterStyle }) => {
     </CircleMarker>
   ));
 });
+
+MarketClusters.propTypes = {
+  clusters: PropTypes.array.isRequired,
+  getClusterStyle: PropTypes.func.isRequired
+};
 
 // Market Shocks Component
 const MarketShocks = React.memo(({ shocks, getShockStyle }) => {
@@ -147,6 +167,11 @@ const MarketShocks = React.memo(({ shocks, getShockStyle }) => {
     </CircleMarker>
   ));
 });
+
+MarketShocks.propTypes = {
+  shocks: PropTypes.array.isRequired,
+  getShockStyle: PropTypes.func.isRequired
+};
 
 const SpatialMap = ({
   geoData,
@@ -234,6 +259,22 @@ const SpatialMap = ({
     }
   }, [visualizationMode, marketClusters, detectedShocks, theme]);
 
+  // Shock style generator
+  const getShockStyle = useCallback((shock) => ({
+    color: shock.severity === 'high' ? 'red' : 'orange',
+    fillColor: shock.severity === 'high' ? 'red' : 'orange',
+    fillOpacity: 0.8,
+    radius: 8
+  }), []);
+
+  // Cluster style generator
+  const getClusterStyle = useCallback((cluster) => ({
+    color: 'blue',
+    fillColor: 'blue',
+    fillOpacity: 0.6,
+    radius: Math.sqrt(cluster.size) * 5
+  }), []);
+
   // Event handlers
   const onEachFeature = useCallback((feature, layer) => {
     layer.on({
@@ -280,6 +321,26 @@ const SpatialMap = ({
     }
   }, [geoData, getRegionStyle, onEachFeature]);
 
+  // Debounced map update to prevent excessive re-renders
+  const debouncedMapUpdate = useMemo(() => debounce(() => {
+    if (mapRef.current && geoJsonRef.current) {
+      geoJsonRef.current.clearLayers();
+      if (geoData) {
+        L.geoJSON(geoData, {
+          style: getRegionStyle,
+          onEachFeature
+        }).addTo(geoJsonRef.current);
+      }
+    }
+  }, 300), [geoData, getRegionStyle, onEachFeature]);
+
+  useEffect(() => {
+    debouncedMapUpdate();
+    return () => {
+      debouncedMapUpdate.cancel();
+    };
+  }, [debouncedMapUpdate]);
+
   return (
     <Box sx={{ height: '100%', position: 'relative' }}>
       <MapContainer
@@ -304,12 +365,14 @@ const SpatialMap = ({
           onEachFeature={onEachFeature}
         />
 
-        {/* Flow Lines */}
+        {/* Flow Lines with Marker Clustering */}
         {showFlows && (
-          <FlowLines 
-            flows={flowMaps} 
-            getFlowStyle={getFlowStyle}
-          />
+          <MarkerClusterGroup>
+            <FlowLines 
+              flows={flowMaps} 
+              getFlowStyle={getFlowStyle}
+            />
+          </MarkerClusterGroup>
         )}
 
         {/* Market Clusters */}

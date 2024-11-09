@@ -109,22 +109,29 @@ class SpatialDataManager {
 
     this.geometryCache = new Map(); // Memoization cache for geometry transformations
 
-    this.initialize();
+    // Add worker initialization
+    this.initialize().catch(error => {
+      console.error('Failed to initialize SpatialDataManager:', error);
+      this.monitor.logError('spatial-manager-init-failed', { error });
+    });
   }
 
   async initialize() {
     try {
-      if (typeof this.worker.initialize === 'function') {
-        await this.worker.initialize();
-      } else {
-        console.warn('Worker manager does not have an initialize method.');
-      }
+      await this.ensureWorkerInitialized();
       this.initializeCleanupInterval();
       this.monitor.init();
       console.log('SpatialDataManager initialized successfully.');
     } catch (error) {
       console.error('Failed to initialize SpatialDataManager:', error);
       this.monitor.logError('spatial-manager-init-failed', { error });
+      throw error;
+    }
+  }
+
+  async ensureWorkerInitialized() {
+    if (this.worker && !this.worker.isInitialized && typeof this.worker.initialize === 'function') {
+      await this.worker.initialize();
     }
   }
 
@@ -180,102 +187,48 @@ class SpatialDataManager {
 
   async executeWithCircuitBreaker(key, operation) {
     const breaker = this.getCircuitBreaker(key);
+    
+    // Check if circuit breaker is open
     if (breaker.isOpen) {
-      if (
-        Date.now() - breaker.lastFailure >
-        this.config.circuitBreaker.resetTimeout
-      ) {
+      const timeSinceLastFailure = Date.now() - (breaker.lastFailure || 0);
+      if (timeSinceLastFailure > this.config.circuitBreaker.resetTimeout) {
+        // Reset circuit breaker after timeout
         breaker.isOpen = false;
         breaker.failures = 0;
         console.log(`Circuit breaker reset for key: ${key}`);
       } else {
+        console.warn(`Circuit breaker open for ${key}, waiting ${(this.config.circuitBreaker.resetTimeout - timeSinceLastFailure) / 1000}s`);
         throw new Error(`Circuit breaker open for ${key}`);
       }
     }
 
     try {
       const result = await operation();
+      // Reset on success
       breaker.failures = 0;
       breaker.isOpen = false;
+      breaker.lastFailure = null;
       return result;
     } catch (error) {
-      breaker.failures++;
+      // Increment failure count
+      breaker.failures = (breaker.failures || 0) + 1;
       breaker.lastFailure = Date.now();
+      
       console.warn(
         `Operation failed for key: ${key}. Failure count: ${breaker.failures}`
       );
+
+      // Check if should open circuit breaker
       if (breaker.failures >= this.config.circuitBreaker.failureThreshold) {
         breaker.isOpen = true;
-        this.monitor.logEvent('circuitBreakerOpened', { key });
+        this.monitor.logEvent('circuitBreakerOpened', { 
+          key,
+          failures: breaker.failures,
+          lastError: error.message 
+        });
         console.warn(`Circuit breaker opened for key: ${key}`);
       }
-      throw error;
-    }
-  }
 
-  // Data processing
-  async processSpatialData(selectedCommodity, selectedDate) {
-    const cacheKey = `spatial_data_${selectedCommodity?.toLowerCase()}_${selectedDate}`;
-    const metric = this.monitor.startMetric('process-spatial-data');
-
-    try {
-      // Check cache
-      const cachedData = this.getCachedData(cacheKey);
-      if (cachedData) {
-        metric.finish({ status: 'success', source: 'cache' });
-        return cachedData;
-      }
-
-      // Execute with circuit breaker
-      return await this.executeWithCircuitBreaker(cacheKey, async () => {
-        const paths = {
-          geoBoundaries: getDataPath(
-            'choropleth_data/geoBoundaries-YEM-ADM1.geojson'
-          ),
-          unified: getDataPath('enhanced_unified_data_with_residual.geojson'),
-          weights: getDataPath(
-            'spatial_weights/transformed_spatial_weights.json'
-          ),
-          flowMaps: getDataPath('network_data/time_varying_flows.csv'),
-          analysis: getDataPath('spatial_analysis_results.json'),
-        };
-
-        // Fetch data
-        const rawData = await this.fetchData(paths);
-
-        // Use worker for heavy processing
-        const processedData = await this.worker.postMessage(
-          'dataProcessor',
-          'PROCESS_SPATIAL_DATA',
-          {
-            geoData: rawData.unifiedData,
-            flows: rawData.flowMapsData,
-            weights: rawData.weightsData,
-            selectedCommodity,
-            selectedDate,
-          }
-        );
-
-        // Extract metadata using worker if necessary
-        // Example:
-        // const metadata = await this.worker.postMessage('dataProcessor', 'EXTRACT_METADATA', { ... });
-
-        // Compile the processed data
-        const finalData = {
-          ...processedData,
-          // ...metadata,
-          // analysis: metadata.filteredAnalysis
-        };
-
-        // Cache the results
-        this.setCachedData(cacheKey, finalData);
-
-        metric.finish({ status: 'success', source: 'processed' });
-        return finalData;
-      });
-    } catch (error) {
-      metric.finish({ status: 'error', error: error.message });
-      this.monitor.logError('process-spatial-data-failed', { error });
       throw error;
     }
   }
@@ -513,6 +466,67 @@ class SpatialDataManager {
     this.circuitBreakers.clear();
     this.geometryCache.clear();
     console.log('SpatialDataManager destroyed and caches cleared.');
+  }
+
+  async processSpatialData(selectedCommodity, selectedDate) {
+    const cacheKey = `spatial_data_${selectedCommodity?.toLowerCase()}_${selectedDate}`;
+    const metric = this.monitor.startMetric('process-spatial-data');
+
+    try {
+      // Check cache
+      const cachedData = this.getCachedData(cacheKey);
+      if (cachedData) {
+        metric.finish({ status: 'success', source: 'cache' });
+        return cachedData;
+      }
+
+      // Execute with circuit breaker
+      return await this.executeWithCircuitBreaker(cacheKey, async () => {
+        const paths = {
+          geoBoundaries: getDataPath(
+            'choropleth_data/geoBoundaries-YEM-ADM1.geojson'
+          ),
+          unified: getDataPath('enhanced_unified_data_with_residual.geojson'),
+          weights: getDataPath(
+            'spatial_weights/transformed_spatial_weights.json'
+          ),
+          flowMaps: getDataPath('network_data/time_varying_flows.csv'),
+          analysis: getDataPath('spatial_analysis_results.json'),
+        };
+
+        // Fetch data
+        const rawData = await this.fetchData(paths);
+
+        // Use worker for processing
+        const processedData = await this.worker.processData(
+          'PROCESS_SPATIAL',
+          {
+            geoData: rawData.unifiedData,
+            flows: rawData.flowMapsData,
+            weights: rawData.weightsData,
+            selectedCommodity,
+            selectedDate,
+          }
+        );
+
+        // Compile the processed data
+        const finalData = {
+          ...processedData,
+          analysis: rawData.analysisResultsData,
+          flowMaps: rawData.flowMapsData
+        };
+
+        // Cache the results
+        this.setCachedData(cacheKey, finalData);
+
+        metric.finish({ status: 'success', source: 'processed' });
+        return finalData;
+      });
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      this.monitor.logError('process-spatial-data-failed', { error });
+      throw error;
+    }
   }
 }
 

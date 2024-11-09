@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+// src/components/analysis/spatial-analysis/TimeControls.js
+
+import React, { useMemo, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Paper,
@@ -17,6 +19,7 @@ import {
   Warning
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+import debounce from 'lodash.debounce';
 
 const TimeControls = ({
   availableMonths = [],
@@ -30,53 +33,76 @@ const TimeControls = ({
 }) => {
   const theme = useTheme();
 
-  const {
-    monthIndex,
-    formattedDates,
-    marketMetrics
-  } = useMemo(() => {
-    const index = availableMonths.indexOf(selectedMonth);
-    const dates = availableMonths.map(month => 
+  // Memoize formatted dates
+  const formattedDates = useMemo(() => {
+    return availableMonths.map(month => 
       new Date(month).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short'
       })
     );
+  }, [availableMonths]);
 
-    // Calculate market integration metrics
-    const metrics = analysisResults?.[selectedMonth]?.['market_metrics'] || {};
+  // Calculate market integration metrics
+  const marketMetrics = useMemo(() => {
+    if (!analysisResults) return {};
     const connections = Object.values(spatialWeights || {}).reduce(
       (sum, { neighbors }) => sum + (neighbors?.length || 0), 
       0
     );
-    const avgConnections = connections / (Object.keys(spatialWeights || {}).length * 2);
-
+    const avgConnections = connections / (Object.keys(spatialWeights || {}).length * 2 || 1);
+    const integrationLevel = analysisResults.integrationLevel || 0;
+    const priceStability = analysisResults.stability || 0;
     return {
-      monthIndex: index,
-      formattedDates: dates,
-      marketMetrics: {
-        connections: avgConnections,
-        integration: metrics.integration_level || 0,
-        stability: metrics.price_stability || 0
-      }
+      connections: avgConnections,
+      integration: integrationLevel,
+      stability: priceStability
     };
-  }, [availableMonths, selectedMonth, analysisResults, spatialWeights]);
+  }, [analysisResults, spatialWeights]);
 
-  const handleSliderChange = (_, newValue) => {
-    onMonthChange(availableMonths[newValue]);
-  };
+  // Handle Slider Change with debounce
+  const debouncedSliderChange = useMemo(() => 
+    debounce((event, newValue) => {
+      onMonthChange(availableMonths[newValue]);
+    }, 300),
+    [availableMonths, onMonthChange]
+  );
 
-  const handlePrevious = () => {
-    if (monthIndex > 0) {
-      onMonthChange(availableMonths[monthIndex - 1]);
+  const handleSliderChange = useCallback((event, newValue) => {
+    debouncedSliderChange(event, newValue);
+  }, [debouncedSliderChange]);
+
+  // Handle Previous Button Click
+  const handlePrevious = useCallback(() => {
+    const currentIndex = availableMonths.indexOf(selectedMonth);
+    if (currentIndex > 0) {
+      onMonthChange(availableMonths[currentIndex - 1]);
     }
-  };
+  }, [availableMonths, selectedMonth, onMonthChange]);
 
-  const handleNext = () => {
-    if (monthIndex < availableMonths.length - 1) {
-      onMonthChange(availableMonths[monthIndex + 1]);
+  // Handle Next Button Click
+  const handleNext = useCallback(() => {
+    const currentIndex = availableMonths.indexOf(selectedMonth);
+    if (currentIndex < availableMonths.length - 1) {
+      onMonthChange(availableMonths[currentIndex + 1]);
     }
-  };
+  }, [availableMonths, selectedMonth, onMonthChange]);
+
+  // Auto-play functionality
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const interval = setInterval(() => {
+      const currentIndex = availableMonths.indexOf(selectedMonth);
+      if (currentIndex < availableMonths.length - 1) {
+        onMonthChange(availableMonths[currentIndex + 1]);
+      } else {
+        clearInterval(interval);
+      }
+    }, playbackSpeed);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, availableMonths, selectedMonth, onMonthChange, playbackSpeed]);
 
   return (
     <Paper
@@ -92,10 +118,10 @@ const TimeControls = ({
       }}
     >
       <Box sx={{ width: '100%' }}>
-        {/* Timeline */}
+        {/* Timeline Slider */}
         <Box sx={{ px: 2, pb: 1 }}>
           <Slider
-            value={monthIndex}
+            value={availableMonths.indexOf(selectedMonth)}
             min={0}
             max={availableMonths.length - 1}
             onChange={handleSliderChange}
@@ -108,17 +134,18 @@ const TimeControls = ({
           />
         </Box>
 
-        {/* Controls */}
+        {/* Playback Controls and Metrics */}
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between',
           px: 2 
         }}>
+          {/* Playback Buttons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <IconButton
               onClick={handlePrevious}
-              disabled={monthIndex === 0}
+              disabled={availableMonths.indexOf(selectedMonth) === 0}
               size="small"
             >
               <SkipPrevious />
@@ -131,7 +158,7 @@ const TimeControls = ({
             </IconButton>
             <IconButton
               onClick={handleNext}
-              disabled={monthIndex === availableMonths.length - 1}
+              disabled={availableMonths.indexOf(selectedMonth) === availableMonths.length - 1}
               size="small"
             >
               <SkipNext />
@@ -162,7 +189,7 @@ const TimeControls = ({
         {isPlaying && (
           <LinearProgress
             variant="determinate"
-            value={(monthIndex / (availableMonths.length - 1)) * 100}
+            value={(availableMonths.indexOf(selectedMonth) / (availableMonths.length - 1)) * 100}
             sx={{ mt: 1 }}
           />
         )}

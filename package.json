@@ -41,6 +41,7 @@
     "katex": "^0.16.11",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.447.0",
     "lz-string": "^1.5.0",
     "papaparse": "^5.4.1",

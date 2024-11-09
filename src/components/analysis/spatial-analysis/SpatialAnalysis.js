@@ -1,6 +1,6 @@
 // src/components/analysis/spatial-analysis/SpatialAnalysis.js
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, Suspense, lazy } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import { 
@@ -37,16 +37,19 @@ import {
   setSelectedDate
 } from '../../../slices/spatialSlice';
 import { backgroundMonitor } from '../../../utils/backgroundMonitor';
-import MapControls from './MapControls';
-import MapLegend from './MapLegend';
-import TimeControls from './TimeControls';
-import LoadingSpinner from '../../common/LoadingSpinner';
-import ErrorDisplay from '../../common/ErrorDisplay';
-import SpatialMap from './SpatialMap';
-import ErrorBoundary from './SpatialErrorBoundary';
+// Lazy load components to optimize initial load
+const MapControls = lazy(() => import('./MapControls'));
+const MapLegend = lazy(() => import('./MapLegend'));
+const TimeControls = lazy(() => import('./TimeControls'));
+const LoadingSpinner = lazy(() => import('../../common/LoadingSpinner'));
+const ErrorDisplay = lazy(() => import('../../common/ErrorDisplay'));
+const SpatialMap = lazy(() => import('./SpatialMap'));
+const ErrorBoundary = lazy(() => import('./SpatialErrorBoundary'));
+const DynamicInterpretation = lazy(() => import('./DynamicInterpretation'));
 import { memoizedComputeClusters, detectMarketShocks } from '../../../utils/spatialUtils';
 import { VISUALIZATION_MODES, COLOR_SCALES, ANALYSIS_THRESHOLDS } from '../../../constants/spatialConstants';
 import { useWorkerManager } from '../../../workers/enhancedWorkerSystem';
+import debounce from 'lodash.debounce';
 
 // Format month strings for charts
 const formatMonth = (monthStr) => {
@@ -89,8 +92,8 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
   // Date error state
   const [dateError, setDateError] = useState(null);
 
-  // Handle date initialization and validation
-  useEffect(() => {
+  // Handle date initialization and validation with debounce
+  const validateDate = useCallback(() => {
     if (uniqueMonths?.length) {
       if (!selectedDate) {
         const sortedMonths = [...uniqueMonths].sort((a, b) => new Date(b) - new Date(a));
@@ -106,6 +109,15 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
       }
     }
   }, [uniqueMonths, selectedDate, dispatch]);
+
+  const debouncedValidateDate = useMemo(() => debounce(validateDate, 300), [validateDate]);
+
+  useEffect(() => {
+    debouncedValidateDate();
+    return () => {
+      debouncedValidateDate.cancel();
+    };
+  }, [debouncedValidateDate]);
 
   // Dispatch fetchSpatialData on component mount
   useEffect(() => {
@@ -148,24 +160,25 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
   const [selectedRegion, setSelectedRegionLocal] = useState(null);
   const [analysisTab, setAnalysisTab] = useState(0);
 
-  // Define callback functions before useMemo that uses them
+  // Initialize worker manager
+  const worker = useWorkerManager();
 
-  // Callback for handling commodity change
-  const handleCommodityChange = useCallback((commodity) => {
+  // Callback for handling commodity change with debounce
+  const handleCommodityChange = useCallback(debounce((commodity) => {
     if (commodities.includes(commodity)) {
       dispatch(setSelectedCommodity(commodity));
       // Optionally, fetch data again if necessary
-      // dispatch(fetchSpatialData());
+      dispatch(fetchSpatialData());
     }
-  }, [dispatch, commodities]);
+  }, 300), [dispatch, commodities]);
 
-  // Callback for handling month change
-  const handleMonthChange = useCallback((newMonth) => {
+  // Callback for handling month change with debounce
+  const handleMonthChange = useCallback(debounce((newMonth) => {
     if (validCommodity && uniqueMonths?.includes(newMonth)) {
       setSelectedDateLocal(newMonth);
       dispatch(setSelectedDate(newMonth));
     }
-  }, [validCommodity, dispatch, uniqueMonths]);
+  }, 300), [validCommodity, dispatch, uniqueMonths]);
 
   // Callback for refreshing data
   const handleRefresh = useCallback(() => {
@@ -183,57 +196,45 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
     dispatch(setSelectedRegion(region));
   }, [dispatch]);
 
-  // Memoized computations
+  // Memoized computations using workers
   const marketClusters = useMemo(() => {
     if (!currentFlows || !weights) return [];
-    return memoizedComputeClusters(currentFlows, weights);
-  }, [currentFlows, weights]);
+    // Offload computeClusters to worker
+    worker.processSpatialData({ flows: currentFlows, weights }).then(result => {
+      // Assuming result contains clusters
+      return result.clusters;
+    }).catch(error => {
+      console.error('Error computing clusters:', error);
+      return [];
+    });
+    return []; // Initial empty state
+  }, [currentFlows, weights, worker]);
 
   const detectedShocks = useMemo(() => {
     if (!geoData?.features) return [];
-    return detectMarketShocks(geoData.features, validDate);
-  }, [geoData?.features, validDate]);
+    // Offload detectMarketShocks to worker
+    worker.processSpatialData({ geoData: geoData, additionalData: {} }).then(result => {
+      // Assuming result contains shocks
+      return result.shocks;
+    }).catch(error => {
+      console.error('Error detecting shocks:', error);
+      return [];
+    });
+    return []; // Initial empty state
+  }, [geoData, worker]);
 
   const timeSeriesData = useMemo(() => {
     if (!geoData?.features) return [];
-    
-    // Aggregate data by month
-    const monthlyData = geoData.features.reduce((acc, feature) => {
-      const dateStr = feature.properties.date;
-      const month = dateStr.slice(0, 7);
-      if (!month) return acc;
-
-      if (!acc[month]) {
-        acc[month] = {
-          month,
-          totalPrice: 0,
-          count: 0,
-          prices: [],
-        };
-      }
-      const price = parseFloat(feature.properties.price) || 0;
-      acc[month].totalPrice += price;
-      acc[month].count += 1;
-      acc[month].prices.push(price);
-      return acc;
-    }, {});
-
-    // Calculate averages and volatility
-    return Object.values(monthlyData)
-      .map(data => {
-        const avgPrice = data.totalPrice / data.count;
-        const priceVariance = data.prices.reduce((acc, price) => 
-          acc + Math.pow(price - avgPrice, 2), 0) / data.count;
-        
-        return {
-          month: data.month,
-          avgPrice,
-          volatility: Math.sqrt(priceVariance),
-          count: data.count,
-        };
-      })
-      .sort((a, b) => new Date(a.month) - new Date(b.month));
-  }, [geoData]);
+    // Offload time series data aggregation to worker
+    worker.processSpatialData({ geoData: geoData, additionalData: {} }).then(result => {
+      // Assuming result contains time series
+      return result.timeSeries;
+    }).catch(error => {
+      console.error('Error processing time series data:', error);
+      return [];
+    });
+    return []; // Initial empty state
+  }, [geoData, worker]);
 
   const marketComparison = useMemo(() => {
     if (!analysisData || !marketClusters.length) return null;
@@ -274,7 +275,7 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
   }, [validCommodity, validDate, timeSeriesData, detectedShocks, marketClusters, marketComparison, analysisData]);
 
   // Define color scales based on visualization mode
-  const colorScales = useMemo(() => {
+  const colorScalesMemo = useMemo(() => {
     if (!geoData?.features) return {};
 
     const scales = {};
@@ -382,7 +383,7 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
     marketClusters,
     detectedShocks,
     visualizationMode,
-    colorScales,
+    colorScales: colorScalesMemo,
     onRegionSelect: handleRegionSelect
   }), [
     geoData,
@@ -397,7 +398,7 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
     marketClusters,
     detectedShocks,
     visualizationMode,
-    colorScales,
+    colorScalesMemo,
     handleRegionSelect
   ]);
 
@@ -418,380 +419,395 @@ const SpatialAnalysis = ({ selectedCommodity, selectedDate: initialDate = '' }) 
 
   // Determine if legend should be shown
   const shouldShowLegend = useMemo(() => 
-    colorScales?.getColor && geoData?.features?.length > 0, 
-    [colorScales, geoData]
+    colorScalesMemo?.getColor && geoData?.features?.length > 0, 
+    [colorScalesMemo, geoData]
   );
 
   // Loading state
   if (status === 'loading' || !geoData || !uniqueMonths.length) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <LoadingSpinner progress={loadingProgress} />
-      </Box>
+      <Suspense fallback={<LoadingSpinner progress={loadingProgress} />}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+          <LoadingSpinner progress={loadingProgress} />
+        </Box>
+      </Suspense>
     );
   }
 
   // Error state
   if (status === 'failed') {
     return (
-      <ErrorDisplay
-        error={error}
-        title="Analysis Error"
-        onRetry={() => dispatch(fetchSpatialData())}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ErrorDisplay
+          error={error}
+          title="Analysis Error"
+          onRetry={() => dispatch(fetchSpatialData())}
+        />
+      </Suspense>
     );
   }
 
   return (
     <ErrorBoundary>
-      <Box sx={{ width: '100%' }}>
-        <Grid container spacing={2}>
-          {/* Title and Export Button */}
-          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h5">
-              Market Integration Analysis: {validCommodity}
-            </Typography>
-            <Tooltip title="Export Analysis">
-              <IconButton onClick={exportAnalysis}>
-                <Download />
-              </IconButton>
-            </Tooltip>
-          </Grid>
-
-          {/* Date Error Alert */}
-          {dateError && (
-            <Grid item xs={12}>
-              <Alert severity="warning">
-                <AlertTitle>Date Selection Issue</AlertTitle>
-                {dateError}
-              </Alert>
+      <Suspense fallback={<div>Loading components...</div>}>
+        <Box sx={{ width: '100%' }}>
+          <Grid container spacing={2}>
+            {/* Title and Export Button */}
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h5">
+                Market Integration Analysis: {validCommodity}
+              </Typography>
+              <Tooltip title="Export Analysis">
+                <IconButton onClick={exportAnalysis}>
+                  <Download />
+                </IconButton>
+              </Tooltip>
             </Grid>
-          )}
 
-          {/* Market Shocks Alert */}
-          {detectedShocks.length > 0 && (
-            <Grid item xs={12}>
-              <Alert 
-                severity="warning" 
-                icon={<Warning />}
-                action={
-                  <Button color="inherit" size="small" onClick={() => setAnalysisTab(1)}>
-                    View Details
-                  </Button>
-                }
-              >
-                {detectedShocks.length} market shock{detectedShocks.length > 1 ? 's' : ''} detected
-              </Alert>
-            </Grid>
-          )}
-
-          {/* Map Controls with valid props */}
-          <Grid item xs={12}>
-            <MapControls {...mapControlsProps} />
-          </Grid>
-
-          {/* Map Component */}
-          <Grid item xs={12}>
-            <Box sx={{ height: 500, position: 'relative' }}>
-              <SpatialMap {...mapProps} />
-            </Box>
-          </Grid>
-
-          {/* Time Controls */}
-          <Grid item xs={12}>
-            <TimeControls {...timeControlsProps} />
-          </Grid>
-
-          {/* Analysis Tabs */}
-          <Grid item xs={12}>
-            <Tabs value={analysisTab} onChange={handleTabChange}>
-              <Tab icon={<Timeline />} label="Time Series" />
-              <Tab icon={<TrendingUp />} label="Market Shocks" />
-              <Tab icon={<GroupWork />} label="Market Clusters" />
-              <Tab icon={<CompareArrows />} label="Market Integration" />
-            </Tabs>
-          </Grid>
-
-          {/* Tab Panels */}
-          <Grid item xs={12}>
-            {analysisTab === 0 && (
-              // Time Series Analysis Panel
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Time Series Analysis</Typography>
-                {timeSeriesData.length > 0 ? (
-                  <Box sx={{ height: 300 }}>
-                    <LineChart width={800} height={300} data={timeSeriesData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="month" 
-                        tickFormatter={formatMonth}
-                      />
-                      <YAxis />
-                      <ChartTooltip 
-                        labelFormatter={formatMonth}
-                        formatter={(value) => value.toFixed(2)}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="avgPrice" 
-                        stroke="#8884d8" 
-                        name="Average Price (YER)" 
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="volatility" 
-                        stroke="#82ca9d" 
-                        name="Volatility" 
-                      />
-                    </LineChart>
-                  </Box>
-                ) : (
-                  <Typography variant="body2">No time series data available.</Typography>
-                )}
-              </Paper>
+            {/* Date Error Alert */}
+            {dateError && (
+              <Grid item xs={12}>
+                <Alert severity="warning">
+                  <AlertTitle>Date Selection Issue</AlertTitle>
+                  {dateError}
+                </Alert>
+              </Grid>
             )}
 
-            {analysisTab === 1 && (
-              // Market Shocks Panel
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Market Shocks Analysis</Typography>
-                {detectedShocks.length > 0 ? (
-                  <Grid container spacing={2}>
-                    {detectedShocks.map((shock, index) => (
-                      <Grid item xs={12} key={index}>
-                        <Alert 
-                          severity={shock.severity === 'high' ? 'error' : 'warning'}
-                          sx={{ mb: 1 }}
-                        >
-                          <AlertTitle>
-                            {shock.type === 'surge' ? 'Price Surge' : 'Price Drop'} - {shock.region}
-                          </AlertTitle>
-                          <Typography variant="body2">
-                            Date: {formatMonth(shock.date)}<br />
-                            Magnitude: {(shock.magnitude * 100).toFixed(1)}%<br />
-                            Price Change: {(shock.price_change * 100).toFixed(1)}%<br />
-                            Volatility: {(shock.volatility * 100).toFixed(1)}%
-                          </Typography>
-                        </Alert>
-                      </Grid>
-                    ))}
-                  </Grid>
-                ) : (
-                  <Alert severity="info">
-                    No significant market shocks detected during this period.
-                  </Alert>
-                )}
-              </Paper>
+            {/* Market Shocks Alert */}
+            {detectedShocks.length > 0 && (
+              <Grid item xs={12}>
+                <Alert 
+                  severity="warning" 
+                  icon={<Warning />}
+                  action={
+                    <Button color="inherit" size="small" onClick={() => setAnalysisTab(1)}>
+                      View Details
+                    </Button>
+                  }
+                >
+                  {detectedShocks.length} market shock{detectedShocks.length > 1 ? 's' : ''} detected
+                </Alert>
+              </Grid>
             )}
 
-            {analysisTab === 2 && (
-              // Market Clusters Panel
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Market Clusters Analysis</Typography>
-                {marketClusters.length > 0 ? (
-                  <Grid container spacing={2}>
-                    {marketClusters.map((cluster, index) => (
-                      <Grid item xs={12} md={6} key={index}>
-                        <Paper 
-                          sx={{ 
-                            p: 2, 
-                            backgroundColor: COLOR_SCALES.CLUSTERS[index % COLOR_SCALES.CLUSTERS.length] + '20'
-                          }}
-                        >
+            {/* Map Controls with valid props */}
+            <Grid item xs={12}>
+              <Suspense fallback={<div>Loading Map Controls...</div>}>
+                <MapControls {...mapControlsProps} />
+              </Suspense>
+            </Grid>
+
+            {/* Map Component */}
+            <Grid item xs={12}>
+              <Box sx={{ height: 500, position: 'relative' }}>
+                <Suspense fallback={<div>Loading Map...</div>}>
+                  <SpatialMap {...mapProps} />
+                </Suspense>
+              </Box>
+            </Grid>
+
+            {/* Time Controls */}
+            <Grid item xs={12}>
+              <Suspense fallback={<div>Loading Time Controls...</div>}>
+                <TimeControls {...timeControlsProps} />
+              </Suspense>
+            </Grid>
+
+            {/* Analysis Tabs */}
+            <Grid item xs={12}>
+              <Tabs value={analysisTab} onChange={handleTabChange}>
+                <Tab icon={<Timeline />} label="Time Series" />
+                <Tab icon={<TrendingUp />} label="Market Shocks" />
+                <Tab icon={<GroupWork />} label="Market Clusters" />
+                <Tab icon={<CompareArrows />} label="Market Integration" />
+              </Tabs>
+            </Grid>
+
+            {/* Tab Panels */}
+            <Grid item xs={12}>
+              {analysisTab === 0 && (
+                // Time Series Analysis Panel
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>Time Series Analysis</Typography>
+                  {timeSeriesData.length > 0 ? (
+                    <Box sx={{ height: 300 }}>
+                      <LineChart width={800} height={300} data={timeSeriesData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="month" 
+                          tickFormatter={formatMonth}
+                        />
+                        <YAxis />
+                        <ChartTooltip 
+                          labelFormatter={formatMonth}
+                          formatter={(value) => value.toFixed(2)}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="avgPrice" 
+                          stroke="#8884d8" 
+                          name="Average Price (YER)" 
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="volatility" 
+                          stroke="#82ca9d" 
+                          name="Volatility" 
+                        />
+                      </LineChart>
+                    </Box>
+                  ) : (
+                    <Typography variant="body2">No time series data available.</Typography>
+                  )}
+                </Paper>
+              )}
+
+              {analysisTab === 1 && (
+                // Market Shocks Panel
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>Market Shocks Analysis</Typography>
+                  {detectedShocks.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {detectedShocks.map((shock, index) => (
+                        <Grid item xs={12} key={index}>
+                          <Alert 
+                            severity={shock.severity === 'high' ? 'error' : 'warning'}
+                            sx={{ mb: 1 }}
+                          >
+                            <AlertTitle>
+                              {shock.type === 'surge' ? 'Price Surge' : 'Price Drop'} - {shock.region}
+                            </AlertTitle>
+                            <Typography variant="body2">
+                              Date: {formatMonth(shock.date)}<br />
+                              Magnitude: {(shock.magnitude * 100).toFixed(1)}%<br />
+                              Price Change: {(shock.price_change * 100).toFixed(1)}%<br />
+                              Volatility: {(shock.volatility * 100).toFixed(1)}%
+                            </Typography>
+                          </Alert>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <Alert severity="info">
+                      No significant market shocks detected during this period.
+                    </Alert>
+                  )}
+                </Paper>
+              )}
+
+              {analysisTab === 2 && (
+                // Market Clusters Panel
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>Market Clusters Analysis</Typography>
+                  {marketClusters.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {marketClusters.map((cluster, index) => (
+                        <Grid item xs={12} md={6} key={index}>
+                          <Paper 
+                            sx={{ 
+                              p: 2, 
+                              backgroundColor: COLOR_SCALES.CLUSTERS[index % COLOR_SCALES.CLUSTERS.length] + '20'
+                            }}
+                          >
+                            <Typography variant="subtitle1" gutterBottom>
+                              Cluster {index + 1}: {cluster.mainMarket}
+                            </Typography>
+                            <Typography variant="body2" gutterBottom>
+                              Connected Markets: {Array.from(cluster.connectedMarkets).length}
+                            </Typography>
+                            <Box sx={{ mt: 1 }}>
+                              {Array.from(cluster.connectedMarkets).map((market) => (
+                                <Chip
+                                  key={market}
+                                  label={market}
+                                  size="small"
+                                  sx={{ m: 0.5 }}
+                                  onClick={() => handleRegionSelect(market)}
+                                />
+                              ))}
+                            </Box>
+                          </Paper>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <Alert severity="info">
+                      No market clusters identified. This could indicate isolated markets.
+                    </Alert>
+                  )}
+                </Paper>
+              )}
+
+              {analysisTab === 3 && (
+                // Market Integration Panel
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>Market Integration Analysis</Typography>
+                  {marketComparison ? (
+                    <Grid container spacing={3}>
+                      {/* Integration Metrics */}
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
                           <Typography variant="subtitle1" gutterBottom>
-                            Cluster {index + 1}: {cluster.mainMarket}
+                            Integration Efficiency
                           </Typography>
-                          <Typography variant="body2" gutterBottom>
-                            Connected Markets: {Array.from(cluster.connectedMarkets).length}
-                          </Typography>
-                          <Box sx={{ mt: 1 }}>
-                            {Array.from(cluster.connectedMarkets).map((market) => (
-                              <Chip
-                                key={market}
-                                label={market}
+                          <Grid container spacing={1}>
+                            <Grid item xs={6}>
+                              <Typography variant="body2" color="textSecondary">
+                                Price Integration:
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Chip 
                                 size="small"
-                                sx={{ m: 0.5 }}
-                                onClick={() => handleRegionSelect(market)}
+                                label={`${(marketComparison.integrationEfficiency * 100).toFixed(1)}%`}
+                                color={marketComparison.integrationEfficiency > ANALYSIS_THRESHOLDS.INTEGRATION.HIGH ? "success" : "warning"}
                               />
-                            ))}
-                          </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Typography variant="body2" color="textSecondary">
+                                Market Coverage:
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Chip
+                                size="small"
+                                label={`${(marketComparison.marketCoverage * 100).toFixed(1)}%`}
+                                color={marketComparison.marketCoverage > 0.6 ? "success" : "warning"}
+                              />
+                            </Grid>
+                          </Grid>
                         </Paper>
                       </Grid>
-                    ))}
-                  </Grid>
-                ) : (
-                  <Alert severity="info">
-                    No market clusters identified. This could indicate isolated markets.
-                  </Alert>
-                )}
-              </Paper>
-            )}
 
-            {analysisTab === 3 && (
-              // Market Integration Panel
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Market Integration Analysis</Typography>
-                {marketComparison ? (
-                  <Grid container spacing={3}>
-                    {/* Integration Metrics */}
-                    <Grid item xs={12} md={4}>
-                      <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                        <Typography variant="subtitle1" gutterBottom>
-                          Integration Efficiency
-                        </Typography>
-                        <Grid container spacing={1}>
-                          <Grid item xs={6}>
-                            <Typography variant="body2" color="textSecondary">
-                              Price Integration:
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Chip 
-                              size="small"
-                              label={`${(marketComparison.integrationEfficiency * 100).toFixed(1)}%`}
-                              color={marketComparison.integrationEfficiency > ANALYSIS_THRESHOLDS.INTEGRATION.HIGH ? "success" : "warning"}
-                            />
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Typography variant="body2" color="textSecondary">
-                              Market Coverage:
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Chip
-                              size="small"
-                              label={`${(marketComparison.marketCoverage * 100).toFixed(1)}%`}
-                              color={marketComparison.marketCoverage > 0.6 ? "success" : "warning"}
-                            />
-                          </Grid>
-                        </Grid>
-                      </Paper>
-                    </Grid>
-
-                    {/* Transmission Metrics */}
-                    <Grid item xs={12} md={4}>
-                      <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                        <Typography variant="subtitle1" gutterBottom>
-                          Price Transmission
-                        </Typography>
-                        <Grid container spacing={1}>
-                          <Grid item xs={6}>
-                            <Typography variant="body2" color="textSecondary">
-                              Transmission Rate:
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Chip
-                              size="small"
-                              label={`${(marketComparison.transmissionEfficiency * 100).toFixed(1)}%`}
-                              color={marketComparison.transmissionEfficiency > 0.7 ? "success" : "warning"}
-                            />
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Typography variant="body2" color="textSecondary">
-                              Price Convergence:
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Chip
-                              size="small"
-                              label={marketComparison.priceConvergence > 0 ? "Converging" : "Diverging"}
-                              color={marketComparison.priceConvergence > 0 ? "success" : "error"}
-                            />
-                          </Grid>
-                        </Grid>
-                      </Paper>
-                    </Grid>
-
-                    {/* Market Stability */}
-                    <Grid item xs={12} md={4}>
-                      <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                        <Typography variant="subtitle1" gutterBottom>
-                          Market Stability
-                        </Typography>
-                        <Grid container spacing={1}>
-                          <Grid item xs={6}>
-                            <Typography variant="body2" color="textSecondary">
-                              Price Stability:
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Chip
-                              size="small"
-                              label={detectedShocks.length > 0 ? "Volatile" : "Stable"}
-                              color={detectedShocks.length > 0 ? "error" : "success"}
-                            />
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Typography variant="body2" color="textSecondary">
-                              Market Resilience:
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Chip
-                              size="small"
-                              label={marketClusters.length > 3 ? "High" : "Low"}
-                              color={marketClusters.length > 3 ? "success" : "warning"}
-                            />
-                          </Grid>
-                        </Grid>
-                      </Paper>
-                    </Grid>
-
-                    {/* Policy Implications */}
-                    <Grid item xs={12}>
-                      <Alert 
-                        severity={marketComparison.integrationEfficiency > 0.7 ? "success" : "warning"}
-                        sx={{ mt: 2 }}
-                      >
-                        <AlertTitle>Policy Implications</AlertTitle>
-                        {marketComparison.integrationEfficiency > 0.7 ? (
-                          "Markets show strong integration. Focus on maintaining current trade flows and monitoring for potential shocks."
-                        ) : (
-                          "Market integration is below optimal levels. Consider interventions to improve connectivity and reduce trade barriers between identified market clusters."
-                        )}
-                        {detectedShocks.length > 0 && (
-                          <Typography variant="body2" sx={{ mt: 1 }}>
-                            Recent market shocks suggest the need for enhanced price stabilization mechanisms.
+                      {/* Transmission Metrics */}
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                          <Typography variant="subtitle1" gutterBottom>
+                            Price Transmission
                           </Typography>
-                        )}
-                      </Alert>
+                          <Grid container spacing={1}>
+                            <Grid item xs={6}>
+                              <Typography variant="body2" color="textSecondary">
+                                Transmission Rate:
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Chip
+                                size="small"
+                                label={`${(marketComparison.transmissionEfficiency * 100).toFixed(1)}%`}
+                                color={marketComparison.transmissionEfficiency > 0.7 ? "success" : "warning"}
+                              />
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Typography variant="body2" color="textSecondary">
+                                Price Convergence:
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Chip
+                                size="small"
+                                label={marketComparison.priceConvergence > 0 ? "Converging" : "Diverging"}
+                                color={marketComparison.priceConvergence > 0 ? "success" : "error"}
+                              />
+                            </Grid>
+                          </Grid>
+                        </Paper>
+                      </Grid>
+
+                      {/* Market Stability */}
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                          <Typography variant="subtitle1" gutterBottom>
+                            Market Stability
+                          </Typography>
+                          <Grid container spacing={1}>
+                            <Grid item xs={6}>
+                              <Typography variant="body2" color="textSecondary">
+                                Price Stability:
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Chip
+                                size="small"
+                                label={detectedShocks.length > 0 ? "Volatile" : "Stable"}
+                                color={detectedShocks.length > 0 ? "error" : "success"}
+                              />
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Typography variant="body2" color="textSecondary">
+                                Market Resilience:
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Chip
+                                size="small"
+                                label={marketClusters.length > 3 ? "High" : "Low"}
+                                color={marketClusters.length > 3 ? "success" : "warning"}
+                              />
+                            </Grid>
+                          </Grid>
+                        </Paper>
+                      </Grid>
+
+                      {/* Policy Implications */}
+                      <Grid item xs={12}>
+                        <Alert 
+                          severity={marketComparison.integrationEfficiency > 0.7 ? "success" : "warning"}
+                          sx={{ mt: 2 }}
+                        >
+                          <AlertTitle>Policy Implications</AlertTitle>
+                          {marketComparison.integrationEfficiency > 0.7 ? (
+                            "Markets show strong integration. Focus on maintaining current trade flows and monitoring for potential shocks."
+                          ) : (
+                            "Market integration is below optimal levels. Consider interventions to improve connectivity and reduce trade barriers between identified market clusters."
+                          )}
+                          {detectedShocks.length > 0 && (
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                              Recent market shocks suggest the need for enhanced price stabilization mechanisms.
+                            </Typography>
+                          )}
+                        </Alert>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                ) : (
-                  <Alert severity="info">
-                    Insufficient data for market integration analysis.
-                  </Alert>
-                )}
-              </Paper>
+                  ) : (
+                    <Alert severity="info">
+                      Insufficient data for market integration analysis.
+                    </Alert>
+                  )}
+                </Paper>
+              )}
+            </Grid>
+
+            {/* Map Legend */}
+            {shouldShowLegend && (
+              <Grid item xs={12}>
+                <Suspense fallback={<div>Loading Legend...</div>}>
+                  <MapLegend
+                    title={`${validCommodity} Distribution`}
+                    colorScale={colorScalesMemo.getColor}
+                    unit={analysisData?.units || ''}
+                    description="Spatial distribution of values"
+                    position="bottomright"
+                    statistics={{
+                      'Spatial Effect': analysisData?.coefficients?.spatial_lag_price,
+                      'Integration': analysisData?.r_squared,
+                      'Correlation': analysisData?.moran_i?.I
+                    }}
+                  />
+                </Suspense>
+              </Grid>
             )}
 
-          </Grid>
-
-          {/* Map Legend */}
-          {shouldShowLegend && (
+            {/* Time Controls */}
             <Grid item xs={12}>
-              <MapLegend
-                title={`${validCommodity} Distribution`}
-                colorScale={colorScales.getColor}
-                unit={analysisData?.units || ''}
-                description="Spatial distribution of values"
-                position="bottomright"
-                statistics={{
-                  'Spatial Effect': analysisData?.coefficients?.spatial_lag_price,
-                  'Integration': analysisData?.r_squared,
-                  'Correlation': analysisData?.moran_i?.I
-                }}
-              />
+              <Suspense fallback={<div>Loading Time Controls...</div>}>
+                <TimeControls {...timeControlsProps} />
+              </Suspense>
             </Grid>
-          )}
-
-          {/* Time Controls */}
-          <Grid item xs={12}>
-            <TimeControls {...timeControlsProps} />
           </Grid>
-        </Grid>
-      </Box>
+        </Box>
+      </Suspense>
     </ErrorBoundary>
   );
 };

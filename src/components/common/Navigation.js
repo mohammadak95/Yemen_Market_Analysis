@@ -1,6 +1,6 @@
 // src/components/common/Navigation.js
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import {
@@ -71,25 +71,29 @@ NavigationItem.propTypes = {
  * - selectedCommodity: Currently selected commodity.
  * - onSelectCommodity: Function to handle commodity selection.
  */
+
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   const dispatch = useDispatch();
   const { uniqueMonths } = useSelector(selectSpatialData);
-  const [selectedDate, setSelectedDate] = useState(uniqueMonths[0]);
 
   const handleCommoditySelect = useCallback(
     (commodity) => {
       if (commodity) {
         const lowercaseCommodity = commodity.toLowerCase(); // Convert to lowercase
-        dispatch(
-          fetchSpatialData({
-            selectedCommodity: lowercaseCommodity,
-            selectedDate: selectedDate || uniqueMonths[0],
-          })
-        );
+        
+        // Dispatch without selectedDate if uniqueMonths is empty
+        const payload = {
+          selectedCommodity: lowercaseCommodity,
+        };
+        if (uniqueMonths?.length) {
+          payload.selectedDate = uniqueMonths[0];
+        }
+
+        dispatch(fetchSpatialData(payload));
         onSelectCommodity(lowercaseCommodity); // Pass lowercase commodity to the callback
       }
     },
-    [dispatch, selectedDate, uniqueMonths, onSelectCommodity]
+    [dispatch, uniqueMonths, onSelectCommodity]
   );
 
   return (
