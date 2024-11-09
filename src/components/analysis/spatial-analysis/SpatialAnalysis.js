@@ -15,7 +15,8 @@ import {
   Tab, 
   Button,
   Tooltip,
-  IconButton
+  IconButton,
+  CircularProgress
 } from '@mui/material';
 import { 
   Timeline, 
@@ -36,20 +37,21 @@ import {
   setSelectedCommodity,
   setSelectedDate
 } from '../../../slices/spatialSlice';
+import { useOptimizedWorker } from '../../../hooks/useOptimizedWorker';
 import { backgroundMonitor } from '../../../utils/backgroundMonitor';
-// Lazy load components to optimize initial load
+import { VISUALIZATION_MODES, COLOR_SCALES, ANALYSIS_THRESHOLDS } from '../../../constants/spatialConstants';
+import debounce from 'lodash.debounce';
+import SpatialErrorBoundary from './SpatialErrorBoundary';
+import { useWorkerManager } from '../../../workers/enhancedWorkerSystem';
+
+
+// Lazy load components
 const MapControls = lazy(() => import('./MapControls'));
 const MapLegend = lazy(() => import('./MapLegend'));
 const TimeControls = lazy(() => import('./TimeControls'));
 const LoadingSpinner = lazy(() => import('../../common/LoadingSpinner'));
 const ErrorDisplay = lazy(() => import('../../common/ErrorDisplay'));
 const SpatialMap = lazy(() => import('./SpatialMap'));
-const ErrorBoundary = lazy(() => import('./SpatialErrorBoundary'));
-const DynamicInterpretation = lazy(() => import('./DynamicInterpretation'));
-import { memoizedComputeClusters, detectMarketShocks } from '../../../utils/spatialUtils';
-import { VISUALIZATION_MODES, COLOR_SCALES, ANALYSIS_THRESHOLDS } from '../../../constants/spatialConstants';
-import { useWorkerManager } from '../../../workers/enhancedWorkerSystem';
-import debounce from 'lodash.debounce';
 
 // Format month strings for charts
 const formatMonth = (monthStr) => {
@@ -57,15 +59,14 @@ const formatMonth = (monthStr) => {
   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 };
 
-// Helper function for feature validation
-const validateFeatures = (features) => {
-  if (!Array.isArray(features)) return [];
-  return features.filter(feature => 
-    feature?.properties?.region_id &&
-    feature?.geometry &&
-    !isNaN(parseFloat(feature.properties?.price))
-  );
+// Processing state interface
+const ProcessingState = {
+  IDLE: 'idle',
+  PROCESSING: 'processing',
+  COMPLETE: 'complete',
+  ERROR: 'error'
 };
+
 const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: initialDate = '' }) => {
   const dispatch = useDispatch();
   
@@ -80,14 +81,37 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
     status,
     error,
     loadingProgress,
-    selectedCommodity: storeCommodity,
-    selectedDate: storeDate
   } = useSelector(selectSpatialData);
 
-  // Local state for tracking initialization
-  const [isInitialized, setIsInitialized] = useState(false);
+  // Get optimized worker methods
+  const { 
+    computeClusters, 
+    processTimeSeries, 
+    detectShocks 
+  } = useOptimizedWorker();
 
-  // Ensure we have valid commodity and date
+  // Local state with processing status
+  const [processingState, setProcessingState] = useState({
+    clusters: ProcessingState.IDLE,
+    timeSeries: ProcessingState.IDLE,
+    shocks: ProcessingState.IDLE
+  });
+  const [progress, setProgress] = useState({
+    clusters: 0,
+    timeSeries: 0,
+    shocks: 0
+  });
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [selectedDate, setSelectedDateLocal] = useState(initialDate);
+  const [dateError, setDateError] = useState(null);
+  const [marketClustersData, setMarketClustersData] = useState([]);
+  const [detectedShocksData, setDetectedShocksData] = useState([]);
+  const [visualizationMode, setVisualizationMode] = useState(VISUALIZATION_MODES.PRICES);
+  const [showFlows, setShowFlows] = useState(true);
+  const [selectedRegion, setSelectedRegionLocal] = useState(null);
+  const [analysisTab, setAnalysisTab] = useState(0);
+
+  // Memoize valid commodity and date
   const validCommodity = useMemo(() => {
     if (!initialCommodity && commodities.length > 0) {
       return commodities[0];
@@ -106,15 +130,77 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
       : uniqueMonths[0] || '';
   }, [initialDate, uniqueMonths]);
 
-  // Initialize data loading
+  // Debounced data processing functions
+  const processClusterData = useCallback(
+    debounce(async (features, weights, flows) => {
+      if (!features?.length || !weights || !flows?.length) return;
+      
+      setProcessingState(prev => ({ ...prev, clusters: ProcessingState.PROCESSING }));
+      
+      try {
+        const clusters = await computeClusters(features, weights, flows, 
+          (progress) => setProgress(prev => ({ ...prev, clusters: progress }))
+        );
+        
+        setMarketClustersData(clusters);
+        setProcessingState(prev => ({ ...prev, clusters: ProcessingState.COMPLETE }));
+      } catch (error) {
+        console.error('Error computing clusters:', error);
+        setProcessingState(prev => ({ ...prev, clusters: ProcessingState.ERROR }));
+      }
+    }, 300),
+    [computeClusters]
+  );
+
+  const processTimeSeriesData = useCallback(
+    debounce(async (features, startDate, endDate) => {
+      if (!features?.length || !startDate || !endDate) return;
+      
+      setProcessingState(prev => ({ ...prev, timeSeries: ProcessingState.PROCESSING }));
+      
+      try {
+        const data = await processTimeSeries(features, startDate, endDate,
+          (progress) => setProgress(prev => ({ ...prev, timeSeries: progress }))
+        );
+        
+        setTimeSeriesData(data);
+        setProcessingState(prev => ({ ...prev, timeSeries: ProcessingState.COMPLETE }));
+      } catch (error) {
+        console.error('Error processing time series:', error);
+        setProcessingState(prev => ({ ...prev, timeSeries: ProcessingState.ERROR }));
+      }
+    }, 300),
+    [processTimeSeries]
+  );
+
+  const processShockData = useCallback(
+    debounce(async (features, date, threshold = 2) => {
+      if (!features?.length || !date) return;
+      
+      setProcessingState(prev => ({ ...prev, shocks: ProcessingState.PROCESSING }));
+      
+      try {
+        const shocks = await detectShocks(features, date, threshold,
+          (progress) => setProgress(prev => ({ ...prev, shocks: progress }))
+        );
+        
+        setDetectedShocksData(shocks);
+        setProcessingState(prev => ({ ...prev, shocks: ProcessingState.COMPLETE }));
+      } catch (error) {
+        console.error('Error detecting shocks:', error);
+        setProcessingState(prev => ({ ...prev, shocks: ProcessingState.ERROR }));
+      }
+    }, 300),
+    [detectShocks]
+  );
+
+  // Effect for initial data loading
   useEffect(() => {
-    if (!isInitialized && validCommodity) {
+    if (!isInitialized && validCommodity && validDate) {
       const loadData = async () => {
         try {
           await dispatch(setSelectedCommodity(validCommodity));
-          if (validDate) {
-            await dispatch(setSelectedDate(validDate));
-          }
+          await dispatch(setSelectedDate(validDate));
           await dispatch(fetchSpatialData({ 
             selectedCommodity: validCommodity,
             selectedDate: validDate
@@ -129,7 +215,24 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
     }
   }, [dispatch, validCommodity, validDate, isInitialized]);
 
-  // Handle commodity change with proper data fetching
+  // Effect for processing data when dependencies change
+  useEffect(() => {
+    if (!geoData?.features || !weights || !flows) return;
+
+    // Process all data types
+    processClusterData(geoData.features, weights, flows);
+    processTimeSeriesData(geoData.features, validDate);
+    processShockData(geoData.features, validDate);
+
+    // Cleanup function
+    return () => {
+      processClusterData.cancel();
+      processTimeSeriesData.cancel();
+      processShockData.cancel();
+    };
+  }, [geoData, weights, flows, validDate]);
+
+  // Handler for commodity change
   const handleCommodityChange = useCallback(async (commodity) => {
     if (commodities.includes(commodity)) {
       try {
@@ -144,7 +247,7 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
     }
   }, [dispatch, validDate, commodities]);
 
-  // Handle date change with proper data fetching
+  // Handler for date change
   const handleDateChange = useCallback(async (date) => {
     if (uniqueMonths.includes(date)) {
       try {
@@ -158,6 +261,7 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
       }
     }
   }, [dispatch, validCommodity, uniqueMonths]);
+
 
   // Handle manual refresh
   const handleRefresh = useCallback(async () => {
@@ -184,51 +288,63 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
   // Local state hooks - keep them in consistent order
   const [workerInitialized, setWorkerInitialized] = useState(false);
   const [workerError, setWorkerError] = useState(null);
-  const [selectedDate, setSelectedDateLocal] = useState(initialDate);
-  const [dateError, setDateError] = useState(null);
-  const [timeSeriesData, setTimeSeriesData] = useState([]);
   const [timeSeriesLoading, setTimeSeriesLoading] = useState(false);
   const [timeSeriesError, setTimeSeriesError] = useState(null);
-  const [marketClustersData, setMarketClustersData] = useState([]);
-  const [detectedShocksData, setDetectedShocksData] = useState([]);
   const [clusterLoading, setClusterLoading] = useState(false);
   const [shocksLoading, setShocksLoading] = useState(false);
-  const [visualizationMode, setVisualizationMode] = useState(VISUALIZATION_MODES.PRICES);
-  const [showFlows, setShowFlows] = useState(true);
-  const [selectedRegion, setSelectedRegionLocal] = useState(null);
-  const [analysisTab, setAnalysisTab] = useState(0);
 
   // Worker initialization effect
   useEffect(() => {
     let mounted = true;
-
+  
     const initializeWorkerAsync = async () => {
       try {
-        await initWorker();
-        if (mounted) setWorkerInitialized(true);
+        if (!workerInitialized) {
+          await initWorker();
+          if (mounted) {
+            setWorkerInitialized(true);
+            setWorkerError(null);
+          }
+        }
       } catch (error) {
         console.error('Worker initialization failed:', error);
-        if (mounted) setWorkerError(error.message);
+        if (mounted) {
+          setWorkerError(error.message);
+          setWorkerInitialized(false);
+        }
       }
     };
-
+  
     initializeWorkerAsync();
     
     const unsubscribeProgress = subscribeToProgress((progress) => {
       if (mounted) console.log('Worker progress:', progress);
     });
-
+  
     const unsubscribeError = subscribeToError((error) => {
-      console.error('Worker error:', error);
-      if (mounted) setWorkerError(error.message);
+      if (mounted) {
+        console.error('Worker error:', error);
+        setWorkerError(error.message);
+      }
     });
-
+  
     return () => {
       mounted = false;
       unsubscribeProgress();
       unsubscribeError();
     };
-  }, [initWorker, subscribeToProgress, subscribeToError]);
+  }, [initWorker, subscribeToProgress, subscribeToError, workerInitialized]);
+
+  // Error handling for worker availability
+
+  useEffect(() => {
+    if (!workerInitialized && !workerError) {
+      console.warn('Workers not initialized yet. Some features may be unavailable.');
+    }
+    if (workerError) {
+      console.error('Worker initialization failed:', workerError);
+    }
+  }, [workerInitialized, workerError]);
 
   // Handle date initialization and validation with debounce
   const validateDate = useCallback(() => {
@@ -314,82 +430,6 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
     dispatch(setSelectedRegion(region));
   }, [dispatch]);
 
-  // Memoized computations using workers
-  const processClusterData = useCallback(async (flows, weights, features) => {
-    if (!flows?.length || !weights || !features?.length) {
-      console.warn('Invalid data for cluster processing');
-      return [];
-    }
-
-    try {
-      return await workerProcessClusters({
-        flows: flows.map(flow => ({
-          ...flow,
-          flow_weight: parseFloat(flow.flow_weight) || 0
-        })),
-        weights,
-        geoData: {
-          features: features.map(feature => ({
-            properties: {
-              region_id: feature.properties.region_id,
-              region: feature.properties.region
-            },
-            geometry: feature.geometry
-          }))
-        }
-      });
-    } catch (error) {
-      console.error('Error computing clusters:', error);
-      return [];
-    }
-  }, [workerProcessClusters]);
-
-  const processShockData = useCallback(async (features, date) => {
-    if (!features?.length || !date) return [];
-    try {
-      return await workerProcessShocks({
-        geoData: {
-          features: features.map(feature => ({
-            properties: {
-              region_id: feature.properties.region_id,
-              region: feature.properties.region,
-              price: feature.properties.price,
-              date: feature.properties.date
-            },
-            geometry: feature.geometry
-          }))
-        },
-        date
-      });
-    } catch (error) {
-      console.error('Error detecting shocks:', error);
-      return [];
-    }
-  }, [workerProcessShocks]);
-
-  const processTimeSeriesData = useCallback(async (features, commodity, date) => {
-    if (!features?.length || !commodity || !date) return [];
-    try {
-      return await workerProcessTimeSeries({
-        features: features.map(feature => ({
-          properties: {
-            region_id: feature.properties.region_id,
-            region: feature.properties.region,
-            price: feature.properties.price,
-            date: feature.properties.date
-          },
-          geometry: feature.geometry
-        })),
-        commodity,
-        selectedDate: date
-      });
-    } catch (error) {
-      console.error('Error processing time series:', error);
-      return [];
-    }
-  }, [workerProcessTimeSeries]);
-
-
   // Compute Clusters with debounce and proper dependency handling
   useEffect(() => {
     let isMounted = true;
@@ -438,17 +478,27 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
     let isMounted = true;
   
     const detectShocks = async () => {
-      if (!geoData?.features?.length || !validDate) {
+      if (!geoData?.features?.length || !validDate || !workerProcessShocks) {
         if (isMounted) setDetectedShocksData([]);
         return;
       }
   
       if (isMounted) setShocksLoading(true);
       try {
-        const shocks = await processShockData(
-          geoData.features,
-          validDate
-        );
+        const shocks = await workerProcessShocks({
+          geoData: {
+            features: geoData.features.map(feature => ({
+              properties: {
+                region_id: feature.properties.region_id,
+                region: feature.properties.region,
+                price: feature.properties.price,
+                date: feature.properties.date
+              },
+              geometry: feature.geometry
+            }))
+          },
+          date: validDate
+        });
         
         if (isMounted && Array.isArray(shocks)) {
           setDetectedShocksData(shocks);
@@ -463,7 +513,7 @@ const SpatialAnalysis = ({ selectedCommodity: initialCommodity, selectedDate: in
   
     detectShocks();
     return () => { isMounted = false; };
-  }, [geoData?.features, validDate, processShockData]);
+  }, [geoData?.features, validDate, workerProcessShocks]); 
 
   // Fetch Time Series Data
   useEffect(() => {
@@ -1128,4 +1178,17 @@ SpatialAnalysis.propTypes = {
   selectedDate: PropTypes.string
 };
 
-export default React.memo(SpatialAnalysis);
+// Replace the existing export with this wrapped version
+export default React.memo(props => (
+  <SpatialErrorBoundary onRetry={() => {
+    // Add any retry logic here if needed, like refetching data
+    if (props.selectedCommodity && props.selectedDate) {
+      dispatch(fetchSpatialData({
+        selectedCommodity: props.selectedCommodity,
+        selectedDate: props.selectedDate
+      }));
+    }
+  }}>
+    <SpatialAnalysis {...props} />
+  </SpatialErrorBoundary>
+));

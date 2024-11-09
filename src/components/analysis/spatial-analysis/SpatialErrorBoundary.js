@@ -1,63 +1,51 @@
 // src/components/analysis/spatial-analysis/SpatialErrorBoundary.js
-
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Alert, AlertTitle, Typography } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import ErrorDisplay from '../../common/ErrorDisplay';
 
 class SpatialErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      isRetrying: false,
-    };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
 
-  handleRetry = async () => {
-    this.setState({ isRetrying: true });
-    try {
-      await this.props.onRetry?.();
-      this.setState({ hasError: false, error: null, isRetrying: false });
-    } catch (error) {
-      this.setState({ hasError: true, error, isRetrying: false });
-    }
-  };
+  componentDidCatch(error, errorInfo) {
+    console.error('Spatial analysis error:', error, errorInfo);
+  }
 
   render() {
-    if (!this.state.hasError) {
-      return this.props.children;
+    if (this.state.hasError) {
+      return (
+        <Alert severity="error">
+          <AlertTitle>Error in Spatial Analysis</AlertTitle>
+          <Typography variant="body2">
+            {this.state.error?.message || 'An error occurred while processing spatial data.'}
+          </Typography>
+          <Button
+            onClick={() => {
+              this.setState({ hasError: false, error: null });
+              if (this.props.onRetry) {
+                this.props.onRetry();
+              }
+            }}
+            variant="outlined"
+            size="small"
+            sx={{ mt: 1 }}
+            startIcon={<Refresh />}
+          >
+            Try Again
+          </Button>
+        </Alert>
+      );
     }
 
-    return (
-      <Box sx={{ p: 2 }}>
-        <ErrorDisplay
-          error={{
-            message:
-              this.state.error?.message ||
-              'An error occurred in the spatial analysis component.',
-          }}
-          title="Spatial Analysis Error"
-          action={
-            <Button
-              onClick={this.handleRetry}
-              disabled={this.state.isRetrying}
-              startIcon={<Refresh />}
-              variant="contained"
-              size="small"
-            >
-              {this.state.isRetrying ? 'Retrying...' : 'Retry Analysis'}
-            </Button>
-          }
-        />
-      </Box>
-    );
+    return this.props.children;
   }
 }
 

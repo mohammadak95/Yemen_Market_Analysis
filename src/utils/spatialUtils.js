@@ -17,6 +17,37 @@ const THRESHOLDS = {
 proj4.defs('UTM38N', UTM_ZONE_38N);
 const coordinateCache = new Map();
 
+// Initialize weights with default structure
+const initializeWeights = (features) => {
+  const weights = {};
+  features.forEach(feature => {
+    const regionId = feature.properties?.region_id;
+    if (regionId && !weights[regionId]) {
+      weights[regionId] = {
+        neighbors: [],
+        weight: 0
+      };
+    }
+  });
+  return weights;
+};
+
+// Group features by region for market shock detection
+const groupFeaturesByRegion = (features) => {
+  const grouped = {};
+  features.forEach(feature => {
+    const regionId = feature.properties?.region_id;
+    if (!regionId) return;
+    
+    if (!grouped[regionId]) {
+      grouped[regionId] = [];
+    }
+    grouped[regionId].push(feature);
+  });
+  return grouped;
+};
+
+
 /**
  * Validate and sanitize GeoJSON features
  * @param {Array<Object>} features - Array of GeoJSON features
@@ -188,6 +219,7 @@ export const transformCoordinates = (coordinates) => {
 /**
  * Enhanced market cluster computation with validation and error handling
  */
+// Fix for memoizedComputeClusters
 export const memoizedComputeClusters = (flows, weights) => {
   if (!flows?.length || !weights || typeof weights !== 'object') {
     return [];
@@ -203,8 +235,14 @@ export const memoizedComputeClusters = (flows, weights) => {
       visited.add(region);
       clusterMarkets.add(region);
 
-      const neighbors = weights[region]?.filter(Boolean) || [];
-      neighbors.forEach(neighbor => {
+      // Fix: Ensure weights[region] exists and has neighbors array
+      const neighbors = weights[region]?.neighbors || [];
+      // Filter out invalid neighbors
+      const validNeighbors = neighbors.filter(neighbor => 
+        neighbor && weights[neighbor] && !visited.has(neighbor)
+      );
+      
+      validNeighbors.forEach(neighbor => {
         if (!visited.has(neighbor)) {
           dfs(neighbor, clusterMarkets);
         }
@@ -237,6 +275,7 @@ export const memoizedComputeClusters = (flows, weights) => {
   }
 };
 
+
 /**
  * Enhanced market shock detection with improved statistical analysis
  */
@@ -245,19 +284,35 @@ export const detectMarketShocks = (features, selectedDate) => {
 
   try {
     const validFeatures = validateFeatures(features);
+    const groupedFeatures = groupFeaturesByRegion(validFeatures);
     const shocks = [];
 
-    // Group and analyze by region
-    const regionData = groupFeaturesByRegion(validFeatures);
+    Object.entries(groupedFeatures).forEach(([region, regionFeatures]) => {
+      // Sort features by date
+      const sortedFeatures = regionFeatures.sort((a, b) => 
+        new Date(a.properties.date) - new Date(b.properties.date)
+      );
 
-    Object.entries(regionData).forEach(([region, regionFeatures]) => {
-      const sortedFeatures = sortFeaturesByDate(regionFeatures);
-      const shocksForRegion = analyzeRegionShocks(region, sortedFeatures);
-      shocks.push(...shocksForRegion);
+      // Calculate price changes and volatility
+      const priceChanges = calculatePriceChanges(sortedFeatures);
+      const volatility = calculateVolatility(sortedFeatures);
+
+      // Detect shocks based on thresholds
+      if (Math.abs(priceChanges.percentChange) > THRESHOLDS.PRICE_CHANGE) {
+        shocks.push({
+          region,
+          date: selectedDate,
+          type: priceChanges.percentChange > 0 ? 'surge' : 'drop',
+          magnitude: Math.abs(priceChanges.percentChange),
+          severity: Math.abs(priceChanges.percentChange) > THRESHOLDS.PRICE_CHANGE * 2 ? 'high' : 'medium',
+          price_change: priceChanges.percentChange,
+          volatility: volatility,
+          coordinates: sortedFeatures[0]?.geometry?.coordinates
+        });
+      }
     });
 
     return shocks;
-
   } catch (error) {
     console.error('Error detecting market shocks:', error);
     return [];
@@ -274,18 +329,43 @@ export const calculateSpatialWeights = (features) => {
     const validFeatures = validateFeatures(features);
     const weights = initializeWeights(validFeatures);
 
-    // Calculate weights using parallel processing for large datasets
-    if (validFeatures.length > 1000) {
-      return calculateWeightsParallel(validFeatures);
-    }
+    // Calculate distances and determine neighbors
+    validFeatures.forEach((feature1) => {
+      const region1 = feature1.properties.region_id;
+      if (!region1) return;
 
-    return calculateWeightsSequential(validFeatures);
+      validFeatures.forEach((feature2) => {
+        const region2 = feature2.properties.region_id;
+        if (!region2 || region1 === region2) return;
 
+        const distance = turf.distance(
+          turf.point(feature1.geometry.coordinates),
+          turf.point(feature2.geometry.coordinates)
+        );
+
+        // Consider regions as neighbors if within threshold distance
+        const NEIGHBOR_THRESHOLD = 200; // kilometers
+        if (distance <= NEIGHBOR_THRESHOLD) {
+          weights[region1].neighbors.push(region2);
+          weights[region1].weight += 1 / distance;
+        }
+      });
+    });
+
+    // Normalize weights
+    Object.values(weights).forEach(regionWeights => {
+      if (regionWeights.weight > 0) {
+        regionWeights.weight = 1 / regionWeights.weight;
+      }
+    });
+
+    return weights;
   } catch (error) {
     console.error('Error calculating spatial weights:', error);
     return {};
   }
 };
+
 
 // Utility Functions
 
@@ -342,6 +422,24 @@ const determineMainMarket = (flows, clusterMarkets) => {
   return Array.from(marketScores.entries())
     .sort(([, a], [, b]) => b - a)[0]?.[0] || Array.from(clusterMarkets)[0];
 };
+
+const calculatePriceChanges = (features) => {
+  if (features.length < 2) return { absoluteChange: 0, percentChange: 0 };
+
+  const latestPrice = features[features.length - 1].properties.price;
+  const previousPrice = features[features.length - 2].properties.price;
+
+  return {
+    absoluteChange: latestPrice - previousPrice,
+    percentChange: ((latestPrice - previousPrice) / previousPrice) * 100
+  };
+};
+
+const calculateVolatility = (features) => {
+  const prices = features.map(f => f.properties.price);
+  return calculateStandardDeviation(prices) / calculateMean(prices) * 100;
+};
+
 
 export {
   THRESHOLDS,
