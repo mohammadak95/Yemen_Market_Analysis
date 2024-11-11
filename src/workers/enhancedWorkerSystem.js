@@ -8,7 +8,6 @@ import EventEmitter from 'eventemitter3';
  * Message types for worker communication
  */
 export const WorkerMessageTypes = {
-  // Analysis types
   PROCESS_SPATIAL: 'PROCESS_SPATIAL',
   PROCESS_GEOJSON: 'PROCESS_GEOJSON',
   PROCESS_FLOW_DATA: 'PROCESS_FLOW_DATA',
@@ -16,8 +15,6 @@ export const WorkerMessageTypes = {
   PROCESS_CLUSTERS: 'PROCESS_CLUSTERS',
   PROCESS_SHOCKS: 'PROCESS_SHOCKS',
   PROCESS_TIME_SERIES: 'PROCESS_TIME_SERIES',
-  
-  // Status types
   ERROR: 'ERROR',
   PROGRESS: 'PROGRESS',
   COMPLETE: 'COMPLETE'
@@ -35,7 +32,6 @@ class EnhancedWorkerSystem extends EventEmitter {
     this.maxWorkers = navigator.hardwareConcurrency || 4;
     this.isInitialized = false;
     this.workerURL = null;
-    this.initializationPromise = null;
     this.computationCache = new Map();
     this.metrics = {
       tasksDone: 0,
@@ -43,63 +39,30 @@ class EnhancedWorkerSystem extends EventEmitter {
       averageProcessingTime: 0,
       totalProcessingTime: 0
     };
+    this.debounceTimer = null;
   }
 
   /**
    * Initialize the worker system
    */
   async initialize() {
-    if (this.initializationPromise) {
-      return this.initializationPromise;
-    }
+    if (this.isInitialized) return Promise.resolve();
 
-    if (this.isInitialized) {
-      return Promise.resolve();
-    }
-
-    this.initializationPromise = new Promise((resolve, reject) => {
-      try {
-        this.initializeWorkerPool();
-        this.isInitialized = true;
-        console.log(`Enhanced worker system initialized with ${this.maxWorkers} workers`);
-        resolve();
-      } catch (error) {
-        console.error('Failed to initialize worker system:', error);
-        reject(error);
-      }
-    });
-
-    return this.initializationPromise;
-  }
-
-  /**
-   * Initialize the worker pool with optimized processing code
-   */
-  initializeWorkerPool() {
-    const workerCode = this.generateWorkerCode();
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    this.workerURL = URL.createObjectURL(blob);
-
+    this.workerURL = this.createWorkerURL();
     for (let i = 0; i < this.maxWorkers; i++) {
-      try {
-        const worker = new Worker(this.workerURL);
-        worker.isBusy = false;
-        worker.currentTask = null;
-        worker.onmessage = this.handleWorkerMessage.bind(this, worker);
-        worker.onerror = this.handleWorkerError.bind(this, worker);
-        this.workers.push(worker);
-      } catch (error) {
-        console.error(`Failed to create worker ${i}:`, error);
-      }
+      const worker = new Worker(this.workerURL);
+      worker.isBusy = false;
+      worker.onmessage = this.handleWorkerMessage.bind(this, worker);
+      worker.onerror = this.handleWorkerError.bind(this, worker);
+      this.workers.push(worker);
     }
+    this.isInitialized = true;
+    return Promise.resolve();
   }
 
-  /**
-   * Generate the worker code with all processing functions
-   */
-  generateWorkerCode() {
-    return `
-      const CHUNK_SIZE = 1000; // Adjustable chunk size for processing
+  createWorkerURL() {
+    const workerCode = `
+      const CHUNK_SIZE = 500; // Adjustable chunk size for processing
       const computationCache = new Map();
 
       // Helper function to process data in chunks
@@ -144,25 +107,21 @@ class EnhancedWorkerSystem extends EventEmitter {
               result = await memoize(cacheKey, () => processSpatialData(payload));
               break;
             }
-
             case 'PROCESS_CLUSTERS': {
               const cacheKey = \`clusters_\${JSON.stringify(payload.bounds)}_\${payload.date}\`;
               result = await memoize(cacheKey, () => computeClusters(payload));
               break;
             }
-
             case 'PROCESS_SHOCKS': {
               const cacheKey = \`shocks_\${payload.date}_\${payload.threshold}\`;
               result = await memoize(cacheKey, () => detectMarketShocks(payload));
               break;
             }
-
             case 'PROCESS_TIME_SERIES': {
               const cacheKey = \`timeseries_\${payload.commodity}_\${payload.startDate}_\${payload.endDate}\`;
               result = await memoize(cacheKey, () => processTimeSeries(payload));
               break;
             }
-
             default:
               throw new Error(\`Unknown task type: \${type}\`);
           }
@@ -314,6 +273,36 @@ class EnhancedWorkerSystem extends EventEmitter {
         });
       }
     `;
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    return URL.createObjectURL(blob);
+  }
+
+  async processData(type, payload, onProgress) {
+    if (!this.isInitialized) await this.initialize();
+
+    const taskId = this.generateTaskId(type, payload);
+    if (this.computationCache.has(taskId)) {
+      return Promise.resolve(this.computationCache.get(taskId));
+    }
+
+    return new Promise((resolve, reject) => {
+      const task = { id: taskId, type, payload, onProgress, resolve, reject, startTime: performance.now() };
+
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = setTimeout(() => {
+        const availableWorker = this.workers.find(w => !w.isBusy);
+        if (availableWorker) {
+          this.executeTask(availableWorker, task);
+        } else {
+          this.taskQueue.push(task);
+        }
+      }, 50);
+    });
+  }
+
+  executeTask(worker, task) {
+    worker.isBusy = true;
+    worker.postMessage({ type: task.type, payload: task.payload, taskId: task.id });
   }
 
   /**
@@ -459,8 +448,8 @@ class EnhancedWorkerSystem extends EventEmitter {
   }
 
   /**
-     * Handle task completion (continued)
-     */
+   * Handle task completion
+   */
   handleCompletion(task, result, metrics) {
     const duration = performance.now() - task.startTime;
     this.updateMetrics(duration);

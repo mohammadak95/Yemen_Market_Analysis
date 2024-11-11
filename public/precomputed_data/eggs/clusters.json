@@ -1,0 +1,41 @@
+[
+  {
+    "mainMarket": "abyan",
+    "connectedMarkets": [
+      "abyan",
+      "lahj",
+      "aden",
+      "al dhale'e",
+      "ibb",
+      "taizz",
+      "dhamar",
+      "sana'a",
+      "amanat al asimah",
+      "amran",
+      "hajjah",
+      "al mahwit",
+      "raymah",
+      "al hudaydah",
+      "al jawf",
+      "marib",
+      "al bayda"
+    ],
+    "marketCount": 17,
+    "totalFlow": 0,
+    "avgFlow": 0,
+    "flowDensity": 0
+  },
+  {
+    "mainMarket": "al maharah",
+    "connectedMarkets": [
+      "al maharah",
+      "hadramaut",
+      "shabwah",
+      "socotra"
+    ],
+    "marketCount": 4,
+    "totalFlow": 0,
+    "avgFlow": 0,
+    "flowDensity": 0
+  }
+]
