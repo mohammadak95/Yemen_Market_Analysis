@@ -1,25 +1,34 @@
 // src/workers/enhancedWorkerSystem.js
 
-/**
- * Enhanced worker system with centralized management, better error handling,
- * progress tracking using a worker pool, and support for transferable objects.
- */
-
 import { v4 as uuidv4 } from 'uuid';
 import EventEmitter from 'eventemitter3';
-import { useCallback } from 'react'; // Ensure useCallback is imported
 
+// Define message types
 export const WorkerMessageTypes = {
   PROCESS_SPATIAL: 'PROCESS_SPATIAL',
+  CALCULATE_VOLATILITY: 'CALCULATE_VOLATILITY',
   PROCESS_GEOJSON: 'PROCESS_GEOJSON',
   PROCESS_FLOW_DATA: 'PROCESS_FLOW_DATA',
-  GENERATE_CSV: 'GENERATE_CSV',
-  CALCULATE_STATISTICS: 'CALCULATE_STATISTICS',
   PROCESS_CLUSTERS: 'PROCESS_CLUSTERS',
   PROCESS_SHOCKS: 'PROCESS_SHOCKS',
+  PROCESS_TIME_SERIES: 'PROCESS_TIME_SERIES',
   ERROR: 'ERROR',
   PROGRESS: 'PROGRESS',
-  PROCESS_TIME_SERIES: 'PROCESS_TIME_SERIES'
+  COMPLETE: 'COMPLETE'
+};
+
+// Constants for worker operations
+const WORKER_CONSTANTS = {
+  CHUNK_SIZE: 1000,
+  CACHE_SIZE_LIMIT: 1000,
+  THRESHOLDS: {
+    VOLATILITY: 0.05,
+    PRICE_CHANGE: 0.15,
+    MIN_DATA_POINTS: 3,
+    MAX_OUTLIER_STDDEV: 3,
+    MIN_CLUSTER_SIZE: 2,
+    NEIGHBOR_THRESHOLD_KM: 200
+  }
 };
 
 // Singleton instance handling
@@ -27,13 +36,11 @@ let instance = null;
 
 class WorkerManager extends EventEmitter {
   constructor() {
-    if (instance) {
-      return instance;
-    }
+    if (instance) return instance;
     super();
     this.workers = [];
     this.taskQueue = [];
-    this.maxWorkers = navigator.hardwareConcurrency || 4;
+    this.maxWorkers = Math.min(navigator.hardwareConcurrency || 4, 4);
     this.isInitialized = false;
     this.workerURL = null;
     this.initializationPromise = null;
@@ -42,17 +49,9 @@ class WorkerManager extends EventEmitter {
   }
 
   async initialize() {
-    // If already initialized, return existing promise
-    if (this.initializationPromise) {
-      return this.initializationPromise;
-    }
+    if (this.initializationPromise) return this.initializationPromise;
+    if (this.isInitialized) return Promise.resolve();
 
-    // If already initialized, return immediately
-    if (this.isInitialized) {
-      return Promise.resolve();
-    }
-
-    // Create initialization promise
     this.initializationPromise = new Promise((resolve, reject) => {
       try {
         this.initializeWorkerPool();
@@ -69,17 +68,18 @@ class WorkerManager extends EventEmitter {
   }
 
   initializeWorkerPool() {
+    // This is where we integrate the optimized worker code
     const workerCode = `
-      const CHUNK_SIZE = 500000;
+      // Constants from optimized worker
+      const CHUNK_SIZE = ${WORKER_CONSTANTS.CHUNK_SIZE};
+      const CACHE_SIZE_LIMIT = ${WORKER_CONSTANTS.CACHE_SIZE_LIMIT};
+      const THRESHOLDS = ${JSON.stringify(WORKER_CONSTANTS.THRESHOLDS)};
 
-      function processInChunks(data, processor) {
-        const chunks = [];
-        for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-          chunks.push(data.slice(i, i + CHUNK_SIZE));
-        }
-        return chunks.map(processor).flat();
-      }
+      // Cache for computational results
+      const computationCache = new Map();
+      const coordinateCache = new Map();
 
+      // Helper function to report progress
       function reportProgress(progress) {
         self.postMessage({
           type: 'PROGRESS',
@@ -87,280 +87,43 @@ class WorkerManager extends EventEmitter {
         });
       }
 
-      self.onmessage = async (event) => {
-        const { type, data, taskId } = event.data;
-        
-        try {
-          let result;
-          switch (type) {
-            case 'PROCESS_SPATIAL':
-              result = await processSpatialData(data, taskId);
-              break;
-            case 'PROCESS_GEOJSON':
-              result = processGeoJSON(data, taskId);
-              break;
-            case 'PROCESS_FLOW_DATA':
-              result = processFlowData(data, taskId);
-              break;
-            case 'GENERATE_CSV':
-              result = generateCSV(data, taskId);
-              break;
-            case 'CALCULATE_STATISTICS':
-              result = calculateStatistics(data, taskId);
-              break;
-            case 'PROCESS_CLUSTERS':
-              result = processClusters(data, taskId);
-              break;
-            case 'PROCESS_SHOCKS':
-              result = processShocks(data, taskId);
-              break;
-            case 'PROCESS_TIME_SERIES':
-              result = await processTimeSeries(data);
-              break;
-            default:
-              throw new Error(\`Unknown message type: \${type}\`);
-          }
+      // Process data in chunks
+      function processInChunks(data, processor) {
+        const results = [];
+        for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+          const chunk = data.slice(i, i + CHUNK_SIZE);
+          results.push(...processor(chunk));
           
-          self.postMessage({ type, data: result, taskId });
-        } catch (error) {
-          self.postMessage({ 
-            type: 'ERROR', 
-            error: error.message, 
-            taskId 
-          });
-        }
-      };
-
-      async function processSpatialData(data) {
-        const { geoData, flows, weights } = data;
-        let progress = 0;
-
-        try {
-          const processedFeatures = processInChunks(
-            geoData.features,
-            (chunk) => chunk.map(processFeature)
-          );
-          progress = 33;
+          const progress = Math.min(100, Math.round((i + CHUNK_SIZE) * 100 / data.length));
           reportProgress(progress);
-
-          const processedFlows = processInChunks(
-            flows,
-            (chunk) => chunk.map(processFlow)
-          );
-          progress = 66;
-          reportProgress(progress);
-
-          const processedWeights = processWeights(weights);
-          progress = 100;
-          reportProgress(progress);
-
-          return {
-            geoData: { ...geoData, features: processedFeatures },
-            flows: processedFlows,
-            weights: processedWeights
-          };
-        } catch (error) {
-          throw error;
         }
+        return results;
       }
 
-      function processFeature(feature) {
-        return {
-          ...feature,
-          properties: {
-            ...feature.properties,
-            price: parseFloat(feature.properties.price) || 0,
-            date: new Date(feature.properties.date).toISOString()
-          }
-        };
-      }
-
-      function processFlow(flow) {
-        return {
-          ...flow,
-          flow_weight: parseFloat(flow.flow_weight) || 0,
-          date: new Date(flow.date).toISOString()
-        };
-      }
-
-      function processWeights(weights) {
-        const processed = {};
-        for (const [region, data] of Object.entries(weights)) {
-          processed[region] = {
-            neighbors: Array.isArray(data.neighbors) ? data.neighbors : [],
-            weight: parseFloat(data.weight) || 0
-          };
+      // Memoization helper
+      function memoize(key, computation) {
+        if (computationCache.has(key)) {
+          return computationCache.get(key);
         }
-        return processed;
-      }
+        const result = computation();
+        computationCache.set(key, result);
 
-      function processGeoJSON(data) {
-        return data; // Stub processing for example
-      }
-
-      function processFlowData(data) {
-        return data; // Stub processing for example
-      }
-
-      function generateCSV(data) {
-        return data; // Stub CSV generation
-      }
-
-      function calculateStatistics(data) {
-        return data; // Stub statistics calculation
-      }
-
-      function processClusters(data) {
-        const { geoData, flows, weights } = data;
-        const clusters = [];
-        geoData.features.forEach((feature, idx) => {
-          clusters.push({
-            mainMarket: feature.properties.region || feature.properties.region_id,
-            connectedMarkets: new Set(weights[feature.properties.region_id]?.neighbors || []),
-            totalFlow: flows.reduce((sum, flow) => {
-              if (flow.source === feature.properties.region_id || flow.target === feature.properties.region_id) {
-                return sum + flow.flow_weight;
-              }
-              return sum;
-            }, 0),
-            avgFlow: flows.length > 0 ? flows.reduce((sum, flow) => sum + flow.flow_weight, 0) / flows.length : 0,
-            marketCount: weights[feature.properties.region_id]?.neighbors?.length || 1,
-            lat: feature.geometry?.coordinates?.[1] || 0,
-            lng: feature.geometry?.coordinates?.[0] || 0,
-            color: '#FF5733' 
-          });
-        });
-        return clusters;
-      }
-
-      function processShocks(data) {
-        const { geoData, date } = data;
-        const shocks = [];
-        geoData.features.forEach((feature) => {
-          if (Math.random() < 0.05) { 
-            shocks.push({
-              region: feature.properties.region || feature.properties.region_id,
-              type: Math.random() > 0.5 ? 'price_surge' : 'price_drop',
-              magnitude: Math.random() * 0.2,
-              severity: Math.random() > 0.7 ? 'high' : 'medium',
-              lat: feature.geometry?.coordinates?.[1] || 0,
-              lng: feature.geometry?.coordinates?.[0] || 0,
-              month: date
-            });
-          }
-        });
-        return shocks;
-      }
-
-      async function processTimeSeries(data) {
-        const { features, commodity, selectedDate } = data;
-        let progress = 0;
-        reportProgress(progress);
-
-        try {
-          // Group features by month
-          const monthlyData = features.reduce((acc, feature) => {
-            const { properties } = feature;
-            if (!properties?.date) return acc;
-
-            const date = new Date(properties.date);
-            if (isNaN(date.getTime())) return acc;
-
-            const month = date.toISOString().slice(0, 7);
-            
-            if (!acc[month]) {
-              acc[month] = {
-                prices: [],
-                conflictIntensity: [],
-                usdPrices: [],
-                count: 0
-              };
-            }
-
-            // Validate and add numerical values
-            if (!isNaN(properties.price)) {
-              acc[month].prices.push(properties.price);
-            }
-            if (!isNaN(properties.conflict_intensity)) {
-              acc[month].conflictIntensity.push(properties.conflict_intensity);
-            }
-            if (!isNaN(properties.usdprice)) {
-              acc[month].usdPrices.push(properties.usdprice);
-            }
-            
-            acc[month].count++;
-            return acc;
-          }, {});
-
-          progress = 50;
-          reportProgress(progress);
-
-          // Calculate statistics for each month
-          const timeSeriesData = Object.entries(monthlyData)
-            .filter(([_, data]) => data.count >= 3) // Minimum data points threshold
-            .map(([month, data]) => {
-              const stats = calculateMonthlyStats(data);
-              return {
-                month,
-                ...stats,
-                sampleSize: data.count
-              };
-            })
-            .sort((a, b) => a.month.localeCompare(b.month));
-
-          progress = 100;
-          reportProgress(progress);
-
-          return timeSeriesData;
-        } catch (error) {
-          throw new Error(\`Time series processing error: \${error.message}\`);
+        if (computationCache.size > 50) {
+          const firstKey = computationCache.keys().next().value;
+          computationCache.delete(firstKey);
         }
+
+        return result;
       }
 
-      function calculateMonthlyStats(data) {
-        const stats = {
-          avgPrice: null,
-          volatility: null,
-          avgConflictIntensity: null,
-          avgUsdPrice: null,
-          priceRange: { min: null, max: null }
-        };
-
-        try {
-          if (data.prices.length > 0) {
-            const cleanPrices = removeOutliers(data.prices);
-            stats.avgPrice = calculateMean(cleanPrices);
-            const stdDev = calculateStandardDeviation(cleanPrices);
-            stats.volatility = (stdDev / stats.avgPrice) * 100;
-            stats.priceRange = {
-              min: Math.min(...cleanPrices),
-              max: Math.max(...cleanPrices)
-            };
-          }
-
-          if (data.conflictIntensity.length > 0) {
-            stats.avgConflictIntensity = calculateMean(data.conflictIntensity);
-          }
-
-          if (data.usdPrices.length > 0) {
-            const cleanUsdPrices = removeOutliers(data.usdPrices);
-            stats.avgUsdPrice = calculateMean(cleanUsdPrices);
-          }
-
-          return stats;
-        } catch (error) {
-          console.error('Error calculating monthly statistics:', error);
-          return stats;
-        }
-      }
-
+      // Statistical functions
       function calculateMean(values) {
-        if (!values?.length) return null;
+        if (!values?.length) return 0;
         return values.reduce((sum, val) => sum + val, 0) / values.length;
       }
 
       function calculateStandardDeviation(values) {
-        if (!values?.length) return null;
+        if (!values?.length) return 0;
         const mean = calculateMean(values);
         const squaredDiffs = values.map(val => Math.pow(val - mean, 2));
         const variance = calculateMean(squaredDiffs);
@@ -371,12 +134,50 @@ class WorkerManager extends EventEmitter {
         if (!values?.length) return [];
         const mean = calculateMean(values);
         const stdDev = calculateStandardDeviation(values);
-        const maxDeviations = 3;
         
         return values.filter(value => 
-          Math.abs(value - mean) <= maxDeviations * stdDev
+          Math.abs(value - mean) <= THRESHOLDS.MAX_OUTLIER_STDDEV * stdDev
         );
       }
+
+      // Main message handler
+      self.onmessage = async (event) => {
+        const { type, data, taskId } = event.data;
+        
+        try {
+          let result;
+          switch (type) {
+            case 'PROCESS_SPATIAL':
+              result = await processSpatialData(data);
+              break;
+            case 'PROCESS_CLUSTERS':
+              result = processClusters(data);
+              break;
+            case 'PROCESS_SHOCKS':
+              result = processShocks(data);
+              break;
+            case 'PROCESS_TIME_SERIES':
+              result = await processTimeSeries(data);
+              break;
+            case 'CALCULATE_VOLATILITY':
+              result = calculateVolatility(data);
+              break;
+            default:
+              throw new Error(\`Unknown message type: \${type}\`);
+          }
+          
+          self.postMessage({ type: 'COMPLETE', taskId, data: result });
+        } catch (error) {
+          self.postMessage({ 
+            type: 'ERROR', 
+            error: error.message, 
+            taskId 
+          });
+        }
+      };
+
+      // Core processing functions
+      ${this.getOptimizedProcessingFunctions()}
     `;
 
     const blob = new Blob([workerCode], { type: 'application/javascript' });
@@ -398,48 +199,284 @@ class WorkerManager extends EventEmitter {
     URL.revokeObjectURL(this.workerURL);
   }
 
-  handleWorkerMessage(worker, event) {
-    const { type, data, error, taskId } = event.data;
+  // Helper to get optimized processing functions
+  getOptimizedProcessingFunctions() {
+    return `
+      // Process spatial data
+      async function processSpatialData({ geoData, flows, weights }) {
+        let progress = 0;
+        try {
+          const processedFeatures = processInChunks(
+            geoData.features,
+            chunk => chunk.map(feature => ({
+              ...feature,
+              properties: {
+                ...feature.properties,
+                price: parseFloat(feature.properties.price) || 0,
+                date: new Date(feature.properties.date).toISOString()
+              }
+            }))
+          );
 
-    if (type === WorkerMessageTypes.ERROR) {
-      const task = worker.currentTask;
-      if (task) {
-        task.reject(new Error(error));
-        this.emit('error', { taskId, error });
-        worker.currentTask = null;
+          progress = 50;
+          reportProgress(progress);
+
+          const processedFlows = flows.map(flow => ({
+            ...flow,
+            flow_weight: parseFloat(flow.flow_weight) || 0,
+            date: new Date(flow.date).toISOString()
+          }));
+
+          const processedWeights = Object.entries(weights).reduce((acc, [region, data]) => {
+            acc[region] = {
+              neighbors: Array.isArray(data.neighbors) ? data.neighbors : [],
+              weight: parseFloat(data.weight) || 0
+            };
+            return acc;
+          }, {});
+
+          progress = 100;
+          reportProgress(progress);
+
+          return {
+            geoData: { ...geoData, features: processedFeatures },
+            flows: processedFlows,
+            weights: processedWeights
+          };
+        } catch (error) {
+          throw error;
+        }
       }
-    } else if (type === WorkerMessageTypes.PROGRESS) {
-      const task = worker.currentTask;
-      if (task && task.onProgress) {
-        task.onProgress(data.progress);
+
+      // Process clusters
+      function processClusters({ geoData, flows, weights }) {
+        const clusters = [];
+        const visited = new Set();
+
+        function dfs(region, clusterMarkets) {
+          if (!region || visited.has(region)) return;
+          
+          visited.add(region);
+          clusterMarkets.add(region);
+
+          const neighbors = weights[region]?.neighbors || [];
+          neighbors.forEach(neighbor => {
+            if (!visited.has(neighbor)) {
+              dfs(neighbor, clusterMarkets);
+            }
+          });
+        }
+
+        Object.keys(weights).forEach(region => {
+          if (!visited.has(region)) {
+            const clusterMarkets = new Set();
+            dfs(region, clusterMarkets);
+
+            if (clusterMarkets.size >= THRESHOLDS.MIN_CLUSTER_SIZE) {
+              const metrics = calculateClusterMetrics(flows, clusterMarkets);
+              
+              clusters.push({
+                mainMarket: determineMainMarket(flows, clusterMarkets),
+                connectedMarkets: Array.from(clusterMarkets),
+                marketCount: clusterMarkets.size,
+                ...metrics
+              });
+            }
+          }
+        });
+
+        return clusters;
       }
-      this.emit('progress', { taskId, progress: data.progress });
-    } else {
-      const task = worker.currentTask;
-      if (task) {
-        task.resolve(data);
-        this.emit('complete', { taskId, data });
-        worker.currentTask = null;
+
+      function calculateClusterMetrics(flows, clusterMarkets) {
+        const relevantFlows = flows.filter(flow =>
+          clusterMarkets.has(flow.source) || clusterMarkets.has(flow.target)
+        );
+
+        const totalFlow = relevantFlows.reduce((sum, flow) =>
+          sum + (flow.flow_weight || 0), 0
+        );
+
+        return {
+          totalFlow,
+          avgFlow: clusterMarkets.size ? totalFlow / clusterMarkets.size : 0,
+          flowDensity: relevantFlows.length / (clusterMarkets.size * (clusterMarkets.size - 1))
+        };
+      }
+
+      function determineMainMarket(flows, clusterMarkets) {
+        const marketScores = new Map();
+        
+        flows.forEach(flow => {
+          if (clusterMarkets.has(flow.source)) {
+            marketScores.set(flow.source,
+              (marketScores.get(flow.source) || 0) + (flow.flow_weight || 0)
+            );
+          }
+        });
+
+        return Array.from(marketScores.entries())
+          .sort(([, a], [, b]) => b - a)[0]?.[0] || Array.from(clusterMarkets)[0];
+      }
+
+      // Process market shocks
+      function processShocks({ geoData, date }) {
+        const features = geoData.features;
+        const shocks = [];
+
+        features.forEach(feature => {
+          const prices = feature.properties.prices || [];
+          if (prices.length < 2) return;
+
+          const lastPrice = prices[prices.length - 1];
+          const prevPrice = prices[prices.length - 2];
+          const priceChange = ((lastPrice - prevPrice) / prevPrice) * 100;
+
+          if (Math.abs(priceChange) > THRESHOLDS.PRICE_CHANGE) {
+            shocks.push({
+              region: feature.properties.region_id,
+              date,
+              type: priceChange > 0 ? 'price_surge' : 'price_drop',
+              magnitude: Math.abs(priceChange / 100),
+              severity: Math.abs(priceChange) > THRESHOLDS.PRICE_CHANGE * 2 ? 'high' : 'medium',
+              price_change: priceChange,
+              coordinates: feature.geometry.coordinates
+            });
+          }
+        });
+
+        return shocks;
+      }
+
+      // Process time series
+      async function processTimeSeries({ features, startDate, endDate, commodity }) {
+        let progress = 0;
+        reportProgress(progress);
+
+        try {
+          const monthlyData = features.reduce((acc, feature) => {
+            const { properties } = feature;
+            if (!properties?.date || properties.commodity !== commodity) return acc;
+
+            const date = new Date(properties.date);
+            if (isNaN(date.getTime())) return acc;
+
+            const month = date.toISOString().slice(0, 7);
+            if (month < startDate || month > endDate) return acc;
+
+            if (!acc[month]) {
+              acc[month] = {
+                prices: [],
+                conflictIntensity: [],
+                usdPrices: [],
+                count: 0
+              };
+            }
+
+            if (!isNaN(properties.price)) acc[month].prices.push(properties.price);
+            if (!isNaN(properties.conflict_intensity)) {
+              acc[month].conflictIntensity.push(properties.conflict_intensity);
+            }
+            if (!isNaN(properties.usdprice)) acc[month].usdPrices.push(properties.usdprice);
+            
+            acc[month].count++;
+            return acc;
+          }, {});
+
+          progress = 50;
+          reportProgress(progress);
+
+          const result = Object.entries(monthlyData)
+            .filter(([_, data]) => data.count >= THRESHOLDS.MIN_DATA_POINTS)
+            .map(([month, data]) => ({
+              month,
+              avgPrice: calculateMean(removeOutliers(data.prices)),
+              volatility: calculateVolatility(data.prices),
+              avgConflictIntensity: calculateMean(data.conflictIntensity),
+              avgUsdPrice: calculateMean(removeOutliers(data.usdPrices)),
+              sampleSize: data.count
+            }))
+            .sort((a, b) => a.month.localeCompare(b.month));
+
+          progress = 100;
+          reportProgress(progress);
+
+          return result;
+        } catch (error) {
+          throw new Error(\`Time series processing error: \${error.message}\`);
+        }
+      }
+
+      function calculateVolatility(prices) {
+        if (!prices?.length) return 0;
+        const cleanPrices = removeOutliers(prices);
+        const mean = calculateMean(cleanPrices);
+        const stdDev = calculateStandardDeviation(cleanPrices);
+        return (stdDev / mean) * 100;
+      }
+    `;
+  }
+
+// Add this after the getOptimizedProcessingFunctions() method...
+
+handleWorkerMessage(worker, event) {
+  const { type, data, error, taskId } = event.data;
+
+  try {
+    switch (type) {
+      case WorkerMessageTypes.ERROR: {
+        const task = worker.currentTask;
+        if (task) {
+          task.reject(new Error(error));
+          this.emit('error', { taskId, error });
+          worker.currentTask = null;
+        }
+        break;
+      }
+      
+      case WorkerMessageTypes.PROGRESS: {
+        const task = worker.currentTask;
+        if (task && task.onProgress) {
+          task.onProgress(data.progress);
+        }
+        this.emit('progress', { taskId, progress: data.progress });
+        break;
+      }
+      
+      case WorkerMessageTypes.COMPLETE: {
+        const task = worker.currentTask;
+        if (task) {
+          task.resolve(data);
+          this.emit('complete', { taskId, data });
+          worker.currentTask = null;
+        }
+        break;
       }
     }
-
+  } catch (error) {
+    console.error('Error handling worker message:', error);
+    this.emit('error', { taskId, error: error.message });
+  } finally {
     worker.isBusy = false;
     this.processNextTask();
   }
+}
 
-  handleWorkerError(worker, error) {
-    console.error(`Worker encountered an error:`, error);
-    if (worker.currentTask) {
-      worker.currentTask.reject(new Error(error.message));
-      this.emit('error', { taskId: worker.currentTask.taskId, error: error.message });
-      worker.currentTask = null;
-    }
-    worker.isBusy = false;
-    this.restartWorker(worker);
-    this.processNextTask();
+handleWorkerError(worker, error) {
+  console.error('Worker encountered an error:', error);
+  if (worker.currentTask) {
+    worker.currentTask.reject(new Error(error.message));
+    this.emit('error', { taskId: worker.currentTask.taskId, error: error.message });
+    worker.currentTask = null;
   }
+  worker.isBusy = false;
+  this.restartWorker(worker);
+  this.processNextTask();
+}
 
-  restartWorker(worker) {
+restartWorker(worker) {
+  try {
+    worker.terminate();
     const newWorker = new Worker(this.workerURL);
     newWorker.isBusy = false;
     newWorker.currentTask = null;
@@ -452,192 +489,201 @@ class WorkerManager extends EventEmitter {
     } else {
       this.workers.push(newWorker);
     }
-  }
-
-  processNextTask() {
-    if (this.taskQueue.length === 0) return;
-
-    const availableWorker = this.workers.find(worker => !worker.isBusy);
-    if (!availableWorker) return;
-
-    const nextTask = this.taskQueue.shift();
-    this.executeTask(availableWorker, nextTask);
-  }
-
-  processData(type, data, onProgress = null) {
-    if (!this.isInitialized) {
-      return Promise.reject(new Error('WorkerManager is not initialized. Call initialize() before processing tasks.'));
-    }
-
-    return new Promise((resolve, reject) => {
-      const taskId = uuidv4();
-      const task = { type, data, taskId, resolve, reject, onProgress };
-
-      const availableWorker = this.workers.find(worker => !worker.isBusy);
-      if (availableWorker) {
-        this.executeTask(availableWorker, task);
-      } else {
-        this.taskQueue.push(task);
-      }
-    });
-  }
-
-  executeTask(worker, task) {
-    worker.isBusy = true;
-    worker.currentTask = task;
-    worker.postMessage({ type: task.type, data: task.data, taskId: task.taskId }, this.getTransferable(task.data));
-  }
-
-  getTransferable(data) {
-    const transferable = [];
-    function extractTransferable(obj) {
-      if (obj instanceof ArrayBuffer) {
-        transferable.push(obj);
-      } else if (Array.isArray(obj)) {
-        obj.forEach(item => extractTransferable(item));
-      } else if (obj && typeof obj === 'object') {
-        Object.values(obj).forEach(value => extractTransferable(value));
-      }
-    }
-    extractTransferable(data);
-    return transferable;
-  }
-
-  handleProgress(taskId, progress) {
-    this.emit('taskProgress', { taskId, progress });
-  }
-
-  terminate() {
-    this.workers.forEach(worker => worker.terminate());
-    this.workers = [];
-    this.taskQueue = [];
-    this.isInitialized = false;
-    console.log('WorkerManager terminated and cleaned up.');
+  } catch (error) {
+    console.error('Error restarting worker:', error);
+    this.emit('error', { error: error.message });
   }
 }
 
-export const workerManager = new WorkerManager();
+processNextTask() {
+  if (this.taskQueue.length === 0) return;
 
-// Don't automatically initialize - let the system handle it
-export const initializeWorkerManager = async () => {
-  if (!workerManager.isInitialized) {
-    await workerManager.initialize();
+  const availableWorker = this.workers.find(worker => !worker.isBusy);
+  if (!availableWorker) return;
+
+  const nextTask = this.taskQueue.shift();
+  this.executeTask(availableWorker, nextTask);
+}
+
+async processData(type, data, onProgress = null) {
+  if (!this.isInitialized) {
+    return Promise.reject(new Error('WorkerManager is not initialized. Call initialize() before processing tasks.'));
   }
+
+  return new Promise((resolve, reject) => {
+    const taskId = uuidv4();
+    const task = { type, data, taskId, resolve, reject, onProgress };
+
+    const availableWorker = this.workers.find(worker => !worker.isBusy);
+    if (availableWorker) {
+      this.executeTask(availableWorker, task);
+    } else {
+      this.taskQueue.push(task);
+    }
+  });
+}
+
+executeTask(worker, task) {
+  try {
+    worker.isBusy = true;
+    worker.currentTask = task;
+    
+    const transferable = this.getTransferable(task.data);
+    worker.postMessage(
+      { type: task.type, data: task.data, taskId: task.taskId },
+      transferable
+    );
+  } catch (error) {
+    console.error('Error executing task:', error);
+    task.reject(error);
+    worker.isBusy = false;
+    worker.currentTask = null;
+    this.processNextTask();
+  }
+}
+
+getTransferable(data) {
+  const transferable = [];
+
+  const processValue = (value) => {
+    if (value instanceof ArrayBuffer) {
+      transferable.push(value);
+    } else if (typeof SharedArrayBuffer !== 'undefined' && value instanceof SharedArrayBuffer) {
+      // Only add SharedArrayBuffer if supported in the environment
+      transferable.push(value);
+    } else if (ArrayBuffer.isView(value)) {
+      transferable.push(value.buffer);
+    }
+  };
+
+  const processObject = (obj) => {
+    if (Array.isArray(obj)) {
+      obj.forEach(processItem);
+    } else if (obj && typeof obj === 'object') {
+      Object.values(obj).forEach(processItem);
+    }
+  };
+
+  const processItem = (item) => {
+    processValue(item);
+    if (typeof item === 'object' && item !== null) {
+      processObject(item);
+    }
+  };
+
+  processItem(data);
+  return transferable;
+}
+
+
+terminate() {
+  try {
+    this.workers.forEach(worker => {
+      if (worker.currentTask) {
+        worker.currentTask.reject(new Error('Worker terminated'));
+      }
+      worker.terminate();
+    });
+    
+    this.taskQueue.forEach(task => {
+      task.reject(new Error('Worker system terminated'));
+    });
+
+    this.workers = [];
+    this.taskQueue = [];
+    this.isInitialized = false;
+    
+    if (this.workerURL) {
+      URL.revokeObjectURL(this.workerURL);
+      this.workerURL = null;
+    }
+
+    console.log('WorkerManager terminated and cleaned up.');
+  } catch (error) {
+    console.error('Error during worker system termination:', error);
+  }
+}
+}
+
+// React hook implementation
+export const useWorkerManager = () => {
+const initialize = useCallback(async () => {
+  try {
+    if (!workerManager.isInitialized) {
+      await workerManager.initialize();
+    }
+    return true;
+  } catch (error) {
+    console.error('Worker initialization failed:', error);
+    throw error;
+  }
+}, []);
+
+const processGeoJSON = useCallback(async (data, onProgress) => {
+  await initialize();
+  return workerManager.processData(WorkerMessageTypes.PROCESS_GEOJSON, data, onProgress);
+}, [initialize]);
+
+const processFlowData = useCallback(async (data, onProgress) => {
+  await initialize();
+  return workerManager.processData(WorkerMessageTypes.PROCESS_FLOW_DATA, data, onProgress);
+}, [initialize]);
+
+const processSpatialData = useCallback(async (data, onProgress) => {
+  await initialize();
+  return workerManager.processData(WorkerMessageTypes.PROCESS_SPATIAL, data, onProgress);
+}, [initialize]);
+
+const processClusters = useCallback(async (data, onProgress) => {
+  await initialize();
+  return workerManager.processData(WorkerMessageTypes.PROCESS_CLUSTERS, data, onProgress);
+}, [initialize]);
+
+const processShocks = useCallback(async (data, onProgress) => {
+  await initialize();
+  return workerManager.processData(WorkerMessageTypes.PROCESS_SHOCKS, data, onProgress);
+}, [initialize]);
+
+const processTimeSeries = useCallback(async (data, onProgress) => {
+  await initialize();
+  return workerManager.processData(WorkerMessageTypes.PROCESS_TIME_SERIES, data, onProgress);
+}, [initialize]);
+
+const subscribeToProgress = useCallback((callback) => {
+  workerManager.on('progress', ({ taskId, progress }) => callback(taskId, progress));
+  return () => workerManager.off('progress', callback);
+}, []);
+
+const subscribeToCompletion = useCallback((callback) => {
+  workerManager.on('complete', ({ taskId, data }) => callback(taskId, data));
+  return () => workerManager.off('complete', callback);
+}, []);
+
+const subscribeToError = useCallback((callback) => {
+  workerManager.on('error', ({ taskId, error }) => callback(taskId, error));
+  return () => workerManager.off('error', callback);
+}, []);
+
+return {
+  initialize,
+  processGeoJSON,
+  processFlowData,
+  processSpatialData,
+  processClusters,
+  processShocks,
+  processTimeSeries,
+  subscribeToProgress,
+  subscribeToCompletion,
+  subscribeToError,
+  isInitialized: () => workerManager.isInitialized,
+  terminate: () => workerManager.terminate()
+};
 };
 
-export const useWorkerManager = () => {
-  const initialize = useCallback(async () => {
-    try {
-      if (!workerManager.isInitialized) {
-        await workerManager.initialize();
-      }
-      return true;
-    } catch (error) {
-      console.error('Worker initialization failed:', error);
-      throw error;
-    }
-  }, []);
-
-  const ensureInitialized = useCallback(async () => {
-    if (!workerManager.isInitialized) {
-      await initialize();
-    }
-  }, [initialize]);
-
-  const processGeoJSON = useCallback(async (data, onProgress) => {
-    await ensureInitialized();
-    return workerManager.processData(WorkerMessageTypes.PROCESS_GEOJSON, data, onProgress);
-  }, [ensureInitialized]);
-
-  const processFlowData = useCallback(async (data, onProgress) => {
-    await ensureInitialized();
-    return workerManager.processData(WorkerMessageTypes.PROCESS_FLOW_DATA, data, onProgress);
-  }, [ensureInitialized]);
-
-  const processSpatialData = useCallback(async (data, onProgress) => {
-    await ensureInitialized();
-    return workerManager.processData(WorkerMessageTypes.PROCESS_SPATIAL, data, onProgress);
-  }, [ensureInitialized]);
-
-  const generateCSV = useCallback(async (data, onProgress) => {
-    await ensureInitialized();
-    return workerManager.processData(WorkerMessageTypes.GENERATE_CSV, data, onProgress);
-  }, [ensureInitialized]);
-
-  const calculateStatistics = useCallback(async (data, onProgress) => {
-    await ensureInitialized();
-    return workerManager.processData(WorkerMessageTypes.CALCULATE_STATISTICS, data, onProgress);
-  }, [ensureInitialized]);
-
-  const processClusters = useCallback(async (data, onProgress) => {
-    await ensureInitialized();
-    return workerManager.processData(WorkerMessageTypes.PROCESS_CLUSTERS, data, onProgress);
-  }, [ensureInitialized]);
-
-  const processShocks = useCallback(async (data, onProgress) => {
-    await ensureInitialized();
-    return workerManager.processData(WorkerMessageTypes.PROCESS_SHOCKS, data, onProgress);
-  }, [ensureInitialized]);
-
-  const processTimeSeries = useCallback(async (data, onProgress) => {
-    await ensureInitialized();
-    return workerManager.processData(WorkerMessageTypes.PROCESS_TIME_SERIES, data, onProgress);
-  }, [ensureInitialized]);
-
-  const subscribeToProgress = useCallback((callback) => {
-    const handleProgress = ({ taskId, progress }) => {
-      callback(taskId, progress);
-    };
-    workerManager.on('taskProgress', handleProgress);
-    return () => {
-      workerManager.off('taskProgress', handleProgress);
-    };
-  }, []);
-
-  const subscribeToCompletion = useCallback((callback) => {
-    const handleComplete = ({ taskId, data }) => {
-      callback(taskId, data);
-    };
-    workerManager.on('complete', handleComplete);
-    return () => {
-      workerManager.off('complete', handleComplete);
-    };
-  }, []);
-
-  const subscribeToError = useCallback((callback) => {
-    const handleError = ({ taskId, error }) => {
-      callback(taskId, error);
-    };
-    workerManager.on('error', handleError);
-    return () => {
-      workerManager.off('error', handleError);
-    };
-  }, []);
-
-  const terminate = useCallback(() => {
-    if (workerManager.isInitialized) {
-      workerManager.terminate();
-    }
-  }, []);
-
-  const isInitialized = useCallback(() => {
-    return workerManager.isInitialized;
-  }, []);
-
-  return {
-    initialize,
-    terminate,
-    isInitialized,
-    processGeoJSON,
-    processFlowData,
-    processSpatialData,
-    generateCSV,
-    calculateStatistics,
-    processClusters,
-    processShocks,
-    processTimeSeries,
-    subscribeToProgress,
-    subscribeToCompletion,
-    subscribeToError
-  };
+// Export the worker manager instance and initialization function
+export const workerManager = new WorkerManager();
+export const initializeWorkerManager = async () => {
+if (!workerManager.isInitialized) {
+  await workerManager.initialize();
+}
 };

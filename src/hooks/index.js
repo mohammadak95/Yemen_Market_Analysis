@@ -1,7 +1,6 @@
 // src/hooks/index.js
 
 // Import hooks from their respective files
-import { useSpatialAnalysis } from './useSpatialAnalysis';
 import {
   useData,
   useECMData,
@@ -23,13 +22,14 @@ import {
   useWorkerProcessor
 } from './uiHooks';
 
-// Export hooks with aliases where needed
-export const useSpatialDataOptimized = useSpatialAnalysis; // Alias for backward compatibility
+// Import and alias useSpatialData for backward compatibility
+import useSpatialData from './useSpatialData';
+
+// Export useSpatialData under a backward-compatible alias
+export const useSpatialDataOptimized = useSpatialData; // Alias for backward compatibility
 
 // Export all other hooks
 export {
-  // Spatial Analysis
-  useSpatialAnalysis,
 
   // Data Analysis
   useData,
@@ -47,5 +47,9 @@ export {
   useWindowSize,
   useBodyScrollLock,
   useTechnicalHelp,
-  useWorkerProcessor
+  useWorkerProcessor,
+
+  // Spatial Data (Primary export)
+  useSpatialData,
+
 };

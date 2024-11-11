@@ -1,0 +1,19 @@
+{
+  "timestamp": "2024-11-10T18:12:53.697Z",
+  "error": {
+    "message": "this.normalizeDate is not a function",
+    "stack": "TypeError: this.normalizeDate is not a function\n    at /Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis/scripts/preprocessing/enhancedSpatialPreprocessor.js:1644:20\n    at Array.map (<anonymous>)\n    at EnhancedSpatialPreprocessor.normalizeFlowsData (/Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis/scripts/preprocessing/enhancedSpatialPreprocessor.js:1627:22)\n    at /Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis/scripts/preprocessing/enhancedSpatialPreprocessor.js:1753:19\n    at async EnhancedSpatialPreprocessor.safeFileOperation (/Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis/scripts/preprocessing/enhancedSpatialPreprocessor.js:1789:14)\n    at async FileOperationQueue.processQueue (/Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis/scripts/preprocessing/enhancedSpatialPreprocessor.js:2426:22)"
+  },
+  "system": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "nodeVersion": "v20.17.0",
+    "memory": {
+      "rss": 72286208,
+      "heapTotal": 31096832,
+      "heapUsed": 18101048,
+      "external": 4999979,
+      "arrayBuffers": 3232040
+    }
+  }
+}

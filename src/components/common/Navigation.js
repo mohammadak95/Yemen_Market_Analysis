@@ -27,7 +27,10 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
-import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
+import { 
+  fetchSpatialData, 
+  selectSpatialViewData as selectSpatialData // Alias for backward compatibility
+} from '../../slices/spatialSlice';
 
 // Utility function to capitalize words
 const capitalizeWords = (str) => {
@@ -75,6 +78,7 @@ NavigationItem.propTypes = {
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   const dispatch = useDispatch();
   const { uniqueMonths } = useSelector(selectSpatialData);
+  
 
   const handleCommoditySelect = useCallback(
     (commodity) => {
@@ -249,7 +253,7 @@ export const Sidebar = ({
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useDispatch();
-  const { geoData, flows, analysis, uniqueMonths } = useSelector(selectSpatialData);
+  const { uniqueMonths } = useSelector(selectSpatialData);
 
   const handleAnalysisChange = useCallback(
     (analysisType) => {
@@ -418,3 +422,5 @@ Sidebar.propTypes = {
   onOpenWelcomeModal: PropTypes.func.isRequired,
   handleDrawerToggle: PropTypes.func.isRequired,
 };
+
+export default Sidebar;

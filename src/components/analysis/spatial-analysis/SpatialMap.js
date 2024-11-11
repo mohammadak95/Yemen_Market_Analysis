@@ -26,32 +26,33 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
 import L from 'leaflet';
-import MarkerClusterGroup from 'react-leaflet-markercluster'; // Assuming this library is installed
+import MarkerClusterGroup from 'react-leaflet-markercluster';
+import debounce from 'lodash/debounce';
 
-// Constants
+// Constants moved to component scope for immediate initialization
 const DEFAULT_CENTER = [15.3694, 44.191];
 const DEFAULT_ZOOM = 6;
 const MIN_ZOOM = 5;
 const MAX_ZOOM = 10;
 
-// Custom Map Controls Component
-const MapControls = ({ position, onZoomIn, onZoomOut, onReset }) => {
+// Map Controls Component
+const MapControls = ({ position = 'topleft', onZoomIn, onZoomOut, onReset }) => {
   const map = useMap();
 
-  const handleZoomIn = () => {
-    map.setZoom(map.getZoom() + 1);
+  const handleZoomIn = useCallback(() => {
+    map.setZoom(Math.min(map.getZoom() + 1, MAX_ZOOM));
     onZoomIn?.();
-  };
+  }, [map, onZoomIn]);
 
-  const handleZoomOut = () => {
-    map.setZoom(map.getZoom() - 1);
+  const handleZoomOut = useCallback(() => {
+    map.setZoom(Math.max(map.getZoom() - 1, MIN_ZOOM));
     onZoomOut?.();
-  };
+  }, [map, onZoomOut]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
     onReset?.();
-  };
+  }, [map, onReset]);
 
   return (
     <Paper
@@ -77,17 +78,12 @@ const MapControls = ({ position, onZoomIn, onZoomOut, onReset }) => {
   );
 };
 
-MapControls.propTypes = {
-  position: PropTypes.string,
-  onZoomIn: PropTypes.func,
-  onZoomOut: PropTypes.func,
-  onReset: PropTypes.func
-};
-
 // Flow Lines Component
 const FlowLines = React.memo(({ flows, getFlowStyle }) => {
+  if (!flows?.length) return null;
+
   return flows.map((flow, idx) => {
-    if (!flow.source_lat || !flow.source_lng || !flow.target_lat || !flow.target_lng) {
+    if (!flow?.source_lat || !flow?.source_lng || !flow?.target_lat || !flow?.target_lng) {
       return null;
     }
 
@@ -104,74 +100,12 @@ const FlowLines = React.memo(({ flows, getFlowStyle }) => {
         pathOptions={style}
       >
         <LeafletTooltip sticky>
-          <div>
-            <strong>{flow.source} → {flow.target}</strong><br/>
-            Flow Weight: {flow.flow_weight?.toFixed(2) || 'N/A'}<br/>
-            Price Differential: {flow.price_differential?.toFixed(2) || 'N/A'}%
-          </div>
+          {`${flow.source} → ${flow.target}\nFlow: ${flow.flow_weight?.toFixed(2) || 'N/A'}`}
         </LeafletTooltip>
       </Polyline>
     );
   });
 });
-
-FlowLines.propTypes = {
-  flows: PropTypes.array.isRequired,
-  getFlowStyle: PropTypes.func.isRequired
-};
-
-// Market Clusters Component
-const MarketClusters = React.memo(({ clusters, getClusterStyle }) => {
-  return clusters.map((cluster, idx) => (
-    <CircleMarker
-      key={`cluster-${idx}`}
-      center={[cluster.lat, cluster.lng]}
-      radius={Math.sqrt(cluster.size) * 5}
-      {...getClusterStyle(cluster)}
-    >
-      <LeafletTooltip>
-        <div>
-          <strong>Market Cluster {index + 1}</strong><br/>
-          Size: {cluster.size} markets<br/>
-          Main Market: {cluster.mainMarket}<br/>
-          Average Flow: {cluster.avgFlow?.toFixed(2)}
-        </div>
-      </LeafletTooltip>
-    </CircleMarker>
-  ));
-});
-
-MarketClusters.propTypes = {
-  clusters: PropTypes.array.isRequired,
-  getClusterStyle: PropTypes.func.isRequired
-};
-
-// Market Shocks Component
-const MarketShocks = React.memo(({ shocks, getShockStyle }) => {
-  return shocks.map((shock, idx) => (
-    <CircleMarker
-      key={`shock-${idx}`}
-      center={[shock.lat, shock.lng]}
-      radius={10 * shock.magnitude}
-      {...getShockStyle(shock)}
-    >
-      <LeafletTooltip>
-        <div>
-          <strong>Market Shock</strong><br/>
-          Region: {shock.region}<br/>
-          Type: {shock.type}<br/>
-          Magnitude: {(shock.magnitude * 100).toFixed(1)}%<br/>
-          Severity: {shock.severity}
-        </div>
-      </LeafletTooltip>
-    </CircleMarker>
-  ));
-});
-
-MarketShocks.propTypes = {
-  shocks: PropTypes.array.isRequired,
-  getShockStyle: PropTypes.func.isRequired
-};
 
 const SpatialMap = ({
   geoData,
@@ -181,7 +115,6 @@ const SpatialMap = ({
   availableMonths = [],
   spatialWeights = {},
   showFlows = true,
-  onToggleFlows,
   analysisResults = null,
   selectedCommodity,
   marketClusters = [],
@@ -194,9 +127,17 @@ const SpatialMap = ({
   const mapRef = useRef(null);
   const geoJsonRef = useRef(null);
 
-  // Style generators
+  // Style generators with proper initialization checks
   const getRegionStyle = useCallback((feature) => {
-    if (!feature?.properties) return {};
+    if (!feature?.properties) {
+      return {
+        fillColor: theme.palette.grey[300],
+        weight: 1,
+        opacity: 1,
+        color: theme.palette.divider,
+        fillOpacity: 0.7
+      };
+    }
 
     const baseStyle = {
       fillOpacity: 0.7,
@@ -207,7 +148,7 @@ const SpatialMap = ({
     };
 
     try {
-      const color = colorScales.getColor(feature);
+      const color = colorScales?.getColor?.(feature) || theme.palette.grey[300];
       return {
         ...baseStyle,
         fillColor: color
@@ -219,13 +160,14 @@ const SpatialMap = ({
   }, [colorScales, theme]);
 
   const getFlowStyle = useCallback((flow) => {
+    if (!flow) return null;
+
     const baseStyle = {
       weight: Math.max(1, Math.min(5, flow.flow_weight / 10)),
       opacity: 0.6,
       dashArray: null
     };
 
-    // Style based on visualization mode
     switch (visualizationMode) {
       case 'market_integration':
         return {
@@ -259,24 +201,9 @@ const SpatialMap = ({
     }
   }, [visualizationMode, marketClusters, detectedShocks, theme]);
 
-  // Shock style generator
-  const getShockStyle = useCallback((shock) => ({
-    color: shock.severity === 'high' ? 'red' : 'orange',
-    fillColor: shock.severity === 'high' ? 'red' : 'orange',
-    fillOpacity: 0.8,
-    radius: 8
-  }), []);
-
-  // Cluster style generator
-  const getClusterStyle = useCallback((cluster) => ({
-    color: 'blue',
-    fillColor: 'blue',
-    fillOpacity: 0.6,
-    radius: Math.sqrt(cluster.size) * 5
-  }), []);
-
-  // Event handlers
   const onEachFeature = useCallback((feature, layer) => {
+    if (!feature?.properties) return;
+
     layer.on({
       mouseover: (e) => {
         const layer = e.target;
@@ -297,42 +224,29 @@ const SpatialMap = ({
       }
     });
 
-    // Bind tooltip
     const tooltipContent = `
-      <strong>${feature.properties.region || feature.properties.region_id}</strong><br/>
-      Price: ${feature.properties.price?.toFixed(2) || 'N/A'} ${analysisResults?.units || ''}<br/>
-      ${visualizationMode === 'market_integration' ? 
-        `Residual: ${feature.properties.residual?.toFixed(3) || 'N/A'}<br/>` : ''}
-      Connections: ${spatialWeights[feature.properties.region_id]?.neighbors?.length || 0}
+      <strong>${feature.properties.region || feature.properties.region_id || 'Unknown Region'}</strong>
+      ${feature.properties.price ? `<br/>Price: ${feature.properties.price.toFixed(2)} ${analysisResults?.units || ''}` : ''}
+      ${visualizationMode === 'market_integration' && feature.properties.residual ? 
+        `<br/>Residual: ${feature.properties.residual.toFixed(3)}` : ''}
+      <br/>Connections: ${spatialWeights[feature.properties.region_id]?.neighbors?.length || 0}
     `;
     layer.bindTooltip(tooltipContent, { sticky: true });
   }, [getRegionStyle, onRegionSelect, analysisResults, visualizationMode, spatialWeights]);
 
-  // Map initialization and updates
-  useEffect(() => {
-    if (mapRef.current && geoJsonRef.current) {
-      geoJsonRef.current.clearLayers();
-      if (geoData) {
+  // Debounced map update
+  const debouncedMapUpdate = useMemo(() => 
+    debounce(() => {
+      if (mapRef.current && geoJsonRef.current && geoData) {
+        geoJsonRef.current.clearLayers();
         L.geoJSON(geoData, {
           style: getRegionStyle,
           onEachFeature
         }).addTo(geoJsonRef.current);
       }
-    }
-  }, [geoData, getRegionStyle, onEachFeature]);
-
-  // Debounced map update to prevent excessive re-renders
-  const debouncedMapUpdate = useMemo(() => debounce(() => {
-    if (mapRef.current && geoJsonRef.current) {
-      geoJsonRef.current.clearLayers();
-      if (geoData) {
-        L.geoJSON(geoData, {
-          style: getRegionStyle,
-          onEachFeature
-        }).addTo(geoJsonRef.current);
-      }
-    }
-  }, 300), [geoData, getRegionStyle, onEachFeature]);
+    }, 300),
+    [geoData, getRegionStyle, onEachFeature]
+  );
 
   useEffect(() => {
     debouncedMapUpdate();
@@ -340,6 +254,14 @@ const SpatialMap = ({
       debouncedMapUpdate.cancel();
     };
   }, [debouncedMapUpdate]);
+
+  if (!geoData) {
+    return (
+      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography>No spatial data available</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ height: '100%', position: 'relative' }}>
@@ -351,13 +273,11 @@ const SpatialMap = ({
         style={{ height: '100%', width: '100%' }}
         ref={mapRef}
       >
-        {/* Base Layer */}
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; OpenStreetMap contributors'
         />
 
-        {/* GeoJSON Layer */}
         <GeoJSON
           ref={geoJsonRef}
           data={geoData}
@@ -365,7 +285,6 @@ const SpatialMap = ({
           onEachFeature={onEachFeature}
         />
 
-        {/* Flow Lines with Marker Clustering */}
         {showFlows && (
           <MarkerClusterGroup>
             <FlowLines 
@@ -375,23 +294,6 @@ const SpatialMap = ({
           </MarkerClusterGroup>
         )}
 
-        {/* Market Clusters */}
-        {visualizationMode === 'clusters' && (
-          <MarketClusters 
-            clusters={marketClusters}
-            getClusterStyle={getClusterStyle}
-          />
-        )}
-
-        {/* Market Shocks */}
-        {visualizationMode === 'shocks' && (
-          <MarketShocks 
-            shocks={detectedShocks}
-            getShockStyle={getShockStyle}
-          />
-        )}
-
-        {/* Controls */}
         <MapControls position="topleft" />
         <ScaleControl position="bottomleft" />
       </MapContainer>
@@ -402,18 +304,17 @@ const SpatialMap = ({
 SpatialMap.propTypes = {
   geoData: PropTypes.object,
   flowMaps: PropTypes.array,
-  selectedMonth: PropTypes.string.isRequired,
+  selectedMonth: PropTypes.string,
   onMonthChange: PropTypes.func,
   availableMonths: PropTypes.arrayOf(PropTypes.string),
   spatialWeights: PropTypes.object,
   showFlows: PropTypes.bool,
-  onToggleFlows: PropTypes.func,
   analysisResults: PropTypes.object,
   selectedCommodity: PropTypes.string,
   marketClusters: PropTypes.array,
   detectedShocks: PropTypes.array,
-  visualizationMode: PropTypes.string.isRequired,
-  colorScales: PropTypes.object.isRequired,
+  visualizationMode: PropTypes.string,
+  colorScales: PropTypes.object,
   onRegionSelect: PropTypes.func
 };
 
