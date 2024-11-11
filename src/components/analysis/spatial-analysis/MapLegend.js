@@ -1,3 +1,5 @@
+// src/components/analysis/spatial-analysis/MapLegend.js
+
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -9,17 +11,15 @@ import {
   Divider,
   Collapse,
   Stack,
-  useTheme
+  useTheme,
 } from '@mui/material';
 import {
   Info,
   ExpandMore,
   ExpandLess,
-  Circle,
   TrendingUp,
-  Warning
+  Warning,
 } from '@mui/icons-material';
-import { interpolateRgb } from 'd3-interpolate';
 
 const MapLegend = ({
   title,
@@ -31,35 +31,28 @@ const MapLegend = ({
   statistics = null,
   domain = null,
   mode = 'continuous',
-  categories = null
+  categories = null,
 }) => {
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = useState(true);
 
   const legendData = useMemo(() => {
-    // Define the color scale domain based on provided domain or statistics data
-    let computedDomain;
-    
     if (mode === 'categorical' && categories) {
-      // Set domain based on categorical categories
-      return categories.map(category => ({
+      return categories.map((category) => ({
         label: category.label,
-        color: category.color
+        color: category.color,
       }));
     } else {
-      // Continuous scale: Calculate domain based on provided statistics or custom domain
-      computedDomain = domain || [
-        statistics?.min || 0,
-        statistics?.max || 1
-      ];
-
-      // Calculate range and step size for gradient scale
+      const computedDomain =
+        domain || [statistics?.min || 0, statistics?.max || 1];
       const range = computedDomain[1] - computedDomain[0];
       const stepSize = range / (steps - 1);
 
       return Array.from({ length: steps }, (_, i) => ({
         value: computedDomain[0] + stepSize * i,
-        color: colorScale(computedDomain[0] + stepSize * i)
+        color: colorScale(
+          (computedDomain[0] + stepSize * i - computedDomain[0]) / range
+        ),
       }));
     }
   }, [colorScale, steps, mode, categories, domain, statistics]);
@@ -89,7 +82,14 @@ const MapLegend = ({
       }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 1,
+        }}
+      >
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="subtitle2">{title}</Typography>
           {description && (
@@ -98,8 +98,8 @@ const MapLegend = ({
             </Tooltip>
           )}
         </Stack>
-        <IconButton 
-          size="small" 
+        <IconButton
+          size="small"
           onClick={() => setIsExpanded(!isExpanded)}
           sx={{ p: 0.5 }}
         >
@@ -137,7 +137,13 @@ const MapLegend = ({
                 </Tooltip>
               ))}
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                mt: 0.5,
+              }}
+            >
               <Typography variant="caption">
                 {formatValue(legendData[0].value)}
                 {unit}
@@ -156,7 +162,7 @@ const MapLegend = ({
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1
+                  gap: 1,
                 }}
               >
                 <Box
@@ -164,12 +170,10 @@ const MapLegend = ({
                     width: 16,
                     height: 16,
                     backgroundColor: category.color,
-                    borderRadius: '50%'
+                    borderRadius: '50%',
                   }}
                 />
-                <Typography variant="caption">
-                  {category.label}
-                </Typography>
+                <Typography variant="caption">{category.label}</Typography>
               </Box>
             ))}
           </Stack>
@@ -186,27 +190,39 @@ const MapLegend = ({
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
                   }}
                 >
                   <Typography variant="caption" color="text.secondary">
                     {key}:
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                    }}
+                  >
                     {typeof value === 'number' && (
                       <Box
                         component="span"
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          color: value > 0 ? 'success.main' : 'error.main'
+                          color: value > 0 ? 'success.main' : 'error.main',
                         }}
                       >
-                        {value > 0 ? <TrendingUp fontSize="small" /> : <Warning fontSize="small" />}
+                        {value > 0 ? (
+                          <TrendingUp fontSize="small" />
+                        ) : (
+                          <Warning fontSize="small" />
+                        )}
                       </Box>
                     )}
                     <Typography variant="caption">
-                      {typeof value === 'number' ? formatValue(value) + unit : value}
+                      {typeof value === 'number'
+                        ? formatValue(value) + unit
+                        : value}
                     </Typography>
                   </Box>
                 </Box>
@@ -229,11 +245,13 @@ MapLegend.propTypes = {
   statistics: PropTypes.object,
   domain: PropTypes.arrayOf(PropTypes.number),
   mode: PropTypes.oneOf(['continuous', 'categorical']),
-  categories: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    color: PropTypes.string.isRequired,
-    value: PropTypes.any
-  }))
+  categories: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      color: PropTypes.string.isRequired,
+      value: PropTypes.any,
+    })
+  ),
 };
 
 export default React.memo(MapLegend);

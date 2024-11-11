@@ -1,6 +1,6 @@
 // src/components/common/Navigation.js
 
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import {
@@ -18,7 +18,6 @@ import {
   MenuItem,
   Checkbox,
   ListItemText,
-  Typography,
   List,
   ListItemIcon,
   ListItem,
@@ -27,9 +26,10 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
-import { 
-  fetchSpatialData, 
-  selectSpatialViewData as selectSpatialData // Alias for backward compatibility
+import {
+  fetchSpatialData,
+  selectSpatialData,
+  setSelectedDate,
 } from '../../slices/spatialSlice';
 
 // Utility function to capitalize words
@@ -78,27 +78,27 @@ NavigationItem.propTypes = {
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   const dispatch = useDispatch();
   const { uniqueMonths } = useSelector(selectSpatialData);
-  
 
   const handleCommoditySelect = useCallback(
     (commodity) => {
       if (commodity) {
-        const lowercaseCommodity = commodity.toLowerCase(); // Convert to lowercase
-        
-        // Dispatch without selectedDate if uniqueMonths is empty
-        const payload = {
-          selectedCommodity: lowercaseCommodity,
-        };
-        if (uniqueMonths?.length) {
-          payload.selectedDate = uniqueMonths[0];
-        }
+        const lowercaseCommodity = commodity.toLowerCase(); // Ensure lowercase
 
-        dispatch(fetchSpatialData(payload));
-        onSelectCommodity(lowercaseCommodity); // Pass lowercase commodity to the callback
+        // Dispatch action to fetch data with lowercase commodity name
+        dispatch(fetchSpatialData({ selectedCommodity: lowercaseCommodity }));
+
+        // Pass the lowercase commodity to the parent callback
+        onSelectCommodity(lowercaseCommodity);
       }
     },
-    [dispatch, uniqueMonths, onSelectCommodity]
+    [dispatch, onSelectCommodity]
   );
+
+  useEffect(() => {
+    if (uniqueMonths && uniqueMonths.length > 0) {
+      dispatch(setSelectedDate(uniqueMonths[0]));
+    }
+  }, [uniqueMonths, dispatch]);
 
   return (
     <FormControl fullWidth variant="outlined" size="small" margin="normal">
@@ -255,6 +255,20 @@ export const Sidebar = ({
   const dispatch = useDispatch();
   const { uniqueMonths } = useSelector(selectSpatialData);
 
+  const handleCommoditySelect = useCallback(
+    (commodity) => {
+      if (commodity) {
+        const lowercaseCommodity = commodity.toLowerCase(); // Ensure lowercase
+
+        dispatch(fetchSpatialData({ selectedCommodity: lowercaseCommodity }));
+
+        // After data is fetched, uniqueMonths will be populated
+        setSelectedCommodity(lowercaseCommodity);
+      }
+    },
+    [dispatch, setSelectedCommodity]
+  );
+
   const handleAnalysisChange = useCallback(
     (analysisType) => {
       setSelectedAnalysis(analysisType);
@@ -262,14 +276,17 @@ export const Sidebar = ({
         setSidebarOpen(false);
       }
 
-      // If spatial analysis is selected, fetch data if we have a commodity
       if (analysisType === 'spatial' && selectedCommodity) {
-        dispatch(
-          fetchSpatialData({
-            selectedCommodity,
-            selectedDate: uniqueMonths[0],
-          })
-        );
+        if (uniqueMonths && uniqueMonths.length > 0) {
+          dispatch(
+            fetchSpatialData({
+              selectedCommodity,
+              selectedDate: uniqueMonths[0],
+            })
+          );
+        } else {
+          dispatch(fetchSpatialData({ selectedCommodity }));
+        }
       }
     },
     [setSelectedAnalysis, isSmUp, setSidebarOpen, dispatch, selectedCommodity, uniqueMonths]
@@ -289,7 +306,7 @@ export const Sidebar = ({
           <CommoditySelector
             commodities={commodities}
             selectedCommodity={selectedCommodity}
-            onSelectCommodity={setSelectedCommodity} // Ensure this receives the lowercase value
+            onSelectCommodity={handleCommoditySelect}
           />
 
           <RegimeSelector
@@ -368,7 +385,7 @@ export const Sidebar = ({
     [
       commodities,
       selectedCommodity,
-      setSelectedCommodity,
+      handleCommoditySelect,
       regimes,
       selectedRegimes,
       handleRegimesSelect,

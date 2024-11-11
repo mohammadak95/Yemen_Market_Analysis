@@ -4,7 +4,7 @@ import Papa from 'papaparse';
 import { parseISO, isValid } from 'date-fns';
 import LZString from 'lz-string';
 import proj4 from 'proj4';
-import { workerManager } from '../workers/enhancedWorkerSystem';
+import { workerSystem } from '../workers/enhancedWorkerSystem';
 import { backgroundMonitor } from './backgroundMonitor';
 
 // Constants
@@ -46,19 +46,21 @@ class SpatialDataManager {
     this.pendingRequests = new Map();
     this.geometryCache = new Map();
     this.currentCacheSize = 0;
-    this.worker = workerManager;
-    this.monitor = backgroundMonitor;
     this.isInitialized = false;
+    this.monitor = backgroundMonitor;
 
     // Initialize cleanup interval
     setInterval(() => this.cleanupCache(), 5 * 60 * 1000); // Run every 5 minutes
   }
 
+  /**
+   * Initialize the SpatialDataManager
+   */
   async initialize() {
     if (this.isInitialized) return;
 
     try {
-      await this.worker.initialize();
+      await workerSystem.initialize();
       this.monitor.init();
       this.isInitialized = true;
       console.log('SpatialDataManager initialized successfully');
@@ -69,7 +71,9 @@ class SpatialDataManager {
     }
   }
 
-  // Main data processing method
+  /**
+   * Process spatial data for a selected commodity and date
+   */
   async processSpatialData(selectedCommodity, selectedDate, options = {}) {
     const metric = this.monitor.startMetric('process-spatial-data');
     const cacheKey = `spatial_${selectedCommodity}_${selectedDate}`;
@@ -108,42 +112,54 @@ class SpatialDataManager {
     }
   }
 
-  // Data processing with retry logic
+  /**
+   * Process data with retry logic
+   */
   async processDataWithRetry(selectedCommodity, selectedDate, options, attempt = 0) {
     try {
       const paths = this.getDataPaths();
       const rawData = await this.fetchDataSources(paths);
-      
-      // Process data using worker
-      const processedData = await this.worker.processData('PROCESS_SPATIAL', {
-        geoData: rawData.unifiedData,
+  
+      // Filter data for the selected commodity
+      const filteredFeatures = rawData.unifiedData.features.filter(
+        (feature) => feature.properties.commodity === selectedCommodity
+      );
+  
+      // Update the unifiedData to contain only filtered features
+      rawData.unifiedData.features = filteredFeatures;
+  
+      // Process data using worker system
+      const processedData = await workerSystem.processData('PROCESS_SPATIAL', {
+        geoData: filteredFeatures,
         flows: rawData.flowMapsData,
         weights: rawData.weightsData,
         selectedCommodity,
-        selectedDate
-      });
-
+        selectedDate,
+      }, options.onProgress);
+  
+      // Return the structured data with geoData property
       return {
-        ...processedData,
+        geoData: {
+          type: 'FeatureCollection',
+          features: processedData,
+        },
         analysis: rawData.analysisResultsData,
-        flowMaps: this.processFlowData(rawData.flowMapsData, selectedCommodity, selectedDate)
+        flowMaps: this.processFlowData(rawData.flowMapsData, selectedCommodity, selectedDate),
       };
     } catch (error) {
       if (attempt < RETRY_ATTEMPTS) {
         const delay = RETRY_DELAY * Math.pow(2, attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return this.processDataWithRetry(
-          selectedCommodity,
-          selectedDate,
-          options,
-          attempt + 1
-        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return this.processDataWithRetry(selectedCommodity, selectedDate, options, attempt + 1);
       }
       throw error;
     }
   }
+  
 
-  // Fetch all required data sources
+  /**
+   * Fetch all required data sources
+   */
   async fetchDataSources(paths) {
     const [
       geoBoundariesData,
@@ -168,33 +184,52 @@ class SpatialDataManager {
     };
   }
 
-  // Fetch with retry logic
+  /**
+   * Fetch with retry logic
+   */
   async fetchWithRetry(url, isCsv = false, attempt = 0) {
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      if (isCsv) {
-        const text = await response.text();
-        return Papa.parse(text, {
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true
-        }).data;
+  
+      const text = await response.text();
+      if (!text) {
+        throw new Error(`Empty response body for URL: ${url}`);
       }
-
-      return await response.json();
+  
+      if (isCsv) {
+        try {
+          return Papa.parse(text, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+          }).data;
+        } catch (parseError) {
+          console.error(`CSV parsing error for ${url}:`, parseError);
+          throw parseError;
+        }
+      } else {
+        try {
+          return JSON.parse(text);
+        } catch (parseError) {
+          console.error(`JSON parsing error for ${url}:`, parseError);
+          throw parseError;
+        }
+      }
     } catch (error) {
       if (attempt < RETRY_ATTEMPTS) {
         const delay = RETRY_DELAY * Math.pow(2, attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         return this.fetchWithRetry(url, isCsv, attempt + 1);
       }
       throw error;
     }
   }
+  
 
-  // Process flow data
+  /**
+   * Process flow data
+   */
   processFlowData(flowMapsData, selectedCommodity, selectedDate) {
     return flowMapsData
       .filter(flow =>
@@ -214,7 +249,9 @@ class SpatialDataManager {
       }));
   }
 
-  // Cache management methods
+  /**
+   * Cache management methods
+   */
   getCachedData(key) {
     const cached = this.cache.get(key);
     if (!cached) return null;
@@ -254,7 +291,9 @@ class SpatialDataManager {
     this.currentCacheSize += dataSize;
   }
 
-  // Utility methods
+  /**
+   * Normalize region names
+   */
   normalizeRegionName(name) {
     if (!name) return '';
 
@@ -269,6 +308,9 @@ class SpatialDataManager {
     return REGION_MAPPING[normalized] || normalized;
   }
 
+  /**
+   * Get data paths based on environment
+   */
   getDataPaths() {
     const PUBLIC_URL = process.env.PUBLIC_URL || '';
     const isGitHubPages = PUBLIC_URL.includes('github.io');
@@ -283,11 +325,16 @@ class SpatialDataManager {
     };
   }
 
+  /**
+   * Calculate data size
+   */
   getDataSize(data) {
     return new Blob([JSON.stringify(data)]).size;
   }
 
-  // Coordinate transformation with caching
+  /**
+   * Transform coordinates with caching
+   */
   transformCoordinates(coordinates, fromProjection = 'UTM38N') {
     const key = `${coordinates.join(',')}_${fromProjection}`;
     
@@ -298,7 +345,7 @@ class SpatialDataManager {
     try {
       const transformed = proj4(fromProjection, WGS84, coordinates);
       
-      if (this.geometryCache.size >= 1000) { // Limit geometry cache size
+      if (this.geometryCache.size >= 1000) {
         const firstKey = this.geometryCache.keys().next().value;
         this.geometryCache.delete(firstKey);
       }
@@ -307,11 +354,13 @@ class SpatialDataManager {
       return transformed;
     } catch (error) {
       console.error('Coordinate transformation error:', error);
-      return coordinates; // Return original coordinates as fallback
+      return coordinates;
     }
   }
 
-  // Cache maintenance
+  /**
+   * Clean up expired cache entries
+   */
   cleanupCache() {
     const now = Date.now();
     for (const [key, value] of this.cache.entries()) {
@@ -322,7 +371,21 @@ class SpatialDataManager {
     }
   }
 
-  // Cleanup method
+  /**
+   * Get current cache statistics
+   */
+  getCacheStats() {
+    return {
+      size: this.currentCacheSize,
+      entries: this.cache.size,
+      geometryEntries: this.geometryCache.size,
+      pendingRequests: this.pendingRequests.size
+    };
+  }
+
+  /**
+   * Clean up and destroy manager
+   */
   destroy() {
     this.cache.clear();
     this.pendingRequests.clear();

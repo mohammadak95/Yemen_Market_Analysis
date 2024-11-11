@@ -15,23 +15,6 @@ const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const isGitHubPages = PUBLIC_URL.includes('github.io');
 
 // ==========================
-// Projection Definitions
-// ==========================
-const EPSG_2085 = 'EPSG:2085';
-const EPSG_2098 = 'EPSG:2098';
-const WGS84 = 'EPSG:4326';
-
-proj4.defs(
-  EPSG_2085,
-  '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass ' +
-    '+towgs84=-76,-138,67,0,0,0,0 +units=m +no_defs'
-);
-proj4.defs(
-  EPSG_2098,
-  '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass +units=m +no_defs'
-);
-
-// ==========================
 // Region Mapping
 // ==========================
 
@@ -75,110 +58,6 @@ const excludedRegions = [
   'sa\'dah_governorate', // Example: Add the exact normalized region IDs
   // Add other regions as needed
 ];
-
-// ==========================
-// Coordinate Transformation Functions
-// ==========================
-
-/**
- * Transforms coordinates from a source EPSG to WGS84.
- *
- * @param {number} x - The x-coordinate.
- * @param {number} y - The y-coordinate.
- * @param {string} sourceEPSG - The source EPSG code.
- * @returns {[number, number]} - The transformed [longitude, latitude] in WGS84.
- * @throws Will throw an error if the source projection is unsupported or transformation fails.
- */
-export const transformToWGS84 = (x, y, sourceEPSG = EPSG_2085) => {
-  if (typeof x !== 'number' || typeof y !== 'number') {
-    throw new Error('Invalid coordinates: x and y must be numbers');
-  }
-
-  try {
-    if (sourceEPSG === WGS84) {
-      return [y, x]; // Already in WGS84 [lat, lng]
-    }
-    return proj4(sourceEPSG, WGS84, [x, y]);
-  } catch (error) {
-    console.error(`Error transforming from ${sourceEPSG}: ${error.message}`);
-    throw error;
-  }
-};
-
-/**
- * Validates latitude and longitude coordinates.
- *
- * @param {number|string} lat - The latitude value.
- * @param {number|string} lng - The longitude value.
- * @returns {[number, number]|null} - Returns [latitude, longitude] if valid, otherwise null.
- */
-export const validateCoordinates = (lat, lng) => {
-  const validLat = parseFloat(lat);
-  const validLng = parseFloat(lng);
-  if (
-    isNaN(validLat) ||
-    isNaN(validLng) ||
-    validLat < -90 ||
-    validLat > 90 ||
-    validLng < -180 ||
-    validLng > 180
-  ) {
-    console.warn(`Invalid coordinates received: lat=${lat}, lng=${lng}`);
-    return null;
-  }
-  return [validLat, validLng];
-};
-
-// ==========================
-// Data Path Utilities
-// ==========================
-/**
- * Constructs the data path based on the environment.
- *
- * @param {string} fileName - The relative file name.
- * @returns {string} - The constructed data path.
- */
-export const getDataPath = (fileName) => {
-  const cleanFileName = fileName.replace(/^\/+/, '').replace(/^results\//, '');
-  const basePath = isGitHubPages ? PUBLIC_URL : '';
-  return `${basePath}/results/${cleanFileName}`;
-};
-
-// ==========================
-// Fetch JSON Data
-// ==========================
-/**
- * Fetches JSON data from a given relative URL.
- *
- * @param {string} relativeUrl - The relative URL to fetch.
- * @returns {Promise<Object>} - The fetched JSON data.
- * @throws Will throw an error if the fetch fails or the response is not JSON.
- */
-export const fetchJson = async (relativeUrl) => {
-  const url = getDataPath(relativeUrl);
-  try {
-    const response = await fetch(url, {
-      headers: { Accept: 'application/json' },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status} while fetching ${url}`);
-    }
-
-    const contentType = response.headers.get('content-type');
-    if (
-      !contentType ||
-      (!contentType.includes('application/json') && !contentType.includes('application/geo+json'))
-    ) {
-      throw new Error(`Expected JSON, but received ${contentType} from ${url}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching JSON from ${relativeUrl}: ${error.message}`);
-    throw error;
-  }
-};
 
 // ==========================
 // JSON to CSV Conversion
@@ -400,19 +279,6 @@ const getRegionId = (properties) => {
   return null;
 };
 
-/**
- * Processes properties of an enhanced feature.
- *
- * @param {Object} properties - The properties to process.
- * @returns {Object} - The processed properties.
- */
-const processProperties = (properties) => {
-  // Implement the logic to process properties here
-  // For example, ensure necessary fields are present and normalized
-  // This is a placeholder implementation
-  return properties;
-};
-
 // ==========================
 // Merge Spatial Data with Mapping
 // ==========================
@@ -525,21 +391,6 @@ export const mergeSpatialDataWithMapping = (geoBoundariesData, enhancedData) => 
   };
 };
 
-// ==========================
-// String Utilities
-// ==========================
-
-/**
- * Capitalizes the first letter of each word in a string.
- *
- * @param {string} str - The input string.
- * @returns {string} - The capitalized string.
- */
-export const capitalizeWords = (str) => {
-  if (!str || typeof str !== 'string') return '';
-  return str.replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
 /**
  * Parses and validates a date string.
  *
@@ -562,89 +413,6 @@ export const formatMonthYear = (date) => {
   if (!(date instanceof Date) || !isValidDate(date)) return '';
   return formatDate(date, 'MMM yyyy');
 };
-
-/**
- * Merges two arrays of objects based on a common key.
- *
- * @param {Array<Object>} array1 - The first array of objects.
- * @param {Array<Object>} array2 - The second array of objects.
- * @param {string} key1 - The key in the first array to match.
- * @param {string} key2 - The key in the second array to match.
- * @returns {Array<Object>} - The merged array of objects.
- */
-export const mergeArraysByKey = (array1, array2, key1, key2) => {
-  if (!Array.isArray(array1) || !Array.isArray(array2)) {
-    console.warn('mergeArraysByKey received non-array arguments');
-    return [];
-  }
-
-  const map2 = new Map();
-  array2.forEach((item) => {
-    if (item[key2] !== undefined) {
-      map2.set(item[key2], item);
-    }
-  });
-
-  return array1.map((item) => {
-    const match = map2.get(item[key1]);
-    return match ? { ...item, ...match } : item;
-  });
-};
-
-/**
- * Merges residuals into GeoJSON data by matching regions and dates.
- *
- * @param {Object} geoJsonData - The GeoJSON data containing region geometries.
- * @param {Object} residualsData - The residuals data to merge, keyed by region and date.
- * @returns {Object} - The GeoJSON data with residuals merged into the properties.
- */
-export const mergeResidualsIntoGeoData = (geoJsonData, residualsData) => {
-  if (!geoJsonData || !residualsData) {
-    console.warn('mergeResidualsIntoGeoData received invalid arguments');
-    return geoJsonData;
-  }
-
-  geoJsonData.features.forEach((feature) => {
-    const region =
-      feature.properties.region_id ||
-      (feature.properties.ADM1_EN
-        ? normalizeRegionId(feature.properties.ADM1_EN)
-        : null);
-    const date = feature.properties.date; // Ensure date is parsed and in a compatible format
-
-    if (region && date && residualsData[region]?.[date] !== undefined) {
-      feature.properties.residual = residualsData[region][date];
-    } else {
-      feature.properties.residual = null; // No residual data for this region/date
-    }
-  });
-
-  return geoJsonData;
-};
-
-// ==========================
-// Methodology Registry
-// ==========================
-
-// (Assuming this part remains unchanged or is handled elsewhere)
-
-// ==========================
-// Tooltip Registry
-// ==========================
-
-// (Assuming this part remains unchanged or is handled elsewhere)
-
-// ==========================
-// Scoring Functions
-// ==========================
-
-// (Assuming this part remains unchanged or is handled elsewhere)
-
-// ==========================
-// methodologyRegistry.js
-// ==========================
-
-// src/utils/methodologyRegistry.js
 
 // Technical component mapping
 export const technicalMapping = {

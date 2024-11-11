@@ -1,6 +1,6 @@
 // src/components/analysis/spatial-analysis/MapControls.js
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -12,7 +12,7 @@ import {
   Tooltip,
   Typography,
   ButtonGroup,
-  Paper
+  Paper,
 } from '@mui/material';
 import {
   Refresh,
@@ -20,7 +20,7 @@ import {
   HubOutlined,
   ShowChartOutlined,
   WarningAmber,
-  MapOutlined
+  MapOutlined,
 } from '@mui/icons-material';
 
 const MapControls = ({
@@ -35,7 +35,7 @@ const MapControls = ({
   visualizationMode,
   onVisualizationModeChange,
   showFlows,
-  onToggleFlows
+  onToggleFlows,
 }) => {
   // Format date for display
   const formatDate = (dateStr) => {
@@ -45,22 +45,11 @@ const MapControls = ({
     });
   };
 
-  // Get current analysis metrics
-  const analysisMetrics = useMemo(() => {
-    if (!analysisResults?.[`${selectedCommodity}_unified`]) return null;
-
-    const currentAnalysis = analysisResults[`${selectedCommodity}_unified`];
-    return {
-      integration: (currentAnalysis.r_squared * 100).toFixed(1),
-      spatialEffect: (currentAnalysis.coefficients?.spatial_lag_price || 0).toFixed(2),
-      moranI: (currentAnalysis.moran_i?.I || 0).toFixed(3),
-      significance: currentAnalysis.moran_i?.['p-value'] < 0.05
-    };
-  }, [analysisResults, selectedCommodity]);
-
   return (
     <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+      <Box
+        sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}
+      >
         {/* Commodity Selection */}
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel>Commodity</InputLabel>
@@ -127,10 +116,10 @@ const MapControls = ({
               <WarningAmber />
             </IconButton>
           </Tooltip>
-          <Tooltip title={showFlows ? "Hide Flows" : "Show Flows"}>
+          <Tooltip title={showFlows ? 'Hide Flows' : 'Show Flows'}>
             <IconButton
               onClick={onToggleFlows}
-              color={showFlows ? "primary" : "default"}
+              color={showFlows ? 'primary' : 'default'}
             >
               <MapOutlined />
             </IconButton>
@@ -144,39 +133,6 @@ const MapControls = ({
           </IconButton>
         </Tooltip>
       </Box>
-
-      {/* Analysis Metrics */}
-      {analysisMetrics && (
-        <Box sx={{
-          display: 'flex',
-          gap: 3,
-          mt: 2,
-          pt: 2,
-          borderTop: '1px solid',
-          borderColor: 'divider'
-        }}>
-          <Typography variant="body2" color="text.secondary">
-            Integration: {analysisMetrics.integration}%
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Spatial Effect: {analysisMetrics.spatialEffect}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Moran's I: {analysisMetrics.moranI}
-            {analysisMetrics.significance &&
-              <Tooltip title="Statistically Significant">
-                <Typography
-                  component="span"
-                  color="success.main"
-                  sx={{ ml: 0.5 }}
-                >
-                  *
-                </Typography>
-              </Tooltip>
-            }
-          </Typography>
-        </Box>
-      )}
     </Paper>
   );
 };
@@ -193,7 +149,7 @@ MapControls.propTypes = {
   visualizationMode: PropTypes.string.isRequired,
   onVisualizationModeChange: PropTypes.func.isRequired,
   showFlows: PropTypes.bool.isRequired,
-  onToggleFlows: PropTypes.func.isRequired
+  onToggleFlows: PropTypes.func.isRequired,
 };
 
 export default React.memo(MapControls);

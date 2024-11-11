@@ -1,5 +1,3 @@
-// src/utils/spatialUtils.js
-
 import * as turf from '@turf/turf';
 import proj4 from 'proj4';
 
@@ -19,12 +17,12 @@ const UTM_ZONE_38N = '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs';
 proj4.defs('UTM38N', UTM_ZONE_38N);
 
 /**
- * Process time series data from GeoJSON features
+ * Process time series data from GeoJSON features for a selected commodity.
  */
-export const processTimeSeriesData = (features, selectedDate) => {
+export const processTimeSeriesData = (features, selectedDate, selectedCommodity) => {
   if (!features?.length || !selectedDate) return [];
 
-  const validFeatures = validateFeatures(features);
+  const validFeatures = validateFeatures(features, selectedCommodity);
   const monthlyData = {};
 
   validFeatures.forEach(feature => {
@@ -109,10 +107,13 @@ export const calculateMonthlyStatistics = (data) => {
 };
 
 /**
- * Compute market clusters based on spatial weights and flows
+ * Compute market clusters based on spatial weights and flows for a selected commodity.
  */
-export const computeClusters = (features, weights, flows) => {
+export const computeClusters = (features, weights, flows, selectedCommodity) => {
   if (!features?.length || !weights || !flows?.length) return [];
+
+  const validFeatures = validateFeatures(features, selectedCommodity);
+  const validFlows = flows.filter(flow => flow.commodity === selectedCommodity);
 
   const clusters = [];
   const visited = new Set();
@@ -138,9 +139,9 @@ export const computeClusters = (features, weights, flows) => {
       dfs(region, clusterMarkets);
 
       if (clusterMarkets.size >= THRESHOLDS.MIN_CLUSTER_SIZE) {
-        const clusterMetrics = calculateClusterMetrics(flows, clusterMarkets);
+        const clusterMetrics = calculateClusterMetrics(validFlows, clusterMarkets);
         clusters.push({
-          mainMarket: determineMainMarket(flows, clusterMarkets),
+          mainMarket: determineMainMarket(validFlows, clusterMarkets),
           connectedMarkets: clusterMarkets,
           marketCount: clusterMarkets.size,
           ...clusterMetrics
@@ -153,12 +154,12 @@ export const computeClusters = (features, weights, flows) => {
 };
 
 /**
- * Detect market shocks based on price changes and volatility
+ * Detect market shocks based on price changes and volatility for a selected commodity.
  */
-export const detectMarketShocks = (features, selectedDate) => {
+export const detectMarketShocks = (features, selectedDate, selectedCommodity) => {
   if (!features?.length || !selectedDate) return [];
 
-  const validFeatures = validateFeatures(features);
+  const validFeatures = validateFeatures(features, selectedCommodity);
   const groupedFeatures = groupFeaturesByRegion(validFeatures);
   const shocks = [];
 
@@ -188,7 +189,7 @@ export const detectMarketShocks = (features, selectedDate) => {
 };
 
 /**
- * Calculate spatial weights for market connectivity
+ * Calculate spatial weights for market connectivity.
  */
 export const calculateSpatialWeights = (features) => {
   if (!features?.length) return {};
@@ -246,21 +247,30 @@ export const calculateSpatialWeights = (features) => {
 
 // Helper Functions
 
-export const validateFeatures = (features) => {
+export const validateFeatures = (features, selectedCommodity = null) => {
   if (!Array.isArray(features)) {
     throw new Error('Features must be an array');
   }
 
   return features.filter(feature => {
     try {
-      return (
+      const isValid =
         feature &&
         feature.properties &&
         feature.geometry &&
         Array.isArray(feature.geometry.coordinates) &&
         feature.properties.region_id &&
-        !isNaN(parseFloat(feature.properties.price))
-      );
+        !isNaN(parseFloat(feature.properties.price));
+
+      if (selectedCommodity) {
+        return (
+          isValid &&
+          feature.properties.commodity &&
+          feature.properties.commodity.toLowerCase() === selectedCommodity.toLowerCase()
+        );
+      }
+
+      return isValid;
     } catch (error) {
       console.warn('Invalid feature detected:', error);
       return false;

@@ -33,7 +33,7 @@ import {
 import { DiscoveryProvider } from './context/DiscoveryContext';
 import { WorkerProvider } from './context/WorkerContext';
 import { SpatialDataProvider } from './context/SpatialDataContext';
-
+import { useWorkerSystem, WorkerMessageTypes } from './workers/enhancedWorkerSystem';
 const DRAWER_WIDTH = 240;
 
 const StyledAppBar = styled(AppBar, {

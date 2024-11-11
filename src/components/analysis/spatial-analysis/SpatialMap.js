@@ -10,24 +10,12 @@ import {
   Tooltip as LeafletTooltip,
   useMap,
   ScaleControl,
-  Polyline
+  Polyline,
 } from 'react-leaflet';
-import { Box, Paper, ButtonGroup, IconButton, Tooltip } from '@mui/material';
-import {
-  LayersOutlined,
-  Map,
-  Timeline,
-  Hub,
-  Warning,
-  ZoomIn,
-  ZoomOut,
-  Refresh
-} from '@mui/icons-material';
+import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
 import L from 'leaflet';
-import MarkerClusterGroup from 'react-leaflet-markercluster';
-import debounce from 'lodash/debounce';
+import debounce from 'lodash.debounce';
 
 // Constants moved to component scope for immediate initialization
 const DEFAULT_CENTER = [15.3694, 44.191];
@@ -54,28 +42,7 @@ const MapControls = ({ position = 'topleft', onZoomIn, onZoomOut, onReset }) => 
     onReset?.();
   }, [map, onReset]);
 
-  return (
-    <Paper
-      sx={{
-        position: 'absolute',
-        [position]: 10,
-        zIndex: 1000,
-        p: 0.5
-      }}
-    >
-      <ButtonGroup orientation="vertical" size="small">
-        <IconButton onClick={handleZoomIn}>
-          <ZoomIn />
-        </IconButton>
-        <IconButton onClick={handleZoomOut}>
-          <ZoomOut />
-        </IconButton>
-        <IconButton onClick={handleReset}>
-          <Refresh />
-        </IconButton>
-      </ButtonGroup>
-    </Paper>
-  );
+  return null; // This component doesn't render anything visible
 };
 
 // Flow Lines Component
@@ -83,7 +50,12 @@ const FlowLines = React.memo(({ flows, getFlowStyle }) => {
   if (!flows?.length) return null;
 
   return flows.map((flow, idx) => {
-    if (!flow?.source_lat || !flow?.source_lng || !flow?.target_lat || !flow?.target_lng) {
+    if (
+      !flow?.source_lat ||
+      !flow?.source_lng ||
+      !flow?.target_lat ||
+      !flow?.target_lng
+    ) {
       return null;
     }
 
@@ -95,12 +67,14 @@ const FlowLines = React.memo(({ flows, getFlowStyle }) => {
         key={`flow-${idx}`}
         positions={[
           [flow.source_lat, flow.source_lng],
-          [flow.target_lat, flow.target_lng]
+          [flow.target_lat, flow.target_lng],
         ]}
         pathOptions={style}
       >
         <LeafletTooltip sticky>
-          {`${flow.source} → ${flow.target}\nFlow: ${flow.flow_weight?.toFixed(2) || 'N/A'}`}
+          {`${flow.source} → ${flow.target}\nFlow: ${
+            flow.flow_weight?.toFixed(2) || 'N/A'
+          }`}
         </LeafletTooltip>
       </Polyline>
     );
@@ -110,9 +84,7 @@ const FlowLines = React.memo(({ flows, getFlowStyle }) => {
 const SpatialMap = ({
   geoData,
   flowMaps = [],
-  selectedMonth,
-  onMonthChange,
-  availableMonths = [],
+  selectedDate,
   spatialWeights = {},
   showFlows = true,
   analysisResults = null,
@@ -121,130 +93,125 @@ const SpatialMap = ({
   detectedShocks = [],
   visualizationMode,
   colorScales,
-  onRegionSelect
+  onRegionSelect,
 }) => {
   const theme = useTheme();
   const mapRef = useRef(null);
   const geoJsonRef = useRef(null);
 
   // Style generators with proper initialization checks
-  const getRegionStyle = useCallback((feature) => {
-    if (!feature?.properties) {
-      return {
-        fillColor: theme.palette.grey[300],
+  const getRegionStyle = useCallback(
+    (feature) => {
+      if (!feature?.properties) {
+        return {
+          fillColor: theme.palette.grey[300],
+          weight: 1,
+          opacity: 1,
+          color: theme.palette.divider,
+          fillOpacity: 0.7,
+        };
+      }
+
+      const baseStyle = {
+        fillOpacity: 0.7,
         weight: 1,
         opacity: 1,
         color: theme.palette.divider,
-        fillOpacity: 0.7
+        dashArray: '',
       };
-    }
 
-    const baseStyle = {
-      fillOpacity: 0.7,
-      weight: 1,
-      opacity: 1,
-      color: theme.palette.divider,
-      dashArray: ''
-    };
+      try {
+        const color = colorScales?.getColor?.(feature) || theme.palette.grey[300];
+        return {
+          ...baseStyle,
+          fillColor: color,
+        };
+      } catch (error) {
+        console.error('Error computing region style:', error);
+        return baseStyle;
+      }
+    },
+    [colorScales, theme]
+  );
 
-    try {
-      const color = colorScales?.getColor?.(feature) || theme.palette.grey[300];
+  const getFlowStyle = useCallback(
+    (flow) => {
+      if (!flow) return null;
+
+      const baseStyle = {
+        weight: Math.max(1, Math.min(5, flow.flow_weight / 10)),
+        opacity: 0.6,
+        dashArray: null,
+      };
+
       return {
         ...baseStyle,
-        fillColor: color
+        color: theme.palette.primary.main,
       };
-    } catch (error) {
-      console.error('Error computing region style:', error);
-      return baseStyle;
-    }
-  }, [colorScales, theme]);
+    },
+    [theme]
+  );
 
-  const getFlowStyle = useCallback((flow) => {
-    if (!flow) return null;
+  const onEachFeature = useCallback(
+    (feature, layer) => {
+      if (!feature?.properties) return;
 
-    const baseStyle = {
-      weight: Math.max(1, Math.min(5, flow.flow_weight / 10)),
-      opacity: 0.6,
-      dashArray: null
-    };
+      layer.on({
+        mouseover: (e) => {
+          const layer = e.target;
+          layer.setStyle({
+            weight: 3,
+            dashArray: '',
+            fillOpacity: 0.9,
+          });
+          layer.bringToFront();
+        },
+        mouseout: (e) => {
+          const layer = e.target;
+          layer.setStyle(getRegionStyle(feature));
+        },
+        click: (e) => {
+          const region =
+            feature.properties.region_id || feature.properties.region;
+          onRegionSelect?.(region);
+        },
+      });
 
-    switch (visualizationMode) {
-      case 'market_integration':
-        return {
-          ...baseStyle,
-          color: interpolateBlues(flow.flow_weight / 100),
-          dashArray: flow.flow_weight > 50 ? null : '5,5'
-        };
-      case 'clusters':
-        const cluster = marketClusters.find(c => 
-          c.connectedMarkets.has(flow.source) && 
-          c.connectedMarkets.has(flow.target)
-        );
-        return {
-          ...baseStyle,
-          color: cluster ? cluster.color : theme.palette.action.disabled
-        };
-      case 'shocks':
-        const hasShock = detectedShocks.some(s => 
-          s.region === flow.source || s.region === flow.target
-        );
-        return {
-          ...baseStyle,
-          color: hasShock ? interpolateReds(0.7) : theme.palette.action.disabled,
-          dashArray: hasShock ? '5,5' : null
-        };
-      default:
-        return {
-          ...baseStyle,
-          color: theme.palette.primary.main
-        };
-    }
-  }, [visualizationMode, marketClusters, detectedShocks, theme]);
-
-  const onEachFeature = useCallback((feature, layer) => {
-    if (!feature?.properties) return;
-
-    layer.on({
-      mouseover: (e) => {
-        const layer = e.target;
-        layer.setStyle({
-          weight: 3,
-          dashArray: '',
-          fillOpacity: 0.9
-        });
-        layer.bringToFront();
-      },
-      mouseout: (e) => {
-        const layer = e.target;
-        layer.setStyle(getRegionStyle(feature));
-      },
-      click: (e) => {
-        const region = feature.properties.region_id || feature.properties.region;
-        onRegionSelect?.(region);
-      }
-    });
-
-    const tooltipContent = `
-      <strong>${feature.properties.region || feature.properties.region_id || 'Unknown Region'}</strong>
-      ${feature.properties.price ? `<br/>Price: ${feature.properties.price.toFixed(2)} ${analysisResults?.units || ''}` : ''}
-      ${visualizationMode === 'market_integration' && feature.properties.residual ? 
-        `<br/>Residual: ${feature.properties.residual.toFixed(3)}` : ''}
-      <br/>Connections: ${spatialWeights[feature.properties.region_id]?.neighbors?.length || 0}
-    `;
-    layer.bindTooltip(tooltipContent, { sticky: true });
-  }, [getRegionStyle, onRegionSelect, analysisResults, visualizationMode, spatialWeights]);
+      const tooltipContent = `
+        <strong>${
+          feature.properties.region || feature.properties.region_id || 'Unknown Region'
+        }</strong>
+        ${
+          feature.properties.price
+            ? `<br/>Price: ${feature.properties.price.toFixed(2)}`
+            : ''
+        }
+        ${
+          visualizationMode === 'integration' && feature.properties.residual
+            ? `<br/>Residual: ${feature.properties.residual.toFixed(3)}`
+            : ''
+        }
+        <br/>Connections: ${
+          spatialWeights[feature.properties.region_id]?.neighbors?.length || 0
+        }
+      `;
+      layer.bindTooltip(tooltipContent, { sticky: true });
+    },
+    [getRegionStyle, onRegionSelect, visualizationMode, spatialWeights]
+  );
 
   // Debounced map update
-  const debouncedMapUpdate = useMemo(() => 
-    debounce(() => {
-      if (mapRef.current && geoJsonRef.current && geoData) {
-        geoJsonRef.current.clearLayers();
-        L.geoJSON(geoData, {
-          style: getRegionStyle,
-          onEachFeature
-        }).addTo(geoJsonRef.current);
-      }
-    }, 300),
+  const debouncedMapUpdate = useMemo(
+    () =>
+      debounce(() => {
+        if (mapRef.current && geoJsonRef.current && geoData) {
+          geoJsonRef.current.clearLayers();
+          L.geoJSON(geoData, {
+            style: getRegionStyle,
+            onEachFeature,
+          }).addTo(geoJsonRef.current);
+        }
+      }, 300),
     [geoData, getRegionStyle, onEachFeature]
   );
 
@@ -257,7 +224,14 @@ const SpatialMap = ({
 
   if (!geoData) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Typography>No spatial data available</Typography>
       </Box>
     );
@@ -275,7 +249,7 @@ const SpatialMap = ({
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
+          attribution="&copy; OpenStreetMap contributors"
         />
 
         <GeoJSON
@@ -286,12 +260,7 @@ const SpatialMap = ({
         />
 
         {showFlows && (
-          <MarkerClusterGroup>
-            <FlowLines 
-              flows={flowMaps} 
-              getFlowStyle={getFlowStyle}
-            />
-          </MarkerClusterGroup>
+          <FlowLines flows={flowMaps} getFlowStyle={getFlowStyle} />
         )}
 
         <MapControls position="topleft" />
@@ -304,9 +273,7 @@ const SpatialMap = ({
 SpatialMap.propTypes = {
   geoData: PropTypes.object,
   flowMaps: PropTypes.array,
-  selectedMonth: PropTypes.string,
-  onMonthChange: PropTypes.func,
-  availableMonths: PropTypes.arrayOf(PropTypes.string),
+  selectedDate: PropTypes.string,
   spatialWeights: PropTypes.object,
   showFlows: PropTypes.bool,
   analysisResults: PropTypes.object,
@@ -315,7 +282,7 @@ SpatialMap.propTypes = {
   detectedShocks: PropTypes.array,
   visualizationMode: PropTypes.string,
   colorScales: PropTypes.object,
-  onRegionSelect: PropTypes.func
+  onRegionSelect: PropTypes.func,
 };
 
 export default React.memo(SpatialMap);
