@@ -2,9 +2,12 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
-import { precomputedDataManager } from '../utils/PrecomputedDataManager';
+import { SpatialDataMerger } from '../utils/spatialDataMerger';
+import { processSpatialData } from '../utils/spatialProcessors';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 import { MAP_SETTINGS } from '../constants';
+import SpatialDataMerger from '../utils/spatialDataMerger';
+
 
 // Define initial state
 export const initialState = {
@@ -17,6 +20,7 @@ export const initialState = {
     analysisMetrics: {},
     spatialAutocorrelation: null,
     flowAnalysis: [],
+    spatialWeights: null,  // New field for weights
     metadata: null,
     uniqueMonths: []
   },
@@ -38,33 +42,39 @@ export const initialState = {
   }
 };
 
-// Create async thunk for fetching spatial data
+// Create async thunk for fetching and merging spatial data
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
   async ({ selectedCommodity, selectedDate }, { rejectWithValue }) => {
     const metric = backgroundMonitor.startMetric('spatial-data-fetch');
+    const dataMerger = new SpatialDataMerger();
 
     try {
       if (!selectedCommodity) {
         throw new Error('Commodity parameter is required');
       }
 
-      const result = await precomputedDataManager.processSpatialData(
-        selectedCommodity,
+      // Load precomputed data for the selected commodity and date
+      const precomputedData = await dataMerger.mergeData(
+        await dataMerger.loadPrecomputedData(selectedCommodity), 
+        selectedCommodity, 
         selectedDate
       );
 
-      // Get unique months from time series data
-      const uniqueMonths = [...new Set(result.timeSeriesData.map(d => d.month))].sort();
+      // Process the data with spatial processors
+      const processedData = processSpatialData(precomputedData, precomputedData.geoData, selectedDate);
 
+      // Extract unique months from the time series data
+      const uniqueMonths = [...new Set(processedData.timeSeriesData.map(d => d.month))].sort();
+      
       metric.finish({ 
         status: 'success',
-        dataSize: JSON.stringify(result).length,
+        dataSize: JSON.stringify(processedData).length,
         commodity: selectedCommodity
       });
-      
+
       return {
-        ...result,
+        ...processedData,
         uniqueMonths,
         selectedCommodity,
         selectedDate: selectedDate || uniqueMonths[uniqueMonths.length - 1]
