@@ -6,23 +6,8 @@ import { Box, Grid } from '@mui/material';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
-import AnalysisWrapper from './utils/debugUtils';
-import { useMarketAnalysis } from './hooks/usePrecomputedData';
-import { backgroundMonitor } from './utils/backgroundMonitor';
-
-// Import the new SpatialAnalysis component
+import AnalysisWrapper from './components/common/AnalysisWrapper';
 import SpatialAnalysis from './components/analysis/spatial-analysis/SpatialAnalysis';
-
-// Lazy loaded components
-const ECMAnalysis = React.lazy(() =>
-  import('./components/analysis/ecm/ECMAnalysis')
-);
-const PriceDifferentialAnalysis = React.lazy(() =>
-  import('./components/analysis/price-differential/PriceDifferentialAnalysis')
-);
-const TVMIIAnalysis = React.lazy(() =>
-  import('./components/analysis/tvmii/TVMIIAnalysis')
-);
 
 import {
   Chart as ChartJS,
@@ -37,6 +22,7 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
+// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -48,76 +34,72 @@ ChartJS.register(
   Filler
 );
 
+// Split lazy imports for better error handling
+const ECMAnalysisLazy = React.lazy(() => 
+  import('./components/analysis/ecm/ECMAnalysis')
+    .then(module => {
+      if (!module.default) {
+        throw new Error('ECMAnalysis component not found');
+      }
+      return module;
+    })
+);
+
+const PriceDifferentialAnalysisLazy = React.lazy(() => 
+  import('./components/analysis/price-differential/PriceDifferentialAnalysis')
+    .then(module => {
+      if (!module.default) {
+        throw new Error('PriceDifferentialAnalysis component not found');
+      }
+      return module;
+    })
+);
+
+const TVMIIAnalysisLazy = React.lazy(() => 
+  import('./components/analysis/tvmii/TVMIIAnalysis')
+    .then(module => {
+      if (!module.default) {
+        throw new Error('TVMIIAnalysis component not found');
+      }
+      return module;
+    })
+);
+
 const Dashboard = React.memo(({
   data,
   selectedAnalysis,
   selectedCommodity,
-  selectedDate,
   selectedRegimes,
   windowWidth,
   spatialViewConfig,
   onSpatialViewChange,
 }) => {
-  // Get market analysis from precomputed data
-  const { marketMetrics, timeSeriesAnalysis, spatialAnalysis } = useMarketAnalysis(data);
-
-  // Process time series data for visualization
   const processedData = useMemo(() => {
-    if (!data?.timeSeriesData) return [];
+    if (!data?.features) return [];
+    return data.features.map((feature) => ({
+      ...feature,
+      date: feature.date instanceof Date ? feature.date.toISOString() : feature.date,
+    }));
+  }, [data]);
 
-    const metric = backgroundMonitor.startMetric('process-timeseries');
-    try {
-      const processed = data.timeSeriesData.map(entry => ({
-        date: new Date(entry.month),
-        price: entry.avgUsdPrice,
-        volatility: entry.volatility,
-        sampleSize: entry.sampleSize,
-        regime: 'unified',
-        commodity: selectedCommodity
-      }));
-
-      metric.finish({ status: 'success', dataPoints: processed.length });
-      return processed;
-    } catch (error) {
-      metric.finish({ status: 'error', error: error.message });
-      console.error('Error processing time series data:', error);
-      return [];
-    }
-  }, [data, selectedCommodity]);
-
-  // Determine which analysis component to render
-  const AnalysisComponent = useMemo(() => {
-    const components = {
-      ecm: ECMAnalysis,
-      priceDiff: PriceDifferentialAnalysis,
+  // Map analysis types to components with explicit null checks
+  const getAnalysisComponent = useCallback((type) => {
+    const componentMap = {
+      ecm: ECMAnalysisLazy,
+      priceDiff: PriceDifferentialAnalysisLazy,
       spatial: SpatialAnalysis,
-      tvmii: TVMIIAnalysis,
+      tvmii: TVMIIAnalysisLazy,
     };
 
-    if (selectedAnalysis === 'spatial') {
-      return () => (
-        <SpatialAnalysis
-          data={data}
-          selectedCommodity={selectedCommodity}
-          selectedDate={selectedDate}
-          viewConfig={spatialViewConfig}
-          onViewChange={onSpatialViewChange}
-          spatialMetrics={spatialAnalysis}
-        />
-      );
+    const Component = componentMap[type];
+    if (!Component) {
+      console.warn(`No component found for analysis type: ${type}`);
+      return null;
     }
 
-    return components[selectedAnalysis] || null;
-  }, [
-    selectedAnalysis,
-    data,
-    selectedCommodity,
-    selectedDate,
-    spatialViewConfig,
-    spatialAnalysis,
-  ]);
+    return Component;
+  }, []);
 
-  // Render interactive chart
   const renderInteractiveChart = useCallback(() => {
     if (!selectedCommodity || selectedRegimes.length === 0) {
       return (
@@ -134,29 +116,27 @@ const Dashboard = React.memo(({
         data={processedData}
         selectedCommodity={selectedCommodity}
         selectedRegimes={selectedRegimes}
-        marketMetrics={marketMetrics}
-        timeSeriesAnalysis={timeSeriesAnalysis}
       />
     );
-  }, [
-    processedData,
-    selectedCommodity,
-    selectedRegimes,
-    marketMetrics,
-    timeSeriesAnalysis,
-  ]);
+  }, [processedData, selectedCommodity, selectedRegimes]);
 
-  // Render analysis component
   const renderAnalysisComponent = useCallback(() => {
-    if (!selectedAnalysis || !AnalysisComponent || !selectedCommodity) {
+    if (!selectedAnalysis) {
       return null;
+    }
+
+    const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
+    if (!AnalysisComponent) {
+      console.error(`Invalid analysis component for type: ${selectedAnalysis}`);
+      return <ErrorMessage message="Selected analysis type is not available." />;
     }
 
     const commonProps = {
       selectedCommodity,
       windowWidth,
-      timeSeriesAnalysis,
-      marketMetrics,
+      spatialViewConfig,
+      onSpatialViewChange,
+      data: processedData,
     };
 
     return (
@@ -168,12 +148,22 @@ const Dashboard = React.memo(({
     );
   }, [
     selectedAnalysis,
-    AnalysisComponent,
     selectedCommodity,
     windowWidth,
-    timeSeriesAnalysis,
-    marketMetrics,
+    spatialViewConfig,
+    onSpatialViewChange,
+    processedData,
+    getAnalysisComponent,
   ]);
+
+  // Add loading state for initial data
+  if (!data) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <LoadingSpinner />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -185,7 +175,6 @@ const Dashboard = React.memo(({
       }}
     >
       <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'auto' }}>
-        {/* Interactive Chart Section */}
         <Grid item xs={12}>
           <Box
             sx={{
@@ -199,8 +188,7 @@ const Dashboard = React.memo(({
           </Box>
         </Grid>
 
-        {/* Analysis Components Section */}
-        {selectedAnalysis && AnalysisComponent && (
+        {selectedAnalysis && (
           <Grid item xs={12}>
             {renderAnalysisComponent()}
           </Grid>
@@ -214,21 +202,34 @@ Dashboard.displayName = 'Dashboard';
 
 Dashboard.propTypes = {
   data: PropTypes.shape({
-    timeSeriesData: PropTypes.arrayOf(PropTypes.shape({
-      month: PropTypes.string.isRequired,
-      avgUsdPrice: PropTypes.number.isRequired,
-      volatility: PropTypes.number,
-      sampleSize: PropTypes.number
-    })),
-    marketClusters: PropTypes.array,
-    detectedShocks: PropTypes.array,
-    flowAnalysis: PropTypes.array,
-    spatialAutocorrelation: PropTypes.object,
-    metadata: PropTypes.object
+    features: PropTypes.arrayOf(
+      PropTypes.shape({
+        date: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.instanceOf(Date),
+        ]).isRequired,
+        commodity: PropTypes.string.isRequired,
+        regime: PropTypes.string.isRequired,
+        price: PropTypes.number,
+        usdprice: PropTypes.number,
+        conflict_intensity: PropTypes.number,
+      })
+    ),
+    commodities: PropTypes.arrayOf(PropTypes.string),
+    regimes: PropTypes.arrayOf(PropTypes.string),
+    dateRange: PropTypes.shape({
+      min: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.instanceOf(Date),
+      ]),
+      max: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.instanceOf(Date),
+      ]),
+    }),
   }),
-  selectedAnalysis: PropTypes.string.isRequired,
+  selectedAnalysis: PropTypes.string,
   selectedCommodity: PropTypes.string.isRequired,
-  selectedDate: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
   windowWidth: PropTypes.number.isRequired,
   spatialViewConfig: PropTypes.shape({

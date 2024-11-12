@@ -25,24 +25,37 @@ class PrecomputedDataManager {
   constructor() {
     this.cache = new Map();
     this.pendingRequests = new Map();
-    this.isInitialized = false;
+    this._isInitialized = false;
     this.cacheTimeout = 30 * 60 * 1000; // 30 minutes
+    this._cacheInitialized = false;
   }
 
   async initialize() {
-    if (this.isInitialized) return;
+    if (this._isInitialized) return;
     try {
       backgroundMonitor.init();
-      this.isInitialized = true;
+      this._isInitialized = true;
+      this._cacheInitialized = true;
       console.log('PrecomputedDataManager initialized');
     } catch (error) {
       console.error('Failed to initialize PrecomputedDataManager:', error);
+      this._cacheInitialized = false;
       throw error;
     }
   }
 
+  // Add this method to check if cache is initialized
+  isCacheInitialized() {
+    return this._cacheInitialized;
+  }
+
+  // Add this method to check initialization status
+  isInitialized() {
+    return this._isInitialized;
+  }
+
   async processSpatialData(selectedCommodity, selectedDate, options = {}) {
-    if (!this.isInitialized) {
+    if (!this._isInitialized) {
       await this.initialize();
     }
 
@@ -96,7 +109,6 @@ class PrecomputedDataManager {
     }
   }
 
-  // Add helper method
   sanitizeCommodityName(commodity) {
     return commodity.toLowerCase()
       .replace(/[(),\s]+/g, '_')
@@ -104,28 +116,32 @@ class PrecomputedDataManager {
   }
 
   transformPreprocessedData(data, targetDate) {
+    const timeSeriesData = data.time_series_data || [];
+    const uniqueMonths = [...new Set(timeSeriesData.map(d => d.month))].sort();
+    const selectedDate = targetDate || uniqueMonths[uniqueMonths.length - 1];
+
     return {
-      geoData: this.extractGeoData(data, targetDate),
+      geoData: this.extractGeoData(data, selectedDate),
       marketClusters: data.market_clusters || [],
-      detectedShocks: this.filterShocksByDate(data.market_shocks, targetDate),
-      timeSeriesData: data.time_series_data || [],
+      detectedShocks: this.filterShocksByDate(data.market_shocks, selectedDate),
+      timeSeriesData: timeSeriesData,
       flowMaps: this.transformFlowData(data.flow_analysis),
       analysisResults: {
         spatialAutocorrelation: data.spatial_autocorrelation || {},
         metadata: data.metadata || {}
-      }
+      },
+      uniqueMonths
     };
   }
 
   extractGeoData(data, targetDate) {
     const timeSeriesForDate = data.time_series_data?.find(d => 
-      d.month.startsWith(targetDate)
+      d.month === targetDate
     ) || null;
 
-    const marketFeatures = {};
-    
-    data.market_clusters?.forEach(cluster => {
-      marketFeatures[cluster.main_market] = {
+    const features = data.market_clusters?.reduce((acc, cluster) => {
+      // Add main market
+      acc.push({
         type: 'Feature',
         properties: {
           id: cluster.main_market,
@@ -134,39 +150,41 @@ class PrecomputedDataManager {
           marketRole: 'hub',
           priceData: timeSeriesForDate,
           cluster_id: cluster.cluster_id
-        }
-      };
-
-      cluster.connected_markets.forEach(market => {
-        if (!marketFeatures[market]) {
-          marketFeatures[market] = {
-            type: 'Feature',
-            properties: {
-              id: market,
-              isMainMarket: false,
-              clusterSize: cluster.market_count,
-              marketRole: 'peripheral',
-              priceData: timeSeriesForDate,
-              cluster_id: cluster.cluster_id
-            }
-          };
-        }
+        },
+        geometry: null
       });
-    });
+
+      // Add connected markets
+      cluster.connected_markets.forEach(market => {
+        acc.push({
+          type: 'Feature',
+          properties: {
+            id: market,
+            isMainMarket: false,
+            clusterSize: cluster.market_count,
+            marketRole: 'peripheral',
+            priceData: timeSeriesForDate,
+            cluster_id: cluster.cluster_id
+          },
+          geometry: null
+        });
+      });
+
+      return acc;
+    }, []);
 
     return {
       type: 'FeatureCollection',
-      features: Object.values(marketFeatures)
+      features: features || []
     };
   }
 
-  filterShocksByDate(shocks, targetDate) {
-    if (!Array.isArray(shocks) || !targetDate) return [];
+  filterShocksByDate(shocks = [], targetDate) {
+    if (!targetDate) return [];
     return shocks.filter(shock => shock.date.startsWith(targetDate));
   }
 
-  transformFlowData(flows) {
-    if (!Array.isArray(flows)) return [];
+  transformFlowData(flows = []) {
     return flows.map(flow => ({
       source: flow.source,
       target: flow.target,
@@ -199,11 +217,13 @@ class PrecomputedDataManager {
   clearCache() {
     this.cache.clear();
     this.pendingRequests.clear();
+    this._cacheInitialized = false;
   }
 
   destroy() {
     this.clearCache();
-    this.isInitialized = false;
+    this._isInitialized = false;
+    this._cacheInitialized = false;
   }
 }
 
