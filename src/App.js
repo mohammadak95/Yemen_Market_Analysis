@@ -25,15 +25,16 @@ import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
 import { useWindowSize } from './hooks';
-import { useData } from './hooks';
+import { usePrecomputedData } from './hooks/usePrecomputedData';
+import { backgroundMonitor } from './utils/backgroundMonitor';
 import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
 } from './styles/theme';
 import { DiscoveryProvider } from './context/DiscoveryContext';
-import { WorkerProvider } from './context/WorkerContext';
 import { SpatialDataProvider } from './context/SpatialDataContext';
-import { useWorkerSystem, WorkerMessageTypes } from './workers/enhancedWorkerSystem';
+import { COMMODITIES } from './constants/index';
+
 const DRAWER_WIDTH = 240;
 
 const StyledAppBar = styled(AppBar, {
@@ -52,9 +53,7 @@ const StyledAppBar = styled(AppBar, {
 
 const App = () => {
   const dispatch = useDispatch();
-  const isDarkMode = useSelector(
-    (state) => state.theme?.isDarkMode ?? false
-  );
+  const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
   const theme = React.useMemo(
     () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
     [isDarkMode]
@@ -62,15 +61,13 @@ const App = () => {
 
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
-  const { data, loading, error } = useData();
 
+  // State management
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedAnalysis, setSelectedAnalysis] = useState('');
-  const [selectedGraphRegimes, setSelectedGraphRegimes] = useState([
-    'unified',
-  ]);
+  const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']);
   const [spatialViewConfig, setSpatialViewConfig] = useState({
     center: [15.3694, 44.191],
     zoom: 6,
@@ -81,6 +78,13 @@ const App = () => {
     welcome: false,
   });
 
+  // Load precomputed data
+  const { data, loading, error } = usePrecomputedData(
+    selectedCommodity,
+    selectedDate
+  );
+
+  // Initialize welcome modal
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
     if (!hasSeenWelcome) {
@@ -88,10 +92,22 @@ const App = () => {
     }
   }, []);
 
+  // Track initial data load
+  useEffect(() => {
+    if (selectedCommodity && selectedDate) {
+      backgroundMonitor.logMetric('app-initial-load', {
+        commodity: selectedCommodity,
+        date: selectedDate,
+      });
+    }
+  }, [selectedCommodity, selectedDate]);
+
+  // Sync sidebar with screen size
   useEffect(() => {
     setSidebarOpen(isSmUp);
   }, [isSmUp]);
 
+  // Event handlers
   const handleToggleDarkMode = useCallback(() => {
     dispatch(toggleDarkMode());
   }, [dispatch]);
@@ -111,6 +127,13 @@ const App = () => {
     }
   }, []);
 
+  const handleCommodityChange = useCallback((commodity) => {
+    setSelectedCommodity(commodity);
+    // Reset date to trigger data load with latest available date
+    setSelectedDate('');
+  }, []);
+
+  // Render content based on loading state
   const renderContent = () => {
     if (loading) {
       return <LoadingSpinner />;
@@ -126,6 +149,17 @@ const App = () => {
         />
       );
     }
+
+    const dashboardProps = {
+      selectedCommodity,
+      selectedDate,
+      selectedAnalysis,
+      selectedRegimes: selectedGraphRegimes,
+      windowWidth: windowSize.width,
+      spatialViewConfig,
+      onSpatialViewChange: setSpatialViewConfig,
+      data,
+    };
 
     return (
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -149,10 +183,9 @@ const App = () => {
         </StyledAppBar>
 
         <Sidebar
-          commodities={data?.commodities || []}
-          regimes={data?.regimes || []}
+          commodities={COMMODITIES.FOOD}
           selectedCommodity={selectedCommodity}
-          setSelectedCommodity={setSelectedCommodity}
+          setSelectedCommodity={handleCommodityChange}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           selectedAnalysis={selectedAnalysis}
@@ -166,6 +199,7 @@ const App = () => {
           setSelectedRegimes={setSelectedGraphRegimes}
           onOpenWelcomeModal={() => handleModalToggle('welcome', true)}
           handleDrawerToggle={handleDrawerToggle}
+          availableDates={data?.timeSeriesData?.map(d => d.month) || []}
         />
 
         <Box
@@ -178,17 +212,7 @@ const App = () => {
           }}
         >
           <Toolbar />
-          <Dashboard
-            data={data}
-            selectedCommodity={selectedCommodity}
-            selectedDate={selectedDate}
-            selectedRegimes={selectedGraphRegimes}
-            selectedAnalysis={selectedAnalysis}
-            windowWidth={windowSize.width}
-            sidebarOpen={sidebarOpen}
-            spatialViewConfig={spatialViewConfig}
-            onSpatialViewChange={setSpatialViewConfig}
-          />
+          <Dashboard {...dashboardProps} />
         </Box>
 
         <MethodologyModal
@@ -210,13 +234,13 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <WorkerProvider>
-        <SpatialDataProvider>
-          <DiscoveryProvider>
-            <EnhancedErrorBoundary>{renderContent()}</EnhancedErrorBoundary>
-          </DiscoveryProvider>
-        </SpatialDataProvider>
-      </WorkerProvider>
+      <SpatialDataProvider>
+        <DiscoveryProvider>
+          <EnhancedErrorBoundary>
+            {renderContent()}
+          </EnhancedErrorBoundary>
+        </DiscoveryProvider>
+      </SpatialDataProvider>
     </ThemeProvider>
   );
 };

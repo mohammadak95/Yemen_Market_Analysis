@@ -1,7 +1,8 @@
 // src/context/SpatialDataContext.js
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { spatialDataManager } from '../utils/SpatialDataManager';
+import { precomputedDataManager } from '../utils/PrecomputedDataManager';
+import { backgroundMonitor } from '../utils/backgroundMonitor';
 
 const SpatialDataContext = createContext(null);
 
@@ -10,28 +11,43 @@ export const SpatialDataProvider = ({ children }) => {
     loading: false,
     error: null,
     data: null,
+    metadata: null
   });
 
-  const fetchSpatialData = useCallback(
-    async (selectedCommodity, selectedDate) => {
-      setState({ loading: true, error: null, data: null });
-      try {
-        const data = await spatialDataManager.processSpatialData(
-          selectedCommodity,
-          selectedDate
-        );
-        setState({ loading: false, error: null, data });
-      } catch (error) {
-        console.error('Error fetching spatial data:', error);
-        setState({ loading: false, error: error.message, data: null });
-      }
-    },
-    []
-  );
+  const fetchSpatialData = useCallback(async (selectedCommodity, selectedDate) => {
+    const metric = backgroundMonitor.startMetric('fetch-spatial-data');
+    
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const result = await precomputedDataManager.processSpatialData(
+        selectedCommodity,
+        selectedDate
+      );
+
+      setState({
+        loading: false,
+        error: null,
+        data: result,
+        metadata: result.metadata
+      });
+
+      metric.finish({ status: 'success' });
+    } catch (error) {
+      console.error('Error fetching spatial data:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: error.message
+      }));
+      
+      metric.finish({ status: 'error', error: error.message });
+    }
+  }, []);
 
   const value = {
     ...state,
-    fetchSpatialData,
+    fetchSpatialData
   };
 
   return (
@@ -44,9 +60,19 @@ export const SpatialDataProvider = ({ children }) => {
 export const useSpatialData = () => {
   const context = useContext(SpatialDataContext);
   if (!context) {
-    throw new Error(
-      'useSpatialData must be used within a SpatialDataProvider'
-    );
+    throw new Error('useSpatialData must be used within a SpatialDataProvider');
   }
   return context;
+};
+
+export const usePrecomputedData = (commodity, date) => {
+  const { data, loading, error, fetchSpatialData } = useSpatialData();
+
+  React.useEffect(() => {
+    if (commodity) {
+      fetchSpatialData(commodity, date);
+    }
+  }, [commodity, date, fetchSpatialData]);
+
+  return { data, loading, error };
 };

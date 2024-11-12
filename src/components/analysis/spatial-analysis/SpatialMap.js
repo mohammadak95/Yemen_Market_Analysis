@@ -17,7 +17,7 @@ import { useTheme } from '@mui/material/styles';
 import L from 'leaflet';
 import debounce from 'lodash.debounce';
 
-// Constants moved to component scope for immediate initialization
+// Constants
 const DEFAULT_CENTER = [15.3694, 44.191];
 const DEFAULT_ZOOM = 6;
 const MIN_ZOOM = 5;
@@ -99,58 +99,23 @@ const SpatialMap = ({
   const mapRef = useRef(null);
   const geoJsonRef = useRef(null);
 
-  // Style generators with proper initialization checks
-  const getRegionStyle = useCallback(
-    (feature) => {
-      if (!feature?.properties) {
-        return {
-          fillColor: theme.palette.grey[300],
-          weight: 1,
-          opacity: 1,
-          color: theme.palette.divider,
-          fillOpacity: 0.7,
-        };
-      }
+  // Integrated Style generator from the simplified version
+  const getRegionStyle = useCallback((feature) => {
+    return {
+      fillColor: colorScales?.getColor(feature) || '#cccccc',
+      weight: 1,
+      opacity: 1,
+      color: '#666666',
+      fillOpacity: 0.7,
+    };
+  }, [colorScales]);
 
-      const baseStyle = {
-        fillOpacity: 0.7,
-        weight: 1,
-        opacity: 1,
-        color: theme.palette.divider,
-        dashArray: '',
-      };
-
-      try {
-        const color = colorScales?.getColor?.(feature) || theme.palette.grey[300];
-        return {
-          ...baseStyle,
-          fillColor: color,
-        };
-      } catch (error) {
-        console.error('Error computing region style:', error);
-        return baseStyle;
-      }
-    },
-    [colorScales, theme]
-  );
-
-  const getFlowStyle = useCallback(
-    (flow) => {
-      if (!flow) return null;
-
-      const baseStyle = {
-        weight: Math.max(1, Math.min(5, flow.flow_weight / 10)),
-        opacity: 0.6,
-        dashArray: null,
-      };
-
-      return {
-        ...baseStyle,
-        color: theme.palette.primary.main,
-      };
-    },
-    [theme]
-  );
+  // Integrated Feature click handler from the simplified version
+  const onFeatureClick = useCallback((feature) => {
+    if (onRegionSelect && feature.properties?.region_id) {
+      onRegionSelect(feature.properties.region_id);
+    }
+  }, [onRegionSelect]);
 
   const onEachFeature = useCallback(
     (feature, layer) => {
@@ -170,34 +135,20 @@ const SpatialMap = ({
           const layer = e.target;
           layer.setStyle(getRegionStyle(feature));
         },
-        click: (e) => {
-          const region =
-            feature.properties.region_id || feature.properties.region;
-          onRegionSelect?.(region);
+        click: () => {
+          onFeatureClick(feature);
         },
       });
 
+      // Simplified tooltip content
       const tooltipContent = `
         <strong>${
           feature.properties.region || feature.properties.region_id || 'Unknown Region'
         }</strong>
-        ${
-          feature.properties.price
-            ? `<br/>Price: ${feature.properties.price.toFixed(2)}`
-            : ''
-        }
-        ${
-          visualizationMode === 'integration' && feature.properties.residual
-            ? `<br/>Residual: ${feature.properties.residual.toFixed(3)}`
-            : ''
-        }
-        <br/>Connections: ${
-          spatialWeights[feature.properties.region_id]?.neighbors?.length || 0
-        }
       `;
       layer.bindTooltip(tooltipContent, { sticky: true });
     },
-    [getRegionStyle, onRegionSelect, visualizationMode, spatialWeights]
+    [getRegionStyle, onFeatureClick]
   );
 
   // Debounced map update

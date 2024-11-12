@@ -38,16 +38,17 @@ import {
   selectTimeSeriesData,
   selectAnalysisMetrics,
 } from '../../../slices/spatialSlice';
-import { useSpatialDataOptimized } from '../../../hooks';
+import { usePrecomputedData } from '../../../hooks/usePrecomputedData';
 import {
   VISUALIZATION_MODES,
   COLOR_SCALES,
   ANALYSIS_THRESHOLDS,
-} from '../../../constants/spatialConstants';
+} from '../../../constants/index.js';
+import { processTimeSeriesData, getColorScales } from '../../../utils/spatialUtils';
 import SpatialErrorBoundary from './SpatialErrorBoundary';
 import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
 
-// Lazy loaded components
+// Lazy loaded components remain the same
 const MapControls = lazy(() => import('./MapControls'));
 const MapLegend = lazy(() => import('./MapLegend'));
 const TimeControls = lazy(() => import('./TimeControls'));
@@ -55,7 +56,6 @@ const LoadingSpinner = lazy(() => import('../../common/LoadingSpinner'));
 const ErrorDisplay = lazy(() => import('../../common/ErrorDisplay'));
 const SpatialMap = lazy(() => import('./SpatialMap'));
 
-// Constants for safe state management
 const DEFAULT_UI_STATE = {
   mode: VISUALIZATION_MODES.PRICES,
   showFlows: true,
@@ -64,7 +64,6 @@ const DEFAULT_UI_STATE = {
   dateError: null,
 };
 
-// Helper function for month formatting
 const formatMonth = (monthStr) => {
   if (!monthStr) return '';
   try {
@@ -76,168 +75,88 @@ const formatMonth = (monthStr) => {
   }
 };
 
-// Data validation utilities
-const validateGeoData = (data) => {
-  return Boolean(data?.features?.length);
-};
-
-const getColorScales = (mode, data) => {
-  if (!validateGeoData(data)) return { getColor: () => '#ccc' };
-
-  try {
-    const priceValues = data.features
-      .map((f) => f.properties?.price)
-      .filter((price) => typeof price === 'number' && !isNaN(price));
-
-    if (!priceValues.length) return { getColor: () => '#ccc' };
-
-    const min = Math.min(...priceValues);
-    const max = Math.max(...priceValues);
-
-    const scales = {
-      prices: (feature) => {
-        const value = feature.properties?.price;
-        if (typeof value !== 'number' || isNaN(value)) return '#ccc';
-        return interpolateBlues((value - min) / (max - min));
-      },
-      volatility: (feature) => {
-        const volatility = feature.properties?.volatility || 0;
-        return interpolateReds(Math.min(volatility / 100, 1));
-      },
-      residuals: (feature) => {
-        const residual = Math.abs(feature.properties?.residual || 0);
-        return interpolateReds(Math.min(residual / 2, 1));
-      },
-    };
-
-    return {
-      getColor: scales[mode] || (() => '#ccc'),
-    };
-  } catch (error) {
-    console.error('Error creating color scales:', error);
-    return { getColor: () => '#ccc' };
-  }
-};
-
 const SpatialAnalysis = () => {
   const dispatch = useDispatch();
+  const [visualizationState, setVisualizationState] = useState(DEFAULT_UI_STATE);
 
-  // Use the optimized hook
+  // Use our new precomputed data hook
   const {
-    spatialData,
-    uiState,
-    isProcessing,
+    data: spatialData,
+    loading: isProcessing,
     error,
-    processSpatialData,
-    selectRegion,
-  } = useSpatialDataOptimized();
+    metrics: analysisMetrics
+  } = usePrecomputedData();
 
+  // Extract data from the preprocessed results
   const {
     geoData,
     flowMaps,
-    flows,
-    weights,
-    uniqueMonths,
-    commodities,
-    regimes,
     marketClusters: marketClustersData,
     detectedShocks: detectedShocksData,
-  } = spatialData;
+    timeSeriesData,
+    analysisResults
+  } = spatialData || {};
 
-  const { selectedCommodity, selectedDate, selectedRegion } = uiState;
-
-  const timeSeriesData = useSelector(selectTimeSeriesData, shallowEqual);
-  const analysisMetrics = useSelector(selectAnalysisMetrics, shallowEqual);
-
-  // State management with safe defaults
-  const [visualizationState, setVisualizationState] = useState(DEFAULT_UI_STATE);
+  const { selectedCommodity, selectedDate, selectedRegion } = useSelector(
+    state => state.spatial.ui,
+    shallowEqual
+  );
 
   // Data validation
   const isDataValid = useCallback(() => {
     return Boolean(
-      validateGeoData(geoData) &&
-        selectedCommodity &&
-        selectedDate &&
-        Array.isArray(regimes) &&
-        regimes.includes('unified')
+      geoData?.features?.length &&
+      selectedCommodity &&
+      selectedDate
     );
-  }, [geoData, selectedCommodity, selectedDate, regimes]);
-
-  // Initialize data on mount or when commodity/date changes
-  useEffect(() => {
-    if (selectedCommodity && selectedDate) {
-      processSpatialData(selectedCommodity, selectedDate);
-    }
-  }, [selectedCommodity, selectedDate, processSpatialData]);
+  }, [geoData, selectedCommodity, selectedDate]);
 
   // Handler for commodity change
-  const handleCommodityChange = useCallback(
-    async (commodity) => {
-      if (commodities.includes(commodity)) {
-        await dispatch(setSelectedCommodity(commodity));
-        await dispatch(setSelectedDate(uniqueMonths[0]));
-        await processSpatialData(commodity, uniqueMonths[0]);
-      }
-    },
-    [dispatch, uniqueMonths, commodities, processSpatialData]
-  );
+  const handleCommodityChange = useCallback(async (commodity) => {
+    try {
+      await dispatch(setSelectedCommodity(commodity));
+      await dispatch(fetchSpatialData({ selectedCommodity: commodity, selectedDate }));
+    } catch (error) {
+      console.error('Error changing commodity:', error);
+    }
+  }, [dispatch, selectedDate]);
 
   // Handler for date change
-  const handleDateChange = useCallback(
-    async (date) => {
-      if (uniqueMonths.includes(date)) {
-        try {
-          await dispatch(setSelectedDate(date));
-          await processSpatialData(selectedCommodity, date);
-        } catch (error) {
-          console.error('Error changing date:', error);
-        }
-      }
-    },
-    [dispatch, selectedCommodity, uniqueMonths, processSpatialData]
-  );
+  const handleDateChange = useCallback(async (date) => {
+    try {
+      await dispatch(setSelectedDate(date));
+      await dispatch(fetchSpatialData({ selectedCommodity, selectedDate: date }));
+    } catch (error) {
+      console.error('Error changing date:', error);
+    }
+  }, [dispatch, selectedCommodity]);
 
   // Handle visualization state updates
   const handleVisualizationUpdate = useCallback((updates) => {
-    setVisualizationState((prevState) => ({
+    setVisualizationState(prevState => ({
       ...prevState,
       ...updates,
     }));
   }, []);
 
   // Handle region selection
-  const handleRegionSelect = useCallback(
-    (region) => {
-      handleVisualizationUpdate({ selectedRegion: region });
-      dispatch(setSelectedRegion(region));
-      selectRegion(region);
-    },
-    [dispatch, selectRegion, handleVisualizationUpdate]
-  );
-
-  // Handle manual refresh
-  const handleRefresh = useCallback(async () => {
-    try {
-      await processSpatialData(selectedCommodity, selectedDate);
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-    }
-  }, [processSpatialData, selectedCommodity, selectedDate]);
+  const handleRegionSelect = useCallback((region) => {
+    handleVisualizationUpdate({ selectedRegion: region });
+    dispatch(setSelectedRegion(region));
+  }, [dispatch, handleVisualizationUpdate]);
 
   // Export Analysis Data
   const exportAnalysis = useCallback(() => {
+    if (!spatialData) return;
+
     const exportData = {
       commodity: selectedCommodity,
       date: selectedDate,
       timeSeriesAnalysis: timeSeriesData,
       marketShocks: detectedShocksData,
-      marketClusters: marketClustersData.map((cluster) => ({
-        mainMarket: cluster.mainMarket,
-        connectedMarkets: Array.from(cluster.connectedMarkets),
-        marketCount: cluster.marketCount,
-      })),
-      // Include analysis metrics if available
+      marketClusters: marketClustersData,
       analysisMetrics,
+      analysisResults
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -250,99 +169,71 @@ const SpatialAnalysis = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [
+    spatialData,
     selectedCommodity,
     selectedDate,
     timeSeriesData,
     detectedShocksData,
     marketClustersData,
     analysisMetrics,
+    analysisResults
   ]);
 
-  // Updated Map Controls props
-  const mapControlsProps = useMemo(
-    () => ({
-      selectedCommodity,
-      selectedDate,
-      uniqueMonths,
-      commodities,
-      onDateChange: handleDateChange,
-      onCommodityChange: handleCommodityChange,
-      onRefresh: handleRefresh,
-      visualizationMode: visualizationState.mode,
-      onVisualizationModeChange: (mode) => handleVisualizationUpdate({ mode }),
-      showFlows: visualizationState.showFlows,
-      onToggleFlows: () =>
-        handleVisualizationUpdate({
-          showFlows: !visualizationState.showFlows,
-        }),
+  // Props for child components
+  const mapControlsProps = useMemo(() => ({
+    selectedCommodity,
+    selectedDate,
+    uniqueMonths: timeSeriesData?.map(d => d.month) || [],
+    commodities: [], // This should come from your commodities list
+    onDateChange: handleDateChange,
+    onCommodityChange: handleCommodityChange,
+    onRefresh: () => dispatch(fetchSpatialData({ selectedCommodity, selectedDate })),
+    visualizationMode: visualizationState.mode,
+    onVisualizationModeChange: (mode) => handleVisualizationUpdate({ mode }),
+    showFlows: visualizationState.showFlows,
+    onToggleFlows: () => handleVisualizationUpdate({
+      showFlows: !visualizationState.showFlows,
     }),
-    [
-      selectedCommodity,
-      selectedDate,
-      uniqueMonths,
-      commodities,
-      visualizationState.mode,
-      visualizationState.showFlows,
-      handleDateChange,
-      handleCommodityChange,
-      handleRefresh,
-      handleVisualizationUpdate,
-    ]
-  );
+  }), [
+    selectedCommodity,
+    selectedDate,
+    timeSeriesData,
+    handleDateChange,
+    handleCommodityChange,
+    dispatch,
+    visualizationState.mode,
+    visualizationState.showFlows,
+    handleVisualizationUpdate
+  ]);
 
-  // Updated mapProps
-  const mapProps = useMemo(
-    () => ({
-      geoData,
-      flowMaps: visualizationState.showFlows ? flowMaps : [],
-      selectedMonth: selectedDate,
-      onMonthChange: handleDateChange,
-      availableMonths: uniqueMonths,
-      spatialWeights: weights,
-      showFlows: visualizationState.showFlows,
-      analysisResults: analysisMetrics,
-      selectedCommodity,
-      marketClusters: marketClustersData,
-      detectedShocks: detectedShocksData,
-      visualizationMode: visualizationState.mode,
-      colorScales: getColorScales(visualizationState.mode, geoData),
-      onRegionSelect: handleRegionSelect,
-    }),
-    [
-      geoData,
-      flowMaps,
-      visualizationState.showFlows,
-      selectedDate,
-      handleDateChange,
-      uniqueMonths,
-      weights,
-      analysisMetrics,
-      selectedCommodity,
-      marketClustersData,
-      detectedShocksData,
-      visualizationState.mode,
-      handleRegionSelect,
-    ]
-  );
-
-  // Time controls props
-  const timeControlsProps = useMemo(
-    () => ({
-      availableMonths: uniqueMonths,
-      selectedMonth: selectedDate,
-      onMonthChange: handleDateChange,
-      analysisResults: analysisMetrics,
-      spatialWeights: weights,
-    }),
-    [uniqueMonths, selectedDate, handleDateChange, analysisMetrics, weights]
-  );
-
-  // Determine if legend should be shown
-  const shouldShowLegend = useMemo(
-    () =>
-      geoData?.features?.length > 0 && getColorScales(visualizationState.mode, geoData).getColor !== undefined,
-    [visualizationState.mode, geoData]
-  );
+  const mapProps = useMemo(() => ({
+    geoData,
+    flowMaps: visualizationState.showFlows ? flowMaps : [],
+    selectedMonth: selectedDate,
+    onMonthChange: handleDateChange,
+    availableMonths: timeSeriesData?.map(d => d.month) || [],
+    showFlows: visualizationState.showFlows,
+    analysisResults,
+    selectedCommodity,
+    marketClusters: marketClustersData,
+    detectedShocks: detectedShocksData,
+    visualizationMode: visualizationState.mode,
+    colorScales: getColorScales(visualizationState.mode, geoData),
+    onRegionSelect: handleRegionSelect,
+  }), [
+    geoData,
+    flowMaps,
+    visualizationState.showFlows,
+    selectedDate,
+    handleDateChange,
+    timeSeriesData,
+    analysisResults,
+    selectedCommodity,
+    marketClustersData,
+    detectedShocksData,
+    visualizationState.mode,
+    handleRegionSelect
+  ]);
 
   // Loading state check
   if (isProcessing || !isDataValid()) {
@@ -362,19 +253,16 @@ const SpatialAnalysis = () => {
         <ErrorDisplay
           error={error}
           title="Analysis Error"
-          onRetry={() => processSpatialData(selectedCommodity, selectedDate)}
+          onRetry={() => dispatch(fetchSpatialData({ selectedCommodity, selectedDate }))}
         />
       </Suspense>
     );
   }
 
+  // Render visualization tabs...
   return (
     <SpatialErrorBoundary
-      onRetry={() => {
-        if (selectedCommodity && selectedDate) {
-          processSpatialData(selectedCommodity, selectedDate);
-        }
-      }}
+      onRetry={() => dispatch(fetchSpatialData({ selectedCommodity, selectedDate }))}
     >
       <Suspense fallback={<div>Loading components...</div>}>
         <Box sx={{ width: '100%' }}>
@@ -421,13 +309,6 @@ const SpatialAnalysis = () => {
               </Box>
             </Grid>
 
-            {/* Time Controls */}
-            <Grid item xs={12}>
-              <Suspense fallback={<div>Loading Time Controls...</div>}>
-                <TimeControls {...timeControlsProps} />
-              </Suspense>
-            </Grid>
-
             {/* Analysis Tabs */}
             <Grid item xs={12}>
               <Tabs
@@ -450,12 +331,12 @@ const SpatialAnalysis = () => {
                   <Typography variant="h6" gutterBottom>
                     Time Series Analysis
                   </Typography>
-                  {timeSeriesData.length > 0 ? (
+                  {timeSeriesData?.length > 0 ? (
                     <Box sx={{ height: 300 }}>
                       <LineChart
                         width={800}
                         height={300}
-                        data={timeSeriesData}
+                        data={processTimeSeriesData(timeSeriesData)}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
@@ -463,55 +344,25 @@ const SpatialAnalysis = () => {
                         <YAxis />
                         <ChartTooltip
                           labelFormatter={formatMonth}
-                          formatter={(value) =>
-                            typeof value === 'number' ? value.toFixed(2) : value
-                          }
+                          formatter={(value) => typeof value === 'number' ? value.toFixed(2) : value}
                         />
                         <Line
                           type="monotone"
-                          dataKey="avgPrice"
+                          dataKey="avgUsdPrice"
                           stroke="#8884d8"
-                          name="Average Price (YER)"
+                          name="Average Price (USD)"
                           dot={false}
                           activeDot={{ r: 8 }}
                         />
                         <Line
                           type="monotone"
-                          dataKey="avgConflictIntensity"
+                          dataKey="volatility"
                           stroke="#82ca9d"
-                          name="Conflict Intensity"
+                          name="Volatility"
                           dot={false}
                           activeDot={{ r: 8 }}
                         />
-                        {/* Add additional lines for USD prices if available */}
-                        {timeSeriesData.some((d) => d.avgUsdPrice) && (
-                          <Line
-                            type="monotone"
-                            dataKey="avgUsdPrice"
-                            stroke="#ffc658"
-                            name="Average Price (USD)"
-                            dot={false}
-                            activeDot={{ r: 8 }}
-                          />
-                        )}
                       </LineChart>
-                      {/* Add statistics summary */}
-                      <Box
-                        sx={{ mt: 2, display: 'flex', justifyContent: 'space-around' }}
-                      >
-                        <Typography variant="body2" color="textSecondary">
-                          Sample Size: {analysisMetrics?.observations || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Price Range:{' '}
-                          {analysisMetrics?.priceRange?.min?.toFixed(2) || 'N/A'} -{' '}
-                          {analysisMetrics?.priceRange?.max?.toFixed(2) || 'N/A'} YER
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Average Conflict Intensity:{' '}
-                          {analysisMetrics?.averageConflictIntensity?.toFixed(2) || 'N/A'}
-                        </Typography>
-                      </Box>
                     </Box>
                   ) : (
                     <Alert severity="info">
@@ -527,7 +378,7 @@ const SpatialAnalysis = () => {
                   <Typography variant="h6" gutterBottom>
                     Market Shocks Analysis
                   </Typography>
-                  {detectedShocksData.length > 0 ? (
+                  {detectedShocksData?.length > 0 ? (
                     <Grid container spacing={2}>
                       {detectedShocksData.map((shock, index) => (
                         <Grid item xs={12} key={index}>
@@ -542,11 +393,11 @@ const SpatialAnalysis = () => {
                             <Typography variant="body2">
                               Date: {formatMonth(shock.date)}
                               <br />
-                              Magnitude: {(shock.magnitude * 100).toFixed(1)}%
+                              Magnitude: {shock.magnitude.toFixed(1)}%
                               <br />
-                              Price Change: {(shock.price_change * 100).toFixed(1)}%
+                              Previous Price: ${shock.previous_price.toFixed(2)}
                               <br />
-                              Conflict Intensity: {(shock.conflict_intensity * 100).toFixed(1)}%
+                              Current Price: ${shock.current_price.toFixed(2)}
                             </Typography>
                           </Alert>
                         </Grid>
@@ -566,26 +417,24 @@ const SpatialAnalysis = () => {
                   <Typography variant="h6" gutterBottom>
                     Market Clusters Analysis
                   </Typography>
-                  {marketClustersData.length > 0 ? (
+                  {marketClustersData?.length > 0 ? (
                     <Grid container spacing={2}>
                       {marketClustersData.map((cluster, index) => (
                         <Grid item xs={12} md={6} key={index}>
                           <Paper
                             sx={{
                               p: 2,
-                              backgroundColor:
-                                COLOR_SCALES.CLUSTERS[index % COLOR_SCALES.CLUSTERS.length] +
-                                '20',
+                              backgroundColor: COLOR_SCALES.CLUSTERS[index % COLOR_SCALES.CLUSTERS.length] + '20',
                             }}
                           >
                             <Typography variant="subtitle1" gutterBottom>
-                              Cluster {index + 1}: {cluster.mainMarket}
+                              Cluster {cluster.cluster_id}: {cluster.main_market}
                             </Typography>
                             <Typography variant="body2" gutterBottom>
-                              Connected Markets: {cluster.connectedMarkets.length}
+                              Connected Markets: {cluster.connected_markets.length}
                             </Typography>
                             <Box sx={{ mt: 1 }}>
-                              {cluster.connectedMarkets.map((market) => (
+                              {cluster.connected_markets.map((market) => (
                                 <Chip
                                   key={market}
                                   label={market}
@@ -594,6 +443,15 @@ const SpatialAnalysis = () => {
                                   onClick={() => handleRegionSelect(market)}
                                 />
                               ))}
+                            </Box>
+                            {/* Add cluster metrics */}
+                            <Box sx={{ mt: 2 }}>
+                              <Typography variant="caption" display="block">
+                                Market Integration: {(cluster.connected_markets.length / (analysisMetrics?.totalMarkets || 1) * 100).toFixed(1)}%
+                              </Typography>
+                              <Typography variant="caption" display="block">
+                                Average Flow: {cluster.avgFlow?.toFixed(2) || 'N/A'}
+                              </Typography>
                             </Box>
                           </Paper>
                         </Grid>
@@ -613,10 +471,83 @@ const SpatialAnalysis = () => {
                   <Typography variant="h6" gutterBottom>
                     Market Integration Analysis
                   </Typography>
-                  {analysisMetrics ? (
+                  {analysisResults?.spatialAutocorrelation ? (
                     <Grid container spacing={3}>
-                      {/* Integration Metrics */}
-                      {/* ... (integration metrics content remains the same) */}
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Spatial Correlation
+                          </Typography>
+                          <Typography variant="h4">
+                            {(analysisResults.spatialAutocorrelation.moran_i * 100).toFixed(1)}%
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {analysisResults.spatialAutocorrelation.significance ? 
+                              'Statistically Significant' : 'Not Statistically Significant'}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Market Coverage
+                          </Typography>
+                          <Typography variant="h4">
+                            {marketClustersData?.length || 0} Clusters
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {marketClustersData?.reduce((acc, cluster) => 
+                              acc + cluster.connected_markets.length, 0) || 0} Connected Markets
+                          </Typography>
+                        </Paper>
+                      </Grid>
+
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Price Integration
+                          </Typography>
+                          <Typography variant="h4">
+                            {(analysisMetrics?.integrationLevel * 100).toFixed(1)}%
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Based on price correlation across markets
+                          </Typography>
+                        </Paper>
+                      </Grid>
+
+                      {/* Flow Analysis Summary */}
+                      <Grid item xs={12}>
+                        <Paper sx={{ p: 2, mt: 2 }}>
+                          <Typography variant="subtitle1" gutterBottom>
+                            Flow Analysis Summary
+                          </Typography>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2">
+                                Total Flows: {flowMaps?.length || 0}
+                              </Typography>
+                              <Typography variant="body2">
+                                Average Flow Weight: {
+                                  (flowMaps?.reduce((acc, flow) => acc + flow.flow_weight, 0) / 
+                                  (flowMaps?.length || 1)).toFixed(2)
+                                }
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body2">
+                                Price Differential Range: {
+                                  flowMaps?.length ? 
+                                  `${Math.min(...flowMaps.map(f => f.price_differential)).toFixed(2)} - 
+                                   ${Math.max(...flowMaps.map(f => f.price_differential)).toFixed(2)}` :
+                                  'N/A'
+                                }
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </Paper>
+                      </Grid>
                     </Grid>
                   ) : (
                     <Alert severity="info">
@@ -628,19 +559,19 @@ const SpatialAnalysis = () => {
             </Grid>
 
             {/* Map Legend */}
-            {shouldShowLegend && (
+            {geoData?.features?.length > 0 && (
               <Grid item xs={12}>
                 <Suspense fallback={<div>Loading Legend...</div>}>
                   <MapLegend
                     title={`${selectedCommodity} Distribution`}
                     colorScale={getColorScales(visualizationState.mode, geoData).getColor}
-                    unit="YER" // Assuming YER as currency
-                    description="Spatial distribution of values"
+                    unit="USD"
+                    description="Spatial distribution of prices"
                     position="bottomright"
                     statistics={{
-                      'Integration Score': analysisMetrics?.integrationScore,
-                      'Transmission Efficiency': analysisMetrics?.transmissionEfficiency,
-                      'Price Convergence': analysisMetrics?.priceConvergence,
+                      'Integration Score': analysisResults?.spatialAutocorrelation?.moran_i?.toFixed(3),
+                      'Price Correlation': analysisMetrics?.integrationLevel?.toFixed(3),
+                      'Market Coverage': `${marketClustersData?.length || 0} clusters`
                     }}
                   />
                 </Suspense>

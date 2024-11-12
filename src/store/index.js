@@ -1,9 +1,19 @@
-// src/store.js
+// src/store/index.js
+// (Consolidating both store files into a single, more robust configuration)
 
 import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import { createLogger } from 'redux-logger';
-import themeReducer from './slices/themeSlice';
-import spatialReducer from './slices/spatialSlice';
+import themeReducer, { initialState as themeInitialState } from '../slices/themeSlice';
+import spatialReducer, { initialState as spatialInitialState } from '../slices/spatialSlice';
+import { backgroundMonitor } from '../utils/backgroundMonitor';
+
+let startTime = Date.now(); // or any other appropriate initial value
+
+// Define initial state structure
+const preloadedState = {
+  theme: themeInitialState,
+  spatial: spatialInitialState
+};
 
 // Enhanced spatial logger middleware
 const spatialLogger = (store) => (next) => (action) => {
@@ -14,152 +24,117 @@ const spatialLogger = (store) => (next) => (action) => {
     console.log('%cPrevious State:', 'color: #ff9800; font-weight: bold;', store.getState().spatial);
     
     const result = next(action);
+    const nextState = store.getState().spatial;
     
-    console.log('%cNext State:', 'color: #2196f3; font-weight: bold;', store.getState().spatial);
-    console.log('%cState Diff:', 'color: #9c27b0; font-weight: bold;', 
-      getDiff(store.getState().spatial, store.getState().spatial));
+    console.log('%cNext State:', 'color: #2196f3; font-weight: bold;', nextState);
     console.groupEnd();
-    return result;
-  }
-  return next(action);
-};
-
-// Performance monitoring middleware
-const performanceMonitor = (store) => (next) => (action) => {
-  if (process.env.NODE_ENV === 'development') {
-    const startTime = performance.now();
-    const result = next(action);
-    const endTime = performance.now();
-    const duration = endTime - startTime;
-
-    if (duration > 16) { // Longer than one frame (60fps)
-      console.warn(`%cSlow action detected: ${action.type} took ${duration.toFixed(2)}ms`, 
-        'color: #f44336; font-weight: bold;');
-    }
-    return result;
-  }
-  return next(action);
-};
-
-// Error boundary middleware
-const errorBoundary = () => (next) => (action) => {
-  try {
-    return next(action);
-  } catch (err) {
-    console.error('Action error:', {
-      action: action.type,
-      payload: action.payload,
-      error: err
+    
+    // Log performance metrics
+    backgroundMonitor.logMetric('redux-action', {
+      type: action.type,
+      duration: performance.now() - startTime,
+      stateSize: JSON.stringify(nextState).length
     });
     
-    // You can add error reporting service here
-    if (process.env.NODE_ENV === 'production' && window?.Sentry) {
-      window.Sentry.captureException(err);
-    }
-    
-    throw err;
+    return result;
   }
-};
-
-// State validation middleware
-const stateValidator = (store) => (next) => (action) => {
-  const result = next(action);
-  const state = store.getState();
-
-  // Validate spatial state
-  if (state.spatial) {
-    const { geoData, flows, weights } = state.spatial.data;
-    
-    if (geoData && !geoData.features) {
-      console.error('Invalid geoData structure detected');
-    }
-    
-    if (flows && !Array.isArray(flows)) {
-      console.error('Invalid flows structure detected');
-    }
-    
-    if (weights && typeof weights !== 'object') {
-      console.error('Invalid weights structure detected');
-    }
-  }
-
-  return result;
+  return next(action);
 };
 
 // Configure middleware based on environment
-const getMiddleware = () => {
-  const middleware = [...getDefaultMiddleware({
+const getOptimizedMiddleware = (getDefaultMiddleware) => {
+  const middleware = getDefaultMiddleware({
+    thunk: {
+      extraArgument: undefined,
+      timeout: 20000,
+    },
     serializableCheck: {
       ignoredPaths: [
         'spatial.data.geoData',
         'spatial.data.weights',
-        'spatial.data.flows'
+        'spatial.data.flows',
+        'spatial.data.analysis',
+        'spatial.data.flowMaps',
+        'spatial.data.marketClusters'
+      ],
+      warnAfter: 1000,
+    },
+    immutableCheck: {
+      warnAfter: 500,
+      ignoredPaths: [
+        'spatial.data',
+        'spatial.status',
+        'spatial.ui.view'
       ],
     },
-    immutableCheck: process.env.NODE_ENV === 'development'
-  })];
+  });
 
-  // Add development middleware
   if (process.env.NODE_ENV === 'development') {
     middleware.push(spatialLogger);
-    middleware.push(performanceMonitor);
-    middleware.push(createLogger({
-      collapsed: true,
-      duration: true,
-      timestamp: true,
-      diff: true
-    }));
+    
+    if (process.env.REACT_APP_ENABLE_REDUX_LOGGER === 'true') {
+      middleware.push(createLogger({
+        collapsed: true,
+        duration: true,
+        timestamp: true,
+        predicate: (getState, action) => {
+          const skipActions = [
+            'spatial/setProgress',
+            'spatial/setLoadingStage',
+            'spatial/updateCache',
+            'spatial/updateProgress'
+          ];
+          return !skipActions.includes(action.type);
+        },
+        actionTransformer: (action) => {
+          if (action.type === 'spatial/fetchSpatialData/fulfilled') {
+            return {
+              ...action,
+              payload: '<<LARGE_PAYLOAD>>'
+            };
+          }
+          return action;
+        },
+        stateTransformer: (state) => ({
+          theme: state.theme,
+          spatial: {
+            ...state.spatial,
+            data: '<<SPATIAL_DATA>>'
+          }
+        })
+      }));
+    }
   }
 
-  // Add production middleware
-  middleware.push(errorBoundary);
-  middleware.push(stateValidator);
-
   return middleware;
-};
-
-// Helper function to get state diff
-const getDiff = (prevState, nextState) => {
-  const diff = {};
-  Object.keys(nextState).forEach(key => {
-    if (prevState[key] !== nextState[key]) {
-      diff[key] = {
-        from: prevState[key],
-        to: nextState[key]
-      };
-    }
-  });
-  return diff;
 };
 
 // Create store with enhanced configuration
 const store = configureStore({
   reducer: {
     theme: themeReducer,
-    spatial: spatialReducer
+    spatial: spatialReducer,
   },
-  middleware: getMiddleware(),
+  preloadedState,
+  middleware: getOptimizedMiddleware,
   devTools: process.env.NODE_ENV === 'development' && {
-    name: 'Yemen Market Analysis',
+    maxAge: 50,
     trace: true,
-    traceLimit: 25
-  },
-  preloadedState: undefined,
-  enhancers: undefined
+    traceLimit: 25,
+    actionsBlacklist: [
+      'spatial/setProgress',
+      'spatial/setLoadingStage'
+    ]
+  }
 });
 
-// Development tools and debugging
+// Development helpers
 if (process.env.NODE_ENV === 'development') {
   window.__REDUX_STORE__ = store;
-  
-  // Add performance monitoring
-  window.__REDUX_PERF__ = {
-    actionDurations: new Map(),
-    stateSize: new Map(),
-    getMetrics: () => ({
-      actionDurations: Array.from(window.__REDUX_PERF__.actionDurations.entries()),
-      stateSize: Array.from(window.__REDUX_PERF__.stateSize.entries())
-    })
+  window.__REDUX_MONITOR__ = {
+    getState: () => store.getState(),
+    dispatch: store.dispatch,
+    subscribe: (listener) => store.subscribe(listener)
   };
 }
 

@@ -193,3 +193,8 @@ export const retryWithBackoff = async (fn, options = {}) => {
 export const clearDataCache = () => {
   cache.clear();
 };
+
+export const getPrecomputedDataPath = (commodity) => {
+  const basePath = getDataPath();
+  return `${basePath}/preprocessed_by_commodity/preprocessed_yemen_market_data_${commodity}.json`;
+};

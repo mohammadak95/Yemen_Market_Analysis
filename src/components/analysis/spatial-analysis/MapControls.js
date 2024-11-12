@@ -10,8 +10,6 @@ import {
   MenuItem,
   IconButton,
   Tooltip,
-  Typography,
-  ButtonGroup,
   Paper,
 } from '@mui/material';
 import {
@@ -83,7 +81,7 @@ const MapControls = ({
         </FormControl>
 
         {/* Visualization Mode Controls */}
-        <ButtonGroup size="small" sx={{ ml: 'auto' }}>
+        <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
           <Tooltip title="Price Distribution">
             <IconButton
               color={visualizationMode === 'prices' ? 'primary' : 'default'}
@@ -124,7 +122,7 @@ const MapControls = ({
               <MapOutlined />
             </IconButton>
           </Tooltip>
-        </ButtonGroup>
+        </Box>
 
         {/* Refresh Button */}
         <Tooltip title="Refresh Data">

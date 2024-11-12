@@ -37,8 +37,6 @@ ReduxDebugWrapper.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export default ReduxDebugWrapper;
-
 // ===== AnalysisWrapper.js =====
 
 // src/components/AnalysisWrapper.js
@@ -136,3 +134,50 @@ export const setupReduxDebugger = (store) => {
   }
 };
 
+export const debugUtils = {
+  isEnabled: () => process.env.NODE_ENV === 'development',
+  
+  log: (message, data = {}) => {
+    if (debugUtils.isEnabled()) {
+      console.group(`[Spatial Debug] ${message}`);
+      console.log(data);
+      console.groupEnd();
+    }
+  },
+
+  logTransformation: (data, type) => {
+    if (debugUtils.isEnabled()) {
+      console.group(`Precomputed Data Transformation: ${type}`);
+      console.log('Input:', data);
+      console.timeEnd('transformation');
+      console.groupEnd();
+    }
+  },
+
+  logError: (error, context = {}) => {
+    if (debugUtils.isEnabled()) {
+      console.group('[Spatial Error]');
+      console.error(error);
+      console.log('Context:', context);
+      console.groupEnd();
+    }
+  }
+};
+
+export const debugPrecomputedData = {
+  logTransformation: (data, type) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.group(`Precomputed Data Transformation: ${type}`);
+      console.log('Input:', data);
+      console.timeEnd('transformation');
+      console.groupEnd();
+    }
+  }
+};
+
+
+export default {
+  debugUtils,
+  debugPrecomputedData,
+  setupReduxDebugger
+};

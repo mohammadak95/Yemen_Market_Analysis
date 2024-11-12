@@ -201,3 +201,20 @@ export const monitoredProcess = async (operation, data, options = {}) => {
     throw error;
   }
 };
+
+export const monitorPrecomputedData = {
+  startLoad: (commodity) => {
+    return dataLoadingMonitor.startRequest(
+      'load-precomputed',
+      { commodity }
+    );
+  },
+  
+  completeLoad: (requestId, data) => {
+    dataLoadingMonitor.completeRequest(requestId, {
+      size: new Blob([JSON.stringify(data)]).size,
+      commodity: data.metadata?.commodity,
+      timestamp: new Date().toISOString()
+    });
+  }
+};

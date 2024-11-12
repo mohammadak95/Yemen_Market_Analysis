@@ -43,16 +43,13 @@ const MapLegend = ({
         color: category.color,
       }));
     } else {
-      const computedDomain =
-        domain || [statistics?.min || 0, statistics?.max || 1];
+      const computedDomain = domain || [statistics?.min || 0, statistics?.max || 1];
       const range = computedDomain[1] - computedDomain[0];
       const stepSize = range / (steps - 1);
 
       return Array.from({ length: steps }, (_, i) => ({
         value: computedDomain[0] + stepSize * i,
-        color: colorScale(
-          (computedDomain[0] + stepSize * i - computedDomain[0]) / range
-        ),
+        color: colorScale((computedDomain[0] + stepSize * i - computedDomain[0]) / range),
       }));
     }
   }, [colorScale, steps, mode, categories, domain, statistics]);
@@ -82,14 +79,7 @@ const MapLegend = ({
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 1,
-        }}
-      >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="subtitle2">{title}</Typography>
           {description && (
@@ -98,11 +88,7 @@ const MapLegend = ({
             </Tooltip>
           )}
         </Stack>
-        <IconButton
-          size="small"
-          onClick={() => setIsExpanded(!isExpanded)}
-          sx={{ p: 0.5 }}
-        >
+        <IconButton size="small" onClick={() => setIsExpanded(!isExpanded)} sx={{ p: 0.5 }}>
           {isExpanded ? <ExpandLess /> : <ExpandMore />}
         </IconButton>
       </Box>
@@ -113,12 +99,7 @@ const MapLegend = ({
           <Box sx={{ mb: 1 }}>
             <Box sx={{ display: 'flex', height: 20 }}>
               {legendData.map((item, i) => (
-                <Tooltip
-                  key={i}
-                  title={`${formatValue(item.value)}${unit}`}
-                  arrow
-                  placement="top"
-                >
+                <Tooltip key={i} title={`${formatValue(item.value)}${unit}`} arrow placement="top">
                   <Box
                     sx={{
                       flex: 1,
@@ -137,13 +118,7 @@ const MapLegend = ({
                 </Tooltip>
               ))}
             </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                mt: 0.5,
-              }}
-            >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
               <Typography variant="caption">
                 {formatValue(legendData[0].value)}
                 {unit}
@@ -196,13 +171,7 @@ const MapLegend = ({
                   <Typography variant="caption" color="text.secondary">
                     {key}:
                   </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                    }}
-                  >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     {typeof value === 'number' && (
                       <Box
                         component="span"
@@ -220,9 +189,7 @@ const MapLegend = ({
                       </Box>
                     )}
                     <Typography variant="caption">
-                      {typeof value === 'number'
-                        ? formatValue(value) + unit
-                        : value}
+                      {typeof value === 'number' ? formatValue(value) + unit : value}
                     </Typography>
                   </Box>
                 </Box>

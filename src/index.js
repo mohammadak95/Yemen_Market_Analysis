@@ -8,39 +8,46 @@ import App from './App';
 import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 import { setupReduxDebugger } from './utils/debugUtils';
 import { backgroundMonitor } from './utils/backgroundMonitor';
+import { dataLoadingMonitor } from './utils/dataMonitoring.js';
+import { precomputedDataManager } from './utils/PrecomputedDataManager';
 import './utils/leafletSetup';
 import 'leaflet/dist/leaflet.css';
 import './styles/leaflet-overrides.css';
-import { fetchSpatialData } from './slices/spatialSlice';
+import { COMMODITIES } from './constants';
 
-// Initialize Redux Debugger
+// Initialize systems
 setupReduxDebugger(store);
+precomputedDataManager.initialize().catch(console.error);
 
 const root = createRoot(document.getElementById('root'));
 
-/**
- * Component to dispatch the fetchSpatialData thunk on mount.
- */
 const DataLoader = React.memo(({ selectedCommodity }) => {
   const [hasLoaded, setHasLoaded] = React.useState(false);
 
   React.useEffect(() => {
     if (selectedCommodity && !hasLoaded) {
-      console.log(`Dispatching fetchSpatialData for commodity: ${selectedCommodity}`);
-      store.dispatch(fetchSpatialData(selectedCommodity));
-      setHasLoaded(true);
+      const metric = backgroundMonitor.startMetric('initial-data-load');
+      
+      precomputedDataManager.processSpatialData(selectedCommodity)
+        .then(() => {
+          setHasLoaded(true);
+          metric.finish({ status: 'success' });
+        })
+        .catch(error => {
+          console.error('Error loading initial data:', error);
+          metric.finish({ status: 'error', error: error.message });
+        });
     }
   }, [selectedCommodity, hasLoaded]);
 
   return null;
 });
 
-/**
- * Wraps the App component with Redux Provider and Debugging Tools.
- */
 const AppWithProviders = React.memo(() => {
-  // Move selectedCommodity inside the component to prevent re-renders
-  const selectedCommodity = React.useMemo(() => 'beans (kidney red)', []);
+  const selectedCommodity = React.useMemo(
+    () => COMMODITIES.FOOD[0], // Use constant for initial commodity
+    []
+  );
 
   return (
     <Provider store={store}>
@@ -60,16 +67,18 @@ root.render(
 
 // Development monitoring
 if (process.env.NODE_ENV === 'development') {
-  backgroundMonitor.logMetric('app', {
-    event: 'initialization',
+  backgroundMonitor.logMetric('app-init', {
     timestamp: Date.now(),
+    environment: process.env.NODE_ENV
   });
 
   const startTime = performance.now();
-  console.debug(`[App] Starting with ${process.env.NODE_ENV} configuration`);
-
+  
   window.addEventListener('load', () => {
     const loadTime = performance.now() - startTime;
-    console.debug(`[App] Initial load completed in ${loadTime.toFixed(2)}ms`);
+    backgroundMonitor.logMetric('app-load-complete', {
+      duration: loadTime,
+      timestamp: Date.now()
+    });
   });
 }

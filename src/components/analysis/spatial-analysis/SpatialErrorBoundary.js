@@ -3,7 +3,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Alert, AlertTitle, Typography } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
-import ErrorDisplay from '../../common/ErrorDisplay';
 
 class SpatialErrorBoundary extends React.Component {
   constructor(props) {
