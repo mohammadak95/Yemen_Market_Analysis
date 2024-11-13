@@ -1,6 +1,16 @@
 // src/utils/spatialUtils.js
 
 import { debugUtils } from './debugUtils';
+import { scaleSequential, scaleQuantile } from 'd3-scale';
+import { interpolateBlues, interpolateReds, interpolateGreens, interpolateOranges } from 'd3-scale-chromatic';
+
+export const VISUALIZATION_MODES = {
+  PRICES: 'prices',
+  FLOWS: 'flows',
+  CLUSTERS: 'clusters',
+  SHOCKS: 'shocks',
+  INTEGRATION: 'integration'
+};
 
 
 /**
@@ -114,25 +124,151 @@ function calculateClusterDensity(cluster) {
 export const getColorScales = (mode, data) => {
   if (!data?.features?.length) return { getColor: () => '#ccc' };
 
-  try {
-    const values = data.features
-      .map(f => f.properties?.priceData?.avgUsdPrice)
-      .filter(price => typeof price === 'number' && !isNaN(price));
+  // Extract values based on visualization mode
+  const values = data.features.map(feature => {
+    const props = feature.properties;
+    switch (mode) {
+      case VISUALIZATION_MODES.PRICES:
+        return props.priceData?.avgUsdPrice || props.usdprice;
+      case VISUALIZATION_MODES.FLOWS:
+        return props.flow_weight;
+      case VISUALIZATION_MODES.CLUSTERS:
+        return props.clusterSize;
+      case VISUALIZATION_MODES.SHOCKS:
+        return props.shock_magnitude;
+      case VISUALIZATION_MODES.INTEGRATION:
+        return props.integration_score;
+      default:
+        return props.priceData?.avgUsdPrice || props.usdprice;
+    }
+  }).filter(value => value !== undefined && value !== null);
 
-    if (!values.length) return { getColor: () => '#ccc' };
+  // If no valid values, return default color
+  if (!values.length) return { getColor: () => '#ccc' };
 
-    const min = Math.min(...values);
-    const max = Math.max(...values);
+  // Calculate domain
+  const min = Math.min(...values);
+  const max = Math.max(...values);
 
-    return {
-      getColor: (feature) => {
-        const value = feature.properties?.priceData?.avgUsdPrice;
-        if (typeof value !== 'number' || isNaN(value)) return '#ccc';
-        return interpolateBlues((value - min) / (max - min));
+  // Create color scale based on visualization mode
+  const getColorScale = () => {
+    switch (mode) {
+      case VISUALIZATION_MODES.PRICES:
+        return scaleSequential()
+          .domain([min, max])
+          .interpolator(interpolateBlues);
+      
+      case VISUALIZATION_MODES.FLOWS:
+        return scaleSequential()
+          .domain([min, max])
+          .interpolator(interpolateGreens);
+      
+      case VISUALIZATION_MODES.CLUSTERS:
+        // Use quantile scale for discrete cluster sizes
+        const clusterScale = scaleQuantile()
+          .domain(values)
+          .range(['#fee5d9', '#fcae91', '#fb6a4a', '#de2d26', '#a50f15']);
+        return value => clusterScale(value);
+      
+      case VISUALIZATION_MODES.SHOCKS:
+        return scaleSequential()
+          .domain([min, max])
+          .interpolator(interpolateReds);
+      
+      case VISUALIZATION_MODES.INTEGRATION:
+        return scaleSequential()
+          .domain([min, max])
+          .interpolator(interpolateOranges);
+      
+      default:
+        return scaleSequential()
+          .domain([min, max])
+          .interpolator(interpolateBlues);
+    }
+  };
+
+  const colorScale = getColorScale();
+
+  return {
+    getColor: (feature) => {
+      if (!feature?.properties) return '#ccc';
+
+      const props = feature.properties;
+      let value;
+
+      switch (mode) {
+        case VISUALIZATION_MODES.PRICES:
+          value = props.priceData?.avgUsdPrice || props.usdprice;
+          break;
+        case VISUALIZATION_MODES.FLOWS:
+          value = props.flow_weight;
+          break;
+        case VISUALIZATION_MODES.CLUSTERS:
+          value = props.clusterSize;
+          break;
+        case VISUALIZATION_MODES.SHOCKS:
+          value = props.shock_magnitude;
+          break;
+        case VISUALIZATION_MODES.INTEGRATION:
+          value = props.integration_score;
+          break;
+        default:
+          value = props.priceData?.avgUsdPrice || props.usdprice;
       }
-    };
-  } catch (error) {
-    console.error('Error creating color scales:', error);
-    return { getColor: () => '#ccc' };
-  }
+
+      if (value === undefined || value === null) return '#ccc';
+      
+      // For cluster mode, use the function directly
+      if (mode === VISUALIZATION_MODES.CLUSTERS) {
+        return colorScale(value);
+      }
+
+      // For other modes, call the scale as a function
+      return colorScale(value);
+    },
+    // Add domain info for legend
+    domain: [min, max],
+    // Add mode-specific formatting
+    format: (value) => {
+      switch (mode) {
+        case VISUALIZATION_MODES.PRICES:
+          return `$${value.toFixed(2)}`;
+        case VISUALIZATION_MODES.FLOWS:
+          return value.toFixed(1);
+        case VISUALIZATION_MODES.CLUSTERS:
+          return Math.round(value);
+        case VISUALIZATION_MODES.SHOCKS:
+          return `${value.toFixed(1)}%`;
+        case VISUALIZATION_MODES.INTEGRATION:
+          return (value * 100).toFixed(1) + '%';
+        default:
+          return value.toFixed(2);
+      }
+    }
+  };
+};
+
+// Helper function to get color for specific visualization types
+export const getFlowLineColor = (flow, maxFlow = 100) => {
+  const normalizedValue = Math.min(flow.flow_weight / maxFlow, 1);
+  const opacity = 0.2 + (normalizedValue * 0.8); // Scale opacity between 0.2 and 1.0
+  return `rgba(0, 128, 255, ${opacity})`;
+};
+
+export const getClusterColor = (clusterId, totalClusters) => {
+  const colors = [
+    '#e41a1c', // red
+    '#377eb8', // blue
+    '#4daf4a', // green
+    '#984ea3', // purple
+    '#ff7f00', // orange
+    '#ffff33'  // yellow
+  ];
+  return colors[clusterId % colors.length];
+};
+
+export const getShockColor = (shock) => {
+  if (shock.magnitude > 50) return '#d73027'; // high severity
+  if (shock.magnitude > 25) return '#fc8d59'; // medium severity
+  return '#fee090'; // low severity
 };

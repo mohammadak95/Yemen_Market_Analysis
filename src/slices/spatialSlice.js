@@ -1,43 +1,62 @@
+// src/slices/spatialSlice.js
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { createSelector } from 'reselect';
+import { createSelector } from '@reduxjs/toolkit';
 import { precomputedDataManager } from '../utils/PrecomputedDataManager';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 import { fetchGeometries } from './geometriesSlice';
-import { MAP_SETTINGS } from '../constants';
-import { normalizeRegionId } from '../utils/appUtils';
 
 export const initialState = {
   data: {
-    geoData: null,
-    marketClusters: [], 
-    detectedShocks: [], 
-    timeSeriesData: [],
-    flowMaps: [],
-    analysisMetrics: {},
-    spatialAutocorrelation: null,
-    flowAnalysis: [],
-    metadata: null,
-    uniqueMonths: []
+    geoData: null, // GeoJSON data
+    marketClusters: [], // Market cluster information
+    detectedShocks: [], // Market shocks data
+    timeSeriesData: [], // Time series price data
+    flowMaps: [], // Flow mapping data
+    analysisMetrics: {
+      marketEfficiency: {
+        integrationScore: 0,
+        coverageRatio: 0,
+        flowDensity: 0
+      },
+      priceAnalysis: {
+        volatilityIndex: 0,
+        trendStrength: 0,
+        priceStability: 0
+      }
+    },
+    spatialAutocorrelation: null, // Moran's I and related stats
+    flowAnalysis: [], // Flow analysis results
+    metadata: null, // Analysis metadata
+    uniqueMonths: [] // Available time periods
   },
   ui: {
     selectedCommodity: '',
     selectedDate: '',
     selectedRegimes: ['unified'],
     selectedRegion: null,
+    visualizationMode: 'prices', // 'prices', 'flows', 'clusters', 'shocks'
+    layerVisibility: {
+      flows: true,
+      clusters: true,
+      shocks: true,
+      heatmap: true
+    },
     view: {
-      center: MAP_SETTINGS.DEFAULT_CENTER,
-      zoom: MAP_SETTINGS.DEFAULT_ZOOM,
+      center: [15.3694, 44.191], // Yemen's approximate center
+      zoom: 6,
     },
   },
   status: {
     loading: false,
     error: null,
+    isInitialized: false, 
     progress: 0,
     stage: null,
+    lastUpdated: null
   }
 };
 
-// Create async thunk for fetching and merging spatial data
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
   async ({ selectedCommodity, selectedDate }, { dispatch, getState, rejectWithValue }) => {
@@ -48,6 +67,7 @@ export const fetchSpatialData = createAsyncThunk(
         throw new Error('Commodity parameter is required');
       }
 
+      // Ensure geometries are loaded first
       const state = getState();
       let geometries = state.geometries.data;
 
@@ -59,62 +79,29 @@ export const fetchSpatialData = createAsyncThunk(
         geometries = geometriesResult;
       }
 
-      if (!geometries || typeof geometries !== 'object') {
-        throw new Error('Invalid geometries data structure');
-      }
-
-      const geometriesFeatures = Object.entries(geometries).map(([regionId, data]) => ({
-        type: 'Feature',
-        properties: {
-          region_id: regionId,
-          ...data.properties
-        },
-        geometry: data.geometry
-      }));
-
+      // Process spatial data
       const result = await precomputedDataManager.processSpatialData(
         selectedCommodity,
         selectedDate,
-        { 
-          geometries: {
-            type: 'FeatureCollection',
-            features: geometriesFeatures
-          }
-        }
+        { geometries }
       );
 
+      // Extract unique months if not provided in the result
       const uniqueMonths = Array.isArray(result.timeSeriesData) 
         ? [...new Set(result.timeSeriesData.map(d => d.month))].sort()
         : [];
-      
+
       const effectiveDate = selectedDate || uniqueMonths[uniqueMonths.length - 1];
 
       metric.finish({ status: 'success' });
-      
-      // Load precomputed data for the selected commodity and date
-      const precomputedData = await dataMerger.mergeData(
-        await dataMerger.loadPrecomputedData(selectedCommodity), 
-        selectedCommodity, 
-        selectedDate
-      );
 
-      // Process the data with spatial processors
-      const processedData = processSpatialData(precomputedData, precomputedData.geoData, selectedDate);
-
-      // Extract unique months from the time series data
-      const uniqueMonths = [...new Set(processedData.timeSeriesData.map(d => d.month))].sort();
-      
-      metric.finish({ 
-        status: 'success',
-        dataSize: JSON.stringify(processedData).length,
-        commodity: selectedCommodity
-      });
-
+      // Ensure we return all required data
       return {
         ...result,
         uniqueMonths,
         selectedCommodity,
-        selectedDate: effectiveDate
+        selectedDate: effectiveDate,
+        isLoaded: true // Add this flag to track initial load
       };
 
     } catch (error) {
@@ -124,6 +111,99 @@ export const fetchSpatialData = createAsyncThunk(
     }
   }
 );
+
+const spatialSlice = createSlice({
+  name: 'spatial',
+  initialState: {
+    data: {
+      geoData: null,
+      marketClusters: [],
+      detectedShocks: [],
+      timeSeriesData: [],
+      flowMaps: [],
+      analysisMetrics: {
+        marketEfficiency: {
+          integrationScore: 0,
+          coverageRatio: 0,
+          flowDensity: 0
+        },
+        priceAnalysis: {
+          volatilityIndex: 0,
+          trendStrength: 0,
+          priceStability: 0
+        }
+      },
+      spatialAutocorrelation: null,
+      metadata: null,
+      uniqueMonths: []
+    },
+    ui: {
+      selectedCommodity: '',
+      selectedDate: '',
+      selectedRegimes: ['unified'],
+      selectedRegion: null,
+      visualizationMode: 'prices',
+      layerVisibility: {
+        flows: true,
+        clusters: true,
+        shocks: true,
+        heatmap: true
+      },
+      view: {
+        center: [15.3694, 44.191],
+        zoom: 6,
+      },
+    },
+    status: {
+      loading: false,
+      error: null,
+      progress: 0,
+      stage: null,
+      lastUpdated: null,
+      isInitialized: false // Add initialization flag
+    }
+  },
+  reducers: {
+    // ... existing reducers ...
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchSpatialData.pending, (state) => {
+        state.status.loading = true;
+        state.status.error = null;
+        state.status.progress = 0;
+        state.status.stage = 'Loading data...';
+      })
+      .addCase(fetchSpatialData.fulfilled, (state, action) => {
+        state.status.loading = false;
+        state.status.error = null;
+        state.status.progress = 100;
+        state.status.stage = null;
+        state.status.lastUpdated = new Date().toISOString();
+        state.status.isInitialized = true;
+        
+        // Update data state
+        state.data = {
+          ...action.payload,
+          analysisMetrics: {
+            marketEfficiency: action.payload.market_efficiency || state.data.analysisMetrics.marketEfficiency,
+            priceAnalysis: action.payload.price_analysis || state.data.analysisMetrics.priceAnalysis
+          }
+        };
+        
+        // Update UI state
+        state.ui.selectedCommodity = action.payload.selectedCommodity;
+        state.ui.selectedDate = action.payload.selectedDate;
+      })
+      .addCase(fetchSpatialData.rejected, (state, action) => {
+        state.status.loading = false;
+        state.status.error = action.payload;
+        state.status.progress = 0;
+        state.status.stage = null;
+        state.status.isInitialized = false;
+      });
+  }
+});
 
 // Selectors
 export const selectSpatialData = state => state.spatial.data;
@@ -165,6 +245,14 @@ export const selectUniqueMonths = createSelector(
   data => data.uniqueMonths || []
 );
 
+export const selectVisualizationState = createSelector(
+  [selectUIState],
+  ui => ({
+    mode: ui.visualizationMode,
+    layerVisibility: ui.layerVisibility
+  })
+);
+
 export const selectSelectedCommodity = createSelector(
   [selectUIState],
   ui => ui.selectedCommodity
@@ -195,62 +283,13 @@ export const selectError = createSelector(
   status => status.error
 );
 
-const spatialSlice = createSlice({
-  name: 'spatial',
-  initialState,
-  reducers: {
-    setProgress: (state, action) => {
-      state.status.progress = action.payload;
-    },
-    setLoadingStage: (state, action) => {
-      state.status.stage = action.payload;
-    },
-    setSelectedRegion: (state, action) => {
-      state.ui.selectedRegion = normalizeRegionId(action.payload);
-    },    
-    setView: (state, action) => {
-      state.ui.view = action.payload;
-    },
-    setSelectedCommodity: (state, action) => {
-      state.ui.selectedCommodity = action.payload;
-    },
-    setSelectedDate: (state, action) => {
-      state.ui.selectedDate = action.payload;
-    },
-    setSelectedRegimes: (state, action) => {
-      state.ui.selectedRegimes = action.payload;
-    },
-    resetState: (state) => {
-      Object.assign(state, initialState);
-    }
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchSpatialData.pending, (state) => {
-        state.status.loading = true;
-        state.status.error = null;
-        state.status.progress = 0;
-      })
-      .addCase(fetchSpatialData.fulfilled, (state, action) => {
-        state.status.loading = false;
-        state.status.error = null;
-        state.status.progress = 100;
-        state.data = action.payload;
-        state.ui.selectedCommodity = action.payload.selectedCommodity;
-        state.ui.selectedDate = action.payload.selectedDate;
-      })
-      .addCase(fetchSpatialData.rejected, (state, action) => {
-        state.status.loading = false;
-        state.status.error = action.payload;
-        state.status.progress = 0;
-      });
-  },
-});
 
 export const {
   setProgress,
   setLoadingStage,
   setSelectedRegion,
+  setVisualizationMode,
+  toggleLayerVisibility,
   setView,
   setSelectedCommodity,
   setSelectedDate,
