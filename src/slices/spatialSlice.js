@@ -1,13 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
-import { SpatialDataMerger } from '../utils/spatialDataMerger';
-import { processSpatialData } from '../utils/spatialProcessors';
+import { precomputedDataManager } from '../utils/PrecomputedDataManager';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 import { fetchGeometries } from './geometriesSlice';
 import { MAP_SETTINGS } from '../constants';
 import { normalizeRegionId } from '../utils/appUtils';
-import SpatialDataMerger from '../utils/spatialDataMerger';
-
 
 export const initialState = {
   data: {
@@ -19,7 +16,6 @@ export const initialState = {
     analysisMetrics: {},
     spatialAutocorrelation: null,
     flowAnalysis: [],
-    spatialWeights: null,  // New field for weights
     metadata: null,
     uniqueMonths: []
   },
@@ -46,7 +42,6 @@ export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
   async ({ selectedCommodity, selectedDate }, { dispatch, getState, rejectWithValue }) => {
     const metric = backgroundMonitor.startMetric('spatial-data-fetch');
-    const dataMerger = new SpatialDataMerger();
 
     try {
       if (!selectedCommodity) {
@@ -116,7 +111,7 @@ export const fetchSpatialData = createAsyncThunk(
       });
 
       return {
-        ...processedData,
+        ...result,
         uniqueMonths,
         selectedCommodity,
         selectedDate: effectiveDate
