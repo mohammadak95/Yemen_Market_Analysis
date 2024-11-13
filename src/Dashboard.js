@@ -9,7 +9,6 @@ import ErrorMessage from './components/common/ErrorMessage';
 import AnalysisWrapper from './components/common/AnalysisWrapper';
 import SpatialAnalysis from './components/analysis/spatial-analysis/SpatialAnalysis';
 
-
 import {
   Chart as ChartJS,
   CategoryScale,

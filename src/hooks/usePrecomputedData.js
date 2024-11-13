@@ -1,143 +1,44 @@
-//src/hooks/usePrecomputedData.js
+// src/hooks/usePrecomputedData.js
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { precomputedDataManager } from '../utils/PrecomputedDataManager';
-import { enhancedSpatialProcessor } from '../utils/spatialProcessors';
-import { fetchSpatialData, selectTimeSeriesData, selectAnalysisMetrics } from '../slices/spatialSlice';
-import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { calculateMarketMetrics } from '../utils/dataTransformers';
 
 export function usePrecomputedData(commodity, date) {
-  const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [processedData, setProcessedData] = useState(null);
-  const [geometries, setGeometries] = useState(null);
+  const [data, setData] = useState(null);
 
-  const timeSeriesData = useSelector(selectTimeSeriesData);
-  const analysisMetrics = useSelector(selectAnalysisMetrics);
+  useEffect(() => {
+    async function loadData() {
+      if (!commodity || !date) {
+        setLoading(false);
+        return;
+      }
 
-  // Load geometries
-  const loadGeometries = useCallback(async () => {
-    const metric = backgroundMonitor.startMetric('load-geometries');
-    try {
-      let geometryData;
-      
-      // Try loading from PrecomputedDataManager first
       try {
-        geometryData = await precomputedDataManager.loadGeometries();
-      } catch (e) {
-        console.warn('Failed to load geometries from PrecomputedDataManager:', e);
+        setLoading(true);
+        const result = await precomputedDataManager.loadCommodityData(commodity, date);
+        setData(result);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error loading commodity data:', err);
+      } finally {
+        setLoading(false);
       }
-
-      // If that fails, try loading from local GeoJSON
-      if (!geometryData) {
-        try {
-          const response = await fetch('/geoBoundaries-YEM-ADM1.geojson');
-          if (!response.ok) throw new Error('Failed to fetch geometry data');
-          geometryData = await response.json();
-        } catch (e) {
-          console.warn('Failed to load local geometry data:', e);
-        }
-      }
-
-      if (geometryData) {
-        metric.finish({ status: 'success' });
-        return geometryData;
-      } else {
-        throw new Error('No geometry data available');
-      }
-    } catch (error) {
-      metric.finish({ status: 'error', error: error.message });
-      console.error('Error loading geometries:', error);
-      return null;
-    }
-  }, []);
-
-  // Load geometries on mount
-  useEffect(() => {
-    if (!geometries) {
-      loadGeometries().then(setGeometries);
-    }
-  }, [geometries, loadGeometries]);
-
-  // Main data loading function
-  const loadData = useCallback(async () => {
-    if (!commodity || !date) {
-      setLoading(false);
-      return;
     }
 
-    const metric = backgroundMonitor.startMetric('load-spatial-data');
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Load raw data
-      const rawData = await precomputedDataManager.loadCommodityData(commodity, date);
-      
-      if (!rawData) {
-        throw new Error('No data available for selected commodity and date');
-      }
-
-      // Process data using enhanced processor
-      const processed = await enhancedSpatialProcessor.processSpatialData(rawData, {
-        geometries,
-        requireGeometry: false, // Don't require geometries to handle missing data gracefully
-        transform: true
-      });
-
-      setProcessedData(processed);
-      
-      // Update Redux store
-      dispatch(fetchSpatialData({
-        selectedCommodity: commodity,
-        selectedDate: date,
-        processedData: processed
-      }));
-
-      metric.finish({ status: 'success' });
-    } catch (err) {
-      console.error('Error loading data:', err);
-      setError(err.message);
-      metric.finish({ status: 'error', error: err.message });
-    } finally {
-      setLoading(false);
-    }
-  }, [commodity, date, geometries, dispatch]);
-
-  // Load data when inputs change
-  useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [commodity, date]);
 
-  // Process map data
-  const mapData = useMemo(() => {
-    if (!processedData?.geoData) return null;
+  const metrics = useMemo(() => {
+    if (!data) return null;
+    return calculateMarketMetrics(data);
+  }, [data]);
 
-    const timeSeriesEntry = timeSeriesData?.find(d => d.month === date);
-
-    return {
-      ...processedData.geoData,
-      features: processedData.geoData.features.map(feature => ({
-        ...feature,
-        properties: {
-          ...feature.properties,
-          timeSeriesData: timeSeriesEntry,
-          priceData: timeSeriesEntry
-        }
-      }))
-    };
-  }, [processedData, timeSeriesData, date]);
-
-  return {
-    data: processedData,
-    mapData,
-    loading,
-    error,
-    analysisMetrics,
-    refresh: loadData
-  };
+  return { data, loading, error, metrics };
 }
 
 // src/hooks/useMarketAnalysis.js
