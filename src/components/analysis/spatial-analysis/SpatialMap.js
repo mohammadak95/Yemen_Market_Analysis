@@ -23,28 +23,6 @@ const DEFAULT_ZOOM = 6;
 const MIN_ZOOM = 5;
 const MAX_ZOOM = 10;
 
-// Map Controls Component
-const MapControls = ({ position = 'topleft', onZoomIn, onZoomOut, onReset }) => {
-  const map = useMap();
-
-  const handleZoomIn = useCallback(() => {
-    map.setZoom(Math.min(map.getZoom() + 1, MAX_ZOOM));
-    onZoomIn?.();
-  }, [map, onZoomIn]);
-
-  const handleZoomOut = useCallback(() => {
-    map.setZoom(Math.max(map.getZoom() - 1, MIN_ZOOM));
-    onZoomOut?.();
-  }, [map, onZoomOut]);
-
-  const handleReset = useCallback(() => {
-    map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-    onReset?.();
-  }, [map, onReset]);
-
-  return null; // This component doesn't render anything visible
-};
-
 // Flow Lines Component
 const FlowLines = React.memo(({ flows, getFlowStyle }) => {
   if (!flows?.length) return null;
@@ -99,7 +77,7 @@ const SpatialMap = ({
   const mapRef = useRef(null);
   const geoJsonRef = useRef(null);
 
-  // Integrated Style generator from the simplified version
+  // Style generator for regions
   const getRegionStyle = useCallback((feature) => {
     return {
       fillColor: colorScales?.getColor(feature) || '#cccccc',
@@ -110,7 +88,7 @@ const SpatialMap = ({
     };
   }, [colorScales]);
 
-  // Integrated Feature click handler from the simplified version
+  // Feature click handler
   const onFeatureClick = useCallback((feature) => {
     if (onRegionSelect && feature.properties?.region_id) {
       onRegionSelect(feature.properties.region_id);
@@ -140,7 +118,7 @@ const SpatialMap = ({
         },
       });
 
-      // Simplified tooltip content
+      // Tooltip content
       const tooltipContent = `
         <strong>${
           feature.properties.region || feature.properties.region_id || 'Unknown Region'
@@ -151,7 +129,7 @@ const SpatialMap = ({
     [getRegionStyle, onFeatureClick]
   );
 
-  // Debounced map update
+  // Debounced map update to optimize performance
   const debouncedMapUpdate = useMemo(
     () =>
       debounce(() => {
@@ -211,10 +189,9 @@ const SpatialMap = ({
         />
 
         {showFlows && (
-          <FlowLines flows={flowMaps} getFlowStyle={getFlowStyle} />
+          <FlowLines flows={flowMaps} getFlowStyle={getRegionStyle} />
         )}
 
-        <MapControls position="topleft" />
         <ScaleControl position="bottomleft" />
       </MapContainer>
     </Box>
@@ -222,7 +199,7 @@ const SpatialMap = ({
 };
 
 SpatialMap.propTypes = {
-  geoData: PropTypes.object,
+  geoData: PropTypes.object.isRequired, // Ensure geoData is provided
   flowMaps: PropTypes.array,
   selectedDate: PropTypes.string,
   spatialWeights: PropTypes.object,

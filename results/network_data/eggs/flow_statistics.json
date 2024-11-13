@@ -1,0 +1,378 @@
+{
+  "2020-07-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 10,
+    "mean_price_diff": 0.184361275,
+    "max_price_diff": 0.28480962,
+    "mean_flow_weight": 0.184361275,
+    "active_regions": 9
+  },
+  "2020-08-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 16,
+    "mean_price_diff": 0.24612947375000002,
+    "max_price_diff": 0.28902384000000003,
+    "mean_flow_weight": 0.24612947375000002,
+    "active_regions": 13
+  },
+  "2020-09-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 29,
+    "mean_price_diff": 0.22186282965517243,
+    "max_price_diff": 0.3416909,
+    "mean_flow_weight": 0.22186282965517243,
+    "active_regions": 17
+  },
+  "2020-10-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 28,
+    "mean_price_diff": 0.21662974785714284,
+    "max_price_diff": 0.31438080999999996,
+    "mean_flow_weight": 0.21662974785714284,
+    "active_regions": 19
+  },
+  "2020-11-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 21,
+    "mean_price_diff": 0.19181133952380952,
+    "max_price_diff": 0.29706791,
+    "mean_flow_weight": 0.19181133952380952,
+    "active_regions": 16
+  },
+  "2020-12-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 10,
+    "mean_price_diff": 0.210836735,
+    "max_price_diff": 0.28187209,
+    "mean_flow_weight": 0.210836735,
+    "active_regions": 11
+  },
+  "2021-01-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 23,
+    "mean_price_diff": 0.1808618195652174,
+    "max_price_diff": 0.3760528,
+    "mean_flow_weight": 0.1808618195652174,
+    "active_regions": 15
+  },
+  "2021-02-28_eggs": {
+    "commodity": "eggs",
+    "flow_count": 27,
+    "mean_price_diff": 0.1794040137037037,
+    "max_price_diff": 0.4122023,
+    "mean_flow_weight": 0.1794040137037037,
+    "active_regions": 17
+  },
+  "2021-03-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 24,
+    "mean_price_diff": 0.17802515333333332,
+    "max_price_diff": 0.38555726,
+    "mean_flow_weight": 0.17802515333333332,
+    "active_regions": 15
+  },
+  "2021-04-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 29,
+    "mean_price_diff": 0.1566346113793104,
+    "max_price_diff": 0.3481473,
+    "mean_flow_weight": 0.1566346113793104,
+    "active_regions": 16
+  },
+  "2021-05-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 27,
+    "mean_price_diff": 0.1680086018518519,
+    "max_price_diff": 0.34872723,
+    "mean_flow_weight": 0.1680086018518519,
+    "active_regions": 16
+  },
+  "2021-06-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 29,
+    "mean_price_diff": 0.16790459,
+    "max_price_diff": 0.35690001,
+    "mean_flow_weight": 0.16790459,
+    "active_regions": 16
+  },
+  "2021-07-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 26,
+    "mean_price_diff": 0.1697188469230769,
+    "max_price_diff": 0.36141106,
+    "mean_flow_weight": 0.1697188469230769,
+    "active_regions": 16
+  },
+  "2021-08-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 36,
+    "mean_price_diff": 0.16825162055555556,
+    "max_price_diff": 0.44940871,
+    "mean_flow_weight": 0.16825162055555556,
+    "active_regions": 17
+  },
+  "2021-09-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 38,
+    "mean_price_diff": 0.22784169894736844,
+    "max_price_diff": 0.56146282,
+    "mean_flow_weight": 0.22784169894736844,
+    "active_regions": 18
+  },
+  "2021-10-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 52,
+    "mean_price_diff": 0.2517654384615385,
+    "max_price_diff": 0.70895547,
+    "mean_flow_weight": 0.2517654384615385,
+    "active_regions": 20
+  },
+  "2021-11-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 52,
+    "mean_price_diff": 0.2751052292307692,
+    "max_price_diff": 0.68266177,
+    "mean_flow_weight": 0.2751052292307692,
+    "active_regions": 21
+  },
+  "2021-12-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 50,
+    "mean_price_diff": 0.21810755440000001,
+    "max_price_diff": 0.50847989,
+    "mean_flow_weight": 0.21810755440000001,
+    "active_regions": 21
+  },
+  "2022-01-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 44,
+    "mean_price_diff": 0.21654151181818182,
+    "max_price_diff": 0.46541947,
+    "mean_flow_weight": 0.21654151181818182,
+    "active_regions": 18
+  },
+  "2022-02-28_eggs": {
+    "commodity": "eggs",
+    "flow_count": 43,
+    "mean_price_diff": 0.22560883348837213,
+    "max_price_diff": 0.44466898,
+    "mean_flow_weight": 0.22560883348837213,
+    "active_regions": 18
+  },
+  "2022-03-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 46,
+    "mean_price_diff": 0.27246973565217397,
+    "max_price_diff": 0.5637573,
+    "mean_flow_weight": 0.27246973565217397,
+    "active_regions": 18
+  },
+  "2022-04-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 42,
+    "mean_price_diff": 0.238679825,
+    "max_price_diff": 0.46831399,
+    "mean_flow_weight": 0.238679825,
+    "active_regions": 18
+  },
+  "2022-05-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 43,
+    "mean_price_diff": 0.241824878372093,
+    "max_price_diff": 0.51189387,
+    "mean_flow_weight": 0.241824878372093,
+    "active_regions": 18
+  },
+  "2022-06-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 42,
+    "mean_price_diff": 0.2837672447619048,
+    "max_price_diff": 0.58636665,
+    "mean_flow_weight": 0.2837672447619048,
+    "active_regions": 18
+  },
+  "2022-07-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 44,
+    "mean_price_diff": 0.36192326295454547,
+    "max_price_diff": 0.78644443,
+    "mean_flow_weight": 0.36192326295454547,
+    "active_regions": 18
+  },
+  "2022-08-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 44,
+    "mean_price_diff": 0.36187219522727265,
+    "max_price_diff": 0.80277538,
+    "mean_flow_weight": 0.36187219522727265,
+    "active_regions": 18
+  },
+  "2022-09-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 42,
+    "mean_price_diff": 0.2923089823809524,
+    "max_price_diff": 0.64546281,
+    "mean_flow_weight": 0.2923089823809524,
+    "active_regions": 18
+  },
+  "2022-10-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 39,
+    "mean_price_diff": 0.29538425743589747,
+    "max_price_diff": 0.59728885,
+    "mean_flow_weight": 0.29538425743589747,
+    "active_regions": 18
+  },
+  "2022-11-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 32,
+    "mean_price_diff": 0.350473675625,
+    "max_price_diff": 0.59169507,
+    "mean_flow_weight": 0.350473675625,
+    "active_regions": 18
+  },
+  "2022-12-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 34,
+    "mean_price_diff": 0.32200927382352934,
+    "max_price_diff": 0.55537987,
+    "mean_flow_weight": 0.32200927382352934,
+    "active_regions": 18
+  },
+  "2023-01-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 32,
+    "mean_price_diff": 0.34224097062500003,
+    "max_price_diff": 0.53225279,
+    "mean_flow_weight": 0.34224097062500003,
+    "active_regions": 18
+  },
+  "2023-02-28_eggs": {
+    "commodity": "eggs",
+    "flow_count": 36,
+    "mean_price_diff": 0.31616761138888894,
+    "max_price_diff": 0.54466897,
+    "mean_flow_weight": 0.31616761138888894,
+    "active_regions": 18
+  },
+  "2023-03-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 34,
+    "mean_price_diff": 0.31191197147058825,
+    "max_price_diff": 0.51785725,
+    "mean_flow_weight": 0.31191197147058825,
+    "active_regions": 18
+  },
+  "2023-04-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 41,
+    "mean_price_diff": 0.3119305912195122,
+    "max_price_diff": 0.60548067,
+    "mean_flow_weight": 0.3119305912195122,
+    "active_regions": 18
+  },
+  "2023-05-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 42,
+    "mean_price_diff": 0.3235754369047619,
+    "max_price_diff": 0.62902719,
+    "mean_flow_weight": 0.3235754369047619,
+    "active_regions": 18
+  },
+  "2023-06-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 42,
+    "mean_price_diff": 0.3224819483333333,
+    "max_price_diff": 0.63033336,
+    "mean_flow_weight": 0.3224819483333333,
+    "active_regions": 18
+  },
+  "2023-07-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 42,
+    "mean_price_diff": 0.31480652333333337,
+    "max_price_diff": 0.61407775,
+    "mean_flow_weight": 0.31480652333333337,
+    "active_regions": 18
+  },
+  "2023-08-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 42,
+    "mean_price_diff": 0.3100721659523809,
+    "max_price_diff": 0.58404207,
+    "mean_flow_weight": 0.3100721659523809,
+    "active_regions": 18
+  },
+  "2023-09-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 40,
+    "mean_price_diff": 0.3452577385,
+    "max_price_diff": 0.64122951,
+    "mean_flow_weight": 0.3452577385,
+    "active_regions": 18
+  },
+  "2023-10-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 36,
+    "mean_price_diff": 0.3658503619444445,
+    "max_price_diff": 0.65962213,
+    "mean_flow_weight": 0.3658503619444445,
+    "active_regions": 18
+  },
+  "2023-11-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 39,
+    "mean_price_diff": 0.354926592051282,
+    "max_price_diff": 0.72012842,
+    "mean_flow_weight": 0.354926592051282,
+    "active_regions": 18
+  },
+  "2023-12-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 47,
+    "mean_price_diff": 0.4168796361702128,
+    "max_price_diff": 0.96731323,
+    "mean_flow_weight": 0.4168796361702128,
+    "active_regions": 18
+  },
+  "2024-01-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 48,
+    "mean_price_diff": 0.411070739375,
+    "max_price_diff": 0.94421947,
+    "mean_flow_weight": 0.411070739375,
+    "active_regions": 18
+  },
+  "2024-02-29_eggs": {
+    "commodity": "eggs",
+    "flow_count": 47,
+    "mean_price_diff": 0.4257497968085106,
+    "max_price_diff": 0.95683563,
+    "mean_flow_weight": 0.4257497968085106,
+    "active_regions": 18
+  },
+  "2024-03-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 46,
+    "mean_price_diff": 0.4260541791304349,
+    "max_price_diff": 0.93049061,
+    "mean_flow_weight": 0.4260541791304349,
+    "active_regions": 18
+  },
+  "2024-04-30_eggs": {
+    "commodity": "eggs",
+    "flow_count": 47,
+    "mean_price_diff": 0.45087394191489366,
+    "max_price_diff": 1.0180806,
+    "mean_flow_weight": 0.45087394191489366,
+    "active_regions": 19
+  },
+  "2024-05-31_eggs": {
+    "commodity": "eggs",
+    "flow_count": 49,
+    "mean_price_diff": 0.46495599775510194,
+    "max_price_diff": 1.0853338,
+    "mean_flow_weight": 0.46495599775510194,
+    "active_regions": 19
+  }
+}

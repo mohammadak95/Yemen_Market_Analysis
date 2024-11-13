@@ -1,0 +1,378 @@
+{
+  "2020-07-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 86,
+    "mean_price_diff": 0.610671803255814,
+    "max_price_diff": 1.9902458,
+    "mean_flow_weight": 0.610671803255814,
+    "active_regions": 21
+  },
+  "2020-08-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 76,
+    "mean_price_diff": 0.666831767763158,
+    "max_price_diff": 1.8973044,
+    "mean_flow_weight": 0.666831767763158,
+    "active_regions": 21
+  },
+  "2020-09-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 81,
+    "mean_price_diff": 0.5802820938271606,
+    "max_price_diff": 2.1162524,
+    "mean_flow_weight": 0.5802820938271606,
+    "active_regions": 21
+  },
+  "2020-10-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 73,
+    "mean_price_diff": 0.5966053115068493,
+    "max_price_diff": 1.9804665,
+    "mean_flow_weight": 0.5966053115068493,
+    "active_regions": 21
+  },
+  "2020-11-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 78,
+    "mean_price_diff": 0.5374877564102564,
+    "max_price_diff": 1.9249275,
+    "mean_flow_weight": 0.5374877564102564,
+    "active_regions": 21
+  },
+  "2020-12-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 78,
+    "mean_price_diff": 0.6162393819230767,
+    "max_price_diff": 2.2229393,
+    "mean_flow_weight": 0.6162393819230767,
+    "active_regions": 21
+  },
+  "2021-01-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 84,
+    "mean_price_diff": 0.7401129380952381,
+    "max_price_diff": 2.8035061,
+    "mean_flow_weight": 0.7401129380952381,
+    "active_regions": 21
+  },
+  "2021-02-28_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 83,
+    "mean_price_diff": 0.7505291409638554,
+    "max_price_diff": 2.5822134,
+    "mean_flow_weight": 0.7505291409638554,
+    "active_regions": 21
+  },
+  "2021-03-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 70,
+    "mean_price_diff": 0.7812314171428572,
+    "max_price_diff": 2.4679706,
+    "mean_flow_weight": 0.7812314171428572,
+    "active_regions": 20
+  },
+  "2021-04-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 79,
+    "mean_price_diff": 0.6081905050632911,
+    "max_price_diff": 2.164597,
+    "mean_flow_weight": 0.6081905050632911,
+    "active_regions": 21
+  },
+  "2021-05-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 87,
+    "mean_price_diff": 0.5896419609195402,
+    "max_price_diff": 2.3953509,
+    "mean_flow_weight": 0.5896419609195402,
+    "active_regions": 21
+  },
+  "2021-06-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 86,
+    "mean_price_diff": 0.6139918081395348,
+    "max_price_diff": 2.4212925,
+    "mean_flow_weight": 0.6139918081395348,
+    "active_regions": 21
+  },
+  "2021-07-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 71,
+    "mean_price_diff": 0.6827083366197183,
+    "max_price_diff": 2.3582315,
+    "mean_flow_weight": 0.6827083366197183,
+    "active_regions": 21
+  },
+  "2021-08-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 75,
+    "mean_price_diff": 0.6520258146666665,
+    "max_price_diff": 2.44506,
+    "mean_flow_weight": 0.6520258146666665,
+    "active_regions": 21
+  },
+  "2021-09-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 86,
+    "mean_price_diff": 0.7543573116279071,
+    "max_price_diff": 2.9858541,
+    "mean_flow_weight": 0.7543573116279071,
+    "active_regions": 21
+  },
+  "2021-10-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 95,
+    "mean_price_diff": 0.98802986,
+    "max_price_diff": 4.1045208,
+    "mean_flow_weight": 0.98802986,
+    "active_regions": 21
+  },
+  "2021-11-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 91,
+    "mean_price_diff": 1.1686133549450546,
+    "max_price_diff": 4.5105586,
+    "mean_flow_weight": 1.1686133549450546,
+    "active_regions": 21
+  },
+  "2021-12-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 95,
+    "mean_price_diff": 0.9012644747368422,
+    "max_price_diff": 3.5935502,
+    "mean_flow_weight": 0.9012644747368422,
+    "active_regions": 21
+  },
+  "2022-01-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 100,
+    "mean_price_diff": 0.991999884,
+    "max_price_diff": 3.4295769,
+    "mean_flow_weight": 0.991999884,
+    "active_regions": 21
+  },
+  "2022-02-28_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 100,
+    "mean_price_diff": 1.1742385459999998,
+    "max_price_diff": 3.7073865,
+    "mean_flow_weight": 1.1742385459999998,
+    "active_regions": 21
+  },
+  "2022-03-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 99,
+    "mean_price_diff": 1.492543808080808,
+    "max_price_diff": 4.9255962,
+    "mean_flow_weight": 1.492543808080808,
+    "active_regions": 21
+  },
+  "2022-04-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 96,
+    "mean_price_diff": 1.1930904322916664,
+    "max_price_diff": 4.1270628,
+    "mean_flow_weight": 1.1930904322916664,
+    "active_regions": 21
+  },
+  "2022-05-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 90,
+    "mean_price_diff": 1.077056897777778,
+    "max_price_diff": 3.917628,
+    "mean_flow_weight": 1.077056897777778,
+    "active_regions": 21
+  },
+  "2022-06-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 78,
+    "mean_price_diff": 1.2004507397435897,
+    "max_price_diff": 3.8433659,
+    "mean_flow_weight": 1.2004507397435897,
+    "active_regions": 21
+  },
+  "2022-07-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 83,
+    "mean_price_diff": 1.4577987975903612,
+    "max_price_diff": 4.8008728,
+    "mean_flow_weight": 1.4577987975903612,
+    "active_regions": 21
+  },
+  "2022-08-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 81,
+    "mean_price_diff": 1.5458939049382716,
+    "max_price_diff": 4.7879934,
+    "mean_flow_weight": 1.5458939049382716,
+    "active_regions": 21
+  },
+  "2022-09-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 86,
+    "mean_price_diff": 1.1667902860465114,
+    "max_price_diff": 3.7089541,
+    "mean_flow_weight": 1.1667902860465114,
+    "active_regions": 21
+  },
+  "2022-10-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 90,
+    "mean_price_diff": 1.0098282022222222,
+    "max_price_diff": 3.2595208,
+    "mean_flow_weight": 1.0098282022222222,
+    "active_regions": 21
+  },
+  "2022-11-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 81,
+    "mean_price_diff": 0.970129797530864,
+    "max_price_diff": 2.7488921,
+    "mean_flow_weight": 0.970129797530864,
+    "active_regions": 21
+  },
+  "2022-12-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 71,
+    "mean_price_diff": 1.0163886690140844,
+    "max_price_diff": 2.51265,
+    "mean_flow_weight": 1.0163886690140844,
+    "active_regions": 21
+  },
+  "2023-01-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 86,
+    "mean_price_diff": 0.8374372558139535,
+    "max_price_diff": 2.3503101,
+    "mean_flow_weight": 0.8374372558139535,
+    "active_regions": 21
+  },
+  "2023-02-28_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 89,
+    "mean_price_diff": 0.8703177606741573,
+    "max_price_diff": 2.508826,
+    "mean_flow_weight": 0.8703177606741573,
+    "active_regions": 21
+  },
+  "2023-03-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 86,
+    "mean_price_diff": 0.82361258872093,
+    "max_price_diff": 2.5536176,
+    "mean_flow_weight": 0.82361258872093,
+    "active_regions": 21
+  },
+  "2023-04-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 84,
+    "mean_price_diff": 0.9652517988095236,
+    "max_price_diff": 2.9616530999999995,
+    "mean_flow_weight": 0.9652517988095236,
+    "active_regions": 21
+  },
+  "2023-05-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 76,
+    "mean_price_diff": 1.1120560855263157,
+    "max_price_diff": 3.1541228999999995,
+    "mean_flow_weight": 1.1120560855263157,
+    "active_regions": 21
+  },
+  "2023-06-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 74,
+    "mean_price_diff": 1.2070862256756758,
+    "max_price_diff": 3.2369404000000004,
+    "mean_flow_weight": 1.2070862256756758,
+    "active_regions": 21
+  },
+  "2023-07-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 85,
+    "mean_price_diff": 1.0633854870588233,
+    "max_price_diff": 3.1238960000000002,
+    "mean_flow_weight": 1.0633854870588233,
+    "active_regions": 21
+  },
+  "2023-08-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 81,
+    "mean_price_diff": 1.1815587234567901,
+    "max_price_diff": 3.1525269,
+    "mean_flow_weight": 1.1815587234567901,
+    "active_regions": 21
+  },
+  "2023-09-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 85,
+    "mean_price_diff": 1.2167420611764705,
+    "max_price_diff": 3.4490542,
+    "mean_flow_weight": 1.2167420611764705,
+    "active_regions": 21
+  },
+  "2023-10-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 89,
+    "mean_price_diff": 1.1754177415730338,
+    "max_price_diff": 3.5379541,
+    "mean_flow_weight": 1.1754177415730338,
+    "active_regions": 21
+  },
+  "2023-11-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 72,
+    "mean_price_diff": 1.4103489624999999,
+    "max_price_diff": 3.7937586,
+    "mean_flow_weight": 1.4103489624999999,
+    "active_regions": 21
+  },
+  "2023-12-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 67,
+    "mean_price_diff": 2.021411758208955,
+    "max_price_diff": 5.1768503,
+    "mean_flow_weight": 2.021411758208955,
+    "active_regions": 21
+  },
+  "2024-01-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 85,
+    "mean_price_diff": 1.6410664329411766,
+    "max_price_diff": 5.1099768,
+    "mean_flow_weight": 1.6410664329411766,
+    "active_regions": 21
+  },
+  "2024-02-29_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 90,
+    "mean_price_diff": 1.5882981799999998,
+    "max_price_diff": 5.2908926,
+    "mean_flow_weight": 1.5882981799999998,
+    "active_regions": 21
+  },
+  "2024-03-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 88,
+    "mean_price_diff": 1.5228060525000002,
+    "max_price_diff": 5.2766841,
+    "mean_flow_weight": 1.5228060525000002,
+    "active_regions": 21
+  },
+  "2024-04-30_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 83,
+    "mean_price_diff": 1.7272694987951804,
+    "max_price_diff": 5.4029961,
+    "mean_flow_weight": 1.7272694987951804,
+    "active_regions": 21
+  },
+  "2024-05-31_fuel (diesel)": {
+    "commodity": "fuel (diesel)",
+    "flow_count": 88,
+    "mean_price_diff": 1.7261119795454543,
+    "max_price_diff": 5.8570452,
+    "mean_flow_weight": 1.7261119795454543,
+    "active_regions": 21
+  }
+}

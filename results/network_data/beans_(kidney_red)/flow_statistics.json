@@ -1,0 +1,370 @@
+{
+  "2020-08-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 11,
+    "mean_price_diff": 2.3855727000000004,
+    "max_price_diff": 2.3855727,
+    "mean_flow_weight": 2.3855727000000004,
+    "active_regions": 8
+  },
+  "2020-09-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 11,
+    "mean_price_diff": 3.3216927,
+    "max_price_diff": 3.3216927,
+    "mean_flow_weight": 3.3216927,
+    "active_regions": 8
+  },
+  "2020-10-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 93,
+    "mean_price_diff": 0.8363253032258064,
+    "max_price_diff": 4.4633036,
+    "mean_flow_weight": 0.8363253032258064,
+    "active_regions": 21
+  },
+  "2020-11-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 93,
+    "mean_price_diff": 0.803879635483871,
+    "max_price_diff": 4.1904731,
+    "mean_flow_weight": 0.803879635483871,
+    "active_regions": 21
+  },
+  "2020-12-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 96,
+    "mean_price_diff": 0.8353994458333333,
+    "max_price_diff": 4.2040424,
+    "mean_flow_weight": 0.8353994458333333,
+    "active_regions": 21
+  },
+  "2021-01-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 98,
+    "mean_price_diff": 1.1467492622448978,
+    "max_price_diff": 5.3055725,
+    "mean_flow_weight": 1.1467492622448978,
+    "active_regions": 21
+  },
+  "2021-02-28_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 99,
+    "mean_price_diff": 1.2301162181818182,
+    "max_price_diff": 6.0573134,
+    "mean_flow_weight": 1.2301162181818182,
+    "active_regions": 21
+  },
+  "2021-03-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 100,
+    "mean_price_diff": 1.191779874,
+    "max_price_diff": 5.5586729,
+    "mean_flow_weight": 1.191779874,
+    "active_regions": 21
+  },
+  "2021-04-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 93,
+    "mean_price_diff": 1.1451026806451612,
+    "max_price_diff": 5.1157837,
+    "mean_flow_weight": 1.1451026806451612,
+    "active_regions": 21
+  },
+  "2021-05-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 97,
+    "mean_price_diff": 1.2203622804123708,
+    "max_price_diff": 5.5467143,
+    "mean_flow_weight": 1.2203622804123708,
+    "active_regions": 21
+  },
+  "2021-06-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 99,
+    "mean_price_diff": 1.3338652484848488,
+    "max_price_diff": 6.1768422,
+    "mean_flow_weight": 1.3338652484848488,
+    "active_regions": 21
+  },
+  "2021-07-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 96,
+    "mean_price_diff": 1.3443566875000001,
+    "max_price_diff": 5.7981701,
+    "mean_flow_weight": 1.3443566875000001,
+    "active_regions": 21
+  },
+  "2021-08-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 97,
+    "mean_price_diff": 1.400452307216495,
+    "max_price_diff": 6.1139026,
+    "mean_flow_weight": 1.400452307216495,
+    "active_regions": 21
+  },
+  "2021-09-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 100,
+    "mean_price_diff": 1.6802374009999996,
+    "max_price_diff": 7.359138,
+    "mean_flow_weight": 1.6802374009999996,
+    "active_regions": 21
+  },
+  "2021-10-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 100,
+    "mean_price_diff": 2.340699894,
+    "max_price_diff": 10.188576,
+    "mean_flow_weight": 2.340699894,
+    "active_regions": 21
+  },
+  "2021-11-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 96,
+    "mean_price_diff": 2.656690916666667,
+    "max_price_diff": 11.165934,
+    "mean_flow_weight": 2.656690916666667,
+    "active_regions": 21
+  },
+  "2021-12-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 93,
+    "mean_price_diff": 2.1366180752688173,
+    "max_price_diff": 8.717885,
+    "mean_flow_weight": 2.1366180752688173,
+    "active_regions": 21
+  },
+  "2022-01-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 94,
+    "mean_price_diff": 1.9703263606382984,
+    "max_price_diff": 8.6354723,
+    "mean_flow_weight": 1.9703263606382984,
+    "active_regions": 21
+  },
+  "2022-02-28_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 97,
+    "mean_price_diff": 2.0651667731958763,
+    "max_price_diff": 9.214777,
+    "mean_flow_weight": 2.0651667731958763,
+    "active_regions": 21
+  },
+  "2022-03-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 100,
+    "mean_price_diff": 2.5234596800000006,
+    "max_price_diff": 11.406405,
+    "mean_flow_weight": 2.5234596800000006,
+    "active_regions": 21
+  },
+  "2022-04-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 97,
+    "mean_price_diff": 2.177655836082474,
+    "max_price_diff": 9.4823503,
+    "mean_flow_weight": 2.177655836082474,
+    "active_regions": 21
+  },
+  "2022-05-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 103,
+    "mean_price_diff": 1.9985314417475726,
+    "max_price_diff": 8.9984808,
+    "mean_flow_weight": 1.9985314417475726,
+    "active_regions": 21
+  },
+  "2022-06-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 93,
+    "mean_price_diff": 2.231612715053764,
+    "max_price_diff": 9.3311424,
+    "mean_flow_weight": 2.231612715053764,
+    "active_regions": 21
+  },
+  "2022-07-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 98,
+    "mean_price_diff": 2.700889575510204,
+    "max_price_diff": 12.137074,
+    "mean_flow_weight": 2.700889575510204,
+    "active_regions": 21
+  },
+  "2022-08-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 99,
+    "mean_price_diff": 2.5962504171717167,
+    "max_price_diff": 12.251201,
+    "mean_flow_weight": 2.5962504171717167,
+    "active_regions": 21
+  },
+  "2022-09-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 90,
+    "mean_price_diff": 2.180284777777778,
+    "max_price_diff": 9.2165384,
+    "mean_flow_weight": 2.180284777777778,
+    "active_regions": 21
+  },
+  "2022-10-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 93,
+    "mean_price_diff": 1.9503584849462365,
+    "max_price_diff": 8.5153332,
+    "mean_flow_weight": 1.9503584849462365,
+    "active_regions": 21
+  },
+  "2022-11-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 94,
+    "mean_price_diff": 1.8497838574468088,
+    "max_price_diff": 8.3590336,
+    "mean_flow_weight": 1.8497838574468088,
+    "active_regions": 21
+  },
+  "2022-12-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 90,
+    "mean_price_diff": 1.8530325033333332,
+    "max_price_diff": 8.292985,
+    "mean_flow_weight": 1.8530325033333332,
+    "active_regions": 21
+  },
+  "2023-01-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 98,
+    "mean_price_diff": 1.754795559183673,
+    "max_price_diff": 8.3605289,
+    "mean_flow_weight": 1.754795559183673,
+    "active_regions": 21
+  },
+  "2023-02-28_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 91,
+    "mean_price_diff": 1.9458634582417584,
+    "max_price_diff": 8.7670317,
+    "mean_flow_weight": 1.9458634582417584,
+    "active_regions": 21
+  },
+  "2023-03-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 93,
+    "mean_price_diff": 1.7987245516129033,
+    "max_price_diff": 8.1336823,
+    "mean_flow_weight": 1.7987245516129033,
+    "active_regions": 21
+  },
+  "2023-04-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 90,
+    "mean_price_diff": 2.0251996088888893,
+    "max_price_diff": 9.165576,
+    "mean_flow_weight": 2.0251996088888893,
+    "active_regions": 21
+  },
+  "2023-05-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 94,
+    "mean_price_diff": 2.0534574510638297,
+    "max_price_diff": 9.1941795,
+    "mean_flow_weight": 2.0534574510638297,
+    "active_regions": 21
+  },
+  "2023-06-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 91,
+    "mean_price_diff": 2.227700139560439,
+    "max_price_diff": 9.3414421,
+    "mean_flow_weight": 2.227700139560439,
+    "active_regions": 21
+  },
+  "2023-07-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 100,
+    "mean_price_diff": 2.0220170100000003,
+    "max_price_diff": 9.1217937,
+    "mean_flow_weight": 2.0220170100000003,
+    "active_regions": 21
+  },
+  "2023-08-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 99,
+    "mean_price_diff": 2.1502693979797978,
+    "max_price_diff": 9.3261547,
+    "mean_flow_weight": 2.1502693979797978,
+    "active_regions": 21
+  },
+  "2023-09-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 95,
+    "mean_price_diff": 2.307563457894737,
+    "max_price_diff": 9.7396412,
+    "mean_flow_weight": 2.307563457894737,
+    "active_regions": 21
+  },
+  "2023-10-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 100,
+    "mean_price_diff": 2.1549714740000003,
+    "max_price_diff": 9.2265339,
+    "mean_flow_weight": 2.1549714740000003,
+    "active_regions": 21
+  },
+  "2023-11-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 101,
+    "mean_price_diff": 2.0476149059405944,
+    "max_price_diff": 9.0115175,
+    "mean_flow_weight": 2.0476149059405944,
+    "active_regions": 21
+  },
+  "2023-12-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 102,
+    "mean_price_diff": 2.6883098284313727,
+    "max_price_diff": 12.201385,
+    "mean_flow_weight": 2.6883098284313727,
+    "active_regions": 21
+  },
+  "2024-01-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 100,
+    "mean_price_diff": 2.682832052,
+    "max_price_diff": 11.84668,
+    "mean_flow_weight": 2.682832052,
+    "active_regions": 21
+  },
+  "2024-02-29_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 100,
+    "mean_price_diff": 2.7385865950000006,
+    "max_price_diff": 11.889065,
+    "mean_flow_weight": 2.7385865950000006,
+    "active_regions": 21
+  },
+  "2024-03-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 94,
+    "mean_price_diff": 2.887796484042553,
+    "max_price_diff": 11.490706,
+    "mean_flow_weight": 2.887796484042553,
+    "active_regions": 21
+  },
+  "2024-04-30_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 91,
+    "mean_price_diff": 3.2915889505494516,
+    "max_price_diff": 12.712093,
+    "mean_flow_weight": 3.2915889505494516,
+    "active_regions": 21
+  },
+  "2024-05-31_beans (kidney red)": {
+    "commodity": "beans (kidney red)",
+    "flow_count": 93,
+    "mean_price_diff": 3.4523009473118282,
+    "max_price_diff": 13.752379,
+    "mean_flow_weight": 3.4523009473118282,
+    "active_regions": 21
+  }
+}

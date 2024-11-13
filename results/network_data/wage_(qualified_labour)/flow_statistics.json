@@ -1,0 +1,378 @@
+{
+  "2020-07-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 104,
+    "mean_price_diff": 9.673778836538462,
+    "max_price_diff": 39.481193,
+    "mean_flow_weight": 9.673778836538462,
+    "active_regions": 21
+  },
+  "2020-08-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 9.211541419047618,
+    "max_price_diff": 41.126545,
+    "mean_flow_weight": 9.211541419047618,
+    "active_regions": 21
+  },
+  "2020-09-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 10.991622676190476,
+    "max_price_diff": 31.580651999999997,
+    "mean_flow_weight": 10.991622676190476,
+    "active_regions": 21
+  },
+  "2020-10-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 103,
+    "mean_price_diff": 10.697014262135925,
+    "max_price_diff": 31.210291,
+    "mean_flow_weight": 10.697014262135925,
+    "active_regions": 21
+  },
+  "2020-11-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 104,
+    "mean_price_diff": 11.569770865384616,
+    "max_price_diff": 32.568602,
+    "mean_flow_weight": 11.569770865384616,
+    "active_regions": 21
+  },
+  "2020-12-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 104,
+    "mean_price_diff": 11.841094932692307,
+    "max_price_diff": 42.172407,
+    "mean_flow_weight": 11.841094932692307,
+    "active_regions": 21
+  },
+  "2021-01-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 14.171965295238094,
+    "max_price_diff": 49.335927999999996,
+    "mean_flow_weight": 14.171965295238094,
+    "active_regions": 21
+  },
+  "2021-02-28_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 14.685077628571431,
+    "max_price_diff": 49.375493999999996,
+    "mean_flow_weight": 14.685077628571431,
+    "active_regions": 21
+  },
+  "2021-03-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 14.2334398,
+    "max_price_diff": 43.935435000000005,
+    "mean_flow_weight": 14.2334398,
+    "active_regions": 21
+  },
+  "2021-04-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 12.91286403809524,
+    "max_price_diff": 37.178896,
+    "mean_flow_weight": 12.91286403809524,
+    "active_regions": 21
+  },
+  "2021-05-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 13.142766295238097,
+    "max_price_diff": 36.487686999999994,
+    "mean_flow_weight": 13.142766295238097,
+    "active_regions": 21
+  },
+  "2021-06-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 13.65716217142857,
+    "max_price_diff": 39.006386,
+    "mean_flow_weight": 13.65716217142857,
+    "active_regions": 21
+  },
+  "2021-07-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 13.275314609523805,
+    "max_price_diff": 40.376534,
+    "mean_flow_weight": 13.275314609523805,
+    "active_regions": 21
+  },
+  "2021-08-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 13.74137441904762,
+    "max_price_diff": 41.806293000000004,
+    "mean_flow_weight": 13.74137441904762,
+    "active_regions": 21
+  },
+  "2021-09-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 15.822083352380952,
+    "max_price_diff": 47.73012000000001,
+    "mean_flow_weight": 15.822083352380952,
+    "active_regions": 21
+  },
+  "2021-10-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 19.588536123809522,
+    "max_price_diff": 56.841788,
+    "mean_flow_weight": 19.588536123809522,
+    "active_regions": 21
+  },
+  "2021-11-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 20.595474561904762,
+    "max_price_diff": 56.096565000000005,
+    "mean_flow_weight": 20.595474561904762,
+    "active_regions": 21
+  },
+  "2021-12-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 15.158755590476192,
+    "max_price_diff": 46.572127,
+    "mean_flow_weight": 15.158755590476192,
+    "active_regions": 21
+  },
+  "2022-01-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 15.188597552380955,
+    "max_price_diff": 56.259113,
+    "mean_flow_weight": 15.188597552380955,
+    "active_regions": 21
+  },
+  "2022-02-28_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 104,
+    "mean_price_diff": 16.972315951923076,
+    "max_price_diff": 69.540361,
+    "mean_flow_weight": 16.972315951923076,
+    "active_regions": 21
+  },
+  "2022-03-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 21.44545141904762,
+    "max_price_diff": 90.98210300000001,
+    "mean_flow_weight": 21.44545141904762,
+    "active_regions": 21
+  },
+  "2022-04-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 18.198449980952383,
+    "max_price_diff": 76.842219,
+    "mean_flow_weight": 18.198449980952383,
+    "active_regions": 21
+  },
+  "2022-05-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 18.693454495238093,
+    "max_price_diff": 74.583301,
+    "mean_flow_weight": 18.693454495238093,
+    "active_regions": 21
+  },
+  "2022-06-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 103,
+    "mean_price_diff": 20.4044125631068,
+    "max_price_diff": 73.80187099999999,
+    "mean_flow_weight": 20.4044125631068,
+    "active_regions": 21
+  },
+  "2022-07-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 26.748186866666664,
+    "max_price_diff": 93.160616,
+    "mean_flow_weight": 26.748186866666664,
+    "active_regions": 21
+  },
+  "2022-08-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 28.151386276190475,
+    "max_price_diff": 93.492041,
+    "mean_flow_weight": 28.151386276190475,
+    "active_regions": 21
+  },
+  "2022-09-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 22.963887009523813,
+    "max_price_diff": 73.30320499999999,
+    "mean_flow_weight": 22.963887009523813,
+    "active_regions": 21
+  },
+  "2022-10-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 21.632122476190474,
+    "max_price_diff": 68.235596,
+    "mean_flow_weight": 21.632122476190474,
+    "active_regions": 21
+  },
+  "2022-11-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 20.488358314285716,
+    "max_price_diff": 63.847933999999995,
+    "mean_flow_weight": 20.488358314285716,
+    "active_regions": 21
+  },
+  "2022-12-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 19.590546885714286,
+    "max_price_diff": 60.531487999999996,
+    "mean_flow_weight": 19.590546885714286,
+    "active_regions": 21
+  },
+  "2023-01-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 18.61301948571429,
+    "max_price_diff": 55.046474,
+    "mean_flow_weight": 18.61301948571429,
+    "active_regions": 21
+  },
+  "2023-02-28_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 104,
+    "mean_price_diff": 18.009035769230767,
+    "max_price_diff": 53.471184,
+    "mean_flow_weight": 18.009035769230767,
+    "active_regions": 21
+  },
+  "2023-03-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 16.369259999999997,
+    "max_price_diff": 52.398905,
+    "mean_flow_weight": 16.369259999999997,
+    "active_regions": 21
+  },
+  "2023-04-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 18.127103285714288,
+    "max_price_diff": 55.855152,
+    "mean_flow_weight": 18.127103285714288,
+    "active_regions": 21
+  },
+  "2023-05-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 103,
+    "mean_price_diff": 19.849750563106795,
+    "max_price_diff": 61.699147999999994,
+    "mean_flow_weight": 19.849750563106795,
+    "active_regions": 21
+  },
+  "2023-06-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 22.757327752380945,
+    "max_price_diff": 94.662094,
+    "mean_flow_weight": 22.757327752380945,
+    "active_regions": 21
+  },
+  "2023-07-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 18.978731923809523,
+    "max_price_diff": 53.124973,
+    "mean_flow_weight": 18.978731923809523,
+    "active_regions": 21
+  },
+  "2023-08-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 19.565578876190475,
+    "max_price_diff": 55.909294,
+    "mean_flow_weight": 19.565578876190475,
+    "active_regions": 21
+  },
+  "2023-09-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 21.131724352380957,
+    "max_price_diff": 63.804299,
+    "mean_flow_weight": 21.131724352380957,
+    "active_regions": 21
+  },
+  "2023-10-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 20.71807635238095,
+    "max_price_diff": 65.586533,
+    "mean_flow_weight": 20.71807635238095,
+    "active_regions": 21
+  },
+  "2023-11-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 20.672553180952384,
+    "max_price_diff": 68.265962,
+    "mean_flow_weight": 20.672553180952384,
+    "active_regions": 21
+  },
+  "2023-12-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 27.750347923809525,
+    "max_price_diff": 87.86388200000002,
+    "mean_flow_weight": 27.750347923809525,
+    "active_regions": 21
+  },
+  "2024-01-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 103,
+    "mean_price_diff": 27.500874601941746,
+    "max_price_diff": 83.82845,
+    "mean_flow_weight": 27.500874601941746,
+    "active_regions": 21
+  },
+  "2024-02-29_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 27.40437168571429,
+    "max_price_diff": 82.77014499999999,
+    "mean_flow_weight": 27.40437168571429,
+    "active_regions": 21
+  },
+  "2024-03-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 26.39628816190476,
+    "max_price_diff": 76.490172,
+    "mean_flow_weight": 26.39628816190476,
+    "active_regions": 21
+  },
+  "2024-04-30_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 28.702079228571428,
+    "max_price_diff": 86.587703,
+    "mean_flow_weight": 28.702079228571428,
+    "active_regions": 21
+  },
+  "2024-05-31_wage (qualified labour)": {
+    "commodity": "wage (qualified labour)",
+    "flow_count": 105,
+    "mean_price_diff": 30.55303259047619,
+    "max_price_diff": 92.095957,
+    "mean_flow_weight": 30.55303259047619,
+    "active_regions": 21
+  }
+}

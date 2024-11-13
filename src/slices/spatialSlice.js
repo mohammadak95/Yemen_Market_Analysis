@@ -1,15 +1,14 @@
-// src/slices/spatialSlice.js
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
 import { SpatialDataMerger } from '../utils/spatialDataMerger';
 import { processSpatialData } from '../utils/spatialProcessors';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { fetchGeometries } from './geometriesSlice';
 import { MAP_SETTINGS } from '../constants';
+import { normalizeRegionId } from '../utils/appUtils';
 import SpatialDataMerger from '../utils/spatialDataMerger';
 
 
-// Define initial state
 export const initialState = {
   data: {
     geoData: null,
@@ -45,7 +44,7 @@ export const initialState = {
 // Create async thunk for fetching and merging spatial data
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
-  async ({ selectedCommodity, selectedDate }, { rejectWithValue }) => {
+  async ({ selectedCommodity, selectedDate }, { dispatch, getState, rejectWithValue }) => {
     const metric = backgroundMonitor.startMetric('spatial-data-fetch');
     const dataMerger = new SpatialDataMerger();
 
@@ -54,6 +53,49 @@ export const fetchSpatialData = createAsyncThunk(
         throw new Error('Commodity parameter is required');
       }
 
+      const state = getState();
+      let geometries = state.geometries.data;
+
+      if (!geometries) {
+        const geometriesResult = await dispatch(fetchGeometries()).unwrap();
+        if (!geometriesResult) {
+          throw new Error('Failed to load geometries');
+        }
+        geometries = geometriesResult;
+      }
+
+      if (!geometries || typeof geometries !== 'object') {
+        throw new Error('Invalid geometries data structure');
+      }
+
+      const geometriesFeatures = Object.entries(geometries).map(([regionId, data]) => ({
+        type: 'Feature',
+        properties: {
+          region_id: regionId,
+          ...data.properties
+        },
+        geometry: data.geometry
+      }));
+
+      const result = await precomputedDataManager.processSpatialData(
+        selectedCommodity,
+        selectedDate,
+        { 
+          geometries: {
+            type: 'FeatureCollection',
+            features: geometriesFeatures
+          }
+        }
+      );
+
+      const uniqueMonths = Array.isArray(result.timeSeriesData) 
+        ? [...new Set(result.timeSeriesData.map(d => d.month))].sort()
+        : [];
+      
+      const effectiveDate = selectedDate || uniqueMonths[uniqueMonths.length - 1];
+
+      metric.finish({ status: 'success' });
+      
       // Load precomputed data for the selected commodity and date
       const precomputedData = await dataMerger.mergeData(
         await dataMerger.loadPrecomputedData(selectedCommodity), 
@@ -77,86 +119,22 @@ export const fetchSpatialData = createAsyncThunk(
         ...processedData,
         uniqueMonths,
         selectedCommodity,
-        selectedDate: selectedDate || uniqueMonths[uniqueMonths.length - 1]
+        selectedDate: effectiveDate
       };
+
     } catch (error) {
+      console.error('Error in fetchSpatialData:', error);
       metric.finish({ status: 'error', error: error.message });
       return rejectWithValue(error.message);
     }
   }
 );
 
-// Create the slice
-const spatialSlice = createSlice({
-  name: 'spatial',
-  initialState,
-  reducers: {
-    setProgress: (state, action) => {
-      state.status.progress = action.payload;
-    },
-    setLoadingStage: (state, action) => {
-      state.status.stage = action.payload;
-    },
-    setSelectedRegion: (state, action) => {
-      state.ui.selectedRegion = action.payload;
-    },
-    setView: (state, action) => {
-      state.ui.view = action.payload;
-    },
-    setSelectedCommodity: (state, action) => {
-      state.ui.selectedCommodity = action.payload;
-    },
-    setSelectedDate: (state, action) => {
-      state.ui.selectedDate = action.payload;
-    },
-    setSelectedRegimes: (state, action) => {
-      state.ui.selectedRegimes = action.payload;
-    },
-    resetState: (state) => {
-      Object.assign(state, initialState);
-    }
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchSpatialData.pending, (state) => {
-        state.status.loading = true;
-        state.status.error = null;
-        state.status.progress = 0;
-      })
-      .addCase(fetchSpatialData.fulfilled, (state, action) => {
-        state.status.loading = false;
-        state.status.error = null;
-        state.status.progress = 100;
-        state.data = action.payload;
-        state.ui.selectedCommodity = action.payload.selectedCommodity;
-        state.ui.selectedDate = action.payload.selectedDate;
-      })
-      .addCase(fetchSpatialData.rejected, (state, action) => {
-        state.status.loading = false;
-        state.status.error = action.payload;
-        state.status.progress = 0;
-      });
-  },
-});
-
-// Export actions
-export const {
-  setProgress,
-  setLoadingStage,
-  setSelectedRegion,
-  setView,
-  setSelectedCommodity,
-  setSelectedDate,
-  setSelectedRegimes,
-  resetState
-} = spatialSlice.actions;
-
-// Basic selectors
+// Selectors
 export const selectSpatialData = state => state.spatial.data;
 export const selectUIState = state => state.spatial.ui;
 export const selectStatusState = state => state.spatial.status;
 
-// Memoized selectors
 export const selectTimeSeriesData = createSelector(
   [selectSpatialData],
   data => data.timeSeriesData || []
@@ -221,5 +199,68 @@ export const selectError = createSelector(
   [selectStatusState],
   status => status.error
 );
+
+const spatialSlice = createSlice({
+  name: 'spatial',
+  initialState,
+  reducers: {
+    setProgress: (state, action) => {
+      state.status.progress = action.payload;
+    },
+    setLoadingStage: (state, action) => {
+      state.status.stage = action.payload;
+    },
+    setSelectedRegion: (state, action) => {
+      state.ui.selectedRegion = normalizeRegionId(action.payload);
+    },    
+    setView: (state, action) => {
+      state.ui.view = action.payload;
+    },
+    setSelectedCommodity: (state, action) => {
+      state.ui.selectedCommodity = action.payload;
+    },
+    setSelectedDate: (state, action) => {
+      state.ui.selectedDate = action.payload;
+    },
+    setSelectedRegimes: (state, action) => {
+      state.ui.selectedRegimes = action.payload;
+    },
+    resetState: (state) => {
+      Object.assign(state, initialState);
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchSpatialData.pending, (state) => {
+        state.status.loading = true;
+        state.status.error = null;
+        state.status.progress = 0;
+      })
+      .addCase(fetchSpatialData.fulfilled, (state, action) => {
+        state.status.loading = false;
+        state.status.error = null;
+        state.status.progress = 100;
+        state.data = action.payload;
+        state.ui.selectedCommodity = action.payload.selectedCommodity;
+        state.ui.selectedDate = action.payload.selectedDate;
+      })
+      .addCase(fetchSpatialData.rejected, (state, action) => {
+        state.status.loading = false;
+        state.status.error = action.payload;
+        state.status.progress = 0;
+      });
+  },
+});
+
+export const {
+  setProgress,
+  setLoadingStage,
+  setSelectedRegion,
+  setView,
+  setSelectedCommodity,
+  setSelectedDate,
+  setSelectedRegimes,
+  resetState
+} = spatialSlice.actions;
 
 export default spatialSlice.reducer;

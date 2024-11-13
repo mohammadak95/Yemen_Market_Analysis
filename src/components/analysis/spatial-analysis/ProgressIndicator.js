@@ -1,3 +1,5 @@
+//src/components/analysis/spatial-analysis/ProgressIndicator.js
+
 import React from 'react';
 import { Box, Typography, CircularProgress, LinearProgress } from '@mui/material';
 
