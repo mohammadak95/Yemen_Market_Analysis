@@ -1,0 +1,378 @@
+{
+  "2020-07-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 86,
+    "mean_price_diff": 0.384127823255814,
+    "max_price_diff": 0.9234527999999997,
+    "mean_flow_weight": 0.384127823255814,
+    "active_regions": 21
+  },
+  "2020-08-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 83,
+    "mean_price_diff": 0.36149635421686754,
+    "max_price_diff": 0.8195960000000002,
+    "mean_flow_weight": 0.36149635421686754,
+    "active_regions": 21
+  },
+  "2020-09-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 89,
+    "mean_price_diff": 0.4153182033707865,
+    "max_price_diff": 1.1291187000000003,
+    "mean_flow_weight": 0.4153182033707865,
+    "active_regions": 21
+  },
+  "2020-10-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 89,
+    "mean_price_diff": 0.3687057382022471,
+    "max_price_diff": 1.0513106000000003,
+    "mean_flow_weight": 0.3687057382022471,
+    "active_regions": 21
+  },
+  "2020-11-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 90,
+    "mean_price_diff": 0.36182759222222227,
+    "max_price_diff": 1.0389993,
+    "mean_flow_weight": 0.36182759222222227,
+    "active_regions": 21
+  },
+  "2020-12-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 83,
+    "mean_price_diff": 0.34884832409638555,
+    "max_price_diff": 1.0456253999999996,
+    "mean_flow_weight": 0.34884832409638555,
+    "active_regions": 21
+  },
+  "2021-01-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 86,
+    "mean_price_diff": 0.4502702174418605,
+    "max_price_diff": 1.0974845999999996,
+    "mean_flow_weight": 0.4502702174418605,
+    "active_regions": 21
+  },
+  "2021-02-28_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 84,
+    "mean_price_diff": 0.5105892928571429,
+    "max_price_diff": 1.1966534000000002,
+    "mean_flow_weight": 0.5105892928571429,
+    "active_regions": 21
+  },
+  "2021-03-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 83,
+    "mean_price_diff": 0.49632753373493976,
+    "max_price_diff": 1.0440562000000004,
+    "mean_flow_weight": 0.49632753373493976,
+    "active_regions": 21
+  },
+  "2021-04-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 84,
+    "mean_price_diff": 0.48403266428571434,
+    "max_price_diff": 1.1167539999999998,
+    "mean_flow_weight": 0.48403266428571434,
+    "active_regions": 21
+  },
+  "2021-05-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 88,
+    "mean_price_diff": 0.5389334920454547,
+    "max_price_diff": 1.4061575,
+    "mean_flow_weight": 0.5389334920454547,
+    "active_regions": 21
+  },
+  "2021-06-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 89,
+    "mean_price_diff": 0.5927419865168538,
+    "max_price_diff": 1.6076068999999995,
+    "mean_flow_weight": 0.5927419865168538,
+    "active_regions": 21
+  },
+  "2021-07-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 90,
+    "mean_price_diff": 0.5600993755555554,
+    "max_price_diff": 1.5250174999999997,
+    "mean_flow_weight": 0.5600993755555554,
+    "active_regions": 21
+  },
+  "2021-08-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 95,
+    "mean_price_diff": 0.5945884105263157,
+    "max_price_diff": 1.5845594000000003,
+    "mean_flow_weight": 0.5945884105263157,
+    "active_regions": 21
+  },
+  "2021-09-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 91,
+    "mean_price_diff": 0.8299716164835166,
+    "max_price_diff": 2.2864166999999997,
+    "mean_flow_weight": 0.8299716164835166,
+    "active_regions": 21
+  },
+  "2021-10-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 94,
+    "mean_price_diff": 1.1464014829787235,
+    "max_price_diff": 3.3715856000000004,
+    "mean_flow_weight": 1.1464014829787235,
+    "active_regions": 21
+  },
+  "2021-11-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 92,
+    "mean_price_diff": 1.3005669043478263,
+    "max_price_diff": 4.0152211,
+    "mean_flow_weight": 1.3005669043478263,
+    "active_regions": 21
+  },
+  "2021-12-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 81,
+    "mean_price_diff": 1.1033960999999999,
+    "max_price_diff": 3.1530514,
+    "mean_flow_weight": 1.1033960999999999,
+    "active_regions": 21
+  },
+  "2022-01-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 84,
+    "mean_price_diff": 0.9843611059523809,
+    "max_price_diff": 2.6005058,
+    "mean_flow_weight": 0.9843611059523809,
+    "active_regions": 21
+  },
+  "2022-02-28_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 84,
+    "mean_price_diff": 0.9554570392857145,
+    "max_price_diff": 2.7267229,
+    "mean_flow_weight": 0.9554570392857145,
+    "active_regions": 21
+  },
+  "2022-03-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 83,
+    "mean_price_diff": 1.242298073493976,
+    "max_price_diff": 3.6438580000000003,
+    "mean_flow_weight": 1.242298073493976,
+    "active_regions": 21
+  },
+  "2022-04-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 76,
+    "mean_price_diff": 1.1396154789473683,
+    "max_price_diff": 3.1677382,
+    "mean_flow_weight": 1.1396154789473683,
+    "active_regions": 21
+  },
+  "2022-05-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 82,
+    "mean_price_diff": 1.0635483902439025,
+    "max_price_diff": 3.1521980999999997,
+    "mean_flow_weight": 1.0635483902439025,
+    "active_regions": 21
+  },
+  "2022-06-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 84,
+    "mean_price_diff": 1.1004834178571428,
+    "max_price_diff": 3.1759522,
+    "mean_flow_weight": 1.1004834178571428,
+    "active_regions": 21
+  },
+  "2022-07-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 85,
+    "mean_price_diff": 1.4099771952941178,
+    "max_price_diff": 3.8690061,
+    "mean_flow_weight": 1.4099771952941178,
+    "active_regions": 21
+  },
+  "2022-08-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 86,
+    "mean_price_diff": 1.4358640418604651,
+    "max_price_diff": 3.9990746999999995,
+    "mean_flow_weight": 1.4358640418604651,
+    "active_regions": 21
+  },
+  "2022-09-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 86,
+    "mean_price_diff": 1.1764167058139536,
+    "max_price_diff": 3.3118969999999996,
+    "mean_flow_weight": 1.1764167058139536,
+    "active_regions": 21
+  },
+  "2022-10-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 83,
+    "mean_price_diff": 1.1881133915662652,
+    "max_price_diff": 3.3532699,
+    "mean_flow_weight": 1.1881133915662652,
+    "active_regions": 21
+  },
+  "2022-11-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 77,
+    "mean_price_diff": 1.2733053883116887,
+    "max_price_diff": 3.2821293,
+    "mean_flow_weight": 1.2733053883116887,
+    "active_regions": 21
+  },
+  "2022-12-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 82,
+    "mean_price_diff": 1.1367886573170736,
+    "max_price_diff": 2.9704444000000003,
+    "mean_flow_weight": 1.1367886573170736,
+    "active_regions": 21
+  },
+  "2023-01-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 84,
+    "mean_price_diff": 1.1668405892857145,
+    "max_price_diff": 3.4344723000000004,
+    "mean_flow_weight": 1.1668405892857145,
+    "active_regions": 21
+  },
+  "2023-02-28_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 84,
+    "mean_price_diff": 1.2627263619047617,
+    "max_price_diff": 3.8041846,
+    "mean_flow_weight": 1.2627263619047617,
+    "active_regions": 21
+  },
+  "2023-03-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 82,
+    "mean_price_diff": 1.2266607658536586,
+    "max_price_diff": 3.5180037,
+    "mean_flow_weight": 1.2266607658536586,
+    "active_regions": 21
+  },
+  "2023-04-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 76,
+    "mean_price_diff": 1.4306077473684211,
+    "max_price_diff": 3.6949158,
+    "mean_flow_weight": 1.4306077473684211,
+    "active_regions": 21
+  },
+  "2023-05-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 78,
+    "mean_price_diff": 1.4837526384615383,
+    "max_price_diff": 3.850996,
+    "mean_flow_weight": 1.4837526384615383,
+    "active_regions": 21
+  },
+  "2023-06-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 77,
+    "mean_price_diff": 1.5295089649350646,
+    "max_price_diff": 4.056035099999999,
+    "mean_flow_weight": 1.5295089649350646,
+    "active_regions": 21
+  },
+  "2023-07-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 83,
+    "mean_price_diff": 1.4705893975903612,
+    "max_price_diff": 4.3022333999999995,
+    "mean_flow_weight": 1.4705893975903612,
+    "active_regions": 21
+  },
+  "2023-08-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 86,
+    "mean_price_diff": 1.5008948872093022,
+    "max_price_diff": 4.5222654,
+    "mean_flow_weight": 1.5008948872093022,
+    "active_regions": 21
+  },
+  "2023-09-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 82,
+    "mean_price_diff": 1.685284057317073,
+    "max_price_diff": 4.9210133,
+    "mean_flow_weight": 1.685284057317073,
+    "active_regions": 21
+  },
+  "2023-10-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 82,
+    "mean_price_diff": 1.6521146890243905,
+    "max_price_diff": 5.0707698,
+    "mean_flow_weight": 1.6521146890243905,
+    "active_regions": 21
+  },
+  "2023-11-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 83,
+    "mean_price_diff": 1.6022190518072288,
+    "max_price_diff": 4.9178961,
+    "mean_flow_weight": 1.6022190518072288,
+    "active_regions": 21
+  },
+  "2023-12-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 84,
+    "mean_price_diff": 2.11099600952381,
+    "max_price_diff": 6.364410600000001,
+    "mean_flow_weight": 2.11099600952381,
+    "active_regions": 21
+  },
+  "2024-01-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 82,
+    "mean_price_diff": 2.127136929268293,
+    "max_price_diff": 6.146768100000001,
+    "mean_flow_weight": 2.127136929268293,
+    "active_regions": 21
+  },
+  "2024-02-29_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 79,
+    "mean_price_diff": 2.219467030379747,
+    "max_price_diff": 6.1875225,
+    "mean_flow_weight": 2.219467030379747,
+    "active_regions": 21
+  },
+  "2024-03-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 74,
+    "mean_price_diff": 2.321394101351351,
+    "max_price_diff": 6.0560429,
+    "mean_flow_weight": 2.321394101351351,
+    "active_regions": 21
+  },
+  "2024-04-30_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 67,
+    "mean_price_diff": 2.7816315462686565,
+    "max_price_diff": 6.5783002999999995,
+    "mean_flow_weight": 2.7816315462686565,
+    "active_regions": 21
+  },
+  "2024-05-31_rice (imported)": {
+    "commodity": "rice (imported)",
+    "flow_count": 78,
+    "mean_price_diff": 2.5689670282051282,
+    "max_price_diff": 6.9940712000000005,
+    "mean_flow_weight": 2.5689670282051282,
+    "active_regions": 21
+  }
+}

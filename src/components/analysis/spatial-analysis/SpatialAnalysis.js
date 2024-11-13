@@ -48,8 +48,7 @@ import { processTimeSeriesData, getColorScales } from '../../../utils/spatialUti
 import SpatialErrorBoundary from './SpatialErrorBoundary';
 import { interpolateBlues, interpolateReds } from 'd3-scale-chromatic';
 
-// Lazy loaded components remain the same
-const MapControls = lazy(() => import('./MapControls'));
+// Lazy loaded components
 const MapLegend = lazy(() => import('./MapLegend'));
 const TimeControls = lazy(() => import('./TimeControls'));
 const LoadingSpinner = lazy(() => import('../../common/LoadingSpinner'));
@@ -79,7 +78,7 @@ const SpatialAnalysis = () => {
   const dispatch = useDispatch();
   const [visualizationState, setVisualizationState] = useState(DEFAULT_UI_STATE);
 
-  // Use our new precomputed data hook
+  // Use the precomputed data hook
   const {
     data: spatialData,
     loading: isProcessing,

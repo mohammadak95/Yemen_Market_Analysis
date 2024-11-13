@@ -1,0 +1,378 @@
+{
+  "2020-07-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 60,
+    "mean_price_diff": 0.23721483749999997,
+    "max_price_diff": 0.72852873,
+    "mean_flow_weight": 0.23721483749999997,
+    "active_regions": 21
+  },
+  "2020-08-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 55,
+    "mean_price_diff": 0.22440159999999998,
+    "max_price_diff": 0.5944138999999999,
+    "mean_flow_weight": 0.22440159999999998,
+    "active_regions": 21
+  },
+  "2020-09-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 67,
+    "mean_price_diff": 0.247128523880597,
+    "max_price_diff": 0.5644062299999999,
+    "mean_flow_weight": 0.247128523880597,
+    "active_regions": 21
+  },
+  "2020-10-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 54,
+    "mean_price_diff": 0.23147758629629628,
+    "max_price_diff": 0.38081608,
+    "mean_flow_weight": 0.23147758629629628,
+    "active_regions": 21
+  },
+  "2020-11-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 56,
+    "mean_price_diff": 0.22190006857142858,
+    "max_price_diff": 0.42635258,
+    "mean_flow_weight": 0.22190006857142858,
+    "active_regions": 21
+  },
+  "2020-12-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 65,
+    "mean_price_diff": 0.21433373446153844,
+    "max_price_diff": 0.5723912299999999,
+    "mean_flow_weight": 0.21433373446153844,
+    "active_regions": 21
+  },
+  "2021-01-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 67,
+    "mean_price_diff": 0.29459952805970147,
+    "max_price_diff": 0.8471035899999999,
+    "mean_flow_weight": 0.29459952805970147,
+    "active_regions": 21
+  },
+  "2021-02-28_wheat": {
+    "commodity": "wheat",
+    "flow_count": 75,
+    "mean_price_diff": 0.2967309792,
+    "max_price_diff": 0.9104748300000001,
+    "mean_flow_weight": 0.2967309792,
+    "active_regions": 21
+  },
+  "2021-03-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 74,
+    "mean_price_diff": 0.2871837601351351,
+    "max_price_diff": 0.7746823899999999,
+    "mean_flow_weight": 0.2871837601351351,
+    "active_regions": 21
+  },
+  "2021-04-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 72,
+    "mean_price_diff": 0.2803136655555556,
+    "max_price_diff": 0.7696045100000001,
+    "mean_flow_weight": 0.2803136655555556,
+    "active_regions": 21
+  },
+  "2021-05-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 70,
+    "mean_price_diff": 0.30523003657142855,
+    "max_price_diff": 0.7764475200000001,
+    "mean_flow_weight": 0.30523003657142855,
+    "active_regions": 21
+  },
+  "2021-06-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 71,
+    "mean_price_diff": 0.3478856650704225,
+    "max_price_diff": 0.8766535400000001,
+    "mean_flow_weight": 0.3478856650704225,
+    "active_regions": 21
+  },
+  "2021-07-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 72,
+    "mean_price_diff": 0.3971859777777778,
+    "max_price_diff": 1.5029136100000002,
+    "mean_flow_weight": 0.3971859777777778,
+    "active_regions": 21
+  },
+  "2021-08-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 75,
+    "mean_price_diff": 0.43701937626666665,
+    "max_price_diff": 1.6733667,
+    "mean_flow_weight": 0.43701937626666665,
+    "active_regions": 21
+  },
+  "2021-09-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 71,
+    "mean_price_diff": 0.521409538309859,
+    "max_price_diff": 1.67885873,
+    "mean_flow_weight": 0.521409538309859,
+    "active_regions": 20
+  },
+  "2021-10-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 82,
+    "mean_price_diff": 0.6327034170731707,
+    "max_price_diff": 1.9273198000000002,
+    "mean_flow_weight": 0.6327034170731707,
+    "active_regions": 21
+  },
+  "2021-11-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 88,
+    "mean_price_diff": 0.7171081522727273,
+    "max_price_diff": 2.3428118,
+    "mean_flow_weight": 0.7171081522727273,
+    "active_regions": 21
+  },
+  "2021-12-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 88,
+    "mean_price_diff": 0.5953076370454545,
+    "max_price_diff": 2.0263726,
+    "mean_flow_weight": 0.5953076370454545,
+    "active_regions": 21
+  },
+  "2022-01-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 83,
+    "mean_price_diff": 0.67654175686747,
+    "max_price_diff": 2.5952828,
+    "mean_flow_weight": 0.67654175686747,
+    "active_regions": 21
+  },
+  "2022-02-28_wheat": {
+    "commodity": "wheat",
+    "flow_count": 75,
+    "mean_price_diff": 0.6548805674666667,
+    "max_price_diff": 2.14984562,
+    "mean_flow_weight": 0.6548805674666667,
+    "active_regions": 20
+  },
+  "2022-03-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 81,
+    "mean_price_diff": 0.7315933037037037,
+    "max_price_diff": 2.3877667,
+    "mean_flow_weight": 0.7315933037037037,
+    "active_regions": 21
+  },
+  "2022-04-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 73,
+    "mean_price_diff": 0.6723961397260274,
+    "max_price_diff": 2.0576271999999998,
+    "mean_flow_weight": 0.6723961397260274,
+    "active_regions": 19
+  },
+  "2022-05-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 79,
+    "mean_price_diff": 0.6307328784810127,
+    "max_price_diff": 1.8847139999999998,
+    "mean_flow_weight": 0.6307328784810127,
+    "active_regions": 20
+  },
+  "2022-06-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 76,
+    "mean_price_diff": 0.7033994368421052,
+    "max_price_diff": 2.0593795999999998,
+    "mean_flow_weight": 0.7033994368421052,
+    "active_regions": 20
+  },
+  "2022-07-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 79,
+    "mean_price_diff": 0.868992246835443,
+    "max_price_diff": 2.5978016,
+    "mean_flow_weight": 0.868992246835443,
+    "active_regions": 20
+  },
+  "2022-08-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 80,
+    "mean_price_diff": 0.875379745,
+    "max_price_diff": 2.7768049999999995,
+    "mean_flow_weight": 0.875379745,
+    "active_regions": 20
+  },
+  "2022-09-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 79,
+    "mean_price_diff": 0.707945706329114,
+    "max_price_diff": 2.2587204,
+    "mean_flow_weight": 0.707945706329114,
+    "active_regions": 20
+  },
+  "2022-10-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 83,
+    "mean_price_diff": 0.6485192975903614,
+    "max_price_diff": 2.2256530999999997,
+    "mean_flow_weight": 0.6485192975903614,
+    "active_regions": 21
+  },
+  "2022-11-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 79,
+    "mean_price_diff": 0.656511746835443,
+    "max_price_diff": 2.178728,
+    "mean_flow_weight": 0.656511746835443,
+    "active_regions": 21
+  },
+  "2022-12-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 76,
+    "mean_price_diff": 0.6589026589473683,
+    "max_price_diff": 2.12032165,
+    "mean_flow_weight": 0.6589026589473683,
+    "active_regions": 21
+  },
+  "2023-01-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 77,
+    "mean_price_diff": 0.7106743559740258,
+    "max_price_diff": 2.3072897599999997,
+    "mean_flow_weight": 0.7106743559740258,
+    "active_regions": 21
+  },
+  "2023-02-28_wheat": {
+    "commodity": "wheat",
+    "flow_count": 74,
+    "mean_price_diff": 0.7919523241891891,
+    "max_price_diff": 2.4386764100000002,
+    "mean_flow_weight": 0.7919523241891891,
+    "active_regions": 21
+  },
+  "2023-03-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 73,
+    "mean_price_diff": 0.7691894882191781,
+    "max_price_diff": 2.38357173,
+    "mean_flow_weight": 0.7691894882191781,
+    "active_regions": 21
+  },
+  "2023-04-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 74,
+    "mean_price_diff": 0.8211734279729729,
+    "max_price_diff": 2.55727623,
+    "mean_flow_weight": 0.8211734279729729,
+    "active_regions": 21
+  },
+  "2023-05-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 85,
+    "mean_price_diff": 0.736961443882353,
+    "max_price_diff": 2.68535731,
+    "mean_flow_weight": 0.736961443882353,
+    "active_regions": 21
+  },
+  "2023-06-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 85,
+    "mean_price_diff": 0.735315354117647,
+    "max_price_diff": 2.6370528099999997,
+    "mean_flow_weight": 0.735315354117647,
+    "active_regions": 21
+  },
+  "2023-07-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 75,
+    "mean_price_diff": 0.7974702622666667,
+    "max_price_diff": 2.5419140999999996,
+    "mean_flow_weight": 0.7974702622666667,
+    "active_regions": 21
+  },
+  "2023-08-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 79,
+    "mean_price_diff": 0.7619865993670887,
+    "max_price_diff": 2.36763839,
+    "mean_flow_weight": 0.7619865993670887,
+    "active_regions": 21
+  },
+  "2023-09-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 80,
+    "mean_price_diff": 0.799993044875,
+    "max_price_diff": 2.49988706,
+    "mean_flow_weight": 0.799993044875,
+    "active_regions": 21
+  },
+  "2023-10-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 84,
+    "mean_price_diff": 0.746108768095238,
+    "max_price_diff": 2.47358657,
+    "mean_flow_weight": 0.746108768095238,
+    "active_regions": 21
+  },
+  "2023-11-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 85,
+    "mean_price_diff": 0.7196472176470587,
+    "max_price_diff": 2.49749467,
+    "mean_flow_weight": 0.7196472176470587,
+    "active_regions": 21
+  },
+  "2023-12-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 87,
+    "mean_price_diff": 0.9372809905747127,
+    "max_price_diff": 3.5145547,
+    "mean_flow_weight": 0.9372809905747127,
+    "active_regions": 21
+  },
+  "2024-01-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 86,
+    "mean_price_diff": 0.9264162725581397,
+    "max_price_diff": 3.50362301,
+    "mean_flow_weight": 0.9264162725581397,
+    "active_regions": 21
+  },
+  "2024-02-29_wheat": {
+    "commodity": "wheat",
+    "flow_count": 94,
+    "mean_price_diff": 0.8766244190425531,
+    "max_price_diff": 3.63390977,
+    "mean_flow_weight": 0.8766244190425531,
+    "active_regions": 21
+  },
+  "2024-03-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 95,
+    "mean_price_diff": 0.8618991588421054,
+    "max_price_diff": 3.5595383299999996,
+    "mean_flow_weight": 0.8618991588421054,
+    "active_regions": 21
+  },
+  "2024-04-30_wheat": {
+    "commodity": "wheat",
+    "flow_count": 93,
+    "mean_price_diff": 0.9648787141935483,
+    "max_price_diff": 3.86464278,
+    "mean_flow_weight": 0.9648787141935483,
+    "active_regions": 21
+  },
+  "2024-05-31_wheat": {
+    "commodity": "wheat",
+    "flow_count": 92,
+    "mean_price_diff": 1.0498658739130435,
+    "max_price_diff": 4.1552046,
+    "mean_flow_weight": 1.0498658739130435,
+    "active_regions": 21
+  }
+}

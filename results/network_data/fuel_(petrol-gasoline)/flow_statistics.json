@@ -1,0 +1,378 @@
+{
+  "2020-07-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 79,
+    "mean_price_diff": 0.5293218982278483,
+    "max_price_diff": 1.36904613,
+    "mean_flow_weight": 0.5293218982278483,
+    "active_regions": 21
+  },
+  "2020-08-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 83,
+    "mean_price_diff": 0.46948132421686745,
+    "max_price_diff": 1.2343600799999999,
+    "mean_flow_weight": 0.46948132421686745,
+    "active_regions": 21
+  },
+  "2020-09-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 84,
+    "mean_price_diff": 0.4343743702380952,
+    "max_price_diff": 1.23204208,
+    "mean_flow_weight": 0.4343743702380952,
+    "active_regions": 21
+  },
+  "2020-10-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 88,
+    "mean_price_diff": 0.45115432045454545,
+    "max_price_diff": 1.46694082,
+    "mean_flow_weight": 0.45115432045454545,
+    "active_regions": 21
+  },
+  "2020-11-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 92,
+    "mean_price_diff": 0.4655188384782608,
+    "max_price_diff": 1.6808666399999999,
+    "mean_flow_weight": 0.4655188384782608,
+    "active_regions": 21
+  },
+  "2020-12-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 93,
+    "mean_price_diff": 0.516343194516129,
+    "max_price_diff": 1.60600067,
+    "mean_flow_weight": 0.516343194516129,
+    "active_regions": 21
+  },
+  "2021-01-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 91,
+    "mean_price_diff": 0.5928858428571429,
+    "max_price_diff": 1.48585435,
+    "mean_flow_weight": 0.5928858428571429,
+    "active_regions": 21
+  },
+  "2021-02-28_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 92,
+    "mean_price_diff": 0.6408033717391304,
+    "max_price_diff": 1.613541,
+    "mean_flow_weight": 0.6408033717391304,
+    "active_regions": 21
+  },
+  "2021-03-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 95,
+    "mean_price_diff": 0.5631640621052632,
+    "max_price_diff": 1.5983207899999998,
+    "mean_flow_weight": 0.5631640621052632,
+    "active_regions": 21
+  },
+  "2021-04-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 91,
+    "mean_price_diff": 0.641036853186813,
+    "max_price_diff": 1.64250507,
+    "mean_flow_weight": 0.641036853186813,
+    "active_regions": 21
+  },
+  "2021-05-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 85,
+    "mean_price_diff": 0.6461688536470589,
+    "max_price_diff": 1.4747226800000002,
+    "mean_flow_weight": 0.6461688536470589,
+    "active_regions": 21
+  },
+  "2021-06-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 91,
+    "mean_price_diff": 0.6113980772527473,
+    "max_price_diff": 1.4418495800000002,
+    "mean_flow_weight": 0.6113980772527473,
+    "active_regions": 21
+  },
+  "2021-07-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 89,
+    "mean_price_diff": 0.4822393314606742,
+    "max_price_diff": 1.6663062899999999,
+    "mean_flow_weight": 0.4822393314606742,
+    "active_regions": 21
+  },
+  "2021-08-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 86,
+    "mean_price_diff": 0.4936989802325582,
+    "max_price_diff": 1.8122099399999998,
+    "mean_flow_weight": 0.4936989802325582,
+    "active_regions": 21
+  },
+  "2021-09-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 86,
+    "mean_price_diff": 0.6690297220930231,
+    "max_price_diff": 2.5141420200000004,
+    "mean_flow_weight": 0.6690297220930231,
+    "active_regions": 21
+  },
+  "2021-10-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 85,
+    "mean_price_diff": 0.860362765882353,
+    "max_price_diff": 2.6334410000000004,
+    "mean_flow_weight": 0.860362765882353,
+    "active_regions": 21
+  },
+  "2021-11-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 73,
+    "mean_price_diff": 1.146015794520548,
+    "max_price_diff": 3.2276333,
+    "mean_flow_weight": 1.146015794520548,
+    "active_regions": 21
+  },
+  "2021-12-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 86,
+    "mean_price_diff": 0.8162810290697676,
+    "max_price_diff": 2.4702339,
+    "mean_flow_weight": 0.8162810290697676,
+    "active_regions": 21
+  },
+  "2022-01-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 95,
+    "mean_price_diff": 0.917641207368421,
+    "max_price_diff": 3.06638786,
+    "mean_flow_weight": 0.917641207368421,
+    "active_regions": 21
+  },
+  "2022-02-28_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 95,
+    "mean_price_diff": 0.9928997884210526,
+    "max_price_diff": 3.19905813,
+    "mean_flow_weight": 0.9928997884210526,
+    "active_regions": 21
+  },
+  "2022-03-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 102,
+    "mean_price_diff": 1.055650082352941,
+    "max_price_diff": 3.97130172,
+    "mean_flow_weight": 1.055650082352941,
+    "active_regions": 21
+  },
+  "2022-04-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 95,
+    "mean_price_diff": 0.63815742,
+    "max_price_diff": 2.8350559900000003,
+    "mean_flow_weight": 0.63815742,
+    "active_regions": 21
+  },
+  "2022-05-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 79,
+    "mean_price_diff": 0.6289460202531646,
+    "max_price_diff": 2.87401961,
+    "mean_flow_weight": 0.6289460202531646,
+    "active_regions": 21
+  },
+  "2022-06-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 76,
+    "mean_price_diff": 0.6817477986842104,
+    "max_price_diff": 3.0106970200000003,
+    "mean_flow_weight": 0.6817477986842104,
+    "active_regions": 21
+  },
+  "2022-07-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 78,
+    "mean_price_diff": 1.289608057692308,
+    "max_price_diff": 4.58730616,
+    "mean_flow_weight": 1.289608057692308,
+    "active_regions": 21
+  },
+  "2022-08-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 95,
+    "mean_price_diff": 1.1221233378947368,
+    "max_price_diff": 4.62180994,
+    "mean_flow_weight": 1.1221233378947368,
+    "active_regions": 21
+  },
+  "2022-09-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 89,
+    "mean_price_diff": 0.9876059471910112,
+    "max_price_diff": 3.69020867,
+    "mean_flow_weight": 0.9876059471910112,
+    "active_regions": 21
+  },
+  "2022-10-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 88,
+    "mean_price_diff": 0.9544601261363636,
+    "max_price_diff": 3.62900738,
+    "mean_flow_weight": 0.9544601261363636,
+    "active_regions": 21
+  },
+  "2022-11-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 71,
+    "mean_price_diff": 1.0304636267605634,
+    "max_price_diff": 3.51806655,
+    "mean_flow_weight": 1.0304636267605634,
+    "active_regions": 21
+  },
+  "2022-12-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 59,
+    "mean_price_diff": 1.156199486440678,
+    "max_price_diff": 3.42673404,
+    "mean_flow_weight": 1.156199486440678,
+    "active_regions": 19
+  },
+  "2023-01-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 73,
+    "mean_price_diff": 0.8834932246575342,
+    "max_price_diff": 2.92032107,
+    "mean_flow_weight": 0.8834932246575342,
+    "active_regions": 21
+  },
+  "2023-02-28_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 87,
+    "mean_price_diff": 0.7739594689655174,
+    "max_price_diff": 2.53745828,
+    "mean_flow_weight": 0.7739594689655174,
+    "active_regions": 21
+  },
+  "2023-03-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 82,
+    "mean_price_diff": 0.765792366707317,
+    "max_price_diff": 2.38257091,
+    "mean_flow_weight": 0.765792366707317,
+    "active_regions": 21
+  },
+  "2023-04-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 75,
+    "mean_price_diff": 0.6558332640000001,
+    "max_price_diff": 2.6287079,
+    "mean_flow_weight": 0.6558332640000001,
+    "active_regions": 21
+  },
+  "2023-05-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 78,
+    "mean_price_diff": 0.6685776294871796,
+    "max_price_diff": 2.7892359000000004,
+    "mean_flow_weight": 0.6685776294871796,
+    "active_regions": 21
+  },
+  "2023-06-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 78,
+    "mean_price_diff": 0.6963605346153846,
+    "max_price_diff": 2.9601498,
+    "mean_flow_weight": 0.6963605346153846,
+    "active_regions": 21
+  },
+  "2023-07-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 80,
+    "mean_price_diff": 0.9360791325000001,
+    "max_price_diff": 3.0120083,
+    "mean_flow_weight": 0.9360791325000001,
+    "active_regions": 21
+  },
+  "2023-08-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 79,
+    "mean_price_diff": 0.9849701025316457,
+    "max_price_diff": 3.1525002,
+    "mean_flow_weight": 0.9849701025316457,
+    "active_regions": 20
+  },
+  "2023-09-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 72,
+    "mean_price_diff": 1.1277835902777777,
+    "max_price_diff": 3.2236819,
+    "mean_flow_weight": 1.1277835902777777,
+    "active_regions": 20
+  },
+  "2023-10-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 71,
+    "mean_price_diff": 1.2065036070422535,
+    "max_price_diff": 3.37117429,
+    "mean_flow_weight": 1.2065036070422535,
+    "active_regions": 21
+  },
+  "2023-11-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 64,
+    "mean_price_diff": 1.268368765625,
+    "max_price_diff": 3.1640783,
+    "mean_flow_weight": 1.268368765625,
+    "active_regions": 20
+  },
+  "2023-12-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 60,
+    "mean_price_diff": 1.79922617,
+    "max_price_diff": 4.4059644,
+    "mean_flow_weight": 1.79922617,
+    "active_regions": 19
+  },
+  "2024-01-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 78,
+    "mean_price_diff": 1.381450805128205,
+    "max_price_diff": 4.8477391999999995,
+    "mean_flow_weight": 1.381450805128205,
+    "active_regions": 21
+  },
+  "2024-02-29_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 88,
+    "mean_price_diff": 1.3589827522727274,
+    "max_price_diff": 5.233118900000001,
+    "mean_flow_weight": 1.3589827522727274,
+    "active_regions": 21
+  },
+  "2024-03-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 84,
+    "mean_price_diff": 1.3683871833333334,
+    "max_price_diff": 5.1360041,
+    "mean_flow_weight": 1.3683871833333334,
+    "active_regions": 21
+  },
+  "2024-04-30_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 79,
+    "mean_price_diff": 3.4774793620253166,
+    "max_price_diff": 10.1990128,
+    "mean_flow_weight": 3.4774793620253166,
+    "active_regions": 21
+  },
+  "2024-05-31_fuel (petrol-gasoline)": {
+    "commodity": "fuel (petrol-gasoline)",
+    "flow_count": 85,
+    "mean_price_diff": 4.259350976470588,
+    "max_price_diff": 13.4812571,
+    "mean_flow_weight": 4.259350976470588,
+    "active_regions": 21
+  }
+}

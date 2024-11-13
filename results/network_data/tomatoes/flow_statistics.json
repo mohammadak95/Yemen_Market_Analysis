@@ -1,0 +1,378 @@
+{
+  "2020-07-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 84,
+    "mean_price_diff": 0.3789621083333334,
+    "max_price_diff": 1.0651743000000002,
+    "mean_flow_weight": 0.3789621083333334,
+    "active_regions": 21
+  },
+  "2020-08-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 83,
+    "mean_price_diff": 0.4424785012048193,
+    "max_price_diff": 1.1987746000000001,
+    "mean_flow_weight": 0.4424785012048193,
+    "active_regions": 21
+  },
+  "2020-09-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 90,
+    "mean_price_diff": 0.5997942611111111,
+    "max_price_diff": 1.950408,
+    "mean_flow_weight": 0.5997942611111111,
+    "active_regions": 21
+  },
+  "2020-10-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 89,
+    "mean_price_diff": 0.5846735033707866,
+    "max_price_diff": 1.7654918999999998,
+    "mean_flow_weight": 0.5846735033707866,
+    "active_regions": 21
+  },
+  "2020-11-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 93,
+    "mean_price_diff": 0.5440500688172044,
+    "max_price_diff": 2.5485948999999994,
+    "mean_flow_weight": 0.5440500688172044,
+    "active_regions": 21
+  },
+  "2020-12-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 82,
+    "mean_price_diff": 0.5627012975609755,
+    "max_price_diff": 3.1175242999999995,
+    "mean_flow_weight": 0.5627012975609755,
+    "active_regions": 21
+  },
+  "2021-01-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 94,
+    "mean_price_diff": 0.7857504914893617,
+    "max_price_diff": 4.6025722,
+    "mean_flow_weight": 0.7857504914893617,
+    "active_regions": 21
+  },
+  "2021-02-28_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 91,
+    "mean_price_diff": 0.9534918637362636,
+    "max_price_diff": 4.9213521,
+    "mean_flow_weight": 0.9534918637362636,
+    "active_regions": 21
+  },
+  "2021-03-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 90,
+    "mean_price_diff": 0.988949068888889,
+    "max_price_diff": 4.7839043000000006,
+    "mean_flow_weight": 0.988949068888889,
+    "active_regions": 21
+  },
+  "2021-04-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 90,
+    "mean_price_diff": 0.8777477541111113,
+    "max_price_diff": 4.3948026,
+    "mean_flow_weight": 0.8777477541111113,
+    "active_regions": 21
+  },
+  "2021-05-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 94,
+    "mean_price_diff": 0.5801484509574468,
+    "max_price_diff": 3.6234095,
+    "mean_flow_weight": 0.5801484509574468,
+    "active_regions": 21
+  },
+  "2021-06-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 81,
+    "mean_price_diff": 0.5703453407407407,
+    "max_price_diff": 3.64727344,
+    "mean_flow_weight": 0.5703453407407407,
+    "active_regions": 21
+  },
+  "2021-07-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 74,
+    "mean_price_diff": 0.4218094941891892,
+    "max_price_diff": 2.47707487,
+    "mean_flow_weight": 0.4218094941891892,
+    "active_regions": 21
+  },
+  "2021-08-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 84,
+    "mean_price_diff": 0.4968244341666667,
+    "max_price_diff": 2.30167673,
+    "mean_flow_weight": 0.4968244341666667,
+    "active_regions": 21
+  },
+  "2021-09-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 88,
+    "mean_price_diff": 0.6946816904545455,
+    "max_price_diff": 2.7992652000000007,
+    "mean_flow_weight": 0.6946816904545455,
+    "active_regions": 21
+  },
+  "2021-10-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 91,
+    "mean_price_diff": 1.1881456505494503,
+    "max_price_diff": 5.1039255,
+    "mean_flow_weight": 1.1881456505494503,
+    "active_regions": 21
+  },
+  "2021-11-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 94,
+    "mean_price_diff": 1.3622044074468083,
+    "max_price_diff": 6.356661299999999,
+    "mean_flow_weight": 1.3622044074468083,
+    "active_regions": 21
+  },
+  "2021-12-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 91,
+    "mean_price_diff": 1.1783567494505491,
+    "max_price_diff": 4.9626565,
+    "mean_flow_weight": 1.1783567494505491,
+    "active_regions": 21
+  },
+  "2022-01-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 91,
+    "mean_price_diff": 1.0267882373626376,
+    "max_price_diff": 4.6260056,
+    "mean_flow_weight": 1.0267882373626376,
+    "active_regions": 21
+  },
+  "2022-02-28_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 88,
+    "mean_price_diff": 0.9705304795454546,
+    "max_price_diff": 4.417685199999999,
+    "mean_flow_weight": 0.9705304795454546,
+    "active_regions": 21
+  },
+  "2022-03-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 97,
+    "mean_price_diff": 1.0581193226804124,
+    "max_price_diff": 5.540004400000001,
+    "mean_flow_weight": 1.0581193226804124,
+    "active_regions": 21
+  },
+  "2022-04-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 94,
+    "mean_price_diff": 0.9576992776595745,
+    "max_price_diff": 5.0536023000000005,
+    "mean_flow_weight": 0.9576992776595745,
+    "active_regions": 21
+  },
+  "2022-05-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 93,
+    "mean_price_diff": 1.0724782688172043,
+    "max_price_diff": 5.6769428,
+    "mean_flow_weight": 1.0724782688172043,
+    "active_regions": 21
+  },
+  "2022-06-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 91,
+    "mean_price_diff": 1.2850157846153845,
+    "max_price_diff": 6.535473499999999,
+    "mean_flow_weight": 1.2850157846153845,
+    "active_regions": 21
+  },
+  "2022-07-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 100,
+    "mean_price_diff": 1.4484111369999997,
+    "max_price_diff": 8.4243004,
+    "mean_flow_weight": 1.4484111369999997,
+    "active_regions": 21
+  },
+  "2022-08-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 97,
+    "mean_price_diff": 1.435475513402062,
+    "max_price_diff": 8.1391436,
+    "mean_flow_weight": 1.435475513402062,
+    "active_regions": 21
+  },
+  "2022-09-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 93,
+    "mean_price_diff": 1.081670024731183,
+    "max_price_diff": 6.5015989,
+    "mean_flow_weight": 1.081670024731183,
+    "active_regions": 21
+  },
+  "2022-10-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 87,
+    "mean_price_diff": 0.9170954563218393,
+    "max_price_diff": 5.14292543,
+    "mean_flow_weight": 0.9170954563218393,
+    "active_regions": 21
+  },
+  "2022-11-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 77,
+    "mean_price_diff": 0.7975916881818181,
+    "max_price_diff": 4.26366176,
+    "mean_flow_weight": 0.7975916881818181,
+    "active_regions": 21
+  },
+  "2022-12-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 79,
+    "mean_price_diff": 0.7838207077215191,
+    "max_price_diff": 3.98212335,
+    "mean_flow_weight": 0.7838207077215191,
+    "active_regions": 21
+  },
+  "2023-01-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 88,
+    "mean_price_diff": 0.803304405,
+    "max_price_diff": 4.0606387999999995,
+    "mean_flow_weight": 0.803304405,
+    "active_regions": 21
+  },
+  "2023-02-28_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 90,
+    "mean_price_diff": 1.0215967433333335,
+    "max_price_diff": 4.5878855000000005,
+    "mean_flow_weight": 1.0215967433333335,
+    "active_regions": 21
+  },
+  "2023-03-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 86,
+    "mean_price_diff": 1.0895725306976742,
+    "max_price_diff": 4.712471,
+    "mean_flow_weight": 1.0895725306976742,
+    "active_regions": 21
+  },
+  "2023-04-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 98,
+    "mean_price_diff": 1.150020730612245,
+    "max_price_diff": 5.247469300000001,
+    "mean_flow_weight": 1.150020730612245,
+    "active_regions": 21
+  },
+  "2023-05-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 94,
+    "mean_price_diff": 1.3241622730851061,
+    "max_price_diff": 5.695976399999999,
+    "mean_flow_weight": 1.3241622730851061,
+    "active_regions": 21
+  },
+  "2023-06-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 92,
+    "mean_price_diff": 1.2688689554347825,
+    "max_price_diff": 4.813906899999999,
+    "mean_flow_weight": 1.2688689554347825,
+    "active_regions": 21
+  },
+  "2023-07-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 98,
+    "mean_price_diff": 1.407846566632653,
+    "max_price_diff": 6.5940667,
+    "mean_flow_weight": 1.407846566632653,
+    "active_regions": 21
+  },
+  "2023-08-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 96,
+    "mean_price_diff": 1.3910751104166668,
+    "max_price_diff": 7.62514342,
+    "mean_flow_weight": 1.3910751104166668,
+    "active_regions": 21
+  },
+  "2023-09-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 92,
+    "mean_price_diff": 1.4952282408695654,
+    "max_price_diff": 8.81443218,
+    "mean_flow_weight": 1.4952282408695654,
+    "active_regions": 21
+  },
+  "2023-10-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 90,
+    "mean_price_diff": 1.2407689894444445,
+    "max_price_diff": 7.74282522,
+    "mean_flow_weight": 1.2407689894444445,
+    "active_regions": 21
+  },
+  "2023-11-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 100,
+    "mean_price_diff": 1.2169822101999999,
+    "max_price_diff": 6.93459485,
+    "mean_flow_weight": 1.2169822101999999,
+    "active_regions": 21
+  },
+  "2023-12-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 96,
+    "mean_price_diff": 1.6345645781250002,
+    "max_price_diff": 8.3563901,
+    "mean_flow_weight": 1.6345645781250002,
+    "active_regions": 21
+  },
+  "2024-01-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 90,
+    "mean_price_diff": 1.6238076600000002,
+    "max_price_diff": 7.4590718,
+    "mean_flow_weight": 1.6238076600000002,
+    "active_regions": 21
+  },
+  "2024-02-29_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 95,
+    "mean_price_diff": 1.3662163294736842,
+    "max_price_diff": 7.4537192,
+    "mean_flow_weight": 1.3662163294736842,
+    "active_regions": 21
+  },
+  "2024-03-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 93,
+    "mean_price_diff": 1.3205416706451614,
+    "max_price_diff": 7.094137999999999,
+    "mean_flow_weight": 1.3205416706451614,
+    "active_regions": 21
+  },
+  "2024-04-30_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 92,
+    "mean_price_diff": 1.4936141097826083,
+    "max_price_diff": 8.15720202,
+    "mean_flow_weight": 1.4936141097826083,
+    "active_regions": 21
+  },
+  "2024-05-31_tomatoes": {
+    "commodity": "tomatoes",
+    "flow_count": 93,
+    "mean_price_diff": 1.6043399195698926,
+    "max_price_diff": 8.61428498,
+    "mean_flow_weight": 1.6043399195698926,
+    "active_regions": 21
+  }
+}

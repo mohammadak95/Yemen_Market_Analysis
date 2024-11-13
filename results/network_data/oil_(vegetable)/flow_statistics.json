@@ -1,0 +1,378 @@
+{
+  "2020-07-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 85,
+    "mean_price_diff": 0.2957440894117646,
+    "max_price_diff": 0.7292058999999997,
+    "mean_flow_weight": 0.2957440894117646,
+    "active_regions": 21
+  },
+  "2020-08-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 73,
+    "mean_price_diff": 0.27461154931506854,
+    "max_price_diff": 0.8155675,
+    "mean_flow_weight": 0.27461154931506854,
+    "active_regions": 21
+  },
+  "2020-09-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 76,
+    "mean_price_diff": 0.3654703973684211,
+    "max_price_diff": 0.8298650000000003,
+    "mean_flow_weight": 0.3654703973684211,
+    "active_regions": 21
+  },
+  "2020-10-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 74,
+    "mean_price_diff": 0.33977192432432435,
+    "max_price_diff": 0.7616611,
+    "mean_flow_weight": 0.33977192432432435,
+    "active_regions": 21
+  },
+  "2020-11-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 76,
+    "mean_price_diff": 0.41776586578947367,
+    "max_price_diff": 0.9091288999999998,
+    "mean_flow_weight": 0.41776586578947367,
+    "active_regions": 21
+  },
+  "2020-12-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 59,
+    "mean_price_diff": 0.41942243559322034,
+    "max_price_diff": 0.7501365999999998,
+    "mean_flow_weight": 0.41942243559322034,
+    "active_regions": 21
+  },
+  "2021-01-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 76,
+    "mean_price_diff": 0.48717310131578945,
+    "max_price_diff": 1.1223927000000002,
+    "mean_flow_weight": 0.48717310131578945,
+    "active_regions": 21
+  },
+  "2021-02-28_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 81,
+    "mean_price_diff": 0.4795944975308642,
+    "max_price_diff": 1.0542634,
+    "mean_flow_weight": 0.4795944975308642,
+    "active_regions": 21
+  },
+  "2021-03-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 88,
+    "mean_price_diff": 0.47576603181818183,
+    "max_price_diff": 1.2862734000000002,
+    "mean_flow_weight": 0.47576603181818183,
+    "active_regions": 21
+  },
+  "2021-04-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 90,
+    "mean_price_diff": 0.49811905999999995,
+    "max_price_diff": 1.1827524,
+    "mean_flow_weight": 0.49811905999999995,
+    "active_regions": 21
+  },
+  "2021-05-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 83,
+    "mean_price_diff": 0.6863476626506023,
+    "max_price_diff": 1.8530626000000003,
+    "mean_flow_weight": 0.6863476626506023,
+    "active_regions": 21
+  },
+  "2021-06-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 81,
+    "mean_price_diff": 0.7438648913580248,
+    "max_price_diff": 2.3121508000000004,
+    "mean_flow_weight": 0.7438648913580248,
+    "active_regions": 21
+  },
+  "2021-07-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 75,
+    "mean_price_diff": 0.7439949986666666,
+    "max_price_diff": 2.3172687,
+    "mean_flow_weight": 0.7439949986666666,
+    "active_regions": 21
+  },
+  "2021-08-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 75,
+    "mean_price_diff": 0.8402815853333333,
+    "max_price_diff": 2.7285993,
+    "mean_flow_weight": 0.8402815853333333,
+    "active_regions": 21
+  },
+  "2021-09-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 80,
+    "mean_price_diff": 1.1106220125,
+    "max_price_diff": 3.645376,
+    "mean_flow_weight": 1.1106220125,
+    "active_regions": 21
+  },
+  "2021-10-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 88,
+    "mean_price_diff": 1.5144044863636361,
+    "max_price_diff": 5.2455418,
+    "mean_flow_weight": 1.5144044863636361,
+    "active_regions": 21
+  },
+  "2021-11-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 87,
+    "mean_price_diff": 1.7097495643678162,
+    "max_price_diff": 5.471808200000001,
+    "mean_flow_weight": 1.7097495643678162,
+    "active_regions": 21
+  },
+  "2021-12-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 70,
+    "mean_price_diff": 1.6361804199999999,
+    "max_price_diff": 3.9428775999999996,
+    "mean_flow_weight": 1.6361804199999999,
+    "active_regions": 21
+  },
+  "2022-01-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 84,
+    "mean_price_diff": 1.284874723809524,
+    "max_price_diff": 3.9157764999999998,
+    "mean_flow_weight": 1.284874723809524,
+    "active_regions": 21
+  },
+  "2022-02-28_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 95,
+    "mean_price_diff": 1.32963542,
+    "max_price_diff": 4.215087199999999,
+    "mean_flow_weight": 1.32963542,
+    "active_regions": 21
+  },
+  "2022-03-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 96,
+    "mean_price_diff": 1.5992434666666666,
+    "max_price_diff": 5.017148000000001,
+    "mean_flow_weight": 1.5992434666666666,
+    "active_regions": 21
+  },
+  "2022-04-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 95,
+    "mean_price_diff": 1.3843275715789474,
+    "max_price_diff": 4.450818700000001,
+    "mean_flow_weight": 1.3843275715789474,
+    "active_regions": 21
+  },
+  "2022-05-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 89,
+    "mean_price_diff": 1.3283808426966293,
+    "max_price_diff": 4.7941742000000005,
+    "mean_flow_weight": 1.3283808426966293,
+    "active_regions": 21
+  },
+  "2022-06-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 90,
+    "mean_price_diff": 1.3110863155555557,
+    "max_price_diff": 4.395699500000001,
+    "mean_flow_weight": 1.3110863155555557,
+    "active_regions": 21
+  },
+  "2022-07-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 98,
+    "mean_price_diff": 1.513969258163265,
+    "max_price_diff": 5.648820499999999,
+    "mean_flow_weight": 1.513969258163265,
+    "active_regions": 21
+  },
+  "2022-08-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 96,
+    "mean_price_diff": 1.513757530208333,
+    "max_price_diff": 5.8485034,
+    "mean_flow_weight": 1.513757530208333,
+    "active_regions": 21
+  },
+  "2022-09-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 95,
+    "mean_price_diff": 1.2288831905263156,
+    "max_price_diff": 4.549387900000001,
+    "mean_flow_weight": 1.2288831905263156,
+    "active_regions": 21
+  },
+  "2022-10-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 98,
+    "mean_price_diff": 1.1344962306122448,
+    "max_price_diff": 3.7198334,
+    "mean_flow_weight": 1.1344962306122448,
+    "active_regions": 21
+  },
+  "2022-11-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 96,
+    "mean_price_diff": 1.0563842083333332,
+    "max_price_diff": 3.2119066,
+    "mean_flow_weight": 1.0563842083333332,
+    "active_regions": 21
+  },
+  "2022-12-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 93,
+    "mean_price_diff": 0.9722049430107527,
+    "max_price_diff": 2.9183822,
+    "mean_flow_weight": 0.9722049430107527,
+    "active_regions": 21
+  },
+  "2023-01-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 89,
+    "mean_price_diff": 0.9518548505617979,
+    "max_price_diff": 2.9090612,
+    "mean_flow_weight": 0.9518548505617979,
+    "active_regions": 21
+  },
+  "2023-02-28_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 89,
+    "mean_price_diff": 0.9780608797752808,
+    "max_price_diff": 3.0222001,
+    "mean_flow_weight": 0.9780608797752808,
+    "active_regions": 21
+  },
+  "2023-03-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 87,
+    "mean_price_diff": 0.8970778885057471,
+    "max_price_diff": 2.7327611000000003,
+    "mean_flow_weight": 0.8970778885057471,
+    "active_regions": 21
+  },
+  "2023-04-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 89,
+    "mean_price_diff": 0.9885476483146068,
+    "max_price_diff": 3.1096186,
+    "mean_flow_weight": 0.9885476483146068,
+    "active_regions": 21
+  },
+  "2023-05-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 87,
+    "mean_price_diff": 1.065926668965517,
+    "max_price_diff": 3.295284,
+    "mean_flow_weight": 1.065926668965517,
+    "active_regions": 21
+  },
+  "2023-06-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 94,
+    "mean_price_diff": 1.0311506127659578,
+    "max_price_diff": 3.275737,
+    "mean_flow_weight": 1.0311506127659578,
+    "active_regions": 21
+  },
+  "2023-07-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 91,
+    "mean_price_diff": 1.0762451263736261,
+    "max_price_diff": 3.2980394000000004,
+    "mean_flow_weight": 1.0762451263736261,
+    "active_regions": 21
+  },
+  "2023-08-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 88,
+    "mean_price_diff": 1.0962976738636363,
+    "max_price_diff": 3.2370708,
+    "mean_flow_weight": 1.0962976738636363,
+    "active_regions": 21
+  },
+  "2023-09-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 93,
+    "mean_price_diff": 1.1163426021505374,
+    "max_price_diff": 3.4447400999999997,
+    "mean_flow_weight": 1.1163426021505374,
+    "active_regions": 21
+  },
+  "2023-10-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 91,
+    "mean_price_diff": 1.1167285747252749,
+    "max_price_diff": 3.2953003,
+    "mean_flow_weight": 1.1167285747252749,
+    "active_regions": 21
+  },
+  "2023-11-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 94,
+    "mean_price_diff": 1.1222519574468086,
+    "max_price_diff": 3.5230794,
+    "mean_flow_weight": 1.1222519574468086,
+    "active_regions": 21
+  },
+  "2023-12-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 96,
+    "mean_price_diff": 1.6868029208333333,
+    "max_price_diff": 5.416112200000001,
+    "mean_flow_weight": 1.6868029208333333,
+    "active_regions": 21
+  },
+  "2024-01-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 100,
+    "mean_price_diff": 1.82518508,
+    "max_price_diff": 6.478843399999999,
+    "mean_flow_weight": 1.82518508,
+    "active_regions": 21
+  },
+  "2024-02-29_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 103,
+    "mean_price_diff": 2.035499372815534,
+    "max_price_diff": 7.6771218999999995,
+    "mean_flow_weight": 2.035499372815534,
+    "active_regions": 21
+  },
+  "2024-03-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 102,
+    "mean_price_diff": 1.9819336892156862,
+    "max_price_diff": 7.2363249,
+    "mean_flow_weight": 1.9819336892156862,
+    "active_regions": 21
+  },
+  "2024-04-30_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 100,
+    "mean_price_diff": 2.099540624,
+    "max_price_diff": 7.513786200000001,
+    "mean_flow_weight": 2.099540624,
+    "active_regions": 21
+  },
+  "2024-05-31_oil (vegetable)": {
+    "commodity": "oil (vegetable)",
+    "flow_count": 97,
+    "mean_price_diff": 2.260138512371134,
+    "max_price_diff": 7.7285655,
+    "mean_flow_weight": 2.260138512371134,
+    "active_regions": 21
+  }
+}

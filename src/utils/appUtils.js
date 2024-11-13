@@ -21,14 +21,14 @@ const isGitHubPages = PUBLIC_URL.includes('github.io');
 /**
  * Mapping between GeoBoundaries region identifiers and Enhanced data region identifiers.
  */
-const regionMapping = {
+export const regionMapping = {
   "san'a'": "sana'a",
   "san_a__governorate": "sana'a",
   "lahij_governorate": "lahj",
   "lahij": "lahj",
   "_adan_governorate": "aden",
   "al_hudaydah_governorate": "al hudaydah",
-  "ta_izz_governorate": "taizz",
+  "taizz_governorate": "taizz",
   "shabwah_governorate": "shabwah",
   "hadhramaut": "hadramaut",
   "abyan_governorate": "abyan",
@@ -44,8 +44,17 @@ const regionMapping = {
   "ma'rib_governorate": "marib",
   "raymah_governorate": "raymah",
   "amanat al asimah": "amanat al asimah", // Capital Municipality
-  // Add any additional mappings if necessary
+
+  // Additional mappings based on recent adjustments:
+  "‘adan governorate": "aden",
+  "amanat al asimah": "sanʿaʾ",
+  "sana'a": "sanʿaʾ governorate",
+  "al bayda": "al bayda governorate",
+  "taizz": "taizz governorate",
+  "al dhale'e": "ad dali governorate",
+  "marib": "marib governorate"
 };
+
 
 // ==========================
 // Excluded Regions
@@ -54,7 +63,7 @@ const regionMapping = {
 /**
  * List of regions to exclude from the mapping and merging process.
  */
-const excludedRegions = [
+export const excludedRegions = [
   'sa\'dah_governorate', // Example: Add the exact normalized region IDs
   // Add other regions as needed
 ];
