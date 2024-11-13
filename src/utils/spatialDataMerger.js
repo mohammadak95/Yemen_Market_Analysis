@@ -1,6 +1,5 @@
 import { getDataPath } from './dataUtils';
 import { backgroundMonitor } from './backgroundMonitor';
-import { regionMapping, excludedRegions } from './appUtils';
 import proj4 from 'proj4';
 
 // Projection setup
@@ -8,19 +7,91 @@ const WGS84 = 'EPSG:4326';
 const UTM_ZONE_38N = 'EPSG:32638';
 const YEMEN_TM = 'EPSG:2098';
 
-proj4.defs(
-  UTM_ZONE_38N,
-  '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs'
-);
-proj4.defs(
-  YEMEN_TM,
-  '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass +units=m +no_defs'
-);
+proj4.defs(UTM_ZONE_38N, '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs');
+proj4.defs(YEMEN_TM, '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass +units=m +no_defs');
+
+// Comprehensive region mapping
+const REGION_MAPPINGS = {
+  "sanaa": ["san'a'", "san_a__governorate", "sana'a", "sanʿaʾ", "amanat al asimah", "sana'a city", "amanat_al_asimah"],
+  "lahj": ["lahij_governorate", "lahij", "lahj_governorate"],
+  "aden": ["_adan_governorate", "aden", "'adan governorate", "adan_governorate"],
+  "hodeidah": ["al_hudaydah_governorate", "al hudaydah", "hudaydah", "al_hudaydah"],
+  "taizz": ["taizz_governorate", "taizz", "taiz", "ta'izz"],
+  "shabwah": ["shabwah_governorate", "shabwah", "shabwa"],
+  "hadramaut": ["hadhramaut", "hadramaut", "hadhramout"],
+  "abyan": ["abyan_governorate", "abyan"],
+  "al_jawf": ["al_jawf_governorate", "al jawf"],
+  "ibb": ["ibb_governorate", "ibb"],
+  "al_bayda": ["al_bayda__governorate", "al bayda", "al_bayda_governorate"],
+  "al_dhale": ["ad_dali__governorate", "al dhale'e", "al_dhale_e", "ad dali governorate"],
+  "al_mahwit": ["al_mahwit_governorate", "al mahwit"],
+  "hajjah": ["hajjah_governorate", "hajjah"],
+  "dhamar": ["dhamar_governorate", "dhamar"],
+  "amran": ["_amran_governorate", "amran", "'amran"],
+  "al_maharah": ["al_mahrah_governorate", "al maharah", "mahra"],
+  "marib": ["ma'rib_governorate", "marib", "ma'rib", "marib_governorate"],
+  "raymah": ["raymah_governorate", "raymah"],
+  "socotra": ["socotra", "soqotra", "suqutra"]
+};
+
+// Regions to exclude from processing
+const excludedRegions = [
+  'socotra',
+  'unknown',
+  'undefined',
+  'other'
+];
 
 export class SpatialDataMerger {
   constructor() {
     this.cache = new Map();
-    this.geometryCache = new Map(); // Cache for coordinate transformations
+    this.geometryCache = new Map();
+    this.mappingCache = new Map();
+  }
+
+  normalizeRegionId(id) {
+    if (!id) return null;
+
+    // Check cache first
+    const cacheKey = typeof id === 'string' ? id.toLowerCase() : id;
+    if (this.mappingCache.has(cacheKey)) {
+      return this.mappingCache.get(cacheKey);
+    }
+
+    const normalized = String(id)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .replace(/['\u2018\u2019]/g, '') // Remove special quotes
+      .replace(/[^a-z0-9]/g, '_')      // Replace non-alphanumeric with underscore
+      .replace(/_+/g, '_')             // Collapse multiple underscores
+      .replace(/^_|_$/g, '')           // Remove leading/trailing underscores
+      .replace(/governorate$/, '')      // Remove trailing "governorate"
+      .trim();
+
+    // Find matching standard region
+    let standardId = null;
+    for (const [standard, variants] of Object.entries(REGION_MAPPINGS)) {
+      if (standard === normalized || variants.some(v => this.normalizeString(v) === normalized)) {
+        standardId = standard;
+        break;
+      }
+    }
+
+    // Cache the result
+    this.mappingCache.set(cacheKey, standardId || normalized);
+    return standardId || normalized;
+  }
+
+  normalizeString(str) {
+    return String(str)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .trim();
   }
 
   async mergeData(preprocessedData, selectedCommodity, selectedDate) {
@@ -63,37 +134,51 @@ export class SpatialDataMerger {
 
   mergeGeometryData(boundaries, enhanced) {
     const geometryMap = new Map();
+    const processedIds = new Set();
     
+    // Process boundaries first
     boundaries.features.forEach(feature => {
       const id = this.normalizeRegionId(feature.properties.shapeName);
       
-      if (excludedRegions.includes(id)) return;
+      if (!id || excludedRegions.includes(id)) return;
 
       const transformedGeometry = this.transformGeometry(feature.geometry);
-      if (id) {
+      if (transformedGeometry) {
         geometryMap.set(id, {
           geometry: transformedGeometry,
           properties: { ...feature.properties }
         });
+        processedIds.add(id);
       }
     });
 
+    // Merge enhanced data
     enhanced.features.forEach(feature => {
       const id = this.normalizeRegionId(feature.properties.region_id || feature.properties.shapeName);
 
-      if (excludedRegions.includes(id)) return;
+      if (!id || excludedRegions.includes(id)) return;
 
-      if (id && geometryMap.has(id)) {
+      if (geometryMap.has(id)) {
         const existing = geometryMap.get(id);
-        const transformedGeometry = this.transformGeometry(feature.geometry);
-        
         geometryMap.set(id, {
           geometry: existing.geometry,
           properties: {
             ...existing.properties,
-            ...feature.properties
+            ...feature.properties,
+            normalizedId: id
           }
         });
+      } else if (!processedIds.has(id)) {
+        const transformedGeometry = this.transformGeometry(feature.geometry);
+        if (transformedGeometry) {
+          geometryMap.set(id, {
+            geometry: transformedGeometry,
+            properties: {
+              ...feature.properties,
+              normalizedId: id
+            }
+          });
+        }
       }
     });
 
@@ -101,26 +186,46 @@ export class SpatialDataMerger {
   }
 
   transformGeometry(geometry) {
-    if (!geometry || !geometry.type || !geometry.coordinates) return geometry;
+    if (!geometry || !geometry.type || !geometry.coordinates) return null;
 
     const cacheKey = JSON.stringify(geometry);
     if (this.geometryCache.has(cacheKey)) {
       return this.geometryCache.get(cacheKey);
     }
 
-    let transformedGeometry = geometry;
-
     try {
-      if (geometry.type === 'Point') {
-        transformedGeometry = {
-          ...geometry,
-          coordinates: this.transformCoordinates(geometry.coordinates)
-        };
-      } else if (geometry.type === 'Polygon') {
-        transformedGeometry = {
-          ...geometry,
-          coordinates: geometry.coordinates.map(ring => ring.map(coord => this.transformCoordinates(coord)))
-        };
+      let transformedGeometry;
+      
+      switch (geometry.type) {
+        case 'Point':
+          transformedGeometry = {
+            ...geometry,
+            coordinates: this.transformCoordinates(geometry.coordinates)
+          };
+          break;
+          
+        case 'Polygon':
+          transformedGeometry = {
+            ...geometry,
+            coordinates: geometry.coordinates.map(ring => 
+              ring.map(coord => this.transformCoordinates(coord))
+            )
+          };
+          break;
+          
+        case 'MultiPolygon':
+          transformedGeometry = {
+            ...geometry,
+            coordinates: geometry.coordinates.map(polygon =>
+              polygon.map(ring =>
+                ring.map(coord => this.transformCoordinates(coord))
+              )
+            )
+          };
+          break;
+          
+        default:
+          return geometry;
       }
 
       this.geometryCache.set(cacheKey, transformedGeometry);
@@ -147,19 +252,6 @@ export class SpatialDataMerger {
     if (!Array.isArray(coords)) return false;
     const [lng, lat] = coords;
     return lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90;
-  }
-
-  normalizeRegionId(id) {
-    if (!id) return null;
-
-    const normalized = id.toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
-
-    return regionMapping[normalized] || normalized;
   }
 
   transformPreprocessedData(data, targetDate) {
@@ -318,17 +410,27 @@ export class SpatialDataMerger {
     }
 
     try {
-      if (geometry.type === 'Point') {
-        return Array.isArray(geometry.coordinates) &&
-               geometry.coordinates.length === 2 &&
-               !isNaN(geometry.coordinates[0]) &&
-               !isNaN(geometry.coordinates[1]);
-      } else if (geometry.type === 'Polygon') {
-        return Array.isArray(geometry.coordinates) && 
-               geometry.coordinates.length > 0 &&
-               Array.isArray(geometry.coordinates[0]);
+      switch (geometry.type) {
+        case 'Point':
+          return Array.isArray(geometry.coordinates) &&
+                 geometry.coordinates.length === 2 &&
+                 !isNaN(geometry.coordinates[0]) &&
+                 !isNaN(geometry.coordinates[1]);
+                 
+        case 'Polygon':
+          return Array.isArray(geometry.coordinates) && 
+                 geometry.coordinates.length > 0 &&
+                 Array.isArray(geometry.coordinates[0]);
+                 
+        case 'MultiPolygon':
+          return Array.isArray(geometry.coordinates) &&
+                 geometry.coordinates.length > 0 &&
+                 Array.isArray(geometry.coordinates[0]) &&
+                 Array.isArray(geometry.coordinates[0][0]);
+                 
+        default:
+          return false;
       }
-      return false;
     } catch (error) {
       console.error('Geometry validation error:', error);
       return false;
