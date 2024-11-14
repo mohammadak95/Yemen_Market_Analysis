@@ -4,15 +4,12 @@
  * @property {MarketShock[]} marketShocks
  * @property {MarketCluster[]} marketClusters
  * @property {FlowAnalysis[]} flowAnalysis
- * @property {SpatialAutocorrelation} spatialAutocorrelation
- * @property {DataMetadata} metadata
- * @property {Geometry[]} geoData // New addition for geometry information
- */
-
-/**
- * @typedef {Object} Geometry
- * @property {string} type - Type of geometry, e.g., "Polygon" or "Point"
- * @property {Array} coordinates - Coordinates array
+ * @property {EnhancedSpatialAutocorrelation} spatialAutocorrelation
+ * @property {SeasonalAnalysis} seasonalAnalysis
+ * @property {ConflictAdjustedMetrics} conflictAdjustedMetrics
+ * @property {MarketIntegration} marketIntegration
+ * @property {EnhancedMetadata} metadata
+ * @property {Geometry[]} geoData
  */
 
 /**
@@ -20,8 +17,11 @@
  * @property {string} month
  * @property {number} avgUsdPrice
  * @property {number} volatility
+ * @property {number} garch_volatility
+ * @property {number} conflict_intensity
  * @property {number} sampleSize
- * @property {boolean} [significant] - Optional, indicates if the entry is statistically significant
+ * @property {number} price_stability
+ * @property {boolean} [significant]
  */
 
 /**
@@ -29,11 +29,12 @@
  * @property {string} region
  * @property {string} date
  * @property {number} magnitude
- * @property {'price_surge' | 'price_drop'} type
+ * @property {'price_surge' | 'price_drop'} shock_type
  * @property {'high' | 'medium' | 'low'} severity
- * @property {number} price_change
  * @property {number} previous_price
  * @property {number} current_price
+ * @property {number} conflict_intensity
+ * @property {number} threshold_used
  */
 
 /**
@@ -42,10 +43,28 @@
  * @property {string} main_market
  * @property {string[]} connected_markets
  * @property {number} market_count
- * @property {Object} metrics
- * @property {number} metrics.totalFlow
- * @property {number} metrics.avgFlow
- * @property {number} metrics.flowDensity
+ * @property {ClusterMetrics} metrics
+ * @property {ClusterEfficiency} efficiency
+ */
+
+/**
+ * @typedef {Object} ClusterMetrics
+ * @property {number} totalFlow
+ * @property {number} avgFlow
+ * @property {number} flowDensity
+ * @property {number} internal_connectivity
+ * @property {number} market_coverage
+ * @property {number} price_convergence
+ * @property {number} stability
+ */
+
+/**
+ * @typedef {Object} ClusterEfficiency
+ * @property {number} internal_connectivity
+ * @property {number} market_coverage
+ * @property {number} price_convergence
+ * @property {number} stability
+ * @property {number} efficiency_score
  */
 
 /**
@@ -56,24 +75,101 @@
  * @property {number} avg_flow
  * @property {number} flow_count
  * @property {number} avg_price_differential
- * @property {number} [flow_weight] - Optional, weight of the flow if applicable
+ * @property {number} [flow_weight]
+ * @property {[number, number]} source_coordinates
+ * @property {[number, number]} target_coordinates
  */
 
 /**
- * @typedef {Object} SpatialAutocorrelation
+ * @typedef {Object} EnhancedSpatialAutocorrelation
+ * @property {GlobalSpatialMetrics} global
+ * @property {Object.<string, LocalSpatialMetrics>} local
+ * @property {Object.<string, HotspotAnalysis>} hotspots
+ */
+
+/**
+ * @typedef {Object} GlobalSpatialMetrics
  * @property {number} moran_i
  * @property {number} p_value
+ * @property {number} z_score
  * @property {boolean} significance
  */
 
 /**
- * @typedef {Object} DataMetadata
+ * @typedef {Object} LocalSpatialMetrics
+ * @property {number} local_i
+ * @property {number} p_value
+ * @property {string} cluster_type
+ */
+
+/**
+ * @typedef {Object} HotspotAnalysis
+ * @property {number} gi_star
+ * @property {number} p_value
+ * @property {'hot_spot' | 'cold_spot' | 'not_significant'} intensity
+ */
+
+/**
+ * @typedef {Object} SeasonalAnalysis
+ * @property {number} seasonal_strength
+ * @property {number} trend_strength
+ * @property {number} peak_month
+ * @property {number} trough_month
+ * @property {number[]} seasonal_pattern
+ */
+
+/**
+ * @typedef {Object} ConflictAdjustedMetrics
+ * @property {number} avg_raw_price
+ * @property {number} avg_adjusted_price
+ * @property {number} avg_raw_volatility
+ * @property {number} avg_adjusted_volatility
+ * @property {number} raw_stability
+ * @property {number} adjusted_stability
+ * @property {number} high_conflict_periods
+ * @property {number} avg_conflict_intensity
+ * @property {number} max_conflict_intensity
+ */
+
+/**
+ * @typedef {Object} MarketIntegration
+ * @property {number[][]} price_correlation
+ * @property {number} flow_density
+ * @property {number[]} accessibility
+ * @property {number} integration_score
+ */
+
+/**
+ * @typedef {Object} EnhancedMetadata
  * @property {string} commodity
  * @property {string} data_source
  * @property {string} processed_date
  * @property {number} total_clusters
- * @property {string} [projection] - Optional, projection used for spatial data
- * @property {string[]} [uniqueMonths] - Optional, unique months available in the data
+ * @property {string} [projection]
+ * @property {string[]} [uniqueMonths]
+ * @property {AnalysisParameters} analysis_parameters
+ */
+
+/**
+ * @typedef {Object} AnalysisParameters
+ * @property {GarchParameters} garch_parameters
+ * @property {string} spatial_weights
+ * @property {number} significance_level
+ * @property {boolean} seasonal_adjustment
+ * @property {boolean} conflict_adjustment
+ */
+
+/**
+ * @typedef {Object} GarchParameters
+ * @property {number} p
+ * @property {number} q
+ */
+
+/**
+ * @typedef {Object} Geometry
+ * @property {string} type
+ * @property {Array} coordinates
+ * @property {Object} [properties]
  */
 
 /**
@@ -88,11 +184,58 @@
  * @property {number} integrationLevel
  * @property {number} stability
  * @property {number} observations
- * @property {number} [reliabilityScore] - Optional, additional metric if used
+ * @property {SpatialEfficiency} spatialEfficiency
+ * @property {number} [reliabilityScore]
  */
 
 /**
- * @typedef {Object} RegionMapping - Mapping of normalized region names
- * @property {string} originalName - The original name of the region
- * @property {string} normalizedName - The normalized name for matching
+ * @typedef {Object} SpatialEfficiency
+ * @property {number} moranI
+ * @property {number} pValue
+ * @property {boolean} significance
+ * @property {number} rSquared
+ * @property {number} spatialLag
+ */
+
+/**
+ * @typedef {Object} RegionMapping
+ * @property {string} originalName
+ * @property {string} normalizedName
+ * @property {string} [standardizedName]
+ * @property {[number, number]} [coordinates]
+ */
+
+/**
+ * @typedef {Object} ModelDiagnostics
+ * @property {VIFResults} vif
+ * @property {ResidualDiagnostics} residuals
+ * @property {HomoskedasticityTest} heteroskedasticity
+ */
+
+/**
+ * @typedef {Object} VIFResults
+ * @property {Object.<string, number>} vifFactors
+ * @property {boolean} hasHighMulticollinearity
+ * @property {number} meanVIF
+ */
+
+/**
+ * @typedef {Object} ResidualDiagnostics
+ * @property {number} skewness
+ * @property {number} kurtosis
+ * @property {boolean} isNormal
+ * @property {BasicStats} stats
+ */
+
+/**
+ * @typedef {Object} BasicStats
+ * @property {number} mean
+ * @property {number} std
+ */
+
+/**
+ * @typedef {Object} HomoskedasticityTest
+ * @property {boolean} isHomoskedastic
+ * @property {number} varianceRatio
+ * @property {'Homoskedastic' | 'Heteroskedastic'} interpretation
  */

@@ -67,8 +67,58 @@ class BackgroundMonitor {
   finish(name, data = {}) {
     console.log(`[BackgroundMonitor] Metric finalized: ${name}`, data);
   }
+
+  // **New Methods Added Below**
+
+  /**
+   * Monitors spatial processing metrics.
+   * @param {object} data - Spatial processing data.
+   * @param {number} processStartTime - Start time of the processing.
+   * @returns {object} - Processed spatial metrics.
+   */
+  monitorSpatialProcessing(data, processStartTime) {
+    const processingTime = performance.now() - processStartTime;
+
+    const spatialMetrics = {
+      processingTime,
+      dataSize: JSON.stringify(data).length,
+      timeSeriesCoverage: data.time_series_data.length,
+      spatialSignificance: data.spatial_autocorrelation.global.significance,
+      clusterCount: data.market_clusters.length,
+    };
+
+    // Optionally log or store the spatial metrics
+    this.logMetric('spatial-processing', spatialMetrics);
+
+    return spatialMetrics;
+  }
+
+  /**
+   * Starts monitoring a spatial metric.
+   * @param {string} name - Name of the spatial metric.
+   * @param {string} commodity - Commodity being monitored.
+   * @returns {object} - An object with a finish() method to log the metric.
+   */
+  startSpatialMetric(name, commodity) {
+    const startTime = performance.now();
+    console.log(`[BackgroundMonitor] Spatial Metric started: spatial-${name}`, { commodity });
+
+    return {
+      finish: (data) => {
+        const duration = performance.now() - startTime;
+        const metricData = {
+          duration,
+          commodity,
+          timestamp: new Date().toISOString(),
+          ...data,
+        };
+        this.logMetric(`spatial-${name}`, metricData);
+      },
+    };
+  }
 }
 
+// Export a singleton instance
 export const backgroundMonitor = new BackgroundMonitor();
 
 // Initialize the monitor in development

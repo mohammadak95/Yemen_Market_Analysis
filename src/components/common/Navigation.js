@@ -1,6 +1,6 @@
 // src/components/common/Navigation.js
 
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import {
@@ -18,7 +18,6 @@ import {
   MenuItem,
   Checkbox,
   ListItemText,
-  Typography,
   List,
   ListItemIcon,
   ListItem,
@@ -27,7 +26,12 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
-import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
+import { 
+  loadSpatialData, 
+  selectSpatialData, 
+  setSelectedCommodity, 
+  setSelectedDate 
+} from '../../slices/spatialSlice';
 
 // Utility function to capitalize words
 const capitalizeWords = (str) => {
@@ -71,7 +75,6 @@ NavigationItem.propTypes = {
  * - selectedCommodity: Currently selected commodity.
  * - onSelectCommodity: Function to handle commodity selection.
  */
-
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   const dispatch = useDispatch();
   const { uniqueMonths } = useSelector(selectSpatialData);
@@ -80,7 +83,7 @@ const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }
     (commodity) => {
       if (commodity) {
         const lowercaseCommodity = commodity.toLowerCase(); // Convert to lowercase
-        
+
         // Dispatch without selectedDate if uniqueMonths is empty
         const payload = {
           selectedCommodity: lowercaseCommodity,
@@ -89,7 +92,9 @@ const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }
           payload.selectedDate = uniqueMonths[0];
         }
 
-        dispatch(fetchSpatialData(payload));
+        dispatch(loadSpatialData(payload));
+        dispatch(setSelectedCommodity(lowercaseCommodity));
+        dispatch(setSelectedDate(null)); // Reset selectedDate to null when commodity changes
         onSelectCommodity(lowercaseCommodity); // Pass lowercase commodity to the callback
       }
     },
@@ -249,7 +254,7 @@ export const Sidebar = ({
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useDispatch();
-  const { geoData, flows, analysis, uniqueMonths } = useSelector(selectSpatialData);
+  const { uniqueMonths } = useSelector(selectSpatialData);
 
   const handleAnalysisChange = useCallback(
     (analysisType) => {
@@ -261,7 +266,7 @@ export const Sidebar = ({
       // If spatial analysis is selected, fetch data if we have a commodity
       if (analysisType === 'spatial' && selectedCommodity) {
         dispatch(
-          fetchSpatialData({
+          loadSpatialData({
             selectedCommodity,
             selectedDate: uniqueMonths[0],
           })
@@ -418,3 +423,34 @@ Sidebar.propTypes = {
   onOpenWelcomeModal: PropTypes.func.isRequired,
   handleDrawerToggle: PropTypes.func.isRequired,
 };
+
+/**
+ * Navigation Component
+ *
+ * The main navigation component that includes the Sidebar.
+ *
+ * Props:
+ * All props required by Sidebar.
+ */
+const Navigation = (props) => {
+  return <Sidebar {...props} />;
+};
+
+Navigation.propTypes = {
+  commodities: PropTypes.arrayOf(PropTypes.string).isRequired,
+  regimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedCommodity: PropTypes.string.isRequired,
+  setSelectedCommodity: PropTypes.func.isRequired,
+  selectedAnalysis: PropTypes.string.isRequired,
+  setSelectedAnalysis: PropTypes.func.isRequired,
+  sidebarOpen: PropTypes.bool.isRequired,
+  setSidebarOpen: PropTypes.func.isRequired,
+  onMethodologyClick: PropTypes.func.isRequired,
+  onTutorialsClick: PropTypes.func.isRequired,
+  selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setSelectedRegimes: PropTypes.func.isRequired,
+  onOpenWelcomeModal: PropTypes.func.isRequired,
+  handleDrawerToggle: PropTypes.func.isRequired,
+};
+
+export default Navigation;

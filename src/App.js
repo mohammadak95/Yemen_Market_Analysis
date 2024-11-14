@@ -1,13 +1,9 @@
+// src/App.js
+
 import React, { useState, useCallback, useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { ThemeProvider } from '@mui/material/styles';
-import {
-  CssBaseline,
-  Toolbar,
-  IconButton,
-  Box,
-  useMediaQuery,
-} from '@mui/material';
+import { CssBaseline, Toolbar, IconButton, Box, useMediaQuery } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
@@ -23,7 +19,7 @@ import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
 import { useWindowSize } from './hooks';
-import { useData } from './hooks'; // Restore original data hook
+import { useData } from './hooks'; // Ensure this hook is correctly implemented
 import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
@@ -55,7 +51,7 @@ const App = () => {
 
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
-  const { data, loading, error } = useData(); // Restored original data hook
+  const { data, loading, error } = useData(); // Ensure this hook provides necessary data
 
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
@@ -191,10 +187,7 @@ const App = () => {
             open={modalStates.tutorials}
             onClose={() => handleModalToggle('tutorials', false)}
           />
-          <WelcomeModal
-            open={modalStates.welcome}
-            onClose={handleWelcomeModalClose}
-          />
+          <WelcomeModal open={modalStates.welcome} onClose={handleWelcomeModalClose} />
         </Box>
       </EnhancedErrorBoundary>
     </ThemeProvider>

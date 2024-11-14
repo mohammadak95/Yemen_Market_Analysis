@@ -1,0 +1,65 @@
+2024-11-14 07:40:28,618 - INFO - Found 21 unique commodities.
+2024-11-14 07:40:28,618 - INFO - Processing commodity: beans (kidney red)
+2024-11-14 07:40:28,621 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,621 - ERROR - Error processing commodity 'beans (kidney red)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,621 - INFO - Processing commodity: beans (white)
+2024-11-14 07:40:28,623 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,623 - ERROR - Error processing commodity 'beans (white)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,623 - INFO - Processing commodity: eggs
+2024-11-14 07:40:28,626 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,626 - ERROR - Error processing commodity 'eggs': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,626 - INFO - Processing commodity: exchange rate (unofficial)
+2024-11-14 07:40:28,628 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,628 - ERROR - Error processing commodity 'exchange rate (unofficial)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,628 - INFO - Processing commodity: fuel (diesel)
+2024-11-14 07:40:28,631 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,631 - ERROR - Error processing commodity 'fuel (diesel)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,631 - INFO - Processing commodity: fuel (gas)
+2024-11-14 07:40:28,633 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,633 - ERROR - Error processing commodity 'fuel (gas)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,633 - INFO - Processing commodity: fuel (petrol-gasoline)
+2024-11-14 07:40:28,636 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,636 - ERROR - Error processing commodity 'fuel (petrol-gasoline)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,636 - INFO - Processing commodity: lentils
+2024-11-14 07:40:28,638 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,638 - ERROR - Error processing commodity 'lentils': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,638 - INFO - Processing commodity: milling cost (wheat)
+2024-11-14 07:40:28,640 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,641 - ERROR - Error processing commodity 'milling cost (wheat)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,641 - INFO - Processing commodity: oil (vegetable)
+2024-11-14 07:40:28,643 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,643 - ERROR - Error processing commodity 'oil (vegetable)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,643 - INFO - Processing commodity: onions
+2024-11-14 07:40:28,645 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,645 - ERROR - Error processing commodity 'onions': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,645 - INFO - Processing commodity: peas (yellow, split)
+2024-11-14 07:40:28,648 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,648 - ERROR - Error processing commodity 'peas (yellow, split)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,648 - INFO - Processing commodity: potatoes
+2024-11-14 07:40:28,650 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,650 - ERROR - Error processing commodity 'potatoes': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,650 - INFO - Processing commodity: rice (imported)
+2024-11-14 07:40:28,653 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,653 - ERROR - Error processing commodity 'rice (imported)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,653 - INFO - Processing commodity: salt
+2024-11-14 07:40:28,655 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,655 - ERROR - Error processing commodity 'salt': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,655 - INFO - Processing commodity: sugar
+2024-11-14 07:40:28,658 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,658 - ERROR - Error processing commodity 'sugar': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,658 - INFO - Processing commodity: tomatoes
+2024-11-14 07:40:28,660 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,660 - ERROR - Error processing commodity 'tomatoes': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,660 - INFO - Processing commodity: wage (non-qualified labour)
+2024-11-14 07:40:28,662 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,662 - ERROR - Error processing commodity 'wage (non-qualified labour)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,662 - INFO - Processing commodity: wage (qualified labour)
+2024-11-14 07:40:28,665 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,665 - ERROR - Error processing commodity 'wage (qualified labour)': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,665 - INFO - Processing commodity: wheat
+2024-11-14 07:40:28,667 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,667 - ERROR - Error processing commodity 'wheat': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,667 - INFO - Processing commodity: wheat flour
+2024-11-14 07:40:28,670 - ERROR - Error calculating enhanced spatial statistics: calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,670 - ERROR - Error processing commodity 'wheat flour': calculate_global_morans_i() missing 1 required positional argument: 'weights'
+2024-11-14 07:40:28,670 - INFO - All commodities have been processed and saved.

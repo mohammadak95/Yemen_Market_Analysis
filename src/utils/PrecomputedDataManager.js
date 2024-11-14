@@ -1,175 +1,159 @@
-import { dataLoadingMonitor } from './dataMonitoring';
-import { getDataPath } from './dataUtils';
-import { spatialDataMerger } from './spatialDataMerger';
-import { backgroundMonitor } from './backgroundMonitor';
+// src/utils/PrecomputedDataManager.js
 
-export class PrecomputedDataManager {
+import { spatialDataMerger } from './spatialDataMerger';
+import { getDataPath } from './dataUtils';
+import { backgroundMonitor } from './backgroundMonitor';
+import JSON5 from 'json5';
+
+class PrecomputedDataManager {
   constructor() {
     this.cache = new Map();
     this.pendingRequests = new Map();
     this._isInitialized = false;
     this.cacheTimeout = 30 * 60 * 1000; // 30 minutes
-    this._cacheInitialized = false;
   }
 
-  /**
-   * Initialize the PrecomputedDataManager
-   * @returns {Promise<void>}
-   */
   async initialize() {
     if (this._isInitialized) return;
-
-    try {
-      const metric = backgroundMonitor.startMetric('initialize-precomputed-manager');
-      
-      // Initialize background monitor
-      backgroundMonitor.init();
-
-      // Load initial geometries
-      await this.loadGeometries();
-
-      this._isInitialized = true;
-      this._cacheInitialized = true;
-      
-      metric.finish({ status: 'success' });
-      console.log('PrecomputedDataManager initialized');
-    } catch (error) {
-      console.error('Failed to initialize PrecomputedDataManager:', error);
-      this._cacheInitialized = false;
-      throw error;
-    }
-  }
-
-  /**
-   * Check if cache is initialized
-   */
-  isCacheInitialized() {
-    return this._cacheInitialized;
-  }
-
-  /**
-   * Check if manager is initialized
-   */
-  isInitialized() {
-    return this._isInitialized;
-  }
-
-  /**
-   * Process spatial data
-   */
-  async processSpatialData(selectedCommodity, selectedDate, options = {}) {
-    if (!this._isInitialized) {
-      await this.initialize();
-    }
-
-    const metric = backgroundMonitor.startMetric('process-spatial-data');
-    const sanitizedCommodity = this.sanitizeCommodityName(selectedCommodity);
-    const cacheKey = `spatial_${sanitizedCommodity}_${selectedDate}`;
-
-    try {
-      // Check cache
-      const cachedData = this.getCachedData(cacheKey);
-      if (cachedData) {
-        metric.finish({ status: 'success', source: 'cache' });
-        return cachedData;
-      }
-
-      // Check pending requests
-      if (this.pendingRequests.has(cacheKey)) {
-        return this.pendingRequests.get(cacheKey);
-      }
-
-      // Load and process data
-      const filePath = getDataPath(`preprocessed_by_commodity/preprocessed_yemen_market_data_${sanitizedCommodity}.json`);
-      const data = await this.loadDataWithRetry(filePath);
-
-      if (!this.validateDataStructure(data)) {
-        throw new Error('Invalid data structure');
-      }
-
-      const processedData = await spatialDataMerger.mergeData(data, selectedCommodity, selectedDate);
-      
-      // Cache the results
-      this.setCachedData(cacheKey, processedData);
-      
-      metric.finish({ status: 'success' });
-      return processedData;
-
-    } catch (error) {
-      metric.finish({ status: 'error', error: error.message });
-      throw error;
-    }
-  }
-
-  /**
-   * Load geometries data
-   */
-  async loadGeometries() {
-    return spatialDataMerger.loadGeometries();
-  }
-
-  /**
-   * Helper methods
-   */
-  sanitizeCommodityName(commodity) {
-    return commodity.toLowerCase()
-      .replace(/[(),\s]+/g, '_')
-      .replace(/_+$/, '');
-  }
-
-  validateDataStructure(data) {
-    return !!(data.time_series_data && 
-              data.market_clusters && 
-              data.market_shocks);
-  }
-
-  async loadDataWithRetry(filePath, retries = 3) {
-    let lastError;
-    for (let i = 0; i < retries; i++) {
-      try {
-        const response = await fetch(filePath);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return await response.json();
-      } catch (error) {
-        lastError = error;
-        if (i === retries - 1) break;
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
-      }
-    }
-    throw lastError;
+    this._isInitialized = true;
+    // Additional initialization logic if needed
   }
 
   getCachedData(key) {
     const cached = this.cache.get(key);
     if (!cached) return null;
-
     if (Date.now() - cached.timestamp > this.cacheTimeout) {
       this.cache.delete(key);
       return null;
     }
-
     return cached.data;
   }
 
   setCachedData(key, data) {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now()
-    });
+    this.cache.set(key, { data, timestamp: Date.now() });
   }
 
-  clearCache() {
-    this.cache.clear();
-    this.pendingRequests.clear();
-    this._cacheInitialized = false;
+  async processSpatialData(selectedCommodity, selectedDate) {
+    const cacheKey = `precomputed_${selectedCommodity?.toLowerCase()}_${selectedDate}`;
+    const metric = backgroundMonitor.startMetric('precomputed-process-spatial-data');
+
+    // Check cache
+    const cachedData = this.getCachedData(cacheKey);
+    if (cachedData) {
+      metric.finish({ status: 'success', source: 'cache' });
+      return cachedData;
+    }
+
+    // Check for pending request
+    if (this.pendingRequests.has(cacheKey)) {
+      return this.pendingRequests.get(cacheKey);
+    }
+
+    const pendingPromise = (async () => {
+      try {
+        const sanitizedCommodity = this.sanitizeCommodity(selectedCommodity);
+        const dataPath = getDataPath(`preprocessed_by_commodity/preprocessed_yemen_market_data_${sanitizedCommodity}.json`);
+
+        // Load data with retry
+        const rawData = await this.loadDataWithRetry(dataPath);
+
+        // Validate data structure
+        if (!this.validateDataStructure(rawData)) {
+          throw new Error('Invalid preprocessed data structure');
+        }
+
+        // Merge data
+        const processedData = await spatialDataMerger.mergeData(rawData, selectedCommodity, selectedDate);
+
+        // Validate processed data
+        if (!this.validateProcessedData(processedData)) {
+          throw new Error('Processed data failed validation');
+        }
+
+        // Cache the processed data
+        this.setCachedData(cacheKey, processedData);
+        metric.finish({ status: 'success', source: 'processed' });
+
+        return processedData;
+      } catch (error) {
+        metric.finish({ status: 'error', error: error.message });
+        throw error;
+      } finally {
+        this.pendingRequests.delete(cacheKey);
+      }
+    })();
+
+    this.pendingRequests.set(cacheKey, pendingPromise);
+    return pendingPromise;
+  }
+
+  sanitizeCommodity(commodity) {
+    return commodity
+      .toLowerCase()
+      .replace(/ /g, '_')
+      .replace(/\(/g, '')
+      .replace(/\)/g, '')
+      .replace(/\//g, '_')
+      .replace(/__+/g, '_')
+      .replace(/_+/g, '_')
+      .trim();
+  }
+
+  async loadDataWithRetry(url, retries = 3) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const text = await response.text();
+        const data = JSON5.parse(text); // Use JSON5 to parse JSON with NaN values
+
+        return data;
+      } catch (error) {
+        if (attempt === retries) {
+          console.error(`Failed to fetch ${url} after ${retries} attempts.`, error);
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+  }
+
+  validateDataStructure(data) {
+    if (
+      !data ||
+      typeof data !== 'object' ||
+      !Array.isArray(data.time_series_data) ||
+      !Array.isArray(data.market_shocks) ||
+      !Array.isArray(data.market_clusters) ||
+      !Array.isArray(data.flow_analysis) ||
+      !data.spatial_autocorrelation ||
+      !data.metadata
+    ) {
+      console.error('[PrecomputedDataManager] Invalid data structure:', data);
+      return false;
+    }
+    return true;
+  }
+
+  validateProcessedData(data) {
+    if (
+      !data ||
+      typeof data !== 'object' ||
+      !data.geoData ||
+      !Array.isArray(data.geoData.features)
+    ) {
+      console.error('[PrecomputedDataManager] Invalid processed data:', data);
+      return false;
+    }
+    return true;
   }
 
   destroy() {
-    this.clearCache();
+    this.cache.clear();
+    this.pendingRequests.clear();
     this._isInitialized = false;
-    this._cacheInitialized = false;
   }
 }
 
 export const precomputedDataManager = new PrecomputedDataManager();
-export { loadGeometries } from './spatialDataMerger';

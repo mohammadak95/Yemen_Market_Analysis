@@ -1,16 +1,15 @@
+// src/utils/spatialDataMerger.js
+
 import { getDataPath } from './dataUtils';
 import { backgroundMonitor } from './backgroundMonitor';
 import proj4 from 'proj4';
+import JSON5 from 'json5';
 
-// Projection setup
 const WGS84 = 'EPSG:4326';
 const UTM_ZONE_38N = 'EPSG:32638';
-const YEMEN_TM = 'EPSG:2098';
 
 proj4.defs(UTM_ZONE_38N, '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs');
-proj4.defs(YEMEN_TM, '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=krass +units=m +no_defs');
 
-// Comprehensive region mapping
 const REGION_MAPPINGS = {
   "sanaa": ["san'a'", "san_a__governorate", "sana'a", "sanʿaʾ", "amanat al asimah", "sana'a city", "amanat_al_asimah"],
   "lahj": ["lahij_governorate", "lahij", "lahj_governorate"],
@@ -42,61 +41,59 @@ const excludedRegions = [
   'other'
 ];
 
-export class SpatialDataMerger {
+class SpatialDataMerger {
   constructor() {
     this.cache = new Map();
     this.geometryCache = new Map();
     this.mappingCache = new Map();
   }
 
+  /**
+   * Normalizes region IDs using predefined mappings.
+   */
   normalizeRegionId(id) {
     if (!id) return null;
 
-    // Check cache first
-    const cacheKey = typeof id === 'string' ? id.toLowerCase() : id;
+    const cacheKey = id.toLowerCase();
     if (this.mappingCache.has(cacheKey)) {
       return this.mappingCache.get(cacheKey);
     }
 
-    const normalized = String(id)
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-      .replace(/['\u2018\u2019]/g, '') // Remove special quotes
-      .replace(/[^a-z0-9]/g, '_')      // Replace non-alphanumeric with underscore
-      .replace(/_+/g, '_')             // Collapse multiple underscores
-      .replace(/^_|_$/g, '')           // Remove leading/trailing underscores
-      .replace(/governorate$/, '')      // Remove trailing "governorate"
-      .trim();
+    const normalized = this.normalizeString(id);
 
-    // Find matching standard region
     let standardId = null;
     for (const [standard, variants] of Object.entries(REGION_MAPPINGS)) {
-      if (standard === normalized || variants.some(v => this.normalizeString(v) === normalized)) {
+      if (standard === normalized || variants.some((v) => this.normalizeString(v) === normalized)) {
         standardId = standard;
         break;
       }
     }
 
-    // Cache the result
     this.mappingCache.set(cacheKey, standardId || normalized);
     return standardId || normalized;
   }
 
+  /**
+   * Normalizes a string by removing diacritics and special characters.
+   */
   normalizeString(str) {
-    return String(str)
+    return str
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
+      .replace(/['\u2018\u2019]/g, '')
       .replace(/[^a-z0-9]/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '')
       .trim();
   }
 
+  /**
+   * Merges preprocessed data with spatial geometries.
+   */
   async mergeData(preprocessedData, selectedCommodity, selectedDate) {
     const metric = backgroundMonitor.startMetric('merge-spatial-data');
-    
+
     try {
       const geometries = await this.loadGeometries();
       const transformedData = this.transformPreprocessedData(preprocessedData, selectedDate);
@@ -110,6 +107,9 @@ export class SpatialDataMerger {
     }
   }
 
+  /**
+   * Loads geometries from GeoJSON files and merges them.
+   */
   async loadGeometries() {
     const cacheKey = 'geometries';
     if (this.cache.has(cacheKey)) {
@@ -117,14 +117,20 @@ export class SpatialDataMerger {
     }
 
     try {
-      const [boundaries, enhanced] = await Promise.all([
-        fetch(getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson')).then(res => res.json()),
-        fetch(getDataPath('enhanced_unified_data_with_residual.geojson')).then(res => res.json())
+      const [boundariesResponse, enhancedResponse] = await Promise.all([
+        fetch(getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson')),
+        fetch(getDataPath('enhanced_unified_data_with_residual.geojson')),
       ]);
+
+      const boundariesText = await boundariesResponse.text();
+      const boundaries = JSON5.parse(boundariesText);
+
+      const enhancedText = await enhancedResponse.text();
+      const enhanced = JSON5.parse(enhancedText);
 
       const mergedGeometries = this.mergeGeometryData(boundaries, enhanced);
       this.cache.set(cacheKey, mergedGeometries);
-      
+
       return mergedGeometries;
     } catch (error) {
       console.error('Error loading geometries:', error);
@@ -132,59 +138,51 @@ export class SpatialDataMerger {
     }
   }
 
+  /**
+   * Merges geometry data from multiple sources.
+   */
   mergeGeometryData(boundaries, enhanced) {
     const geometryMap = new Map();
-    const processedIds = new Set();
-    
-    // Process boundaries first
-    boundaries.features.forEach(feature => {
-      const id = this.normalizeRegionId(feature.properties.shapeName);
-      
-      if (!id || excludedRegions.includes(id)) return;
 
-      const transformedGeometry = this.transformGeometry(feature.geometry);
-      if (transformedGeometry) {
+    // Add base boundaries
+    boundaries.features.forEach(feature => {
+      const id = this.normalizeRegionId(
+        feature.properties.shapeName || 
+        feature.properties.region_id
+      );
+      if (id) {
+        const transformedGeometry = this.transformGeometry(feature.geometry);
         geometryMap.set(id, {
           geometry: transformedGeometry,
           properties: { ...feature.properties }
         });
-        processedIds.add(id);
       }
     });
 
-    // Merge enhanced data
+    // Enhance with additional data
     enhanced.features.forEach(feature => {
-      const id = this.normalizeRegionId(feature.properties.region_id || feature.properties.shapeName);
-
-      if (!id || excludedRegions.includes(id)) return;
-
-      if (geometryMap.has(id)) {
+      const id = this.normalizeRegionId(
+        feature.properties.region_id || 
+        feature.properties.shapeName
+      );
+      if (id && geometryMap.has(id)) {
         const existing = geometryMap.get(id);
         geometryMap.set(id, {
           geometry: existing.geometry,
           properties: {
             ...existing.properties,
-            ...feature.properties,
-            normalizedId: id
+            ...feature.properties
           }
         });
-      } else if (!processedIds.has(id)) {
-        const transformedGeometry = this.transformGeometry(feature.geometry);
-        if (transformedGeometry) {
-          geometryMap.set(id, {
-            geometry: transformedGeometry,
-            properties: {
-              ...feature.properties,
-              normalizedId: id
-            }
-          });
-        }
       }
     });
 
     return geometryMap;
   }
 
+  /**
+   * Transforms geometry coordinates to WGS84.
+   */
   transformGeometry(geometry) {
     if (!geometry || !geometry.type || !geometry.coordinates) return null;
 
@@ -195,35 +193,33 @@ export class SpatialDataMerger {
 
     try {
       let transformedGeometry;
-      
+
       switch (geometry.type) {
         case 'Point':
           transformedGeometry = {
             ...geometry,
-            coordinates: this.transformCoordinates(geometry.coordinates)
+            coordinates: this.transformCoordinates(geometry.coordinates),
           };
           break;
-          
+
         case 'Polygon':
           transformedGeometry = {
             ...geometry,
-            coordinates: geometry.coordinates.map(ring => 
-              ring.map(coord => this.transformCoordinates(coord))
-            )
+            coordinates: geometry.coordinates.map((ring) =>
+              ring.map((coord) => this.transformCoordinates(coord))
+            ),
           };
           break;
-          
+
         case 'MultiPolygon':
           transformedGeometry = {
             ...geometry,
-            coordinates: geometry.coordinates.map(polygon =>
-              polygon.map(ring =>
-                ring.map(coord => this.transformCoordinates(coord))
-              )
-            )
+            coordinates: geometry.coordinates.map((polygon) =>
+              polygon.map((ring) => ring.map((coord) => this.transformCoordinates(coord)))
+            ),
           };
           break;
-          
+
         default:
           return geometry;
       }
@@ -232,10 +228,13 @@ export class SpatialDataMerger {
       return transformedGeometry;
     } catch (error) {
       console.error('Geometry transformation error:', error);
-      return geometry;
+      throw error;
     }
   }
 
+  /**
+   * Transforms coordinates from source CRS to WGS84.
+   */
   transformCoordinates([x, y], sourceCRS = UTM_ZONE_38N) {
     try {
       if (this.coordinatesInWGS84([x, y])) {
@@ -244,35 +243,39 @@ export class SpatialDataMerger {
       return proj4(sourceCRS, WGS84, [x, y]);
     } catch (error) {
       console.error('Coordinate transformation error:', error);
-      return [x, y];
+      throw error;
     }
   }
 
+  /**
+   * Checks if coordinates are already in WGS84.
+   */
   coordinatesInWGS84(coords) {
     if (!Array.isArray(coords)) return false;
     const [lng, lat] = coords;
     return lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90;
   }
 
+  /**
+   * Transforms preprocessed data into required format.
+   */
   transformPreprocessedData(data, targetDate) {
     const timeSeriesData = data.time_series_data || [];
-    const timeSeriesForDate = timeSeriesData.find(d => d.month === targetDate) || null;
 
-    const features = this.createFeaturesFromClusters(data.market_clusters, timeSeriesForDate);
-
-    const filteredFeatures = features.filter(feature => {
-      const regionId = this.normalizeRegionId(feature.properties.id);
-      return !excludedRegions.includes(regionId);
-    });
+    // Create features from market clusters
+    const features = this.createFeaturesFromClusters(
+      data.market_clusters,
+      targetDate
+    );
 
     return {
       geoData: {
         type: 'FeatureCollection',
-        features: filteredFeatures
+        features
       },
       marketClusters: data.market_clusters || [],
       detectedShocks: this.filterShocksByDate(data.market_shocks, targetDate),
-      timeSeriesData,
+      timeSeriesData: timeSeriesData,
       flowMaps: this.transformFlowData(data.flow_analysis),
       analysisResults: {
         spatialAutocorrelation: data.spatial_autocorrelation || {},
@@ -281,14 +284,15 @@ export class SpatialDataMerger {
     };
   }
 
-  createFeaturesFromClusters(clusters, timeSeriesData) {
-    if (!clusters) return [];
-
+  /**
+   * Creates GeoJSON features from market clusters.
+   */
+  createFeaturesFromClusters(clusters = [], selectedDate) {
     return clusters.reduce((acc, cluster) => {
       const mainMarketId = this.normalizeRegionId(cluster.main_market);
-      
-      if (excludedRegions.includes(mainMarketId)) return acc;
+      if (!mainMarketId) return acc;
 
+      // Main Market Feature
       acc.push({
         type: 'Feature',
         properties: {
@@ -297,16 +301,16 @@ export class SpatialDataMerger {
           isMainMarket: true,
           clusterSize: cluster.market_count,
           marketRole: 'hub',
-          priceData: timeSeriesData,
+          priceData: this.getPriceDataForCluster(cluster, selectedDate),
           cluster_id: cluster.cluster_id
         },
-        geometry: null
+        geometry: null // Geometry will be merged later
       });
 
+      // Peripheral Markets Features
       cluster.connected_markets.forEach(market => {
         const marketId = this.normalizeRegionId(market);
-        
-        if (!excludedRegions.includes(marketId)) {
+        if (marketId) {
           acc.push({
             type: 'Feature',
             properties: {
@@ -315,10 +319,10 @@ export class SpatialDataMerger {
               isMainMarket: false,
               clusterSize: cluster.market_count,
               marketRole: 'peripheral',
-              priceData: timeSeriesData,
+              priceData: this.getPriceDataForCluster(cluster, selectedDate),
               cluster_id: cluster.cluster_id
             },
-            geometry: null
+            geometry: null // Geometry will be merged later
           });
         }
       });
@@ -327,13 +331,26 @@ export class SpatialDataMerger {
     }, []);
   }
 
+  /**
+   * Retrieves price data for a given cluster and date.
+   */
+  getPriceDataForCluster(cluster, selectedDate) {
+    if (!cluster.priceData) return null;
+
+    // Assuming priceData is an object with dates as keys
+    return cluster.priceData[selectedDate] || null;
+  }
+
+  /**
+   * Filters shocks based on the selected date.
+   */
   filterShocksByDate(shocks = [], targetDate) {
     if (!targetDate || !shocks) return [];
-    
+
     return shocks
       .filter(shock => {
         const regionId = this.normalizeRegionId(shock.region);
-        return shock.date.startsWith(targetDate) && !excludedRegions.includes(regionId);
+        return shock.date.startsWith(targetDate) && regionId;
       })
       .map(shock => ({
         ...shock,
@@ -341,6 +358,9 @@ export class SpatialDataMerger {
       }));
   }
 
+  /**
+   * Transforms flow analysis data.
+   */
   transformFlowData(flows = []) {
     if (!flows) return [];
 
@@ -348,25 +368,28 @@ export class SpatialDataMerger {
       .filter(flow => {
         const sourceId = this.normalizeRegionId(flow.source);
         const targetId = this.normalizeRegionId(flow.target);
-        return !excludedRegions.includes(sourceId) && !excludedRegions.includes(targetId);
+        return sourceId && targetId;
       })
       .map(flow => ({
         source: this.normalizeRegionId(flow.source),
         target: this.normalizeRegionId(flow.target),
-        flow_weight: flow.total_flow,
-        avg_flow: flow.avg_flow,
-        flow_count: flow.flow_count,
-        price_differential: flow.avg_price_differential,
+        flow_weight: typeof flow.total_flow === 'number' && !isNaN(flow.total_flow) ? flow.total_flow : 0,
+        avg_flow: typeof flow.avg_flow === 'number' && !isNaN(flow.avg_flow) ? flow.avg_flow : 0,
+        flow_count: typeof flow.flow_count === 'number' && !isNaN(flow.flow_count) ? flow.flow_count : 0,
+        price_differential: typeof flow.avg_price_differential === 'number' && !isNaN(flow.avg_price_differential) ? flow.avg_price_differential : 0,
         original_source: flow.source,
         original_target: flow.target
       }));
   }
 
+  /**
+   * Merges geometries into features.
+   */
   async mergeGeometries(transformedData, geometryMap, selectedDate) {
     const features = transformedData.geoData.features.map(feature => {
       const id = this.normalizeRegionId(feature.properties.id);
       const geometryData = geometryMap.get(id);
-      
+
       if (geometryData) {
         const properties = {
           ...feature.properties,
@@ -386,7 +409,6 @@ export class SpatialDataMerger {
       return feature;
     });
 
-    // Filter out features without geometry
     const validFeatures = features.filter(feature => feature.geometry !== null);
 
     return {
@@ -403,40 +425,6 @@ export class SpatialDataMerger {
       }
     };
   }
-
-  validateGeometry(geometry) {
-    if (!geometry || !geometry.type || !geometry.coordinates) {
-      return false;
-    }
-
-    try {
-      switch (geometry.type) {
-        case 'Point':
-          return Array.isArray(geometry.coordinates) &&
-                 geometry.coordinates.length === 2 &&
-                 !isNaN(geometry.coordinates[0]) &&
-                 !isNaN(geometry.coordinates[1]);
-                 
-        case 'Polygon':
-          return Array.isArray(geometry.coordinates) && 
-                 geometry.coordinates.length > 0 &&
-                 Array.isArray(geometry.coordinates[0]);
-                 
-        case 'MultiPolygon':
-          return Array.isArray(geometry.coordinates) &&
-                 geometry.coordinates.length > 0 &&
-                 Array.isArray(geometry.coordinates[0]) &&
-                 Array.isArray(geometry.coordinates[0][0]);
-                 
-        default:
-          return false;
-      }
-    } catch (error) {
-      console.error('Geometry validation error:', error);
-      return false;
-    }
-  }
 }
 
 export const spatialDataMerger = new SpatialDataMerger();
-export const loadGeometries = spatialDataMerger.loadGeometries.bind(spatialDataMerger);

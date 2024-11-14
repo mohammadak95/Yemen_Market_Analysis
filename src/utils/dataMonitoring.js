@@ -15,68 +15,98 @@ export class DataLoadingMonitor {
   }
 
   startRequest(id, type) {
+    if (typeof id !== 'string') {
+      throw new Error('Request ID must be a string');
+    }
+
     const request = {
       id,
       type,
       startTime: performance.now(),
       status: 'pending',
+      events: [],
     };
+    
     this.requests.set(id, request);
+    this.logEvent(id, 'started', { type });
 
-    console.group(`Data Request Started: ${id}`);
-    console.log('Type:', type);
-    console.log('Start Time:', new Date().toISOString());
-    console.groupEnd();
-
-    return request;
+    return id;
   }
 
   completeRequest(id, data) {
     const request = this.requests.get(id);
+    if (!request) {
+      console.warn(`No active request found for ID: ${id}`);
+      return;
+    }
+
+    const endTime = performance.now();
+    const duration = endTime - request.startTime;
+
+    request.status = 'completed';
+    request.endTime = endTime;
+    request.duration = duration;
+
+    this.performance.loadTimes.push({
+      type: request.type,
+      duration,
+      timestamp: new Date().toISOString(),
+      dataSize: this.getDataSize(data)
+    });
+
+    this.logEvent(id, 'completed', {
+      duration,
+      dataSize: this.getDataSize(data)
+    });
+
+    backgroundMonitor.logMetric('data-load-complete', {
+      requestId: id,
+      type: request.type,
+      duration,
+      dataSize: this.getDataSize(data),
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  logEvent(id, eventType, details = {}) {
+    const request = this.requests.get(id);
     if (request) {
-      const endTime = performance.now();
-      const duration = endTime - request.startTime;
-
-      request.status = 'completed';
-      request.endTime = endTime;
-      request.duration = duration;
-
-      this.performance.loadTimes.push({
-        type: request.type,
-        duration,
+      const event = {
+        type: eventType,
         timestamp: new Date().toISOString(),
-      });
-
-      console.group(`Data Request Completed: ${id}`);
-      console.log('Duration:', `${duration.toFixed(2)}ms`);
-      console.log('Data Size:', this.getDataSize(data));
+        ...details
+      };
+      request.events.push(event);
+      
+      console.group(`Data Request Event: ${id}`);
+      console.log('Type:', eventType);
+      console.log('Details:', details);
+      console.log('Timestamp:', event.timestamp);
       console.groupEnd();
-
-      backgroundMonitor.logMetric('data-load-complete', {
-        requestId: id,
-        type: request.type,
-        duration,
-        timestamp: new Date().toISOString(),
-      });
     }
   }
 
   logError(id, error) {
-    this.errors.set(id, {
-      error,
-      timestamp: new Date().toISOString(),
-    });
+    const errorDetails = {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    };
+
+    this.errors.set(id, errorDetails);
+    this.logEvent(id, 'error', errorDetails);
 
     console.error(`Data Request Error: ${id}`, error);
+    
     backgroundMonitor.logError('data-load-error', {
       requestId: id,
-      error: error.message,
-      stack: error.stack,
+      ...errorDetails
     });
   }
 
   getDataSize(data) {
     try {
+      if (!data) return '0 KB';
       const jsonData = JSON.stringify(data);
       const size = new Blob([jsonData]).size;
       return `${(size / 1024).toFixed(2)} KB`;
@@ -86,6 +116,17 @@ export class DataLoadingMonitor {
     }
   }
 
+  getRequestDetails(id) {
+    const request = this.requests.get(id);
+    if (!request) return null;
+
+    return {
+      ...request,
+      error: this.errors.get(id),
+      duration: request.endTime ? request.endTime - request.startTime : null
+    };
+  }
+
   getPerformanceStats() {
     return {
       averageLoadTime: this.calculateAverage(this.performance.loadTimes),
@@ -93,8 +134,22 @@ export class DataLoadingMonitor {
       averageNetworkTime: this.calculateAverage(this.performance.networkTimes),
       totalRequests: this.requests.size,
       totalErrors: this.errors.size,
-      errorRate: this.errors.size / this.requests.size,
+      errorRate: this.calculateErrorRate(),
+      requestsByType: this.groupRequestsByType()
     };
+  }
+
+  calculateErrorRate() {
+    const total = this.requests.size;
+    return total ? (this.errors.size / total) : 0;
+  }
+
+  groupRequestsByType() {
+    const groups = {};
+    this.requests.forEach(request => {
+      groups[request.type] = (groups[request.type] || 0) + 1;
+    });
+    return groups;
   }
 
   calculateAverage(times) {

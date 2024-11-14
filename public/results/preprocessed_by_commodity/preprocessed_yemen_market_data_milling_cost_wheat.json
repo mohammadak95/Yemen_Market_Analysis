@@ -2,285 +2,426 @@
   "time_series_data": [
     {
       "month": "2020-07",
-      "avgUsdPrice": 4.646073749999999,
-      "volatility": 44.94665799120559,
-      "sampleSize": 20
+      "avgUsdPrice": 7.108345,
+      "volatility": 47.62258049735889,
+      "garch_volatility": NaN,
+      "conflict_intensity": 5.953551667127013,
+      "sampleSize": 20,
+      "price_stability": 0.5839513975183974
     },
     {
       "month": "2020-08",
-      "avgUsdPrice": 5.318596666666667,
-      "volatility": 28.031705566907945,
-      "sampleSize": 20
+      "avgUsdPrice": 2.1838024999999996,
+      "volatility": 29.546534303558786,
+      "garch_volatility": 101.61992708606256,
+      "conflict_intensity": 5.40398347519436,
+      "sampleSize": 20,
+      "price_stability": 0.7019059482231318
     },
     {
       "month": "2020-09",
-      "avgUsdPrice": 5.259791666666666,
-      "volatility": 29.8505519948998,
-      "sampleSize": 20
+      "avgUsdPrice": 6.6636425,
+      "volatility": 31.504356064788283,
+      "garch_volatility": 103.4785944505766,
+      "conflict_intensity": 5.540279691213236,
+      "sampleSize": 20,
+      "price_stability": 0.6910770336723101
     },
     {
       "month": "2020-10",
-      "avgUsdPrice": 5.187655833333333,
-      "volatility": 29.720239891372145,
-      "sampleSize": 20
+      "avgUsdPrice": 6.9319299999999995,
+      "volatility": 31.40818779777059,
+      "garch_volatility": 102.84908346824795,
+      "conflict_intensity": 5.679455860948354,
+      "sampleSize": 20,
+      "price_stability": 0.6907520137731317
     },
     {
       "month": "2020-11",
-      "avgUsdPrice": 5.226718333333333,
-      "volatility": 28.621941217245777,
-      "sampleSize": 20
+      "avgUsdPrice": 1.9673949999999998,
+      "volatility": 30.26325742464018,
+      "garch_volatility": 97.60732352927648,
+      "conflict_intensity": 5.734468514684297,
+      "sampleSize": 20,
+      "price_stability": 0.6962440005457067
     },
     {
       "month": "2020-12",
-      "avgUsdPrice": 5.236153333333333,
-      "volatility": 29.33475770890524,
-      "sampleSize": 20
+      "avgUsdPrice": 6.78083,
+      "volatility": 30.848502733936286,
+      "garch_volatility": 104.26727760588047,
+      "conflict_intensity": 5.160243831062954,
+      "sampleSize": 20,
+      "price_stability": 0.6966245575166573
     },
     {
       "month": "2021-01",
-      "avgUsdPrice": 6.977688333333333,
-      "volatility": 28.130022427949854,
-      "sampleSize": 20
+      "avgUsdPrice": 6.960235,
+      "volatility": 29.588888321510638,
+      "garch_volatility": 104.02122835092894,
+      "conflict_intensity": 5.186152614337273,
+      "sampleSize": 20,
+      "price_stability": 0.702982433855653
     },
     {
       "month": "2021-02",
-      "avgUsdPrice": 7.259425,
-      "volatility": 26.722645607360292,
-      "sampleSize": 20
+      "avgUsdPrice": 7.192,
+      "volatility": 28.116321995155907,
+      "garch_volatility": 97.60364974501408,
+      "conflict_intensity": 5.215338362350444,
+      "sampleSize": 20,
+      "price_stability": 0.6731724630986544
     },
     {
       "month": "2021-03",
-      "avgUsdPrice": 7.515385833333333,
-      "volatility": 26.914829963314762,
-      "sampleSize": 20
+      "avgUsdPrice": 7.626040000000001,
+      "volatility": 28.51325127169053,
+      "garch_volatility": 97.60528298782218,
+      "conflict_intensity": 5.938812582336359,
+      "sampleSize": 20,
+      "price_stability": 0.704079484427547
     },
     {
       "month": "2021-04",
-      "avgUsdPrice": 5.820239166666667,
-      "volatility": 24.839463444857607,
-      "sampleSize": 20
+      "avgUsdPrice": 7.728117499999999,
+      "volatility": 26.170142501297864,
+      "garch_volatility": 97.61527929991327,
+      "conflict_intensity": 5.357116748492977,
+      "sampleSize": 20,
+      "price_stability": 0.7581167095716603
     },
     {
       "month": "2021-05",
-      "avgUsdPrice": 5.860579999999999,
-      "volatility": 25.788240680691636,
-      "sampleSize": 20
+      "avgUsdPrice": 2.10656,
+      "volatility": 27.089601937587314,
+      "garch_volatility": 97.60158029623291,
+      "conflict_intensity": 5.04633593663503,
+      "sampleSize": 20,
+      "price_stability": 0.7171257056466905
     },
     {
       "month": "2021-06",
-      "avgUsdPrice": 5.9083225,
-      "volatility": 24.094391551651746,
-      "sampleSize": 20
+      "avgUsdPrice": 7.747062499999998,
+      "volatility": 25.14854785768171,
+      "garch_volatility": 104.6865174185513,
+      "conflict_intensity": 4.375110713089166,
+      "sampleSize": 20,
+      "price_stability": 0.7705818779659267
     },
     {
       "month": "2021-07",
-      "avgUsdPrice": 5.883814999999999,
-      "volatility": 21.667653483267436,
-      "sampleSize": 20
+      "avgUsdPrice": 7.871345000000001,
+      "volatility": 22.609890187142614,
+      "garch_volatility": 104.68916854299519,
+      "conflict_intensity": 4.3485867290743165,
+      "sampleSize": 20,
+      "price_stability": 0.7861696230056768
     },
     {
       "month": "2021-08",
-      "avgUsdPrice": 6.115079166666668,
-      "volatility": 21.282480119927655,
-      "sampleSize": 20
+      "avgUsdPrice": 2.0330375,
+      "volatility": 22.31044320256696,
+      "garch_volatility": 97.60188723023666,
+      "conflict_intensity": 4.830090651308925,
+      "sampleSize": 20,
+      "price_stability": 0.7454614532276638
     },
     {
       "month": "2021-09",
-      "avgUsdPrice": 6.511588333333335,
-      "volatility": 17.853052953466346,
-      "sampleSize": 20
+      "avgUsdPrice": 8.440855,
+      "volatility": 18.743704464317144,
+      "garch_volatility": 105.26383469931861,
+      "conflict_intensity": 4.988791066560239,
+      "sampleSize": 20,
+      "price_stability": 0.8061836885206057
     },
     {
       "month": "2021-10",
-      "avgUsdPrice": 8.975875833333335,
-      "volatility": 19.832674300593368,
-      "sampleSize": 20
+      "avgUsdPrice": 9.060872500000004,
+      "volatility": 20.734791599553144,
+      "garch_volatility": 106.01706262951977,
+      "conflict_intensity": 4.548641727720941,
+      "sampleSize": 20,
+      "price_stability": 0.7965386638442603
     },
     {
       "month": "2021-11",
-      "avgUsdPrice": 9.272228333333333,
-      "volatility": 25.441174549925538,
-      "sampleSize": 20
+      "avgUsdPrice": 9.425899999999999,
+      "volatility": 26.69546716905961,
+      "garch_volatility": 97.62206115160376,
+      "conflict_intensity": 4.93016789249513,
+      "sampleSize": 20,
+      "price_stability": 0.7578837845596472
     },
     {
       "month": "2021-12",
-      "avgUsdPrice": 7.037241885964911,
-      "volatility": 26.706878792227272,
-      "sampleSize": 20
+      "avgUsdPrice": 9.329912499999999,
+      "volatility": 27.965217949696378,
+      "garch_volatility": 97.60733145136102,
+      "conflict_intensity": 4.711666860282193,
+      "sampleSize": 20,
+      "price_stability": 0.7520375692938558
     },
     {
       "month": "2022-01",
-      "avgUsdPrice": 7.631407719298245,
-      "volatility": 17.652968133958602,
-      "sampleSize": 19
+      "avgUsdPrice": 2.355913157894737,
+      "volatility": 18.62681218331267,
+      "garch_volatility": 97.6014920356547,
+      "conflict_intensity": 5.516602318454917,
+      "sampleSize": 19,
+      "price_stability": 0.7608017774386899
     },
     {
       "month": "2022-02",
-      "avgUsdPrice": 8.749236885964912,
-      "volatility": 47.88313931295973,
-      "sampleSize": 20
+      "avgUsdPrice": 11.208397499999998,
+      "volatility": 50.23436905658287,
+      "garch_volatility": 105.51194028827705,
+      "conflict_intensity": 4.910350025832114,
+      "sampleSize": 20,
+      "price_stability": 0.5787048163458297
     },
     {
       "month": "2022-03",
-      "avgUsdPrice": 12.113932499999999,
-      "volatility": 41.920956964474925,
-      "sampleSize": 20
+      "avgUsdPrice": 12.6834,
+      "volatility": 44.08455435638992,
+      "garch_volatility": 107.62643978791033,
+      "conflict_intensity": 5.161135500195032,
+      "sampleSize": 20,
+      "price_stability": 0.6348387384209042
     },
     {
       "month": "2022-04",
-      "avgUsdPrice": 9.410335000000002,
-      "volatility": 42.19849777306054,
-      "sampleSize": 20
+      "avgUsdPrice": 12.45,
+      "volatility": 44.02195338128788,
+      "garch_volatility": 97.66605636536332,
+      "conflict_intensity": 4.321138676627093,
+      "sampleSize": 20,
+      "price_stability": 0.639211522489264
     },
     {
       "month": "2022-05",
-      "avgUsdPrice": 9.226629166666667,
-      "volatility": 43.088104573185596,
-      "sampleSize": 20
+      "avgUsdPrice": 3.0976049999999997,
+      "volatility": 44.94058470449666,
+      "garch_volatility": 97.60261368347423,
+      "conflict_intensity": 4.299284337663556,
+      "sampleSize": 20,
+      "price_stability": 0.635382515901025
     },
     {
       "month": "2022-06",
-      "avgUsdPrice": 9.300376666666667,
-      "volatility": 50.46703005600849,
-      "sampleSize": 20
+      "avgUsdPrice": 12.1322825,
+      "volatility": 52.907900796671704,
+      "garch_volatility": 105.67625906352956,
+      "conflict_intensity": 4.836565056343375,
+      "sampleSize": 20,
+      "price_stability": 0.6008310469265071
     },
     {
       "month": "2022-07",
-      "avgUsdPrice": 12.316606666666665,
-      "volatility": 54.23583452723282,
-      "sampleSize": 20
+      "avgUsdPrice": 12.6712425,
+      "volatility": 56.69930359629001,
+      "garch_volatility": 105.36601383391961,
+      "conflict_intensity": 4.542142829608779,
+      "sampleSize": 20,
+      "price_stability": 0.5879630021767722
     },
     {
       "month": "2022-08",
-      "avgUsdPrice": 12.433845833333331,
-      "volatility": 49.57426824687328,
-      "sampleSize": 20
+      "avgUsdPrice": 12.146294999999999,
+      "volatility": 51.60476804744357,
+      "garch_volatility": 97.60872229703914,
+      "conflict_intensity": 4.09587447757911,
+      "sampleSize": 20,
+      "price_stability": 0.6091216110509329
     },
     {
       "month": "2022-09",
-      "avgUsdPrice": 9.029939166666667,
-      "volatility": 50.95071493945159,
-      "sampleSize": 20
+      "avgUsdPrice": 12.483999999999998,
+      "volatility": 53.2778214329395,
+      "garch_volatility": 97.60911015374532,
+      "conflict_intensity": 4.567367692982072,
+      "sampleSize": 20,
+      "price_stability": 0.6006000086056723
     },
     {
       "month": "2022-10",
-      "avgUsdPrice": 8.574959166666666,
-      "volatility": 46.49368924119736,
-      "sampleSize": 20
+      "avgUsdPrice": 2.4595225000000003,
+      "volatility": 48.41717375590537,
+      "garch_volatility": 97.60394152852254,
+      "conflict_intensity": 4.137087303890774,
+      "sampleSize": 20,
+      "price_stability": 0.6216634145335789
     },
     {
       "month": "2022-11",
-      "avgUsdPrice": 7.8857075,
-      "volatility": 47.82873199934006,
-      "sampleSize": 20
+      "avgUsdPrice": 10.781355000000001,
+      "volatility": 49.923287274279765,
+      "garch_volatility": 108.4618956707754,
+      "conflict_intensity": 4.379282467635993,
+      "sampleSize": 20,
+      "price_stability": 0.6144927337680968
     },
     {
       "month": "2022-12",
-      "avgUsdPrice": 7.798208333333335,
-      "volatility": 47.89420447482187,
-      "sampleSize": 20
+      "avgUsdPrice": 10.416245,
+      "volatility": 49.993917555641204,
+      "garch_volatility": 106.64400857957529,
+      "conflict_intensity": 4.3840650530549405,
+      "sampleSize": 20,
+      "price_stability": 0.6465157663647537
     },
     {
       "month": "2023-01",
-      "avgUsdPrice": 7.680712727272727,
-      "volatility": 53.53153956977853,
-      "sampleSize": 20
+      "avgUsdPrice": 2.197025,
+      "volatility": 56.062485359206825,
+      "garch_volatility": 97.60641788001334,
+      "conflict_intensity": 4.727952548663754,
+      "sampleSize": 20,
+      "price_stability": 0.6205373027477267
     },
     {
       "month": "2023-02",
-      "avgUsdPrice": 7.7088537878787875,
-      "volatility": 52.416949292526525,
-      "sampleSize": 22
+      "avgUsdPrice": 10.428868181818181,
+      "volatility": 54.84229241186788,
+      "garch_volatility": 107.61079611459277,
+      "conflict_intensity": 4.627020748205104,
+      "sampleSize": 22,
+      "price_stability": 0.568852144155689
     },
     {
       "month": "2023-03",
-      "avgUsdPrice": 7.710188636363636,
-      "volatility": 51.11328552901456,
-      "sampleSize": 22
+      "avgUsdPrice": 10.500668181818183,
+      "volatility": 53.47363306511286,
+      "garch_volatility": 107.59872091805734,
+      "conflict_intensity": 4.617874808220727,
+      "sampleSize": 22,
+      "price_stability": 0.6311961576235161
     },
     {
       "month": "2023-04",
-      "avgUsdPrice": 7.729141666666667,
-      "volatility": 58.33749179369988,
-      "sampleSize": 22
+      "avgUsdPrice": 2.201029545454545,
+      "volatility": 60.564116830868244,
+      "garch_volatility": 97.60107878597205,
+      "conflict_intensity": 3.8167994007051576,
+      "sampleSize": 22,
+      "price_stability": 0.6074568916666513
     },
     {
       "month": "2023-05",
-      "avgUsdPrice": 7.423750757575758,
-      "volatility": 55.38754415100797,
-      "sampleSize": 22
+      "avgUsdPrice": 10.485727272727273,
+      "volatility": 58.06631270193316,
+      "garch_volatility": 107.68754404296747,
+      "conflict_intensity": 4.83640968738714,
+      "sampleSize": 22,
+      "price_stability": 0.6124274042205818
     },
     {
       "month": "2023-06",
-      "avgUsdPrice": 7.257563636363636,
-      "volatility": 34.842277922757184,
-      "sampleSize": 22
+      "avgUsdPrice": 9.584495454545454,
+      "volatility": 36.35659551558267,
+      "garch_volatility": 107.64306433230107,
+      "conflict_intensity": 4.346207203164547,
+      "sampleSize": 22,
+      "price_stability": 0.6771310491844075
     },
     {
       "month": "2023-07",
-      "avgUsdPrice": 7.017158333333332,
-      "volatility": 34.261227234031935,
-      "sampleSize": 22
+      "avgUsdPrice": 1.702468181818182,
+      "volatility": 35.75737770202346,
+      "garch_volatility": 97.63683115321646,
+      "conflict_intensity": 4.366891056679332,
+      "sampleSize": 22,
+      "price_stability": 0.7122913361772103
     },
     {
       "month": "2023-08",
-      "avgUsdPrice": 7.096223484848482,
-      "volatility": 38.37877525193456,
-      "sampleSize": 22
+      "avgUsdPrice": 9.76451136363636,
+      "volatility": 40.14344742853776,
+      "garch_volatility": 109.81029472924473,
+      "conflict_intensity": 4.5980419255672995,
+      "sampleSize": 22,
+      "price_stability": 0.6894262353510675
     },
     {
       "month": "2023-09",
-      "avgUsdPrice": 7.095640151515148,
-      "volatility": 38.84507625068607,
-      "sampleSize": 22
+      "avgUsdPrice": 9.821690909090906,
+      "volatility": 40.35233636922211,
+      "garch_volatility": 110.02998370196129,
+      "conflict_intensity": 3.880183189264342,
+      "sampleSize": 22,
+      "price_stability": 0.6608137407967762
     },
     {
       "month": "2023-10",
-      "avgUsdPrice": 7.191068939393937,
-      "volatility": 40.279757702295235,
-      "sampleSize": 22
+      "avgUsdPrice": 1.700718181818182,
+      "volatility": 42.12049600110496,
+      "garch_volatility": 97.6010321948312,
+      "conflict_intensity": 4.5698842391617385,
+      "sampleSize": 22,
+      "price_stability": 0.6493622794785043
     },
     {
       "month": "2023-11",
-      "avgUsdPrice": 7.167866666666666,
-      "volatility": 41.440482924929206,
-      "sampleSize": 22
+      "avgUsdPrice": 10.050797727272725,
+      "volatility": 43.161490133807575,
+      "garch_volatility": 110.15201597487965,
+      "conflict_intensity": 4.15296127701029,
+      "sampleSize": 22,
+      "price_stability": 0.6468470218192858
     },
     {
       "month": "2023-12",
-      "avgUsdPrice": 9.950562272727272,
-      "volatility": 43.99571190940442,
-      "sampleSize": 22
+      "avgUsdPrice": 9.752084090909092,
+      "volatility": 45.74629415431886,
+      "garch_volatility": 110.43477972619309,
+      "conflict_intensity": 3.9789837894184292,
+      "sampleSize": 22,
+      "price_stability": 0.6668324697821116
     },
     {
       "month": "2024-01",
-      "avgUsdPrice": 9.971632196969695,
-      "volatility": 45.67536195470579,
-      "sampleSize": 20
+      "avgUsdPrice": 10.048804999999998,
+      "volatility": 47.953143638917425,
+      "garch_volatility": 97.60517692035504,
+      "conflict_intensity": 4.986893560844475,
+      "sampleSize": 20,
+      "price_stability": 0.6522249552995623
     },
     {
       "month": "2024-02",
-      "avgUsdPrice": 10.075681666666666,
-      "volatility": 46.31731874220716,
-      "sampleSize": 20
+      "avgUsdPrice": 10.1140075,
+      "volatility": 48.404706825861496,
+      "garch_volatility": 97.60455200905379,
+      "conflict_intensity": 4.506711831210085,
+      "sampleSize": 20,
+      "price_stability": 0.6526451481593725
     },
     {
       "month": "2024-03",
-      "avgUsdPrice": 10.140240833333332,
-      "volatility": 46.343901873302144,
-      "sampleSize": 20
+      "avgUsdPrice": 10.0642325,
+      "volatility": 48.53041671322013,
+      "garch_volatility": 97.6010597788145,
+      "conflict_intensity": 4.718020605808321,
+      "sampleSize": 20,
+      "price_stability": 0.6510826769992948
     },
     {
       "month": "2024-04",
-      "avgUsdPrice": 10.2564075,
-      "volatility": 47.2424821590856,
-      "sampleSize": 20
+      "avgUsdPrice": 10.2424825,
+      "volatility": 49.40915820344794,
+      "garch_volatility": 97.6010925499012,
+      "conflict_intensity": 4.586287479701463,
+      "sampleSize": 20,
+      "price_stability": 0.6480039667981856
     },
     {
       "month": "2024-05",
-      "avgUsdPrice": 10.352495,
-      "volatility": 47.755287525432344,
-      "sampleSize": 20
+      "avgUsdPrice": 10.4625075,
+      "volatility": 50.22094660606848,
+      "garch_volatility": 97.60210990430548,
+      "conflict_intensity": 5.163112208931904,
+      "sampleSize": 20,
+      "price_stability": 0.6418510591354933
     }
   ],
   "market_shocks": [
@@ -4869,14 +5010,219 @@
     }
   ],
   "spatial_autocorrelation": {
-    "moran_i": 0.8093950088858346,
-    "p_value": 0.1906049911141654,
-    "significance": "False"
+    "global": {
+      "moran_i": 0.10799168628174471,
+      "p_value": NaN,
+      "z_score": NaN,
+      "significance": "False"
+    },
+    "local": {
+      "abyan": {
+        "local_i": 0.896579432161213,
+        "p_value": 0.0,
+        "cluster_type": "high-high"
+      },
+      "aden": {
+        "local_i": 0.9959989877236217,
+        "p_value": 0.0,
+        "cluster_type": "high-high"
+      },
+      "al bayda": {
+        "local_i": 0.009555415312988367,
+        "p_value": 0.8857075866992428,
+        "cluster_type": "not_significant"
+      },
+      "al dhale'e": {
+        "local_i": 0.5639866738078014,
+        "p_value": 0.0,
+        "cluster_type": "high-high"
+      },
+      "al hudaydah": {
+        "local_i": 0.10197862315615461,
+        "p_value": 0.13402263686453542,
+        "cluster_type": "not_significant"
+      },
+      "al jawf": {
+        "local_i": -0.11374680386574867,
+        "p_value": 0.04837363220110724,
+        "cluster_type": "high-low"
+      },
+      "al mahwit": {
+        "local_i": 0.10473898705509345,
+        "p_value": 0.15745930480555126,
+        "cluster_type": "not_significant"
+      },
+      "amanat al asimah": {
+        "local_i": 0.01246100536415979,
+        "p_value": 0.8390789137804686,
+        "cluster_type": "not_significant"
+      },
+      "amran": {
+        "local_i": 0.08086225830516337,
+        "p_value": 0.184393432362699,
+        "cluster_type": "not_significant"
+      },
+      "dhamar": {
+        "local_i": 0.039449550139883056,
+        "p_value": 0.49544589630887215,
+        "cluster_type": "not_significant"
+      },
+      "hadramaut": {
+        "local_i": 0.005389006103020313,
+        "p_value": 0.9430572132940469,
+        "cluster_type": "not_significant"
+      },
+      "hajjah": {
+        "local_i": 0.047808591688069425,
+        "p_value": 0.48198614722036215,
+        "cluster_type": "not_significant"
+      },
+      "ibb": {
+        "local_i": 0.004957793031717031,
+        "p_value": 0.9426249896296501,
+        "cluster_type": "not_significant"
+      },
+      "lahj": {
+        "local_i": 2.2194436968709477,
+        "p_value": 0.0,
+        "cluster_type": "high-high"
+      },
+      "marib": {
+        "local_i": -0.04903983875654441,
+        "p_value": 0.40065526173040467,
+        "cluster_type": "not_significant"
+      },
+      "raymah": {
+        "local_i": -0.006296955869845653,
+        "p_value": 0.92378206739159,
+        "cluster_type": "not_significant"
+      },
+      "sana'a": {
+        "local_i": 0.11699960871974041,
+        "p_value": 0.10690915664101541,
+        "cluster_type": "not_significant"
+      },
+      "shabwah": {
+        "local_i": 0.09484268763812796,
+        "p_value": 0.15381364787885854,
+        "cluster_type": "not_significant"
+      },
+      "taizz": {
+        "local_i": 0.024363342881513705,
+        "p_value": 0.7304818236866275,
+        "cluster_type": "not_significant"
+      }
+    },
+    "hotspots": {
+      "abyan": {
+        "gi_star": 9.17345658332218,
+        "p_value": 0.0,
+        "intensity": "hot_spot"
+      },
+      "aden": {
+        "gi_star": 6.8254311381902975,
+        "p_value": 8.766098957835311e-12,
+        "intensity": "hot_spot"
+      },
+      "al bayda": {
+        "gi_star": 8.477673284664808,
+        "p_value": 0.0,
+        "intensity": "hot_spot"
+      },
+      "al dhale'e": {
+        "gi_star": 6.211782585739717,
+        "p_value": 5.238687261766017e-10,
+        "intensity": "hot_spot"
+      },
+      "al hudaydah": {
+        "gi_star": -4.594430992671478,
+        "p_value": 4.339316933332782e-06,
+        "intensity": "cold_spot"
+      },
+      "al jawf": {
+        "gi_star": -5.822764343211094,
+        "p_value": 5.788214574309336e-09,
+        "intensity": "cold_spot"
+      },
+      "al mahwit": {
+        "gi_star": -4.239528162516902,
+        "p_value": 2.239900928824312e-05,
+        "intensity": "cold_spot"
+      },
+      "amanat al asimah": {
+        "gi_star": -6.109842863901391,
+        "p_value": 9.97292914917125e-10,
+        "intensity": "cold_spot"
+      },
+      "amran": {
+        "gi_star": -4.224736185952435,
+        "p_value": 2.3922084768202012e-05,
+        "intensity": "cold_spot"
+      },
+      "dhamar": {
+        "gi_star": -2.216925434518797,
+        "p_value": 0.026628187370851153,
+        "intensity": "cold_spot"
+      },
+      "hadramaut": {
+        "gi_star": 0.1180946451234946,
+        "p_value": 0.9059926663351034,
+        "intensity": "not_significant"
+      },
+      "hajjah": {
+        "gi_star": -5.850837114118164,
+        "p_value": 4.891050453537105e-09,
+        "intensity": "cold_spot"
+      },
+      "ibb": {
+        "gi_star": 4.200603667076689,
+        "p_value": 2.66204241956558e-05,
+        "intensity": "hot_spot"
+      },
+      "lahj": {
+        "gi_star": 12.882878231848611,
+        "p_value": 0.0,
+        "intensity": "hot_spot"
+      },
+      "marib": {
+        "gi_star": -4.707063093322098,
+        "p_value": 2.5131114422816125e-06,
+        "intensity": "cold_spot"
+      },
+      "raymah": {
+        "gi_star": -5.660271777776112,
+        "p_value": 1.5113345464001782e-08,
+        "intensity": "cold_spot"
+      },
+      "sana'a": {
+        "gi_star": -4.859201772503812,
+        "p_value": 1.1785997129365455e-06,
+        "intensity": "cold_spot"
+      },
+      "shabwah": {
+        "gi_star": 2.0412441945197095,
+        "p_value": 0.041226560905323284,
+        "intensity": "hot_spot"
+      },
+      "taizz": {
+        "gi_star": 0.1641499096620366,
+        "p_value": 0.8696131324132772,
+        "intensity": "not_significant"
+      }
+    }
   },
   "metadata": {
     "commodity": "Milling Cost (Wheat)",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-11T21:40:48.505141",
-    "total_clusters": 2
+    "processed_date": "2024-11-14T07:18:47.263120",
+    "total_clusters": 2,
+    "analysis_parameters": {
+      "garch_parameters": {
+        "p": 1,
+        "q": 1
+      },
+      "spatial_weights": "distance_connectivity_hybrid",
+      "significance_level": 0.05
+    }
   }
 }

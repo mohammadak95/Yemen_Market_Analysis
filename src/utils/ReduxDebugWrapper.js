@@ -3,8 +3,7 @@
 import React, { useEffect } from 'react';
 import { useStore } from 'react-redux';
 import PropTypes from 'prop-types';
-
-
+import { backgroundMonitor } from './backgroundMonitor'; // Ensure correct import
 
 const ReduxDebugWrapper = ({ children }) => {
   const store = useStore();
@@ -18,14 +17,23 @@ const ReduxDebugWrapper = ({ children }) => {
     console.log('Initial State:', store.getState());
     console.groupEnd();
 
+    let prevUpdate = null;
+
     const unsubscribe = store.subscribe(() => {
       const state = store.getState();
-      const lastAction = state.lastAction;
-      if (lastAction) {
-        console.group('Redux State Update');
-        console.log('Action:', lastAction);
-        console.log('New State:', state);
+      if (state.spatial.status.lastUpdated !== prevUpdate) {
+        prevUpdate = state.spatial.status.lastUpdated;
+        console.group('Spatial State Update');
+        console.log('New Spatial State:', state.spatial);
+        console.log('Cache Stats:', state.spatial.status.cacheStats);
+        console.log('Transformed Data:', state.spatial.data.transformed);
         console.groupEnd();
+
+        // Optionally, you can add more detailed monitoring here
+        backgroundMonitor.logMetric('redux-spatial-update', {
+          timestamp: new Date().toISOString(),
+          spatialState: state.spatial,
+        });
       }
     });
 

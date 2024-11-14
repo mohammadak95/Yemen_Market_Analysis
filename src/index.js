@@ -1,4 +1,4 @@
-//src/index.js
+// src/index.js
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -9,56 +9,96 @@ import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 import { setupReduxDebugger } from './utils/debugUtils';
 import { backgroundMonitor } from './utils/backgroundMonitor';
 import { precomputedDataManager } from './utils/PrecomputedDataManager';
-import { fetchSpatialData } from './slices/spatialSlice';
+import { spatialDataManager } from './utils/SpatialDataManager'; // Ensure correct casing
 import './utils/leafletSetup';
 import 'leaflet/dist/leaflet.css';
 import './styles/leaflet-overrides.css';
+import { loadSpatialData } from './slices/spatialSlice';
 
-// Initialize necessary services
-setupReduxDebugger(store);
-precomputedDataManager.initialize();
 
-const root = createRoot(document.getElementById('root'));
+// Initialize services
+const initializeServices = async () => {
+  try {
+    // Initialize precomputed data manager
+    await precomputedDataManager.initialize();
 
-/**
- * Component to handle initial data loading
- */
+    // Initialize spatial data manager
+    await spatialDataManager.initialize();
+
+    // Setup Redux debugger
+    setupReduxDebugger(store);
+
+    return true;
+  } catch (error) {
+    console.error('Service initialization failed:', error);
+    return false;
+  }
+};
+
+// Enhanced DataLoader component
 const DataLoader = React.memo(({ selectedCommodity }) => {
   const [hasLoaded, setHasLoaded] = React.useState(false);
+  const [loadError, setLoadError] = React.useState(null);
 
   React.useEffect(() => {
     if (selectedCommodity && !hasLoaded) {
       const metric = backgroundMonitor.startMetric('initial-data-load');
 
-      store.dispatch(fetchSpatialData({ selectedCommodity }))
+      store
+        .dispatch(loadSpatialData({ selectedCommodity }))
+        .unwrap()
         .then(() => {
           setHasLoaded(true);
-          metric.finish({ 
+          metric.finish({
             status: 'success',
             commodity: selectedCommodity,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Error loading initial data:', error);
-          metric.finish({ 
-            status: 'error', 
+          setLoadError(error.message);
+          metric.finish({
+            status: 'error',
             error: error.message,
-            commodity: selectedCommodity
+            commodity: selectedCommodity,
           });
         });
     }
   }, [selectedCommodity, hasLoaded]);
 
+  if (loadError) {
+    return (
+      <div className="initial-load-error">
+        <h3>Failed to load initial data</h3>
+        <p>{loadError}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
   return null;
 });
 
-/**
- * App wrapper with providers and initial setup
- */
+// Enhanced AppWithProviders
 const AppWithProviders = React.memo(() => {
-  // Initial commodity selection - could be moved to configuration
+  const [isInitialized, setIsInitialized] = React.useState(false);
   const selectedCommodity = React.useMemo(() => 'beans (kidney red)', []);
+
+  React.useEffect(() => {
+    initializeServices().then((success) => {
+      setIsInitialized(success);
+
+      backgroundMonitor.logMetric('services-initialization', {
+        success,
+        timestamp: Date.now(),
+      });
+    });
+  }, []);
+
+  if (!isInitialized) {
+    return <div className="initialization-loading">Initializing services...</div>;
+  }
 
   return (
     <Provider store={store}>
@@ -70,57 +110,8 @@ const AppWithProviders = React.memo(() => {
   );
 });
 
-// Development monitoring setup
-if (process.env.NODE_ENV === 'development') {
-  const startTime = performance.now();
-  
-  // Initial metrics
-  backgroundMonitor.logMetric('app-init', {
-    timestamp: Date.now(),
-    environment: process.env.NODE_ENV,
-    config: {
-      precomputedData: true,
-      reduxDebugger: true,
-      environment: process.env.NODE_ENV
-    }
-  });
-
-  // Load time monitoring
-  window.addEventListener('load', () => {
-    const loadTime = performance.now() - startTime;
-    
-    console.debug(`[App] Initial load completed in ${loadTime.toFixed(2)}ms`);
-    
-    backgroundMonitor.logMetric('app-load-complete', {
-      duration: loadTime,
-      timestamp: Date.now(),
-      metrics: {
-        loadTime,
-        cacheInitialized: precomputedDataManager.isCacheInitialized(),
-        reduxStoreSize: JSON.stringify(store.getState()).length
-      }
-    });
-  });
-
-  // Additional debug information
-  console.debug(`
-    🚀 Yemen Market Analysis Dashboard
-    ================================
-    Environment: ${process.env.NODE_ENV}
-    Version: ${process.env.REACT_APP_VERSION || '1.0.0'}
-    Redux Debugger: Enabled
-    Precomputed Data: Enabled
-    
-    Debug tools available:
-    - Redux DevTools
-    - Background Monitor
-    - Performance Metrics
-  `);
-}
-
 // Render application
-root.render(
-  <React.StrictMode>
-    <AppWithProviders />
-  </React.StrictMode>
-);
+const rootElement = document.getElementById('root');
+const root = createRoot(rootElement);
+
+root.render(<AppWithProviders />);
