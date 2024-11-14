@@ -29,34 +29,21 @@ const initialState = {
 // Async thunk to load precomputed data using precomputedDataManager
 export const loadSpatialData = createAsyncThunk(
   'spatial/loadSpatialData',
-  async ({ selectedCommodity, selectedDate }, { rejectWithValue, getState }) => {
+  async ({ selectedCommodity, selectedDate }, { rejectWithValue }) => {
     try {
-      // Use provided parameters or fallback to state values
-      const state = getState();
-      const commodity = selectedCommodity || state.spatial.ui.selectedCommodity;
-      let date = selectedDate || state.spatial.ui.selectedDate;
+      const data = await precomputedDataManager.processSpatialData(
+        selectedCommodity, 
+        selectedDate
+      );
 
-      // Ensure that commodity is provided
-      if (!commodity) {
-        throw new Error('Commodity must be selected to load spatial data.');
-      }
+      // If no date provided, use the latest available
+      const effectiveDate = selectedDate || data.availableMonths[data.availableMonths.length - 1];
 
-      // Process data using precomputedDataManager
-      const data = await precomputedDataManager.processSpatialData(commodity, date);
-
-      // If date is not provided, determine the latest date from the processed data
-      if (!date && data.timeSeriesData && data.timeSeriesData.length > 0) {
-        const availableDates = data.timeSeriesData
-          .map((entry) => entry.month)
-          .filter((month) => !!month)
-          .sort();
-        date = availableDates[availableDates.length - 1]; // Pick the latest date
-      }
-
-      // Update the selectedDate in the UI state
-      return { data, selectedDate: date };
+      return {
+        data,
+        selectedDate: effectiveDate
+      };
     } catch (error) {
-      console.error('Error in loadSpatialData:', error);
       return rejectWithValue(error.message);
     }
   }

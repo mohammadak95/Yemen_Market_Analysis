@@ -10,149 +10,135 @@ class PrecomputedDataManager {
     this.cache = new Map();
     this.pendingRequests = new Map();
     this._isInitialized = false;
-    this.cacheTimeout = 30 * 60 * 1000; // 30 minutes
+    this.cacheTimeout = 30 * 60 * 1000;
+    this.rawData = null; // Add this line
   }
 
   async initialize() {
     if (this._isInitialized) return;
-    this._isInitialized = true;
-    // Additional initialization logic if needed
-  }
-
-  getCachedData(key) {
-    const cached = this.cache.get(key);
-    if (!cached) return null;
-    if (Date.now() - cached.timestamp > this.cacheTimeout) {
-      this.cache.delete(key);
-      return null;
+    
+    try {
+      // Load the base GeoJSON data
+      const response = await fetch('/results/unified_data.geojson');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      const text = await response.text();
+      this.rawData = JSON.parse(text);
+      this._isInitialized = true;
+      
+      console.log('PrecomputedDataManager initialized with features:', this.rawData.features.length);
+    } catch (error) {
+      console.error('Failed to initialize PrecomputedDataManager:', error);
+      throw error;
     }
-    return cached.data;
-  }
-
-  setCachedData(key, data) {
-    this.cache.set(key, { data, timestamp: Date.now() });
   }
 
   async processSpatialData(selectedCommodity, selectedDate) {
-    const cacheKey = `precomputed_${selectedCommodity?.toLowerCase()}_${selectedDate}`;
-    const metric = backgroundMonitor.startMetric('precomputed-process-spatial-data');
-
-    // Check cache
-    const cachedData = this.getCachedData(cacheKey);
-    if (cachedData) {
-      metric.finish({ status: 'success', source: 'cache' });
-      return cachedData;
+    if (!this._isInitialized || !this.rawData) {
+      await this.initialize();
     }
 
-    // Check for pending request
-    if (this.pendingRequests.has(cacheKey)) {
-      return this.pendingRequests.get(cacheKey);
+    const metric = backgroundMonitor.startMetric('precomputed-process-spatial-data', {
+      commodity: selectedCommodity,
+      date: selectedDate,
+    });
+
+    try {
+      // Filter features by commodity
+      const relevantFeatures = this.rawData.features.filter(
+        feature => feature.properties.commodity === selectedCommodity
+      );
+
+      // Get unique months
+      const availableMonths = [...new Set(
+        relevantFeatures.map(f => f.properties.date)
+      )].sort();
+
+      // Create time series data
+      const timeSeriesData = this.processTimeSeries(relevantFeatures);
+
+      // Create processed data structure
+      const processedData = {
+        timeSeriesData,
+        geoData: {
+          type: 'FeatureCollection',
+          features: selectedDate ? 
+            relevantFeatures.filter(f => f.properties.date === selectedDate) :
+            relevantFeatures
+        },
+        marketClusters: this.createMarketClustersFromFeatures(relevantFeatures),
+        availableMonths,
+        metadata: {
+          commodity: selectedCommodity,
+          dateRange: {
+            min: availableMonths[0],
+            max: availableMonths[availableMonths.length - 1]
+          }
+        }
+      };
+
+      metric.finish({ status: 'success', source: 'processed' });
+      return processedData;
+
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      throw error;
     }
+  }
 
-    const pendingPromise = (async () => {
-      try {
-        const sanitizedCommodity = this.sanitizeCommodity(selectedCommodity);
-        const dataPath = getDataPath(`preprocessed_by_commodity/preprocessed_yemen_market_data_${sanitizedCommodity}.json`);
-
-        // Load data with retry
-        const rawData = await this.loadDataWithRetry(dataPath);
-
-        // Validate data structure
-        if (!this.validateDataStructure(rawData)) {
-          throw new Error('Invalid preprocessed data structure');
-        }
-
-        // Merge data
-        const processedData = await spatialDataMerger.mergeData(rawData, selectedCommodity, selectedDate);
-
-        // Validate processed data
-        if (!this.validateProcessedData(processedData)) {
-          throw new Error('Processed data failed validation');
-        }
-
-        // Cache the processed data
-        this.setCachedData(cacheKey, processedData);
-        metric.finish({ status: 'success', source: 'processed' });
-
-        return processedData;
-      } catch (error) {
-        metric.finish({ status: 'error', error: error.message });
-        throw error;
-      } finally {
-        this.pendingRequests.delete(cacheKey);
+  processTimeSeries(features) {
+    const timeSeriesMap = new Map();
+    
+    features.forEach(feature => {
+      const { date, price, usdprice, conflict_intensity } = feature.properties;
+      if (!date) return;
+      
+      if (!timeSeriesMap.has(date)) {
+        timeSeriesMap.set(date, {
+          month: date,
+          avgUsdPrice: usdprice || 0,
+          price: price || 0,
+          volatility: 0,
+          conflict_intensity: conflict_intensity || 0,
+          sampleSize: 1
+        });
+      } else {
+        const existing = timeSeriesMap.get(date);
+        existing.avgUsdPrice += (usdprice || 0);
+        existing.price += (price || 0);
+        existing.conflict_intensity += (conflict_intensity || 0);
+        existing.sampleSize++;
       }
-    })();
+    });
 
-    this.pendingRequests.set(cacheKey, pendingPromise);
-    return pendingPromise;
+    return Array.from(timeSeriesMap.values())
+      .map(entry => ({
+        ...entry,
+        avgUsdPrice: entry.avgUsdPrice / entry.sampleSize,
+        price: entry.price / entry.sampleSize,
+        conflict_intensity: entry.conflict_intensity / entry.sampleSize
+      }))
+      .sort((a, b) => new Date(a.month) - new Date(b.month));
   }
 
-  sanitizeCommodity(commodity) {
-    return commodity
-      .toLowerCase()
-      .replace(/ /g, '_')
-      .replace(/\(/g, '')
-      .replace(/\)/g, '')
-      .replace(/\//g, '_')
-      .replace(/__+/g, '_')
-      .replace(/_+/g, '_')
-      .trim();
-  }
-
-  async loadDataWithRetry(url, retries = 3) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const text = await response.text();
-        const data = JSON5.parse(text); // Use JSON5 to parse JSON with NaN values
-
-        return data;
-      } catch (error) {
-        if (attempt === retries) {
-          console.error(`Failed to fetch ${url} after ${retries} attempts.`, error);
-          throw error;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+  createMarketClustersFromFeatures(features) {
+    // Group features by region to identify clusters
+    const regionGroups = new Map();
+    features.forEach(feature => {
+      const { admin1, date } = feature.properties;
+      if (!regionGroups.has(admin1)) {
+        regionGroups.set(admin1, new Set());
       }
-    }
-  }
+      regionGroups.get(admin1).add(date);
+    });
 
-  validateDataStructure(data) {
-    if (
-      !data ||
-      typeof data !== 'object' ||
-      !Array.isArray(data.time_series_data) ||
-      !Array.isArray(data.market_shocks) ||
-      !Array.isArray(data.market_clusters) ||
-      !Array.isArray(data.flow_analysis) ||
-      !data.spatial_autocorrelation ||
-      !data.metadata
-    ) {
-      console.error('[PrecomputedDataManager] Invalid data structure:', data);
-      return false;
-    }
-    return true;
-  }
-
-  validateProcessedData(data) {
-    if (
-      !data ||
-      typeof data !== 'object' ||
-      !data.geoData ||
-      !Array.isArray(data.geoData.features)
-    ) {
-      console.error('[PrecomputedDataManager] Invalid processed data:', data);
-      return false;
-    }
-    return true;
-  }
-
-  destroy() {
-    this.cache.clear();
-    this.pendingRequests.clear();
-    this._isInitialized = false;
+    // Create cluster objects
+    return Array.from(regionGroups.entries()).map(([region, dates]) => ({
+      cluster_id: region,
+      main_market: region,
+      market_count: dates.size,
+      connected_markets: []
+    }));
   }
 }
 

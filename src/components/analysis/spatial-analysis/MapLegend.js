@@ -47,10 +47,15 @@ const MapLegend = ({
       const range = computedDomain[1] - computedDomain[0];
       const stepSize = range / (steps - 1);
 
-      return Array.from({ length: steps }, (_, i) => ({
-        value: computedDomain[0] + stepSize * i,
-        color: colorScale((computedDomain[0] + stepSize * i - computedDomain[0]) / range),
-      }));
+      return Array.from({ length: steps }, (_, i) => {
+        const value = computedDomain[0] + stepSize * i;
+        const normalizedValue = range === 0 ? 0 : (value - computedDomain[0]) / range;
+        const color = colorScale ? colorScale(normalizedValue) : '#cccccc';
+        return {
+          value,
+          color,
+        };
+      });
     }
   }, [colorScale, steps, mode, categories, domain, statistics]);
 

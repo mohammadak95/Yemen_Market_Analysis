@@ -3,7 +3,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import store from './store';
+import { store } from './store';
 import App from './App';
 import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 import { setupReduxDebugger } from './utils/debugUtils';
@@ -21,11 +21,11 @@ const initializeServices = async () => {
   try {
     // Initialize precomputed data manager
     await precomputedDataManager.initialize();
-
-    // Initialize spatial data manager
+    
+    // Initialize spatial data manager with store reference
     await spatialDataManager.initialize();
-
-    // Setup Redux debugger
+    
+    // Setup Redux debugger with store reference
     setupReduxDebugger(store);
 
     return true;
@@ -44,10 +44,12 @@ const DataLoader = React.memo(({ selectedCommodity }) => {
     if (selectedCommodity && !hasLoaded) {
       const metric = backgroundMonitor.startMetric('initial-data-load');
 
-      store
-        .dispatch(loadSpatialData({ selectedCommodity }))
-        .unwrap()
-        .then(() => {
+      precomputedDataManager.processSpatialData(selectedCommodity)
+        .then(data => {
+          store.dispatch(loadSpatialData({
+            selectedCommodity,
+            data
+          }));
           setHasLoaded(true);
           metric.finish({
             status: 'success',

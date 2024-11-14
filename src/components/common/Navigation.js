@@ -77,28 +77,30 @@ NavigationItem.propTypes = {
  */
 const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
   const dispatch = useDispatch();
-  const { uniqueMonths } = useSelector(selectSpatialData);
+  // Get spatial state to check loading
+  const spatialState = useSelector(state => state.spatial);
 
   const handleCommoditySelect = useCallback(
-    (commodity) => {
-      if (commodity) {
-        const lowercaseCommodity = commodity.toLowerCase(); // Convert to lowercase
+    async (commodity) => {
+      if (commodity && !spatialState.status.loading) {
+        // Update local state
+        onSelectCommodity(commodity);
+        
+        try {
+          // Load data first
+          await dispatch(loadSpatialData({
+            selectedCommodity: commodity,
+            selectedDate: null // Let processor determine initial date
+          })).unwrap();
 
-        // Dispatch without selectedDate if uniqueMonths is empty
-        const payload = {
-          selectedCommodity: lowercaseCommodity,
-        };
-        if (uniqueMonths?.length) {
-          payload.selectedDate = uniqueMonths[0];
+          // Then update selected commodity in Redux
+          dispatch(setSelectedCommodity(commodity));
+        } catch (error) {
+          console.error('Error selecting commodity:', error);
         }
-
-        dispatch(loadSpatialData(payload));
-        dispatch(setSelectedCommodity(lowercaseCommodity));
-        dispatch(setSelectedDate(null)); // Reset selectedDate to null when commodity changes
-        onSelectCommodity(lowercaseCommodity); // Pass lowercase commodity to the callback
       }
     },
-    [dispatch, uniqueMonths, onSelectCommodity]
+    [dispatch, onSelectCommodity, spatialState.status.loading]
   );
 
   return (
@@ -108,10 +110,11 @@ const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }
         labelId="commodity-select-label"
         id="commodity-select"
         name="commodity"
-        value={selectedCommodity}
+        value={selectedCommodity || ''}
         onChange={(e) => handleCommoditySelect(e.target.value)}
         label="Select Commodity"
         aria-label="Select commodity"
+        disabled={spatialState.status.loading}
       >
         <MenuItem value="">
           <em>Select a commodity</em>
@@ -262,18 +265,19 @@ export const Sidebar = ({
       if (!isSmUp) {
         setSidebarOpen(false);
       }
-
+  
       // If spatial analysis is selected, fetch data if we have a commodity
       if (analysisType === 'spatial' && selectedCommodity) {
         dispatch(
           loadSpatialData({
             selectedCommodity,
-            selectedDate: uniqueMonths[0],
+            // Remove dependency on uniqueMonths
+            selectedDate: null // Let processor determine initial date
           })
         );
       }
     },
-    [setSelectedAnalysis, isSmUp, setSidebarOpen, dispatch, selectedCommodity, uniqueMonths]
+    [setSelectedAnalysis, isSmUp, setSidebarOpen, dispatch, selectedCommodity]
   );
 
   const handleRegimesSelect = useCallback(
@@ -283,6 +287,11 @@ export const Sidebar = ({
     [setSelectedRegimes]
   );
 
+  const handleCommodityChange = useCallback((commodity) => {
+    // This will be passed to CommoditySelector as onSelectCommodity
+    setSelectedCommodity(commodity); // Update App-level state
+  }, [setSelectedCommodity]);
+
   const sidebarContent = useMemo(
     () => (
       <Box sx={{ p: 2 }}>
@@ -290,7 +299,7 @@ export const Sidebar = ({
           <CommoditySelector
             commodities={commodities}
             selectedCommodity={selectedCommodity}
-            onSelectCommodity={setSelectedCommodity} // Ensure this receives the lowercase value
+            onSelectCommodity={handleCommodityChange}
           />
 
           <RegimeSelector

@@ -1,7 +1,7 @@
 // src/components/analysis/spatial-analysis/SpatialAnalysis.js
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { useDispatch, shallowEqual } from 'react-redux';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import useSpatialData from '../../../hooks/useSpatialData';
 import {
   setSelectedCommodity,
@@ -40,13 +40,10 @@ import DynamicInterpretation from './DynamicInterpretation';
 import TimeSeriesChart from './TimeSeriesChart';
 import ShocksPanel from './ShocksPanel';
 import ClustersPanel from './ClustersPanel';
+// Removed redundant import of EnhancedSpatialProcessor if using singleton
+// import { EnhancedSpatialProcessor } from '../../../utils/spatialProcessor';
 
-import { scaleSequential, scaleLinear, scaleOrdinal } from 'd3-scale';
-import {
-  interpolateRdYlGn,
-  interpolateBlues,
-  schemeCategory10,
-} from 'd3-scale-chromatic';
+import { spatialProcessor } from '../../../utils/spatialProcessors'; // Ensure singleton instance
 
 const DEFAULT_UI_STATE = {
   mode: 'prices',
@@ -61,6 +58,19 @@ const SpatialAnalysis = () => {
   const spatialState = useSpatialData();
   const [visualizationState, setVisualizationState] = useState(DEFAULT_UI_STATE);
 
+  // Initialize processor instance (using singleton)
+  // If you prefer using a singleton, ensure only one instance exists
+  // const processor = useMemo(() => new EnhancedSpatialProcessor(), []);
+  const processor = useMemo(() => spatialProcessor, []);
+
+  // Process data when it changes
+  const processedData = useMemo(() => {
+    if (!spatialState.data) return null;
+
+    return processor.process(spatialState.data, spatialState.ui.selectedDate);
+  }, [processor, spatialState.data, spatialState.ui.selectedDate]);
+
+  // Safe data access with default empty objects to prevent undefined errors
   const {
     status: { loading, error, isInitialized },
     data: {
@@ -71,18 +81,30 @@ const SpatialAnalysis = () => {
       timeSeriesData,
       analysisResults,
       analysisMetrics,
-    },
+    } = {}, // Provide empty default
     ui: { selectedCommodity, selectedDate },
   } = spatialState;
 
+  useEffect(() => {
+    if (selectedCommodity && !processedData?.availableMonths?.length) {
+      dispatch(loadSpatialData({
+        selectedCommodity,
+        selectedDate: null // Will be set after data loads
+      }));
+    }
+  }, [selectedCommodity, processedData?.availableMonths?.length]);
+
+  // Data validation with more specific checks
   const isDataValid = useCallback(() => {
     return Boolean(
-      geoData?.features?.length &&
-        selectedCommodity &&
-        selectedDate &&
-        isInitialized
+      processedData?.geoData?.features?.length > 0 &&
+      selectedCommodity &&
+      selectedDate &&
+      isInitialized &&
+      !error &&
+      processedData?.availableMonths?.length > 0
     );
-  }, [geoData, selectedCommodity, selectedDate, isInitialized]);
+  }, [processedData, selectedCommodity, selectedDate, isInitialized, error]);
 
   const showLoading = loading || !isInitialized;
 
@@ -115,60 +137,70 @@ const SpatialAnalysis = () => {
     [dispatch, handleVisualizationUpdate]
   );
 
-  const mapControlsProps = useMemo(
-    () => ({
-      selectedCommodity,
-      selectedDate,
-      uniqueMonths: timeSeriesData?.map((d) => d.month) || [],
-      commodities: ['wheat', 'rice', 'maize'], // Example commodities
-      onDateChange: handleDateChange,
-      onCommodityChange: handleCommodityChange,
-      onRefresh: () => dispatch(loadSpatialData()),
-      visualizationMode: visualizationState.mode,
-      onVisualizationModeChange: (mode) => handleVisualizationUpdate({ mode }),
-      showFlows: visualizationState.showFlows,
-      onToggleFlows: () =>
-        handleVisualizationUpdate({
-          showFlows: !visualizationState.showFlows,
-        }),
+  // Map controls props with safe data handling
+  const mapControlsProps = useMemo(() => ({
+    selectedCommodity,
+    selectedDate,
+    uniqueMonths: processedData?.availableMonths || [],
+    commodities: processedData?.metadata?.availableCommodities || [],
+    onDateChange: handleDateChange,
+    onCommodityChange: handleCommodityChange,
+    onRefresh: () => dispatch(loadSpatialData()),
+    visualizationMode: visualizationState.mode,
+    onVisualizationModeChange: (mode) => handleVisualizationUpdate({ mode }),
+    showFlows: visualizationState.showFlows,
+    onToggleFlows: () => handleVisualizationUpdate({
+      showFlows: !visualizationState.showFlows,
     }),
-    [
-      selectedCommodity,
-      selectedDate,
-      timeSeriesData,
-      handleDateChange,
-      handleCommodityChange,
-      dispatch,
-      visualizationState.mode,
-      visualizationState.showFlows,
-      handleVisualizationUpdate,
-    ]
-  );
+  }), [
+    selectedCommodity,
+    selectedDate,
+    processedData,
+    handleDateChange,
+    handleCommodityChange,
+    dispatch,
+    visualizationState.mode,
+    visualizationState.showFlows,
+  ]);
 
+  // Map props with processed data
   const mapProps = useMemo(
     () => ({
-      geoData,
-      flowMaps: visualizationState.showFlows ? flowMaps : [],
+      geoData: processedData?.geoData,
+      flowMaps: visualizationState.showFlows ? processedData?.flowMaps : [],
       selectedDate,
       showFlows: visualizationState.showFlows,
       selectedCommodity,
-      marketClusters: marketClustersData,
-      detectedShocks: detectedShocksData,
+      marketClusters: processedData?.marketClusters,
+      detectedShocks: processedData?.detectedShocks,
       visualizationMode: visualizationState.mode,
-      colorScales: getColorScales(visualizationState.mode, geoData),
+      colorScales: processor.getColorScales(
+        visualizationState.mode,
+        processedData?.geoData
+      ),
       onRegionSelect: handleRegionSelect,
     }),
     [
-      geoData,
-      flowMaps,
+      processedData,
       visualizationState.showFlows,
       selectedDate,
       selectedCommodity,
-      marketClustersData,
-      detectedShocksData,
       visualizationState.mode,
       handleRegionSelect,
+      processor,
     ]
+  );
+
+  // Safe statistics for legend
+  const legendStats = useMemo(
+    () => ({
+      'Integration Score':
+        processedData?.spatialMetrics?.global?.moran_i?.toFixed(3) || 'N/A',
+      'Price Correlation':
+        processedData?.analysisMetrics?.integrationLevel?.toFixed(3) || 'N/A',
+      'Market Coverage': `${processedData?.marketClusters?.length || 0} clusters`,
+    }),
+    [processedData]
   );
 
   if (showLoading) {
@@ -226,7 +258,7 @@ const SpatialAnalysis = () => {
             }}
           >
             <Typography variant="h5">
-              Market Integration Analysis: {selectedCommodity}
+              Market Integration Analysis: {selectedCommodity || 'Select Commodity'}
             </Typography>
             <Tooltip title="Export Analysis">
               <IconButton aria-label="export analysis">
@@ -278,21 +310,21 @@ const SpatialAnalysis = () => {
             {/* Time Series Analysis Panel */}
             {visualizationState.analysisTab === 0 && (
               <Paper sx={{ p: 2 }}>
-                <TimeSeriesChart timeSeriesData={timeSeriesData} />
+                <TimeSeriesChart timeSeriesData={processedData?.timeSeriesData || []} />
               </Paper>
             )}
 
             {/* Market Shocks Panel */}
             {visualizationState.analysisTab === 1 && (
               <Paper sx={{ p: 2 }}>
-                <ShocksPanel shocksData={detectedShocksData} />
+                <ShocksPanel shocksData={processedData?.detectedShocks || []} />
               </Paper>
             )}
 
             {/* Market Clusters Panel */}
             {visualizationState.analysisTab === 2 && (
               <Paper sx={{ p: 2 }}>
-                <ClustersPanel clustersData={marketClustersData} />
+                <ClustersPanel clustersData={processedData?.marketClusters || []} />
               </Paper>
             )}
 
@@ -301,9 +333,9 @@ const SpatialAnalysis = () => {
               <Paper sx={{ p: 2 }}>
                 <DynamicInterpretation
                   preprocessedData={{
-                    analysisMetrics,
-                    timeSeriesData,
-                    detectedShocks: detectedShocksData,
+                    analysisMetrics: processedData?.analysisMetrics,
+                    timeSeriesData: processedData?.timeSeriesData,
+                    detectedShocks: processedData?.detectedShocks,
                   }}
                   selectedRegion={visualizationState.selectedRegion}
                   selectedCommodity={selectedCommodity}
@@ -312,22 +344,19 @@ const SpatialAnalysis = () => {
             )}
           </Grid>
 
-          {/* Map Legend */}
-          {geoData?.features?.length > 0 && (
+          {/* Map Legend with safe data checks */}
+          {processedData?.geoData?.features?.length > 0 && (
             <Grid item xs={12}>
               <MapLegend
-                title={`${selectedCommodity} Distribution`}
-                colorScale={getColorScales(visualizationState.mode, geoData).getColor}
+                title={`${selectedCommodity || 'Market'} Distribution`}
+                colorScale={processor.getColorScales(
+                  visualizationState.mode,
+                  processedData.geoData
+                )}
                 unit="USD"
                 description="Spatial distribution of prices"
                 position="bottomright"
-                statistics={{
-                  'Integration Score':
-                    analysisResults?.spatialAutocorrelation?.moran_i?.toFixed(3),
-                  'Price Correlation':
-                    analysisMetrics?.integrationLevel?.toFixed(3),
-                  'Market Coverage': `${marketClustersData?.length || 0} clusters`,
-                }}
+                statistics={legendStats}
               />
             </Grid>
           )}
@@ -338,63 +367,3 @@ const SpatialAnalysis = () => {
 };
 
 export default React.memo(SpatialAnalysis);
-
-// Helper function to get color scales
-const getColorScales = (mode, geoData) => {
-  // Determine the domain based on the data
-  let domain;
-  if (mode === 'prices') {
-    const prices = geoData.features
-      .map((feature) => feature.properties.priceData?.avgUsdPrice)
-      .filter((value) => value !== undefined);
-    domain = [Math.min(...prices), Math.max(...prices)];
-    const scale = scaleSequential(interpolateRdYlGn).domain(domain.reverse()); // High prices in red, low in green
-    return {
-      getColor: (feature) => {
-        const value = feature.properties.priceData?.avgUsdPrice;
-        return value !== undefined ? scale(value) : '#cccccc';
-      },
-    };
-  } else if (mode === 'integration') {
-    const scores = geoData.features
-      .map((feature) => feature.properties.integrationScore)
-      .filter((value) => value !== undefined);
-    domain = [Math.min(...scores), Math.max(...scores)];
-    const scale = scaleSequential(interpolateBlues).domain(domain);
-    return {
-      getColor: (feature) => {
-        const value = feature.properties.integrationScore;
-        return value !== undefined ? scale(value) : '#cccccc';
-      },
-    };
-  } else if (mode === 'clusters') {
-    // Assign colors to clusters
-    const clusterIds = [
-      ...new Set(
-        geoData.features
-          .map((feature) => feature.properties.clusterId)
-          .filter((id) => id !== undefined)
-      ),
-    ];
-    const colorScale = scaleOrdinal(schemeCategory10).domain(clusterIds);
-    return {
-      getColor: (feature) => {
-        const clusterId = feature.properties.clusterId;
-        return clusterId !== undefined ? colorScale(clusterId) : '#cccccc';
-      },
-    };
-  } else if (mode === 'shocks') {
-    // Highlight regions with shocks
-    return {
-      getColor: (feature) => {
-        const hasShock = feature.properties.hasShock;
-        return hasShock ? '#ff0000' : '#cccccc';
-      },
-    };
-  }
-
-  // Default color scale
-  return {
-    getColor: () => '#cccccc',
-  };
-};

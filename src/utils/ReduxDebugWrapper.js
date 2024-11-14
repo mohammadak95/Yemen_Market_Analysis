@@ -1,7 +1,7 @@
 // src/utils/ReduxDebugWrapper.js
 
 import React, { useEffect } from 'react';
-import { useStore } from 'react-redux';
+import { useStore } from 'react-redux'; // Use useStore hook
 import PropTypes from 'prop-types';
 import { backgroundMonitor } from './backgroundMonitor'; // Ensure correct import
 

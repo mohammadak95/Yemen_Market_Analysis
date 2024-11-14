@@ -20,6 +20,7 @@ import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
 import { useWindowSize } from './hooks';
 import { useData } from './hooks'; // Ensure this hook is correctly implemented
+import { store } from './store'; // Ensure the store is correctly imported
 import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
@@ -78,6 +79,14 @@ const App = () => {
   useEffect(() => {
     setSidebarOpen(isSmUp);
   }, [isSmUp]);
+
+  // Add an effect to sync with Redux state
+  useEffect(() => {
+    const spatialState = store.getState().spatial;
+    if (spatialState.ui.selectedCommodity && !selectedCommodity) {
+      setSelectedCommodity(spatialState.ui.selectedCommodity);
+    }
+  }, [selectedCommodity]);
 
   const handleToggleDarkMode = useCallback(() => {
     dispatch(toggleDarkMode());

@@ -2,9 +2,8 @@
 
 import { configureStore } from '@reduxjs/toolkit';
 import themeReducer from '../slices/themeSlice';
-import spatialReducer from '../slices/spatialSlice'; // Ensure correct path
+import spatialReducer from '../slices/spatialSlice';
 
-// Create store
 const store = configureStore({
   reducer: {
     theme: themeReducer,
@@ -12,19 +11,14 @@ const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: {
-        // Ignore paths that contain non-serializable data
+      serializableCheck: process.env.NODE_ENV === 'production' ? {
         ignoredPaths: ['spatial.data'],
-        // Ignore actions that involve non-serializable data
         ignoredActions: ['spatial/loadSpatialData/fulfilled', 'spatial/loadSpatialData/rejected'],
-      },
+      } : false,
     }),
   devTools: process.env.NODE_ENV !== 'production',
 });
 
-// Expose store in development
-if (process.env.NODE_ENV === 'development') {
-  window.__REDUX_STORE__ = store;
-}
-
+// Export both default and named export
+export { store };
 export default store;
