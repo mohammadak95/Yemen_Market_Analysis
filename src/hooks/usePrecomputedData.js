@@ -11,7 +11,7 @@ export function usePrecomputedData(commodity, date) {
 
   // Main data loading function
   const loadData = useCallback(async () => {
-    if (!commodity || !date) {
+    if (!commodity) {
       setLoading(false);
       return;
     }

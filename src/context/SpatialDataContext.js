@@ -19,7 +19,10 @@ export const SpatialDataProvider = ({ children }) => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const result = await precomputedDataManager.processSpatialData(selectedCommodity, selectedDate);
+      const result = await precomputedDataManager.processSpatialData(
+        selectedCommodity,
+        selectedDate
+      );
 
       setState({
         loading: false,
@@ -48,10 +51,10 @@ export const SpatialDataProvider = ({ children }) => {
   return <SpatialDataContext.Provider value={value}>{children}</SpatialDataContext.Provider>;
 };
 
-export const useSpatialData = () => {
+export const useSpatialDataContext = () => {
   const context = useContext(SpatialDataContext);
   if (!context) {
-    throw new Error('useSpatialData must be used within a SpatialDataProvider');
+    throw new Error('useSpatialDataContext must be used within a SpatialDataProvider');
   }
   return context;
 };

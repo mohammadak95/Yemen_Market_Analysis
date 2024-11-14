@@ -3,45 +3,44 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { precomputedDataManager } from '../utils/PrecomputedDataManager';
 
-// Define the initial state
 const initialState = {
   status: {
     loading: false,
     error: null,
     isInitialized: false,
   },
-  data: {
-    geoData: null,
-    flowMaps: [],
-    marketClusters: [],
-    detectedShocks: [],
-    timeSeriesData: [],
-    analysisResults: null,
-    analysisMetrics: null,
-  },
+  data: null,
   ui: {
     selectedCommodity: '',
     selectedDate: '',
     selectedRegion: null,
+    selectedAnalysis: '',
+    selectedRegimes: [],
   },
 };
 
-// Async thunk to load precomputed data using precomputedDataManager
 export const loadSpatialData = createAsyncThunk(
   'spatial/loadSpatialData',
   async ({ selectedCommodity, selectedDate }, { rejectWithValue }) => {
     try {
       const data = await precomputedDataManager.processSpatialData(
-        selectedCommodity, 
+        selectedCommodity,
         selectedDate
       );
 
-      // If no date provided, use the latest available
-      const effectiveDate = selectedDate || data.availableMonths[data.availableMonths.length - 1];
+      const effectiveDate =
+        selectedDate ||
+        (data.availableMonths && data.availableMonths[data.availableMonths.length - 1]);
+
+      // Extract unique regimes from data
+      const regimes = Array.from(new Set(data.timeSeriesData.map((d) => d.regime)));
 
       return {
-        data,
-        selectedDate: effectiveDate
+        data: {
+          ...data,
+          regimes,
+        },
+        selectedDate: effectiveDate,
       };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -49,10 +48,6 @@ export const loadSpatialData = createAsyncThunk(
   }
 );
 
-// Selector function to select spatial data from the state
-export const selectSpatialData = (state) => state.spatial;
-
-// Create the slice
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
@@ -65,6 +60,12 @@ const spatialSlice = createSlice({
     },
     setSelectedRegion(state, action) {
       state.ui.selectedRegion = action.payload;
+    },
+    setSelectedAnalysis(state, action) {
+      state.ui.selectedAnalysis = action.payload;
+    },
+    setSelectedRegimes(state, action) {
+      state.ui.selectedRegimes = action.payload;
     },
     resetError(state) {
       state.status.error = null;
@@ -80,7 +81,15 @@ const spatialSlice = createSlice({
         state.status.loading = false;
         state.status.isInitialized = true;
         state.data = action.payload.data;
-        state.ui.selectedDate = action.payload.selectedDate; // Update selectedDate
+        state.ui.selectedDate = action.payload.selectedDate;
+
+        // Only update selectedRegimes if they have changed
+        if (
+          JSON.stringify(state.ui.selectedRegimes) !==
+          JSON.stringify(action.payload.data.regimes)
+        ) {
+          state.ui.selectedRegimes = action.payload.data.regimes;
+        }
       })
       .addCase(loadSpatialData.rejected, (state, action) => {
         state.status.loading = false;
@@ -89,11 +98,12 @@ const spatialSlice = createSlice({
   },
 });
 
-// Export actions and reducer
 export const {
   setSelectedCommodity,
   setSelectedDate,
   setSelectedRegion,
+  setSelectedAnalysis,
+  setSelectedRegimes,
   resetError,
 } = spatialSlice.actions;
 

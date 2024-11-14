@@ -1,4 +1,4 @@
-//src/components/interactive_graph/InteractiveChart.js
+// src/components/interactive_graph/InteractiveChart.js
 
 import React, { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
@@ -422,12 +422,14 @@ const InteractiveChart = ({
         </Grid>
       </Paper>
 
-      <Box sx={{
-        width: '100%',
-        height: { xs: '250px', sm: '300px', md: '400px' }, // Reduced height for mobile
-        position: 'relative',
-        mb: 2 // Add bottom margin
-      }}>
+      <Box
+        sx={{
+          width: '100%',
+          height: { xs: '250px', sm: '300px', md: '400px' }, // Adjusted height for responsiveness
+          position: 'relative',
+          mb: 2, // Add bottom margin
+        }}
+      >
         <Line options={options} data={chartData} />
       </Box>
     </Box>

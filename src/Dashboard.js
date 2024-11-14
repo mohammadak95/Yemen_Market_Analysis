@@ -8,6 +8,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import AnalysisWrapper from './components/common/AnalysisWrapper';
 import SpatialAnalysis from './components/analysis/spatial-analysis/SpatialAnalysis';
+import { useMarketAnalysis } from './hooks/useMarketAnalysis';
 
 import {
   Chart as ChartJS,
@@ -51,17 +52,18 @@ const Dashboard = React.memo(
     selectedAnalysis,
     selectedCommodity,
     selectedRegimes,
+    selectedDate,
     windowWidth,
-    spatialViewConfig,
-    onSpatialViewChange,
   }) => {
     const processedData = useMemo(() => {
-      if (!data?.features) return [];
-      return data.features.map((feature) => ({
-        ...feature,
-        date: feature.date instanceof Date ? feature.date.toISOString() : feature.date,
+      if (!data?.timeSeriesData) return [];
+      return data.timeSeriesData.map((entry) => ({
+        ...entry,
+        date: entry.month,
       }));
     }, [data]);
+
+    const { marketMetrics, timeSeriesAnalysis, spatialAnalysis } = useMarketAnalysis(data);
 
     const getAnalysisComponent = useCallback((type) => {
       const componentMap = {
@@ -75,7 +77,7 @@ const Dashboard = React.memo(
     }, []);
 
     const renderInteractiveChart = useCallback(() => {
-      if (!selectedCommodity || selectedRegimes.length === 0) {
+      if (!selectedCommodity || !selectedRegimes || selectedRegimes.length === 0) {
         return (
           <ErrorMessage message="Please select at least one regime and a commodity from the sidebar." />
         );
@@ -107,9 +109,7 @@ const Dashboard = React.memo(
       const commonProps = {
         selectedCommodity,
         windowWidth,
-        spatialViewConfig,
-        onSpatialViewChange,
-        data: processedData,
+        data,
       };
 
       return (
@@ -119,15 +119,7 @@ const Dashboard = React.memo(
           </AnalysisWrapper>
         </Suspense>
       );
-    }, [
-      selectedAnalysis,
-      selectedCommodity,
-      windowWidth,
-      spatialViewConfig,
-      onSpatialViewChange,
-      processedData,
-      getAnalysisComponent,
-    ]);
+    }, [selectedAnalysis, selectedCommodity, windowWidth, data, getAnalysisComponent]);
 
     if (!data) {
       return (
@@ -169,33 +161,12 @@ const Dashboard = React.memo(
 Dashboard.displayName = 'Dashboard';
 
 Dashboard.propTypes = {
-  data: PropTypes.shape({
-    features: PropTypes.arrayOf(
-      PropTypes.shape({
-        date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]).isRequired,
-        commodity: PropTypes.string.isRequired,
-        regime: PropTypes.string.isRequired,
-        price: PropTypes.number,
-        usdprice: PropTypes.number,
-        conflict_intensity: PropTypes.number,
-      })
-    ),
-    commodities: PropTypes.arrayOf(PropTypes.string),
-    regimes: PropTypes.arrayOf(PropTypes.string),
-    dateRange: PropTypes.shape({
-      min: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
-      max: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
-    }),
-  }),
+  data: PropTypes.object, // Made optional
   selectedAnalysis: PropTypes.string,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedDate: PropTypes.string,
   windowWidth: PropTypes.number.isRequired,
-  spatialViewConfig: PropTypes.shape({
-    center: PropTypes.arrayOf(PropTypes.number).isRequired,
-    zoom: PropTypes.number.isRequired,
-  }),
-  onSpatialViewChange: PropTypes.func,
 };
 
 export default Dashboard;

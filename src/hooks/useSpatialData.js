@@ -11,7 +11,7 @@ const useSpatialData = () => {
   const { selectedCommodity, selectedDate } = spatialState.ui;
 
   useEffect(() => {
-    if (selectedCommodity && selectedDate) {
+    if (selectedCommodity) {
       dispatch(loadSpatialData({ selectedCommodity, selectedDate }));
     }
   }, [dispatch, selectedCommodity, selectedDate]);

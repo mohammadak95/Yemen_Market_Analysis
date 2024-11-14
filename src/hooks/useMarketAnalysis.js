@@ -8,7 +8,7 @@ export function useMarketAnalysis(data) {
 
     return {
       priceVolatility: calculateVolatility(data.timeSeriesData),
-      marketIntegration: data.analysisResults?.spatialAutocorrelation?.global?.moran_i || 0,
+      marketIntegration: data.spatialMetrics?.global?.moran_i || 0,
       shockFrequency: calculateShockFrequency(data.detectedShocks),
       clusterEfficiency: calculateClusterEfficiency(data.marketClusters),
     };
@@ -25,11 +25,11 @@ export function useMarketAnalysis(data) {
   }, [data]);
 
   const spatialAnalysis = useMemo(() => {
-    if (!data?.analysisResults?.spatialAutocorrelation) return null;
+    if (!data?.spatialMetrics?.global) return null;
 
     return {
-      moranI: data.analysisResults.spatialAutocorrelation.global.moran_i || 0,
-      significance: data.analysisResults.spatialAutocorrelation.global.significance || false,
+      moranI: data.spatialMetrics.global.moran_i || 0,
+      significance: data.spatialMetrics.global.significance || false,
       clusters: summarizeClusters(data.marketClusters),
     };
   }, [data]);
@@ -45,7 +45,7 @@ export function useMarketAnalysis(data) {
 
 function calculateVolatility(timeSeriesData) {
   if (!timeSeriesData?.length) return 0;
-  const prices = timeSeriesData.map(d => d.avgUsdPrice).filter(p => p != null && !isNaN(p));
+  const prices = timeSeriesData.map((d) => d.avgUsdPrice).filter((p) => p != null && !isNaN(p));
   const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
   const variance = prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length;
   return mean !== 0 ? Math.sqrt(variance) / mean : 0;
@@ -53,7 +53,7 @@ function calculateVolatility(timeSeriesData) {
 
 function calculateShockFrequency(shocks) {
   if (!shocks?.length) return 0;
-  const monthsWithShocks = new Set(shocks.map(s => s.date.substring(0, 7)));
+  const monthsWithShocks = new Set(shocks.map((s) => s.date.substring(0, 7)));
   return shocks.length / monthsWithShocks.size;
 }
 
@@ -81,10 +81,10 @@ function detectSeasonality(timeSeriesData) {
 
 function detectOutliers(timeSeriesData) {
   if (!timeSeriesData?.length) return [];
-  const prices = timeSeriesData.map(d => d.avgUsdPrice).filter(p => p != null && !isNaN(p));
+  const prices = timeSeriesData.map((d) => d.avgUsdPrice).filter((p) => p != null && !isNaN(p));
   const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
   const stdDev = Math.sqrt(prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length);
-  return timeSeriesData.filter(d => {
+  return timeSeriesData.filter((d) => {
     const price = d.avgUsdPrice;
     return price != null && !isNaN(price) && Math.abs(price - mean) > 2 * stdDev;
   });
@@ -96,7 +96,7 @@ function summarizeClusters(clusters) {
   return {
     count: clusters.length,
     averageSize: clusters.reduce((acc, c) => acc + c.market_count, 0) / clusters.length,
-    largest: Math.max(...clusters.map(c => c.market_count)),
-    smallest: Math.min(...clusters.map(c => c.market_count)),
+    largest: Math.max(...clusters.map((c) => c.market_count)),
+    smallest: Math.min(...clusters.map((c) => c.market_count)),
   };
 }

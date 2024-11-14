@@ -11,10 +11,16 @@ const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: process.env.NODE_ENV === 'production' ? {
-        ignoredPaths: ['spatial.data'],
-        ignoredActions: ['spatial/loadSpatialData/fulfilled', 'spatial/loadSpatialData/rejected'],
-      } : false,
+      serializableCheck:
+        process.env.NODE_ENV === 'production'
+          ? {
+              ignoredPaths: ['spatial.data'],
+              ignoredActions: [
+                'spatial/loadSpatialData/fulfilled',
+                'spatial/loadSpatialData/rejected',
+              ],
+            }
+          : false,
     }),
   devTools: process.env.NODE_ENV !== 'production',
 });

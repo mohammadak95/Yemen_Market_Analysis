@@ -19,12 +19,24 @@ import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
 import { useWindowSize } from './hooks';
-import { useData } from './hooks'; // Ensure this hook is correctly implemented
-import { store } from './store'; // Ensure the store is correctly imported
 import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
 } from './styles/theme';
+import {
+  setSelectedCommodity,
+  setSelectedDate,
+  setSelectedAnalysis,
+  loadSpatialData,
+} from './slices/spatialSlice';
+import {
+  selectSpatialStatus,
+  selectSpatialData,
+  selectSelectedCommodity,
+  selectSelectedDate,
+  selectSelectedAnalysis,
+  selectSelectedRegimes,
+} from './selectors/spatialSelectors';
 
 const DRAWER_WIDTH = 240;
 
@@ -52,17 +64,16 @@ const App = () => {
 
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
-  const { data, loading, error } = useData(); // Ensure this hook provides necessary data
+
+  // Use memoized selectors to get spatial state
+  const spatialStatus = useSelector(selectSpatialStatus);
+  const spatialData = useSelector(selectSpatialData);
+  const selectedCommodity = useSelector(selectSelectedCommodity);
+  const selectedDate = useSelector(selectSelectedDate);
+  const selectedAnalysis = useSelector(selectSelectedAnalysis);
+  const selectedRegimes = useSelector(selectSelectedRegimes);
 
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
-  const [selectedCommodity, setSelectedCommodity] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedAnalysis, setSelectedAnalysis] = useState('');
-  const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']);
-  const [spatialViewConfig, setSpatialViewConfig] = useState({
-    center: [15.3694, 44.191],
-    zoom: 6,
-  });
   const [modalStates, setModalStates] = useState({
     methodology: false,
     tutorials: false,
@@ -79,14 +90,6 @@ const App = () => {
   useEffect(() => {
     setSidebarOpen(isSmUp);
   }, [isSmUp]);
-
-  // Add an effect to sync with Redux state
-  useEffect(() => {
-    const spatialState = store.getState().spatial;
-    if (spatialState.ui.selectedCommodity && !selectedCommodity) {
-      setSelectedCommodity(spatialState.ui.selectedCommodity);
-    }
-  }, [selectedCommodity]);
 
   const handleToggleDarkMode = useCallback(() => {
     dispatch(toggleDarkMode());
@@ -107,17 +110,24 @@ const App = () => {
     }
   }, []);
 
-  if (loading) {
+  // Load initial data if not already loaded
+  useEffect(() => {
+    if (!spatialData && !spatialStatus.loading) {
+      dispatch(loadSpatialData({ selectedCommodity: selectedCommodity || 'defaultCommodity' }));
+    }
+  }, [dispatch, spatialData, spatialStatus.loading, selectedCommodity]);
+
+  if (spatialStatus.loading && !spatialData) {
     return <LoadingSpinner />;
   }
 
-  if (error) {
+  if (spatialStatus.error) {
     return (
       <ErrorDisplay
-        error={error}
+        error={spatialStatus.error}
         title="Application Error"
         showDetails={process.env.NODE_ENV !== 'production'}
-        onRetry={() => window.location.reload()}
+        onRetry={() => dispatch(loadSpatialData({ selectedCommodity }))}
       />
     );
   }
@@ -147,21 +157,10 @@ const App = () => {
           </StyledAppBar>
 
           <Sidebar
-            commodities={data?.commodities || []}
-            regimes={data?.regimes || []}
-            selectedCommodity={selectedCommodity}
-            setSelectedCommodity={setSelectedCommodity}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            selectedAnalysis={selectedAnalysis}
-            setSelectedAnalysis={setSelectedAnalysis}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
-            isSmUp={isSmUp}
             onMethodologyClick={() => handleModalToggle('methodology', true)}
             onTutorialsClick={() => handleModalToggle('tutorials', true)}
-            selectedRegimes={selectedGraphRegimes}
-            setSelectedRegimes={setSelectedGraphRegimes}
             onOpenWelcomeModal={() => handleModalToggle('welcome', true)}
             handleDrawerToggle={handleDrawerToggle}
           />
@@ -177,14 +176,12 @@ const App = () => {
           >
             <Toolbar />
             <Dashboard
-              data={data}
+              data={spatialData}
               selectedCommodity={selectedCommodity}
+              selectedRegimes={selectedRegimes}
               selectedDate={selectedDate}
-              selectedRegimes={selectedGraphRegimes}
               selectedAnalysis={selectedAnalysis}
               windowWidth={windowSize.width}
-              spatialViewConfig={spatialViewConfig}
-              onSpatialViewChange={setSpatialViewConfig}
             />
           </Box>
 
