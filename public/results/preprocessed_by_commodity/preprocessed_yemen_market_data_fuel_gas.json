@@ -1634,7 +1634,7 @@
   "metadata": {
     "commodity": "Fuel (Gas)",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T15:12:33.341109",
+    "processed_date": "2024-11-14T20:11:56.590766",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

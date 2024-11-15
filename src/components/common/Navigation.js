@@ -1,6 +1,6 @@
 // src/components/common/Navigation.js
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import {
@@ -11,48 +11,22 @@ import {
   Button,
   Stack,
   useTheme,
-  useMediaQuery,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  ListItemText,
   List,
   ListItemIcon,
   ListItem,
   ListItemButton,
+  ListItemText,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
-import {
-  setSelectedCommodity,
-  setSelectedAnalysis,
-  setSelectedRegimes,
-  loadSpatialData,
-} from '../../slices/spatialSlice';
-import {
-  selectRegimes,
-  selectSelectedRegimes,
-  selectCommodities,
-  selectSelectedCommodity,
-  selectSelectedAnalysis,
-} from '../../selectors/spatialSelectors';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import MapIcon from '@mui/icons-material/Map';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import { setSelectedAnalysis } from '../../slices/spatialSlice';
+import MarketInterface from './MarketInterface';
 
-// Utility function to capitalize words
-const capitalizeWords = (str) => {
-  return str.replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
-// Constant for drawer width
-const drawerWidth = 240;
-
-/**
- * NavigationItem Component
- *
- * A reusable navigation item that wraps Material-UI's ListItem and ListItemButton.
- */
 const NavigationItem = ({ onClick = () => {}, selected = false, children }) => (
   <ListItem disablePadding>
     <ListItemButton onClick={onClick} selected={selected}>
@@ -67,217 +41,105 @@ NavigationItem.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-/**
- * CommoditySelector Component
- *
- * A selector for choosing a single commodity from a list.
- */
-// src/components/common/Navigation.js
-
-const CommoditySelector = ({ commodities, selectedCommodity }) => {
-  const dispatch = useDispatch();
-  const loading = useSelector((state) => state.spatial.status.loading);
-
-  // Set first commodity as default if none is selected
-  useEffect(() => {
-    if (!selectedCommodity && commodities.length > 0) {
-      dispatch(setSelectedCommodity(commodities[0]));
-    }
-  }, [selectedCommodity, commodities, dispatch]);
-
-  const handleCommoditySelect = useCallback(
-    async (commodity) => {
-      if (commodity && !loading) {
-        dispatch(setSelectedCommodity(commodity));
-        try {
-          await dispatch(
-            loadSpatialData({
-              selectedCommodity: commodity,
-              selectedDate: null,
-            })
-          ).unwrap();
-        } catch (error) {
-          console.error('Error selecting commodity:', error);
-        }
-      }
-    },
-    [dispatch, loading]
-  );
-
-  return (
-    <FormControl fullWidth variant="outlined" size="small" margin="normal">
-      <InputLabel id="commodity-select-label">Select Commodity</InputLabel>
-      <Select
-        labelId="commodity-select-label"
-        id="commodity-select"
-        name="commodity"
-        value={selectedCommodity || ''}
-        onChange={(e) => handleCommoditySelect(e.target.value)}
-        label="Select Commodity"
-        aria-label="Select commodity"
-        disabled={loading}
-      >
-        {commodities.map((commodity) => (
-          <MenuItem key={commodity} value={commodity}>
-            {capitalizeWords(commodity)}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
-};
-
-CommoditySelector.propTypes = {
-  // No props are passed since it uses selectors internally
-};
-
-/**
- * RegimeSelector Component
- *
- * A multi-select component for choosing regimes.
- */
-const RegimeSelector = () => {
-  const dispatch = useDispatch();
-  const regimes = useSelector(selectRegimes);
-  const selectedRegimes = useSelector(selectSelectedRegimes);
-
-  const handleRegimesSelect = useCallback(
-    (regimesSelected) => {
-      dispatch(setSelectedRegimes(regimesSelected));
-    },
-    [dispatch]
-  );
-
-  return (
-    <FormControl fullWidth variant="outlined" size="small" margin="normal">
-      <InputLabel id="regime-select-label">Select Regimes</InputLabel>
-      <Select
-        labelId="regime-select-label"
-        id="regime-select"
-        name="regimes"
-        multiple
-        value={selectedRegimes}
-        onChange={(e) => handleRegimesSelect(e.target.value)}
-        label="Select Regimes"
-        aria-label="Select regimes"
-        renderValue={(selected) =>
-          selected.map((regime) => capitalizeWords(regime)).join(', ')
-        }
-      >
-        {regimes.map((regime) => (
-          <MenuItem key={regime} value={regime}>
-            <Checkbox checked={selectedRegimes.indexOf(regime) > -1} />
-            <ListItemText primary={capitalizeWords(regime)} />
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
-};
-
-RegimeSelector.propTypes = {
-  // No props are passed since it uses selectors internally
-};
-
-/**
- * DiscoveryMenu Component
- *
- * A menu item for discovery-related actions.
- */
-export const DiscoveryMenu = ({ onTutorialsClick }) => {
-  return (
-    <List>
-      <NavigationItem onClick={onTutorialsClick}>
-        <ListItemIcon>
-          <SchoolIcon />
-        </ListItemIcon>
-        <ListItemText primary="Tutorials" />
-      </NavigationItem>
-      <Divider />
-      {/* Other menu items can be added here using <NavigationItem> */}
-    </List>
-  );
-};
+export const DiscoveryMenu = ({ onTutorialsClick }) => (
+  <List>
+    <NavigationItem onClick={onTutorialsClick}>
+      <ListItemIcon>
+        <SchoolIcon />
+      </ListItemIcon>
+      <ListItemText primary="Tutorials" />
+    </NavigationItem>
+    <Divider />
+  </List>
+);
 
 DiscoveryMenu.propTypes = {
   onTutorialsClick: PropTypes.func.isRequired,
 };
 
-/**
- * Sidebar Component
- *
- * The main navigation sidebar component.
- */
-export const Sidebar = ({
+
+
+const drawerWidth = 240;
+
+const Sidebar = ({
   sidebarOpen,
   setSidebarOpen,
+  handleDrawerToggle,
   onMethodologyClick,
   onTutorialsClick,
-  onOpenWelcomeModal,
-  handleDrawerToggle,
+  isSmUp,
 }) => {
   const theme = useTheme();
-  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useDispatch();
+  
+  // Get analysis state from Redux
+  const selectedAnalysis = useSelector(state => state.spatial.ui.selectedAnalysis);
 
-  const selectedAnalysis = useSelector(selectSelectedAnalysis);
-
-  const handleAnalysisChange = useCallback(
-    (analysisType) => {
-      dispatch(setSelectedAnalysis(analysisType));
-      if (!isSmUp) {
-        setSidebarOpen(false);
-      }
-    },
-    [dispatch, isSmUp, setSidebarOpen]
-  );
+  const handleAnalysisChange = useCallback((analysisType) => {
+    dispatch(setSelectedAnalysis(analysisType));
+    if (!isSmUp) {
+      setSidebarOpen(false);
+    }
+  }, [dispatch, isSmUp, setSidebarOpen]);
 
   const sidebarContent = (
     <Box sx={{ p: 2 }}>
       <Stack spacing={3}>
-        <CommoditySelector />
-
-        <RegimeSelector />
-
+        {/* Market Interface Component */}
+        <MarketInterface />
+        
+        {/* Analysis Buttons */}
         <Stack spacing={2}>
           <Button
             variant={selectedAnalysis === 'ecm' ? 'contained' : 'outlined'}
             color="primary"
             fullWidth
             onClick={() => handleAnalysisChange('ecm')}
+            startIcon={<TimelineIcon />}
           >
             ECM Analysis
           </Button>
+
           <Button
             variant={selectedAnalysis === 'priceDiff' ? 'contained' : 'outlined'}
             color="primary"
             fullWidth
             onClick={() => handleAnalysisChange('priceDiff')}
+            startIcon={<CompareArrowsIcon />}
           >
-            Price Differential Analysis
+            Price Differential
           </Button>
+
           <Button
             variant={selectedAnalysis === 'spatial' ? 'contained' : 'outlined'}
             color="primary"
             fullWidth
             onClick={() => handleAnalysisChange('spatial')}
+            startIcon={<MapIcon />}
           >
             Spatial Analysis
           </Button>
+
           <Button
             variant={selectedAnalysis === 'tvmii' ? 'contained' : 'outlined'}
             color="primary"
             fullWidth
             onClick={() => handleAnalysisChange('tvmii')}
+            startIcon={<TrendingUpIcon />}
           >
             TV-MII Analysis
           </Button>
         </Stack>
 
+        <Divider />
+
+        {/* Action Buttons */}
         <Button
           variant="contained"
-          sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }}
+          sx={{ 
+            backgroundColor: theme.palette.error.main,
+            '&:hover': { backgroundColor: theme.palette.error.dark }
+          }}
           fullWidth
           onClick={onMethodologyClick}
           startIcon={<InfoIcon />}
@@ -287,22 +149,15 @@ export const Sidebar = ({
 
         <Button
           variant="contained"
-          sx={{ backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' } }}
+          sx={{ 
+            backgroundColor: theme.palette.info.main,
+            '&:hover': { backgroundColor: theme.palette.info.dark }
+          }}
           fullWidth
           onClick={onTutorialsClick}
           startIcon={<MenuBookIcon />}
         >
           Tutorials
-        </Button>
-
-        <Button
-          variant="contained"
-          sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#388e3c' } }}
-          fullWidth
-          onClick={onOpenWelcomeModal}
-          startIcon={<InfoIcon />}
-        >
-          How to Use
         </Button>
       </Stack>
     </Box>
@@ -310,18 +165,18 @@ export const Sidebar = ({
 
   return (
     <Drawer
-      variant={isMobile ? 'temporary' : 'persistent'}
+      variant={isSmUp ? 'persistent' : 'temporary'}
       open={sidebarOpen}
       onClose={handleDrawerToggle}
       ModalProps={{
-        keepMounted: true, // Better open performance on mobile
+        keepMounted: true,
       }}
       sx={{
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
           [theme.breakpoints.down('sm')]: {
-            top: '56px', // Height of mobile AppBar
+            top: '56px',
             height: 'calc(100% - 56px)',
           },
         },
@@ -337,31 +192,11 @@ export const Sidebar = ({
 Sidebar.propTypes = {
   sidebarOpen: PropTypes.bool.isRequired,
   setSidebarOpen: PropTypes.func.isRequired,
+  handleDrawerToggle: PropTypes.func.isRequired,
   onMethodologyClick: PropTypes.func.isRequired,
   onTutorialsClick: PropTypes.func.isRequired,
-  onOpenWelcomeModal: PropTypes.func.isRequired,
-  handleDrawerToggle: PropTypes.func.isRequired,
+  isSmUp: PropTypes.bool.isRequired,
 };
 
-/**
- * Navigation Component
- *
- * The main navigation component that includes the Sidebar.
- *
- * Props:
- * All props required by Sidebar.
- */
-const Navigation = (props) => {
-  return <Sidebar {...props} />;
-};
+export default React.memo(Sidebar);
 
-Navigation.propTypes = {
-  sidebarOpen: PropTypes.bool.isRequired,
-  setSidebarOpen: PropTypes.func.isRequired,
-  onMethodologyClick: PropTypes.func.isRequired,
-  onTutorialsClick: PropTypes.func.isRequired,
-  onOpenWelcomeModal: PropTypes.func.isRequired,
-  handleDrawerToggle: PropTypes.func.isRequired,
-};
-
-export default Navigation;

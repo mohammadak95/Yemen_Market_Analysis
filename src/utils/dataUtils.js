@@ -9,9 +9,9 @@ const ENV = process.env.NODE_ENV;
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const isGitHubPages = PUBLIC_URL.includes('github.io');
 const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
-const CACHE_DURATION = parseInt(process.env.REACT_APP_CACHE_DURATION, 10) || 3600000; // 1 hour
-const RETRY_ATTEMPTS = 3;
-const RETRY_DELAY = 1000; // in milliseconds
+export const CACHE_DURATION = parseInt(process.env.REACT_APP_CACHE_DURATION, 10) || 3600000; // 1 hour
+export const RETRY_ATTEMPTS = 3;
+export const RETRY_DELAY = 1000; // in milliseconds
 
 /**
  * Constructs the data path based on the current environment.

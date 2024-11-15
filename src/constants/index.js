@@ -94,3 +94,9 @@ export const VISUALIZATION_MODES = {
       'analysis_notes'
     ]
   };
+
+  export const REGIMES = {
+    North: 'north',
+    South: 'south',
+    Uunified: 'unified'
+  };

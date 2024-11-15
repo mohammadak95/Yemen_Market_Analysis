@@ -1023,3 +1023,703 @@
 2024-11-14 15:12:41,328 - INFO - Attempting to save data for 'wheat flour' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wheat_flour.json'.
 2024-11-14 15:12:41,330 - INFO - Data for 'wheat flour' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wheat_flour.json'.
 2024-11-14 15:12:41,330 - INFO - All commodities have been processed and saved.
+2024-11-14 20:11:53,104 - INFO - Loaded geo boundaries from './data/geoBoundaries-YEM-ADM1.geojson'.
+2024-11-14 20:11:53,232 - INFO - Loaded unified data from './data/enhanced_unified_data_with_residual.geojson'.
+2024-11-14 20:11:53,343 - INFO - Loaded flow maps data from './data/time_varying_flows.csv'.
+2024-11-14 20:11:53,343 - INFO - Loaded weights data from './data/transformed_spatial_weights.json'.
+2024-11-14 20:11:53,343 - INFO - Starting preprocessing of commodities.
+2024-11-14 20:11:53,347 - INFO - Found 21 unique commodities.
+2024-11-14 20:11:53,347 - INFO - Processing commodity: beans (kidney red)
+2024-11-14 20:11:53,350 - INFO - Processed 949 features for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,362 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:53,362 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:53,366 - INFO - Processed time series data for commodity 'beans (kidney red)' with 46 records.
+2024-11-14 20:11:53,367 - INFO - Detected 434 market shocks for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,367 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:53,367 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:53,367 - INFO - Identified 2 market clusters for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,570 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:53,615 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:53,615 - INFO - Calculated cluster efficiency for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,630 - INFO - Filtered flow data for commodity 'beans (kidney red)' with 4252 records.
+2024-11-14 20:11:53,637 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:11:53,637 - INFO - Completed flow analysis for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,756 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:53,763 - INFO - Global Moran's I calculated: I=0.1444795205231776, p-value=nan, z-score=nan
+2024-11-14 20:11:53,799 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:53,835 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:53,835 - INFO - Computed spatial autocorrelation for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,859 - INFO - Seasonal components calculated.
+2024-11-14 20:11:53,859 - INFO - Calculated seasonal analysis for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,860 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:53,860 - INFO - Calculated conflict-adjusted metrics for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,860 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:53,864 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:53,864 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:53,864 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:53,864 - INFO - Calculated market integration metrics for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,881 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:53,881 - INFO - Performed enhanced shock detection for commodity 'beans (kidney red)'.
+2024-11-14 20:11:53,881 - INFO - Attempting to save data for 'beans (kidney red)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_beans_kidney_red.json'.
+2024-11-14 20:11:53,883 - INFO - Data for 'beans (kidney red)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_beans_kidney_red.json'.
+2024-11-14 20:11:53,883 - INFO - Processing commodity: beans (white)
+2024-11-14 20:11:53,886 - INFO - Processed 1009 features for commodity 'beans (white)'.
+2024-11-14 20:11:53,896 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:53,896 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:53,899 - INFO - Processed time series data for commodity 'beans (white)' with 47 records.
+2024-11-14 20:11:53,900 - INFO - Detected 506 market shocks for commodity 'beans (white)'.
+2024-11-14 20:11:53,900 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:53,900 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:53,900 - INFO - Identified 2 market clusters for commodity 'beans (white)'.
+2024-11-14 20:11:54,104 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:54,149 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:54,149 - INFO - Calculated cluster efficiency for commodity 'beans (white)'.
+2024-11-14 20:11:54,163 - INFO - Filtered flow data for commodity 'beans (white)' with 4441 records.
+2024-11-14 20:11:54,169 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:11:54,169 - INFO - Completed flow analysis for commodity 'beans (white)'.
+2024-11-14 20:11:54,302 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:54,306 - INFO - Global Moran's I calculated: I=0.14962222068347564, p-value=nan, z-score=nan
+2024-11-14 20:11:54,345 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:54,383 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:54,384 - INFO - Computed spatial autocorrelation for commodity 'beans (white)'.
+2024-11-14 20:11:54,386 - INFO - Seasonal components calculated.
+2024-11-14 20:11:54,387 - INFO - Calculated seasonal analysis for commodity 'beans (white)'.
+2024-11-14 20:11:54,387 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:54,387 - INFO - Calculated conflict-adjusted metrics for commodity 'beans (white)'.
+2024-11-14 20:11:54,387 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:54,391 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:54,391 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:54,391 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:54,391 - INFO - Calculated market integration metrics for commodity 'beans (white)'.
+2024-11-14 20:11:54,408 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:54,408 - INFO - Performed enhanced shock detection for commodity 'beans (white)'.
+2024-11-14 20:11:54,408 - INFO - Attempting to save data for 'beans (white)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_beans_white.json'.
+2024-11-14 20:11:54,411 - INFO - Data for 'beans (white)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_beans_white.json'.
+2024-11-14 20:11:54,411 - INFO - Processing commodity: eggs
+2024-11-14 20:11:54,413 - INFO - Processed 1009 features for commodity 'eggs'.
+2024-11-14 20:11:54,427 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:54,427 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:54,430 - INFO - Processed time series data for commodity 'eggs' with 47 records.
+2024-11-14 20:11:54,431 - INFO - Detected 499 market shocks for commodity 'eggs'.
+2024-11-14 20:11:54,431 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:54,431 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:54,431 - INFO - Identified 2 market clusters for commodity 'eggs'.
+2024-11-14 20:11:54,654 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:54,700 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:54,700 - INFO - Calculated cluster efficiency for commodity 'eggs'.
+2024-11-14 20:11:54,713 - INFO - Filtered flow data for commodity 'eggs' with 1732 records.
+2024-11-14 20:11:54,717 - INFO - Completed flow analysis with 77 flow pairs.
+2024-11-14 20:11:54,717 - INFO - Completed flow analysis for commodity 'eggs'.
+2024-11-14 20:11:54,851 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:54,855 - INFO - Global Moran's I calculated: I=0.14783638383503597, p-value=nan, z-score=nan
+2024-11-14 20:11:54,895 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:54,934 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:54,935 - INFO - Computed spatial autocorrelation for commodity 'eggs'.
+2024-11-14 20:11:54,937 - INFO - Seasonal components calculated.
+2024-11-14 20:11:54,938 - INFO - Calculated seasonal analysis for commodity 'eggs'.
+2024-11-14 20:11:54,938 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:54,938 - INFO - Calculated conflict-adjusted metrics for commodity 'eggs'.
+2024-11-14 20:11:54,938 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:54,942 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:54,942 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:54,942 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:54,942 - INFO - Calculated market integration metrics for commodity 'eggs'.
+2024-11-14 20:11:54,960 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:54,960 - INFO - Performed enhanced shock detection for commodity 'eggs'.
+2024-11-14 20:11:54,960 - INFO - Attempting to save data for 'eggs' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_eggs.json'.
+2024-11-14 20:11:54,962 - INFO - Data for 'eggs' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_eggs.json'.
+2024-11-14 20:11:54,962 - INFO - Processing commodity: exchange rate (unofficial)
+2024-11-14 20:11:54,965 - INFO - Processed 1053 features for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:54,976 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:54,976 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:54,979 - INFO - Processed time series data for commodity 'exchange rate (unofficial)' with 47 records.
+2024-11-14 20:11:54,980 - INFO - Detected 492 market shocks for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:54,980 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:54,980 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:54,980 - INFO - Identified 2 market clusters for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:55,188 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:55,234 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:55,234 - INFO - Calculated cluster efficiency for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:55,247 - INFO - Filtered flow data for commodity 'exchange rate (unofficial)' with 1325 records.
+2024-11-14 20:11:55,249 - INFO - Completed flow analysis with 35 flow pairs.
+2024-11-14 20:11:55,249 - INFO - Completed flow analysis for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:55,393 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:55,398 - INFO - Global Moran's I calculated: I=0.18496209031625724, p-value=nan, z-score=nan
+2024-11-14 20:11:55,440 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:55,480 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:55,481 - INFO - Computed spatial autocorrelation for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:55,483 - INFO - Seasonal components calculated.
+2024-11-14 20:11:55,484 - INFO - Calculated seasonal analysis for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:55,484 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:55,484 - INFO - Calculated conflict-adjusted metrics for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:55,484 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:55,488 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:55,488 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:55,488 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:55,488 - INFO - Calculated market integration metrics for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:55,506 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:55,506 - INFO - Performed enhanced shock detection for commodity 'exchange rate (unofficial)'.
+2024-11-14 20:11:55,506 - INFO - Attempting to save data for 'exchange rate (unofficial)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_exchange_rate_unofficial.json'.
+2024-11-14 20:11:55,508 - INFO - Data for 'exchange rate (unofficial)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_exchange_rate_unofficial.json'.
+2024-11-14 20:11:55,508 - INFO - Processing commodity: fuel (diesel)
+2024-11-14 20:11:55,511 - INFO - Processed 1009 features for commodity 'fuel (diesel)'.
+2024-11-14 20:11:55,522 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:55,522 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:55,525 - INFO - Processed time series data for commodity 'fuel (diesel)' with 47 records.
+2024-11-14 20:11:55,526 - INFO - Detected 556 market shocks for commodity 'fuel (diesel)'.
+2024-11-14 20:11:55,526 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:55,526 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:55,526 - INFO - Identified 2 market clusters for commodity 'fuel (diesel)'.
+2024-11-14 20:11:55,732 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:55,778 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:55,778 - INFO - Calculated cluster efficiency for commodity 'fuel (diesel)'.
+2024-11-14 20:11:55,791 - INFO - Filtered flow data for commodity 'fuel (diesel)' with 3937 records.
+2024-11-14 20:11:55,797 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:11:55,797 - INFO - Completed flow analysis for commodity 'fuel (diesel)'.
+2024-11-14 20:11:55,925 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:55,929 - INFO - Global Moran's I calculated: I=0.06655834066080195, p-value=nan, z-score=nan
+2024-11-14 20:11:55,968 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:56,007 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:56,007 - INFO - Computed spatial autocorrelation for commodity 'fuel (diesel)'.
+2024-11-14 20:11:56,009 - INFO - Seasonal components calculated.
+2024-11-14 20:11:56,010 - INFO - Calculated seasonal analysis for commodity 'fuel (diesel)'.
+2024-11-14 20:11:56,010 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:56,010 - INFO - Calculated conflict-adjusted metrics for commodity 'fuel (diesel)'.
+2024-11-14 20:11:56,010 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:56,014 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:56,014 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:56,014 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:56,014 - INFO - Calculated market integration metrics for commodity 'fuel (diesel)'.
+2024-11-14 20:11:56,032 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:56,033 - INFO - Performed enhanced shock detection for commodity 'fuel (diesel)'.
+2024-11-14 20:11:56,033 - INFO - Attempting to save data for 'fuel (diesel)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_fuel_diesel.json'.
+2024-11-14 20:11:56,035 - INFO - Data for 'fuel (diesel)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_fuel_diesel.json'.
+2024-11-14 20:11:56,035 - INFO - Processing commodity: fuel (gas)
+2024-11-14 20:11:56,037 - INFO - Processed 1056 features for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,050 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:56,050 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:56,053 - INFO - Processed time series data for commodity 'fuel (gas)' with 47 records.
+2024-11-14 20:11:56,054 - INFO - Detected 553 market shocks for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,054 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:56,054 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:56,054 - INFO - Identified 2 market clusters for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,262 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:56,308 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:56,308 - INFO - Calculated cluster efficiency for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,322 - INFO - Filtered flow data for commodity 'fuel (gas)' with 4847 records.
+2024-11-14 20:11:56,328 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:11:56,328 - INFO - Completed flow analysis for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,470 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:56,475 - INFO - Global Moran's I calculated: I=0.01301668829143156, p-value=nan, z-score=nan
+2024-11-14 20:11:56,518 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:56,561 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:56,562 - INFO - Computed spatial autocorrelation for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,565 - INFO - Seasonal components calculated.
+2024-11-14 20:11:56,565 - INFO - Calculated seasonal analysis for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,565 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:56,565 - INFO - Calculated conflict-adjusted metrics for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,565 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:56,570 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:56,570 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:56,570 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:56,570 - INFO - Calculated market integration metrics for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,590 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:56,590 - INFO - Performed enhanced shock detection for commodity 'fuel (gas)'.
+2024-11-14 20:11:56,590 - INFO - Attempting to save data for 'fuel (gas)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_fuel_gas.json'.
+2024-11-14 20:11:56,593 - INFO - Data for 'fuel (gas)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_fuel_gas.json'.
+2024-11-14 20:11:56,593 - INFO - Processing commodity: fuel (petrol-gasoline)
+2024-11-14 20:11:56,595 - INFO - Processed 1056 features for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:56,608 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:56,608 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:56,611 - INFO - Processed time series data for commodity 'fuel (petrol-gasoline)' with 47 records.
+2024-11-14 20:11:56,612 - INFO - Detected 567 market shocks for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:56,612 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:56,612 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:56,612 - INFO - Identified 2 market clusters for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:56,827 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:56,873 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:56,873 - INFO - Calculated cluster efficiency for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:56,886 - INFO - Filtered flow data for commodity 'fuel (petrol-gasoline)' with 3904 records.
+2024-11-14 20:11:56,892 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:11:56,892 - INFO - Completed flow analysis for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:57,035 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:57,040 - INFO - Global Moran's I calculated: I=0.0695180369891353, p-value=nan, z-score=nan
+2024-11-14 20:11:57,082 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:57,123 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:57,123 - INFO - Computed spatial autocorrelation for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:57,126 - INFO - Seasonal components calculated.
+2024-11-14 20:11:57,126 - INFO - Calculated seasonal analysis for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:57,126 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:57,126 - INFO - Calculated conflict-adjusted metrics for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:57,126 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:57,130 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:57,130 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:57,130 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:57,130 - INFO - Calculated market integration metrics for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:57,148 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:57,148 - INFO - Performed enhanced shock detection for commodity 'fuel (petrol-gasoline)'.
+2024-11-14 20:11:57,149 - INFO - Attempting to save data for 'fuel (petrol-gasoline)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_fuel_petrol-gasoline.json'.
+2024-11-14 20:11:57,150 - INFO - Data for 'fuel (petrol-gasoline)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_fuel_petrol-gasoline.json'.
+2024-11-14 20:11:57,150 - INFO - Processing commodity: lentils
+2024-11-14 20:11:57,153 - INFO - Processed 1008 features for commodity 'lentils'.
+2024-11-14 20:11:57,166 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:57,166 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:57,169 - INFO - Processed time series data for commodity 'lentils' with 47 records.
+2024-11-14 20:11:57,170 - INFO - Detected 488 market shocks for commodity 'lentils'.
+2024-11-14 20:11:57,171 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:57,171 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:57,171 - INFO - Identified 2 market clusters for commodity 'lentils'.
+2024-11-14 20:11:57,377 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:57,422 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:57,422 - INFO - Calculated cluster efficiency for commodity 'lentils'.
+2024-11-14 20:11:57,436 - INFO - Filtered flow data for commodity 'lentils' with 4532 records.
+2024-11-14 20:11:57,442 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:11:57,442 - INFO - Completed flow analysis for commodity 'lentils'.
+2024-11-14 20:11:57,575 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:57,579 - INFO - Global Moran's I calculated: I=0.15292733126895705, p-value=nan, z-score=nan
+2024-11-14 20:11:57,618 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:57,656 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:57,656 - INFO - Computed spatial autocorrelation for commodity 'lentils'.
+2024-11-14 20:11:57,659 - INFO - Seasonal components calculated.
+2024-11-14 20:11:57,659 - INFO - Calculated seasonal analysis for commodity 'lentils'.
+2024-11-14 20:11:57,659 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:57,659 - INFO - Calculated conflict-adjusted metrics for commodity 'lentils'.
+2024-11-14 20:11:57,660 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:57,663 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:57,663 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:57,663 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:57,663 - INFO - Calculated market integration metrics for commodity 'lentils'.
+2024-11-14 20:11:57,681 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:57,681 - INFO - Performed enhanced shock detection for commodity 'lentils'.
+2024-11-14 20:11:57,681 - INFO - Attempting to save data for 'lentils' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_lentils.json'.
+2024-11-14 20:11:57,683 - INFO - Data for 'lentils' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_lentils.json'.
+2024-11-14 20:11:57,683 - INFO - Processing commodity: milling cost (wheat)
+2024-11-14 20:11:57,686 - INFO - Processed 961 features for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:57,698 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:57,698 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:57,701 - INFO - Processed time series data for commodity 'milling cost (wheat)' with 47 records.
+2024-11-14 20:11:57,702 - INFO - Detected 465 market shocks for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:57,702 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:57,702 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:57,702 - INFO - Identified 2 market clusters for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:58,079 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:58,126 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:58,126 - INFO - Calculated cluster efficiency for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:58,139 - INFO - Filtered flow data for commodity 'milling cost (wheat)' with 4673 records.
+2024-11-14 20:11:58,145 - INFO - Completed flow analysis with 103 flow pairs.
+2024-11-14 20:11:58,145 - INFO - Completed flow analysis for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:58,274 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:58,279 - INFO - Global Moran's I calculated: I=0.10799168628174471, p-value=nan, z-score=nan
+2024-11-14 20:11:58,316 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:58,353 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:58,354 - INFO - Computed spatial autocorrelation for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:58,356 - INFO - Seasonal components calculated.
+2024-11-14 20:11:58,357 - INFO - Calculated seasonal analysis for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:58,357 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:58,357 - INFO - Calculated conflict-adjusted metrics for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:58,357 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:58,361 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:58,361 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:58,361 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:58,361 - INFO - Calculated market integration metrics for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:58,378 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:58,379 - INFO - Performed enhanced shock detection for commodity 'milling cost (wheat)'.
+2024-11-14 20:11:58,379 - INFO - Attempting to save data for 'milling cost (wheat)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_milling_cost_wheat.json'.
+2024-11-14 20:11:58,380 - INFO - Data for 'milling cost (wheat)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_milling_cost_wheat.json'.
+2024-11-14 20:11:58,380 - INFO - Processing commodity: oil (vegetable)
+2024-11-14 20:11:58,383 - INFO - Processed 1056 features for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,394 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:58,394 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:58,396 - INFO - Processed time series data for commodity 'oil (vegetable)' with 47 records.
+2024-11-14 20:11:58,397 - INFO - Detected 553 market shocks for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,397 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:58,397 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:58,397 - INFO - Identified 2 market clusters for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,606 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:58,657 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:58,658 - INFO - Calculated cluster efficiency for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,671 - INFO - Filtered flow data for commodity 'oil (vegetable)' with 4132 records.
+2024-11-14 20:11:58,677 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:11:58,677 - INFO - Completed flow analysis for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,824 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:58,830 - INFO - Global Moran's I calculated: I=0.11161220521254664, p-value=nan, z-score=nan
+2024-11-14 20:11:58,872 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:58,913 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:58,914 - INFO - Computed spatial autocorrelation for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,917 - INFO - Seasonal components calculated.
+2024-11-14 20:11:58,917 - INFO - Calculated seasonal analysis for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,917 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:58,917 - INFO - Calculated conflict-adjusted metrics for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,917 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:58,921 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:58,921 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:58,921 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:58,921 - INFO - Calculated market integration metrics for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,939 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:58,940 - INFO - Performed enhanced shock detection for commodity 'oil (vegetable)'.
+2024-11-14 20:11:58,940 - INFO - Attempting to save data for 'oil (vegetable)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_oil_vegetable.json'.
+2024-11-14 20:11:58,942 - INFO - Data for 'oil (vegetable)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_oil_vegetable.json'.
+2024-11-14 20:11:58,942 - INFO - Processing commodity: onions
+2024-11-14 20:11:58,945 - INFO - Processed 1056 features for commodity 'onions'.
+2024-11-14 20:11:58,957 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:58,957 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:58,960 - INFO - Processed time series data for commodity 'onions' with 47 records.
+2024-11-14 20:11:58,961 - INFO - Detected 666 market shocks for commodity 'onions'.
+2024-11-14 20:11:58,961 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:58,961 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:58,961 - INFO - Identified 2 market clusters for commodity 'onions'.
+2024-11-14 20:11:59,173 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:59,218 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:59,218 - INFO - Calculated cluster efficiency for commodity 'onions'.
+2024-11-14 20:11:59,231 - INFO - Filtered flow data for commodity 'onions' with 4260 records.
+2024-11-14 20:11:59,237 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:11:59,237 - INFO - Completed flow analysis for commodity 'onions'.
+2024-11-14 20:11:59,380 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:59,385 - INFO - Global Moran's I calculated: I=0.09011839340599458, p-value=nan, z-score=nan
+2024-11-14 20:11:59,427 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:59,470 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:59,471 - INFO - Computed spatial autocorrelation for commodity 'onions'.
+2024-11-14 20:11:59,474 - INFO - Seasonal components calculated.
+2024-11-14 20:11:59,474 - INFO - Calculated seasonal analysis for commodity 'onions'.
+2024-11-14 20:11:59,474 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:59,474 - INFO - Calculated conflict-adjusted metrics for commodity 'onions'.
+2024-11-14 20:11:59,474 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:59,478 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:59,478 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:59,478 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:59,478 - INFO - Calculated market integration metrics for commodity 'onions'.
+2024-11-14 20:11:59,502 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:59,502 - INFO - Performed enhanced shock detection for commodity 'onions'.
+2024-11-14 20:11:59,502 - INFO - Attempting to save data for 'onions' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_onions.json'.
+2024-11-14 20:11:59,505 - INFO - Data for 'onions' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_onions.json'.
+2024-11-14 20:11:59,505 - INFO - Processing commodity: peas (yellow, split)
+2024-11-14 20:11:59,508 - INFO - Processed 633 features for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,517 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:59,517 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:59,520 - INFO - Processed time series data for commodity 'peas (yellow, split)' with 47 records.
+2024-11-14 20:11:59,521 - INFO - Detected 305 market shocks for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,521 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:59,521 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:59,521 - INFO - Identified 2 market clusters for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,760 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:11:59,805 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:11:59,805 - INFO - Calculated cluster efficiency for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,819 - INFO - Filtered flow data for commodity 'peas (yellow, split)' with 3992 records.
+2024-11-14 20:11:59,824 - INFO - Completed flow analysis with 88 flow pairs.
+2024-11-14 20:11:59,824 - INFO - Completed flow analysis for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,879 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:11:59,880 - INFO - Global Moran's I calculated: I=0.25730214418060177, p-value=nan, z-score=nan
+2024-11-14 20:11:59,905 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:11:59,929 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:11:59,929 - INFO - Computed spatial autocorrelation for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,931 - INFO - Seasonal components calculated.
+2024-11-14 20:11:59,932 - INFO - Calculated seasonal analysis for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,932 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:11:59,932 - INFO - Calculated conflict-adjusted metrics for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,932 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:11:59,936 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:11:59,936 - INFO - Market accessibility scores calculated.
+2024-11-14 20:11:59,936 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:11:59,936 - INFO - Calculated market integration metrics for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,953 - INFO - Detected 0 market shocks.
+2024-11-14 20:11:59,954 - INFO - Performed enhanced shock detection for commodity 'peas (yellow, split)'.
+2024-11-14 20:11:59,954 - INFO - Attempting to save data for 'peas (yellow, split)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_peas_yellow,_split.json'.
+2024-11-14 20:11:59,955 - INFO - Data for 'peas (yellow, split)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_peas_yellow,_split.json'.
+2024-11-14 20:11:59,955 - INFO - Processing commodity: potatoes
+2024-11-14 20:11:59,958 - INFO - Processed 1056 features for commodity 'potatoes'.
+2024-11-14 20:11:59,969 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:11:59,969 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:11:59,972 - INFO - Processed time series data for commodity 'potatoes' with 47 records.
+2024-11-14 20:11:59,973 - INFO - Detected 660 market shocks for commodity 'potatoes'.
+2024-11-14 20:11:59,973 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:11:59,973 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:11:59,973 - INFO - Identified 2 market clusters for commodity 'potatoes'.
+2024-11-14 20:12:00,181 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:00,229 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:00,229 - INFO - Calculated cluster efficiency for commodity 'potatoes'.
+2024-11-14 20:12:00,242 - INFO - Filtered flow data for commodity 'potatoes' with 3980 records.
+2024-11-14 20:12:00,248 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:12:00,248 - INFO - Completed flow analysis for commodity 'potatoes'.
+2024-11-14 20:12:00,393 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:00,398 - INFO - Global Moran's I calculated: I=0.1608422978154497, p-value=nan, z-score=nan
+2024-11-14 20:12:00,440 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:00,480 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:00,481 - INFO - Computed spatial autocorrelation for commodity 'potatoes'.
+2024-11-14 20:12:00,484 - INFO - Seasonal components calculated.
+2024-11-14 20:12:00,484 - INFO - Calculated seasonal analysis for commodity 'potatoes'.
+2024-11-14 20:12:00,484 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:00,484 - INFO - Calculated conflict-adjusted metrics for commodity 'potatoes'.
+2024-11-14 20:12:00,484 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:00,488 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:00,488 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:00,488 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:00,488 - INFO - Calculated market integration metrics for commodity 'potatoes'.
+2024-11-14 20:12:00,506 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:00,506 - INFO - Performed enhanced shock detection for commodity 'potatoes'.
+2024-11-14 20:12:00,506 - INFO - Attempting to save data for 'potatoes' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_potatoes.json'.
+2024-11-14 20:12:00,508 - INFO - Data for 'potatoes' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_potatoes.json'.
+2024-11-14 20:12:00,508 - INFO - Processing commodity: rice (imported)
+2024-11-14 20:12:00,510 - INFO - Processed 1056 features for commodity 'rice (imported)'.
+2024-11-14 20:12:00,522 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:12:00,522 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:12:00,525 - INFO - Processed time series data for commodity 'rice (imported)' with 47 records.
+2024-11-14 20:12:00,526 - INFO - Detected 476 market shocks for commodity 'rice (imported)'.
+2024-11-14 20:12:00,526 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:12:00,526 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:12:00,526 - INFO - Identified 2 market clusters for commodity 'rice (imported)'.
+2024-11-14 20:12:00,735 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:00,780 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:00,780 - INFO - Calculated cluster efficiency for commodity 'rice (imported)'.
+2024-11-14 20:12:00,793 - INFO - Filtered flow data for commodity 'rice (imported)' with 3930 records.
+2024-11-14 20:12:00,799 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:12:00,799 - INFO - Completed flow analysis for commodity 'rice (imported)'.
+2024-11-14 20:12:00,942 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:00,947 - INFO - Global Moran's I calculated: I=0.12131371928327662, p-value=nan, z-score=nan
+2024-11-14 20:12:00,988 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:01,030 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:01,030 - INFO - Computed spatial autocorrelation for commodity 'rice (imported)'.
+2024-11-14 20:12:01,033 - INFO - Seasonal components calculated.
+2024-11-14 20:12:01,034 - INFO - Calculated seasonal analysis for commodity 'rice (imported)'.
+2024-11-14 20:12:01,034 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:01,034 - INFO - Calculated conflict-adjusted metrics for commodity 'rice (imported)'.
+2024-11-14 20:12:01,034 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:01,038 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:01,038 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:01,038 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:01,038 - INFO - Calculated market integration metrics for commodity 'rice (imported)'.
+2024-11-14 20:12:01,057 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:01,057 - INFO - Performed enhanced shock detection for commodity 'rice (imported)'.
+2024-11-14 20:12:01,057 - INFO - Attempting to save data for 'rice (imported)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_rice_imported.json'.
+2024-11-14 20:12:01,059 - INFO - Data for 'rice (imported)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_rice_imported.json'.
+2024-11-14 20:12:01,059 - INFO - Processing commodity: salt
+2024-11-14 20:12:01,062 - INFO - Processed 1056 features for commodity 'salt'.
+2024-11-14 20:12:01,074 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:12:01,074 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:12:01,076 - INFO - Processed time series data for commodity 'salt' with 47 records.
+2024-11-14 20:12:01,077 - INFO - Detected 525 market shocks for commodity 'salt'.
+2024-11-14 20:12:01,077 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:12:01,077 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:12:01,077 - INFO - Identified 2 market clusters for commodity 'salt'.
+2024-11-14 20:12:01,288 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:01,336 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:01,336 - INFO - Calculated cluster efficiency for commodity 'salt'.
+2024-11-14 20:12:01,349 - INFO - Filtered flow data for commodity 'salt' with 3654 records.
+2024-11-14 20:12:01,355 - INFO - Completed flow analysis with 103 flow pairs.
+2024-11-14 20:12:01,356 - INFO - Completed flow analysis for commodity 'salt'.
+2024-11-14 20:12:01,504 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:01,509 - INFO - Global Moran's I calculated: I=0.1466718151330966, p-value=nan, z-score=nan
+2024-11-14 20:12:01,554 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:01,596 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:01,596 - INFO - Computed spatial autocorrelation for commodity 'salt'.
+2024-11-14 20:12:01,599 - INFO - Seasonal components calculated.
+2024-11-14 20:12:01,599 - INFO - Calculated seasonal analysis for commodity 'salt'.
+2024-11-14 20:12:01,599 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:01,599 - INFO - Calculated conflict-adjusted metrics for commodity 'salt'.
+2024-11-14 20:12:01,599 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:01,603 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:01,603 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:01,603 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:01,603 - INFO - Calculated market integration metrics for commodity 'salt'.
+2024-11-14 20:12:01,621 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:01,621 - INFO - Performed enhanced shock detection for commodity 'salt'.
+2024-11-14 20:12:01,621 - INFO - Attempting to save data for 'salt' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_salt.json'.
+2024-11-14 20:12:01,623 - INFO - Data for 'salt' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_salt.json'.
+2024-11-14 20:12:01,623 - INFO - Processing commodity: sugar
+2024-11-14 20:12:01,625 - INFO - Processed 1056 features for commodity 'sugar'.
+2024-11-14 20:12:01,636 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:12:01,636 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:12:01,639 - INFO - Processed time series data for commodity 'sugar' with 47 records.
+2024-11-14 20:12:01,641 - INFO - Detected 488 market shocks for commodity 'sugar'.
+2024-11-14 20:12:01,641 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:12:01,641 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:12:01,641 - INFO - Identified 2 market clusters for commodity 'sugar'.
+2024-11-14 20:12:01,867 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:01,915 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:01,915 - INFO - Calculated cluster efficiency for commodity 'sugar'.
+2024-11-14 20:12:01,929 - INFO - Filtered flow data for commodity 'sugar' with 3027 records.
+2024-11-14 20:12:01,935 - INFO - Completed flow analysis with 103 flow pairs.
+2024-11-14 20:12:01,935 - INFO - Completed flow analysis for commodity 'sugar'.
+2024-11-14 20:12:02,082 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:02,089 - INFO - Global Moran's I calculated: I=0.14797245142612644, p-value=nan, z-score=nan
+2024-11-14 20:12:02,131 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:02,174 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:02,174 - INFO - Computed spatial autocorrelation for commodity 'sugar'.
+2024-11-14 20:12:02,177 - INFO - Seasonal components calculated.
+2024-11-14 20:12:02,177 - INFO - Calculated seasonal analysis for commodity 'sugar'.
+2024-11-14 20:12:02,177 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:02,177 - INFO - Calculated conflict-adjusted metrics for commodity 'sugar'.
+2024-11-14 20:12:02,177 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:02,181 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:02,182 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:02,182 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:02,182 - INFO - Calculated market integration metrics for commodity 'sugar'.
+2024-11-14 20:12:02,201 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:02,201 - INFO - Performed enhanced shock detection for commodity 'sugar'.
+2024-11-14 20:12:02,201 - INFO - Attempting to save data for 'sugar' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_sugar.json'.
+2024-11-14 20:12:02,204 - INFO - Data for 'sugar' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_sugar.json'.
+2024-11-14 20:12:02,204 - INFO - Processing commodity: tomatoes
+2024-11-14 20:12:02,208 - INFO - Processed 1056 features for commodity 'tomatoes'.
+2024-11-14 20:12:02,224 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:12:02,224 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:12:02,227 - INFO - Processed time series data for commodity 'tomatoes' with 47 records.
+2024-11-14 20:12:02,228 - INFO - Detected 776 market shocks for commodity 'tomatoes'.
+2024-11-14 20:12:02,228 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:12:02,228 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:12:02,228 - INFO - Identified 2 market clusters for commodity 'tomatoes'.
+2024-11-14 20:12:02,442 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:02,488 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:02,488 - INFO - Calculated cluster efficiency for commodity 'tomatoes'.
+2024-11-14 20:12:02,501 - INFO - Filtered flow data for commodity 'tomatoes' with 4253 records.
+2024-11-14 20:12:02,507 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:12:02,507 - INFO - Completed flow analysis for commodity 'tomatoes'.
+2024-11-14 20:12:02,651 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:02,656 - INFO - Global Moran's I calculated: I=0.12336010853295025, p-value=nan, z-score=nan
+2024-11-14 20:12:02,696 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:02,801 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:02,805 - INFO - Computed spatial autocorrelation for commodity 'tomatoes'.
+2024-11-14 20:12:02,809 - INFO - Seasonal components calculated.
+2024-11-14 20:12:02,809 - INFO - Calculated seasonal analysis for commodity 'tomatoes'.
+2024-11-14 20:12:02,810 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:02,810 - INFO - Calculated conflict-adjusted metrics for commodity 'tomatoes'.
+2024-11-14 20:12:02,810 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:02,816 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:02,816 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:02,816 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:02,816 - INFO - Calculated market integration metrics for commodity 'tomatoes'.
+2024-11-14 20:12:02,844 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:02,844 - INFO - Performed enhanced shock detection for commodity 'tomatoes'.
+2024-11-14 20:12:02,844 - INFO - Attempting to save data for 'tomatoes' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_tomatoes.json'.
+2024-11-14 20:12:02,847 - INFO - Data for 'tomatoes' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_tomatoes.json'.
+2024-11-14 20:12:02,847 - INFO - Processing commodity: wage (non-qualified labour)
+2024-11-14 20:12:02,850 - INFO - Processed 1055 features for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:02,864 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:12:02,864 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:12:02,867 - INFO - Processed time series data for commodity 'wage (non-qualified labour)' with 47 records.
+2024-11-14 20:12:02,868 - INFO - Detected 496 market shocks for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:02,868 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:12:02,868 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:12:02,868 - INFO - Identified 2 market clusters for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:03,088 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:03,133 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:03,133 - INFO - Calculated cluster efficiency for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:03,146 - INFO - Filtered flow data for commodity 'wage (non-qualified labour)' with 4927 records.
+2024-11-14 20:12:03,152 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:12:03,152 - INFO - Completed flow analysis for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:03,296 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:03,300 - INFO - Global Moran's I calculated: I=0.0034683816744766785, p-value=nan, z-score=nan
+2024-11-14 20:12:03,341 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:03,381 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:03,382 - INFO - Computed spatial autocorrelation for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:03,384 - INFO - Seasonal components calculated.
+2024-11-14 20:12:03,385 - INFO - Calculated seasonal analysis for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:03,385 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:03,385 - INFO - Calculated conflict-adjusted metrics for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:03,385 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:03,388 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:03,388 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:03,388 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:03,389 - INFO - Calculated market integration metrics for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:03,406 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:03,406 - INFO - Performed enhanced shock detection for commodity 'wage (non-qualified labour)'.
+2024-11-14 20:12:03,406 - INFO - Attempting to save data for 'wage (non-qualified labour)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wage_non-qualified_labour.json'.
+2024-11-14 20:12:03,407 - INFO - Data for 'wage (non-qualified labour)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wage_non-qualified_labour.json'.
+2024-11-14 20:12:03,407 - INFO - Processing commodity: wage (qualified labour)
+2024-11-14 20:12:03,410 - INFO - Processed 1055 features for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,421 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:12:03,421 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:12:03,424 - INFO - Processed time series data for commodity 'wage (qualified labour)' with 47 records.
+2024-11-14 20:12:03,425 - INFO - Detected 486 market shocks for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,425 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:12:03,425 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:12:03,425 - INFO - Identified 2 market clusters for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,627 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:03,671 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:03,671 - INFO - Calculated cluster efficiency for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,684 - INFO - Filtered flow data for commodity 'wage (qualified labour)' with 4922 records.
+2024-11-14 20:12:03,690 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:12:03,690 - INFO - Completed flow analysis for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,833 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:03,837 - INFO - Global Moran's I calculated: I=-0.0034898998702761574, p-value=nan, z-score=nan
+2024-11-14 20:12:03,877 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:03,917 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:03,918 - INFO - Computed spatial autocorrelation for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,920 - INFO - Seasonal components calculated.
+2024-11-14 20:12:03,921 - INFO - Calculated seasonal analysis for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,921 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:03,921 - INFO - Calculated conflict-adjusted metrics for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,921 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:03,925 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:03,925 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:03,925 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:03,925 - INFO - Calculated market integration metrics for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,942 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:03,942 - INFO - Performed enhanced shock detection for commodity 'wage (qualified labour)'.
+2024-11-14 20:12:03,942 - INFO - Attempting to save data for 'wage (qualified labour)' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wage_qualified_labour.json'.
+2024-11-14 20:12:03,944 - INFO - Data for 'wage (qualified labour)' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wage_qualified_labour.json'.
+2024-11-14 20:12:03,944 - INFO - Processing commodity: wheat
+2024-11-14 20:12:03,946 - INFO - Processed 1054 features for commodity 'wheat'.
+2024-11-14 20:12:03,957 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:12:03,957 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:12:03,960 - INFO - Processed time series data for commodity 'wheat' with 47 records.
+2024-11-14 20:12:03,961 - INFO - Detected 494 market shocks for commodity 'wheat'.
+2024-11-14 20:12:03,961 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:12:03,961 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:12:03,961 - INFO - Identified 2 market clusters for commodity 'wheat'.
+2024-11-14 20:12:04,163 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:04,211 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:04,211 - INFO - Calculated cluster efficiency for commodity 'wheat'.
+2024-11-14 20:12:04,225 - INFO - Filtered flow data for commodity 'wheat' with 3623 records.
+2024-11-14 20:12:04,231 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:12:04,231 - INFO - Completed flow analysis for commodity 'wheat'.
+2024-11-14 20:12:04,374 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:04,379 - INFO - Global Moran's I calculated: I=0.16685675896268692, p-value=nan, z-score=nan
+2024-11-14 20:12:04,420 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:04,460 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:04,461 - INFO - Computed spatial autocorrelation for commodity 'wheat'.
+2024-11-14 20:12:04,463 - INFO - Seasonal components calculated.
+2024-11-14 20:12:04,464 - INFO - Calculated seasonal analysis for commodity 'wheat'.
+2024-11-14 20:12:04,464 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:04,464 - INFO - Calculated conflict-adjusted metrics for commodity 'wheat'.
+2024-11-14 20:12:04,464 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:04,468 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:04,468 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:04,468 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:04,468 - INFO - Calculated market integration metrics for commodity 'wheat'.
+2024-11-14 20:12:04,484 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:04,485 - INFO - Performed enhanced shock detection for commodity 'wheat'.
+2024-11-14 20:12:04,485 - INFO - Attempting to save data for 'wheat' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wheat.json'.
+2024-11-14 20:12:04,486 - INFO - Data for 'wheat' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wheat.json'.
+2024-11-14 20:12:04,486 - INFO - Processing commodity: wheat flour
+2024-11-14 20:12:04,489 - INFO - Processed 1056 features for commodity 'wheat flour'.
+2024-11-14 20:12:04,500 - INFO - GARCH(1,1) model fitted successfully.
+2024-11-14 20:12:04,500 - ERROR - GARCH model fitting failed: 'numpy.ndarray' object has no attribute 'values'
+2024-11-14 20:12:04,503 - INFO - Processed time series data for commodity 'wheat flour' with 47 records.
+2024-11-14 20:12:04,503 - INFO - Detected 504 market shocks for commodity 'wheat flour'.
+2024-11-14 20:12:04,504 - INFO - Formed cluster 1 with 17 markets.
+2024-11-14 20:12:04,504 - INFO - Formed cluster 2 with 4 markets.
+2024-11-14 20:12:04,504 - INFO - Identified 2 market clusters for commodity 'wheat flour'.
+2024-11-14 20:12:04,709 - INFO - Calculated efficiency for cluster 1: 22.596556636378605
+2024-11-14 20:12:04,754 - INFO - Calculated efficiency for cluster 2: 3.243314586760071
+2024-11-14 20:12:04,754 - INFO - Calculated cluster efficiency for commodity 'wheat flour'.
+2024-11-14 20:12:04,767 - INFO - Filtered flow data for commodity 'wheat flour' with 3315 records.
+2024-11-14 20:12:04,772 - INFO - Completed flow analysis with 105 flow pairs.
+2024-11-14 20:12:04,772 - INFO - Completed flow analysis for commodity 'wheat flour'.
+2024-11-14 20:12:04,921 - INFO - Spatial weights matrix created and row-standardized.
+2024-11-14 20:12:04,926 - INFO - Global Moran's I calculated: I=0.14427034370458489, p-value=nan, z-score=nan
+2024-11-14 20:12:04,967 - INFO - Local Moran's I statistics calculated.
+2024-11-14 20:12:05,008 - INFO - Getis-Ord Gi* statistics calculated.
+2024-11-14 20:12:05,008 - INFO - Computed spatial autocorrelation for commodity 'wheat flour'.
+2024-11-14 20:12:05,011 - INFO - Seasonal components calculated.
+2024-11-14 20:12:05,011 - INFO - Calculated seasonal analysis for commodity 'wheat flour'.
+2024-11-14 20:12:05,011 - ERROR - Error calculating conflict-adjusted metrics: 'commodity'
+2024-11-14 20:12:05,011 - INFO - Calculated conflict-adjusted metrics for commodity 'wheat flour'.
+2024-11-14 20:12:05,011 - ERROR - Error calculating price correlations: 'avgUsdPrice'
+2024-11-14 20:12:05,015 - INFO - Flow density calculated: 6574.855258796904
+2024-11-14 20:12:05,015 - INFO - Market accessibility scores calculated.
+2024-11-14 20:12:05,015 - INFO - Market integration score calculated: 2193.2850862656346
+2024-11-14 20:12:05,015 - INFO - Calculated market integration metrics for commodity 'wheat flour'.
+2024-11-14 20:12:05,032 - INFO - Detected 0 market shocks.
+2024-11-14 20:12:05,032 - INFO - Performed enhanced shock detection for commodity 'wheat flour'.
+2024-11-14 20:12:05,032 - INFO - Attempting to save data for 'wheat flour' to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wheat_flour.json'.
+2024-11-14 20:12:05,034 - INFO - Data for 'wheat flour' saved successfully to './data/preprocessed_by_commodity/preprocessed_yemen_market_data_wheat_flour.json'.
+2024-11-14 20:12:05,035 - INFO - All commodities have been processed and saved.

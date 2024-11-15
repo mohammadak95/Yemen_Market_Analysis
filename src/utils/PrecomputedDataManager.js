@@ -1,877 +1,571 @@
 // src/utils/PrecomputedDataManager.js
 
 import Papa from 'papaparse';
-import LZString from 'lz-string';
-import proj4 from 'proj4';
-import JSON5 from 'json5';
 import { backgroundMonitor } from './backgroundMonitor';
-import { getDataPath } from './dataUtils';
-import { dataLoadingMonitor } from './dataMonitoring';
-
-// Projection setup
-const WGS84 = 'EPSG:4326';
-const UTM_ZONE_38N = 'EPSG:32638';
-
-proj4.defs(UTM_ZONE_38N, '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs');
-
-// Regions to exclude from processing
-const excludedRegions = [
-  'socotra',
-  'unknown',
-  'undefined',
-  'other',
-];
-
-// Define region mappings
-const REGION_MAPPINGS = {
-  "sanaa": ["san'a'", "san_a__governorate", "sana'a", "sanʿaʾ", "amanat al asimah", "sana'a city", "amanat_al_asimah"],
-  "lahj": ["lahij_governorate", "lahij", "lahj_governorate"],
-  "aden": ["_adan_governorate", "aden", "'adan governorate", "adan_governorate"],
-  "hodeidah": ["al_hudaydah_governorate", "al hudaydah", "hudaydah", "al_hudaydah"],
-  "taizz": ["taizz_governorate", "taizz", "taiz", "ta'izz"],
-  "shabwah": ["shabwah_governorate", "shabwah", "shabwa"],
-  "hadramaut": ["hadhramaut", "hadramaut", "hadhramout"],
-  "abyan": ["abyan_governorate", "abyan"],
-  "al_jawf": ["al_jawf_governorate", "al jawf"],
-  "ibb": ["ibb_governorate", "ibb"],
-  "al_bayda": ["al_bayda__governorate", "al bayda", "al_bayda_governorate"],
-  "al_dhale": ["ad_dali__governorate", "al dhale'e", "al_dhale_e", "ad dali governorate"],
-  "al_mahwit": ["al_mahwit_governorate", "al mahwit"],
-  "hajjah": ["hajjah_governorate", "hajjah"],
-  "dhamar": ["dhamar_governorate", "dhamar"],
-  "amran": ["_amran_governorate", "amran", "'amran"],
-  "al_maharah": ["al_mahrah_governorate", "al maharah", "mahra"],
-  "marib": ["ma'rib_governorate", "marib", "ma'rib", "marib_governorate"],
-  "raymah": ["raymah_governorate", "raymah"],
-  "socotra": ["socotra", "soqotra", "suqutra"]
-};
-
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
-const RETRY_ATTEMPTS = 3;
-const RETRY_DELAY = 1000; // 1 second
+import { spatialValidation } from './spatialValidation';
+import { spatialDebugUtils } from './spatialDebugUtils';
+import { regionMapping, excludedRegions } from './appUtils';
+import { getDataPath, CACHE_DURATION, RETRY_ATTEMPTS, RETRY_DELAY } from './dataUtils';
+import _ from 'lodash';
 
 class PrecomputedDataManager {
   constructor() {
+    this._isInitialized = false;
+    this._cacheInitialized = false;
+    
+    // Use Maps for better memory management
     this.cache = new Map();
-    this.circuitBreakers = new Map();
     this.pendingRequests = new Map();
     this.geometryCache = new Map();
-    this.mappingCache = new Map();
-    this._isInitialized = false;
-    this.cacheTimeout = CACHE_DURATION;
-    this._cacheInitialized = false;
-    this.monitor = backgroundMonitor;
+    
+    // Configuration using imported constants
     this.config = {
-      cache: { maxSize: 50, ttl: CACHE_DURATION, cleanupInterval: 300000 }, // 5 minutes
-      circuitBreaker: { failureThreshold: 5, resetTimeout: 30000 }, // 30 seconds
-      retry: { maxAttempts: RETRY_ATTEMPTS, baseDelay: RETRY_DELAY },
+      cache: { 
+        maxSize: 50, 
+        ttl: CACHE_DURATION,
+        cleanupInterval: CACHE_DURATION / 6 
+      },
+      retry: { 
+        maxAttempts: RETRY_ATTEMPTS, 
+        baseDelay: RETRY_DELAY 
+      }
     };
-    this.initializeCleanupInterval();
+
+    // Define data paths
+    this.dataPaths = {
+      preprocessedBase: getDataPath('preprocessed_by_commodity'),
+      spatialAnalysis: getDataPath('spatial_analysis_results.json'),
+      spatialWeights: getDataPath('transformed_spatial_weights.json'),
+      geoBoundaries: getDataPath('geoBoundaries-YEM-ADM1.geojson'),
+      enhancedUnified: getDataPath('enhanced_unified_data_with_residual.geojson'),
+      getPreprocessedPath: (commodity) => {
+        const sanitizedCommodity = this.sanitizeCommodityName(commodity);
+        return getDataPath(`preprocessed_by_commodity/preprocessed_yemen_market_data_${sanitizedCommodity}.json`);
+      }
+    };
+
+    if (process.env.NODE_ENV === 'development') {
+      spatialDebugUtils.enableDebug();
+    }
+
+    // Add memory monitoring
+    this.memoryMonitor = {
+      lastCheck: Date.now(),
+      checkInterval: 60000, // 1 minute
+      warningThreshold: 0.8 // 80% of available heap
+    };
   }
 
   async initialize() {
     if (this._isInitialized) return;
+
+    const metric = backgroundMonitor.startMetric('initialize-precomputed-manager');
+    
     try {
-      this.monitor.init();
+      // Clear existing caches
+      this.cache.clear();
+      this.pendingRequests.clear();
+      this.geometryCache.clear();
+
+      // Start cleanup interval
+      this.initializeCleanupInterval();
+      
       this._isInitialized = true;
       this._cacheInitialized = true;
-      console.log('PrecomputedDataManager initialized');
-    } catch (error) {
-      console.error('Failed to initialize PrecomputedDataManager:', error);
-      this._cacheInitialized = false;
-      throw error;
-    }
-  }
-
-  isCacheInitialized() {
-    return this._cacheInitialized;
-  }
-
-  isInitialized() {
-    return this._isInitialized;
-  }
-
-  initializeCleanupInterval() {
-    setInterval(() => this.cleanupCache(), this.config.cache.cleanupInterval);
-  }
-
-  getCachedData(key) {
-    const cached = this.cache.get(key);
-    if (!cached) return null;
-    if (Date.now() - cached.timestamp > this.config.cache.ttl) {
-      this.cache.delete(key);
-      return null;
-    }
-    return cached.compressed
-      ? JSON.parse(LZString.decompressFromUTF16(cached.data))
-      : cached.data;
-  }
-
-  setCachedData(key, data) {
-    const dataString = JSON.stringify(data);
-    const shouldCompress = dataString.length > 100000; // Compress if data size > 100KB
-    const cachedData = {
-      data: shouldCompress ? LZString.compressToUTF16(dataString) : data,
-      timestamp: Date.now(),
-      compressed: shouldCompress,
-    };
-    this.cache.set(key, cachedData);
-    this.enforceMaxCacheSize();
-  }
-
-  enforceMaxCacheSize() {
-    while (this.cache.size > this.config.cache.maxSize) {
-      const oldestKey = this.cache.keys().next().value;
-      this.cache.delete(oldestKey);
-      console.log(`Cache entry removed due to size limit: ${oldestKey}`);
-    }
-  }
-
-  getCircuitBreaker(key) {
-    if (!this.circuitBreakers.has(key)) {
-      this.circuitBreakers.set(key, {
-        failures: 0,
-        lastFailure: null,
-        isOpen: false,
-      });
-    }
-    return this.circuitBreakers.get(key);
-  }
-
-  async executeWithCircuitBreaker(key, operation) {
-    const breaker = this.getCircuitBreaker(key);
-
-    if (breaker.isOpen) {
-      const timeSinceLastFailure = Date.now() - (breaker.lastFailure || 0);
-      if (timeSinceLastFailure > this.config.circuitBreaker.resetTimeout) {
-        breaker.isOpen = false;
-        breaker.failures = 0;
-        console.log(`Circuit breaker reset for key: ${key}`);
-      } else {
-        console.warn(
-          `Circuit breaker open for ${key}, waiting ${
-            (this.config.circuitBreaker.resetTimeout - timeSinceLastFailure) / 1000
-          }s`
-        );
-        throw new Error(`Circuit breaker open for ${key}`);
-      }
-    }
-
-    try {
-      const result = await operation();
-      breaker.failures = 0;
-      breaker.isOpen = false;
-      breaker.lastFailure = null;
-      return result;
-    } catch (error) {
-      breaker.failures += 1;
-      breaker.lastFailure = Date.now();
-
-      console.warn(
-        `Operation failed for key: ${key}. Failure count: ${breaker.failures}`
-      );
-
-      if (breaker.failures >= this.config.circuitBreaker.failureThreshold) {
-        breaker.isOpen = true;
-        this.monitor.logEvent('circuitBreakerOpened', {
-          key,
-          failures: breaker.failures,
-          lastError: error.message,
-        });
-        console.warn(`Circuit breaker opened for key: ${key}`);
-      }
-
-      throw error;
-    }
-  }
-
-  async processSpatialData(selectedCommodity, selectedDate, options = {}) {
-    if (!this._isInitialized) {
-      await this.initialize();
-    }
-
-    const metric = this.monitor.startMetric('process-spatial-data');
-    const cacheKey = `spatial_${selectedCommodity}_${selectedDate}`;
-
-    try {
-      // Check cache
-      const cachedData = this.getCachedData(cacheKey);
-      if (cachedData) {
-        metric.finish({ status: 'success', source: 'cache' });
-        return cachedData;
-      }
-
-      // Prevent duplicate requests
-      if (this.pendingRequests.has(cacheKey)) {
-        return this.pendingRequests.get(cacheKey);
-      }
-
-      const requestPromise = this.executeWithCircuitBreaker(cacheKey, () =>
-        this.loadAndProcessData(selectedCommodity, selectedDate)
-      );
-
-      this.pendingRequests.set(cacheKey, requestPromise);
-
-      const result = await requestPromise;
-      this.setCachedData(cacheKey, result);
-
-      metric.finish({ status: 'success', source: 'fetch' });
-      return result;
+      
+      metric.finish({ status: 'success' });
+      
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
-      throw error;
-    } finally {
-      this.pendingRequests.delete(cacheKey);
+      throw new Error(`Failed to initialize PrecomputedDataManager: ${error.message}`);
+    }
+  }
+
+  buildRegionIndex(preprocessedData) {
+    const regionIndex = new Map();
+    
+    // Extract region names from time series data
+    preprocessedData.time_series_data.forEach(entry => {
+      const normalizedRegion = this.normalizeRegionName(entry.region);
+      if (normalizedRegion) {
+        regionIndex.set(entry.region, normalizedRegion);
+      }
+    });
+    
+    // Extract region names from market clusters
+    preprocessedData.market_clusters.forEach(cluster => {
+      const normalizedMainMarket = this.normalizeRegionName(cluster.main_market);
+      if (normalizedMainMarket) {
+        regionIndex.set(cluster.main_market, normalizedMainMarket);
+      }
+      cluster.connected_markets.forEach(market => {
+        const normalizedMarket = this.normalizeRegionName(market);
+        if (normalizedMarket) {
+          regionIndex.set(market, normalizedMarket);
+        }
+      });
+    });
+    
+    // Extract region names from flow analysis
+    preprocessedData.flow_analysis.forEach(flow => {
+      const normalizedSource = this.normalizeRegionName(flow.source);
+      const normalizedTarget = this.normalizeRegionName(flow.target);
+      if (normalizedSource) {
+        regionIndex.set(flow.source, normalizedSource);
+      }
+      if (normalizedTarget) {
+        regionIndex.set(flow.target, normalizedTarget);
+      }
+    });
+    
+    return regionIndex;
+  }
+
+  normalizeRegionName(regionId) {
+    if (!regionId) return null;
+    
+    const normalized = regionId.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+
+    if (regionMapping[normalized]) {
+      return this.normalizeRegionName(regionMapping[normalized]);
+    }
+
+    if (excludedRegions.includes(normalized)) {
+      return null;
+    }
+
+    return normalized;
+  }
+
+  async loadFile(path, options = {}) {
+    const metric = backgroundMonitor.startMetric('load-file');
+    const { retryAttempts = this.config.retry.maxAttempts } = options;
+    
+    for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+      try {
+        const response = await fetch(path);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${path}: ${response.statusText}`);
+        }
+        const data = await response.text();
+        metric.finish({ status: 'success' });
+        return data;
+      } catch (error) {
+        if (attempt === retryAttempts) {
+          metric.finish({ status: 'error', error: error.message });
+          throw new Error(`Failed to load file ${path} after ${retryAttempts} attempts: ${error.message}`);
+        }
+        await new Promise(resolve => setTimeout(resolve, this.config.retry.baseDelay * attempt));
+      }
+    }
+  }
+
+  async loadFileWithRetry(path, options = {}) {
+    const metric = backgroundMonitor.startMetric('load-file');
+    const { retryAttempts = this.config.retry.maxAttempts } = options;
+    
+    for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+      try {
+        const response = await fetch(path);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${path}: ${response.statusText}`);
+        }
+        const data = await response.text();
+        metric.finish({ status: 'success' });
+        return data;
+      } catch (error) {
+        if (attempt === retryAttempts) {
+          metric.finish({ status: 'error', error: error.message });
+          throw new Error(`Failed to load file ${path} after ${retryAttempts} attempts: ${error.message}`);
+        }
+        await new Promise(resolve => setTimeout(resolve, this.config.retry.baseDelay * attempt));
+      }
     }
   }
 
   async loadAndProcessData(commodity, date) {
-    const metric = dataLoadingMonitor.startRequest('load-precomputed-data');
-
-    try {
-      const sanitizedCommodity = this.sanitizeCommodityName(commodity);
-      const dataPath = getDataPath(
-        `preprocessed_by_commodity/preprocessed_yemen_market_data_${sanitizedCommodity}.json`
-      );
-
-      // Fetch preprocessed data
-      const preprocessedData = await this.fetchWithRetry(dataPath);
-
-      // Merge data with geometries
-      const mergedData = await this.mergeData(preprocessedData, commodity, date);
-
-      // Process the merged data
-      const processedData = this.processData(mergedData, {
-        selectedDate: date,
-        selectedCommodity: commodity,
-      });
-
-      dataLoadingMonitor.completeRequest(metric.id, processedData);
-      return processedData;
-    } catch (error) {
-      dataLoadingMonitor.logError(metric.id, error);
-      throw error;
+    const cacheKey = `${commodity}_${date || 'latest'}`;
+    const cached = this.getCachedData(cacheKey);
+    
+    if (cached) {
+      return cached;
     }
-  }
-
-  sanitizeCommodityName(commodity) {
-    return commodity
-      .toLowerCase()
-      .replace(/[(),\s]+/g, '_')
-      .replace(/_+$/, '');
-  }
-
-  async fetchWithRetry(url, isCsv = false, attempts = 0) {
+  
+    const metric = backgroundMonitor.startMetric('load-precomputed-data');
+    
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      if (isCsv) {
-        const text = await response.text();
-        const parsedData = Papa.parse(text, {
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-        }).data;
-        return parsedData;
-      }
-
-      const text = await response.text();
-      // Use JSON5 in case the JSON contains comments or trailing commas
-      const jsonData = JSON5.parse(text);
-      return jsonData;
-    } catch (error) {
-      if (attempts < this.config.retry.maxAttempts - 1) {
-        const delay = this.config.retry.baseDelay * Math.pow(2, attempts);
-        console.warn(
-          `Fetch attempt ${attempts + 1} for ${url} failed. Retrying in ${delay}ms...`
-        );
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        return this.fetchWithRetry(url, isCsv, attempts + 1);
-      }
-      console.error(
-        `Failed to fetch ${url} after ${this.config.retry.maxAttempts} attempts.`
-      );
-      throw error;
-    }
-  }
-
-  async mergeData(preprocessedData, selectedCommodity, selectedDate) {
-    const metric = this.monitor.startMetric('merge-spatial-data');
-
-    try {
-      const geometries = await this.loadGeometries();
-      const transformedData = this.transformPreprocessedData(
+      const [
         preprocessedData,
-        selectedDate
+        spatialAnalysis,
+        spatialWeights,
+        geoBoundaries
+      ] = await Promise.all([
+        this.loadFileWithRetry(this.dataPaths.getPreprocessedPath(commodity)),
+        this.loadFileWithRetry(this.dataPaths.spatialAnalysis),
+        this.loadFileWithRetry(this.dataPaths.spatialWeights),
+        this.loadFileWithRetry(this.dataPaths.geoBoundaries)
+      ]);
+  
+      const result = await this.processDataParallel(
+        preprocessedData,
+        spatialAnalysis,
+        spatialWeights,
+        geoBoundaries,
+        date
       );
-      const mergedData = await this.mergeGeometries(
-        transformedData,
-        geometries,
-        selectedDate
-      );
-
+  
+      this.setCachedData(cacheKey, result);
       metric.finish({ status: 'success' });
-      return mergedData;
+      return result;
+  
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
       throw error;
     }
   }
 
-  async loadGeometries() {
-    const cacheKey = 'geometries';
-    if (this.cache.has(cacheKey)) {
-      return this.cache.get(cacheKey);
-    }
-
-    try {
-      const [boundaries, enhanced] = await Promise.all([
-        this.fetchWithRetry(
-          getDataPath('choropleth_data/geoBoundaries-YEM-ADM1.geojson')
-        ),
-        this.fetchWithRetry(
-          getDataPath('enhanced_unified_data_with_residual.geojson')
-        ),
-      ]);
-
-      const mergedGeometries = this.mergeGeometryData(boundaries, enhanced);
-      this.cache.set(cacheKey, mergedGeometries);
-
-      return mergedGeometries;
-    } catch (error) {
-      console.error('Error loading geometries:', error);
-      throw error;
-    }
-  }
-
-  mergeGeometryData(boundaries, enhanced) {
-    const geometryMap = new Map();
-
-    // Add base boundaries
-    boundaries.features.forEach((feature) => {
-      const id = this.normalizeRegionId(
-        feature.properties.shapeName || feature.properties.region_id
-      );
-      if (id) {
-        const transformedGeometry = this.transformGeometry(feature.geometry);
-        geometryMap.set(id, {
-          geometry: transformedGeometry,
-          properties: { ...feature.properties },
-        });
-      }
-    });
-
-    // Enhance with additional data
-    enhanced.features.forEach((feature) => {
-      const id = this.normalizeRegionId(
-        feature.properties.region_id || feature.properties.shapeName
-      );
-      if (id && geometryMap.has(id)) {
-        const existing = geometryMap.get(id);
-        geometryMap.set(id, {
-          geometry: existing.geometry,
-          properties: {
-            ...existing.properties,
-            ...feature.properties,
-          },
-        });
-      }
-    });
-
-    return geometryMap;
-  }
-
-  transformGeometry(geometry) {
-    if (!geometry || !geometry.type || !geometry.coordinates) return null;
-
-    const cacheKey = JSON.stringify(geometry);
-    if (this.geometryCache.has(cacheKey)) {
-      return this.geometryCache.get(cacheKey);
-    }
-
-    try {
-      let transformedGeometry;
-
-      switch (geometry.type) {
-        case 'Point':
-          transformedGeometry = {
-            ...geometry,
-            coordinates: this.transformCoordinates(geometry.coordinates),
-          };
-          break;
-
-        case 'Polygon':
-          transformedGeometry = {
-            ...geometry,
-            coordinates: geometry.coordinates.map((ring) =>
-              ring.map((coord) => this.transformCoordinates(coord))
-            ),
-          };
-          break;
-
-        case 'MultiPolygon':
-          transformedGeometry = {
-            ...geometry,
-            coordinates: geometry.coordinates.map((polygon) =>
-              polygon.map((ring) => ring.map((coord) => this.transformCoordinates(coord)))
-            ),
-          };
-          break;
-
-        default:
-          return geometry;
-      }
-
-      this.geometryCache.set(cacheKey, transformedGeometry);
-      return transformedGeometry;
-    } catch (error) {
-      console.error('Geometry transformation error:', error);
-      throw error;
-    }
-  }
-
-  transformCoordinates([x, y], sourceCRS = UTM_ZONE_38N) {
-    try {
-      if (this.coordinatesInWGS84([x, y])) {
-        return [x, y];
-      }
-      return proj4(sourceCRS, WGS84, [x, y]);
-    } catch (error) {
-      console.error('Coordinate transformation error:', error);
-      throw error;
-    }
-  }
-
-  coordinatesInWGS84(coords) {
-    if (!Array.isArray(coords)) return false;
-    const [lng, lat] = coords;
-    return lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90;
-  }
-
-  normalizeRegionId(id) {
-    if (!id) return null;
-
-    const cacheKey = id.toLowerCase();
-    if (this.mappingCache.has(cacheKey)) {
-      return this.mappingCache.get(cacheKey);
-    }
-
-    const normalized = this.normalizeString(id);
-
-    let standardId = null;
-    for (const [standard, variants] of Object.entries(REGION_MAPPINGS)) {
-      if (
-        standard === normalized ||
-        variants.some((v) => this.normalizeString(v) === normalized)
-      ) {
-        standardId = standard;
-        break;
-      }
-    }
-
-    this.mappingCache.set(cacheKey, standardId || normalized);
-    return standardId || normalized;
-  }
-
-  normalizeString(str) {
-    return str
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/['\u2018\u2019]/g, '')
-      .replace(/[^a-z0-9]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '')
-      .trim();
-  }
-
-  transformPreprocessedData(data, targetDate) {
-    const timeSeriesData = data.time_series_data || [];
-
-    // Create features from market clusters
-    const features = this.createFeaturesFromClusters(data.market_clusters, targetDate);
-
-    return {
-      geoData: {
-        type: 'FeatureCollection',
-        features,
-      },
-      marketClusters: data.market_clusters || [],
-      detectedShocks: this.filterShocksByDate(data.market_shocks, targetDate),
+  async processDataParallel(preprocessedData, spatialAnalysis, spatialWeights, geoBoundaries, date) {
+    const regionIndex = this.buildRegionIndex(preprocessedData);
+    
+    const [
       timeSeriesData,
-      flowMaps: this.transformFlowData(data.flow_analysis),
-      analysisResults: {
-        spatialAutocorrelation: data.spatial_autocorrelation || {},
-        metadata: data.metadata || {},
-      },
-    };
-  }
-
-  createFeaturesFromClusters(clusters = [], selectedDate) {
-    return clusters.reduce((acc, cluster) => {
-      const mainMarketId = this.normalizeRegionId(cluster.main_market);
-      if (!mainMarketId) return acc;
-
-      // Main Market Feature
-      acc.push({
-        type: 'Feature',
-        properties: {
-          id: mainMarketId,
-          originalId: cluster.main_market,
-          isMainMarket: true,
-          clusterSize: cluster.market_count,
-          marketRole: 'hub',
-          priceData: this.getPriceDataForCluster(cluster, selectedDate),
-          cluster_id: cluster.cluster_id,
-        },
-        geometry: null, // Geometry will be merged later
-      });
-
-      // Peripheral Markets Features
-      cluster.connected_markets.forEach((market) => {
-        const marketId = this.normalizeRegionId(market);
-        if (marketId) {
-          acc.push({
-            type: 'Feature',
-            properties: {
-              id: marketId,
-              originalId: market,
-              isMainMarket: false,
-              clusterSize: cluster.market_count,
-              marketRole: 'peripheral',
-              priceData: this.getPriceDataForCluster(cluster, selectedDate),
-              cluster_id: cluster.cluster_id,
-            },
-            geometry: null, // Geometry will be merged later
-          });
-        }
-      });
-
-      return acc;
-    }, []);
-  }
-
-  getPriceDataForCluster(cluster, selectedDate) {
-    if (!cluster.priceData) return null;
-
-    // Assuming priceData is an object with dates as keys
-    return cluster.priceData[selectedDate] || null;
-  }
-
-  filterShocksByDate(shocks = [], targetDate) {
-    if (!targetDate || !shocks) return [];
-
-    return shocks
-      .filter((shock) => {
-        const regionId = this.normalizeRegionId(shock.region);
-        return shock.date.startsWith(targetDate) && regionId;
-      })
-      .map((shock) => ({
-        ...shock,
-        region: this.normalizeRegionId(shock.region),
-      }));
-  }
-
-  transformFlowData(flows = []) {
-    if (!flows) return [];
-
-    return flows
-      .filter((flow) => {
-        const sourceId = this.normalizeRegionId(flow.source);
-        const targetId = this.normalizeRegionId(flow.target);
-        return sourceId && targetId;
-      })
-      .map((flow) => ({
-        source: this.normalizeRegionId(flow.source),
-        target: this.normalizeRegionId(flow.target),
-        flow_weight:
-          typeof flow.total_flow === 'number' && !isNaN(flow.total_flow)
-            ? flow.total_flow
-            : 0,
-        avg_flow:
-          typeof flow.avg_flow === 'number' && !isNaN(flow.avg_flow)
-            ? flow.avg_flow
-            : 0,
-        flow_count:
-          typeof flow.flow_count === 'number' && !isNaN(flow.flow_count)
-            ? flow.flow_count
-            : 0,
-        price_differential:
-          typeof flow.avg_price_differential === 'number' && !isNaN(flow.avg_price_differential)
-            ? flow.avg_price_differential
-            : 0,
-        original_source: flow.source,
-        original_target: flow.target,
-      }));
-  }
-
-  async mergeGeometries(transformedData, geometryMap, selectedDate) {
-    const features = transformedData.geoData.features.map((feature) => {
-      const id = this.normalizeRegionId(feature.properties.id);
-      const geometryData = geometryMap.get(id);
-
-      if (geometryData) {
-        const properties = {
-          ...feature.properties,
-          ...geometryData.properties,
-          normalizedId: id,
-          originalId: feature.properties.id,
-        };
-
-        return {
-          ...feature,
-          geometry: geometryData.geometry,
-          properties,
-        };
-      }
-
-      console.warn(
-        `No geometry found for region: ${id} (original: ${feature.properties.id})`
-      );
-      return feature;
-    });
-
-    const validFeatures = features.filter((feature) => feature.geometry !== null);
+      marketClusters,
+      flowAnalysis,
+      spatialMetrics,
+      geoData
+    ] = await Promise.all([
+      this.processTimeSeries(preprocessedData.time_series_data, regionIndex, date),
+      this.processMarketClusters(preprocessedData.market_clusters, regionIndex),
+      this.processFlowAnalysis(preprocessedData.flow_analysis, regionIndex),
+      this.processSpatialMetrics(preprocessedData.spatial_autocorrelation, regionIndex),
+      this.processGeometryData(geoBoundaries, regionIndex)
+    ]);
 
     return {
-      ...transformedData,
-      geoData: {
-        type: 'FeatureCollection',
-        features: validFeatures,
-        metadata: {
-          processedDate: new Date().toISOString(),
-          totalFeatures: validFeatures.length,
-          excludedRegions,
-          projection: WGS84,
-        },
-      },
+      timeSeriesData,
+      marketClusters,
+      flowAnalysis,
+      spatialMetrics,
+      geoData
     };
   }
 
-  processData(mergedData, { selectedDate, selectedCommodity }) {
-    const { geoData, timeSeriesData } = mergedData;
+  async processGeometryData(geoData, regionIndex) {
+    const metric = backgroundMonitor.startMetric('process-geometry');
+    
+    try {
+      // Process features with normalized regions
+      const features = geoData.features
+        .filter(feature => {
+          const regionId = feature.properties?.shapeName;
+          return regionId && regionIndex.has(regionId);
+        })
+        .map(feature => ({
+          ...feature,
+          properties: {
+            ...feature.properties,
+            region_id: regionIndex.get(feature.properties.shapeName)
+          }
+        }));
 
-    // Filter features by commodity
-    const commodityFeatures = this.filterFeaturesByCommodity(
-      geoData.features,
-      selectedCommodity
-    );
-
-    // Get available months from filtered features
-    const availableMonths = [
-      ...new Set(commodityFeatures.map((f) => f.properties.date).filter(Boolean)),
-    ].sort();
-
-    // Get relevant features for date
-    const relevantFeatures = selectedDate
-      ? commodityFeatures.filter((f) => f.properties.date === selectedDate)
-      : commodityFeatures;
-
-    const processedData = {
-      timeSeriesData: this.processTimeSeries(commodityFeatures),
-      geoData: {
+      return {
         type: 'FeatureCollection',
-        features: relevantFeatures,
-        metadata: {
-          date: selectedDate,
-          commodity: selectedCommodity,
-          total_features: relevantFeatures.length,
-        },
-      },
-      marketClusters: this.createMarketClustersFromFeatures(relevantFeatures),
-      flowMaps: this.processFlows(relevantFeatures),
-      spatialMetrics: this.processSpatialMetrics(relevantFeatures),
-      analysisMetrics: {
-        coverage: relevantFeatures.length / geoData.features.length,
-        temporalRange: availableMonths.length,
-        spatialCoverage: new Set(relevantFeatures.map((f) => f.properties.admin1)).size,
-      },
-      metadata: {
-        date: selectedDate,
-        commodity: selectedCommodity,
-        total_features: relevantFeatures.length,
-      },
-      availableMonths,
-    };
+        features
+      };
 
-    return processedData;
+    } finally {
+      metric.finish();
+    }
   }
 
-  filterFeaturesByCommodity(features, commodity) {
-    if (!commodity) return features;
-    return features.filter(
-      (f) => f.properties.commodity?.toLowerCase() === commodity.toLowerCase()
-    );
-  }
-
-  processTimeSeries(features) {
-    const timeSeriesMap = new Map();
-
-    features.forEach((feature) => {
-      const { date, price, usdprice, conflict_intensity } = feature.properties;
-      if (!date) return;
-
-      if (!timeSeriesMap.has(date)) {
-        timeSeriesMap.set(date, {
-          month: date,
-          avgUsdPrice: usdprice || 0,
-          price: price || 0,
-          volatility: 0,
-          conflict_intensity: conflict_intensity || 0,
-          sampleSize: 1,
-        });
-      } else {
-        const existing = timeSeriesMap.get(date);
-        existing.avgUsdPrice += usdprice || 0;
-        existing.price += price || 0;
-        existing.conflict_intensity += conflict_intensity || 0;
-        existing.sampleSize++;
-      }
-    });
-
-    return Array.from(timeSeriesMap.values())
-      .map((entry) => ({
+  processTimeSeries(timeSeriesData, regionIndex, date) {
+    return timeSeriesData
+      .filter(entry => {
+        if (!regionIndex.has(entry.region)) return false;
+        if (date && entry.month > date) return false;
+        return true;
+      })
+      .map(entry => ({
         ...entry,
-        avgUsdPrice: entry.avgUsdPrice / entry.sampleSize,
-        price: entry.price / entry.sampleSize,
-        conflict_intensity: entry.conflict_intensity / entry.sampleSize,
+        region: regionIndex.get(entry.region),
+        month: entry.month,
+        avgUsdPrice: this.cleanNumber(entry.avgUsdPrice),
+        volatility: this.cleanNumber(entry.volatility),
+        garch_volatility: this.cleanNumber(entry.garch_volatility),
+        conflict_intensity: this.cleanNumber(entry.conflict_intensity),
+        price_stability: this.cleanNumber(entry.price_stability)
       }))
       .sort((a, b) => new Date(a.month) - new Date(b.month));
   }
 
-  createMarketClustersFromFeatures(features) {
-    // Group features by region
-    const regionGroups = new Map();
-    features.forEach((feature) => {
-      const { admin1: region } = feature.properties;
-      if (!region) return;
-
-      if (!regionGroups.has(region)) {
-        regionGroups.set(region, {
-          markets: new Set(),
-          dates: new Set(),
-        });
-      }
-
-      regionGroups.get(region).markets.add(region);
-      regionGroups.get(region).dates.add(feature.properties.date);
-    });
-
-    // Convert to cluster format
-    return Array.from(regionGroups.entries()).map(([region, data]) => ({
-      cluster_id: region,
-      main_market: region,
-      market_count: data.dates.size,
-      connected_markets: [],
-      metrics: {
-        temporal_coverage: data.dates.size,
-        spatial_coverage: data.markets.size,
-      },
-    }));
+  processMarketClusters(clusters, regionIndex) {
+    return clusters
+      .filter(cluster => {
+        const mainMarket = regionIndex.has(cluster.main_market);
+        const connectedValid = cluster.connected_markets
+          .every(market => regionIndex.has(market));
+        return mainMarket && connectedValid;
+      })
+      .map(cluster => ({
+        cluster_id: cluster.cluster_id,
+        main_market: regionIndex.get(cluster.main_market),
+        connected_markets: cluster.connected_markets
+          .map(market => regionIndex.get(market))
+          .filter(Boolean),
+        market_count: cluster.market_count,
+        efficiency: this.calculateClusterEfficiency(cluster)
+      }));
   }
 
-  processFlows(features) {
-    const flowMap = new Map();
-
-    features.forEach((feature) => {
-      const { admin1: region, price, date } = feature.properties;
-      if (!region || !price || !date) return;
-
-      const key = `${region}_${date}`;
-      if (!flowMap.has(key)) {
-        flowMap.set(key, {
-          source: region,
-          date,
-          prices: [price],
-          count: 1,
-        });
-      } else {
-        const existing = flowMap.get(key);
-        existing.prices.push(price);
-        existing.count++;
-      }
-    });
-
-    // Convert to flow objects
-    return Array.from(flowMap.values()).map((flow) => ({
-      source: flow.source,
-      target: flow.source, // Self-loop for now
-      date: flow.date,
-      flow_weight: flow.count,
-      avg_price: flow.prices.reduce((a, b) => a + b, 0) / flow.count,
-    }));
+  processFlowAnalysis(flows, regionIndex) {
+    return flows
+      .filter(flow => 
+        regionIndex.has(flow.source) && regionIndex.has(flow.target)
+      )
+      .map(flow => ({
+        source: regionIndex.get(flow.source),
+        target: regionIndex.get(flow.target),
+        total_flow: this.cleanNumber(flow.total_flow),
+        avg_flow: this.cleanNumber(flow.avg_flow),
+        flow_count: flow.flow_count,
+        avg_price_differential: this.cleanNumber(flow.avg_price_differential)
+      }));
   }
 
-  processSpatialMetrics(features) {
-    const regionMetrics = new Map();
+  processSpatialMetrics(metrics, regionIndex) {
+    if (!metrics?.global) return null;
 
-    features.forEach((feature) => {
-      const { admin1: region, price, conflict_intensity } = feature.properties;
-      if (!region) return;
-
-      if (!regionMetrics.has(region)) {
-        regionMetrics.set(region, {
-          prices: [],
-          conflict: [],
-        });
-      }
-
-      if (price) regionMetrics.get(region).prices.push(price);
-      if (conflict_intensity) regionMetrics.get(region).conflict.push(conflict_intensity);
-    });
-
-    // Convert to metrics format
-    const metrics = {
+    return {
       global: {
-        regions: regionMetrics.size,
-        total_observations: features.length,
+        moran_i: this.cleanNumber(metrics.global.moran_i),
+        p_value: this.cleanNumber(metrics.global.p_value),
+        significance: metrics.global.significance === 'True'
       },
-      local: {},
+      local: _.pickBy(metrics.local, (_, region) => regionIndex.has(region)),
+      hotspots: _.pickBy(metrics.hotspots, (_, region) => regionIndex.has(region))
+    };
+  }
+
+  async validateData(data) {
+    const validationResults = {
+      isValid: true,
+      errors: [],
+      warnings: [],
+      coverage: {},
+      qualityMetrics: {}
     };
 
-    regionMetrics.forEach((data, region) => {
-      metrics.local[region] = {
-        observations: data.prices.length,
-        mean_price: data.prices.length
-          ? data.prices.reduce((a, b) => a + b, 0) / data.prices.length
-          : 0,
-        mean_conflict: data.conflict.length
-          ? data.conflict.reduce((a, b) => a + b, 0) / data.conflict.length
-          : 0,
-      };
+    try {
+      // Validate data structure
+      if (!this.validateDataStructure(data)) {
+        validationResults.isValid = false;
+        validationResults.errors.push('Invalid data structure');
+        return validationResults;
+      }
+
+      // Calculate coverage and consistency
+      const coverage = await this.calculateDataCoverage(data);
+      validationResults.coverage = coverage;
+
+      // Calculate quality metrics
+      const qualityMetrics = this.calculateQualityMetrics(data);
+      validationResults.qualityMetrics = qualityMetrics;
+
+      // Generate warnings based on thresholds
+      this.generateWarnings(coverage, qualityMetrics, validationResults);
+
+      return validationResults;
+    } catch (error) {
+      validationResults.isValid = false;
+      validationResults.errors.push(`Validation error: ${error.message}`);
+      return validationResults;
+    }
+  }
+
+  calculateQualityMetrics(data) {
+    return {
+      timeSeriesCompleteness: this.calculateTimeSeriesCompleteness(data.timeSeriesData),
+      spatialCoverage: this.calculateSpatialCoverage(data),
+      dataConsistency: this.checkDataConsistency(data),
+      outlierMetrics: this.detectOutliers(data)
+    };
+  }
+
+  async validateData(data) {
+    const validationResults = {
+      isValid: true,
+      errors: [],
+      warnings: [],
+      coverage: {}
+    };
+
+    // Extract unique regions from each dataset
+    const timeSeriesRegions = new Set(data.timeSeriesData.map(d => d.region));
+    const clusterRegions = new Set();
+    data.marketClusters.forEach(cluster => {
+      clusterRegions.add(cluster.main_market);
+      cluster.connected_markets.forEach(m => clusterRegions.add(m));
+    });
+    const flowRegions = new Set([
+      ...data.flowAnalysis.map(f => f.source),
+      ...data.flowAnalysis.map(f => f.target)
+    ]);
+
+    // Calculate coverage
+    const allRegions = new Set([
+      ...timeSeriesRegions,
+      ...clusterRegions,
+      ...flowRegions
+    ]);
+
+    validationResults.coverage = {
+      timeSeries: timeSeriesRegions.size / allRegions.size,
+      clusters: clusterRegions.size / allRegions.size,
+      flows: flowRegions.size / allRegions.size
+    };
+
+    // Validate cross-dataset consistency
+    allRegions.forEach(region => {
+      if (!timeSeriesRegions.has(region)) {
+        validationResults.warnings.push(
+          `Region ${region} missing from time series data`
+        );
+      }
+      if (!clusterRegions.has(region)) {
+        validationResults.warnings.push(
+          `Region ${region} missing from market clusters`
+        );
+      }
     });
 
-    return metrics;
+    return validationResults;
   }
 
-  cleanupCache() {
+  calculateClusterEfficiency(cluster) {
+    return {
+      internal_connectivity: this.cleanNumber(cluster.internal_connectivity),
+      market_coverage: this.cleanNumber(cluster.market_coverage),
+      price_convergence: this.cleanNumber(cluster.price_convergence),
+      stability: this.cleanNumber(cluster.stability),
+      efficiency_score: this.cleanNumber(cluster.efficiency_score)
+    };
+  }
+
+  sanitizeCommodityName(commodity) {
+    return commodity
+      .replace(/\s+/g, '_')
+      .replace(/[\(\)]/g, '')
+      .replace(/\//g, '_')
+      .toLowerCase();
+  }
+
+  cleanNumber(value) {
+    if (value === null || value === undefined || value === '') return 0;
+    if (typeof value === 'string' && value.toLowerCase() === 'nan') return 0;
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  }
+
+  // Cache management
+  getCachedData(key) {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+    
     const now = Date.now();
-    for (const [key, value] of this.cache.entries()) {
-      if (now - value.timestamp > this.config.cache.ttl) {
-        this.cache.delete(key);
-        console.log(`Cache entry expired and removed: ${key}`);
-      }
+    const age = now - cached.timestamp;
+    
+    if (age > this.config.cache.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    // Update access time for LRU implementation
+    cached.lastAccessed = now;
+    return cached.data;
+  }
+
+  setCachedData(key, data) {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+    this.enforceMaxCacheSize();
+  }
+
+  enforceMaxCacheSize() {
+    if (this.cache.size <= this.config.cache.maxSize) return;
+    
+    // Sort by last accessed time
+    const entries = Array.from(this.cache.entries())
+      .sort(([, a], [, b]) => a.lastAccessed - b.lastAccessed);
+    
+    // Remove oldest accessed entries
+    while (this.cache.size > this.config.cache.maxSize) {
+      const [oldestKey] = entries.shift();
+      this.cache.delete(oldestKey);
+    }
+  }
+
+  initializeCleanupInterval() {
+    if (this._cleanupIntervalId) {
+      clearInterval(this._cleanupIntervalId);
     }
 
-    // Clear geometry cache periodically
-    this.geometryCache.clear();
+    this._cleanupIntervalId = setInterval(() => {
+      const now = Date.now();
+      for (const [key, value] of this.cache.entries()) {
+        if (now - value.timestamp > this.config.cache.ttl) {
+          this.cache.delete(key);
+        }
+      }
+    }, this.config.cache.cleanupInterval);
   }
 
-  clearCache() {
-    this.cache.clear();
-    this.pendingRequests.clear();
-    this.circuitBreakers.clear();
-    this.geometryCache.clear();
-    this._cacheInitialized = false;
+  async monitorMemoryUsage() {
+    if (!performance?.memory) return;
+    
+    const now = Date.now();
+    if (now - this.memoryMonitor.lastCheck < this.memoryMonitor.checkInterval) return;
+    
+    const { usedJSHeapSize, jsHeapSizeLimit } = performance.memory;
+    const usage = usedJSHeapSize / jsHeapSizeLimit;
+    
+    if (usage > this.memoryMonitor.warningThreshold) {
+      spatialDebugUtils.warn('High memory usage detected', { usage: usage.toFixed(2) });
+      this.clearUnusedCache();
+    }
+    
+    this.memoryMonitor.lastCheck = now;
+  }
+
+  clearUnusedCache() {
+    const now = Date.now();
+    for (const [key, value] of this.cache.entries()) {
+      if (!value.lastAccessed || now - value.lastAccessed > this.config.cache.ttl / 2) {
+        this.cache.delete(key);
+      }
+    }
   }
 
   destroy() {
-    this.clearCache();
+    if (this._cleanupIntervalId) {
+      clearInterval(this._cleanupIntervalId);
+      this._cleanupIntervalId = null;
+    }
+    
+    this.cache.clear();
+    this.pendingRequests.clear();
+    this.geometryCache.clear();
+    
     this._isInitialized = false;
     this._cacheInitialized = false;
-    console.log('PrecomputedDataManager destroyed and caches cleared.');
   }
 }
 
+// Create and export singleton instance
 export const precomputedDataManager = new PrecomputedDataManager();

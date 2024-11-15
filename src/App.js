@@ -1,42 +1,37 @@
 // src/App.js
 
 import React, { useState, useCallback, useEffect } from 'react';
-import 'leaflet/dist/leaflet.css';
 import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline, Toolbar, IconButton, Box, useMediaQuery } from '@mui/material';
+import {
+  CssBaseline,
+  Toolbar,
+  IconButton,
+  Box,
+  useMediaQuery,
+  CircularProgress,
+} from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
+
 import { toggleDarkMode } from './slices/themeSlice';
+import { loadSpatialData, setSelectedCommodity } from './slices/spatialSlice';
+import { spatialIntegrationSystem } from './utils/spatialIntegrationSystem';
+import { spatialDebugUtils } from './utils/spatialDebugUtils';
+import { backgroundMonitor } from './utils/backgroundMonitor';
+
 import Header from './components/common/Header';
-import { Sidebar } from './components/common/Navigation';
+import Sidebar from './components/common/Navigation';
 import Dashboard from './Dashboard';
-import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorDisplay from './components/common/ErrorDisplay';
-import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
-import MethodologyModal from './components/methodology/MethodologyModal';
-import { TutorialsModal } from './components/discovery/Tutorials';
-import WelcomeModal from './components/common/WelcomeModal';
+import MarketDataLoader from './components/common/MarketDataLoader';
 import { useWindowSize } from './hooks';
+
 import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
 } from './styles/theme';
-import {
-  setSelectedCommodity,
-  setSelectedDate,
-  setSelectedAnalysis,
-  loadSpatialData,
-} from './slices/spatialSlice';
-import {
-  selectSpatialStatus,
-  selectSpatialData,
-  selectSelectedCommodity,
-  selectSelectedDate,
-  selectSelectedAnalysis,
-  selectSelectedRegimes,
-} from './selectors/spatialSelectors';
 
 const DRAWER_WIDTH = 240;
 
@@ -54,6 +49,47 @@ const StyledAppBar = styled(AppBar, {
   },
 }));
 
+const useAppInitialization = () => {
+  const dispatch = useDispatch();
+  const [state, setState] = useState({
+    isInitializing: true,
+    error: null
+  });
+
+  useEffect(() => {
+    const initialize = async () => {
+      const metric = backgroundMonitor.startMetric('app-initialization');
+      
+      try {
+        // Initialize spatial integration system
+        await spatialIntegrationSystem.initialize();
+        
+        const defaultCommodity = 'beans (kidney red)';
+        dispatch(setSelectedCommodity(defaultCommodity));
+        
+        // Load initial data
+        await dispatch(loadSpatialData({
+          selectedCommodity: defaultCommodity,
+          selectedDate: null
+        })).unwrap();
+
+        metric.finish({ status: 'success' });
+        setState({ isInitializing: false, error: null });
+        
+        spatialDebugUtils.log('Application initialized successfully');
+      } catch (error) {
+        metric.finish({ status: 'error', error: error.message });
+        setState({ isInitializing: false, error: error.message });
+        spatialDebugUtils.error('Failed to initialize application:', error);
+      }
+    };
+
+    initialize();
+  }, [dispatch]);
+
+  return state;
+};
+
 const App = () => {
   const dispatch = useDispatch();
   const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
@@ -65,13 +101,16 @@ const App = () => {
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
 
-  // Use memoized selectors to get spatial state
-  const spatialStatus = useSelector(selectSpatialStatus);
-  const spatialData = useSelector(selectSpatialData);
-  const selectedCommodity = useSelector(selectSelectedCommodity);
-  const selectedDate = useSelector(selectSelectedDate);
-  const selectedAnalysis = useSelector(selectSelectedAnalysis);
-  const selectedRegimes = useSelector(selectSelectedRegimes);
+  // Spatial state
+  const spatialStatus = useSelector((state) => state.spatial.status);
+  const spatialData = useSelector((state) => state.spatial.data);
+  const selectedCommodity = useSelector((state) => state.spatial.ui.selectedCommodity);
+  const selectedRegimes = useSelector((state) => state.spatial.ui.selectedRegimes);
+
+  const isLoading = useSelector(state => 
+    state.spatial.status.loading || 
+    !state.spatial.status.isInitialized
+  );
 
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [modalStates, setModalStates] = useState({
@@ -80,45 +119,47 @@ const App = () => {
     welcome: false,
   });
 
-  useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
-    if (!hasSeenWelcome) {
-      setModalStates((prev) => ({ ...prev, welcome: true }));
-    }
-  }, []);
+  const { isInitializing, error } = useAppInitialization();
 
   useEffect(() => {
     setSidebarOpen(isSmUp);
   }, [isSmUp]);
 
-  const handleToggleDarkMode = useCallback(() => {
-    dispatch(toggleDarkMode());
-  }, [dispatch]);
-
   const handleDrawerToggle = useCallback(() => {
     setSidebarOpen((prev) => !prev);
   }, []);
+
+  const handleToggleDarkMode = useCallback(() => {
+    dispatch(toggleDarkMode());
+  }, [dispatch]);
 
   const handleModalToggle = useCallback((modalName, isOpen) => {
     setModalStates((prev) => ({ ...prev, [modalName]: isOpen }));
   }, []);
 
-  const handleWelcomeModalClose = useCallback((dontShowAgain) => {
-    setModalStates((prev) => ({ ...prev, welcome: false }));
-    if (dontShowAgain) {
-      localStorage.setItem('hasSeenWelcome', 'true');
-    }
-  }, []);
+  if (isInitializing || isLoading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+        bgcolor={theme.palette.background.default}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  // Load initial data if not already loaded
-  useEffect(() => {
-    if (!spatialData && !spatialStatus.loading) {
-      dispatch(loadSpatialData({ selectedCommodity: selectedCommodity || 'defaultCommodity' }));
-    }
-  }, [dispatch, spatialData, spatialStatus.loading, selectedCommodity]);
-
-  if (spatialStatus.loading && !spatialData) {
-    return <LoadingSpinner />;
+  if (error) {
+    return (
+      <ErrorDisplay
+        error={error}
+        title="Initialization Error"
+        showDetails={process.env.NODE_ENV !== 'production'}
+        onRetry={() => window.location.reload()}
+      />
+    );
   }
 
   if (spatialStatus.error) {
@@ -127,7 +168,7 @@ const App = () => {
         error={spatialStatus.error}
         title="Application Error"
         showDetails={process.env.NODE_ENV !== 'production'}
-        onRetry={() => dispatch(loadSpatialData({ selectedCommodity }))}
+        onRetry={() => window.location.reload()}
       />
     );
   }
@@ -135,67 +176,57 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <EnhancedErrorBoundary>
-        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-          <StyledAppBar position="fixed" open={sidebarOpen && isSmUp}>
-            <Toolbar>
-              <IconButton
-                color="inherit"
-                aria-label="toggle drawer"
-                edge="start"
-                onClick={handleDrawerToggle}
-                sx={{ marginRight: 2 }}
-              >
-                <MenuIcon />
-              </IconButton>
-              <Header
-                isDarkMode={isDarkMode}
-                toggleDarkMode={handleToggleDarkMode}
-                onTutorialsClick={() => handleModalToggle('tutorials', true)}
-              />
-            </Toolbar>
-          </StyledAppBar>
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+        <StyledAppBar position="fixed" open={sidebarOpen && isSmUp}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              aria-label="toggle drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ marginRight: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Header
+              isDarkMode={isDarkMode}
+              toggleDarkMode={handleToggleDarkMode}
+              onTutorialsClick={() => handleModalToggle('tutorials', true)}
+            />
+          </Toolbar>
+        </StyledAppBar>
 
+        <MarketDataLoader>
           <Sidebar
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
+            handleDrawerToggle={handleDrawerToggle}
             onMethodologyClick={() => handleModalToggle('methodology', true)}
             onTutorialsClick={() => handleModalToggle('tutorials', true)}
-            onOpenWelcomeModal={() => handleModalToggle('welcome', true)}
-            handleDrawerToggle={handleDrawerToggle}
+            selectedCommodity={selectedCommodity}
+            selectedRegimes={selectedRegimes}
+            isSmUp={isSmUp}
           />
+        </MarketDataLoader>
 
-          <Box
-            component="main"
-            sx={{
-              flexGrow: 1,
-              p: 3,
-              width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
-              ml: { sm: `${DRAWER_WIDTH}px` },
-            }}
-          >
-            <Toolbar />
-            <Dashboard
-              data={spatialData}
-              selectedCommodity={selectedCommodity}
-              selectedRegimes={selectedRegimes}
-              selectedDate={selectedDate}
-              selectedAnalysis={selectedAnalysis}
-              windowWidth={windowSize.width}
-            />
-          </Box>
-
-          <MethodologyModal
-            open={modalStates.methodology}
-            onClose={() => handleModalToggle('methodology', false)}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+            ml: { sm: `${DRAWER_WIDTH}px` },
+          }}
+        >
+          <Toolbar />
+          <Dashboard
+            data={spatialData}
+            selectedCommodity={selectedCommodity}
+            selectedRegimes={selectedRegimes}
+            windowWidth={windowSize.width}
           />
-          <TutorialsModal
-            open={modalStates.tutorials}
-            onClose={() => handleModalToggle('tutorials', false)}
-          />
-          <WelcomeModal open={modalStates.welcome} onClose={handleWelcomeModalClose} />
         </Box>
-      </EnhancedErrorBoundary>
+      </Box>
     </ThemeProvider>
   );
 };
