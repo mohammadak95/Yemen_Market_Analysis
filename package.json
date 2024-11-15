@@ -98,7 +98,9 @@
     "test:spatial": "jest spatialPreprocessor.test.js --verbose",
     "test:build": "jest build.test.js --verbose",
     "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
-    "test:perf": "jest --testNamePattern='Performance|Full Processing' --verbose"
+    "test:perf": "jest --testNamePattern='Performance|Full Processing' --verbose",
+    "verify-gh-pages": "node scripts/verify-gh-pages.js",
+    "predeploy": "npm run build && npm run verify-gh-pages"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

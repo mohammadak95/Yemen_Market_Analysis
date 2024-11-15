@@ -5,31 +5,90 @@ import { backgroundMonitor } from './backgroundMonitor'; // Ensure correct impor
 import { spatialValidation } from './spatialValidation'; // Ensure correct import path
 import { spatialDebugUtils } from './spatialDebugUtils'; // Ensure correct import path
 
-const ENV = process.env.NODE_ENV;
+const isDev = process.env.NODE_ENV === 'development';
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const isGitHubPages = PUBLIC_URL.includes('github.io');
+const ENV = process.env.NODE_ENV;
 const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 export const CACHE_DURATION = parseInt(process.env.REACT_APP_CACHE_DURATION, 10) || 3600000; // 1 hour
 export const RETRY_ATTEMPTS = 3;
 export const RETRY_DELAY = 1000; // in milliseconds
 
-/**
- * Constructs the data path based on the current environment.
- */
+
+const sanitizeCommodityName = (commodity) => {
+  if (!commodity) return '';
+  
+  return commodity
+    .toLowerCase()                  // Convert to lowercase
+    .trim()                        // Remove leading/trailing spaces
+    .replace(/[\s-]+/g, '_')       // Replace spaces and hyphens with single underscore
+    .replace(/[()]/g, '')          // Remove parentheses
+    .replace(/[^a-z0-9_]/g, '')    // Remove any non-alphanumeric characters except underscore
+    .replace(/_+/g, '_')           // Replace multiple underscores with single
+    .replace(/^_|_$/g, '');        // Remove leading/trailing underscores
+};
+
 export const getDataPath = (fileName) => {
-  let basePath = '';
+  const cleanPath = fileName.replace(/\/+/g, '/');
+  return `/results/${cleanPath}`;
+};
 
-  if (isOffline) {
-    basePath = '/results';
-  } else if (isGitHubPages) {
-    basePath = `${PUBLIC_URL}/results`;
-  } else if (ENV === 'production') {
-    basePath = '/Yemen_Market_Analysis/results';
-  } else {
-    basePath = '/results';
+export const getCommodityPath = (commodity) => {
+  const normalizedCommodity = sanitizeCommodityName(commodity);    
+  return `/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedCommodity}.json`;
+};
+
+export const getPrecomputedDataPath = (commodity) => {
+  const normalizedCommodity = sanitizeCommodityName(commodity);
+  return `/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedCommodity}.json`;
+};
+
+// Adjusted test paths
+const testPaths = [
+  getCommodityPath('beans white'),
+  getDataPath('preprocessed_by_commodity/file.json')
+  // Removed the test that includes 'results/' in the file name
+];
+
+// Utility function to validate paths
+export const validatePath = (path) => {
+  const errors = [];
+  
+  if (path.includes('//')) {
+    errors.push('Path contains double slashes');
   }
+  
+  if ((path.match(/public/g) || []).length > 1) {
+    errors.push('Path contains multiple public prefixes');
+  }
+  
+  if ((path.match(/results/g) || []).length > 1) {
+    errors.push('Path contains multiple results prefixes');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
 
-  return `${basePath}/${fileName}`;
+testPaths.forEach(path => {
+  const validation = validatePath(path);
+  console.assert(validation.isValid, 
+    `Invalid path: ${path}\nErrors: ${validation.errors.join(', ')}`);
+});
+
+export const fetchWithRetry = async (url, options = {}, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
 };
 
 /**
@@ -290,16 +349,6 @@ export const clearDataCache = () => {
   cache.clear();
   // Log cache clear action
   backgroundMonitor.logMetric('clearDataCache', { timestamp: new Date().toISOString() });
-};
-
-/**
- * Constructs the path for precomputed data based on the commodity.
- * @param {string} commodity - The commodity name.
- * @returns {string} - The path to the precomputed data file.
- */
-export const getPrecomputedDataPath = (commodity) => {
-  const basePath = getDataPath(''); // Adjusted to pass an empty string for base path
-  return `${basePath}/preprocessed_by_commodity/preprocessed_yemen_market_data_${commodity}.json`;
 };
 
 /**

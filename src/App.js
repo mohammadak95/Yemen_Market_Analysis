@@ -9,6 +9,7 @@ import {
   Box,
   useMediaQuery,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -49,47 +50,6 @@ const StyledAppBar = styled(AppBar, {
   },
 }));
 
-const useAppInitialization = () => {
-  const dispatch = useDispatch();
-  const [state, setState] = useState({
-    isInitializing: true,
-    error: null
-  });
-
-  useEffect(() => {
-    const initialize = async () => {
-      const metric = backgroundMonitor.startMetric('app-initialization');
-      
-      try {
-        // Initialize spatial integration system
-        await spatialIntegrationSystem.initialize();
-        
-        const defaultCommodity = 'beans (kidney red)';
-        dispatch(setSelectedCommodity(defaultCommodity));
-        
-        // Load initial data
-        await dispatch(loadSpatialData({
-          selectedCommodity: defaultCommodity,
-          selectedDate: null
-        })).unwrap();
-
-        metric.finish({ status: 'success' });
-        setState({ isInitializing: false, error: null });
-        
-        spatialDebugUtils.log('Application initialized successfully');
-      } catch (error) {
-        metric.finish({ status: 'error', error: error.message });
-        setState({ isInitializing: false, error: error.message });
-        spatialDebugUtils.error('Failed to initialize application:', error);
-      }
-    };
-
-    initialize();
-  }, [dispatch]);
-
-  return state;
-};
-
 const App = () => {
   const dispatch = useDispatch();
   const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
@@ -101,17 +61,9 @@ const App = () => {
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
 
-  // Spatial state
-  const spatialStatus = useSelector((state) => state.spatial.status);
-  const spatialData = useSelector((state) => state.spatial.data);
-  const selectedCommodity = useSelector((state) => state.spatial.ui.selectedCommodity);
-  const selectedRegimes = useSelector((state) => state.spatial.ui.selectedRegimes);
-
-  const isLoading = useSelector(state => 
-    state.spatial.status.loading || 
-    !state.spatial.status.isInitialized
-  );
-
+  // State
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [error, setError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [modalStates, setModalStates] = useState({
     methodology: false,
@@ -119,12 +71,53 @@ const App = () => {
     welcome: false,
   });
 
-  const { isInitializing, error } = useAppInitialization();
+  // Selectors
+  const spatialStatus = useSelector((state) => state.spatial.status);
+  const spatialData = useSelector((state) => state.spatial.data);
+  const selectedCommodity = useSelector((state) => state.spatial.ui.selectedCommodity);
+  const selectedRegimes = useSelector((state) => state.spatial.ui.selectedRegimes);
+  const isLoading = useSelector(state => 
+    state.spatial.status.loading || 
+    !state.spatial.status.isInitialized
+  );
 
+  // Initialize app
+  useEffect(() => {
+    const initialize = async () => {
+      const metric = backgroundMonitor.startMetric('app-initialization');
+      
+      try {
+        await spatialIntegrationSystem.initialize();
+        
+        const defaultCommodity = 'beans_white'; // Changed from 'beans (kidney red)'
+        dispatch(setSelectedCommodity(defaultCommodity));
+        
+        await dispatch(loadSpatialData({
+          selectedCommodity: defaultCommodity,
+          selectedDate: null
+        })).unwrap();
+
+        metric.finish({ status: 'success' });
+        setIsInitializing(false);
+        setError(null);
+        
+      } catch (err) {
+        metric.finish({ status: 'error', error: err.message });
+        setIsInitializing(false);
+        setError(err.message);
+        spatialDebugUtils.error('Failed to initialize application:', err);
+      }
+    };
+
+    initialize();
+  }, [dispatch]);
+
+  // Effect to handle responsive sidebar
   useEffect(() => {
     setSidebarOpen(isSmUp);
   }, [isSmUp]);
 
+  // Handlers
   const handleDrawerToggle = useCallback(() => {
     setSidebarOpen((prev) => !prev);
   }, []);
@@ -134,9 +127,14 @@ const App = () => {
   }, [dispatch]);
 
   const handleModalToggle = useCallback((modalName, isOpen) => {
-    setModalStates((prev) => ({ ...prev, [modalName]: isOpen }));
+    setModalStates(prev => ({ ...prev, [modalName]: isOpen }));
   }, []);
 
+  const handleRetry = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  // Render loading state
   if (isInitializing || isLoading) {
     return (
       <Box
@@ -151,28 +149,21 @@ const App = () => {
     );
   }
 
+  // Render error state
   if (error) {
     return (
-      <ErrorDisplay
-        error={error}
-        title="Initialization Error"
-        showDetails={process.env.NODE_ENV !== 'production'}
-        onRetry={() => window.location.reload()}
-      />
+      <Box sx={{ p: 3 }}>
+        <ErrorDisplay
+          error={error}
+          title="Initialization Error"
+          showDetails={process.env.NODE_ENV !== 'production'}
+          onRetry={handleRetry}
+        />
+      </Box>
     );
   }
 
-  if (spatialStatus.error) {
-    return (
-      <ErrorDisplay
-        error={spatialStatus.error}
-        title="Application Error"
-        showDetails={process.env.NODE_ENV !== 'production'}
-        onRetry={() => window.location.reload()}
-      />
-    );
-  }
-
+  // Render main app
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -219,12 +210,18 @@ const App = () => {
           }}
         >
           <Toolbar />
-          <Dashboard
-            data={spatialData}
-            selectedCommodity={selectedCommodity}
-            selectedRegimes={selectedRegimes}
-            windowWidth={windowSize.width}
-          />
+          {spatialStatus.error ? (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {spatialStatus.error}
+            </Alert>
+          ) : (
+            <Dashboard
+              data={spatialData}
+              selectedCommodity={selectedCommodity}
+              selectedRegimes={selectedRegimes}
+              windowWidth={windowSize.width}
+            />
+          )}
         </Box>
       </Box>
     </ThemeProvider>
