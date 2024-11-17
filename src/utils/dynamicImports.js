@@ -83,12 +83,3 @@ export const TVMIIAnalysis = lazyLoadSpatialComponent(
     ),
   'tvmii-analysis'
 );
-
-export const PrecomputedAnalysis = lazyLoadSpatialComponent(
-  () =>
-    import(
-      /* webpackChunkName: "precomputed-analysis" */
-      '../components/analysis/precomputed/PrecomputedAnalysis'
-    ),
-  'precomputed-analysis'
-);

@@ -1,8 +1,7 @@
 // src/selectors/spatialSelectors.js
 
 import { createSelector } from '@reduxjs/toolkit';
-import { spatialDebugUtils } from '../utils/spatialDebugUtils';
-
+import { spatialDebugUtils } from '../utils/MonitoringSystem';
 
 // Base selector for spatial state
 const selectSpatialState = (state) => {
@@ -85,24 +84,24 @@ export const selectMarketClusters = createSelector(
 
 export const selectFlowMaps = createSelector(
   [selectSpatialData],
-  (data) => data?.flowMaps || []
+  (data) => data?.flowAnalysis || []
 );
 
 export const selectAnalysisResults = createSelector(
   [selectSpatialData],
-  (data) => data?.analysisResults || {}
+  (data) => data?.marketIntegration || {}
 );
 
 export const selectMetadata = createSelector(
   [selectSpatialData],
-  (data) => data?.metadata || {}
+  (data) => data?.metrics || {}
 );
 
 // Derived Selectors
 export const selectAvailableDates = createSelector(
   [selectTimeSeriesData],
   (timeSeriesData) => 
-    [...new Set(timeSeriesData.map(entry => entry.month))].sort()
+    [...new Set(timeSeriesData.map(entry => entry.date))].sort()
 );
 
 export const selectAvailableRegimes = createSelector(
@@ -127,8 +126,8 @@ export const selectMarketMetrics = createSelector(
       totalMarkets: data.marketClusters?.length || 0,
       avgClusterSize: data.marketClusters?.reduce((acc, cluster) => 
         acc + cluster.market_count, 0) / (data.marketClusters?.length || 1),
-      integrationScore: data.analysisResults?.spatialAutocorrelation?.global?.moran_i || 0,
-      coverageRate: (data.analysisMetrics?.coverage || 0) * 100,
+      integrationScore: data.spatialAutocorrelation?.global?.moran_i || 0,
+      coverageRate: (data.metrics?.coverage || 0) * 100,
     };
   }
 );
@@ -143,14 +142,14 @@ export const selectMarketAnalysis = createSelector(
       cluster.connected_markets?.includes(selectedRegion)
     );
 
-    const flowData = data.flowMaps?.filter(flow => 
+    const flowData = data.flowAnalysis?.filter(flow => 
       flow.source === selectedRegion || flow.target === selectedRegion
     );
 
     return {
       cluster: marketCluster || null,
       flows: flowData || [],
-      localIntegration: data.analysisResults?.spatialAutocorrelation?.local?.[selectedRegion] || null,
+      localIntegration: data.spatialAutocorrelation?.local?.[selectedRegion] || null,
       timeSeriesData: data.timeSeriesData?.filter(ts => ts.region === selectedRegion) || [],
     };
   }
@@ -163,5 +162,5 @@ export const selectAvailableCommodities = createSelector(
 
 export const selectUniqueMonths = createSelector(
   [selectTimeSeriesData],
-  (timeSeriesData) => [...new Set(timeSeriesData.map(d => d.month))].sort()
+  (timeSeriesData) => [...new Set(timeSeriesData.map(d => d.date))].sort()
 );

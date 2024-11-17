@@ -1,4 +1,4 @@
-// src/components/interactive_graph/InteractiveChart.js
+// Updated InteractiveChart.js to integrate with new consolidated systems
 
 import React, { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
@@ -25,10 +25,7 @@ import {
   Grid,
   Typography,
 } from '@mui/material';
-import {
-  applySeasonalAdjustment,
-  applySmoothing,
-} from '../../utils/appUtils';
+import { dataTransformationSystem }  from '../../utils/DataTransformationSystem';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 const capitalizeWords = (str) => {
@@ -94,25 +91,12 @@ const InteractiveChart = ({
       const color = COLORS[index % COLORS.length];
       const conflictColor = color.replace('1)', '0.2)');
 
-      let processedData = regimeData.data;
-
-      if (applySeasonalAdj) {
-        processedData = applySeasonalAdjustment(
-          processedData,
-          [regimeData.regime],
-          12,
-          priceType === 'lcu'
-        );
-      }
-
-      if (applySmooth) {
-        processedData = applySmoothing(
-          processedData,
-          [regimeData.regime],
-          6,
-          priceType === 'lcu'
-        );
-      }
+      let processedData = dataTransformationSystem.transformData(regimeData.data, {
+        applySeasonalAdj,
+        applySmooth,
+        priceType,
+        regime: regimeData.regime
+      });
 
       datasets.push({
         label: `${capitalizeWords(regimeData.regime)} Price`,

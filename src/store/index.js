@@ -4,27 +4,43 @@ import { configureStore } from '@reduxjs/toolkit';
 import { enableMapSet } from 'immer';
 import themeReducer from '../slices/themeSlice';
 import spatialReducer from '../slices/spatialSlice';
-import { backgroundMonitor } from '../utils/backgroundMonitor';
-import { spatialDebugUtils } from '../utils/spatialDebugUtils';
+import { monitoringSystem } from '../utils/MonitoringSystem';
 
 // Enable Immer support for Map and Set
 enableMapSet();
 
-// Custom middleware to log actions to background monitor
+// Custom middleware to log actions to monitoring system
 const monitorMiddleware = (store) => (next) => (action) => {
   if (process.env.NODE_ENV === 'development') {
-    backgroundMonitor.logMetric('redux-action', {
+    monitoringSystem.logMetric('redux-action', {
       type: action.type,
       payload: action.payload,
       timestamp: new Date().toISOString(),
     });
     
-    spatialDebugUtils.log('Redux Action:', {
+    // Log action for debugging
+    monitoringSystem.log('Redux Action:', {
       type: action.type,
-      payload: action.payload
+      payload: action.payload,
+      state: store.getState()
+    }, 'redux');
+  }
+  
+  // Track timing of action processing
+  const startTime = performance.now();
+  const result = next(action);
+  const duration = performance.now() - startTime;
+  
+  // Log slow actions
+  if (duration > 16) { // More than one frame
+    monitoringSystem.warn('Slow Redux action:', {
+      type: action.type,
+      duration,
+      timestamp: new Date().toISOString()
     });
   }
-  return next(action);
+  
+  return result;
 };
 
 const store = configureStore({
@@ -55,22 +71,36 @@ const store = configureStore({
 // Enable hot reloading for reducers in development
 if (process.env.NODE_ENV === 'development' && module.hot) {
   module.hot.accept('../slices/spatialSlice', () => {
-    const nextSpatialReducer = require('../slices/spatialSlice').default;
-    store.replaceReducer({
-      ...store.getState(),
-      spatial: nextSpatialReducer,
-    });
+    const metric = monitoringSystem.startMetric('hmr-spatial-reducer');
+    try {
+      const nextSpatialReducer = require('../slices/spatialSlice').default;
+      store.replaceReducer({
+        ...store.getState(),
+        spatial: nextSpatialReducer,
+      });
+      metric.finish({ status: 'success' });
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      monitoringSystem.error('Failed to hot reload spatial reducer:', error);
+    }
   });
 
   module.hot.accept('../slices/themeSlice', () => {
-    const nextThemeReducer = require('../slices/themeSlice').default;
-    store.replaceReducer({
-      ...store.getState(),
-      theme: nextThemeReducer,
-    });
+    const metric = monitoringSystem.startMetric('hmr-theme-reducer');
+    try {
+      const nextThemeReducer = require('../slices/themeSlice').default;
+      store.replaceReducer({
+        ...store.getState(),
+        theme: nextThemeReducer,
+      });
+      metric.finish({ status: 'success' });
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      monitoringSystem.error('Failed to hot reload theme reducer:', error);
+    }
   });
 }
 
-// Export store instance and types
+// Export store instance
 export { store };
 export default store;

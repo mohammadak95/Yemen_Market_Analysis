@@ -68,7 +68,9 @@ export const VISUALIZATION_MODES = {
       'wheat_flour',
       'rice_imported',
       'sugar',
-      'oil_vegetable'
+      'oil_vegetable',
+      'salt',
+      'eggs',
     ],
     FUEL: [
       'fuel_diesel',

@@ -1,23 +1,19 @@
 // src/slices/geometriesSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { precomputedDataManager } from '../utils/PrecomputedDataManager';
+import { UnifiedDataManager } from '../utils/UnifiedDataManager';
+import { monitoringSystem } from '../utils/MonitoringSystem';
 import { normalizeRegionId } from '../utils/appUtils';
 
-
 /**
- * @typedef {import('../types/spatialTypes').PrecomputedData} PrecomputedData
- */
-
-/**
- * Async thunk to fetch geometries using PrecomputedDataManager.
+ * Async thunk to fetch geometries using UnifiedDataManager.
  * @returns {Promise<Object>} - An object mapping region IDs to geometry data.
  */
 export const fetchGeometries = createAsyncThunk(
   'geometries/fetchGeometries',
   async (_, { rejectWithValue }) => {
     try {
-      const geometriesMap = await precomputedDataManager.loadGeometries();
+      const geometriesMap = await UnifiedDataManager.loadGeometriesData();
       
       if (!geometriesMap || geometriesMap.size === 0) {
         throw new Error('No geometry data loaded');
@@ -32,12 +28,11 @@ export const fetchGeometries = createAsyncThunk(
 
       return geometries;
     } catch (error) {
-      console.error('Error loading geometries:', error);
+      monitoringSystem.error('Error loading geometries:', error);
       return rejectWithValue(error.message);
     }
   }
 );
-
 
 /**
  * @typedef {Object} GeometriesState
@@ -93,7 +88,7 @@ const geometriesSlice = createSlice({
 // Export actions
 export const { clearGeometries } = geometriesSlice.actions;
 
-// Export selectors (optional)
+// Export selectors
 export const selectGeometriesData = state => state.geometries.data;
 export const selectGeometriesLoading = state => state.geometries.loading;
 export const selectGeometriesError = state => state.geometries.error;

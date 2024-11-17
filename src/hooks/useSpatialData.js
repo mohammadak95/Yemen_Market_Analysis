@@ -1,152 +1,207 @@
-// src/hooks/useSpatialData.js
+import { useState, useEffect, useMemo } from 'react';
+import { spatialSystem } from '../utils/SpatialSystem';
+import { monitoringSystem } from '../utils/MonitoringSystem';
+import _ from 'lodash';
 
-import { useEffect, useMemo, useCallback, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { loadSpatialData } from '../slices/spatialSlice';
-import { spatialIntegrationSystem } from '../utils/spatialIntegrationSystem';
-import { spatialDebugUtils } from '../utils/spatialDebugUtils';
+/**
+ * Custom hook for spatial econometric analysis
+ * @param {Object} options Analysis configuration
+ * @param {Object} options.geoData GeoJSON data for analysis
+ * @param {Array} options.timeSeriesData Time series data
+ * @param {string} options.selectedDate Selected analysis date
+ * @param {Object} options.weightMatrix Spatial weights matrix
+ */
+export const useSpatialAnalysis = ({ 
+  geoData, 
+  timeSeriesData, 
+  selectedDate,
+  weightMatrix
+}) => {
+  const [status, setStatus] = useState('idle');
+  const [error, setError] = useState(null);
+  const [results, setResults] = useState(null);
 
-export const useSpatialData = () => {
-  const dispatch = useDispatch();
-  const mountedRef = useRef(true);
-  
-  // Get state from Redux
-  const status = useSelector(state => state.spatial.status);
-  const data = useSelector(state => state.spatial.data);
-  const validation = useSelector(state => state.spatial.validation);
-  const ui = useSelector(state => state.spatial.ui);
-
-  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      mountedRef.current = false;
+    const analyzeSpatialPatterns = async () => {
+      if (!geoData || !timeSeriesData || !selectedDate) return;
+
+      const metric = monitoringSystem.startMetric('spatial-analysis');
+      setStatus('loading');
+      setError(null);
+
+      try {
+        // Process spatial data and calculate metrics
+        const spatialResults = await spatialSystem.processSpatialData({
+          geoData,
+          timeSeriesData,
+          date: selectedDate,
+          weightMatrix
+        });
+
+        // Run spatial regression analysis
+        const regressionResults = await spatialSystem.spatialRegression({
+          data: spatialResults.processedData,
+          weights: weightMatrix,
+          model: 'SAR' // Spatial Autoregressive Model
+        });
+
+        // Detect spatial clusters and hotspots
+        const clusters = await spatialSystem.detectClusters({
+          data: spatialResults.processedData,
+          weights: weightMatrix,
+          method: 'LISA' // Local Indicators of Spatial Association
+        });
+
+        setResults({
+          spatialAutocorrelation: spatialResults.spatialAutocorrelation,
+          clusters,
+          regression: regressionResults,
+          metadata: {
+            date: selectedDate,
+            processedAt: new Date().toISOString()
+          }
+        });
+
+        setStatus('succeeded');
+        metric.finish({ status: 'success' });
+
+      } catch (err) {
+        console.error('Error in spatial analysis:', err);
+        setError(err.message);
+        setStatus('failed');
+        metric.finish({ status: 'error', error: err.message });
+      }
     };
-  }, []);
 
-  // Data fetching function
-  const fetchData = useCallback(async (commodity, date, options = {}) => {
-    if (!commodity || !mountedRef.current) return;
+    analyzeSpatialPatterns();
+  }, [geoData, timeSeriesData, selectedDate, weightMatrix]);
 
-    try {
-      await dispatch(loadSpatialData({
-        selectedCommodity: commodity,
-        selectedDate: date,
-        ...options
-      })).unwrap();
-      
-      // Get quality report after successful load
-      const qualityReport = await spatialIntegrationSystem.getDataQualityReport(
-        commodity,
-        date
-      );
-      
-      spatialDebugUtils.log('Data quality report:', qualityReport);
-      
-      return qualityReport;
-    } catch (error) {
-      console.error('Error fetching spatial data:', error);
-      throw error;
-    }
-  }, [dispatch]);
-
-  // Memoized derived data
-  const processedData = useMemo(() => {
-    if (!data) return null;
+  // Compute derived spatial metrics
+  const spatialMetrics = useMemo(() => {
+    if (!results) return null;
 
     return {
-      timeSeriesData: data.timeSeriesData,
-      marketClusters: data.marketClusters,
-      flowAnalysis: data.flowAnalysis,
-      spatialMetrics: data.spatialAutocorrelation,
-      integrationMetrics: data.metrics
+      // Global spatial autocorrelation
+      global: {
+        moranI: results.spatialAutocorrelation.global.moran_i,
+        pValue: results.spatialAutocorrelation.global.p_value,
+        significance: results.spatialAutocorrelation.global.significance,
+        interpretation: interpretMoranI(
+          results.spatialAutocorrelation.global.moran_i,
+          results.spatialAutocorrelation.global.p_value
+        )
+      },
+
+      // Local spatial patterns
+      local: {
+        clusters: summarizeClusters(results.clusters),
+        hotspots: summarizeHotspots(results.clusters),
+        significance: calculateLocalSignificance(results.clusters)
+      },
+
+      // Spatial regression results
+      regression: {
+        spatialDependence: results.regression.rho, // Spatial lag coefficient
+        modelFit: results.regression.r2,
+        aic: results.regression.aic,
+        coefficients: results.regression.coefficients,
+        interpretation: interpretSpatialRegression(results.regression)
+      }
     };
-  }, [data]);
+  }, [results]);
 
   return {
+    results,
+    spatialMetrics,
     status,
-    data: processedData,
-    validation,
-    ui,
-    fetchData
+    error
   };
 };
 
-// Additional hooks for specific analysis types
-export const useTimeSeriesAnalysis = () => {
-  const data = useSelector(state => state.spatial.data.timeSeriesData);
-  const selectedCommodity = useSelector(state => state.spatial.ui.selectedCommodity);
+/**
+ * Interpret Moran's I statistic
+ */
+function interpretMoranI(moranI, pValue) {
+  if (pValue > 0.05) return 'No significant spatial autocorrelation';
 
-  return useMemo(() => {
-    if (!data?.length) return null;
+  if (moranI > 0) {
+    return moranI > 0.3 
+      ? 'Strong positive spatial autocorrelation'
+      : 'Moderate positive spatial autocorrelation';
+  } else {
+    return moranI < -0.3
+      ? 'Strong negative spatial autocorrelation'
+      : 'Moderate negative spatial autocorrelation';
+  }
+}
 
-    const prices = data.map(d => d.avgUsdPrice);
-    const volatility = data.map(d => d.volatility);
-    const stability = data.map(d => d.price_stability);
+/**
+ * Summarize spatial clusters
+ */
+function summarizeClusters(clusters) {
+  const clusterTypes = _.countBy(clusters, 'type');
+  const significantClusters = clusters.filter(c => c.pValue < 0.05);
 
-    return {
-      averagePrice: prices.reduce((a, b) => a + b, 0) / prices.length,
-      maxPrice: Math.max(...prices),
-      minPrice: Math.min(...prices),
-      averageVolatility: volatility.reduce((a, b) => a + b, 0) / volatility.length,
-      averageStability: stability.reduce((a, b) => a + b, 0) / stability.length,
-      observations: data.length,
-      dateRange: {
-        start: data[0]?.month,
-        end: data[data.length - 1]?.month
-      }
-    };
-  }, [data]);
-};
+  return {
+    total: clusters.length,
+    byType: clusterTypes,
+    significant: significantClusters.length,
+    significantTypes: _.countBy(significantClusters, 'type')
+  };
+}
 
-export const useMarketClusters = () => {
-  const clusters = useSelector(state => state.spatial.data.marketClusters);
-  const flows = useSelector(state => state.spatial.data.flowAnalysis);
+/**
+ * Summarize spatial hotspots
+ */
+function summarizeHotspots(clusters) {
+  const hotspots = clusters.filter(c => 
+    c.type === 'high-high' && c.pValue < 0.05
+  );
+  const coldspots = clusters.filter(c => 
+    c.type === 'low-low' && c.pValue < 0.05
+  );
 
-  return useMemo(() => {
-    if (!clusters?.length) return null;
+  return {
+    hotspots: {
+      count: hotspots.length,
+      regions: hotspots.map(h => h.region)
+    },
+    coldspots: {
+      count: coldspots.length,
+      regions: coldspots.map(c => c.region)
+    }
+  };
+}
 
-    return {
-      totalClusters: clusters.length,
-      averageClusterSize: clusters.reduce((acc, c) => 
-        acc + c.market_count, 0) / clusters.length,
-      largestCluster: Math.max(...clusters.map(c => c.market_count)),
-      smallestCluster: Math.min(...clusters.map(c => c.market_count)),
-      efficiency: clusters.reduce((acc, c) => 
-        acc + (c.efficiency?.efficiency_score || 0), 0) / clusters.length,
-      flowMetrics: flows ? {
-        totalFlows: flows.length,
-        averageFlow: flows.reduce((acc, f) => acc + f.avg_flow, 0) / flows.length
-      } : null
-    };
-  }, [clusters, flows]);
-};
+/**
+ * Calculate local significance metrics
+ */
+function calculateLocalSignificance(clusters) {
+  const significantClusters = clusters.filter(c => c.pValue < 0.05);
+  const totalRegions = clusters.length;
 
-export const useSpatialAnalysis = () => {
-  const spatialData = useSelector(state => state.spatial.data.spatialAutocorrelation);
-  const geoData = useSelector(state => state.spatial.data.geoData);
+  return {
+    proportion: significantClusters.length / totalRegions,
+    distribution: _.countBy(significantClusters, 'type'),
+    averagePValue: _.meanBy(clusters, 'pValue')
+  };
+}
 
-  return useMemo(() => {
-    if (!spatialData?.global || !geoData) return null;
+/**
+ * Interpret spatial regression results
+ */
+function interpretSpatialRegression(regression) {
+  const { rho, r2, coefficients } = regression;
 
-    const localPatterns = _.countBy(
-      Object.values(spatialData.local || {}),
-      'cluster_type'
-    );
-
-    const hotspots = _.countBy(
-      Object.values(spatialData.hotspots || {}),
-      'intensity'
-    );
-
-    return {
-      globalStatistics: {
-        moranI: spatialData.global.moran_i,
-        significance: spatialData.global.significance,
-        pValue: spatialData.global.p_value
-      },
-      localPatterns,
-      hotspots,
-      coverage: geoData.features.length
-    };
-  }, [spatialData, geoData]);
-};
+  return {
+    spatialDependence: rho > 0.3 ? 'Strong' : rho > 0.1 ? 'Moderate' : 'Weak',
+    modelFit: r2 > 0.7 ? 'Strong' : r2 > 0.3 ? 'Moderate' : 'Weak',
+    significantFactors: Object.entries(coefficients)
+      .filter(([_, coef]) => coef.pValue < 0.05)
+      .map(([name, coef]) => ({
+        name,
+        coefficient: coef.value,
+        impact: coef.value > 0 ? 'Positive' : 'Negative'
+      }))
+  };
+}

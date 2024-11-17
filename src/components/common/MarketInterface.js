@@ -1,6 +1,5 @@
-// src/components/common/MarketInterface.js
-
-import React, { useCallback } from 'react';
+// Updated MarketInterface.js to integrate with new consolidated systems
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -16,6 +15,7 @@ import {
   Typography,
   Paper,
 } from '@mui/material';
+import { monitoringSystem } from '../../utils/MonitoringSystem';
 import {
   setSelectedCommodity,
   setSelectedRegimes,
@@ -49,7 +49,7 @@ const MarketInterface = () => {
         selectedDate: null
       })).unwrap();
     } catch (error) {
-      console.error('Error loading commodity data:', error);
+      monitoringSystem.error('Error loading commodity data:', error);
     }
   }, [dispatch]);
 

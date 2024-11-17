@@ -1,8 +1,9 @@
 // src/context/SpatialDataContext.js
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { precomputedDataManager } from '../utils/PrecomputedDataManager';
-import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { spatialSystem } from '../utils/SpatialSystem';
+import { monitoringSystem } from '../utils/MonitoringSystem';
+import { dataTransformationSystem } from '../utils/DataTransformationSystem';
 
 const SpatialDataContext = createContext(null);
 
@@ -11,28 +12,54 @@ export const SpatialDataProvider = ({ children }) => {
     loading: false,
     error: null,
     data: null,
+    processedData: null,
+    metadata: null
   });
 
   const fetchSpatialData = useCallback(async (selectedCommodity, selectedDate) => {
-    const metric = backgroundMonitor.startMetric('fetch-spatial-data');
+    const metric = monitoringSystem.startMetric('fetch-spatial-data');
 
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const result = await precomputedDataManager.processSpatialData(
+      // Load raw data using spatial system
+      const rawData = await spatialSystem.processSpatialData(
         selectedCommodity,
         selectedDate
+      );
+
+      // Transform data using data transformation system
+      const processedData = await dataTransformationSystem.transformTimeSeriesData(
+        rawData.timeSeriesData,
+        {
+          includeGarch: true,
+          includeConflict: true,
+          smoothing: true
+        }
       );
 
       setState({
         loading: false,
         error: null,
-        data: result,
+        data: rawData,
+        processedData,
+        metadata: {
+          commodity: selectedCommodity,
+          date: selectedDate,
+          processedAt: new Date().toISOString(),
+          quality: rawData.validation?.qualityMetrics || {}
+        }
       });
 
-      metric.finish({ status: 'success' });
+      metric.finish({ 
+        status: 'success',
+        dataPoints: rawData.timeSeriesData?.length,
+        processedPoints: processedData.length
+      });
+      
     } catch (error) {
-      console.error('Error fetching spatial data:', error);
+      monitoringSystem.error('Error fetching spatial data:', error);
+      
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -43,12 +70,27 @@ export const SpatialDataProvider = ({ children }) => {
     }
   }, []);
 
+  const clearData = useCallback(() => {
+    setState({
+      loading: false,
+      error: null,
+      data: null,
+      processedData: null,
+      metadata: null
+    });
+  }, []);
+
   const value = {
     ...state,
     fetchSpatialData,
+    clearData
   };
 
-  return <SpatialDataContext.Provider value={value}>{children}</SpatialDataContext.Provider>;
+  return (
+    <SpatialDataContext.Provider value={value}>
+      {children}
+    </SpatialDataContext.Provider>
+  );
 };
 
 export const useSpatialDataContext = () => {

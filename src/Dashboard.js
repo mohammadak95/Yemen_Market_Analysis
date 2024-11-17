@@ -1,6 +1,6 @@
 // src/Dashboard.js
 
-import React, { Suspense, useMemo, useCallback } from 'react';
+import React, { Suspense, useMemo, useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid, Paper, Alert, AlertTitle } from '@mui/material';
 import { useSelector } from 'react-redux';
@@ -11,255 +11,280 @@ import ErrorMessage from './components/common/ErrorMessage';
 import AnalysisWrapper from './components/common/AnalysisWrapper';
 import SpatialAnalysis from './components/analysis/spatial-analysis/SpatialAnalysis';
 import { useMarketAnalysis } from './hooks/useMarketAnalysis';
-import { spatialDebugUtils } from './utils/spatialDebugUtils';
-import { spatialIntegrationSystem } from './utils/spatialIntegrationSystem';
+import { monitoringSystem } from './utils/MonitoringSystem';
+import { dataTransformationSystem } from './utils/DataTransformationSystem';
+import { unifiedDataManager } from './utils/UnifiedDataManager';
 
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  TimeScale,
-  Tooltip,
-  Legend,
-  Filler,
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    TimeScale,
+    Tooltip,
+    Legend,
+    Filler,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
-// Lazy load analysis components
-const ECMAnalysisLazy = React.lazy(() =>
-  import('./components/analysis/ecm/ECMAnalysis')
-);
-const PriceDifferentialAnalysisLazy = React.lazy(() =>
-  import('./components/analysis/price-differential/PriceDifferentialAnalysis')
-);
-const TVMIIAnalysisLazy = React.lazy(() =>
-  import('./components/analysis/tvmii/TVMIIAnalysis')
-);
+// Import analysis components using dynamic imports
+import {
+    ECMAnalysis,
+    PriceDifferentialAnalysis,
+    TVMIIAnalysis
+} from './utils/dynamicImports';
 
 // Register ChartJS components
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  TimeScale,
-  Tooltip,
-  Legend,
-  Filler
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    TimeScale,
+    Tooltip,
+    Legend,
+    Filler
 );
 
 const Dashboard = React.memo(({
-  data,
-  selectedAnalysis,
-  selectedCommodity,
-  selectedRegimes,
-  selectedDate,
-  windowWidth,
-}) => {
-  // Get spatial validation status
-  const validationStatus = useSelector(state => state.spatial.validation);
-
-  // Process time series data
-  const processedData = useMemo(() => {
-    if (!data?.timeSeriesData) {
-      spatialDebugUtils.log('No time series data available');
-      return [];
-    }
-
-    const processed = data.timeSeriesData.map(entry => ({
-      ...entry,
-      date: entry.month,
-    }));
-
-    spatialDebugUtils.log('Processed time series data:', { 
-      count: processed.length 
-    });
-
-    return processed;
-  }, [data]);
-
-  // Get market analysis data
-  const { 
-    marketMetrics, 
-    timeSeriesAnalysis, 
-    spatialAnalysis 
-  } = useMarketAnalysis(data);
-
-  // Handle analysis component selection
-  const getAnalysisComponent = useCallback((type) => {
-    const componentMap = {
-      ecm: ECMAnalysisLazy,
-      priceDiff: PriceDifferentialAnalysisLazy,
-      spatial: SpatialAnalysis,
-      tvmii: TVMIIAnalysisLazy,
-    };
-
-    return componentMap[type] || null;
-  }, []);
-
-  // Render interactive chart
-  const renderInteractiveChart = useCallback(() => {
-    if (!selectedCommodity || !selectedRegimes?.length) {
-      return (
-        <ErrorMessage 
-          message="Please select at least one regime and a commodity from the sidebar." 
-        />
-      );
-    }
-
-    if (!processedData.length) {
-      return <LoadingSpinner />;
-    }
-
-    return (
-      <InteractiveChart
-        data={processedData}
-        selectedCommodity={selectedCommodity}
-        selectedRegimes={selectedRegimes}
-      />
-    );
-  }, [processedData, selectedCommodity, selectedRegimes]);
-
-  // Render analysis component
-  const renderAnalysisComponent = useCallback(() => {
-    if (!selectedAnalysis) return null;
-
-    const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
-    if (!AnalysisComponent) {
-      return <ErrorMessage message="Selected analysis type is not available." />;
-    }
-
-    // Get quality report for the selected analysis
-    const getQualityReport = async () => {
-      try {
-        const report = await spatialIntegrationSystem.getDataQualityReport(
-          selectedCommodity,
-          selectedDate
-        );
-        spatialDebugUtils.log('Analysis quality report:', report);
-        return report;
-      } catch (error) {
-        spatialDebugUtils.error('Error getting quality report:', error);
-        return null;
-      }
-    };
-
-    const commonProps = {
-      selectedCommodity,
-      windowWidth,
-      data,
-      qualityReport: getQualityReport(),
-      marketMetrics,
-      timeSeriesAnalysis,
-      spatialAnalysis
-    };
-
-    return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <AnalysisWrapper>
-          <AnalysisComponent {...commonProps} />
-        </AnalysisWrapper>
-      </Suspense>
-    );
-  }, [
     selectedAnalysis,
     selectedCommodity,
+    selectedRegimes,
     selectedDate,
     windowWidth,
-    data,
-    marketMetrics,
-    timeSeriesAnalysis,
-    spatialAnalysis,
-    getAnalysisComponent
-  ]);
+}) => {
+    // Local state for dashboard data
+    const [dashboardData, setDashboardData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
+    // Get validation status from Redux
+    const validationStatus = useSelector(state => state.spatial.validation);
 
-  // Show loading state
-  if (!data) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100%' 
-      }}>
-        <LoadingSpinner />
-      </Box>
-    );
-  }
+    // Load data using unified data manager
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            const metric = monitoringSystem.startMetric('load-dashboard-data');
+            setLoading(true);
+            
+            try {
+                const result = await unifiedDataManager.loadDashboardData(
+                    selectedCommodity,
+                    selectedDate,
+                    { selectedRegimes }
+                );
+                
+                setDashboardData(result);
+                metric.finish({ status: 'success' });
+                
+            } catch (err) {
+                setError(err.message);
+                metric.finish({ status: 'error', error: err.message });
+                monitoringSystem.error('Error loading dashboard data:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  // Show validation warnings if any
-  const showValidationWarnings = validationStatus?.warnings?.length > 0;
+        if (selectedCommodity && selectedRegimes?.length > 0) {
+            loadDashboardData();
+        }
+    }, [selectedCommodity, selectedDate, selectedRegimes]);
 
-  return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100%', 
-      overflow: 'hidden' 
-    }}>
-      {showValidationWarnings && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          <AlertTitle>Data Quality Warnings</AlertTitle>
-          <Box component="ul" sx={{ pl: 2, m: 0 }}>
-            {validationStatus.warnings.map((warning, index) => (
-              <li key={index}>{warning}</li>
-            ))}
-          </Box>
-        </Alert>
-      )}
+    // Process time series data using data transformation system
+    const processedData = useMemo(() => {
+        if (!dashboardData?.timeSeriesData) {
+            monitoringSystem.log('No time series data available');
+            return [];
+        }
 
-      <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'auto' }}>
-        <Grid item xs={12}>
-          <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-            <Box sx={{
-              width: '100%',
-              height: { xs: '300px', sm: '400px', md: '500px' },
-              position: 'relative'
+        try {
+            return dataTransformationSystem.transformTimeSeriesData(
+                dashboardData.timeSeriesData,
+                {
+                    includeGarch: true,
+                    includeConflict: true
+                }
+            );
+        } catch (err) {
+            monitoringSystem.error('Error processing time series data:', err);
+            return [];
+        }
+    }, [dashboardData]);
+
+    // Get market analysis data
+    const { 
+        marketMetrics, 
+        timeSeriesAnalysis, 
+        spatialAnalysis 
+    } = useMarketAnalysis(dashboardData);
+
+    // Handle analysis component selection
+    const getAnalysisComponent = useCallback((type) => {
+        const componentMap = {
+            ecm: ECMAnalysis,
+            priceDiff: PriceDifferentialAnalysis,
+            spatial: SpatialAnalysis,
+            tvmii: TVMIIAnalysis,
+        };
+
+        return componentMap[type] || null;
+    }, []);
+
+    // Render interactive chart
+    const renderInteractiveChart = useCallback(() => {
+        if (!selectedCommodity || !selectedRegimes?.length) {
+            return (
+                <ErrorMessage 
+                    message="Please select at least one regime and a commodity from the sidebar." 
+                />
+            );
+        }
+
+        if (!processedData.length) {
+            return <LoadingSpinner />;
+        }
+
+        return (
+            <InteractiveChart
+                data={processedData}
+                selectedCommodity={selectedCommodity}
+                selectedRegimes={selectedRegimes}
+            />
+        );
+    }, [processedData, selectedCommodity, selectedRegimes]);
+
+    // Render analysis component
+    const renderAnalysisComponent = useCallback(() => {
+        if (!selectedAnalysis) return null;
+
+        const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
+        if (!AnalysisComponent) {
+            return <ErrorMessage message="Selected analysis type is not available." />;
+        }
+
+        const commonProps = {
+            selectedCommodity,
+            windowWidth,
+            data: dashboardData,
+            marketMetrics,
+            timeSeriesAnalysis,
+            spatialAnalysis
+        };
+
+        return (
+            <Suspense fallback={<LoadingSpinner />}>
+                <AnalysisWrapper>
+                    <AnalysisComponent {...commonProps} />
+                </AnalysisWrapper>
+            </Suspense>
+        );
+    }, [
+        selectedAnalysis,
+        selectedCommodity,
+        windowWidth,
+        dashboardData,
+        marketMetrics,
+        timeSeriesAnalysis,
+        spatialAnalysis,
+        getAnalysisComponent
+    ]);
+
+    // Show loading state
+    if (loading) {
+        return (
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%' 
             }}>
-              {renderInteractiveChart()}
+                <LoadingSpinner />
             </Box>
-          </Paper>
-        </Grid>
+        );
+    }
 
-        {selectedAnalysis && (
-          <Grid item xs={12}>
-            {renderAnalysisComponent()}
-          </Grid>
-        )}
+    // Show error state
+    if (error) {
+        return (
+            <ErrorMessage 
+                message={error}
+                retry={() => unifiedDataManager.clearCache()}
+            />
+        );
+    }
 
-        {marketMetrics && (
-          <Grid item xs={12}>
-            <Paper elevation={2} sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  <strong>Market Coverage:</strong> {marketMetrics.marketCoverage}%
-                </div>
-                <div>
-                  <strong>Integration Level:</strong> {marketMetrics.integrationLevel}%
-                </div>
-                <div>
-                  <strong>Stability:</strong> {marketMetrics.stability}%
-                </div>
-              </Box>
-            </Paper>
-          </Grid>
-        )}
-      </Grid>
-    </Box>
-  );
+    // Show validation warnings if any
+    const showValidationWarnings = validationStatus?.warnings?.length > 0;
+
+    return (
+        <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%', 
+            overflow: 'hidden' 
+        }}>
+            {showValidationWarnings && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    <AlertTitle>Data Quality Warnings</AlertTitle>
+                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                        {validationStatus.warnings.map((warning, index) => (
+                            <li key={index}>{warning}</li>
+                        ))}
+                    </Box>
+                </Alert>
+            )}
+
+            <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'auto' }}>
+                <Grid item xs={12}>
+                    <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
+                        <Box sx={{
+                            width: '100%',
+                            height: { xs: '300px', sm: '400px', md: '500px' },
+                            position: 'relative'
+                        }}>
+                            {renderInteractiveChart()}
+                        </Box>
+                    </Paper>
+                </Grid>
+
+                {selectedAnalysis && (
+                    <Grid item xs={12}>
+                        {renderAnalysisComponent()}
+                    </Grid>
+                )}
+
+                {marketMetrics && (
+                    <Grid item xs={12}>
+                        <Paper elevation={2} sx={{ p: 2 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <div>
+                                    <strong>Market Coverage:</strong> {marketMetrics.marketCoverage}%
+                                </div>
+                                <div>
+                                    <strong>Integration Level:</strong> {marketMetrics.integrationLevel}%
+                                </div>
+                                <div>
+                                    <strong>Stability:</strong> {marketMetrics.stability}%
+                                </div>
+                            </Box>
+                        </Paper>
+                    </Grid>
+                )}
+            </Grid>
+        </Box>
+    );
 });
 
 Dashboard.displayName = 'Dashboard';
 
 Dashboard.propTypes = {
-  data: PropTypes.object,
-  selectedAnalysis: PropTypes.string,
-  selectedCommodity: PropTypes.string.isRequired,
-  selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
-  selectedDate: PropTypes.string,
-  windowWidth: PropTypes.number.isRequired,
+    selectedAnalysis: PropTypes.string,
+    selectedCommodity: PropTypes.string.isRequired,
+    selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
+    selectedDate: PropTypes.string,
+    windowWidth: PropTypes.number.isRequired,
 };
 
 export default Dashboard;

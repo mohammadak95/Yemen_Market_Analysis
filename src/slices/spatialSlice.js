@@ -1,9 +1,9 @@
-// src/slices/spatialSlice.js
+// Updated spatialSlice.js to integrate with consolidated systems and improve state management
+
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { spatialIntegrationSystem } from '../utils/spatialIntegrationSystem';
-import { spatialDebugUtils } from '../utils/spatialDebugUtils';
-import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { unifiedDataManager } from '../utils/UnifiedDataManager';
+import { monitoringSystem, backgroundMonitor } from '../utils/MonitoringSystem';
 
 const initialState = {
   status: {
@@ -42,10 +42,10 @@ export const loadSpatialData = createAsyncThunk(
   'spatial/loadSpatialData',
   async ({ selectedCommodity, selectedDate }, { rejectWithValue }) => {
     const metric = backgroundMonitor.startMetric('load-spatial-data');
-    spatialDebugUtils.log('Loading spatial data:', { selectedCommodity, selectedDate });
+    monitoringSystem.log('Loading spatial data:', { selectedCommodity, selectedDate });
 
     try {
-      const result = await spatialIntegrationSystem.loadAndProcessData(
+      const result = await unifiedDataManager.loadSpatialData(
         selectedCommodity,
         selectedDate,
         {
@@ -59,6 +59,7 @@ export const loadSpatialData = createAsyncThunk(
 
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
+      monitoringSystem.error('Error loading spatial data:', error);
       return rejectWithValue(error.message);
     }
   }

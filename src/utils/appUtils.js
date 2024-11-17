@@ -245,21 +245,6 @@ export const applySmoothing = (
 // ==========================
 
 /**
- * Normalizes a region ID by removing diacritics and replacing non-alphanumeric characters with underscores.
- *
- * @param {string} regionId - The region ID to normalize.
- * @returns {string|null} - The normalized region ID or null if input is invalid.
- */
-export const normalizeRegionId = (regionId) => {
-  if (!regionId) return null;
-  return regionId
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-    .replace(/[^a-z0-9]/g, '_'); // Replace non-alphanumeric characters with underscores
-};
-
-/**
  * Retrieves the normalized region ID from feature properties.
  *
  * @param {Object} properties - The properties of a feature.
@@ -777,4 +762,194 @@ export const calculateTVMIIScore = (answers) => {
   if (answers.timeVaryingNature?.trim().length > 50) score += 35;
   if (answers.implications?.trim().length > 50) score += 35;
   return score;
+};
+
+// src/utils/appUtils.js
+
+import Papa from 'papaparse';
+import _ from 'lodash';
+
+/**
+ * Data Processing Functions
+ */
+
+export const normalizeRegionId = (regionId) => {
+  if (!regionId) return null;
+  return regionId
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+};
+
+export const transformProperties = (properties) => {
+  if (!properties) return {};
+  return {
+    id: properties.id || properties.region_id,
+    name: properties.name || properties.region,
+    value: properties.value || properties.avgUsdPrice,
+    ...properties
+  };
+};
+
+export const processMarketData = async (rawData) => {
+  if (!rawData) return null;
+
+  const {
+    time_series_data,
+    market_clusters,
+    flow_analysis,
+    spatial_autocorrelation,
+    metadata
+  } = rawData;
+
+  return {
+    timeSeriesData: time_series_data,
+    marketClusters: market_clusters,
+    flowAnalysis: flow_analysis,
+    spatialAutocorrelation: spatial_autocorrelation,
+    metadata: {
+      ...metadata,
+      processedAt: new Date().toISOString()
+    }
+  };
+};
+
+/**
+ * File Operations
+ */
+
+export const readFileAsText = async (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+};
+
+export const parseCSVData = (text, options = {}) => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(text, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      ...options,
+      complete: (results) => resolve(results.data),
+      error: (error) => reject(error)
+    });
+  });
+};
+
+/**
+ * Market Analysis Functions
+ */
+
+export const calculateMarketMetrics = (timeSeriesData) => {
+  if (!Array.isArray(timeSeriesData) || !timeSeriesData.length) {
+    return null;
+  }
+
+  const latest = timeSeriesData[timeSeriesData.length - 1];
+  return {
+    currentPrice: latest.avgUsdPrice,
+    volatility: latest.volatility,
+    stability: latest.price_stability,
+    conflictIntensity: latest.conflict_intensity,
+    sampleSize: latest.sampleSize
+  };
+};
+
+export const processTimeSeriesData = (data, options = {}) => {
+  const {
+    includeGarch = true,
+    includeConflict = true
+  } = options;
+
+  return data.map(entry => ({
+    date: new Date(entry.month),
+    price: entry.avgUsdPrice,
+    volatility: entry.volatility,
+    ...(includeGarch && { garchVolatility: entry.garch_volatility }),
+    ...(includeConflict && {
+      conflictIntensity: entry.conflict_intensity,
+      stability: entry.price_stability
+    })
+  }));
+};
+
+/**
+ * Validation Functions
+ */
+
+export const validateData = (data) => {
+  if (!data) return false;
+
+  const requiredFields = [
+    'time_series_data',
+    'market_clusters',
+    'flow_analysis',
+    'spatial_autocorrelation'
+  ];
+
+  return requiredFields.every(field => field in data);
+};
+
+export const validateDataStructure = (data) => {
+  if (!data || typeof data !== 'object') return false;
+
+  const structure = {
+    hasTimeSeries: Array.isArray(data.time_series_data),
+    hasClusters: Array.isArray(data.market_clusters),
+    hasFlows: Array.isArray(data.flow_analysis),
+    hasSpatial: Boolean(data.spatial_autocorrelation)
+  };
+
+  return Object.values(structure).every(Boolean);
+};
+
+/**
+ * Cache Control Functions
+ */
+
+export const clearCache = async () => {
+  try {
+    localStorage.clear();
+    sessionStorage.clear();
+    return true;
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+    return false;
+  }
+};
+
+export const getCacheStats = () => {
+  try {
+    return {
+      localStorage: {
+        size: localStorage.length,
+        usage: calculateStorageUsage(localStorage)
+      },
+      sessionStorage: {
+        size: sessionStorage.length,
+        usage: calculateStorageUsage(sessionStorage)
+      }
+    };
+  } catch (error) {
+    console.error('Error getting cache stats:', error);
+    return null;
+  }
+};
+
+// Helper function for cache stats
+const calculateStorageUsage = (storage) => {
+  let total = 0;
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    const value = storage.getItem(key);
+    total += (key.length + value.length) * 2; // Unicode characters = 2 bytes
+  }
+  return total;
 };
