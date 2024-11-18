@@ -3,265 +3,201 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { store } from './store';
+import { store } from './store/store';
 import App from './App';
+import ErrorBoundary from './components/common/ErrorBoundary'; // Updated import
 import { monitoringSystem } from './utils/MonitoringSystem';
 import { unifiedDataManager } from './utils/UnifiedDataManager';
 import { spatialSystem } from './utils/SpatialSystem';
 
-// State preservation for HMR
-let preservedState = null;
+// Import any global CSS or resets
+import './styles/index.css';
 
-/**
- * Sets up development tools and monitoring
- */
 const setupDevelopmentTools = async () => {
-  if (process.env.NODE_ENV !== 'development') return;
+  if (process.env.NODE_ENV === 'development') {
+    // Enable debug mode
+    monitoringSystem.enableDebug();
 
-  // Enable monitoring system debugging
-  monitoringSystem.enableDebug();
+    // Setup performance monitoring
+    const perfObserver = new PerformanceObserver((list) => {
+      list.getEntries().forEach((entry) => {
+        if (entry.duration > 100) {
+          monitoringSystem.warn('Slow operation detected:', {
+            name: entry.name,
+            duration: entry.duration,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      });
+    });
 
-  // Setup performance observer
-  const perfObserver = new PerformanceObserver((list) => {
-    list.getEntries().forEach((entry) => {
-      if (entry.duration > 100) { // Log slow operations (>100ms)
-        monitoringSystem.warn('Slow operation detected:', {
-          name: entry.name,
-          duration: entry.duration,
-          timestamp: new Date().toISOString()
+    perfObserver.observe({ entryTypes: ['measure', 'resource'] });
+
+    // Monitor Redux state updates
+    let prevUpdateTime = Date.now();
+    store.subscribe(() => {
+      const now = Date.now();
+      const updateDuration = now - prevUpdateTime;
+      prevUpdateTime = now;
+
+      if (updateDuration > 16) {
+        monitoringSystem.warn('Slow state update:', {
+          duration: updateDuration,
+          timestamp: new Date().toISOString(),
         });
       }
     });
-  });
-  
-  perfObserver.observe({ entryTypes: ['measure', 'resource'] });
 
-  // Monitor Redux state changes
-  let prevUpdateTime = Date.now();
-  store.subscribe(() => {
-    const now = Date.now();
-    const updateDuration = now - prevUpdateTime;
-    prevUpdateTime = now;
+    // Add debug utilities to window
+    window.debugUtils = {
+      store,
+      monitoringSystem,
+      logState: () => {
+        console.group('Current Redux State');
+        console.log('Full State:', store.getState());
+        console.groupEnd();
+      },
+      getPerformanceReport: () => monitoringSystem.getPerformanceReport(),
+      clearCache: () => {
+        unifiedDataManager.clearCache();
+        console.log('Cache cleared');
+      },
+    };
 
-    if (updateDuration > 16) { // More than one frame (60fps)
-      monitoringSystem.warn('Slow state update:', {
-        duration: updateDuration,
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
-
-  // Add debug utilities to window for console access
-  window.debugUtils = {
-    store,
-    monitoringSystem,
-    spatialSystem,
-    dataManager: unifiedDataManager,
-    
-    // Debug helpers
-    logState: () => {
-      console.group('Current Redux State');
-      console.log('Full State:', store.getState());
-      console.log('Spatial State:', store.getState().spatial);
-      console.groupEnd();
-    },
-
-    getPerformanceReport: () => {
-      return monitoringSystem.getPerformanceReport();
-    },
-
-    clearCache: () => {
-      unifiedDataManager.clearCache();
-      console.log('Cache cleared');
-    },
-
-    getSpatialMetrics: () => {
-      const state = store.getState().spatial;
-      return {
-        dataPoints: state.data?.timeSeriesData?.length || 0,
-        markets: state.data?.marketClusters?.length || 0,
-        flows: state.data?.flowAnalysis?.length || 0,
-        warnings: state.validation?.warnings?.length || 0
-      };
-    }
-  };
-
-  // Setup cleanup on page unload
-  window.addEventListener('beforeunload', () => {
-    perfObserver.disconnect();
-    monitoringSystem.log('Development tools cleaned up');
-  });
-
-  console.log(`
-    🔧 Debug tools available in console:
-    - debugUtils.logState()      // View current Redux state
-    - debugUtils.getPerformanceReport() // View performance metrics
-    - debugUtils.clearCache()    // Clear data cache
-    - debugUtils.getSpatialMetrics() // Get spatial analysis metrics
-  `);
+    console.log(`
+      🔧 Debug tools available in console:
+      - debugUtils.logState()            // View current Redux state
+      - debugUtils.getPerformanceReport()// View performance metrics
+      - debugUtils.clearCache()          // Clear data cache
+    `);
+  }
 };
 
-/**
- * Sets up error handling and monitoring
- */
 const setupErrorHandling = () => {
-  // Global error handler
   window.onerror = (message, source, lineno, colno, error) => {
     monitoringSystem.error('Global Error:', {
       message,
       source,
       lineno,
       colno,
-      error
+      error,
     });
-    return false; // Let other error handlers run
+    // Return false to allow the default handler to run as well
+    return false;
   };
 
-  // Promise rejection handling
   window.onunhandledrejection = (event) => {
     monitoringSystem.error('Unhandled Promise Rejection:', event.reason);
   };
 };
 
-/**
- * Manages state preservation for Hot Module Replacement
- */
-const setupHMR = () => {
-  if (process.env.NODE_ENV !== 'development' || !module.hot) return;
-
-  // Preserve state before update
-  const preserveState = () => {
-    const currentState = store.getState();
-    preservedState = {
-      spatial: {
-        data: currentState.spatial.data,
-        ui: currentState.spatial.ui
-      }
-    };
-    monitoringSystem.log('State preserved for HMR');
-  };
-
-  // Restore state after update
-  const restoreState = () => {
-    if (preservedState) {
-      store.dispatch({
-        type: 'spatial/restoreState',
-        payload: preservedState.spatial
-      });
-      monitoringSystem.log('State restored after HMR');
-      preservedState = null;
-    }
-  };
-
-  // Handle module replacement
-  module.hot.accept('./App', () => {
-    preserveState();
-    const NextApp = require('./App').default;
-    const rootElement = document.getElementById('root');
-    const root = createRoot(rootElement);
-    renderApp(root, NextApp);
-    restoreState();
-  });
-};
-
-/**
- * Renders the application
- */
-const renderApp = (root, Component) => {
+const renderApp = (root) => {
   root.render(
     <React.StrictMode>
-      <Provider store={store}>
-        <Component />
-      </Provider>
+      <ErrorBoundary>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </ErrorBoundary>
     </React.StrictMode>
   );
 };
 
-/**
- * Initializes and starts the application
- */
+const verifyDataPaths = async () => {
+  if (process.env.NODE_ENV === 'development') {
+    const { testDataPath } = await import('./utils/dataUtils');
+    const { config } = await import('./config/appConfig');
+    
+    console.log('Data paths configuration:', {
+      baseUrl: config.baseUrl,
+      resultsPath: config.dataPaths.results,
+      fullPath: config.paths.getFullPath(config.dataPaths.files.timeVaryingFlows)
+    });
+    
+    // Test critical data files
+    const files = [
+      config.dataPaths.files.timeVaryingFlows,
+      config.dataPaths.files.tvMiiResults,
+      config.dataPaths.files.priceDifferentials
+    ];
+    
+    for (const file of files) {
+      const exists = await testDataPath(file);
+      console.log(`Data file ${file}: ${exists ? 'OK' : 'NOT FOUND'}`);
+    }
+  }
+};
+
 const initializeApp = async () => {
   const initMetric = monitoringSystem.startMetric('app-initialization');
-  
+
   try {
-    // Initialize core systems
-    await Promise.all([
-      unifiedDataManager.init(),
-      spatialSystem.initialize()
-    ]);
-    
-    // Setup development features
+    await unifiedDataManager.init();
+    await spatialSystem.initialize();
+
+    const baseState = {
+      commodities: {
+        commodities: [],
+        status: 'idle',
+        error: null,
+      },
+      spatial: {
+        status: {
+          loading: false,
+          error: null,
+          isInitialized: false,
+        },
+        ui: {
+          selectedCommodity: null,
+          selectedDate: null,
+          selectedRegimes: [],
+        },
+      },
+      markets: {
+        status: 'idle',
+        error: null,
+      },
+      analysis: {
+        status: 'idle',
+        error: null,
+      },
+    };
+
+    store.dispatch({ type: 'INIT_STATE', payload: baseState });
+
     if (process.env.NODE_ENV === 'development') {
       await setupDevelopmentTools();
     }
 
-    // Setup error handling
     setupErrorHandling();
-    
-    // Setup HMR
-    setupHMR();
 
-    // Setup base styles
-    const style = document.createElement('style');
-    style.textContent = `
-      body {
-        margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-          Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Get root element
     const rootElement = document.getElementById('root');
     if (!rootElement) {
       throw new Error('Root element not found');
     }
 
-    // Create root and render app
     const root = createRoot(rootElement);
-    renderApp(root, App);
+    renderApp(root);
+
+    // Verify data paths after rendering
+    await verifyDataPaths();
 
     initMetric.finish({ status: 'success' });
-    
   } catch (error) {
     initMetric.finish({ status: 'error', error: error.message });
     monitoringSystem.error('Failed to initialize application:', error);
-    
-    // Render error UI
+
     const rootElement = document.getElementById('root');
     if (rootElement) {
       rootElement.innerHTML = `
-        <div style="
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          color: #ff0000;
-          text-align: center;
-          font-family: sans-serif;
-        ">
-          <div>
-            <h1>Application Initialization Failed</h1>
-            <p>${error.message}</p>
-            <button onclick="window.location.reload()" style="
-              padding: 10px 20px;
-              background: #f44336;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            ">
-              Retry
-            </button>
-          </div>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: system-ui; background-color: #f8d7da; color: #721c24;">
+          <h1 style="color: #e53e3e;">Application Initialization Failed</h1>
+          <p style="color: #4a5568;">${error.message}</p>
+          <!-- You can add more user-friendly options here if desired -->
         </div>
       `;
     }
   }
 };
 
-// Start the application
 initializeApp();

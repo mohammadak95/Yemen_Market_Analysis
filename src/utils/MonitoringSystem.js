@@ -6,6 +6,11 @@
  */
 class MonitoringSystem {
   constructor() {
+    this.isLogging = false;
+    this.errorQueue = [];
+    this.batchSize = 10;
+    this.batchTimeout = 1000; // 1 second
+
     this.isDebugEnabled = process.env.NODE_ENV === 'development';
     this.metrics = new Map();
     this.errors = new Map();
@@ -134,23 +139,18 @@ class MonitoringSystem {
   }
 
   /**
-   * Log debug information
+   * Log a general message
    */
   log(message, data = {}, category = 'general') {
-    if (!this.isDebugEnabled) return;
-
-    const logEntry = {
-      type: 'log',
-      category,
-      message,
-      data,
-      timestamp: new Date().toISOString()
-    };
-
-    this.addToHistory(logEntry);
+    if (this.isLogging) return;
     
-    if (this.isDebugEnabled) {
-      console.log(`[${category}] ${message}`, data);
+    try {
+      this.isLogging = true;
+      if (this.isDebugEnabled) {
+        console.log(`[${category}] ${message}`, data);
+      }
+    } finally {
+      this.isLogging = false;
     }
   }
 
@@ -177,28 +177,55 @@ class MonitoringSystem {
   }
 
   /**
-   * Log error information
+   * Log error information with batching to prevent cascading
    */
   error(message, error = null, category = 'general') {
-    const errorEntry = {
-      type: 'error',
-      category,
-      message,
-      error: error ? {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      } : null,
-      timestamp: new Date().toISOString()
-    };
+    // Queue errors instead of processing immediately
+    this.errorQueue.push({ message, error, category });
+    this.processErrorQueue();
+  }
 
-    if (!this.errors.has(category)) {
-      this.errors.set(category, []);
-    }
-    this.errors.get(category).push(errorEntry);
+  /**
+   * Process the error queue in batches
+   */
+  processErrorQueue() {
+    if (this.isLogging) return;
 
-    if (this.isDebugEnabled) {
-      console.error(`[${category}] ${message}`, error);
+    try {
+      this.isLogging = true;
+      
+      // Process only a batch of errors
+      const batch = this.errorQueue.splice(0, this.batchSize);
+      
+      batch.forEach(({ message, error, category }) => {
+        const errorEntry = {
+          type: 'error',
+          category,
+          message,
+          error: error ? {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          } : null,
+          timestamp: new Date().toISOString()
+        };
+
+        if (!this.errors.has(category)) {
+          this.errors.set(category, []);
+        }
+        this.errors.get(category).push(errorEntry);
+
+        if (this.isDebugEnabled) {
+          console.error(`[${category}] ${message}`, error);
+        }
+      });
+
+      // If there are more errors, schedule next batch
+      if (this.errorQueue.length > 0) {
+        setTimeout(() => this.processErrorQueue(), this.batchTimeout);
+      }
+    } finally {
+      this.isLogging = false;
     }
   }
 

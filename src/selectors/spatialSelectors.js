@@ -3,12 +3,12 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { spatialDebugUtils } from '../utils/MonitoringSystem';
 
-// Base selector for spatial state
+// Base selector for spatial state with development logging
 const selectSpatialState = (state) => {
   if (process.env.NODE_ENV === 'development') {
     spatialDebugUtils.log('Spatial State Access:', {
       timestamp: new Date().toISOString(),
-      stateSize: JSON.stringify(state.spatial).length
+      stateSize: JSON.stringify(state.spatial).length, // Consider optimizing this if state.spatial is large
     });
   }
   return state.spatial;
@@ -17,54 +17,54 @@ const selectSpatialState = (state) => {
 // UI State Selectors
 export const selectSelectedCommodity = createSelector(
   [selectSpatialState],
-  (spatial) => spatial.ui.selectedCommodity
+  (spatial) => spatial?.ui?.selectedCommodity
 );
 
 export const selectSelectedDate = createSelector(
   [selectSpatialState],
-  (spatial) => spatial.ui.selectedDate
+  (spatial) => spatial?.ui?.selectedDate
 );
 
 export const selectSelectedAnalysis = createSelector(
   [selectSpatialState],
-  (spatial) => spatial.ui.selectedAnalysis
+  (spatial) => spatial?.ui?.selectedAnalysis
 );
 
 export const selectSelectedRegimes = createSelector(
   [selectSpatialState],
-  (spatial) => spatial.ui.selectedRegimes
+  (spatial) => spatial?.ui?.selectedRegimes || []
 );
 
 export const selectSelectedRegion = createSelector(
   [selectSpatialState],
-  (spatial) => spatial.ui.selectedRegion
+  (spatial) => spatial?.ui?.selectedRegion
 );
 
 // Status Selectors
 export const selectSpatialStatus = createSelector(
   [selectSpatialState],
-  (spatial) => spatial.status
+  (spatial) => spatial?.status
 );
 
 export const selectIsLoading = createSelector(
   [selectSpatialStatus],
-  (status) => status.loading
+  (status) => status?.loading
 );
 
 export const selectError = createSelector(
   [selectSpatialStatus],
-  (status) => status.error
+  (status) => status?.error
 );
 
 export const selectIsInitialized = createSelector(
   [selectSpatialStatus],
-  (status) => status.isInitialized
+  (status) => status?.isInitialized
 );
 
 // Data Selectors
 export const selectSpatialData = createSelector(
   [selectSpatialState],
-  (spatial) => spatial.data
+  (spatial) => spatial?.data
 );
 
 export const selectGeoData = createSelector(
@@ -100,34 +100,41 @@ export const selectMetadata = createSelector(
 // Derived Selectors
 export const selectAvailableDates = createSelector(
   [selectTimeSeriesData],
-  (timeSeriesData) => 
-    [...new Set(timeSeriesData.map(entry => entry.date))].sort()
+  (timeSeriesData) =>
+    [...new Set(timeSeriesData.map((entry) => entry.date))].sort()
 );
 
 export const selectAvailableRegimes = createSelector(
   [selectMarketClusters],
   (clusters) => {
-    if (!clusters) return [];
+    if (!clusters.length) return [];
     const regimes = new Set();
-    clusters.forEach(cluster => {
+    clusters.forEach((cluster) => {
       if (cluster.main_market) regimes.add(cluster.main_market);
-      cluster.connected_markets?.forEach(market => regimes.add(market));
+      cluster.connected_markets?.forEach((market) => regimes.add(market));
     });
     return Array.from(regimes);
   }
 );
 
+// Composite Selectors
 export const selectMarketMetrics = createSelector(
   [selectSpatialData],
   (data) => {
     if (!data) return null;
 
+    const totalMarkets = data.marketClusters?.length || 0;
+    const avgClusterSize =
+      data.marketClusters?.reduce((acc, cluster) => acc + cluster.market_count, 0) /
+        (totalMarkets || 1) || 0;
+    const integrationScore = data.spatialAutocorrelation?.global?.moran_i || 0;
+    const coverageRate = (data.metrics?.coverage || 0) * 100;
+
     return {
-      totalMarkets: data.marketClusters?.length || 0,
-      avgClusterSize: data.marketClusters?.reduce((acc, cluster) => 
-        acc + cluster.market_count, 0) / (data.marketClusters?.length || 1),
-      integrationScore: data.spatialAutocorrelation?.global?.moran_i || 0,
-      coverageRate: (data.metrics?.coverage || 0) * 100,
+      totalMarkets,
+      avgClusterSize,
+      integrationScore,
+      coverageRate,
     };
   }
 );
@@ -137,20 +144,28 @@ export const selectMarketAnalysis = createSelector(
   (data, selectedRegion) => {
     if (!data || !selectedRegion) return null;
 
-    const marketCluster = data.marketClusters?.find(cluster => 
-      cluster.main_market === selectedRegion || 
-      cluster.connected_markets?.includes(selectedRegion)
+    const marketCluster = data.marketClusters?.find(
+      (cluster) =>
+        cluster.main_market === selectedRegion ||
+        cluster.connected_markets?.includes(selectedRegion)
     );
 
-    const flowData = data.flowAnalysis?.filter(flow => 
-      flow.source === selectedRegion || flow.target === selectedRegion
+    const flowData = data.flowAnalysis?.filter(
+      (flow) => flow.source === selectedRegion || flow.target === selectedRegion
     );
+
+    const localIntegration =
+      data.spatialAutocorrelation?.local?.[selectedRegion] || null;
+
+    const timeSeriesData = data.timeSeriesData?.filter(
+      (ts) => ts.region === selectedRegion
+    ) || [];
 
     return {
       cluster: marketCluster || null,
       flows: flowData || [],
-      localIntegration: data.spatialAutocorrelation?.local?.[selectedRegion] || null,
-      timeSeriesData: data.timeSeriesData?.filter(ts => ts.region === selectedRegion) || [],
+      localIntegration,
+      timeSeriesData,
     };
   }
 );
@@ -162,5 +177,6 @@ export const selectAvailableCommodities = createSelector(
 
 export const selectUniqueMonths = createSelector(
   [selectTimeSeriesData],
-  (timeSeriesData) => [...new Set(timeSeriesData.map(d => d.date))].sort()
+  (timeSeriesData) =>
+    [...new Set(timeSeriesData.map((d) => d.date))].sort()
 );

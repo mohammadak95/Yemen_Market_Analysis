@@ -14,6 +14,8 @@ export { default as DataValidator } from './DataValidator';
 export { lazyLoadComponent, lazyLoadSpatialComponent } from './dynamicImports';
 export { initializeLeaflet } from './leafletSetup';
 
+export { verifyDataFiles, loadFile } from './DataLoader';
+
 // Utility Functions
 export {
   // Data Processing

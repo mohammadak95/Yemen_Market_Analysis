@@ -2,6 +2,7 @@
 
 import Papa from 'papaparse';
 
+// Environment and configuration constants
 const ENV = process.env.NODE_ENV;
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const isGitHubPages = PUBLIC_URL.includes('github.io');
@@ -11,26 +12,7 @@ const RETRY_ATTEMPTS = 3;
 const RETRY_DELAY = 1000;
 
 /**
- * Constructs the data path based on the current environment.
- */
-export const getDataPath = (fileName) => {
-  let basePath = '';
-
-  if (isOffline) {
-    basePath = '/results';
-  } else if (isGitHubPages) {
-    basePath = `${PUBLIC_URL}/results`;
-  } else if (ENV === 'production') {
-    basePath = '/Yemen_Market_Analysis/results';
-  } else {
-    basePath = '/results';
-  }
-
-  return `${basePath}/${fileName}`;
-};
-
-/**
- * Cache management class.
+ * Cache management class for data fetching
  */
 class DataFetchCache {
   constructor() {
@@ -64,7 +46,51 @@ class DataFetchCache {
 const cache = new DataFetchCache();
 
 /**
- * Enhanced JSON fetcher with CSV support and retry logic.
+ * Constructs the data path based on the current environment.
+ */
+export const getDataPath = (fileName) => {
+  // Add a debug log to help troubleshoot path construction
+  console.debug('Environment:', {
+    ENV,
+    PUBLIC_URL,
+    isGitHubPages,
+    isOffline
+  });
+
+  // Normalize the fileName to handle any malformed input
+  const normalizedFileName = fileName.replace(/^\/+/, '');
+
+  // Construct the base path with environment awareness
+  let basePath = '';
+  if (ENV === 'development') {
+    // In development, use the public folder directly
+    basePath = '/data';
+  } else if (isGitHubPages) {
+    // For GitHub Pages, include the repository name
+    basePath = `${PUBLIC_URL}/data`;
+  } else if (ENV === 'production') {
+    // In production, use the correct deployment path
+    basePath = '/data';
+  } else if (isOffline) {
+    // Offline mode uses local data
+    basePath = '/data';
+  }
+
+  // Construct the full path
+  const fullPath = `${basePath}/${normalizedFileName}`.replace(/\/+/g, '/');
+  
+  // Log the constructed path for debugging
+  console.debug('Constructed data path:', {
+    fileName,
+    basePath,
+    fullPath
+  });
+
+  return fullPath;
+};
+
+/**
+ * Enhanced JSON fetcher with CSV support and retry logic
  */
 export const enhancedFetchJson = async (url, options = {}) => {
   const {
@@ -76,16 +102,22 @@ export const enhancedFetchJson = async (url, options = {}) => {
 
   const cacheKey = url + JSON.stringify(headers);
 
+  // Check cache first if enabled
   if (useCache) {
     const cachedData = cache.get(cacheKey);
-    if (cachedData) return cachedData;
+    if (cachedData) {
+      console.debug('Cache hit for:', url);
+      return cachedData;
+    }
   }
 
   let lastError;
 
   for (let attempt = 0; attempt < retryAttempts; attempt++) {
     try {
+      // Add delay for retries
       if (attempt > 0) {
+        console.debug(`Retry attempt ${attempt + 1} for:`, url);
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY * attempt));
       }
 
@@ -103,12 +135,14 @@ export const enhancedFetchJson = async (url, options = {}) => {
 
       const contentType = response.headers.get('content-type');
 
-      if (contentType?.includes('text/csv')) {
+      // Handle CSV files
+      if (contentType?.includes('text/csv') || url.endsWith('.csv')) {
         const text = await response.text();
         return new Promise((resolve, reject) => {
           Papa.parse(text, {
             header: true,
             dynamicTyping: true,
+            skipEmptyLines: true,
             complete: (results) => {
               if (useCache) {
                 cache.set(cacheKey, results.data);
@@ -120,6 +154,7 @@ export const enhancedFetchJson = async (url, options = {}) => {
         });
       }
 
+      // Handle JSON files
       const data = await response.json();
       if (useCache) {
         cache.set(cacheKey, data);
@@ -129,7 +164,10 @@ export const enhancedFetchJson = async (url, options = {}) => {
     } catch (error) {
       lastError = error;
       if (error.name === 'AbortError') throw error;
+      
+      // Only throw on final attempt
       if (attempt === retryAttempts - 1) {
+        console.error(`Failed to fetch data from ${url}:`, error);
         throw new Error(`Failed to fetch data from ${url}: ${error.message}`);
       }
     }
@@ -139,62 +177,60 @@ export const enhancedFetchJson = async (url, options = {}) => {
 };
 
 /**
- * Fetches and validates GeoJSON data with optional commodity filtering.
+ * Test if a data path exists and is accessible
  */
-export const fetchAndValidateData = async (url, selectedCommodity) => {
+export const testDataPath = async (filename) => {
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (data?.features) {
-      data.features = data.features.filter((feature) => {
-        if (!feature?.properties?.commodity) return false;
-        if (selectedCommodity) {
-          return feature.properties.commodity.toLowerCase().trim() === 
-                 selectedCommodity.toLowerCase().trim();
-        }
-        return true;
-      });
-    }
-
-    return data;
+    const fullPath = getDataPath(filename);
+    const response = await fetch(fullPath, { 
+      method: 'HEAD',
+      cache: 'no-cache' // Prevent caching of HEAD requests
+    });
+    return {
+      exists: response.ok,
+      status: response.status,
+      path: fullPath
+    };
   } catch (error) {
-    console.error('Error fetching data:', error);
-    throw error;
+    console.error(`Error testing path for ${filename}:`, error);
+    return {
+      exists: false,
+      error: error.message,
+      path: getDataPath(filename)
+    };
   }
 };
 
 /**
- * Retry utility with exponential backoff.
+ * Clear the data cache
  */
-export const retryWithBackoff = async (fn, options = {}) => {
-  const { maxRetries = 3, initialDelay = 1000, maxDelay = 5000 } = options;
-  let lastError;
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      if (attempt === maxRetries - 1) throw error;
-
-      const delay = Math.min(initialDelay * Math.pow(2, attempt), maxDelay);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-
-  throw lastError;
-};
-
 export const clearDataCache = () => {
   cache.clear();
+  console.debug('Data cache cleared');
 };
 
-export const getPrecomputedDataPath = (commodity) => {
-  const basePath = getDataPath();
-  return `${basePath}/preprocessed_by_commodity/preprocessed_yemen_market_data_${commodity}.json`;
+/**
+ * Get the path for preprocessed commodity data
+ */
+export const getPreprocessedDataPath = (commodity) => {
+  if (!commodity) throw new Error('Commodity parameter is required');
+  const normalizedCommodity = commodity.toLowerCase().trim().replace(/\s+/g, '_');
+  const filename = `preprocessed_yemen_market_data_${normalizedCommodity}.json`;
+  return getDataPath(filename);
+};
+
+/**
+ * Load JSON data with error handling
+ */
+export const loadJSONData = async (filename) => {
+  const fullPath = getDataPath(filename);
+  return enhancedFetchJson(fullPath);
+};
+
+/**
+ * Load CSV data with error handling
+ */
+export const loadCSVData = async (filename) => {
+  const fullPath = getDataPath(filename);
+  return enhancedFetchJson(fullPath);
 };

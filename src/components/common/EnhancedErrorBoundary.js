@@ -5,9 +5,10 @@ import PropTypes from 'prop-types';
 import { Box, Typography, Button, Alert, Collapse } from '@mui/material';
 import { CircularProgress } from '@mui/material';
 import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Database, Bug } from 'lucide-react';
-import { precomputedDataManager } from '../../utils/PrecomputedDataManager';
-import { spatialIntegrationSystem } from '../../utils/spatialIntegrationSystem';
-import { backgroundMonitor } from '../../utils/backgroundMonitor';
+import { unifiedDataManager } from '../../utils/UnifiedDataManager';
+import { spatialSystem } from '../../utils/SpatialSystem';
+import { monitoringSystem } from '../../utils/MonitoringSystem';
+import { dataTransformationSystem } from '../../utils/DataTransformationSystem';
 
 class EnhancedErrorBoundary extends React.Component {
   constructor(props) {
@@ -19,9 +20,10 @@ class EnhancedErrorBoundary extends React.Component {
       isRetrying: false,
       showDetails: false,
       systemStatus: {
-        dataManager: null,
-        integrationSystem: null,
-        monitor: null
+        unifiedManager: null,
+        spatialSystem: null,
+        dataTransformation: null,
+        monitoring: null
       }
     };
   }
@@ -31,8 +33,6 @@ class EnhancedErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error);
-    
     // Get system status
     const systemStatus = this.checkSystemStatus();
     
@@ -41,6 +41,15 @@ class EnhancedErrorBoundary extends React.Component {
       systemStatus
     });
 
+    // Log to monitoring system
+    monitoringSystem.error('Error caught by boundary:', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      systemStatus
+    });
+
+    // Production error reporting
     if (process.env.NODE_ENV === 'production' && window?.Sentry) {
       window.Sentry.captureException(error, { 
         extra: {
@@ -49,46 +58,45 @@ class EnhancedErrorBoundary extends React.Component {
         }
       });
     }
-
-    // Log to background monitor
-    backgroundMonitor.logError('error-boundary-catch', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      systemStatus
-    });
   }
 
   checkSystemStatus() {
     return {
-      dataManager: {
-        isInitialized: precomputedDataManager?._isInitialized || false,
-        isCacheInitialized: precomputedDataManager?._cacheInitialized || false,
-        cacheSize: precomputedDataManager?.cache?.size || 0
+      unifiedManager: {
+        isInitialized: unifiedDataManager?._isInitialized || false,
+        cacheStats: unifiedDataManager?.getCacheStats() || {},
       },
-      integrationSystem: {
-        isInitialized: spatialIntegrationSystem?._isInitialized || false
+      spatialSystem: {
+        isInitialized: spatialSystem?._isInitialized || false,
+        validation: spatialSystem?.getValidationStatus() || {}
       },
-      monitor: {
-        metrics: backgroundMonitor?.metrics?.length || 0,
-        errors: backgroundMonitor?.errors?.length || 0
+      dataTransformation: {
+        batchSize: dataTransformationSystem?.batchSize || 0,
+        streamingThreshold: dataTransformationSystem?.streamingThreshold || 0
+      },
+      monitoring: {
+        metrics: monitoringSystem?.getPerformanceReport() || {},
+        errors: monitoringSystem?.errors?.size || 0
       }
     };
   }
 
   handleRetry = async () => {
     this.setState({ isRetrying: true });
-    const metric = backgroundMonitor.startMetric('error-boundary-retry');
+    const metric = monitoringSystem.startMetric('error-boundary-retry');
 
     try {
-      // Reset system states
-      if (!precomputedDataManager.isInitialized) {
-        await precomputedDataManager.initialize();
+      // Reset and reinitialize core systems
+      if (!unifiedDataManager._isInitialized) {
+        await unifiedDataManager.init();
       }
 
-      if (!spatialIntegrationSystem._isInitialized) {
-        await spatialIntegrationSystem.initialize();
+      if (!spatialSystem._isInitialized) {
+        await spatialSystem.initialize();
       }
+
+      // Clear caches
+      unifiedDataManager.clearCache();
 
       // Call provided retry handler
       if (this.props.onRetry) {
@@ -105,7 +113,7 @@ class EnhancedErrorBoundary extends React.Component {
 
       metric.finish({ status: 'success' });
     } catch (error) {
-      console.error('Retry failed:', error);
+      monitoringSystem.error('Retry failed:', error);
       
       this.setState({ 
         hasError: true, 
@@ -131,22 +139,22 @@ class EnhancedErrorBoundary extends React.Component {
       return {
         icon: <Database className="w-6 h-6" />,
         title: 'System Initialization Error',
-        description: 'The application failed to initialize properly. This might be due to data loading issues.'
+        description: 'The application failed to initialize core systems. This might be due to data loading or configuration issues.'
       };
     }
 
     if (error?.message?.includes('spatial')) {
       return {
         icon: <Bug className="w-6 h-6" />,
-        title: 'Spatial Data Error',
-        description: 'An error occurred while processing spatial data. This might be due to invalid or missing data.'
+        title: 'Spatial Analysis Error',
+        description: 'An error occurred while processing spatial market data. This might be due to invalid data or analysis configuration.'
       };
     }
 
     return {
       icon: <AlertTriangle className="w-6 h-6" />,
       title: 'Application Error',
-      description: 'An unexpected error occurred in the application.'
+      description: 'An unexpected error occurred while analyzing market data.'
     };
   }
 
@@ -156,6 +164,7 @@ class EnhancedErrorBoundary extends React.Component {
     }
 
     const errorTypeInfo = this.getErrorTypeInfo();
+    const { systemStatus } = this.state;
 
     return (
       <Box 
@@ -179,7 +188,7 @@ class EnhancedErrorBoundary extends React.Component {
             {errorTypeInfo.description}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {this.state.error?.message || 'An unexpected error occurred'}
+            Error: {this.state.error?.message || 'An unexpected error occurred'}
           </Typography>
         </Alert>
 
@@ -188,7 +197,7 @@ class EnhancedErrorBoundary extends React.Component {
           endIcon={this.state.showDetails ? <ChevronUp /> : <ChevronDown />}
           sx={{ mb: 2 }}
         >
-          {this.state.showDetails ? 'Hide Details' : 'Show Details'}
+          {this.state.showDetails ? 'Hide Technical Details' : 'Show Technical Details'}
         </Button>
 
         <Collapse in={this.state.showDetails}>
@@ -206,25 +215,30 @@ class EnhancedErrorBoundary extends React.Component {
                 fontFamily: 'monospace'
               }}
             >
-              {JSON.stringify(this.state.systemStatus, null, 2)}
+              {JSON.stringify(systemStatus, null, 2)}
             </Box>
           </Box>
 
-          {process.env.NODE_ENV !== 'production' && this.state.errorInfo && (
-            <Box 
-              component="pre"
-              sx={{ 
-                p: 2, 
-                backgroundColor: 'grey.100',
-                borderRadius: 1,
-                overflow: 'auto',
-                fontSize: '0.875rem',
-                fontFamily: 'monospace',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word'
-              }}
-            >
-              {this.state.errorInfo.componentStack}
+          {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Component Stack:
+              </Typography>
+              <Box 
+                component="pre"
+                sx={{ 
+                  p: 2, 
+                  backgroundColor: 'grey.100',
+                  borderRadius: 1,
+                  overflow: 'auto',
+                  fontSize: '0.875rem',
+                  fontFamily: 'monospace',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {this.state.errorInfo.componentStack}
+              </Box>
             </Box>
           )}
         </Collapse>
@@ -241,14 +255,14 @@ class EnhancedErrorBoundary extends React.Component {
             variant="contained"
             color="primary"
           >
-            {this.state.isRetrying ? 'Retrying...' : 'Retry'}
+            {this.state.isRetrying ? 'Retrying...' : 'Retry Analysis'}
           </Button>
           <Button
             onClick={() => window.location.reload()}
             variant="outlined"
             color="primary"
           >
-            Reload Page
+            Reload Application
           </Button>
         </Box>
       </Box>

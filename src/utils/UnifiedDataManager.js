@@ -7,7 +7,14 @@ import { monitoringSystem } from './MonitoringSystem';
 import { preprocessedDataManager } from './PreprocessedDataManager';
 import { configUtils } from './systemConfig';
 import { getDataPath } from './dataUtils';
+import { constructDataPath } from './DataLoader';
 
+/**
+ * UnifiedDataManager is responsible for loading, caching, and processing
+ * various data sources related to commodities. It ensures efficient data
+ * retrieval and integration, leveraging a centralized monitoring system
+ * for performance tracking and error handling.
+ */
 class UnifiedDataManager {
   constructor() {
     this._isInitialized = false;
@@ -19,6 +26,10 @@ class UnifiedDataManager {
     this.limit = pLimit(concurrencyLimit);
   }
 
+  /**
+   * Initialize the data manager and its dependencies.
+   * This method must be called before any data loading operations.
+   */
   async init() {
     if (this._isInitialized) return;
 
@@ -39,7 +50,29 @@ class UnifiedDataManager {
       throw error;
     }
   }
-  
+
+  /**
+   * Add statistics to the cache stats.
+   *
+   * @param {string} key - The cache key.
+   * @param {Object} stats - The statistics to add.
+   */
+  addToCacheStats(key, stats) {
+    const currentStats = this.getCacheStats();
+    currentStats[key] = stats;
+    monitoringSystem.log(`Cache stats updated for key: ${key}`, stats, 'addToCacheStats');
+  }
+
+  /**
+   * Load all required data for a specific commodity and date.
+   * This includes preprocessed data, time-varying flows, TV-MII results,
+   * price differentials, ECM data, and enhanced unified data.
+   *
+   * @param {string} commodity - The commodity name.
+   * @param {string} [date] - The specific date for data filtering.
+   * @param {Object} [options={}] - Additional options for data processing.
+   * @returns {Object} - The integrated and processed data.
+   */
   async loadSpatialData(commodity, date, options = {}) {
     if (!this._isInitialized) {
       const error = new Error('UnifiedDataManager must be initialized first.');
@@ -68,14 +101,18 @@ class UnifiedDataManager {
         tvMiiResults,
         priceDifferentials,
         ecmData,
-        enhancedUnified
+        enhancedUnified,
+        marketMetrics,          // Add support for market metrics
+        analysisData            // Add support for consolidated analysis
       ] = await Promise.all([
-        this.loadPreprocessedData(commodity),
+        this.loadPreprocessedData(commodity),              // Pass commodity
         this.loadTimeVaryingFlows(commodity),
         this.loadTVMIIData(commodity),
         this.loadPriceDifferentials(commodity),
         this.loadECMData(commodity),
-        this.loadEnhancedUnifiedData(commodity, date)
+        this.loadEnhancedUnifiedData(commodity, date),
+        this.loadMarketMetrics(commodity),                // Load market metrics
+        this.loadAnalysisData(commodity)                  // Load consolidated analysis
       ]);
 
       // Combine and process all data
@@ -85,7 +122,9 @@ class UnifiedDataManager {
         tvMiiResults,
         priceDifferentials,
         ecmData,
-        enhancedUnified
+        enhancedUnified,
+        marketMetrics,          // Add to results
+        analysisData            // Add to results
       }, date, options);
 
       // Cache the results
@@ -110,14 +149,9 @@ class UnifiedDataManager {
    */
   async loadPreprocessedData(commodity) {
     try {
-      // Retrieve the preprocessed pattern from configuration
-      const preprocessedPattern = configUtils.getConfig('data.preprocessedPattern');
-      const fileName = preprocessedPattern.replace('{commodity}', commodity);
-      const filePath = getDataPath(fileName);
+      monitoringSystem.log(`Loading preprocessed data for commodity: ${commodity}`, {}, 'loadPreprocessedData');
 
-      monitoringSystem.log(`Loading preprocessed data from ${filePath}`, {}, 'loadPreprocessedData');
-
-      const preprocessedData = await preprocessedDataManager.loadPreprocessedData(filePath);
+      const preprocessedData = await preprocessedDataManager.loadPreprocessedData(commodity);
       monitoringSystem.log(`Preprocessed data loaded for ${commodity}`, {}, 'loadPreprocessedData');
       return preprocessedData;
     } catch (error) {
@@ -135,9 +169,24 @@ class UnifiedDataManager {
   async loadTimeVaryingFlows(commodity) {
     const metric = monitoringSystem.startMetric('load-time-varying-flows');
     try {
+      // Get the filename from config
       const fileName = configUtils.getConfig('data.files.timeVaryingFlows');
-      const filePath = getDataPath(fileName);
-      const response = await fetch(filePath);
+      // Construct the path properly for CSV files
+      const filePath = constructDataPath(fileName); // Use the constructDataPath helper
+
+      console.debug('Loading time varying flows:', {
+        fileName,
+        filePath,
+        commodity
+      });
+
+      const response = await fetch(filePath, {
+        headers: {
+          'Accept': 'text/csv',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch ${fileName}: ${response.statusText}`);
@@ -151,6 +200,7 @@ class UnifiedDataManager {
           dynamicTyping: true,
           skipEmptyLines: true,
           complete: (results) => {
+            // Filter for the specific commodity
             const filteredData = results.data.filter(row =>
               row.commodity?.toLowerCase() === commodity.toLowerCase()
             );
@@ -170,6 +220,7 @@ class UnifiedDataManager {
     }
   }
 
+
   /**
    * Load TV-MII data for a specific commodity.
    *
@@ -181,10 +232,13 @@ class UnifiedDataManager {
     try {
       const fileName = configUtils.getConfig('data.files.tvMiiResults');
       const filePath = getDataPath(fileName);
-      const marketResults = await this.loadJSONFile(filePath);
-      const filteredResults = marketResults.filter(item =>
+      const tvMmiData = await this.loadJSONFile(filePath);
+
+      // Filter by commodity
+      const filteredResults = tvMmiData.filter(item =>
         item.commodity?.toLowerCase() === commodity.toLowerCase()
       );
+
       monitoringSystem.log(`TV-MII data loaded for ${commodity}`, {}, 'loadTVMIIData');
       return filteredResults;
     } catch (error) {
@@ -303,62 +357,62 @@ class UnifiedDataManager {
     }
   }
 
-  /**
-   * Process and integrate all loaded data sources into a unified structure.
-   *
-   * @param {Object} data - The loaded data from various sources.
-   * @param {string} [date] - The specific date for data filtering.
-   * @param {Object} [options={}] - Additional options for data processing.
-   * @returns {Object} - The integrated and processed data.
-   */
-  async processIntegratedData(data, date, options = {}) {
-    const {
-      preprocessedData,
-      timeVaryingFlows,
-      tvMiiResults,
-      priceDifferentials,
-      ecmData,
-      enhancedUnified
-    } = data;
+/**
+ * Process and integrate all loaded data sources into a unified structure.
+ *
+ * @param {Object} data - The loaded data from various sources.
+ * @param {string} [date] - The specific date for data filtering.
+ * @param {Object} [options={}] - Additional options for data processing.
+ * @returns {Object} - The integrated and processed data.
+ */
+async processIntegratedData(data, date, options = {}) {
+  const {
+    preprocessedData,
+    timeVaryingFlows,
+    tvMiiResults,
+    priceDifferentials,
+    ecmData,
+    enhancedUnified
+  } = data;
 
-    try {
-      // If date filtering is needed, it should have been handled during data loading
-      // Combine preprocessed and enhanced data
-      const integratedData = {
-        timeSeriesData: preprocessedData.timeSeriesData,
-        marketClusters: preprocessedData.marketClusters,
-        flowAnalysis: preprocessedData.flowAnalysis,
-        spatialAutocorrelation: preprocessedData.spatialAutocorrelation,
-        seasonalAnalysis: preprocessedData.seasonalAnalysis,
-        marketIntegration: preprocessedData.marketIntegration,
-        tvmii: {
-          marketResults: tvMiiResults,
-          analysis: this.processTVMIIAnalysis(tvMiiResults)
-        },
-        priceDifferentials: {
-          raw: priceDifferentials,
-          analysis: this.processPriceDifferentials(priceDifferentials)
-        },
-        ecm: {
-          northToSouth: ecmData.northToSouth,
-          southToNorth: ecmData.southToNorth,
-          analysis: this.processECMResults(ecmData)
-        },
-        enhancedSpatial: enhancedUnified,
-        metadata: {
-          ...preprocessedData.metadata,
-          processedAt: new Date().toISOString(),
-          options
-        }
-      };
+  try {
+    // Combine preprocessed and enhanced data
+    const integratedData = {
+      timeSeriesData: preprocessedData.timeSeriesData,
+      marketClusters: preprocessedData.marketClusters,
+      flowAnalysis: preprocessedData.flowAnalysis,
+      spatialAutocorrelation: preprocessedData.spatialAutocorrelation,
+      seasonalAnalysis: preprocessedData.seasonalAnalysis,
+      marketIntegration: preprocessedData.marketIntegration,
+      timeVaryingFlows: timeVaryingFlows, // Added line
+      tvmii: {
+        marketResults: tvMiiResults,
+        analysis: this.processTVMIIAnalysis(tvMiiResults)
+      },
+      priceDifferentials: {
+        raw: priceDifferentials,
+        analysis: this.processPriceDifferentials(priceDifferentials)
+      },
+      ecm: {
+        northToSouth: ecmData.northToSouth,
+        southToNorth: ecmData.southToNorth,
+        analysis: this.processECMResults(ecmData)
+      },
+      enhancedSpatial: enhancedUnified,
+      metadata: {
+        ...preprocessedData.metadata,
+        processedAt: new Date().toISOString(),
+        options
+      }
+    };
 
-      monitoringSystem.log('Data integration complete.', integratedData, 'processIntegratedData');
-      return integratedData;
-    } catch (error) {
-      monitoringSystem.error('Error during data integration.', error, 'processIntegratedData');
-      throw error;
-    }
+    monitoringSystem.log('Data integration complete.', integratedData, 'processIntegratedData');
+    return integratedData;
+  } catch (error) {
+    monitoringSystem.error('Error during data integration.', error, 'processIntegratedData');
+    throw error;
   }
+}
 
   /**
    * Process TV-MII analysis results.
@@ -458,17 +512,21 @@ class UnifiedDataManager {
    */
   processMarketPairDiffs(results) {
     try {
+      const pValueThreshold = configUtils.getConfig('spatial.analysis.pValueThreshold');
+
       const processed = results.map(result => ({
-        source: result.source,
-        target: result.target,
-        flowWeight: result.flow_weight,
-        priceDifferential: result.price_differential,
-        significance: result.p_value < configUtils.getConfig('spatial.analysis.pValueThreshold')
+        priceDifferential: {
+          dates: result.price_differential.dates,
+          values: result.price_differential.values
+        },
+        diagnostics: result.diagnostics,
+        regressionResults: result.regression_results,
+        significance: result.regression_results.p_value < pValueThreshold
       }));
 
       const summary = {
-        averageDifferential: _.meanBy(processed, 'priceDifferential'),
-        significantDifferences: processed.filter(r => r.significance).length,
+        averageDifferential: _.meanBy(processed, item => _.mean(item.priceDifferential.values)),
+        significantDifferences: processed.filter(item => item.significance).length,
         totalDifferences: processed.length
       };
 
@@ -487,20 +545,23 @@ class UnifiedDataManager {
    */
   processDirectionalECM(data) {
     try {
-      const analysis = data.map(entry => ({
+      const processed = data.map(entry => ({
         commodity: entry.commodity,
         direction: entry.direction,
-        ecmValue: entry.ecm_value,
-        significance: entry.p_value < configUtils.getConfig('spatial.analysis.pValueThreshold')
+        alpha: entry.alpha,
+        irf: entry.irf,
+        diagnostics: entry.diagnostics,
+        moranI: entry.moran_i,
+        significance: entry.moran_i.p_value < configUtils.getConfig('spatial.analysis.pValueThreshold')
       }));
 
       const summary = {
-        averageECM: _.meanBy(analysis, 'ecmValue'),
-        significantECM: analysis.filter(a => a.significance).length,
-        totalEntries: analysis.length
+        averageAlpha: _.meanBy(processed, 'alpha'),
+        significantMoranI: processed.filter(r => r.significance).length,
+        totalEntries: processed.length
       };
 
-      return { analysis, summary };
+      return { processed, summary };
     } catch (error) {
       monitoringSystem.error('Error processing directional ECM data.', error, 'processDirectionalECM');
       throw error;
@@ -516,18 +577,24 @@ class UnifiedDataManager {
    */
   compareDirectionalResults(northToSouth, southToNorth) {
     try {
+      const pValueThreshold = configUtils.getConfig('spatial.analysis.pValueThreshold');
+
+      const northToSouthSignificant = northToSouth.filter(r => r.moran_i.p_value < pValueThreshold).length;
+      const southToNorthSignificant = southToNorth.filter(r => r.moran_i.p_value < pValueThreshold).length;
+
       const comparison = {
         northToSouth: {
-          averageECM: _.meanBy(northToSouth, 'ecm_value'),
-          significantECM: northToSouth.filter(r => r.p_value < configUtils.getConfig('spatial.analysis.pValueThreshold')).length
+          averageAlpha: _.meanBy(northToSouth, 'alpha'),
+          significantMoranI: northToSouthSignificant,
+          totalEntries: northToSouth.length
         },
         southToNorth: {
-          averageECM: _.meanBy(southToNorth, 'ecm_value'),
-          significantECM: southToNorth.filter(r => r.p_value < configUtils.getConfig('spatial.analysis.pValueThreshold')).length
+          averageAlpha: _.meanBy(southToNorth, 'alpha'),
+          significantMoranI: southToNorthSignificant,
+          totalEntries: southToNorth.length
         },
-        differenceInAverages: _.meanBy(northToSouth, 'ecm_value') - _.meanBy(southToNorth, 'ecm_value'),
-        totalDifferenceInSignificantECM: northToSouth.filter(r => r.p_value < configUtils.getConfig('spatial.analysis.pValueThreshold')).length -
-                                           southToNorth.filter(r => r.p_value < configUtils.getConfig('spatial.analysis.pValueThreshold')).length
+        differenceInAverages: _.meanBy(northToSouth, 'alpha') - _.meanBy(southToNorth, 'alpha'),
+        totalSignificantDifferences: northToSouthSignificant - southToNorthSignificant
       };
 
       monitoringSystem.log('ECM directional comparison completed.', comparison, 'compareDirectionalResults');

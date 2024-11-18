@@ -3,6 +3,7 @@
 import { configUtils } from './systemConfig';
 import { monitoringSystem } from './MonitoringSystem';
 import _ from 'lodash';
+import { getDataPath } from './dataUtils'; // Ensure this utility is available
 
 class PreprocessedDataManager {
   constructor() {
@@ -22,8 +23,10 @@ class PreprocessedDataManager {
       configUtils.validateConfig();
       this._isInitialized = true;
       metric.finish({ status: 'success' });
+      monitoringSystem.log('PreprocessedDataManager initialized successfully.', {}, 'init');
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
+      monitoringSystem.error('Initialization failed for PreprocessedDataManager.', error, 'init');
       throw error;
     }
   }
@@ -41,6 +44,7 @@ class PreprocessedDataManager {
       // Check cache first
       const cachedData = this.cache.get(commodity);
       if (cachedData) {
+        monitoringSystem.log(`Preprocessed data cache hit for commodity: ${commodity}`, {}, 'loadPreprocessedData');
         return cachedData;
       }
 
@@ -48,22 +52,31 @@ class PreprocessedDataManager {
       const filename = configUtils.getConfig('data.preprocessedPattern')
         .replace('{commodity}', this.normalizeCommodityName(commodity));
 
+      const filePath = getDataPath(filename); // Construct the full file path
+
+      monitoringSystem.log(`Loading preprocessed data from ${filePath} for commodity: ${commodity}`, {}, 'loadPreprocessedData');
+
       // Load data using fetch API
-      const response = await fetch(filename);
+      const response = await fetch(filePath);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch preprocessed data for ${commodity}: ${response.statusText}`);
+      }
       const text = await response.text();
       const data = JSON.parse(text);
 
       // Validate and process the data
-      const processedData = await this.processPreprocessedData(data, commodity);
+      const processedData = this.processPreprocessedData(data, commodity);
 
       // Cache the results
       this.cache.set(commodity, processedData);
 
       metric.finish({ status: 'success' });
+      monitoringSystem.log(`Preprocessed data loaded and cached for commodity: ${commodity}`, {}, 'loadPreprocessedData');
       return processedData;
 
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
+      monitoringSystem.error(`Error loading preprocessed data for ${commodity}.`, error, 'loadPreprocessedData');
       throw error;
     }
   }
@@ -71,7 +84,7 @@ class PreprocessedDataManager {
   /**
    * Process and validate preprocessed data
    */
-  async processPreprocessedData(data, commodity) {
+  processPreprocessedData(data, commodity) {
     const {
       time_series_data,
       market_clusters,
@@ -203,6 +216,13 @@ class PreprocessedDataManager {
           clusterType: metrics.cluster_type
         };
         return acc;
+      }, {}),
+      hotspots: Object.entries(spatial.hotspots || {}).reduce((acc, [region, stats]) => {
+        acc[region] = {
+          giStar: stats.gi_star,
+          category: stats.category
+        };
+        return acc;
       }, {})
     };
   }
@@ -257,6 +277,7 @@ class PreprocessedDataManager {
    */
   clearCache() {
     this.cache.clear();
+    monitoringSystem.log('PreprocessedDataManager cache cleared.', {}, 'clearCache');
   }
 
   /**

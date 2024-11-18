@@ -5,14 +5,11 @@
 // ==========================
 // Imports
 // ==========================
-import proj4 from 'proj4';
 import { parseISO, isValid as isValidDate, format as formatDate } from 'date-fns';
 
 // ==========================
 // Environment Variables
 // ==========================
-const PUBLIC_URL = process.env.PUBLIC_URL || '';
-const isGitHubPages = PUBLIC_URL.includes('github.io');
 
 // ==========================
 // Region Mapping
@@ -43,7 +40,6 @@ export const regionMapping = {
   "al_mahrah_governorate": "al maharah",
   "ma'rib_governorate": "marib",
   "raymah_governorate": "raymah",
-  "amanat al asimah": "amanat al asimah", // Capital Municipality
 
   // Additional mappings based on recent adjustments:
   "‘adan governorate": "aden",
@@ -767,7 +763,6 @@ export const calculateTVMIIScore = (answers) => {
 // src/utils/appUtils.js
 
 import Papa from 'papaparse';
-import _ from 'lodash';
 
 /**
  * Data Processing Functions
@@ -953,3 +948,4 @@ const calculateStorageUsage = (storage) => {
   }
   return total;
 };
+

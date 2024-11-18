@@ -3,7 +3,7 @@
 import React, { Suspense, useMemo, useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid, Paper, Alert, AlertTitle } from '@mui/material';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux'; // Import useDispatch
 
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -35,6 +35,10 @@ import {
     TVMIIAnalysis
 } from './utils/dynamicImports';
 
+// Redux Actions and Selectors
+import { generateAnalysis } from './slices/analysisSlice';
+import { selectAnalysisResults } from './slices/analysisSlice';
+
 // Register ChartJS components
 ChartJS.register(
     CategoryScale,
@@ -54,43 +58,59 @@ const Dashboard = React.memo(({
     selectedDate,
     windowWidth,
 }) => {
-    // Local state for dashboard data
+    const dispatch = useDispatch(); // Initialize dispatch
+
+    // Redux selectors
+    const validationStatus = useSelector(state => state?.spatial?.validation || {});
+    const analysisResults = useSelector(state => state?.analysis?.results);
+    
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
-    // Get validation status from Redux
-    const validationStatus = useSelector(state => state.spatial.validation);
 
-    // Load data using unified data manager
-    useEffect(() => {
-        const loadDashboardData = async () => {
-            const metric = monitoringSystem.startMetric('load-dashboard-data');
-            setLoading(true);
-            
-            try {
-                const result = await unifiedDataManager.loadDashboardData(
-                    selectedCommodity,
-                    selectedDate,
-                    { selectedRegimes }
-                );
-                
-                setDashboardData(result);
-                metric.finish({ status: 'success' });
-                
-            } catch (err) {
-                setError(err.message);
-                metric.finish({ status: 'error', error: err.message });
-                monitoringSystem.error('Error loading dashboard data:', err);
-            } finally {
-                setLoading(false);
+    // Load dashboard data
+    const loadDashboardData = useCallback(async () => {
+        const metric = monitoringSystem.startMetric('load-dashboard-data');
+        setLoading(true);
+        
+        try {
+            // Ensure both commodity and regimes exist
+            if (!selectedCommodity || !selectedRegimes?.length) {
+                throw new Error('Missing required selection parameters');
             }
-        };
 
-        if (selectedCommodity && selectedRegimes?.length > 0) {
-            loadDashboardData();
+            const result = await unifiedDataManager.loadSpatialData(
+                selectedCommodity,
+                selectedDate,
+                { regimes: selectedRegimes }
+            );
+            
+            setDashboardData(result);
+            
+            // Only dispatch analysis if we have data
+            if (result) {
+                await dispatch(generateAnalysis({
+                    commodity: selectedCommodity,
+                    date: selectedDate,
+                    options: { timeframe: 'monthly' }
+                }));
+            }
+
+            metric.finish({ status: 'success' });
+            
+        } catch (err) {
+            setError(err.message);
+            metric.finish({ status: 'error', error: err.message });
+            monitoringSystem.error('Error loading dashboard data:', err);
+        } finally {
+            setLoading(false);
         }
-    }, [selectedCommodity, selectedDate, selectedRegimes]);
+    }, [selectedCommodity, selectedDate, selectedRegimes, dispatch]);
+
+    // Use the callback in useEffect
+    useEffect(() => {
+        loadDashboardData();
+    }, [loadDashboardData]);
 
     // Process time series data using data transformation system
     const processedData = useMemo(() => {
@@ -103,6 +123,8 @@ const Dashboard = React.memo(({
             return dataTransformationSystem.transformTimeSeriesData(
                 dashboardData.timeSeriesData,
                 {
+                    timeUnit: 'month',
+                    aggregationType: 'mean',
                     includeGarch: true,
                     includeConflict: true
                 }
@@ -210,7 +232,7 @@ const Dashboard = React.memo(({
         return (
             <ErrorMessage 
                 message={error}
-                retry={() => unifiedDataManager.clearCache()}
+                retry={() => loadDashboardData()} // Retry function
             />
         );
     }
