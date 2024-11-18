@@ -4,7 +4,7 @@
       "month": "2020-07",
       "avgUsdPrice": 1.8699954545454545,
       "volatility": 65.48201686304952,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.569853147515454,
       "sampleSize": 22,
       "price_stability": 0.5298221015063698
@@ -13,7 +13,7 @@
       "month": "2020-08",
       "avgUsdPrice": 0.557815909090909,
       "volatility": 27.420949852395587,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.0488818989746,
       "sampleSize": 22,
       "price_stability": 0.7187388934098601
@@ -22,7 +22,7 @@
       "month": "2020-09",
       "avgUsdPrice": 2.072161363636363,
       "volatility": 37.858291589283816,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.212581583416937,
       "sampleSize": 22,
       "price_stability": 0.6653708314872555
@@ -31,7 +31,7 @@
       "month": "2020-10",
       "avgUsdPrice": 2.536936363636364,
       "volatility": 36.834226135392655,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.357535606271961,
       "sampleSize": 22,
       "price_stability": 0.6375063627323398
@@ -40,7 +40,7 @@
       "month": "2020-11",
       "avgUsdPrice": 0.8512840909090909,
       "volatility": 36.84389500184067,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.386183308338921,
       "sampleSize": 22,
       "price_stability": 0.7010464416411233
@@ -1325,8 +1325,8 @@
   "spatial_autocorrelation": {
     "global": {
       "moran_i": 0.1608422978154497,
-      "p_value": NaN,
-      "z_score": NaN,
+      "p_value": null,
+      "z_score": null,
       "significance": "False"
     },
     "local": {
@@ -1634,7 +1634,7 @@
   "metadata": {
     "commodity": "Potatoes",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T20:12:00.506827",
+    "processed_date": "2024-11-18T11:55:29.772192",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

@@ -4,7 +4,7 @@
       "month": "2020-07",
       "avgUsdPrice": 1.293336363636364,
       "volatility": 13.363057363847517,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.569853147515454,
       "sampleSize": 22,
       "price_stability": 0.8001016193770857
@@ -13,7 +13,7 @@
       "month": "2020-08",
       "avgUsdPrice": 0.44697272727272713,
       "volatility": 31.890476012562715,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.0488818989746,
       "sampleSize": 22,
       "price_stability": 0.6621715921087912
@@ -22,7 +22,7 @@
       "month": "2020-09",
       "avgUsdPrice": 1.354706818181818,
       "volatility": 15.340528587458937,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.212581583416937,
       "sampleSize": 22,
       "price_stability": 0.7896535038340764
@@ -31,7 +31,7 @@
       "month": "2020-10",
       "avgUsdPrice": 1.3870045454545457,
       "volatility": 16.08275718230409,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.357535606271961,
       "sampleSize": 22,
       "price_stability": 0.821086361310678
@@ -40,7 +40,7 @@
       "month": "2020-11",
       "avgUsdPrice": 0.3989227272727272,
       "volatility": 17.578059244206596,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.386183308338921,
       "sampleSize": 22,
       "price_stability": 0.8108852478075593
@@ -1325,8 +1325,8 @@
   "spatial_autocorrelation": {
     "global": {
       "moran_i": 0.14427034370458489,
-      "p_value": NaN,
-      "z_score": NaN,
+      "p_value": null,
+      "z_score": null,
       "significance": "False"
     },
     "local": {
@@ -1634,7 +1634,7 @@
   "metadata": {
     "commodity": "Wheat Flour",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T20:12:05.032733",
+    "processed_date": "2024-11-18T11:55:34.107932",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

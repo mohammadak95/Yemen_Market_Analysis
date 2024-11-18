@@ -1,3 +1,4 @@
 // src/store/index.js
-export { store, configureAppStore } from './store';
 export * from './slices';
+
+export { default as store, configureAppStore } from './store';

@@ -4,7 +4,7 @@
       "month": "2020-07",
       "avgUsdPrice": 1.6884153846153847,
       "volatility": 45.71350623683766,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 4.933953983156338,
       "sampleSize": 13,
       "price_stability": 0.6112481367593788
@@ -13,7 +13,7 @@
       "month": "2020-08",
       "avgUsdPrice": 0.6170230769230768,
       "volatility": 40.782296371977715,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 4.1352470846666325,
       "sampleSize": 13,
       "price_stability": 0.6358777652300155
@@ -22,7 +22,7 @@
       "month": "2020-09",
       "avgUsdPrice": 1.961892307692308,
       "volatility": 40.75598539018673,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 4.352464122805616,
       "sampleSize": 13,
       "price_stability": 0.6349239168502695
@@ -31,7 +31,7 @@
       "month": "2020-10",
       "avgUsdPrice": 2.0623846153846155,
       "volatility": 43.407034688124654,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 4.563875637242824,
       "sampleSize": 13,
       "price_stability": 0.5706468884763835
@@ -40,7 +40,7 @@
       "month": "2020-11",
       "avgUsdPrice": 0.5843076923076923,
       "volatility": 43.37205145750575,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 4.744682855631238,
       "sampleSize": 13,
       "price_stability": 0.5699889261178399
@@ -1189,8 +1189,8 @@
   "spatial_autocorrelation": {
     "global": {
       "moran_i": 0.25730214418060177,
-      "p_value": NaN,
-      "z_score": NaN,
+      "p_value": null,
+      "z_score": null,
       "significance": "False"
     },
     "local": {
@@ -1408,7 +1408,7 @@
   "metadata": {
     "commodity": "Peas (Yellow, Split)",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T20:11:59.954178",
+    "processed_date": "2024-11-18T11:55:29.228242",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

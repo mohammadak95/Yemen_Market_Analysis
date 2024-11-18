@@ -4,7 +4,7 @@
       "month": "2020-07",
       "avgUsdPrice": 0.23805238095238093,
       "volatility": 15.777187239909608,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.736063223983817,
       "sampleSize": 21,
       "price_stability": 0.8202477952519338
@@ -13,7 +13,7 @@
       "month": "2020-08",
       "avgUsdPrice": 0.08227142857142858,
       "volatility": 14.209955334061204,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.223290829348634,
       "sampleSize": 21,
       "price_stability": 0.8350034478060878
@@ -22,7 +22,7 @@
       "month": "2020-09",
       "avgUsdPrice": 0.3037261904761905,
       "volatility": 58.550172997724985,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.328771719663468,
       "sampleSize": 21,
       "price_stability": 0.5794988437033076
@@ -31,7 +31,7 @@
       "month": "2020-10",
       "avgUsdPrice": 0.28507380952380956,
       "volatility": 43.73700095942937,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.579649340829676,
       "sampleSize": 21,
       "price_stability": 0.6040486135641939
@@ -40,7 +40,7 @@
       "month": "2020-11",
       "avgUsdPrice": 0.08249523809523811,
       "volatility": 22.078757521314557,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.56602832719153,
       "sampleSize": 21,
       "price_stability": 0.7438066552755558
@@ -1101,8 +1101,8 @@
   "spatial_autocorrelation": {
     "global": {
       "moran_i": 0.14783638383503597,
-      "p_value": NaN,
-      "z_score": NaN,
+      "p_value": null,
+      "z_score": null,
       "significance": "False"
     },
     "local": {
@@ -1400,7 +1400,7 @@
   "metadata": {
     "commodity": "Eggs",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T20:11:54.960440",
+    "processed_date": "2024-11-18T11:55:24.284081",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

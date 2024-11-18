@@ -55,7 +55,7 @@ export const config = {
 
   // Analysis configuration
   analysis: {
-    defaultCommodity: 'beans_white',
+    defaultCommodity: 'beans (white)',
     timeWindow: {
       default: 12, // months
       min: 3,

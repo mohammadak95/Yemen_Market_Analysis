@@ -6,19 +6,25 @@ import { spatialSystem } from '../utils/SpatialSystem';
 import { monitoringSystem } from '../utils/MonitoringSystem';
 import { dataTransformationSystem } from '../utils/DataTransformationSystem';
 
-// Define memoized base selectors with proper structure
-const selectSpatialRoot = state => state.spatial;
+// Utility function for normalization (if needed)
+const normalizeCommodityId = (value) => {
+  return value?.toLowerCase().replace(/[()]/g, '').replace(/\s+/g, '_');
+};
+
+// Define base selectors
+const selectSpatialRoot = (state) => state.spatial;
 
 export const selectSpatialState = createSelector(
   [selectSpatialRoot],
   (spatial) => ({
     ui: spatial?.ui || {},
-    data: spatial?.data || null,
+    data: spatial?.data || {},
     status: spatial?.status || {},
     validation: spatial?.validation || {},
   })
 );
 
+// Initial state with 'regimes' initialized
 const initialState = {
   status: {
     loading: false,
@@ -39,6 +45,7 @@ const initialState = {
     ecm: null,
     enhancedSpatial: null,
     metadata: null,
+    regimes: [], // Initialized to prevent null reference
   },
   ui: {
     selectedCommodity: null,
@@ -61,12 +68,22 @@ const initialState = {
   },
 };
 
+// Async thunk to initialize spatial systems
 export const initializeSpatial = createAsyncThunk(
   'spatial/initialize',
-  async (_, { rejectWithValue }) => {
+  async (_, { dispatch, getState, rejectWithValue }) => {
     const metric = monitoringSystem.startMetric('initialize-spatial');
-
+    
     try {
+      // Get selected commodity from state
+      const state = getState();
+      const defaultCommodity = state.commodities.commodities[0]?.id;
+      
+      if (!defaultCommodity) {
+        throw new Error('No commodities available');
+      }
+
+      // Initialize systems if needed
       if (!unifiedDataManager._isInitialized) {
         await unifiedDataManager.init();
       }
@@ -74,22 +91,73 @@ export const initializeSpatial = createAsyncThunk(
         await spatialSystem.initialize();
       }
 
+      // Load initial spatial data
+      const rawData = await unifiedDataManager.loadSpatialData(
+        defaultCommodity,
+        null,
+        { validateData: true }
+      );
+
+      // Process the data
+      const processedData = await spatialSystem.processSpatialData(rawData);
+
+      // Transform time series data
+      const transformedTimeSeries = await dataTransformationSystem.transformTimeSeriesStream(
+        processedData.timeSeriesData,
+        {
+          applySeasonalAdj: false,
+          applySmooth: true,
+          includePriceStability: true,
+          includeConflict: true,
+        }
+      );
+
+      // Get validation results
+      const validationResult = await spatialSystem.validateData(processedData);
+
+      // Set selected commodity
+      dispatch(setSelectedCommodity(defaultCommodity));
+
+      const result = {
+        data: {
+          ...processedData,
+          timeSeriesData: transformedTimeSeries,
+          regimes: processedData.regimes || [],
+        },
+        validation: {
+          warnings: validationResult.warnings || [],
+          qualityMetrics: validationResult.details || {},
+          coverage: validationResult.coverage || {},
+          spatialDiagnostics: validationResult.spatialDiagnostics || null,
+        },
+        metadata: {
+          processedAt: new Date().toISOString(),
+          commodity: defaultCommodity,
+          options: { validateData: true }
+        },
+        selectedCommodity: defaultCommodity
+      };
+
       metric.finish({ status: 'success' });
-      return true;
+      return result;
+
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
-      monitoringSystem.error('Failed to initialize spatial system:', error);
       return rejectWithValue(error.message);
     }
   }
 );
 
+// Async thunk to load spatial data
 export const loadSpatialData = createAsyncThunk(
   'spatial/loadSpatialData',
   async ({ commodity, date, options = {} }, { rejectWithValue }) => {
     const metric = monitoringSystem.startMetric('load-spatial-data');
 
     try {
+      // Optionally normalize commodity ID if needed
+      // const normalizedCommodity = normalizeCommodityId(commodity);
+
       const rawData = await unifiedDataManager.loadSpatialData(commodity, date, options);
       const processedData = await spatialSystem.processSpatialData(rawData);
 
@@ -109,6 +177,8 @@ export const loadSpatialData = createAsyncThunk(
         data: {
           ...processedData,
           timeSeriesData: transformedTimeSeries,
+          // Ensure regimes are included; use existing if already present
+          regimes: processedData.regimes || [],
         },
         validation: {
           warnings: validationResult.warnings || [],
@@ -118,7 +188,7 @@ export const loadSpatialData = createAsyncThunk(
         },
         metadata: {
           processedAt: new Date().toISOString(),
-          commodity,
+          commodity, // Store as received (assumed normalized)
           date,
           options,
         },
@@ -166,33 +236,38 @@ export const spatialSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase('INIT_STATE', (state, action) => {
-        if (action.payload?.spatial) {
-          return {
-            ...state,
-            ...action.payload.spatial,
-            status: {
-              ...state.status,
-              ...action.payload.spatial.status,
-              isInitialized: true,
-            },
-          };
-        }
-        return state;
-      })
       .addCase(initializeSpatial.pending, (state) => {
         state.status.loading = true;
         state.status.error = null;
+        state.status.isInitialized = false;
       })
-      .addCase(initializeSpatial.fulfilled, (state) => {
+      .addCase(initializeSpatial.fulfilled, (state, action) => {
         state.status.loading = false;
         state.status.isInitialized = true;
         state.status.lastUpdated = new Date().toISOString();
         state.status.cacheStats = unifiedDataManager.getCacheStats();
+        
+        // Update data with proper merging
+        state.data = {
+          ...state.data,
+          ...action.payload.data,
+          regimes: action.payload.data.regimes || [],
+        };
+        
+        // Update validation
+        state.validation = action.payload.validation;
+        
+        // Update UI state
+        state.ui = {
+          ...state.ui,
+          selectedCommodity: action.payload.selectedCommodity,
+          selectedRegimes: [], // Reset selected regimes
+        };
       })
       .addCase(initializeSpatial.rejected, (state, action) => {
         state.status.loading = false;
         state.status.error = action.payload || action.error.message;
+        state.status.isInitialized = false;
       })
       .addCase(loadSpatialData.pending, (state) => {
         state.status.loading = true;
@@ -203,7 +278,15 @@ export const spatialSlice = createSlice({
         state.status.isInitialized = true;
         state.status.lastUpdated = new Date().toISOString();
         state.status.cacheStats = unifiedDataManager.getCacheStats();
-        state.data = action.payload.data;
+
+        // Merge new data with proper handling of regimes
+        state.data = {
+          ...state.data,
+          ...action.payload.data,
+          regimes: action.payload.data.regimes || state.data.regimes,
+        };
+
+        // Update validation
         state.validation = action.payload.validation;
       })
       .addCase(loadSpatialData.rejected, (state, action) => {
@@ -213,6 +296,8 @@ export const spatialSlice = createSlice({
   },
 });
 
+
+// Export actions
 export const {
   setSelectedCommodity,
   setSelectedDate,
@@ -251,7 +336,7 @@ export const selectSpatialStatus = createSelector(
   (spatial) => spatial?.status || {}
 );
 
-// UI Selectors with proper nullchecking
+// UI Selectors with proper null checking
 export const selectSelectedCommodity = createSelector(
   [selectSpatialUI],
   (ui) => ui.selectedCommodity || null
@@ -316,7 +401,7 @@ export const selectMarketMetrics = createSelector(
       totalMarkets: marketClusters.length,
       activeFlows: flowAnalysis.length,
       timeSeriesLength: timeSeriesData.length,
-      lastUpdate: timeSeriesData[timeSeriesData.length - 1]?.date || null
+      lastUpdate: timeSeriesData[timeSeriesData.length - 1]?.date || null,
     };
   }
 );

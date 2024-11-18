@@ -1,6 +1,6 @@
 // src/store/store.js
 
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import { enableMapSet } from 'immer';
 import { monitoringSystem } from '../utils/MonitoringSystem';
 
@@ -18,161 +18,14 @@ import tvmiiReducer from '../slices/tvmiiSlice';
 // Enable Immer support for Map and Set
 enableMapSet();
 
-/**
- * Performance thresholds for monitoring
- */
 const PERFORMANCE_THRESHOLDS = {
   ACTION_DURATION: 16, // ms
   STATE_SIZE: 1024 * 1024, // 1MB
-  BATCH_SIZE: 100,
-  CLEANUP_INTERVAL: 60000 // 1 minute
+  BATCH_SIZE: 100
 };
 
-/**
- * State validation configuration
- */
-const STATE_VALIDATION = {
-  requiredKeys: ['commodities', 'spatial', 'analysis'],
-  requiredSubKeys: {
-    spatial: ['ui', 'data', 'status', 'validation'],
-    commodities: ['commodities', 'status', 'error']
-  }
-};
-
-/**
- * Enhanced state validation with deep checking
- */
-const validateState = (state) => {
-  const validationErrors = [];
-
-  // Check required top-level keys
-  STATE_VALIDATION.requiredKeys.forEach(key => {
-    if (!(key in state)) {
-      validationErrors.push(`Missing required state key: ${key}`);
-    }
-  });
-
-  // Check required sub-keys
-  Object.entries(STATE_VALIDATION.requiredSubKeys).forEach(([key, subKeys]) => {
-    if (state[key]) {
-      subKeys.forEach(subKey => {
-        if (!(subKey in state[key])) {
-          validationErrors.push(`Missing required sub-key ${subKey} in ${key}`);
-        }
-      });
-    }
-  });
-
-  if (validationErrors.length > 0) {
-    throw new Error(`State validation failed:\n${validationErrors.join('\n')}`);
-  }
-
-  return state;
-};
-
-/**
- * Enhanced monitoring middleware with batching and throttling
- */
-const createMonitorMiddleware = () => {
-  let pendingActions = [];
-  let isProcessing = false;
-  let batchTimeout = null;
-
-  const processBatch = async (store) => {
-    if (isProcessing || pendingActions.length === 0) return;
-
-    isProcessing = true;
-    const batch = pendingActions.splice(0, PERFORMANCE_THRESHOLDS.BATCH_SIZE);
-    const batchMetric = monitoringSystem.startMetric('redux-batch-processing');
-
-    try {
-      for (const { action } of batch) {
-        const startTime = performance.now();
-        const duration = performance.now() - startTime;
-
-        // Performance monitoring
-        const state = store.getState();
-        const stateSize = new TextEncoder().encode(JSON.stringify(state)).length;
-
-        if (duration > PERFORMANCE_THRESHOLDS.ACTION_DURATION || 
-            stateSize > PERFORMANCE_THRESHOLDS.STATE_SIZE) {
-          monitoringSystem.warn('Performance threshold exceeded:', {
-            action: action.type,
-            duration,
-            stateSize,
-            timestamp: new Date().toISOString()
-          });
-        }
-      }
-
-      batchMetric.finish({ status: 'success', batchSize: batch.length });
-    } catch (error) {
-      batchMetric.finish({ status: 'error', error: error.message });
-      throw error;
-    } finally {
-      isProcessing = false;
-      if (pendingActions.length > 0) {
-        batchTimeout = setTimeout(() => processBatch(store), 0);
-      }
-    }
-  };
-
-  return store => next => action => {
-    if (process.env.NODE_ENV === 'development') {
-      monitoringSystem.log('Redux Action:', {
-        type: action.type,
-        payload: action.payload
-      });
-    }
-
-    pendingActions.push({ action, next });
-
-    if (!batchTimeout) {
-      batchTimeout = setTimeout(() => processBatch(store), 0);
-    }
-
-    return next(action);
-  };
-};
-
-/**
- * Enhanced error handling middleware
- */
-const errorHandlingMiddleware = store => next => action => {
-  try {
-    return next(action);
-  } catch (error) {
-    const errorDetails = {
-      action: action.type,
-      payload: action.payload,
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString(),
-      state: store.getState()
-    };
-
-    monitoringSystem.error('Redux error:', errorDetails);
-
-    store.dispatch({
-      type: 'app/error',
-      payload: {
-        source: 'redux',
-        ...errorDetails
-      }
-    });
-
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Redux Error:', errorDetails);
-    }
-
-    throw error;
-  }
-};
-
-/**
- * Initial state with safe defaults
- */
-const createInitialState = () => ({
+// Define initial state
+const initialState = {
   commodities: {
     commodities: [],
     status: 'idle',
@@ -211,16 +64,54 @@ const createInitialState = () => ({
     error: null,
     data: null
   }
-});
+};
 
-/**
- * Configure store with enhanced options and middleware
- */
+// Create monitoring middleware
+const createMonitorMiddleware = () => {
+  return store => next => action => {
+    const startTime = performance.now();
+
+    try {
+      // Process the action
+      const result = next(action);
+      const duration = performance.now() - startTime;
+
+      // Log performance metrics
+      if (process.env.NODE_ENV === 'development') {
+        monitoringSystem.log('Redux Action:', {
+          type: action.type,
+          duration,
+          timestamp: new Date().toISOString()
+        });
+
+        if (duration > PERFORMANCE_THRESHOLDS.ACTION_DURATION) {
+          monitoringSystem.warn('Slow action detected:', {
+            type: action.type,
+            duration,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+
+      return result;
+    } catch (error) {
+      monitoringSystem.error('Redux Error:', {
+        type: action.type,
+        error: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  };
+};
+
+// Configure store
 const configureAppStore = (preloadedState = {}) => {
-  const validatedState = validateState({
-    ...createInitialState(),
+  // Merge with initial state
+  const mergedState = {
+    ...initialState,
     ...preloadedState
-  });
+  };
 
   const store = configureStore({
     reducer: {
@@ -234,7 +125,7 @@ const configureAppStore = (preloadedState = {}) => {
       theme: themeReducer,
       tvmii: tvmiiReducer
     },
-    preloadedState: validatedState,
+    preloadedState: mergedState,
     middleware: (getDefaultMiddleware) => {
       const middlewares = getDefaultMiddleware({
         serializableCheck: {
@@ -242,9 +133,7 @@ const configureAppStore = (preloadedState = {}) => {
             'spatial/loadSpatialData/fulfilled',
             'commodities/fetchData/fulfilled',
             'spatial/loadSpatialData/rejected',
-            'markets/fetchData/fulfilled',
-            'commodities/fetchData/pending',
-            'commodities/fetchData/rejected'
+            'markets/fetchData/fulfilled'
           ],
           ignoredPaths: [
             'spatial.data.geometries',
@@ -262,8 +151,8 @@ const configureAppStore = (preloadedState = {}) => {
         }
       });
 
+      // Add custom monitoring middleware
       middlewares.push(createMonitorMiddleware());
-      middlewares.push(errorHandlingMiddleware);
 
       return middlewares;
     },
@@ -274,44 +163,38 @@ const configureAppStore = (preloadedState = {}) => {
     } : false
   });
 
-  // Development tooling
-  if (process.env.NODE_ENV === 'development') {
-    if (module.hot) {
-      module.hot.accept([
-        '../slices/analysisSlice',
-        '../slices/commoditiesSlice',
-        '../slices/ecmSlice',
-        '../slices/geometriesSlice',
-        '../slices/marketsSlice',
-        '../slices/priceDiffSlice',
-        '../slices/spatialSlice',
-        '../slices/themeSlice',
-        '../slices/tvmiiSlice'
-      ], () => {
-        store.replaceReducer(
-          combineReducers({
-            analysis: require('../slices/analysisSlice').default,
-            commodities: require('../slices/commoditiesSlice').default,
-            ecm: require('../slices/ecmSlice').default,
-            geometries: require('../slices/geometriesSlice').default,
-            markets: require('../slices/marketsSlice').default,
-            priceDiff: require('../slices/priceDiffSlice').default,
-            spatial: require('../slices/spatialSlice').default,
-            theme: require('../slices/themeSlice').default,
-            tvmii: require('../slices/tvmiiSlice').default
-          })
-        );
+  // Add hot reloading in development
+  if (process.env.NODE_ENV === 'development' && module.hot) {
+    module.hot.accept([
+      '../slices/analysisSlice',
+      '../slices/commoditiesSlice',
+      '../slices/ecmSlice',
+      '../slices/geometriesSlice',
+      '../slices/marketsSlice',
+      '../slices/priceDiffSlice',
+      '../slices/spatialSlice',
+      '../slices/themeSlice',
+      '../slices/tvmiiSlice'
+    ], () => {
+      store.replaceReducer({
+        analysis: require('../slices/analysisSlice').default,
+        commodities: require('../slices/commoditiesSlice').default,
+        ecm: require('../slices/ecmSlice').default,
+        geometries: require('../slices/geometriesSlice').default,
+        markets: require('../slices/marketsSlice').default,
+        priceDiff: require('../slices/priceDiffSlice').default,
+        spatial: require('../slices/spatialSlice').default,
+        theme: require('../slices/themeSlice').default,
+        tvmii: require('../slices/tvmiiSlice').default
       });
-    }
-
-    window.store = store;
+    });
   }
 
   return store;
 };
 
-// Create and export the store instance
+// Create store instance
 export const store = configureAppStore();
 
-export { configureAppStore };
-export default store;
+// Export store and configuration
+export { store as default, configureAppStore };

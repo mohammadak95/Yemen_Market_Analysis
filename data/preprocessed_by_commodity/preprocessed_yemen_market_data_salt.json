@@ -4,7 +4,7 @@
       "month": "2020-07",
       "avgUsdPrice": 0.7352204545454545,
       "volatility": 51.06617911826628,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.569853147515454,
       "sampleSize": 22,
       "price_stability": 0.6075129261184661
@@ -13,7 +13,7 @@
       "month": "2020-08",
       "avgUsdPrice": 0.23550681818181812,
       "volatility": 49.00231913613769,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.0488818989746,
       "sampleSize": 22,
       "price_stability": 0.6180491917195052
@@ -22,7 +22,7 @@
       "month": "2020-09",
       "avgUsdPrice": 0.7780704545454544,
       "volatility": 47.70788535159007,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.212581583416937,
       "sampleSize": 22,
       "price_stability": 0.6521578957429414
@@ -31,7 +31,7 @@
       "month": "2020-10",
       "avgUsdPrice": 0.782825,
       "volatility": 43.75971238711331,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.357535606271961,
       "sampleSize": 22,
       "price_stability": 0.6382934352743408
@@ -40,7 +40,7 @@
       "month": "2020-11",
       "avgUsdPrice": 0.2566931818181818,
       "volatility": 58.97109735494526,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.386183308338921,
       "sampleSize": 22,
       "price_stability": 0.5790897864029289
@@ -1309,8 +1309,8 @@
   "spatial_autocorrelation": {
     "global": {
       "moran_i": 0.1466718151330966,
-      "p_value": NaN,
-      "z_score": NaN,
+      "p_value": null,
+      "z_score": null,
       "significance": "False"
     },
     "local": {
@@ -1618,7 +1618,7 @@
   "metadata": {
     "commodity": "Salt",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T20:12:01.621846",
+    "processed_date": "2024-11-18T11:55:30.855179",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

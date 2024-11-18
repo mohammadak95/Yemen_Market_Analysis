@@ -1,6 +1,6 @@
 // src/utils/DataProcessor.js
 
-import { backgroundMonitor } from './backgroundMonitor-cancelled';
+import { backgroundMonitor } from './MonitoringSystem';
 
 export class DataProcessor {
     constructor() {
@@ -200,3 +200,9 @@ export class DataProcessor {
             (this.metrics.processingTimes.length / total) * 100 : 0;
     }
 }
+
+// Named export
+export const { safeJSONParse, cleanValue, cleanObject } = DataProcessor;
+
+// Default export
+export default DataProcessor;

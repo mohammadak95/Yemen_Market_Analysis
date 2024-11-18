@@ -4,7 +4,7 @@
       "month": "2020-07",
       "avgUsdPrice": 1.8137547619047616,
       "volatility": 36.86574603054132,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.835084249778095,
       "sampleSize": 21,
       "price_stability": 0.6651245574542557
@@ -13,7 +13,7 @@
       "month": "2020-08",
       "avgUsdPrice": 0.5621142857142857,
       "volatility": 31.880084563886218,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.289304846544819,
       "sampleSize": 21,
       "price_stability": 0.6923676663472984
@@ -22,7 +22,7 @@
       "month": "2020-09",
       "avgUsdPrice": 1.8208047619047618,
       "volatility": 20.279799717658857,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.460799754055839,
       "sampleSize": 21,
       "price_stability": 0.755158576120371
@@ -31,7 +31,7 @@
       "month": "2020-10",
       "avgUsdPrice": 1.7685666666666668,
       "volatility": 20.302357818095906,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.612656349427769,
       "sampleSize": 21,
       "price_stability": 0.753985358004713
@@ -40,7 +40,7 @@
       "month": "2020-11",
       "avgUsdPrice": 0.4377285714285714,
       "volatility": 9.501217347977123,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.642668227783631,
       "sampleSize": 21,
       "price_stability": 0.8244889381685797
@@ -1325,8 +1325,8 @@
   "spatial_autocorrelation": {
     "global": {
       "moran_i": 0.06655834066080195,
-      "p_value": NaN,
-      "z_score": NaN,
+      "p_value": null,
+      "z_score": null,
       "significance": "False"
     },
     "local": {
@@ -1624,7 +1624,7 @@
   "metadata": {
     "commodity": "Fuel (Diesel)",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T20:11:56.033080",
+    "processed_date": "2024-11-18T11:55:25.574896",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

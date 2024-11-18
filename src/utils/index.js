@@ -43,3 +43,10 @@ export {
   clearCache,
   getCacheStats
 } from './appUtils';
+
+// src/utils/index.js
+
+export { DataProcessor, safeJSONParse, cleanValue, cleanObject } from './DataProcessor';
+export { preprocessedDataManager } from './PreprocessedDataManager';
+
+// Export other utilities as needed

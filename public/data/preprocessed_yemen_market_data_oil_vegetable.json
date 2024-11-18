@@ -4,7 +4,7 @@
       "month": "2020-07",
       "avgUsdPrice": 2.972375,
       "volatility": 7.494180609773494,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.569853147515454,
       "sampleSize": 22,
       "price_stability": 0.8416329325525846
@@ -13,7 +13,7 @@
       "month": "2020-08",
       "avgUsdPrice": 0.92715,
       "volatility": 7.488649049973457,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.0488818989746,
       "sampleSize": 22,
       "price_stability": 0.8460397120882467
@@ -22,7 +22,7 @@
       "month": "2020-09",
       "avgUsdPrice": 2.907456818181818,
       "volatility": 9.37885573736263,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.212581583416937,
       "sampleSize": 22,
       "price_stability": 0.7911767569761743
@@ -31,7 +31,7 @@
       "month": "2020-10",
       "avgUsdPrice": 2.9114795454545455,
       "volatility": 10.839086831413928,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.357535606271961,
       "sampleSize": 22,
       "price_stability": 0.8191336243994292
@@ -40,7 +40,7 @@
       "month": "2020-11",
       "avgUsdPrice": 0.8364659090909092,
       "volatility": 11.009132722048982,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.386183308338921,
       "sampleSize": 22,
       "price_stability": 0.8177100745894188
@@ -1325,8 +1325,8 @@
   "spatial_autocorrelation": {
     "global": {
       "moran_i": 0.11161220521254664,
-      "p_value": NaN,
-      "z_score": NaN,
+      "p_value": null,
+      "z_score": null,
       "significance": "False"
     },
     "local": {
@@ -1634,7 +1634,7 @@
   "metadata": {
     "commodity": "Oil (Vegetable)",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T20:11:58.940090",
+    "processed_date": "2024-11-18T11:55:28.259982",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

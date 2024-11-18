@@ -4,7 +4,7 @@
       "month": "2020-07",
       "avgUsdPrice": 3.8971704545454546,
       "volatility": 8.778901972875168,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.569853147515454,
       "sampleSize": 22,
       "price_stability": 0.8321770901413418
@@ -13,7 +13,7 @@
       "month": "2020-08",
       "avgUsdPrice": 1.2466113636363636,
       "volatility": 8.427219893685047,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.0488818989746,
       "sampleSize": 22,
       "price_stability": 0.8390420430297953
@@ -22,7 +22,7 @@
       "month": "2020-09",
       "avgUsdPrice": 3.940575000000001,
       "volatility": 8.97758798947926,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.212581583416937,
       "sampleSize": 22,
       "price_stability": 0.7939569762948505
@@ -31,7 +31,7 @@
       "month": "2020-10",
       "avgUsdPrice": 4.03215909090909,
       "volatility": 11.040727800525243,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.357535606271961,
       "sampleSize": 22,
       "price_stability": 0.8177146092610478
@@ -40,7 +40,7 @@
       "month": "2020-11",
       "avgUsdPrice": 1.1505772727272725,
       "volatility": 9.689442024092033,
-      "garch_volatility": NaN,
+      "garch_volatility": null,
       "conflict_intensity": 5.386183308338921,
       "sampleSize": 22,
       "price_stability": 0.7877024743562203
@@ -1325,8 +1325,8 @@
   "spatial_autocorrelation": {
     "global": {
       "moran_i": 0.12131371928327662,
-      "p_value": NaN,
-      "z_score": NaN,
+      "p_value": null,
+      "z_score": null,
       "significance": "False"
     },
     "local": {
@@ -1634,7 +1634,7 @@
   "metadata": {
     "commodity": "Rice (Imported)",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-14T20:12:01.057754",
+    "processed_date": "2024-11-18T11:55:30.314925",
     "total_clusters": 2,
     "analysis_parameters": {
       "garch_parameters": {

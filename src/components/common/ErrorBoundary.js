@@ -1,6 +1,7 @@
 // src/components/common/ErrorBoundary.js
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { monitoringSystem } from '../../utils/MonitoringSystem'; // Ensure correct import path
 
 class ErrorBoundary extends React.Component {
@@ -77,6 +78,9 @@ const styles = {
   //   border: 'none',
   //   borderRadius: '4px',
   // },
+};
+ErrorBoundary.propTypes = {
+  children: PropTypes.node,
 };
 
 export default ErrorBoundary;

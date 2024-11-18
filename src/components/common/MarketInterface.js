@@ -1,6 +1,6 @@
 // src/components/common/MarketInterface.js
 
-import React, { useCallback, useEffect } from 'react'; // Added useEffect
+import React, { useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Box,
@@ -25,53 +25,69 @@ import {
   selectSpatialUI,
 } from '../../slices/spatialSlice';
 import {
-  selectAvailableCommodities,
-  selectAvailableRegimes,
-} from '../../selectors/spatialSelectors';
+  selectCommodities,
+  selectCommoditiesStatus,
+} from '../../slices/commoditiesSlice';
+
+// Utility functions for normalization and formatting
+const normalizeCommodityId = (value) => {
+  return value?.toLowerCase().replace(/[()]/g, '').replace(/\s+/g, '_');
+};
+
+const formatCommodityLabel = (value) => {
+  return value
+    ?.replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
 
 const MarketInterface = () => {
   const dispatch = useDispatch();
 
   const { loading, error } = useSelector(selectSpatialStatus);
   const { selectedCommodity, selectedRegimes } = useSelector(selectSpatialUI);
-  const availableCommodities = useSelector(selectAvailableCommodities);
-  const availableRegimes = useSelector(selectAvailableRegimes);
+  const availableCommodities = useSelector(selectCommodities);
+  const commoditiesStatus = useSelector(selectCommoditiesStatus);
+  const availableRegimes = useSelector(
+    (state) => state.spatial.data?.regimes || []
+  );
 
-  // Add initialization effect
+  // Initialize default commodity after commodities are loaded
   useEffect(() => {
-    const initializeSelections = async () => {
-      // Only set default commodity if we have available commodities and no selection
-      if (availableCommodities.length > 0 && !selectedCommodity) {
-        const defaultCommodity = availableCommodities[0];
-        dispatch(setSelectedCommodity(defaultCommodity));
-        
-        try {
-          await dispatch(
-            loadSpatialData({
-              commodity: defaultCommodity,
-              date: null,
-              options: {},
-            })
-          ).unwrap();
-        } catch (error) {
-          monitoringSystem.error('Error loading initial commodity data:', error);
-        }
-      }
-    };
+    if (
+      commoditiesStatus === 'succeeded' &&
+      availableCommodities.length > 0 &&
+      !selectedCommodity
+    ) {
+      const defaultCommodityId = availableCommodities[0].id;
+      dispatch(setSelectedCommodity(defaultCommodityId));
 
-    initializeSelections();
-  }, [availableCommodities, selectedCommodity, dispatch]);
+      dispatch(
+        loadSpatialData({
+          commodity: defaultCommodityId,
+          date: null,
+          options: {},
+        })
+      ).catch((error) => {
+        monitoringSystem.error('Error loading initial commodity data:', error);
+      });
+    }
+  }, [
+    availableCommodities,
+    selectedCommodity,
+    dispatch,
+    commoditiesStatus,
+  ]);
 
   const handleCommodityChange = useCallback(
     async (event) => {
-      const commodity = event.target.value;
-      if (!commodity || commodity === selectedCommodity) return;
+      const commodityId = event.target.value;
+      if (!commodityId) return;
 
       try {
-        dispatch(setSelectedCommodity(commodity));
+        dispatch(setSelectedCommodity(commodityId));
         await dispatch(
           loadSpatialData({
-            commodity,
+            commodity: commodityId,
             date: null,
             options: {},
           })
@@ -80,7 +96,7 @@ const MarketInterface = () => {
         monitoringSystem.error('Error loading commodity data:', error);
       }
     },
-    [dispatch, selectedCommodity]
+    [dispatch]
   );
 
   const handleRegimeChange = useCallback(
@@ -88,17 +104,12 @@ const MarketInterface = () => {
       const regimes = event.target.value;
       if (Array.isArray(regimes) && regimes.length > 0) {
         dispatch(setSelectedRegimes(regimes));
+      } else {
+        dispatch(setSelectedRegimes([]));
       }
     },
     [dispatch]
   );
-
-  const formatLabel = useCallback((value) => {
-    if (!value) return '';
-    return value
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  }, []);
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -119,11 +130,15 @@ const MarketInterface = () => {
               value={selectedCommodity || ''}
               onChange={handleCommodityChange}
               label="Commodity"
-              disabled={loading || availableCommodities.length === 0}
+              disabled={
+                loading ||
+                commoditiesStatus !== 'succeeded' ||
+                availableCommodities.length === 0
+              }
             >
               {availableCommodities.map((commodity) => (
-                <MenuItem key={commodity} value={commodity}>
-                  {formatLabel(commodity)}
+                <MenuItem key={commodity.id} value={commodity.id}>
+                  {formatCommodityLabel(commodity.name)}
                 </MenuItem>
               ))}
             </Select>
@@ -147,15 +162,15 @@ const MarketInterface = () => {
                 availableRegimes.length === 0
               }
               renderValue={(selected) =>
-                selected.map(formatLabel).join(', ')
+                selected.map((regime) => formatCommodityLabel(regime)).join(', ')
               }
             >
               {availableRegimes.map((regime) => (
                 <MenuItem key={regime} value={regime}>
                   <Checkbox
-                    checked={selectedRegimes?.indexOf(regime) > -1}
+                    checked={selectedRegimes?.includes(regime)}
                   />
-                  <ListItemText primary={formatLabel(regime)} />
+                  <ListItemText primary={formatCommodityLabel(regime)} />
                 </MenuItem>
               ))}
             </Select>

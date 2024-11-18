@@ -9,8 +9,8 @@ import { unifiedDataManager } from './UnifiedDataManager';
  */
 class SpatialSystem {
   constructor() {
-    this.monitor = monitoringSystem;
     this._isInitialized = false;
+    this.monitor = monitoringSystem;
 
     // Configuration
     this.config = {
@@ -21,19 +21,6 @@ class SpatialSystem {
         flowThreshold: 0.1,
         pValueThreshold: 0.05,
         minCoverage: 0.8
-      },
-      integration: {
-        maxRetries: 3,
-        retryDelay: 1000, // in milliseconds
-        batchSize: 100
-      },
-      visualization: {
-        modes: {
-          PRICES: 'prices',
-          FLOWS: 'flows',
-          CLUSTERS: 'clusters',
-          SHOCKS: 'shocks'
-        }
       }
     };
   }
@@ -82,7 +69,7 @@ class SpatialSystem {
         spatialMetrics
       ] = await Promise.all([
         this.processTimeSeriesData(rawData.timeSeriesData, options),
-        this.processMarketClusters(rawData.marketClusters, options),
+        this.processMarketClusters(rawData.marketClusters, { ...options, marketData: rawData.marketData }),
         this.processFlowAnalysis(rawData.flowAnalysis, options),
         this.processSpatialMetrics(rawData.spatialAutocorrelation, options)
       ]);
@@ -108,7 +95,7 @@ class SpatialSystem {
       };
 
       // Add analysis results
-      const analysisResults = await this.generateAnalysisResults(rawData);
+      const analysisResults = await this.generateAnalysisResults(rawData, options);
       const finalResult = {
         ...result,
         analysis: analysisResults
@@ -144,7 +131,8 @@ class SpatialSystem {
         'timeSeriesData',
         'marketClusters',
         'flowAnalysis',
-        'spatialAutocorrelation'
+        'spatialAutocorrelation',
+        'marketData' // Assuming marketData is required for efficiency calculations
       ];
 
       requiredFields.forEach(field => {
@@ -228,7 +216,7 @@ class SpatialSystem {
       main_market: cluster.main_market,
       connected_markets: cluster.connected_markets,
       market_count: cluster.market_count,
-      efficiency: this.calculateClusterEfficiency(cluster)
+      efficiency: this.calculateClusterEfficiency(cluster, options.marketData || [])
     }));
   }
 
@@ -277,22 +265,36 @@ class SpatialSystem {
 
   /**
    * Process local spatial metrics
-   * @param {Object} localMetrics - Raw local metrics data
-   * @returns {Object} Processed local metrics
+   * @param {Array} localMetrics - Raw local metrics data
+   * @returns {Array} Processed local metrics
    */
   processLocalMetrics(localMetrics) {
-    // Implement detailed processing of local metrics as needed
-    return localMetrics; // Placeholder: return as is
+    // Example implementation: Normalize local Moran's I values
+    if (!Array.isArray(localMetrics)) return [];
+
+    return localMetrics.map(metric => ({
+      region: metric.region,
+      moran_i: this.cleanNumber(metric.moran_i),
+      p_value: this.cleanNumber(metric.p_value),
+      significance: metric.p_value < this.config.validation.pValueThreshold
+    }));
   }
 
   /**
    * Process hotspots data
-   * @param {Object} hotspots - Raw hotspots data
-   * @returns {Object} Processed hotspots data
+   * @param {Array} hotspots - Raw hotspots data
+   * @returns {Array} Processed hotspots data
    */
   processHotspots(hotspots) {
-    // Implement detailed processing of hotspots as needed
-    return hotspots; // Placeholder: return as is
+    // Example implementation: Identify hotspots based on z-scores
+    if (!Array.isArray(hotspots)) return [];
+
+    return hotspots.map(hotspot => ({
+      region: hotspot.region,
+      z_score: this.cleanNumber(hotspot.z_score),
+      hotspot_type: hotspot.z_score > 2 ? 'High' :
+                    hotspot.z_score < -2 ? 'Low' : 'Neutral'
+    }));
   }
 
   /**
@@ -316,11 +318,11 @@ class SpatialSystem {
    */
   calculateMarketIntegration({ flowAnalysis, marketClusters }) {
     const totalFlows = flowAnalysis.length;
-    const avgFlowWeight = _.meanBy(flowAnalysis, 'avg_flow');
+    const avgFlowWeight = _.meanBy(flowAnalysis, 'avg_flow') || 0;
     const clusterCount = marketClusters.length;
 
     return {
-      flowDensity: totalFlows / (clusterCount * (clusterCount - 1)),
+      flowDensity: clusterCount > 1 ? totalFlows / (clusterCount * (clusterCount - 1)) : 0,
       avgFlowWeight,
       clusterCount
     };
@@ -332,6 +334,8 @@ class SpatialSystem {
    * @returns {Object} Spatial dependence metrics
    */
   calculateSpatialDependence({ spatialMetrics }) {
+    if (!spatialMetrics || !spatialMetrics.global) return {};
+
     const { moran_i, p_value } = spatialMetrics.global;
 
     return {
@@ -364,16 +368,37 @@ class SpatialSystem {
    * @returns {Object} Conflict impact metrics
    */
   calculateConflictImpact(data) {
-    const { timeSeriesData, flowAnalysis } = data;
+    const { timeSeriesData, flowAnalysis, marketData } = data;
 
-    // Example calculations (implement actual logic as needed)
+    // Calculate direct price effects
     const priceEffects = this.analyzePriceTransmission(data);
+
+    // Calculate market disruption scores
     const marketDisruptions = this.analyzeConflictImpact(data);
 
-    return {
+    // Analyze spatial spillover effects
+    const spilloverEffects = this.analyzeSpilloverEffects(data);
+
+    // Calculate resilience metrics
+    const resilienceMetrics = this.calculateMarketResilience(data);
+
+    // Calculate overall conflict impact score
+    const conflictImpactScore = this.calculateOverallImpact(
       priceEffects,
-      marketDisruptions
-      // Add more detailed metrics as needed
+      marketDisruptions,
+      spilloverEffects,
+      resilienceMetrics
+    );
+
+    return {
+      conflictImpactScore,
+      details: {
+        priceEffects,
+        marketDisruptions,
+        spilloverEffects,
+        resilienceMetrics,
+        temporalPatterns: this.analyzeTemporalPatterns(timeSeriesData)
+      }
     };
   }
 
@@ -500,13 +525,21 @@ class SpatialSystem {
       marketSets.flows.add(flow.target);
     });
 
+    // Collect markets from spatial metrics (assuming spatial includes all markets)
+    if (data.spatialAutocorrelation?.local) {
+      data.spatialAutocorrelation.local.forEach(metric => {
+        allMarkets.add(metric.region);
+        marketSets.spatial.add(metric.region);
+      });
+    }
+
     // Calculate coverage ratios
     const totalMarkets = allMarkets.size;
     return {
-      timeSeries: marketSets.timeSeries.size / totalMarkets,
-      clusters: marketSets.clusters.size / totalMarkets,
-      flows: marketSets.flows.size / totalMarkets,
-      spatial: marketSets.spatial.size / totalMarkets
+      timeSeries: totalMarkets ? (marketSets.timeSeries.size / totalMarkets) : 0,
+      clusters: totalMarkets ? (marketSets.clusters.size / totalMarkets) : 0,
+      flows: totalMarkets ? (marketSets.flows.size / totalMarkets) : 0,
+      spatial: totalMarkets ? (marketSets.spatial.size / totalMarkets) : 0
     };
   }
 
@@ -527,7 +560,7 @@ class SpatialSystem {
 
       for (const market1 of markets) {
         for (const market2 of markets) {
-          if (market1 !== market2) {
+          if (market1 !== market2 && !correlations.has(`${market2}-${market1}`)) {
             const market1Data = timeSeriesData.filter(d => d.region === market1);
             const market2Data = timeSeriesData.filter(d => d.region === market2);
             const correlation = this.calculatePriceCorrelation(market1Data, market2Data);
@@ -614,15 +647,7 @@ class SpatialSystem {
       }));
 
       // Analyze spatial spillover effects
-      const spilloverEffects = marketClusters.map(cluster => ({
-        clusterId: cluster.cluster_id,
-        markets: cluster.connected_markets,
-        spillover: this.calculateSpilloverEffects(
-          cluster,
-          priceEffects,
-          marketDisruptions
-        )
-      }));
+      const spilloverEffects = this.analyzeSpilloverEffects(data);
 
       // Calculate resilience metrics
       const resilienceMetrics = this.calculateMarketResilience(
@@ -659,6 +684,31 @@ class SpatialSystem {
   }
 
   /**
+   * Analyze spillover effects within market clusters
+   * @param {Object} data - Processed data components
+   * @returns {Array} Spillover effects data
+   */
+  analyzeSpilloverEffects(data) {
+    const { marketClusters, flowAnalysis } = data;
+
+    return marketClusters.map(cluster => {
+      const disruptions = flowAnalysis.filter(flow =>
+        cluster.connected_markets.includes(flow.source) &&
+        cluster.connected_markets.includes(flow.target)
+      );
+
+      const totalDisruption = disruptions.reduce((acc, curr) => acc + curr.disruption, 0);
+      const avgDisruption = disruptions.length ? totalDisruption / disruptions.length : 0;
+
+      return {
+        clusterId: cluster.cluster_id,
+        totalDisruption,
+        avgDisruption
+      };
+    });
+  }
+
+  /**
    * Calculate price correlation between two markets
    * @param {Array} market1Data - Time series data for market 1
    * @param {Array} market2Data - Time series data for market 2
@@ -666,15 +716,17 @@ class SpatialSystem {
    */
   calculatePriceCorrelation(market1Data, market2Data) {
     // Align data by date
-    const market1Prices = market1Data.map(d => d.avgUsdPrice);
-    const market2Prices = market2Data.map(d => d.avgUsdPrice);
+    const market1Map = new Map(market1Data.map(d => [d.date.toISOString(), d.avgUsdPrice]));
+    const market2Map = new Map(market2Data.map(d => [d.date.toISOString(), d.avgUsdPrice]));
 
-    // Ensure both markets have the same number of data points
-    const minLength = Math.min(market1Prices.length, market2Prices.length);
-    const alignedMarket1Prices = market1Prices.slice(-minLength);
-    const alignedMarket2Prices = market2Prices.slice(-minLength);
+    const commonDates = [...market1Map.keys()].filter(date => market2Map.has(date));
 
-    return this.pearsonCorrelation(alignedMarket1Prices, alignedMarket2Prices);
+    const market1Prices = commonDates.map(date => market1Map.get(date));
+    const market2Prices = commonDates.map(date => market2Map.get(date));
+
+    if (market1Prices.length === 0 || market2Prices.length === 0) return 0;
+
+    return this.pearsonCorrelation(market1Prices, market2Prices);
   }
 
   /**
@@ -685,23 +737,29 @@ class SpatialSystem {
    */
   calculateTransmissionSpeed(flow, timeSeriesData) {
     // Example implementation: Difference in price changes over time
-    const sourceData = timeSeriesData.filter(d => d.region === flow.source);
-    const targetData = timeSeriesData.filter(d => d.region === flow.target);
+    const sourceData = timeSeriesData.filter(d => d.region === flow.source).sort((a, b) => a.date - b.date);
+    const targetData = timeSeriesData.filter(d => d.region === flow.target).sort((a, b) => a.date - b.date);
 
     if (sourceData.length < 2 || targetData.length < 2) return 0;
 
     const sourceChanges = [];
     for (let i = 1; i < sourceData.length; i++) {
-      sourceChanges.push(sourceData[i].avgUsdPrice - sourceData[i - 1].avgUsdPrice);
+      const change = (sourceData[i].avgUsdPrice - sourceData[i - 1].avgUsdPrice) / sourceData[i - 1].avgUsdPrice;
+      sourceChanges.push(change);
     }
 
     const targetChanges = [];
     for (let i = 1; i < targetData.length; i++) {
-      targetChanges.push(targetData[i].avgUsdPrice - targetData[i - 1].avgUsdPrice);
+      const change = (targetData[i].avgUsdPrice - targetData[i - 1].avgUsdPrice) / targetData[i - 1].avgUsdPrice;
+      targetChanges.push(change);
     }
 
-    // Calculate correlation between source and target price changes as speed indicator
-    return this.pearsonCorrelation(sourceChanges, targetChanges);
+    // Align changes by date
+    const minLength = Math.min(sourceChanges.length, targetChanges.length);
+    const alignedSourceChanges = sourceChanges.slice(-minLength);
+    const alignedTargetChanges = targetChanges.slice(-minLength);
+
+    return this.pearsonCorrelation(alignedSourceChanges, alignedTargetChanges);
   }
 
   /**
@@ -718,19 +776,22 @@ class SpatialSystem {
     for (const market1 of cluster.connected_markets) {
       for (const market2 of cluster.connected_markets) {
         if (market1 !== market2) {
-          const correlation = correlations.get(`${market1}-${market2}`) || 0;
+          const key = `${market1}-${market2}`;
+          const reverseKey = `${market2}-${market1}`;
+          const correlation = correlations.get(key) || correlations.get(reverseKey) || 0;
           clusterCorrelations.push(correlation);
 
           const speed = transmissionSpeeds.find(
-            s => s.source === market1 && s.target === market2
+            s => (s.source === market1 && s.target === market2) ||
+                 (s.source === market2 && s.target === market1)
           );
           if (speed) clusterSpeeds.push(speed.speed);
         }
       }
     }
 
-    const avgCorrelation = this.mean(clusterCorrelations);
-    const avgSpeed = this.mean(clusterSpeeds);
+    const avgCorrelation = clusterCorrelations.length ? this.mean(clusterCorrelations) : 0;
+    const avgSpeed = clusterSpeeds.length ? this.mean(clusterSpeeds) : 0;
 
     return (avgCorrelation + avgSpeed) / 2;
   }
@@ -758,7 +819,7 @@ class SpatialSystem {
    * @returns {Object} Spatial transmission patterns
    */
   analyzeSpatialTransmissionPatterns(transmissionSpeeds, marketClusters) {
-    // Example implementation: Identify clusters with high transmission speeds
+    // Identify clusters with high transmission speeds
     const highTransmissionClusters = marketClusters.filter(cluster => {
       const clusterSpeeds = transmissionSpeeds.filter(speed =>
         cluster.connected_markets.includes(speed.source) &&
@@ -781,29 +842,89 @@ class SpatialSystem {
    * @returns {Object} Temporal patterns analysis
    */
   analyzeTemporalPatterns(timeSeriesData) {
-    // Example implementation: Identify seasonal trends
-    // Placeholder: Implement actual temporal analysis as needed
+    // Example implementation: Identify seasonal trends using simple moving averages
+    // This can be expanded with more sophisticated time series analysis as needed
+
+    const months = timeSeriesData.map(d => d.date.getMonth() + 1);
+    const prices = timeSeriesData.map(d => d.avgUsdPrice);
+
+    // Calculate moving average (window size = 3)
+    const movingAverage = prices.map((price, index, arr) => {
+      if (index < 1 || index > arr.length - 2) return price;
+      return (arr[index - 1] + arr[index] + arr[index + 1]) / 3;
+    });
+
+    // Detect upward or downward trends
+    let trend = 'Stable';
+    const trendSlope = this.calculateTrendSlope(prices, movingAverage);
+    if (trendSlope > 0.01) trend = 'Upward';
+    else if (trendSlope < -0.01) trend = 'Downward';
+
     return {
-      seasonalTrends: 'Not Implemented'
+      movingAverage,
+      trend
     };
   }
 
   /**
-   * Analyze spatial transmission patterns
-   * @param {Array} transmissionSpeeds - Transmission speeds data
-   * @param {Array} marketClusters - Market clusters data
-   * @returns {Object} Spatial transmission patterns analysis
+   * Calculate trend slope between actual prices and moving average
+   * @param {Array} actual - Actual price data
+   * @param {Array} movingAverage - Moving average data
+   * @returns {number} Trend slope
    */
-  analyzeSpatialTransmissionPatterns(transmissionSpeeds, marketClusters) {
-    // Placeholder for detailed spatial transmission pattern analysis
-    // Implement actual logic as per application requirements
-    return {
-      patterns: 'Detailed Spatial Transmission Patterns Analysis'
-    };
+  calculateTrendSlope(actual, movingAverage) {
+    if (actual.length !== movingAverage.length) return 0;
+
+    const n = actual.length;
+    const meanActual = this.mean(actual);
+    const meanMA = this.mean(movingAverage);
+
+    let numerator = 0;
+    let denominator = 0;
+    for (let i = 0; i < n; i++) {
+      numerator += (actual[i] - meanActual) * (movingAverage[i] - meanMA);
+      denominator += Math.pow(movingAverage[i] - meanMA, 2);
+    }
+
+    if (denominator === 0) return 0;
+
+    return numerator / denominator;
   }
 
   /**
-   * Calculate overall conflict impact
+   * Analyze price transmission across markets
+   * @param {Object} data - Processed data components
+   * @returns {Object} Price transmission analysis
+   */
+  analyzePriceTransmission(data) {
+    // Already implemented in analyzePriceTransmission method
+    // This placeholder can be removed or kept for additional processing if needed
+    return {};
+  }
+
+  /**
+   * Analyze conflict impact on markets
+   * @param {Object} data - Processed data components
+   * @returns {Array} Market disruptions data
+   */
+  analyzeConflictImpact(data) {
+    const { flowAnalysis, marketData } = data;
+
+    // Example implementation: Calculate disruption based on flow count and conflict intensity
+    return flowAnalysis.map(flow => {
+      const conflictEntry = marketData.find(m => m.market === flow.source || m.market === flow.target);
+      const conflictIntensity = conflictEntry ? conflictEntry.conflict_intensity : 0;
+      const disruption = flow.flow_count * flow.avg_flow * conflictIntensity;
+      return {
+        source: flow.source,
+        target: flow.target,
+        disruption
+      };
+    });
+  }
+
+  /**
+   * Calculate overall impact score based on various factors
    * @param {Array} priceEffects - Price effects data
    * @param {Array} marketDisruptions - Market disruptions data
    * @param {Array} spilloverEffects - Spillover effects data
@@ -823,7 +944,7 @@ class SpatialSystem {
     const totalDisruption = marketDisruptions.reduce((acc, curr) => acc + curr.disruption, 0);
     const avgDisruption = marketDisruptions.length ? totalDisruption / marketDisruptions.length : 0;
 
-    const totalSpillover = spilloverEffects.reduce((acc, curr) => acc + curr.spillover, 0);
+    const totalSpillover = spilloverEffects.reduce((acc, curr) => acc + curr.avgDisruption, 0);
     const avgSpillover = spilloverEffects.length ? totalSpillover / spilloverEffects.length : 0;
 
     const resilienceScore = resilienceMetrics.overallResilience;
@@ -854,9 +975,10 @@ class SpatialSystem {
    * @returns {number} Price efficiency score
    */
   calculatePriceEfficiency(timeSeriesData) {
-    // Example implementation: Inverse of price volatility
-    const volatility = this.calculateVolatility(timeSeriesData);
-    return 1 / (1 + volatility);
+    // Example implementation: Inverse of average volatility across all regions
+    const volatilities = timeSeriesData.map(d => d.volatility || 0);
+    const avgVolatility = volatilities.length ? this.mean(volatilities) : 0;
+    return 1 / (1 + avgVolatility);
   }
 
   /**
@@ -865,7 +987,7 @@ class SpatialSystem {
    * @returns {number} Flow efficiency score
    */
   calculateFlowEfficiency(flowAnalysis) {
-    // Example implementation: Average flow count
+    // Example implementation: Average flow count normalized by maxClusterSize
     const totalFlows = flowAnalysis.length;
     const avgFlowCount = totalFlows ? (flowAnalysis.reduce((acc, curr) => acc + curr.flow_count, 0) / totalFlows) : 0;
     return avgFlowCount / this.config.validation.maxClusterSize;
@@ -880,7 +1002,7 @@ class SpatialSystem {
     const prices = timeSeriesData.map(d => d.avgUsdPrice);
     const maxPrice = Math.max(...prices);
     const minPrice = Math.min(...prices);
-    return (maxPrice - minPrice) / maxPrice;
+    return maxPrice > 0 ? (maxPrice - minPrice) / maxPrice : 0;
   }
 
   /**
@@ -892,7 +1014,7 @@ class SpatialSystem {
     const prices = timeSeriesData.map(d => d.avgUsdPrice);
     const avg = this.mean(prices);
     const variance = this.variance(prices);
-    return Math.sqrt(variance) / avg;
+    return avg > 0 ? Math.sqrt(variance) / avg : 0;
   }
 
   /**
@@ -914,31 +1036,47 @@ class SpatialSystem {
    */
   calculateFlowDisruption(flow, timeSeriesData) {
     // Example calculation: Based on flow count and conflict intensity
-    const disruptionFactor = flow.flow_count * flow.avg_flow;
+    const conflictEntrySource = timeSeriesData.find(d => d.region === flow.source);
+    const conflictEntryTarget = timeSeriesData.find(d => d.region === flow.target);
+    const conflictIntensity = (conflictEntrySource?.conflict_intensity || 0 + conflictEntryTarget?.conflict_intensity || 0) / 2;
+
+    const disruptionFactor = flow.flow_count * flow.avg_flow * conflictIntensity;
     return disruptionFactor;
   }
 
   /**
-   * Calculate spillover effects
-   * @param {Object} cluster - Market cluster data
-   * @param {Array} priceEffects - Price effects data
-   * @param {Array} marketDisruptions - Market disruptions data
-   * @returns {number} Spillover effect score
+   * Calculate spillover effects within market clusters
+   * @param {Object} data - Processed data components
+   * @returns {Array} Spillover effects data
    */
-  calculateSpilloverEffects(cluster, priceEffects, marketDisruptions) {
-    // Example implementation: Sum of disruptions within the cluster
-    const disruptions = marketDisruptions.filter(d => cluster.connected_markets.includes(d.source) && cluster.connected_markets.includes(d.target));
-    const totalDisruption = disruptions.reduce((acc, curr) => acc + curr.disruption, 0);
-    return totalDisruption;
+  analyzeSpilloverEffects(data) {
+    const { marketClusters, flowAnalysis } = data;
+
+    return marketClusters.map(cluster => {
+      const disruptions = flowAnalysis.filter(flow =>
+        cluster.connected_markets.includes(flow.source) &&
+        cluster.connected_markets.includes(flow.target)
+      );
+
+      const totalDisruption = disruptions.reduce((acc, curr) => acc + curr.disruption, 0);
+      const avgDisruption = disruptions.length ? totalDisruption / disruptions.length : 0;
+
+      return {
+        clusterId: cluster.cluster_id,
+        totalDisruption,
+        avgDisruption
+      };
+    });
   }
 
   /**
    * Calculate market resilience
-   * @param {Array} timeSeriesData - Time series data
-   * @param {Array} marketDisruptions - Market disruptions data
+   * @param {Object} data - Processed data components
    * @returns {Object} Resilience metrics
    */
-  calculateMarketResilience(timeSeriesData, marketDisruptions) {
+  calculateMarketResilience(data) {
+    const { timeSeriesData, marketDisruptions } = data;
+
     // Example implementation: Inverse of average disruption
     const totalDisruption = marketDisruptions.reduce((acc, curr) => acc + curr.disruption, 0);
     const avgDisruption = marketDisruptions.length ? totalDisruption / marketDisruptions.length : 0;
@@ -979,8 +1117,12 @@ class SpatialSystem {
    */
   calculatePriceDiscoveryIndex(timeSeriesData) {
     // Example implementation: Correlation between price and flow
-    // Placeholder: Implement actual logic as needed
-    return 0.75; // Example static value
+    const prices = timeSeriesData.map(d => d.avgUsdPrice);
+    const flows = timeSeriesData.map(d => d.volatility); // Assuming volatility correlates with flow
+
+    if (prices.length !== flows.length || prices.length === 0) return 0;
+
+    return this.pearsonCorrelation(prices, flows);
   }
 
   /**
@@ -989,7 +1131,7 @@ class SpatialSystem {
    * @returns {number} Market access index
    */
   calculateMarketAccessIndex(flowAnalysis) {
-    // Example implementation: Average flow count
+    // Example implementation: Average flow count normalized by maxClusterSize
     const totalFlows = flowAnalysis.length;
     const avgFlowCount = totalFlows ? (flowAnalysis.reduce((acc, curr) => acc + curr.flow_count, 0) / totalFlows) : 0;
     return avgFlowCount / this.config.validation.maxClusterSize;
@@ -1001,9 +1143,9 @@ class SpatialSystem {
    * @returns {number} Competitiveness index
    */
   calculateCompetitivenessIndex(marketClusters) {
-    // Example implementation: Number of clusters
+    // Example implementation: Number of clusters normalized
     const numClusters = marketClusters.length;
-    return numClusters / 10; // Example scaling
+    return numClusters / 10; // Example scaling factor
   }
 
   /**
@@ -1054,6 +1196,179 @@ class SpatialSystem {
    */
   sum(values) {
     return values.reduce((a, b) => a + b, 0);
+  }
+
+  /**
+   * Calculate cluster efficiency metrics
+   * @param {Object} cluster - Market cluster data
+   * @param {Array} marketData - Market data for efficiency calculations
+   * @returns {Object} Efficiency metrics
+   */
+  calculateClusterEfficiency(cluster, marketData = []) {
+    try {
+      if (!cluster || !cluster.connected_markets || cluster.connected_markets.length < 2) {
+        return {
+          internal_connectivity: 0,
+          market_coverage: 0,
+          price_convergence: 0,
+          stability: 0,
+          efficiency_score: 0
+        };
+      }
+
+      // Calculate internal connectivity
+      const internalConnectivity = this.calculateInternalConnectivity(cluster.connected_markets, marketData);
+
+      // Calculate market coverage
+      const marketCoverage = cluster.market_count / cluster.connected_markets.length;
+
+      // Calculate price convergence
+      const priceConvergence = this.calculatePriceConvergence(cluster.connected_markets, marketData);
+
+      // Calculate stability
+      const stability = this.calculateClusterStability(cluster.connected_markets, marketData);
+
+      // Calculate overall efficiency score
+      const efficiencyScore = (
+        (internalConnectivity * 0.3) +
+        (marketCoverage * 0.2) +
+        (priceConvergence * 0.3) +
+        (stability * 0.2)
+      );
+
+      return {
+        internal_connectivity: internalConnectivity,
+        market_coverage: marketCoverage,
+        price_convergence: priceConvergence,
+        stability: stability,
+        efficiency_score: efficiencyScore
+      };
+
+    } catch (error) {
+      this.monitor.error('Error calculating cluster efficiency:', error);
+      return {
+        internal_connectivity: 0,
+        market_coverage: 0,
+        price_convergence: 0,
+        stability: 0,
+        efficiency_score: 0
+      };
+    }
+  }
+
+  /**
+   * Calculate internal connectivity of markets within a cluster
+   * @param {Array} markets - Connected markets in the cluster
+   * @param {Array} marketData - Market flow data
+   * @returns {number} Internal connectivity score
+   */
+  calculateInternalConnectivity(markets, marketData) {
+    try {
+      if (!markets || !marketData || markets.length < 2) return 0;
+
+      // Count actual connections between markets in the cluster
+      const actualConnections = marketData.filter(flow =>
+        markets.includes(flow.source) && markets.includes(flow.target)
+      ).length;
+
+      // Calculate maximum possible connections
+      const maxPossibleConnections = (markets.length * (markets.length - 1)) / 2;
+
+      return maxPossibleConnections > 0 ?
+        actualConnections / maxPossibleConnections : 0;
+
+    } catch (error) {
+      this.monitor.error('Error calculating internal connectivity:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Calculate price convergence within a cluster
+   * @param {Array} markets - Connected markets in the cluster
+   * @param {Array} marketData - Market price data
+   * @returns {number} Price convergence score
+   */
+  calculatePriceConvergence(markets, marketData) {
+    try {
+      if (!markets || !marketData || markets.length < 2) return 0;
+
+      // Get price data for markets in the cluster
+      const marketPrices = markets.map(market => {
+        const data = marketData.find(d => d.market === market);
+        return data ? data.price : null;
+      }).filter(price => price !== null);
+
+      if (marketPrices.length < 2) return 0;
+
+      // Calculate coefficient of variation (CV)
+      const mean = this.mean(marketPrices);
+      const variance = this.variance(marketPrices);
+      const stdDev = Math.sqrt(variance);
+      const cv = mean > 0 ? stdDev / mean : 0;
+
+      // Convert to convergence score (inverse of CV, normalized to 0-1)
+      return Math.max(0, Math.min(1, 1 - cv));
+
+    } catch (error) {
+      this.monitor.error('Error calculating price convergence:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Calculate stability metrics for a cluster
+   * @param {Array} markets - Connected markets in the cluster
+   * @param {Array} marketData - Market time series data
+   * @returns {number} Stability score
+   */
+  calculateClusterStability(markets, marketData) {
+    try {
+      if (!markets || !marketData || markets.length < 2) return 0;
+
+      // Calculate average price volatility for each market
+      const volatilities = markets.map(market => {
+        const data = marketData.filter(d => d.market === market);
+        if (data.length < 2) return null;
+
+        // Calculate price changes
+        const priceChanges = data.slice(1).map((d, i) =>
+          Math.abs(d.price - data[i].price) / data[i].price
+        );
+
+        // Return average volatility
+        return priceChanges.reduce((a, b) => a + b, 0) / priceChanges.length;
+      }).filter(v => v !== null);
+
+      if (volatilities.length === 0) return 0;
+
+      // Calculate average volatility across markets
+      const avgVolatility = this.mean(volatilities);
+
+      // Convert to stability score (inverse of volatility, normalized to 0-1)
+      return Math.max(0, Math.min(1, 1 - avgVolatility));
+
+    } catch (error) {
+      this.monitor.error('Error calculating cluster stability:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Generate analysis results by aggregating various analyses
+   * @param {Object} rawData - Raw spatial data
+   * @param {Object} options - Processing options
+   * @returns {Object} Analysis results
+   */
+  async generateAnalysisResults(rawData, options = {}) {
+    // Example implementation: Combine different analysis outputs
+    const spatialData = await this.processSpatialData(rawData, options);
+    const compositeIndices = await this.calculateCompositeIndices(spatialData.derivedMetrics);
+
+    return {
+      compositeIndices
+      // Add more analysis results as needed
+    };
   }
 
   /**
