@@ -1,8 +1,9 @@
 //src/components/common/MarketDataLoader.js
 
 import React, { useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, LinearProgress, Alert } from '@mui/material';
+import { Box, LinearProgress, Alert, Button } from '@mui/material';
 import { loadSpatialData, selectSpatialStatus } from '../../slices/spatialSlice';
 import { backgroundMonitor } from '../../utils/backgroundMonitor';
 
@@ -62,6 +63,9 @@ const MarketDataLoader = ({ children }) => {
   }
 
   return children;
+};
+MarketDataLoader.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default React.memo(MarketDataLoader);

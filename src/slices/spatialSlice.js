@@ -6,18 +6,19 @@ import { spatialSystem } from '../utils/SpatialSystem';
 import { monitoringSystem } from '../utils/MonitoringSystem';
 import { dataTransformationSystem } from '../utils/DataTransformationSystem';
 
-// Selector to access the spatial slice state
+// Define memoized base selectors with proper structure
+const selectSpatialRoot = state => state.spatial;
+
 export const selectSpatialState = createSelector(
-  [(state) => state.spatial],
+  [selectSpatialRoot],
   (spatial) => ({
-    ui: spatial.ui,
-    data: spatial.data,
-    status: spatial.status,
-    validation: spatial.validation,
+    ui: spatial?.ui || {},
+    data: spatial?.data || null,
+    status: spatial?.status || {},
+    validation: spatial?.validation || {},
   })
 );
 
-// Define the initial state
 const initialState = {
   status: {
     loading: false,
@@ -60,14 +61,12 @@ const initialState = {
   },
 };
 
-// Async thunk to load spatial data
-export const loadSpatialData = createAsyncThunk(
-  'spatial/loadSpatialData',
-  async ({ commodity, date, options = {} }, { rejectWithValue }) => {
-    const metric = monitoringSystem.startMetric('load-spatial-data');
+export const initializeSpatial = createAsyncThunk(
+  'spatial/initialize',
+  async (_, { rejectWithValue }) => {
+    const metric = monitoringSystem.startMetric('initialize-spatial');
 
     try {
-      // Initialize core systems if needed
       if (!unifiedDataManager._isInitialized) {
         await unifiedDataManager.init();
       }
@@ -75,13 +74,25 @@ export const loadSpatialData = createAsyncThunk(
         await spatialSystem.initialize();
       }
 
-      // Load data using UnifiedDataManager
-      const rawData = await unifiedDataManager.loadSpatialData(commodity, date, options);
+      metric.finish({ status: 'success' });
+      return true;
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      monitoringSystem.error('Failed to initialize spatial system:', error);
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
-      // Process the data using SpatialSystem
+export const loadSpatialData = createAsyncThunk(
+  'spatial/loadSpatialData',
+  async ({ commodity, date, options = {} }, { rejectWithValue }) => {
+    const metric = monitoringSystem.startMetric('load-spatial-data');
+
+    try {
+      const rawData = await unifiedDataManager.loadSpatialData(commodity, date, options);
       const processedData = await spatialSystem.processSpatialData(rawData);
 
-      // Transform time series data
       const transformedTimeSeries = await dataTransformationSystem.transformTimeSeriesStream(
         processedData.timeSeriesData,
         {
@@ -92,7 +103,6 @@ export const loadSpatialData = createAsyncThunk(
         }
       );
 
-      // Validate the processed data
       const validationResult = await spatialSystem.validateData(processedData);
 
       const result = {
@@ -101,10 +111,10 @@ export const loadSpatialData = createAsyncThunk(
           timeSeriesData: transformedTimeSeries,
         },
         validation: {
-          warnings: validationResult.warnings,
-          qualityMetrics: validationResult.details,
-          coverage: validationResult.coverage,
-          spatialDiagnostics: validationResult.spatialDiagnostics,
+          warnings: validationResult.warnings || [],
+          qualityMetrics: validationResult.details || {},
+          coverage: validationResult.coverage || {},
+          spatialDiagnostics: validationResult.spatialDiagnostics || null,
         },
         metadata: {
           processedAt: new Date().toISOString(),
@@ -124,10 +134,9 @@ export const loadSpatialData = createAsyncThunk(
   }
 );
 
-// Create the slice using the single initialState
 export const spatialSlice = createSlice({
   name: 'spatial',
-  initialState, // Reference the initialState constant
+  initialState,
   reducers: {
     setSelectedCommodity: (state, action) => {
       state.ui.selectedCommodity = action.payload;
@@ -142,7 +151,7 @@ export const spatialSlice = createSlice({
       state.ui.selectedAnalysis = action.payload;
     },
     setSelectedRegimes: (state, action) => {
-      state.ui.selectedRegimes = action.payload;
+      state.ui.selectedRegimes = action.payload || [];
     },
     setVisualizationMode: (state, action) => {
       state.ui.visualizationMode = action.payload;
@@ -157,6 +166,34 @@ export const spatialSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase('INIT_STATE', (state, action) => {
+        if (action.payload?.spatial) {
+          return {
+            ...state,
+            ...action.payload.spatial,
+            status: {
+              ...state.status,
+              ...action.payload.spatial.status,
+              isInitialized: true,
+            },
+          };
+        }
+        return state;
+      })
+      .addCase(initializeSpatial.pending, (state) => {
+        state.status.loading = true;
+        state.status.error = null;
+      })
+      .addCase(initializeSpatial.fulfilled, (state) => {
+        state.status.loading = false;
+        state.status.isInitialized = true;
+        state.status.lastUpdated = new Date().toISOString();
+        state.status.cacheStats = unifiedDataManager.getCacheStats();
+      })
+      .addCase(initializeSpatial.rejected, (state, action) => {
+        state.status.loading = false;
+        state.status.error = action.payload || action.error.message;
+      })
       .addCase(loadSpatialData.pending, (state) => {
         state.status.loading = true;
         state.status.error = null;
@@ -176,7 +213,6 @@ export const spatialSlice = createSlice({
   },
 });
 
-// Export actions
 export const {
   setSelectedCommodity,
   setSelectedDate,
@@ -189,94 +225,100 @@ export const {
   resetState,
 } = spatialSlice.actions;
 
-// Memoized Selectors
-
-// Select the entire spatial state
+// Memoized Selectors with proper dependency chains
 export const selectSpatial = createSelector(
-  [(state) => state.spatial],
+  [selectSpatialRoot],
   (spatial) => spatial
 );
 
-// Select UI state
 export const selectSpatialUI = createSelector(
   [selectSpatial],
-  (spatial) => spatial.ui
+  (spatial) => spatial?.ui || {}
 );
 
-// Select Data state
 export const selectSpatialData = createSelector(
   [selectSpatial],
-  (spatial) => spatial.data
+  (spatial) => spatial?.data || {}
 );
 
-// Select Validation state
 export const selectSpatialValidation = createSelector(
   [selectSpatial],
-  (spatial) => spatial.validation
+  (spatial) => spatial?.validation || {}
 );
 
-// Select Status state
 export const selectSpatialStatus = createSelector(
   [selectSpatial],
-  (spatial) => spatial.status
+  (spatial) => spatial?.status || {}
 );
 
-// Specific UI Selectors
+// UI Selectors with proper nullchecking
 export const selectSelectedCommodity = createSelector(
   [selectSpatialUI],
-  (ui) => ui.selectedCommodity
+  (ui) => ui.selectedCommodity || null
 );
 
 export const selectSelectedDate = createSelector(
   [selectSpatialUI],
-  (ui) => ui.selectedDate
+  (ui) => ui.selectedDate || null
 );
 
 export const selectSelectedRegion = createSelector(
   [selectSpatialUI],
-  (ui) => ui.selectedRegion
+  (ui) => ui.selectedRegion || null
 );
 
 export const selectSelectedAnalysis = createSelector(
   [selectSpatialUI],
-  (ui) => ui.selectedAnalysis
+  (ui) => ui.selectedAnalysis || null
 );
 
 export const selectSelectedRegimes = createSelector(
   [selectSpatialUI],
-  (ui) => ui.selectedRegimes
+  (ui) => ui.selectedRegimes || []
 );
 
 export const selectVisualizationMode = createSelector(
   [selectSpatialUI],
-  (ui) => ui.visualizationMode
+  (ui) => ui.visualizationMode || 'prices'
 );
 
 export const selectFilters = createSelector(
   [selectSpatialUI],
-  (ui) => ui.filters
+  (ui) => ui.filters || {}
 );
 
-// Specific Data Selectors
+// Data Selectors with proper null checking
 export const selectTimeSeriesData = createSelector(
   [selectSpatialData],
-  (data) => data.timeSeriesData
+  (data) => data.timeSeriesData || []
 );
 
 export const selectMarketClusters = createSelector(
   [selectSpatialData],
-  (data) => data.marketClusters
+  (data) => data.marketClusters || []
 );
 
 export const selectFlowAnalysis = createSelector(
   [selectSpatialData],
-  (data) => data.flowAnalysis
+  (data) => data.flowAnalysis || []
 );
 
 export const selectSpatialAutocorrelation = createSelector(
   [selectSpatialData],
-  (data) => data.spatialAutocorrelation
+  (data) => data.spatialAutocorrelation || null
 );
 
-// Export the reducer
+// Complex derived selectors
+export const selectMarketMetrics = createSelector(
+  [selectTimeSeriesData, selectMarketClusters, selectFlowAnalysis],
+  (timeSeriesData, marketClusters, flowAnalysis) => {
+    return {
+      totalMarkets: marketClusters.length,
+      activeFlows: flowAnalysis.length,
+      timeSeriesLength: timeSeriesData.length,
+      lastUpdate: timeSeriesData[timeSeriesData.length - 1]?.date || null
+    };
+  }
+);
+
 export default spatialSlice.reducer;

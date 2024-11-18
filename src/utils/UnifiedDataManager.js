@@ -18,13 +18,21 @@ import { constructDataPath } from './DataLoader';
 class UnifiedDataManager {
   constructor() {
     this._isInitialized = false;
-    this.cache = new Map();          // Cache for processed data
-    this.jsonCache = new Map();      // Cache for JSON files
+    this.cache = new Map();
+    this.jsonCache = new Map();
+    
+    // Enhanced configuration
+    this.config = {
+        batchSize: 1000,
+        retryAttempts: 3,
+        retryDelay: 1000,
+        concurrencyLimit: 5,
+        cacheTimeout: 30 * 60 * 1000 // 30 minutes
+    };
 
-    // Setup concurrency control based on configuration
-    const concurrencyLimit = configUtils.getConfig('data.concurrency.limit') || 5;
-    this.limit = pLimit(concurrencyLimit);
-  }
+    this.limit = pLimit(this.config.concurrencyLimit);
+    this.pendingRequests = new Map();
+}
 
   /**
    * Initialize the data manager and its dependencies.
@@ -64,6 +72,26 @@ class UnifiedDataManager {
   }
 
   /**
+   * Process items in batches.
+   *
+   * @param {Array} items - The items to process.
+   * @param {Function} processor - The processor function to apply to each item.
+   * @param {number} [batchSize=this.config.batchSize] - The size of each batch.
+   * @returns {Array} - The processed results.
+   */
+  async processBatch(items, processor, batchSize = this.config.batchSize) {
+    const results = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(item => processor(item))
+      );
+      results.push(...batchResults);
+    }
+    return results;
+  }
+
+  /**
    * Load all required data for a specific commodity and date.
    * This includes preprocessed data, time-varying flows, TV-MII results,
    * price differentials, ECM data, and enhanced unified data.
@@ -75,71 +103,57 @@ class UnifiedDataManager {
    */
   async loadSpatialData(commodity, date, options = {}) {
     if (!this._isInitialized) {
-      const error = new Error('UnifiedDataManager must be initialized first.');
-      monitoringSystem.error(error.message, error, 'loadSpatialData');
-      throw error;
+        throw new Error('UnifiedDataManager must be initialized first.');
     }
 
     const metric = monitoringSystem.startMetric('load-spatial-data');
     const cacheKey = this.generateCacheKey(commodity, date);
 
     try {
-      // Check cache first
-      const cachedData = this.getCachedData(cacheKey);
-      if (cachedData) {
-        monitoringSystem.log(`Cache hit for key: ${cacheKey}`, {}, 'cache');
-        metric.finish({ status: 'success', cached: true });
-        return cachedData;
-      }
+        // Check cache first
+        const cachedData = this.getCachedData(cacheKey);
+        if (cachedData) {
+            metric.finish({ status: 'success', cached: true });
+            return cachedData;
+        }
 
-      monitoringSystem.log(`Cache miss for key: ${cacheKey}. Loading data...`, {}, 'cache');
+        // Load all data in parallel with batching
+        const [
+            preprocessedData,
+            timeVaryingFlows,
+            tvMiiResults,
+            priceDifferentials,
+            ecmData,
+            enhancedUnified
+        ] = await this.processBatch([
+            () => this.loadPreprocessedData(commodity),
+            () => this.loadTimeVaryingFlows(commodity),
+            () => this.loadTVMIIData(commodity),
+            () => this.loadPriceDifferentials(commodity),
+            () => this.loadECMData(commodity),
+            () => this.loadEnhancedUnifiedData(commodity, date)
+        ], processor => processor());
 
-      // Load all required data in parallel with concurrency control
-      const [
-        preprocessedData,
-        timeVaryingFlows,
-        tvMiiResults,
-        priceDifferentials,
-        ecmData,
-        enhancedUnified,
-        marketMetrics,          // Add support for market metrics
-        analysisData            // Add support for consolidated analysis
-      ] = await Promise.all([
-        this.loadPreprocessedData(commodity),              // Pass commodity
-        this.loadTimeVaryingFlows(commodity),
-        this.loadTVMIIData(commodity),
-        this.loadPriceDifferentials(commodity),
-        this.loadECMData(commodity),
-        this.loadEnhancedUnifiedData(commodity, date),
-        this.loadMarketMetrics(commodity),                // Load market metrics
-        this.loadAnalysisData(commodity)                  // Load consolidated analysis
-      ]);
+        const processedData = await this.processIntegratedData({
+            preprocessedData,
+            timeVaryingFlows,
+            tvMiiResults,
+            priceDifferentials,
+            ecmData,
+            enhancedUnified
+        }, date, options);
 
-      // Combine and process all data
-      const processedData = await this.processIntegratedData({
-        preprocessedData,
-        timeVaryingFlows,
-        tvMiiResults,
-        priceDifferentials,
-        ecmData,
-        enhancedUnified,
-        marketMetrics,          // Add to results
-        analysisData            // Add to results
-      }, date, options);
-
-      // Cache the results
-      this.setCachedData(cacheKey, processedData);
-      monitoringSystem.log(`Data cached with key: ${cacheKey}`, {}, 'cache');
-
-      metric.finish({ status: 'success', cached: false });
-      return processedData;
+        this.setCachedData(cacheKey, processedData);
+        
+        metric.finish({ status: 'success', cached: false });
+        return processedData;
 
     } catch (error) {
-      metric.finish({ status: 'error', error: error.message });
-      monitoringSystem.error(`Failed to load spatial data for ${commodity} on ${date}.`, error, 'loadSpatialData');
-      throw error;
+        metric.finish({ status: 'error', error: error.message });
+        monitoringSystem.error(`Failed to load spatial data for ${commodity} on ${date}.`, error);
+        throw error;
     }
-  }
+}
 
   /**
    * Load preprocessed data for a specific commodity.
@@ -168,57 +182,75 @@ class UnifiedDataManager {
    */
   async loadTimeVaryingFlows(commodity) {
     const metric = monitoringSystem.startMetric('load-time-varying-flows');
+    const cacheKey = `flows_${commodity}`;
+
     try {
-      // Get the filename from config
-      const fileName = configUtils.getConfig('data.files.timeVaryingFlows');
-      // Construct the path properly for CSV files
-      const filePath = constructDataPath(fileName); // Use the constructDataPath helper
-
-      console.debug('Loading time varying flows:', {
-        fileName,
-        filePath,
-        commodity
-      });
-
-      const response = await fetch(filePath, {
-        headers: {
-          'Accept': 'text/csv',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+        // Check for pending request
+        if (this.pendingRequests.has(cacheKey)) {
+            return this.pendingRequests.get(cacheKey);
         }
-      });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${fileName}: ${response.statusText}`);
-      }
+        // Check cache
+        const cachedData = this.cache.get(cacheKey);
+        if (cachedData) {
+            return cachedData;
+        }
 
-      const text = await response.text();
+        const request = (async () => {
+            const fileName = configUtils.getConfig('data.files.timeVaryingFlows');
+            const filePath = constructDataPath(fileName);
 
-      return new Promise((resolve, reject) => {
-        Papa.parse(text, {
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            // Filter for the specific commodity
-            const filteredData = results.data.filter(row =>
-              row.commodity?.toLowerCase() === commodity.toLowerCase()
-            );
-            monitoringSystem.log(`Time varying flows data parsed for ${commodity}`, {}, 'loadTimeVaryingFlows');
-            resolve(filteredData);
-          },
-          error: (err) => {
-            monitoringSystem.error(`PapaParse error for ${fileName}: ${err.message}`, err, 'loadTimeVaryingFlows');
-            reject(err);
-          }
-        });
-      });
+            const response = await fetch(filePath, {
+                headers: {
+                    'Accept': 'text/csv',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${fileName}: ${response.statusText}`);
+            }
+
+            const text = await response.text();
+            
+            return new Promise((resolve, reject) => {
+                Papa.parse(text, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        const filteredData = results.data.filter(row =>
+                            row.commodity?.toLowerCase() === commodity.toLowerCase()
+                        );
+                        
+                        // Cache the results
+                        this.cache.set(cacheKey, filteredData);
+                        monitoringSystem.log(`Time varying flows data parsed for ${commodity}`, {
+                            rowCount: filteredData.length
+                        }, 'loadTimeVaryingFlows');
+                        
+                        resolve(filteredData);
+                    },
+                    error: (err) => reject(err)
+                });
+            });
+        })();
+
+        this.pendingRequests.set(cacheKey, request);
+        const result = await request;
+        this.pendingRequests.delete(cacheKey);
+
+        metric.finish({ status: 'success' });
+        return result;
+
     } catch (error) {
-      metric.finish({ status: 'error', error: error.message });
-      monitoringSystem.error(`Error loading time varying flows for ${commodity}.`, error, 'loadTimeVaryingFlows');
-      throw error;
+        this.pendingRequests.delete(cacheKey);
+        metric.finish({ status: 'error', error: error.message });
+        monitoringSystem.error(`Error loading time varying flows for ${commodity}.`, error);
+        throw error;
     }
-  }
+}
 
 
   /**
@@ -687,10 +719,12 @@ async processIntegratedData(data, date, options = {}) {
    * Clear all caches, including unified and JSON caches.
    */
   clearCache() {
+    if (this.cache.size === 0 && this.jsonCache.size === 0) return;
     this.cache.clear();
     this.jsonCache.clear();
-    preprocessedDataManager.clearCache();
-    monitoringSystem.log('All caches cleared.', {}, 'clearCache');
+    monitoringSystem.log('Cache cleared', {
+      previousSize: this.cache.size + this.jsonCache.size
+    });
   }
 
   /**
@@ -720,6 +754,23 @@ async processIntegratedData(data, date, options = {}) {
    */
   delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Cleanup expired entries from the cache.
+   */
+  async cleanup() {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (now - entry.timestamp > this.config.cacheTimeout) {
+        this.cache.delete(key);
+      }
+    }
+    for (const [key, entry] of this.jsonCache.entries()) {
+      if (now - entry.timestamp > this.config.cacheTimeout) {
+        this.jsonCache.delete(key);
+      }
+    }
   }
 }
 

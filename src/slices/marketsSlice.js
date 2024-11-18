@@ -8,7 +8,7 @@ import { spatialSystem } from '../utils/SpatialSystem';
 import { createSelector } from 'reselect';
 import Papa from 'papaparse';
 
-
+// Async Thunk to fetch markets data
 export const fetchMarketsData = createAsyncThunk(
   'markets/fetchData',
   async ({ commodity, date }, { rejectWithValue }) => {
@@ -237,6 +237,7 @@ const calculateVolatility = (prices) => {
   return Math.sqrt(variance) / mean * 100;
 };
 
+// Initial state
 const initialState = {
   markets: [],
   networkMetrics: null,
@@ -264,6 +265,7 @@ const initialState = {
   }
 };
 
+// Create Slice
 const marketsSlice = createSlice({
   name: 'markets',
   initialState,
@@ -315,6 +317,7 @@ const marketsSlice = createSlice({
   }
 });
 
+// Export Actions
 export const {
   setSelectedMarkets,
   setHighlightedMarket,
@@ -331,18 +334,25 @@ export const selectTimeSeriesData = state => state.markets.timeSeriesData;
 export const selectMarketsMetadata = state => state.markets.metadata;
 export const selectMarketsUI = state => state.markets.ui;
 
-// Memoized selectors
+// Updated Memoized Selector
 export const selectFilteredMarkets = createSelector(
   [selectAllMarkets, selectMarketsUI],
   (markets, ui) => {
+    const { minConnectivity, minFlowVolume, showConflictZones } = ui.filters;
     return markets.filter(market => {
-      const passesConnectivity = market.spatial.connectivity.score >= ui.filters.minConnectivity;
-      const passesFlowVolume = market.metrics.flowVolume >= ui.filters.minFlowVolume;
-      const passesConflict = !ui.filters.showConflictZones || market.metrics.conflictIndex !== null;
-
-      return passesConnectivity && passesFlowVolume && passesConflict;
+      return (
+        market.spatial.connectivity.score >= minConnectivity &&
+        market.metrics.flowVolume >= minFlowVolume &&
+        (!showConflictZones || market.metrics.conflictIndex !== null)
+      );
     });
   }
+);
+
+// Additional Selectors (if any)
+export const selectFilteredMarketsCount = createSelector(
+  [selectFilteredMarkets],
+  (filteredMarkets) => filteredMarkets.length
 );
 
 export default marketsSlice.reducer;

@@ -3,7 +3,7 @@
 import React, { Suspense, useMemo, useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid, Paper, Alert, AlertTitle } from '@mui/material';
-import { useSelector, useDispatch } from 'react-redux'; // Import useDispatch
+import { useSelector, useDispatch } from 'react-redux';
 
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -28,18 +28,15 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
-// Import analysis components using dynamic imports
 import {
     ECMAnalysis,
     PriceDifferentialAnalysis,
     TVMIIAnalysis
 } from './utils/dynamicImports';
 
-// Redux Actions and Selectors
 import { generateAnalysis } from './slices/analysisSlice';
 import { selectAnalysisResults } from './slices/analysisSlice';
 
-// Register ChartJS components
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -58,64 +55,115 @@ const Dashboard = React.memo(({
     selectedDate,
     windowWidth,
 }) => {
-    const dispatch = useDispatch(); // Initialize dispatch
+    const dispatch = useDispatch();
 
-    // Redux selectors
+    // Enhanced Redux selectors
     const validationStatus = useSelector(state => state?.spatial?.validation || {});
     const analysisResults = useSelector(state => state?.analysis?.results);
-    
+    const spatialStatus = useSelector(state => state?.spatial?.status || {});
+
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Load dashboard data
+    // Enhanced initialization check
+    const canLoadData = useMemo(() => {
+        return Boolean(
+            selectedCommodity && 
+            Array.isArray(selectedRegimes) && 
+            selectedRegimes.length > 0 &&
+            !spatialStatus.loading
+        );
+    }, [selectedCommodity, selectedRegimes, spatialStatus.loading]);
+
+    // Load dashboard data with enhanced error handling
     const loadDashboardData = useCallback(async () => {
+        if (!canLoadData) {
+            setLoading(false);
+            return;
+        }
+
         const metric = monitoringSystem.startMetric('load-dashboard-data');
         setLoading(true);
+        setError(null);
         
         try {
-            // Ensure both commodity and regimes exist
+            // Validate input parameters
             if (!selectedCommodity || !selectedRegimes?.length) {
-                throw new Error('Missing required selection parameters');
+                throw new Error('Please select a commodity and at least one market');
             }
 
+            // Load spatial data
             const result = await unifiedDataManager.loadSpatialData(
                 selectedCommodity,
                 selectedDate,
-                { regimes: selectedRegimes }
+                { 
+                    regimes: selectedRegimes,
+                    validateData: true 
+                }
             );
             
+            if (!result) {
+                throw new Error('No data available for the selected parameters');
+            }
+
             setDashboardData(result);
             
-            // Only dispatch analysis if we have data
+            // Generate analysis if we have data
             if (result) {
                 await dispatch(generateAnalysis({
                     commodity: selectedCommodity,
                     date: selectedDate,
-                    options: { timeframe: 'monthly' }
+                    options: { 
+                        timeframe: 'monthly',
+                        includeValidation: true
+                    }
                 }));
             }
 
-            metric.finish({ status: 'success' });
+            metric.finish({ 
+                status: 'success',
+                dataPoints: result?.timeSeriesData?.length || 0
+            });
             
         } catch (err) {
-            setError(err.message);
-            metric.finish({ status: 'error', error: err.message });
-            monitoringSystem.error('Error loading dashboard data:', err);
+            const errorMessage = err.message || 'Error loading dashboard data';
+            setError(errorMessage);
+            metric.finish({ status: 'error', error: errorMessage });
+            monitoringSystem.error('Dashboard data loading error:', {
+                error: err,
+                parameters: {
+                    commodity: selectedCommodity,
+                    regimes: selectedRegimes,
+                    date: selectedDate
+                }
+            });
         } finally {
             setLoading(false);
         }
-    }, [selectedCommodity, selectedDate, selectedRegimes, dispatch]);
+    }, [canLoadData, selectedCommodity, selectedDate, selectedRegimes, dispatch]);
 
-    // Use the callback in useEffect
+    // Enhanced useEffect with cleanup
     useEffect(() => {
-        loadDashboardData();
+        let mounted = true;
+
+        if (mounted) {
+            loadDashboardData();
+        }
+
+        return () => {
+            mounted = false;
+        };
     }, [loadDashboardData]);
 
-    // Process time series data using data transformation system
+    // Enhanced data processing with error handling
     const processedData = useMemo(() => {
         if (!dashboardData?.timeSeriesData) {
-            monitoringSystem.log('No time series data available');
+            monitoringSystem.log('No time series data available', {
+                hasData: Boolean(dashboardData),
+                commodity: selectedCommodity,
+                regimes: selectedRegimes
+            });
             return [];
         }
 
@@ -126,14 +174,15 @@ const Dashboard = React.memo(({
                     timeUnit: 'month',
                     aggregationType: 'mean',
                     includeGarch: true,
-                    includeConflict: true
+                    includeConflict: true,
+                    validate: true
                 }
             );
         } catch (err) {
-            monitoringSystem.error('Error processing time series data:', err);
+            monitoringSystem.error('Time series data processing error:', err);
             return [];
         }
-    }, [dashboardData]);
+    }, [dashboardData, selectedCommodity, selectedRegimes]);
 
     // Get market analysis data
     const { 
@@ -213,27 +262,45 @@ const Dashboard = React.memo(({
         getAnalysisComponent
     ]);
 
-    // Show loading state
+    // Render loading state with context
     if (loading) {
         return (
             <Box sx={{ 
                 display: 'flex', 
+                flexDirection: 'column',
                 justifyContent: 'center', 
                 alignItems: 'center', 
-                height: '100%' 
+                height: '100%',
+                gap: 2
             }}>
                 <LoadingSpinner />
+                <Alert severity="info" sx={{ maxWidth: 400 }}>
+                    Loading data for {selectedCommodity || 'selected commodity'}...
+                </Alert>
             </Box>
         );
     }
 
-    // Show error state
+    // Enhanced error display with retry option
     if (error) {
         return (
             <ErrorMessage 
                 message={error}
-                retry={() => loadDashboardData()} // Retry function
+                retry={loadDashboardData}
+                details={`Commodity: ${selectedCommodity}, Markets: ${selectedRegimes?.join(', ')}`}
             />
+        );
+    }
+
+    // Show initial state message if needed
+    if (!canLoadData) {
+        return (
+            <Box sx={{ p: 2 }}>
+                <Alert severity="info">
+                    <AlertTitle>Select Parameters</AlertTitle>
+                    Please select a commodity and at least one market from the sidebar to view analysis.
+                </Alert>
+            </Box>
         );
     }
 

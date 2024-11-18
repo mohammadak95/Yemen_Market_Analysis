@@ -1,6 +1,6 @@
 // src/components/common/MarketInterface.js
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react'; // Added useEffect
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Box,
@@ -32,65 +32,67 @@ import {
 const MarketInterface = () => {
   const dispatch = useDispatch();
 
-  // Extracting UI and Status from the spatial slice
   const { loading, error } = useSelector(selectSpatialStatus);
   const { selectedCommodity, selectedRegimes } = useSelector(selectSpatialUI);
   const availableCommodities = useSelector(selectAvailableCommodities);
   const availableRegimes = useSelector(selectAvailableRegimes);
 
-  /**
-   * Handles the change event for commodity selection.
-   * Dispatches actions to update the selected commodity and load spatial data.
-   *
-   * @param {Object} event - The change event object.
-   */
+  // Add initialization effect
+  useEffect(() => {
+    const initializeSelections = async () => {
+      // Only set default commodity if we have available commodities and no selection
+      if (availableCommodities.length > 0 && !selectedCommodity) {
+        const defaultCommodity = availableCommodities[0];
+        dispatch(setSelectedCommodity(defaultCommodity));
+        
+        try {
+          await dispatch(
+            loadSpatialData({
+              commodity: defaultCommodity,
+              date: null,
+              options: {},
+            })
+          ).unwrap();
+        } catch (error) {
+          monitoringSystem.error('Error loading initial commodity data:', error);
+        }
+      }
+    };
+
+    initializeSelections();
+  }, [availableCommodities, selectedCommodity, dispatch]);
+
   const handleCommodityChange = useCallback(
     async (event) => {
       const commodity = event.target.value;
-      if (!commodity) return;
-
-      // Update the selected commodity in the Redux store
-      dispatch(setSelectedCommodity(commodity));
+      if (!commodity || commodity === selectedCommodity) return;
 
       try {
-        // Dispatch the loadSpatialData thunk with the correct parameters
+        dispatch(setSelectedCommodity(commodity));
         await dispatch(
           loadSpatialData({
-            commodity, // Updated parameter name
-            date: null, // Assuming null for date; adjust as needed
-            options: {}, // Add any additional options if necessary
+            commodity,
+            date: null,
+            options: {},
           })
-        ).unwrap(); // Using unwrap to handle fulfilled and rejected actions
+        ).unwrap();
       } catch (error) {
-        // Log the error using the monitoring system
         monitoringSystem.error('Error loading commodity data:', error);
       }
     },
-    [dispatch]
+    [dispatch, selectedCommodity]
   );
 
-  /**
-   * Handles the change event for regime (market) selection.
-   * Dispatches an action to update the selected regimes in the Redux store.
-   *
-   * @param {Object} event - The change event object.
-   */
   const handleRegimeChange = useCallback(
     (event) => {
       const regimes = event.target.value;
-      if (regimes.length > 0) {
+      if (Array.isArray(regimes) && regimes.length > 0) {
         dispatch(setSelectedRegimes(regimes));
       }
     },
     [dispatch]
   );
 
-  /**
-   * Formats the label by replacing underscores with spaces and capitalizing each word.
-   *
-   * @param {string} value - The string to format.
-   * @returns {string} - The formatted string.
-   */
   const formatLabel = useCallback((value) => {
     if (!value) return '';
     return value
@@ -101,14 +103,12 @@ const MarketInterface = () => {
   return (
     <Paper sx={{ p: 2 }}>
       <Stack spacing={2}>
-        {/* Display an error alert if there's an error */}
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
-        {/* Commodity Selection */}
         <Box>
           <Typography variant="subtitle2" gutterBottom>
             Commodity Selection
@@ -130,7 +130,6 @@ const MarketInterface = () => {
           </FormControl>
         </Box>
 
-        {/* Market (Regime) Selection */}
         <Box>
           <Typography variant="subtitle2" gutterBottom>
             Market Selection
@@ -154,7 +153,7 @@ const MarketInterface = () => {
               {availableRegimes.map((regime) => (
                 <MenuItem key={regime} value={regime}>
                   <Checkbox
-                    checked={selectedRegimes.indexOf(regime) > -1}
+                    checked={selectedRegimes?.indexOf(regime) > -1}
                   />
                   <ListItemText primary={formatLabel(regime)} />
                 </MenuItem>
@@ -163,14 +162,12 @@ const MarketInterface = () => {
           </FormControl>
         </Box>
 
-        {/* Loading Indicator */}
         {loading && (
           <Box display="flex" justifyContent="center" py={1}>
             <CircularProgress size={24} />
           </Box>
         )}
 
-        {/* Display selected markets count */}
         {selectedCommodity && selectedRegimes?.length > 0 && (
           <Box>
             <Typography variant="caption" color="textSecondary">

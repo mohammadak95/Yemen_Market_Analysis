@@ -3,6 +3,17 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { spatialDebugUtils } from '../utils/MonitoringSystem';
 
+// Helper function for calculating stability
+// Ensure this function is defined or imported from your utilities
+const calculateStability = (timeSeriesData) => {
+  // Example implementation; replace with your actual logic
+  if (!timeSeriesData.length) return 0;
+  const prices = timeSeriesData.map(entry => entry.price);
+  const mean = prices.reduce((acc, val) => acc + val, 0) / prices.length;
+  const variance = prices.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / prices.length;
+  return Math.sqrt(variance) / mean * 100;
+};
+
 // Base selector for spatial state with development logging
 const selectSpatialState = (state) => {
   if (process.env.NODE_ENV === 'development') {
@@ -179,4 +190,19 @@ export const selectUniqueMonths = createSelector(
   [selectTimeSeriesData],
   (timeSeriesData) =>
     [...new Set(timeSeriesData.map((d) => d.date))].sort()
+);
+
+// New Memoized Selector
+export const selectSpatialMetrics = createSelector(
+  [selectSpatialData],
+  (data) => {
+    if (!data) return null;
+    return {
+      marketCoverage: data.marketClusters?.length || 0,
+      integrationLevel: data.spatialAutocorrelation?.global?.moran_i || 0,
+      stability: data.timeSeriesData?.length
+        ? calculateStability(data.timeSeriesData)
+        : 0,
+    };
+  }
 );

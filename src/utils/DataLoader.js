@@ -25,7 +25,19 @@ checkFileExistence();
 /**
  * Helper function to ensure proper path construction
  */
+const pathCache = new Map();
+
 export const constructDataPath = (filename) => {
+  if (pathCache.has(filename)) {
+    return pathCache.get(filename);
+  }
+
+  const path = buildDataPath(filename);
+  pathCache.set(filename, path);
+  return path;
+};
+
+const buildDataPath = (filename) => {
   // Get environment configuration
   const isDev = process.env.NODE_ENV === 'development';
   const isGitHubPages = window.location.hostname.includes('github.io');
