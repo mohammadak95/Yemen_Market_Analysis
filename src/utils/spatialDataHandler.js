@@ -376,8 +376,6 @@ class SpatialDataHandler {
     }
   }
   
-
-
   async loadFlowData(selectedCommodity = null) {
     try {
       if (this.debugMode) {
@@ -690,6 +688,9 @@ class SpatialDataHandler {
   }
 
   processAllData(geometryData, preprocessed, flows, date) {
+    if (!preprocessed?.time_series_data) {
+      throw new Error('Missing time series data');
+    }
     const filteredFlows = this.filterByDate(flows, date);
     const processedData = this.processMarketClusters(
       preprocessed.market_clusters,
@@ -698,27 +699,17 @@ class SpatialDataHandler {
     );
 
     return {
-      marketClusters: processedData.clusters,
-      timeSeriesData: this.processTimeSeriesData(processedData.timeData),
-      flowMaps: filteredFlows,
+      timeSeriesData: preprocessed.time_series_data,
+      marketClusters: preprocessed.market_clusters,
+      marketShocks: preprocessed.market_shocks,
+      clusterEfficiency: preprocessed.cluster_efficiency,
+      flowAnalysis: preprocessed.flow_analysis,
+      spatialAutocorrelation: preprocessed.spatial_autocorrelation,
+      seasonalAnalysis: preprocessed.seasonal_analysis,
+      marketIntegration: preprocessed.market_integration,
+      metadata: preprocessed.metadata,
       geoJSON: this.createGeoJSON(processedData.features),
-      market_shocks: this.processMarketShocks(preprocessed.market_shocks),
-      cluster_efficiency: this.processClusterEfficiency(preprocessed.cluster_efficiency),
-      flow_analysis: this.processFlowAnalysis(preprocessed.flow_analysis),
-      spatial_autocorrelation: this.processSpatialAutocorrelation(
-        preprocessed.spatial_autocorrelation
-      ),
-      seasonal_analysis: this.processSeasonalAnalysis(preprocessed.seasonal_analysis),
-      conflict_adjusted_metrics: this.processConflictMetrics(
-        preprocessed.conflict_adjusted_metrics
-      ),
-      market_integration: this.processMarketIntegration(preprocessed.market_integration),
-      metadata: {
-        ...preprocessed.metadata,
-        lastUpdated: new Date().toISOString(),
-        flowCount: filteredFlows.length,
-        clusterCount: processedData.clusters.length,
-      }
+      flowMaps: flows
     };
   }
 
@@ -855,6 +846,14 @@ class SpatialDataHandler {
     this.cache.clear();
     this.geometryCache = null;
     this.regionMappingCache.clear();
+  }
+
+  validateMarketClusters(clusters) {
+    return clusters.every(cluster => (
+      cluster.main_market && 
+      Array.isArray(cluster.connected_markets) &&
+      this.validateMarketConnections(cluster)
+    ));
   }
 }
 

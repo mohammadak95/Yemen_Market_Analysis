@@ -14,39 +14,55 @@ import { fetchSpatialData } from './slices/spatialSlice';
 import './utils/leafletSetup';
 import 'leaflet/dist/leaflet.css';
 import './styles/leaflet-overrides.css';
-import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import { useSelector } from 'react-redux';
 
 // DataLoader component with prop types
 const DataLoader = React.memo(({ selectedCommodity, selectedDate }) => {
   const [hasLoaded, setHasLoaded] = React.useState(false);
 
   React.useEffect(() => {
-    if (selectedCommodity && !hasLoaded) {
-      const metric = backgroundMonitor.startMetric('initial-data-load');
+    if (!selectedCommodity || hasLoaded) return;
 
-      store
-        .dispatch(fetchSpatialData({ selectedCommodity, selectedDate }))
-        .then(() => {
-          setHasLoaded(true);
-          metric.finish({
-            status: 'success',
-            commodity: selectedCommodity,
-            date: selectedDate,
-            timestamp: Date.now(),
-          });
-        })
-        .catch((error) => {
-          console.error('Error loading initial data:', error);
-          metric.finish({
-            status: 'error',
-            error: error.message,
-            commodity: selectedCommodity,
-            date: selectedDate,
-          });
-        });
+    let metric;
+    try {
+      metric = backgroundMonitor.startMetric('initial-data-load');
+    } catch (e) {
+      console.error('Error starting metric:', e);
+      return;
     }
+
+    const finishMetric = (args) => {
+      try {
+        metric.finish(args);
+      } catch (e) {
+        console.error('Error finishing metric:', e);
+      }
+    };
+
+    store.dispatch(fetchSpatialData({ 
+      commodity: selectedCommodity, 
+      date: selectedDate 
+    }))
+    .then(() => {
+      setHasLoaded(true);
+      finishMetric({
+        status: 'success',
+        commodity: selectedCommodity,
+        date: selectedDate,
+        timestamp: Date.now(),
+      });
+    })
+    .catch((error) => {
+      console.error('Error loading initial data:', error);
+      finishMetric({
+        status: 'error',
+        error: error.message,
+        commodity: selectedCommodity,
+        date: selectedDate,
+      });
+    });
   }, [selectedCommodity, selectedDate, hasLoaded]);
 
   return null;

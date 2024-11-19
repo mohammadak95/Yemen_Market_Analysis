@@ -1,6 +1,23 @@
 // src/types/dataTypes.js
 
 /**
+ * @typedef {Object} SeasonalAnalysis
+ * @property {number} seasonal_strength
+ * @property {number} trend_strength
+ * @property {number} peak_month
+ * @property {number} trough_month
+ * @property {Array<number>} seasonal_pattern
+ */
+
+/**
+ * @typedef {Object} MarketIntegration
+ * @property {Object} price_correlation
+ * @property {number} flow_density
+ * @property {Object} accessibility
+ * @property {number} integration_score
+ */
+
+/**
  * @typedef {Object} RegressionModel
  * @property {Object} coefficients - Model coefficients
  * @property {number} intercept - Model intercept

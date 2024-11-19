@@ -3,6 +3,12 @@
 const MAX_METRICS_LENGTH = 1000;
 const MAX_ERRORS_LENGTH = 100;
 
+const SPATIAL_METRIC_TYPES = {
+  DATA_LOAD: 'spatial-data-load',
+  PROCESSING: 'spatial-processing',
+  VALIDATION: 'spatial-validation'
+};
+
 class BackgroundMonitor {
   constructor() {
     this.metrics = [];
@@ -126,6 +132,13 @@ class BackgroundMonitor {
       ...data,
       timestamp: new Date().toISOString()
     };
+
+    const validMetricTypes = [
+      'spatial-processing',
+      'market-integration',
+      'seasonal-analysis',
+      'flow-calculation'
+    ];
 
     this.metrics.push({ name, data: metricData });
     console.log(`[BackgroundMonitor] Metric logged: ${name}`, metricData);

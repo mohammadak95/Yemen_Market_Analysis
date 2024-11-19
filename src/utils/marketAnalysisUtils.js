@@ -1,5 +1,11 @@
 // src/utils/marketAnalysisUtils.js
 
+import { 
+  selectTimeSeriesData,
+  selectMarketClusters,
+  selectSpatialAutocorrelation,
+  selectMarketIntegration
+} from '../slices/spatialSlice';
 
 export function calculateVolatility(timeSeriesData) {
   if (!timeSeriesData?.length) return 0;
