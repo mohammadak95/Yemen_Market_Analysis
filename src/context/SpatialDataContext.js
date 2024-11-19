@@ -1,6 +1,7 @@
 // src/context/SpatialDataContext.js
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { precomputedDataManager } from '../utils/PrecomputedDataManager';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 
@@ -55,6 +56,9 @@ export const SpatialDataProvider = ({ children }) => {
       {children}
     </SpatialDataContext.Provider>
   );
+};
+SpatialDataProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export const useSpatialData = () => {

@@ -1,37 +1,17 @@
 // src/utils/dataUtils.js
+import { pathResolver } from './pathResolver';
 
-import Papa from 'papaparse';
 
+// Constants
 const ENV = process.env.NODE_ENV;
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const isGitHubPages = PUBLIC_URL.includes('github.io');
 const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 const CACHE_DURATION = parseInt(process.env.REACT_APP_CACHE_DURATION, 10) || 3600000;
 const RETRY_ATTEMPTS = 3;
-const RETRY_DELAY = 1000;
+const RETRY_INITIAL_DELAY = 1000;
+const RETRY_MAX_DELAY = 5000;
 
-/**
- * Constructs the data path based on the current environment.
- */
-export const getDataPath = (fileName) => {
-  let basePath = '';
-
-  if (isOffline) {
-    basePath = '/results';
-  } else if (isGitHubPages) {
-    basePath = `${PUBLIC_URL}/results`;
-  } else if (ENV === 'production') {
-    basePath = '/Yemen_Market_Analysis/results';
-  } else {
-    basePath = '/results';
-  }
-
-  return `${basePath}/${fileName}`;
-};
-
-/**
- * Cache management class.
- */
 class DataFetchCache {
   constructor() {
     this.cache = new Map();
@@ -63,92 +43,61 @@ class DataFetchCache {
 
 const cache = new DataFetchCache();
 
-/**
- * Enhanced JSON fetcher with CSV support and retry logic.
- */
+const cleanPath = (path) => {
+  if (!path) return '';
+  return path
+    .replace(/\/+/g, '/') // Replace multiple slashes
+    .replace(/\/$/, '')   // Remove trailing slash
+    .replace(/^\/+/, '/') // Ensure single leading slash
+    .trim();
+};
+
+const getBasePath = () => {
+  if (isOffline) return '/results';
+  if (isGitHubPages) return `${PUBLIC_URL}/results`;
+  if (ENV === 'production') return '/Yemen_Market_Analysis/results';
+  return '/results';
+};
+
+export const getDataPath = (fileName = '') => {
+  const basePath = getBasePath();
+  return cleanPath(`${basePath}/${fileName}`);
+};
+
+export const getNetworkDataPath = (fileName) => {
+  return cleanPath(`${getDataPath('network_data')}/${fileName}`);
+};
+
+export const getPrecomputedDataPath = (commodity) => {
+  return pathResolver.getCommodityFilePath(commodity);
+};
+
+
 export const enhancedFetchJson = async (url, options = {}) => {
-  const {
-    useCache = true,
-    retryAttempts = RETRY_ATTEMPTS,
-    signal,
-    headers = {},
-  } = options;
-
-  const cacheKey = url + JSON.stringify(headers);
-
-  if (useCache) {
-    const cachedData = cache.get(cacheKey);
-    if (cachedData) return cachedData;
+  try {
+    const response = await pathResolver.readAndParseFile(url);
+    return response;
+  } catch (error) {
+    console.error('[DataUtils] Failed to fetch:', {
+      url,
+      error: error.message
+    });
+    throw error;
   }
+};
 
-  let lastError;
 
-  for (let attempt = 0; attempt < retryAttempts; attempt++) {
-    try {
-      if (attempt > 0) {
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY * attempt));
-      }
-
-      const response = await fetch(url, {
-        headers: {
-          Accept: 'application/json, text/csv',
-          ...headers,
-        },
-        signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-
-      if (contentType?.includes('text/csv')) {
-        const text = await response.text();
-        return new Promise((resolve, reject) => {
-          Papa.parse(text, {
-            header: true,
-            dynamicTyping: true,
-            complete: (results) => {
-              if (useCache) {
-                cache.set(cacheKey, results.data);
-              }
-              resolve(results.data);
-            },
-            error: (error) => reject(new Error(`CSV parsing failed: ${error.message}`)),
-          });
-        });
-      }
-
-      const data = await response.json();
-      if (useCache) {
-        cache.set(cacheKey, data);
-      }
-      return data;
-
-    } catch (error) {
-      lastError = error;
-      if (error.name === 'AbortError') throw error;
-      if (attempt === retryAttempts - 1) {
-        throw new Error(`Failed to fetch data from ${url}: ${error.message}`);
-      }
-    }
-  }
-
-  throw lastError;
+export const getChoroplethDataPath = (fileName) => {
+  if (!fileName) throw new Error('Filename parameter is required');
+  return cleanPath(`${getDataPath('choropleth_data')}/${fileName}`);
 };
 
 /**
- * Fetches and validates GeoJSON data with optional commodity filtering.
+ * Data validation utilities
  */
 export const fetchAndValidateData = async (url, selectedCommodity) => {
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await enhancedFetchJson(url);
 
     if (data?.features) {
       data.features = data.features.filter((feature) => {
@@ -163,16 +112,21 @@ export const fetchAndValidateData = async (url, selectedCommodity) => {
 
     return data;
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('Error fetching and validating data:', error);
     throw error;
   }
 };
 
 /**
- * Retry utility with exponential backoff.
+ * Retry utility with exponential backoff
  */
 export const retryWithBackoff = async (fn, options = {}) => {
-  const { maxRetries = 3, initialDelay = 1000, maxDelay = 5000 } = options;
+  const { 
+    maxRetries = RETRY_ATTEMPTS, 
+    initialDelay = RETRY_INITIAL_DELAY, 
+    maxDelay = RETRY_MAX_DELAY 
+  } = options;
+
   let lastError;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -190,11 +144,9 @@ export const retryWithBackoff = async (fn, options = {}) => {
   throw lastError;
 };
 
+/**
+ * Cache management
+ */
 export const clearDataCache = () => {
   cache.clear();
-};
-
-export const getPrecomputedDataPath = (commodity) => {
-  const basePath = getDataPath();
-  return `${basePath}/preprocessed_by_commodity/preprocessed_yemen_market_data_${commodity}.json`;
 };

@@ -1,0 +1,302 @@
+[
+  {
+    "date": "2022-07-31T00:00:00.000",
+    "tv_mii": 0.0987078294,
+    "commodity": "beans (white)",
+    "market_pair": "aden-al dhale'e"
+  },
+  {
+    "date": "2024-02-29T00:00:00.000",
+    "tv_mii": 0.1072016895,
+    "commodity": "rice (imported)",
+    "market_pair": "al hudaydah-al maharah"
+  },
+  {
+    "date": "2022-08-31T00:00:00.000",
+    "tv_mii": 0.5231203956,
+    "commodity": "exchange rate (unofficial)",
+    "market_pair": "hajjah-shabwah"
+  },
+  {
+    "date": "2021-09-30T00:00:00.000",
+    "tv_mii": 0.4864728426,
+    "commodity": "salt",
+    "market_pair": "hajjah-lahj"
+  },
+  {
+    "date": "2022-08-31T00:00:00.000",
+    "tv_mii": 0.0587208236,
+    "commodity": "lentils",
+    "market_pair": "hadramaut-shabwah"
+  },
+  {
+    "date": "2022-03-31T00:00:00.000",
+    "tv_mii": 0.7711964048,
+    "commodity": "fuel (gas)",
+    "market_pair": "taizz-marib"
+  },
+  {
+    "date": "2024-02-29T00:00:00.000",
+    "tv_mii": 0.1728246743,
+    "commodity": "fuel (petrol-gasoline)",
+    "market_pair": "hajjah-marib"
+  },
+  {
+    "date": "2021-09-30T00:00:00.000",
+    "tv_mii": 0.6728970422,
+    "commodity": "exchange rate (unofficial)",
+    "market_pair": "al hudaydah-socotra"
+  },
+  {
+    "date": "2023-11-30T00:00:00.000",
+    "tv_mii": 0.4054086734,
+    "commodity": "onions",
+    "market_pair": "amanat al asimah-amran"
+  },
+  {
+    "date": "2022-03-31T00:00:00.000",
+    "tv_mii": 0.0377334402,
+    "commodity": "salt",
+    "market_pair": "amran-aden"
+  },
+  {
+    "date": "2023-12-31T00:00:00.000",
+    "tv_mii": 0.3545481966,
+    "commodity": "wheat",
+    "market_pair": "sana'a-shabwah"
+  },
+  {
+    "date": "2021-10-31T00:00:00.000",
+    "tv_mii": 0.092005831,
+    "commodity": "sugar",
+    "market_pair": "lahj-al dhale'e"
+  },
+  {
+    "date": "2022-07-31T00:00:00.000",
+    "tv_mii": 0.3846947553,
+    "commodity": "tomatoes",
+    "market_pair": "al bayda-amanat al asimah"
+  },
+  {
+    "date": "2021-05-31T00:00:00.000",
+    "tv_mii": 0.0778589838,
+    "commodity": "beans (kidney red)",
+    "market_pair": "al mahwit-ibb"
+  },
+  {
+    "date": "2022-02-28T00:00:00.000",
+    "tv_mii": 0.3364251818,
+    "commodity": "fuel (petrol-gasoline)",
+    "market_pair": "hajjah-shabwah"
+  },
+  {
+    "date": "2022-06-30T00:00:00.000",
+    "tv_mii": 0.7251325457,
+    "commodity": "beans (kidney red)",
+    "market_pair": "abyan-amanat al asimah"
+  },
+  {
+    "date": "2023-12-31T00:00:00.000",
+    "tv_mii": 0.4314104289,
+    "commodity": "oil (vegetable)",
+    "market_pair": "hadramaut-aden"
+  },
+  {
+    "date": "2020-09-30T00:00:00.000",
+    "tv_mii": 0.2576712035,
+    "commodity": "beans (white)",
+    "market_pair": "lahj-al dhale'e"
+  },
+  {
+    "date": "2021-11-30T00:00:00.000",
+    "tv_mii": 0.7783146133,
+    "commodity": "fuel (gas)",
+    "market_pair": "lahj-taizz"
+  },
+  {
+    "date": "2023-07-31T00:00:00.000",
+    "tv_mii": 0.1560955246,
+    "commodity": "sugar",
+    "market_pair": "amanat al asimah-marib"
+  },
+  {
+    "date": "2020-11-30T00:00:00.000",
+    "tv_mii": 0.0830012138,
+    "commodity": "salt",
+    "market_pair": "dhamar-hadramaut"
+  },
+  {
+    "date": "2020-08-31T00:00:00.000",
+    "tv_mii": 0.7081886225,
+    "commodity": "fuel (diesel)",
+    "market_pair": "al mahwit-ibb"
+  },
+  {
+    "date": "2022-08-31T00:00:00.000",
+    "tv_mii": 0.5046655662,
+    "commodity": "fuel (petrol-gasoline)",
+    "market_pair": "al mahwit-socotra"
+  },
+  {
+    "date": "2024-01-31T00:00:00.000",
+    "tv_mii": 0.213508044,
+    "commodity": "fuel (diesel)",
+    "market_pair": "al hudaydah-al dhale'e"
+  },
+  {
+    "date": "2022-01-31T00:00:00.000",
+    "tv_mii": 0.3391778709,
+    "commodity": "onions",
+    "market_pair": "al bayda-raymah"
+  },
+  {
+    "date": "2024-01-31T00:00:00.000",
+    "tv_mii": 0.291114364,
+    "commodity": "fuel (petrol-gasoline)",
+    "market_pair": "al bayda-dhamar"
+  },
+  {
+    "date": "2022-12-31T00:00:00.000",
+    "tv_mii": 0.4465178847,
+    "commodity": "exchange rate (unofficial)",
+    "market_pair": "abyan-ibb"
+  },
+  {
+    "date": "2024-04-30T00:00:00.000",
+    "tv_mii": 0.087560242,
+    "commodity": "oil (vegetable)",
+    "market_pair": "al hudaydah-hadramaut"
+  },
+  {
+    "date": "2024-04-30T00:00:00.000",
+    "tv_mii": 0.0515087286,
+    "commodity": "milling cost (wheat)",
+    "market_pair": "amran-lahj"
+  },
+  {
+    "date": "2023-06-30T00:00:00.000",
+    "tv_mii": 0.292722931,
+    "commodity": "exchange rate (unofficial)",
+    "market_pair": "al mahwit-socotra"
+  },
+  {
+    "date": "2023-02-28T00:00:00.000",
+    "tv_mii": 0.3649257615,
+    "commodity": "tomatoes",
+    "market_pair": "hadramaut-shabwah"
+  },
+  {
+    "date": "2023-12-31T00:00:00.000",
+    "tv_mii": 0.8444209836,
+    "commodity": "beans (kidney red)",
+    "market_pair": "al jawf-amanat al asimah"
+  },
+  {
+    "date": "2021-11-30T00:00:00.000",
+    "tv_mii": 0.2395628893,
+    "commodity": "sugar",
+    "market_pair": "hajjah-ibb"
+  },
+  {
+    "date": "2022-07-31T00:00:00.000",
+    "tv_mii": 0.0378799188,
+    "commodity": "beans (white)",
+    "market_pair": "raymah-shabwah"
+  },
+  {
+    "date": "2021-02-28T00:00:00.000",
+    "tv_mii": 0.4550487775,
+    "commodity": "milling cost (wheat)",
+    "market_pair": "al bayda-al jawf"
+  },
+  {
+    "date": "2022-11-30T00:00:00.000",
+    "tv_mii": 0.493185034,
+    "commodity": "fuel (petrol-gasoline)",
+    "market_pair": "al jawf-amran"
+  },
+  {
+    "date": "2023-06-30T00:00:00.000",
+    "tv_mii": 0.1456883131,
+    "commodity": "onions",
+    "market_pair": "hadramaut-al maharah"
+  },
+  {
+    "date": "2023-12-31T00:00:00.000",
+    "tv_mii": 0.0956327437,
+    "commodity": "sugar",
+    "market_pair": "al mahwit-raymah"
+  },
+  {
+    "date": "2021-03-31T00:00:00.000",
+    "tv_mii": 0.0893131158,
+    "commodity": "beans (white)",
+    "market_pair": "hadramaut-raymah"
+  },
+  {
+    "date": "2020-11-30T00:00:00.000",
+    "tv_mii": 0.9640038647,
+    "commodity": "fuel (gas)",
+    "market_pair": "amanat al asimah-sana'a"
+  },
+  {
+    "date": "2023-04-30T00:00:00.000",
+    "tv_mii": 0.3000340418,
+    "commodity": "eggs",
+    "market_pair": "hajjah-al dhale'e"
+  },
+  {
+    "date": "2023-08-31T00:00:00.000",
+    "tv_mii": 0.4723574767,
+    "commodity": "wheat",
+    "market_pair": "amran-sana'a"
+  },
+  {
+    "date": "2022-07-31T00:00:00.000",
+    "tv_mii": 0.5131457057,
+    "commodity": "oil (vegetable)",
+    "market_pair": "lahj-marib"
+  },
+  {
+    "date": "2020-12-31T00:00:00.000",
+    "tv_mii": 0.975978347,
+    "commodity": "exchange rate (unofficial)",
+    "market_pair": "al mahwit-shabwah"
+  },
+  {
+    "date": "2023-08-31T00:00:00.000",
+    "tv_mii": 0.4732622383,
+    "commodity": "eggs",
+    "market_pair": "al hudaydah-dhamar"
+  },
+  {
+    "date": "2022-02-28T00:00:00.000",
+    "tv_mii": 0.3633469202,
+    "commodity": "oil (vegetable)",
+    "market_pair": "shabwah-socotra"
+  },
+  {
+    "date": "2022-10-31T00:00:00.000",
+    "tv_mii": 0.3240921509,
+    "commodity": "eggs",
+    "market_pair": "al hudaydah-lahj"
+  },
+  {
+    "date": "2021-01-31T00:00:00.000",
+    "tv_mii": 0.3762314802,
+    "commodity": "eggs",
+    "market_pair": "abyan-al jawf"
+  },
+  {
+    "date": "2021-06-30T00:00:00.000",
+    "tv_mii": 0.5937391672,
+    "commodity": "oil (vegetable)",
+    "market_pair": "abyan-socotra"
+  },
+  {
+    "date": "2023-01-31T00:00:00.000",
+    "tv_mii": 0.7014234362,
+    "commodity": "beans (white)",
+    "market_pair": "al jawf-dhamar"
+  }
+]

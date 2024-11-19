@@ -4,283 +4,424 @@
       "month": "2020-07",
       "avgUsdPrice": 1.1386034090909092,
       "volatility": 13.550811628995763,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 5.569853147515454,
+      "garch_volatility": NaN,
+      "price_stability": 6.853511229626519
     },
     {
       "month": "2020-08",
       "avgUsdPrice": 1.3449507575757575,
       "volatility": 12.368742978354646,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 5.0488818989746,
+      "garch_volatility": NaN,
+      "price_stability": 8.266558679699328
     },
     {
       "month": "2020-09",
       "avgUsdPrice": 1.3511643939393938,
       "volatility": 12.493157362593193,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 5.212581583416937,
+      "garch_volatility": 0.14130365379445847,
+      "price_stability": 96.95293662666036
     },
     {
       "month": "2020-10",
       "avgUsdPrice": 1.3310242424242424,
       "volatility": 15.145176284285,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 5.357535606271961,
+      "garch_volatility": 0.14074723680216877,
+      "price_stability": 94.32379999538341
     },
     {
       "month": "2020-11",
       "avgUsdPrice": 1.3353575757575757,
       "volatility": 16.05194345279878,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 5.386183308338921,
+      "garch_volatility": 0.13888833352323335,
+      "price_stability": 161.66349457047852
     },
     {
       "month": "2020-12",
       "avgUsdPrice": 1.323157575757576,
       "volatility": 18.43216426721209,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.854017979987055,
+      "garch_volatility": 0.13749912168671735,
+      "price_stability": 4.146610459674054
     },
     {
       "month": "2021-01",
       "avgUsdPrice": 1.746825,
       "volatility": 14.39093264190956,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.764621117064253,
+      "garch_volatility": 0.13629170754008227,
+      "price_stability": 3.9805765896194196
     },
     {
       "month": "2021-02",
       "avgUsdPrice": 1.7688977272727273,
       "volatility": 16.54827475313446,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.741216693045858,
+      "garch_volatility": 0.1353882872838578,
+      "price_stability": 23.448612895842555
     },
     {
       "month": "2021-03",
       "avgUsdPrice": 1.8292090909090908,
       "volatility": 16.713459797667298,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 5.511870831659779,
+      "garch_volatility": 0.13939390007412422,
+      "price_stability": 4.45389211981221
     },
     {
       "month": "2021-04",
       "avgUsdPrice": 1.4136939393939396,
       "volatility": 18.579297844659077,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.951549747231255,
+      "garch_volatility": 0.13777893312835543,
+      "price_stability": 4.398961126407173
     },
     {
       "month": "2021-05",
       "avgUsdPrice": 1.4616363636363638,
       "volatility": 18.724280418536583,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.587578124213664,
+      "garch_volatility": 0.13646941791179162,
+      "price_stability": 18.379107925161563
     },
     {
       "month": "2021-06",
       "avgUsdPrice": 1.5222643939393936,
       "volatility": 21.509837240305142,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 3.977373375535605,
+      "garch_volatility": 0.1416867773117065,
+      "price_stability": 26.302932663156934
     },
     {
       "month": "2021-07",
       "avgUsdPrice": 1.5316893939393939,
       "volatility": 24.944869186146175,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.003197585007021,
+      "garch_volatility": 0.1396029730402292,
+      "price_stability": 10.952630121708353
     },
     {
       "month": "2021-08",
       "avgUsdPrice": 1.684904545454545,
       "volatility": 27.61245583975321,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.422498191215384,
+      "garch_volatility": 0.13793987253537582,
+      "price_stability": 4.563652881812775
     },
     {
       "month": "2021-09",
       "avgUsdPrice": 1.963876515151515,
       "volatility": 31.617508257528858,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.62978467604021,
+      "garch_volatility": 0.13663340900005097,
+      "price_stability": 1.6221826098029004
     },
     {
       "month": "2021-10",
       "avgUsdPrice": 2.864425,
       "volatility": 42.06225562879588,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.135128843382675,
+      "garch_volatility": 0.13590535315821506,
+      "price_stability": 1.6593206032819456
     },
     {
       "month": "2021-11",
       "avgUsdPrice": 3.107937121212121,
       "volatility": 47.300741709540276,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.531907733571396,
+      "garch_volatility": 0.1361969608089066,
+      "price_stability": 2.657764088814119
     },
     {
       "month": "2021-12",
       "avgUsdPrice": 2.36955303030303,
       "volatility": 44.45202160676532,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.314840199372901,
+      "garch_volatility": 0.14447676365462897,
+      "price_stability": 2.1292895062297528
     },
     {
       "month": "2022-01",
       "avgUsdPrice": 2.23597803030303,
       "volatility": 34.34986788612426,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.9866269626756905,
+      "garch_volatility": 0.1420619890878968,
+      "price_stability": 10.138403480920235
     },
     {
       "month": "2022-02",
       "avgUsdPrice": 2.177050757575757,
       "volatility": 34.14915701593808,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.513891491150472,
+      "garch_volatility": 0.14655382753925736,
+      "price_stability": 2.577891795784836
     },
     {
       "month": "2022-03",
       "avgUsdPrice": 2.8764583333333333,
       "volatility": 35.981493882908936,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.773384976051305,
+      "garch_volatility": 0.14407465640959755,
+      "price_stability": 2.445884336325798
     },
     {
       "month": "2022-04",
       "avgUsdPrice": 2.159883333333333,
       "volatility": 31.158711399231226,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 3.9283078878428115,
+      "garch_volatility": 0.14174937882449629,
+      "price_stability": 2.383112072092643
     },
     {
       "month": "2022-05",
       "avgUsdPrice": 2.1398469696969697,
       "volatility": 30.392238687234585,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.034467067068679,
+      "garch_volatility": 0.14434600882717685,
+      "price_stability": 35.924500607515306
     },
     {
       "month": "2022-06",
       "avgUsdPrice": 2.194846212121212,
       "volatility": 34.175302126682354,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.396877323948522,
+      "garch_volatility": 0.14898065425632662,
+      "price_stability": 2.172633407012561
     },
     {
       "month": "2022-07",
       "avgUsdPrice": 2.963133333333333,
       "volatility": 34.35702937266656,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.223740824266155,
+      "garch_volatility": 0.14559426407867382,
+      "price_stability": 2.217634172676318
     },
     {
       "month": "2022-08",
       "avgUsdPrice": 2.98803106060606,
       "volatility": 36.0547997685792,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 3.723522252344645,
+      "garch_volatility": 0.1427508794857981,
+      "price_stability": 2.3053114106401615
     },
     {
       "month": "2022-09",
       "avgUsdPrice": 2.224562878787878,
       "volatility": 36.32769965843265,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.202089370377707,
+      "garch_volatility": 0.14594778475440687,
+      "price_stability": 2.2536616976106467
     },
     {
       "month": "2022-10",
       "avgUsdPrice": 2.2145022727272723,
       "volatility": 36.56516792766977,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 3.792495148107974,
+      "garch_volatility": 0.14306503092409698,
+      "price_stability": 105.71880701968307
     },
     {
       "month": "2022-11",
       "avgUsdPrice": 2.205659848484848,
       "volatility": 36.6537414404336,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.031102801881271,
+      "garch_volatility": 0.14838963920562379,
+      "price_stability": 102.82445104954901
     },
     {
       "month": "2022-12",
       "avgUsdPrice": 2.1950795454545453,
       "volatility": 37.95241326794521,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.073964145916097,
+      "garch_volatility": 0.14509077019405991,
+      "price_stability": 91.4682437154336
     },
     {
       "month": "2023-01",
       "avgUsdPrice": 2.216939330808081,
       "volatility": 39.81716669356717,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.348075602815599,
+      "garch_volatility": 0.14242072799708544,
+      "price_stability": 59.26674445474042
     },
     {
       "month": "2023-02",
       "avgUsdPrice": 2.228271338383838,
       "volatility": 41.79789715397541,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 4.270316818378008,
+      "garch_volatility": 0.1402735282391923,
+      "price_stability": 174.07153731841845
     },
     {
       "month": "2023-03",
       "avgUsdPrice": 2.2242368055555555,
       "volatility": 41.09788707628233,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 4.300111820553754,
+      "garch_volatility": 0.1384911962496913,
+      "price_stability": 28.180686886613472
     },
     {
       "month": "2023-04",
       "avgUsdPrice": 2.287615277777778,
       "volatility": 41.5148552268381,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 3.5564950490263896,
+      "garch_volatility": 0.13707823882542708,
+      "price_stability": 12.03708234864239
     },
     {
       "month": "2023-05",
       "avgUsdPrice": 2.3889375,
       "volatility": 45.05525911564315,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 4.4622566792948755,
+      "garch_volatility": 0.13597714414951254,
+      "price_stability": 17.207727894296188
     },
     {
       "month": "2023-06",
       "avgUsdPrice": 2.3875868055555554,
       "volatility": 46.17454147735622,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 4.058679914118671,
+      "garch_volatility": 0.13502795697061196,
+      "price_stability": 25.45067972265982
     },
     {
       "month": "2023-07",
       "avgUsdPrice": 2.4563055555555553,
       "volatility": 49.14327110200904,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 4.002983468622721,
+      "garch_volatility": 0.1342895778261421,
+      "price_stability": 13.987381574765225
     },
     {
       "month": "2023-08",
       "avgUsdPrice": 2.5305354166666665,
       "volatility": 48.42911209775353,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 4.2819316781214445,
+      "garch_volatility": 0.13374886174570588,
+      "price_stability": 23.747709793507976
     },
     {
       "month": "2023-09",
       "avgUsdPrice": 2.5278701388888885,
       "volatility": 49.89131680242673,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 3.6145968552056424,
+      "garch_volatility": 0.13325329281861104,
+      "price_stability": 16.566811345561227
     },
     {
       "month": "2023-10",
       "avgUsdPrice": 2.6337249999999996,
       "volatility": 49.906168854443465,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 4.217941685088257,
+      "garch_volatility": 0.1328596191892427,
+      "price_stability": 10.071132713714928
     },
     {
       "month": "2023-11",
       "avgUsdPrice": 2.7263076388888887,
       "volatility": 52.71414610344921,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 3.8646434356394272,
+      "garch_volatility": 0.13261501724441652,
+      "price_stability": 1.460420259502744
     },
     {
       "month": "2023-12",
       "avgUsdPrice": 3.8632960227272726,
       "volatility": 51.953823482299825,
-      "sampleSize": 24
+      "sampleSize": 24,
+      "conflict_intensity": 3.6762829394902243,
+      "garch_volatility": 0.13236587006632902,
+      "price_stability": 1.4352385122728188
     },
     {
       "month": "2024-01",
       "avgUsdPrice": 3.992522032828282,
       "volatility": 51.041657415180886,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.646489903030797,
+      "garch_volatility": 0.13215812483794556,
+      "price_stability": 9.085436315085277
     },
     {
       "month": "2024-02",
       "avgUsdPrice": 4.082241666666666,
       "volatility": 53.60526565162949,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.146947677857719,
+      "garch_volatility": 0.14001391225167095,
+      "price_stability": 17.535469043254565
     },
     {
       "month": "2024-03",
       "avgUsdPrice": 4.098363636363635,
       "volatility": 53.95346669744075,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.32061633166938,
+      "garch_volatility": 0.13825914215127316,
+      "price_stability": 43.2867801001086
     },
     {
       "month": "2024-04",
       "avgUsdPrice": 4.05280606060606,
       "volatility": 54.44438884470208,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.232365634324961,
+      "garch_volatility": 0.1368540569473258,
+      "price_stability": 30.35109220550717
     },
     {
       "month": "2024-05",
       "avgUsdPrice": 4.034355681818181,
       "volatility": 55.35804563492764,
-      "sampleSize": 22
+      "sampleSize": 22,
+      "conflict_intensity": 4.725245061781728,
+      "garch_volatility": 0.13577376418279832,
+      "price_stability": 76.64369323345784
     }
   ],
   "market_shocks": [
@@ -4226,6 +4367,24 @@
       "market_count": 4
     }
   ],
+  "cluster_efficiency": [
+    {
+      "cluster_id": 1,
+      "internal_connectivity": 205367.40147756002,
+      "market_coverage": 0.8095238095238095,
+      "price_convergence": 0.854694530127211,
+      "stability": 1.097558254312735,
+      "efficiency_score": 194513.4791700335
+    },
+    {
+      "cluster_id": 2,
+      "internal_connectivity": 22399.95343188,
+      "market_coverage": 0.19047619047619047,
+      "price_convergence": 0.2905109225463334,
+      "stability": 2.0676094791927477,
+      "efficiency_score": 14686.68741424231
+    }
+  ],
   "flow_analysis": [
     {
       "source": "abyan",
@@ -5053,14 +5212,888 @@
     }
   ],
   "spatial_autocorrelation": {
-    "moran_i": 1.6960648869919832,
-    "p_value": -0.6960648869919832,
-    "significance": "True"
+    "global": {
+      "moran_i": 0.46908085920612064,
+      "p_value": null,
+      "z_score": null,
+      "significance": false
+    },
+    "local": {
+      "shabwah": {
+        "local_i": 4.370708043002958,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "hadramaut": {
+        "local_i": 3.830532532899011,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "dhamar": {
+        "local_i": 2.5126722421693564,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "hajjah": {
+        "local_i": 4.515054766782159,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "al dhale'e": {
+        "local_i": 0.8739780036963796,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "al bayda": {
+        "local_i": -2.1590356262450157,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "aden": {
+        "local_i": 2.462986487826661,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "al jawf": {
+        "local_i": 2.5107836960086756,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "abyan": {
+        "local_i": 2.429190659392936,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "amanat al asimah": {
+        "local_i": 4.567531195988411,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "al hudaydah": {
+        "local_i": 4.820888137756624,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "sana'a": {
+        "local_i": 2.449205000151622,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "raymah": {
+        "local_i": 4.412600433106882,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "taizz": {
+        "local_i": -1.1171987993665478,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "marib": {
+        "local_i": -5.804194901356687,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "lahj": {
+        "local_i": 2.1127805542545706,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "ibb": {
+        "local_i": -0.9626523504199501,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "amran": {
+        "local_i": 4.512895871047104,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "socotra": {
+        "local_i": 4.277508430843947,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "al maharah": {
+        "local_i": 3.8665708854455403,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "al mahwit": {
+        "local_i": 4.770684953658015,
+        "p_value": null,
+        "cluster_type": "high-high"
+      }
+    }
+  },
+  "seasonal_analysis": {
+    "seasonal_strength": 0.11522158716724196,
+    "trend_strength": 0.7380233770643837,
+    "peak_month": 3,
+    "trough_month": 6,
+    "seasonal_pattern": [
+      -0.054673221282201576,
+      -0.006231428582845186,
+      -0.19294347045314342,
+      -0.018761320404249424,
+      -0.008895533202577952,
+      0.10427535644752246,
+      0.1559740168017934,
+      0.13042670919042304,
+      0.2832504341705935,
+      -0.036664708036736035,
+      -0.05254977211906568,
+      -0.30320706252951324,
+      -0.054673221282201576,
+      -0.006231428582845186,
+      -0.19294347045314342,
+      -0.018761320404249424,
+      -0.008895533202577952,
+      0.10427535644752246,
+      0.1559740168017934,
+      0.13042670919042304,
+      0.2832504341705935,
+      -0.036664708036736035,
+      -0.05254977211906568,
+      -0.30320706252951324,
+      -0.054673221282201576,
+      -0.006231428582845186,
+      -0.19294347045314342,
+      -0.018761320404249424,
+      -0.008895533202577952,
+      0.10427535644752246,
+      0.1559740168017934,
+      0.13042670919042304,
+      0.2832504341705935,
+      -0.036664708036736035,
+      -0.05254977211906568,
+      -0.30320706252951324,
+      -0.054673221282201576,
+      -0.006231428582845186,
+      -0.19294347045314342,
+      -0.018761320404249424,
+      -0.008895533202577952,
+      0.10427535644752246,
+      0.1559740168017934,
+      0.13042670919042304,
+      0.2832504341705935,
+      -0.036664708036736035,
+      -0.05254977211906568
+    ]
+  },
+  "conflict_adjusted_metrics": [
+    {
+      "month": "2020-07",
+      "adjusted_price": 1.2020219469098774
+    },
+    {
+      "month": "2020-08",
+      "adjusted_price": 1.412855732925122
+    },
+    {
+      "month": "2020-09",
+      "adjusted_price": 1.4215949402995656
+    },
+    {
+      "month": "2020-10",
+      "adjusted_price": 1.402334340140233
+    },
+    {
+      "month": "2020-11",
+      "adjusted_price": 1.4072823826096694
+    },
+    {
+      "month": "2020-12",
+      "adjusted_price": 1.3873838823884095
+    },
+    {
+      "month": "2021-01",
+      "adjusted_price": 1.8300545928281577
+    },
+    {
+      "month": "2021-02",
+      "adjusted_price": 1.8527650016010906
+    },
+    {
+      "month": "2021-03",
+      "adjusted_price": 1.9300327332409781
+    },
+    {
+      "month": "2021-04",
+      "adjusted_price": 1.483693698076624
+    },
+    {
+      "month": "2021-05",
+      "adjusted_price": 1.5286900737100977
+    },
+    {
+      "month": "2021-06",
+      "adjusted_price": 1.5828105326491975
+    },
+    {
+      "month": "2021-07",
+      "adjusted_price": 1.5930059467673843
+    },
+    {
+      "month": "2021-08",
+      "adjusted_price": 1.7594194185009782
+    },
+    {
+      "month": "2021-09",
+      "adjusted_price": 2.054799769106352
+    },
+    {
+      "month": "2021-10",
+      "adjusted_price": 2.9828726643720644
+    },
+    {
+      "month": "2021-11",
+      "adjusted_price": 3.2487859639628693
+    },
+    {
+      "month": "2021-12",
+      "adjusted_price": 2.471795457000004
+    },
+    {
+      "month": "2022-01",
+      "adjusted_price": 2.347477913641626
+    },
+    {
+      "month": "2022-02",
+      "adjusted_price": 2.275320466479996
+    },
+    {
+      "month": "2022-03",
+      "adjusted_price": 3.0137627632590425
+    },
+    {
+      "month": "2022-04",
+      "adjusted_price": 2.244730200684869
+    },
+    {
+      "month": "2022-05",
+      "adjusted_price": 2.2261783909750608
+    },
+    {
+      "month": "2022-06",
+      "adjusted_price": 2.2913509075175122
+    },
+    {
+      "month": "2022-07",
+      "adjusted_price": 3.0882884056107716
+    },
+    {
+      "month": "2022-08",
+      "adjusted_price": 3.0992910620546965
+    },
+    {
+      "month": "2022-09",
+      "adjusted_price": 2.318040999054792
+    },
+    {
+      "month": "2022-10",
+      "adjusted_price": 2.298487163975195
+    },
+    {
+      "month": "2022-11",
+      "adjusted_price": 2.294572264437091
+    },
+    {
+      "month": "2022-12",
+      "adjusted_price": 2.2845062991107015
+    },
+    {
+      "month": "2023-01",
+      "adjusted_price": 2.3133335289801704
+    },
+    {
+      "month": "2023-02",
+      "adjusted_price": 2.3234255841059404
+    },
+    {
+      "month": "2023-03",
+      "adjusted_price": 2.319881475348357
+    },
+    {
+      "month": "2023-04",
+      "adjusted_price": 2.368974201872716
+    },
+    {
+      "month": "2023-05",
+      "adjusted_price": 2.49553802315793
+    },
+    {
+      "month": "2023-06",
+      "adjusted_price": 2.4844913116647867
+    },
+    {
+      "month": "2023-07",
+      "adjusted_price": 2.5546310608833056
+    },
+    {
+      "month": "2023-08",
+      "adjusted_price": 2.638891214298999
+    },
+    {
+      "month": "2023-09",
+      "adjusted_price": 2.619242453432849
+    },
+    {
+      "month": "2023-10",
+      "adjusted_price": 2.7448139846455906
+    },
+    {
+      "month": "2023-11",
+      "adjusted_price": 2.8316697080905446
+    },
+    {
+      "month": "2023-12",
+      "adjusted_price": 4.0053217153128
+    },
+    {
+      "month": "2024-01",
+      "adjusted_price": 4.178034165959929
+    },
+    {
+      "month": "2024-02",
+      "adjusted_price": 4.251530092667039
+    },
+    {
+      "month": "2024-03",
+      "adjusted_price": 4.2754382049675606
+    },
+    {
+      "month": "2024-04",
+      "adjusted_price": 4.22433563154099
+    },
+    {
+      "month": "2024-05",
+      "adjusted_price": 4.224988874448005
+    }
+  ],
+  "market_integration": {
+    "price_correlation": {
+      "abyan": {
+        "abyan": 1.0,
+        "aden": 0.9825969571676323,
+        "al bayda": 0.8734002360419169,
+        "al dhale'e": 0.9901260577984266,
+        "al hudaydah": 0.8816670537297985,
+        "al jawf": 0.8278198816614836,
+        "al maharah": 0.9852286146385494,
+        "al mahwit": 0.8651363604647521,
+        "amanat al asimah": 0.8450593621137092,
+        "amran": 0.8879796494237587,
+        "dhamar": 0.8817214139527124,
+        "hadramaut": 0.9899370137690489,
+        "hajjah": 0.8493454845956155,
+        "ibb": 0.889685572885302,
+        "lahj": 0.9916584006055401,
+        "marib": 0.9840562122648981,
+        "raymah": 0.8691175754119879,
+        "sana'a": 0.8720837546792811,
+        "shabwah": 0.9806390552069685,
+        "socotra": 0.975151260871443,
+        "taizz": 0.9913173117648322
+      },
+      "aden": {
+        "abyan": 0.9825969571676323,
+        "aden": 1.0,
+        "al bayda": 0.8751788693276683,
+        "al dhale'e": 0.9873252980540718,
+        "al hudaydah": 0.899367024422318,
+        "al jawf": 0.846580000673149,
+        "al maharah": 0.9830590448571428,
+        "al mahwit": 0.8768511175927453,
+        "amanat al asimah": 0.8642876145005315,
+        "amran": 0.8984500740047953,
+        "dhamar": 0.8894739333017206,
+        "hadramaut": 0.9869953647814895,
+        "hajjah": 0.8658407093504195,
+        "ibb": 0.9020715053124458,
+        "lahj": 0.9793931036155574,
+        "marib": 0.9836712080890265,
+        "raymah": 0.8693284738271588,
+        "sana'a": 0.8869602992859745,
+        "shabwah": 0.975348095111553,
+        "socotra": 0.9739599541724898,
+        "taizz": 0.9839632060700405
+      },
+      "al bayda": {
+        "abyan": 0.8734002360419169,
+        "aden": 0.8751788693276683,
+        "al bayda": 1.0,
+        "al dhale'e": 0.8696820725338065,
+        "al hudaydah": 0.975299404578285,
+        "al jawf": 0.9742247961708401,
+        "al maharah": 0.8385142787408363,
+        "al mahwit": 0.9809939816746222,
+        "amanat al asimah": 0.9832038289750722,
+        "amran": 0.9795664745192114,
+        "dhamar": 0.9541866522849854,
+        "hadramaut": 0.8667931616597936,
+        "hajjah": 0.9860192010810616,
+        "ibb": 0.9805120595712763,
+        "lahj": 0.889533798930014,
+        "marib": 0.8559592189305419,
+        "raymah": 0.9761451095604723,
+        "sana'a": 0.9824447047742705,
+        "shabwah": 0.8474640971735837,
+        "socotra": 0.8587959059153724,
+        "taizz": 0.8817879768832815
+      },
+      "al dhale'e": {
+        "abyan": 0.9901260577984266,
+        "aden": 0.9873252980540718,
+        "al bayda": 0.8696820725338065,
+        "al dhale'e": 1.0,
+        "al hudaydah": 0.8794512981419281,
+        "al jawf": 0.8263570652213018,
+        "al maharah": 0.9872187835761678,
+        "al mahwit": 0.863597243996505,
+        "amanat al asimah": 0.8445276380247193,
+        "amran": 0.8874783066459412,
+        "dhamar": 0.8781464416525204,
+        "hadramaut": 0.9940014754914941,
+        "hajjah": 0.8494960049133667,
+        "ibb": 0.8906501824412985,
+        "lahj": 0.9906146361160971,
+        "marib": 0.9851745282881218,
+        "raymah": 0.8630594750416671,
+        "sana'a": 0.8760241342881614,
+        "shabwah": 0.9849919704976464,
+        "socotra": 0.9705837203228357,
+        "taizz": 0.9939588278909279
+      },
+      "al hudaydah": {
+        "abyan": 0.8816670537297985,
+        "aden": 0.899367024422318,
+        "al bayda": 0.975299404578285,
+        "al dhale'e": 0.8794512981419281,
+        "al hudaydah": 1.0,
+        "al jawf": 0.9797223982658256,
+        "al maharah": 0.8553827511142283,
+        "al mahwit": 0.9866378812263548,
+        "amanat al asimah": 0.985555938382688,
+        "amran": 0.9826064715875079,
+        "dhamar": 0.9767317215170539,
+        "hadramaut": 0.8794890964706861,
+        "hajjah": 0.9876352353747309,
+        "ibb": 0.9869113878199838,
+        "lahj": 0.8939634856076554,
+        "marib": 0.8784235601817307,
+        "raymah": 0.9761906521130843,
+        "sana'a": 0.9820841604564515,
+        "shabwah": 0.8550385078826941,
+        "socotra": 0.8939796149282594,
+        "taizz": 0.8862303228934696
+      },
+      "al jawf": {
+        "abyan": 0.8278198816614836,
+        "aden": 0.846580000673149,
+        "al bayda": 0.9742247961708401,
+        "al dhale'e": 0.8263570652213018,
+        "al hudaydah": 0.9797223982658256,
+        "al jawf": 1.0,
+        "al maharah": 0.806310390413441,
+        "al mahwit": 0.9875135921882179,
+        "amanat al asimah": 0.9950249054050521,
+        "amran": 0.9755266057805266,
+        "dhamar": 0.9621328789059932,
+        "hadramaut": 0.829581953947178,
+        "hajjah": 0.9950449298801636,
+        "ibb": 0.9832954054841045,
+        "lahj": 0.8482495192754604,
+        "marib": 0.8351319241750527,
+        "raymah": 0.9865787568259639,
+        "sana'a": 0.9912757362377574,
+        "shabwah": 0.8104233087181251,
+        "socotra": 0.8490825064218387,
+        "taizz": 0.833718519119351
+      },
+      "al maharah": {
+        "abyan": 0.9852286146385494,
+        "aden": 0.9830590448571428,
+        "al bayda": 0.8385142787408363,
+        "al dhale'e": 0.9872187835761678,
+        "al hudaydah": 0.8553827511142283,
+        "al jawf": 0.806310390413441,
+        "al maharah": 1.0,
+        "al mahwit": 0.8294884770296967,
+        "amanat al asimah": 0.8192866851186487,
+        "amran": 0.85476713199078,
+        "dhamar": 0.8533616641522412,
+        "hadramaut": 0.9929069334727412,
+        "hajjah": 0.8229330750057239,
+        "ibb": 0.8641300317795414,
+        "lahj": 0.9851873611249095,
+        "marib": 0.9850577040525237,
+        "raymah": 0.8428911423354979,
+        "sana'a": 0.8536623173268932,
+        "shabwah": 0.9837456839767055,
+        "socotra": 0.9742499581888844,
+        "taizz": 0.9825749383107103
+      },
+      "al mahwit": {
+        "abyan": 0.8651363604647521,
+        "aden": 0.8768511175927453,
+        "al bayda": 0.9809939816746222,
+        "al dhale'e": 0.863597243996505,
+        "al hudaydah": 0.9866378812263548,
+        "al jawf": 0.9875135921882179,
+        "al maharah": 0.8294884770296967,
+        "al mahwit": 1.0,
+        "amanat al asimah": 0.9911458825519367,
+        "amran": 0.9904955240492289,
+        "dhamar": 0.9748854956651961,
+        "hadramaut": 0.8576006096437231,
+        "hajjah": 0.992651025497594,
+        "ibb": 0.9917488986947455,
+        "lahj": 0.8765112223857803,
+        "marib": 0.86114468556082,
+        "raymah": 0.9835566253623553,
+        "sana'a": 0.9896907305304488,
+        "shabwah": 0.8419815560515481,
+        "socotra": 0.8679212713196582,
+        "taizz": 0.8689976665823353
+      },
+      "amanat al asimah": {
+        "abyan": 0.8450593621137092,
+        "aden": 0.8642876145005315,
+        "al bayda": 0.9832038289750722,
+        "al dhale'e": 0.8445276380247193,
+        "al hudaydah": 0.985555938382688,
+        "al jawf": 0.9950249054050521,
+        "al maharah": 0.8192866851186487,
+        "al mahwit": 0.9911458825519367,
+        "amanat al asimah": 1.0,
+        "amran": 0.987724447322415,
+        "dhamar": 0.9642270549382171,
+        "hadramaut": 0.8410772854044745,
+        "hajjah": 0.9976194615688385,
+        "ibb": 0.9893781401240964,
+        "lahj": 0.8599451955102801,
+        "marib": 0.8432757846273266,
+        "raymah": 0.9847126475689385,
+        "sana'a": 0.9916180861096479,
+        "shabwah": 0.8193278502262594,
+        "socotra": 0.8562671625337184,
+        "taizz": 0.8496021260130419
+      },
+      "amran": {
+        "abyan": 0.8879796494237587,
+        "aden": 0.8984500740047953,
+        "al bayda": 0.9795664745192114,
+        "al dhale'e": 0.8874783066459412,
+        "al hudaydah": 0.9826064715875079,
+        "al jawf": 0.9755266057805266,
+        "al maharah": 0.85476713199078,
+        "al mahwit": 0.9904955240492289,
+        "amanat al asimah": 0.987724447322415,
+        "amran": 1.0,
+        "dhamar": 0.9660693312708512,
+        "hadramaut": 0.8763469422376352,
+        "hajjah": 0.9865813074641837,
+        "ibb": 0.9912918743122185,
+        "lahj": 0.8934568281370175,
+        "marib": 0.8766307852009985,
+        "raymah": 0.9804206036914003,
+        "sana'a": 0.9842946144048685,
+        "shabwah": 0.8585103465693075,
+        "socotra": 0.8855212315912547,
+        "taizz": 0.8903641181492458
+      },
+      "dhamar": {
+        "abyan": 0.8817214139527124,
+        "aden": 0.8894739333017206,
+        "al bayda": 0.9541866522849854,
+        "al dhale'e": 0.8781464416525204,
+        "al hudaydah": 0.9767317215170539,
+        "al jawf": 0.9621328789059932,
+        "al maharah": 0.8533616641522412,
+        "al mahwit": 0.9748854956651961,
+        "amanat al asimah": 0.9642270549382171,
+        "amran": 0.9660693312708512,
+        "dhamar": 1.0,
+        "hadramaut": 0.8776805389305352,
+        "hajjah": 0.9644460105929331,
+        "ibb": 0.9820558964160392,
+        "lahj": 0.8951922600251364,
+        "marib": 0.8784631040787587,
+        "raymah": 0.9649289606186187,
+        "sana'a": 0.9709363499411028,
+        "shabwah": 0.8712672536051499,
+        "socotra": 0.8945139031948607,
+        "taizz": 0.8838133126725299
+      },
+      "hadramaut": {
+        "abyan": 0.9899370137690489,
+        "aden": 0.9869953647814895,
+        "al bayda": 0.8667931616597936,
+        "al dhale'e": 0.9940014754914941,
+        "al hudaydah": 0.8794890964706861,
+        "al jawf": 0.829581953947178,
+        "al maharah": 0.9929069334727412,
+        "al mahwit": 0.8576006096437231,
+        "amanat al asimah": 0.8410772854044745,
+        "amran": 0.8763469422376352,
+        "dhamar": 0.8776805389305352,
+        "hadramaut": 1.0,
+        "hajjah": 0.8480818578470478,
+        "ibb": 0.8866969269474272,
+        "lahj": 0.9946665335622593,
+        "marib": 0.9914439877761265,
+        "raymah": 0.864151188737135,
+        "sana'a": 0.8749822931570552,
+        "shabwah": 0.9885169492128534,
+        "socotra": 0.977942166924558,
+        "taizz": 0.9932708924889112
+      },
+      "hajjah": {
+        "abyan": 0.8493454845956155,
+        "aden": 0.8658407093504195,
+        "al bayda": 0.9860192010810616,
+        "al dhale'e": 0.8494960049133667,
+        "al hudaydah": 0.9876352353747309,
+        "al jawf": 0.9950449298801636,
+        "al maharah": 0.8229330750057239,
+        "al mahwit": 0.992651025497594,
+        "amanat al asimah": 0.9976194615688385,
+        "amran": 0.9865813074641837,
+        "dhamar": 0.9644460105929331,
+        "hadramaut": 0.8480818578470478,
+        "hajjah": 1.0,
+        "ibb": 0.988915254135706,
+        "lahj": 0.8657514843077383,
+        "marib": 0.8469192257251631,
+        "raymah": 0.9876905592210058,
+        "sana'a": 0.9931346316056457,
+        "shabwah": 0.8255804916801533,
+        "socotra": 0.8558801526919649,
+        "taizz": 0.855487034124325
+      },
+      "ibb": {
+        "abyan": 0.889685572885302,
+        "aden": 0.9020715053124458,
+        "al bayda": 0.9805120595712763,
+        "al dhale'e": 0.8906501824412985,
+        "al hudaydah": 0.9869113878199838,
+        "al jawf": 0.9832954054841045,
+        "al maharah": 0.8641300317795414,
+        "al mahwit": 0.9917488986947455,
+        "amanat al asimah": 0.9893781401240964,
+        "amran": 0.9912918743122185,
+        "dhamar": 0.9820558964160392,
+        "hadramaut": 0.8866969269474272,
+        "hajjah": 0.988915254135706,
+        "ibb": 1.0,
+        "lahj": 0.9019954113956901,
+        "marib": 0.8871184362210155,
+        "raymah": 0.9860411250323703,
+        "sana'a": 0.9919573706359628,
+        "shabwah": 0.8722858195649906,
+        "socotra": 0.8957452060560589,
+        "taizz": 0.894789957773263
+      },
+      "lahj": {
+        "abyan": 0.9916584006055401,
+        "aden": 0.9793931036155574,
+        "al bayda": 0.889533798930014,
+        "al dhale'e": 0.9906146361160971,
+        "al hudaydah": 0.8939634856076554,
+        "al jawf": 0.8482495192754604,
+        "al maharah": 0.9851873611249095,
+        "al mahwit": 0.8765112223857803,
+        "amanat al asimah": 0.8599451955102801,
+        "amran": 0.8934568281370175,
+        "dhamar": 0.8951922600251364,
+        "hadramaut": 0.9946665335622593,
+        "hajjah": 0.8657514843077383,
+        "ibb": 0.9019954113956901,
+        "lahj": 1.0,
+        "marib": 0.9874186878016165,
+        "raymah": 0.8855417143733364,
+        "sana'a": 0.8900364830745167,
+        "shabwah": 0.981880210104694,
+        "socotra": 0.9789590961215171,
+        "taizz": 0.994611188207755
+      },
+      "marib": {
+        "abyan": 0.9840562122648981,
+        "aden": 0.9836712080890265,
+        "al bayda": 0.8559592189305419,
+        "al dhale'e": 0.9851745282881218,
+        "al hudaydah": 0.8784235601817307,
+        "al jawf": 0.8351319241750527,
+        "al maharah": 0.9850577040525237,
+        "al mahwit": 0.86114468556082,
+        "amanat al asimah": 0.8432757846273266,
+        "amran": 0.8766307852009985,
+        "dhamar": 0.8784631040787587,
+        "hadramaut": 0.9914439877761265,
+        "hajjah": 0.8469192257251631,
+        "ibb": 0.8871184362210155,
+        "lahj": 0.9874186878016165,
+        "marib": 1.0,
+        "raymah": 0.8690334844398,
+        "sana'a": 0.8732790750168188,
+        "shabwah": 0.9773505469764077,
+        "socotra": 0.987679361736903,
+        "taizz": 0.9847441380591031
+      },
+      "raymah": {
+        "abyan": 0.8691175754119879,
+        "aden": 0.8693284738271588,
+        "al bayda": 0.9761451095604723,
+        "al dhale'e": 0.8630594750416671,
+        "al hudaydah": 0.9761906521130843,
+        "al jawf": 0.9865787568259639,
+        "al maharah": 0.8428911423354979,
+        "al mahwit": 0.9835566253623553,
+        "amanat al asimah": 0.9847126475689385,
+        "amran": 0.9804206036914003,
+        "dhamar": 0.9649289606186187,
+        "hadramaut": 0.864151188737135,
+        "hajjah": 0.9876905592210058,
+        "ibb": 0.9860411250323703,
+        "lahj": 0.8855417143733364,
+        "marib": 0.8690334844398,
+        "raymah": 1.0,
+        "sana'a": 0.9869849213043079,
+        "shabwah": 0.8475925762086095,
+        "socotra": 0.8791497877876964,
+        "taizz": 0.8713269017323926
+      },
+      "sana'a": {
+        "abyan": 0.8720837546792811,
+        "aden": 0.8869602992859745,
+        "al bayda": 0.9824447047742705,
+        "al dhale'e": 0.8760241342881614,
+        "al hudaydah": 0.9820841604564515,
+        "al jawf": 0.9912757362377574,
+        "al maharah": 0.8536623173268932,
+        "al mahwit": 0.9896907305304488,
+        "amanat al asimah": 0.9916180861096479,
+        "amran": 0.9842946144048685,
+        "dhamar": 0.9709363499411028,
+        "hadramaut": 0.8749822931570552,
+        "hajjah": 0.9931346316056457,
+        "ibb": 0.9919573706359628,
+        "lahj": 0.8900364830745167,
+        "marib": 0.8732790750168188,
+        "raymah": 0.9869849213043079,
+        "sana'a": 1.0,
+        "shabwah": 0.8604663471236327,
+        "socotra": 0.8795408106844425,
+        "taizz": 0.881125684503605
+      },
+      "shabwah": {
+        "abyan": 0.9806390552069685,
+        "aden": 0.975348095111553,
+        "al bayda": 0.8474640971735837,
+        "al dhale'e": 0.9849919704976464,
+        "al hudaydah": 0.8550385078826941,
+        "al jawf": 0.8104233087181251,
+        "al maharah": 0.9837456839767055,
+        "al mahwit": 0.8419815560515481,
+        "amanat al asimah": 0.8193278502262594,
+        "amran": 0.8585103465693075,
+        "dhamar": 0.8712672536051499,
+        "hadramaut": 0.9885169492128534,
+        "hajjah": 0.8255804916801533,
+        "ibb": 0.8722858195649906,
+        "lahj": 0.981880210104694,
+        "marib": 0.9773505469764077,
+        "raymah": 0.8475925762086095,
+        "sana'a": 0.8604663471236327,
+        "shabwah": 1.0,
+        "socotra": 0.9624487328671906,
+        "taizz": 0.9818198031395288
+      },
+      "socotra": {
+        "abyan": 0.975151260871443,
+        "aden": 0.9739599541724898,
+        "al bayda": 0.8587959059153724,
+        "al dhale'e": 0.9705837203228357,
+        "al hudaydah": 0.8939796149282594,
+        "al jawf": 0.8490825064218387,
+        "al maharah": 0.9742499581888844,
+        "al mahwit": 0.8679212713196582,
+        "amanat al asimah": 0.8562671625337184,
+        "amran": 0.8855212315912547,
+        "dhamar": 0.8945139031948607,
+        "hadramaut": 0.977942166924558,
+        "hajjah": 0.8558801526919649,
+        "ibb": 0.8957452060560589,
+        "lahj": 0.9789590961215171,
+        "marib": 0.987679361736903,
+        "raymah": 0.8791497877876964,
+        "sana'a": 0.8795408106844425,
+        "shabwah": 0.9624487328671906,
+        "socotra": 1.0,
+        "taizz": 0.9713350808091064
+      },
+      "taizz": {
+        "abyan": 0.9913173117648322,
+        "aden": 0.9839632060700405,
+        "al bayda": 0.8817879768832815,
+        "al dhale'e": 0.9939588278909279,
+        "al hudaydah": 0.8862303228934696,
+        "al jawf": 0.833718519119351,
+        "al maharah": 0.9825749383107103,
+        "al mahwit": 0.8689976665823353,
+        "amanat al asimah": 0.8496021260130419,
+        "amran": 0.8903641181492458,
+        "dhamar": 0.8838133126725299,
+        "hadramaut": 0.9932708924889112,
+        "hajjah": 0.855487034124325,
+        "ibb": 0.894789957773263,
+        "lahj": 0.994611188207755,
+        "marib": 0.9847441380591031,
+        "raymah": 0.8713269017323926,
+        "sana'a": 0.881125684503605,
+        "shabwah": 0.9818198031395288,
+        "socotra": 0.9713350808091064,
+        "taizz": 1.0
+      }
+    },
+    "flow_density": 0.24523809523809523,
+    "accessibility": {
+      "shabwah": 5,
+      "hadramaut": 5,
+      "dhamar": 5,
+      "hajjah": 5,
+      "al dhale'e": 5,
+      "al bayda": 5,
+      "aden": 5,
+      "al jawf": 5,
+      "abyan": 5,
+      "amanat al asimah": 5,
+      "al hudaydah": 5,
+      "sana'a": 5,
+      "raymah": 5,
+      "taizz": 5,
+      "marib": 5,
+      "lahj": 5,
+      "ibb": 5,
+      "amran": 5,
+      "socotra": 5,
+      "al maharah": 5,
+      "al mahwit": 5
+    },
+    "integration_score": 1.226190476190476
   },
   "metadata": {
     "commodity": "Sugar",
     "data_source": "Unified Data & Weights",
-    "processed_date": "2024-11-11T21:40:48.731486",
-    "total_clusters": 2
+    "processed_date": "2024-11-19T10:28:18.640629",
+    "analysis_parameters": {
+      "garch_parameters": {
+        "p": 1,
+        "q": 1
+      },
+      "spatial_weights": "distance_connectivity_hybrid",
+      "significance_level": 0.05
+    }
   }
 }

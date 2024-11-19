@@ -1,7 +1,7 @@
 // src/store/index.js
 // (Consolidating both store files into a single, more robust configuration)
 
-import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import { createLogger } from 'redux-logger';
 import themeReducer, { initialState as themeInitialState } from '../slices/themeSlice';
 import spatialReducer, { initialState as spatialInitialState } from '../slices/spatialSlice';
@@ -46,7 +46,7 @@ const getOptimizedMiddleware = (getDefaultMiddleware) => {
   const middleware = getDefaultMiddleware({
     thunk: {
       extraArgument: undefined,
-      timeout: 20000,
+      timeout: 30000, // Increased timeout for large data processing
     },
     serializableCheck: {
       ignoredPaths: [
@@ -57,10 +57,10 @@ const getOptimizedMiddleware = (getDefaultMiddleware) => {
         'spatial.data.flowMaps',
         'spatial.data.marketClusters'
       ],
-      warnAfter: 1000,
+      warnAfter: 2000, // Increased threshold for large datasets
     },
     immutableCheck: {
-      warnAfter: 500,
+      warnAfter: 1000, // Increased threshold for large datasets
       ignoredPaths: [
         'spatial.data',
         'spatial.status',

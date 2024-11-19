@@ -1,0 +1,6099 @@
+{
+  "time_series_data": [
+    {
+      "month": "2020-07",
+      "avgUsdPrice": 24.749152272727272,
+      "volatility": 35.724377789906406,
+      "sampleSize": 22,
+      "conflict_intensity": 5.569853147515454,
+      "garch_volatility": NaN,
+      "price_stability": 0.3253936589975271
+    },
+    {
+      "month": "2020-08",
+      "avgUsdPrice": 29.095312878787876,
+      "volatility": 35.049924973079236,
+      "sampleSize": 22,
+      "conflict_intensity": 5.0488818989746,
+      "garch_volatility": NaN,
+      "price_stability": 0.40500884342847004
+    },
+    {
+      "month": "2020-09",
+      "avgUsdPrice": 28.952564393939394,
+      "volatility": 35.228289747641185,
+      "sampleSize": 22,
+      "conflict_intensity": 5.212581583416937,
+      "garch_volatility": 0.13562550652777533,
+      "price_stability": 5.223134970797595
+    },
+    {
+      "month": "2020-10",
+      "avgUsdPrice": 28.716234090909094,
+      "volatility": 30.731991609422693,
+      "sampleSize": 22,
+      "conflict_intensity": 5.357535606271961,
+      "garch_volatility": 0.13502602216773066,
+      "price_stability": 1.514525190685432
+    },
+    {
+      "month": "2020-11",
+      "avgUsdPrice": 29.95956060606061,
+      "volatility": 37.09846864567174,
+      "sampleSize": 22,
+      "conflict_intensity": 5.386183308338921,
+      "garch_volatility": 0.13442918762094555,
+      "price_stability": 0.6665977771897552
+    },
+    {
+      "month": "2020-12",
+      "avgUsdPrice": 31.702636363636362,
+      "volatility": 34.906962255539575,
+      "sampleSize": 22,
+      "conflict_intensity": 4.854017979987055,
+      "garch_volatility": 0.1338349911748622,
+      "price_stability": 0.1518999976277008
+    },
+    {
+      "month": "2021-01",
+      "avgUsdPrice": 42.13330606060606,
+      "volatility": 33.80067659458923,
+      "sampleSize": 22,
+      "conflict_intensity": 4.764621117064253,
+      "garch_volatility": 0.133243421168694,
+      "price_stability": 0.16199804021534653
+    },
+    {
+      "month": "2021-02",
+      "avgUsdPrice": 42.63771060606061,
+      "volatility": 34.715621621332204,
+      "sampleSize": 22,
+      "conflict_intensity": 4.741216693045858,
+      "garch_volatility": 0.13265446599319694,
+      "price_stability": 2.250874314804392
+    },
+    {
+      "month": "2021-03",
+      "avgUsdPrice": 43.019000000000005,
+      "volatility": 35.552375020593594,
+      "sampleSize": 22,
+      "conflict_intensity": 5.511870831659779,
+      "garch_volatility": 0.13206811409044159,
+      "price_stability": 0.1732221752867374
+    },
+    {
+      "month": "2021-04",
+      "avgUsdPrice": 32.83479772727273,
+      "volatility": 36.55757847519855,
+      "sampleSize": 22,
+      "conflict_intensity": 4.951549747231255,
+      "garch_volatility": 0.13148435395358637,
+      "price_stability": 0.17518776737111907
+    },
+    {
+      "month": "2021-05",
+      "avgUsdPrice": 33.45914848484849,
+      "volatility": 36.05603742841912,
+      "sampleSize": 22,
+      "conflict_intensity": 4.587578124213664,
+      "garch_volatility": 0.1309031741266517,
+      "price_stability": 1.1822318040518285
+    },
+    {
+      "month": "2021-06",
+      "avgUsdPrice": 34.50861212121212,
+      "volatility": 34.55320935273848,
+      "sampleSize": 22,
+      "conflict_intensity": 3.977373375535605,
+      "garch_volatility": 0.13032456320429525,
+      "price_stability": 1.754734773704322
+    },
+    {
+      "month": "2021-07",
+      "avgUsdPrice": 34.368950000000005,
+      "volatility": 34.38907235213245,
+      "sampleSize": 22,
+      "conflict_intensity": 4.003197585007021,
+      "garch_volatility": 0.12974850983158798,
+      "price_stability": 1.6127351664502978
+    },
+    {
+      "month": "2021-08",
+      "avgUsdPrice": 35.505930303030304,
+      "volatility": 32.063039820822894,
+      "sampleSize": 22,
+      "conflict_intensity": 4.422498191215384,
+      "garch_volatility": 0.12917500270379143,
+      "price_stability": 0.7597490060494085
+    },
+    {
+      "month": "2021-09",
+      "avgUsdPrice": 36.993598484848484,
+      "volatility": 30.983632589247772,
+      "sampleSize": 22,
+      "conflict_intensity": 4.62978467604021,
+      "garch_volatility": 0.12860403056613587,
+      "price_stability": 0.11701064928664984
+    },
+    {
+      "month": "2021-10",
+      "avgUsdPrice": 50.9960946969697,
+      "volatility": 33.10184241343797,
+      "sampleSize": 22,
+      "conflict_intensity": 4.135128843382675,
+      "garch_volatility": 0.12803558221359937,
+      "price_stability": 0.11270540577681286
+    },
+    {
+      "month": "2021-11",
+      "avgUsdPrice": 53.435256818181834,
+      "volatility": 30.102968993312572,
+      "sampleSize": 22,
+      "conflict_intensity": 4.531907733571396,
+      "garch_volatility": 0.12746964649068784,
+      "price_stability": 0.15395968703677665
+    },
+    {
+      "month": "2021-12",
+      "avgUsdPrice": 41.16574545454546,
+      "volatility": 30.980765348947525,
+      "sampleSize": 22,
+      "conflict_intensity": 4.314840199372901,
+      "garch_volatility": 0.12690621229121637,
+      "price_stability": 0.1493954238904498
+    },
+    {
+      "month": "2022-01",
+      "avgUsdPrice": 42.662727272727274,
+      "volatility": 38.82580188076182,
+      "sampleSize": 22,
+      "conflict_intensity": 4.9866269626756905,
+      "garch_volatility": 0.12634526855809097,
+      "price_stability": 0.7059181589787655
+    },
+    {
+      "month": "2022-02",
+      "avgUsdPrice": 43.99738257575757,
+      "volatility": 36.2965756081968,
+      "sampleSize": 22,
+      "conflict_intensity": 4.513891491150472,
+      "garch_volatility": 0.12578680428309172,
+      "price_stability": 0.1098534789106135
+    },
+    {
+      "month": "2022-03",
+      "avgUsdPrice": 59.05454772727273,
+      "volatility": 38.79046080367171,
+      "sampleSize": 22,
+      "conflict_intensity": 4.773384976051305,
+      "garch_volatility": 0.12523080850665683,
+      "price_stability": 0.1173497860711095
+    },
+    {
+      "month": "2022-04",
+      "avgUsdPrice": 44.611428030303024,
+      "volatility": 39.46421217532261,
+      "sampleSize": 22,
+      "conflict_intensity": 3.9283078878428115,
+      "garch_volatility": 0.12467727031766737,
+      "price_stability": 0.12083027188537857
+    },
+    {
+      "month": "2022-05",
+      "avgUsdPrice": 44.83104090909091,
+      "volatility": 38.36400442046338,
+      "sampleSize": 22,
+      "conflict_intensity": 4.034467067068679,
+      "garch_volatility": 0.12412617885323332,
+      "price_stability": 2.346359181437268
+    },
+    {
+      "month": "2022-06",
+      "avgUsdPrice": 45.43449772727272,
+      "volatility": 38.703213103505334,
+      "sampleSize": 22,
+      "conflict_intensity": 4.396877323948522,
+      "garch_volatility": 0.12357752329848028,
+      "price_stability": 0.10686764212061435
+    },
+    {
+      "month": "2022-07",
+      "avgUsdPrice": 61.33177878787879,
+      "volatility": 39.77766652773925,
+      "sampleSize": 22,
+      "conflict_intensity": 4.223740824266155,
+      "garch_volatility": 0.12303129288633725,
+      "price_stability": 0.10506706201007476
+    },
+    {
+      "month": "2022-08",
+      "avgUsdPrice": 62.450600757575764,
+      "volatility": 39.09265066190134,
+      "sampleSize": 22,
+      "conflict_intensity": 3.723522252344645,
+      "garch_volatility": 0.12248747689732542,
+      "price_stability": 0.11372646934433014
+    },
+    {
+      "month": "2022-09",
+      "avgUsdPrice": 46.692073484848486,
+      "volatility": 40.8641305515557,
+      "sampleSize": 22,
+      "conflict_intensity": 4.202089370377707,
+      "garch_volatility": 0.12194606465934768,
+      "price_stability": 0.11083444935053813
+    },
+    {
+      "month": "2022-10",
+      "avgUsdPrice": 46.95778257575757,
+      "volatility": 38.177358662350805,
+      "sampleSize": 22,
+      "conflict_intensity": 3.792495148107974,
+      "garch_volatility": 0.12140704554747926,
+      "price_stability": 6.778311110008469
+    },
+    {
+      "month": "2022-11",
+      "avgUsdPrice": 46.936026515151504,
+      "volatility": 37.38023775551982,
+      "sampleSize": 22,
+      "conflict_intensity": 4.031102801881271,
+      "garch_volatility": 0.1208704089837592,
+      "price_stability": 5.035386894551178
+    },
+    {
+      "month": "2022-12",
+      "avgUsdPrice": 46.60344696969697,
+      "volatility": 37.91390339681008,
+      "sampleSize": 22,
+      "conflict_intensity": 4.073964145916097,
+      "garch_volatility": 0.1203361444369828,
+      "price_stability": 4.87357752397429
+    },
+    {
+      "month": "2023-01",
+      "avgUsdPrice": 46.5615340909091,
+      "volatility": 38.061321152923924,
+      "sampleSize": 22,
+      "conflict_intensity": 4.348075602815599,
+      "garch_volatility": 0.11980424142249489,
+      "price_stability": 5.131928662411117
+    },
+    {
+      "month": "2023-02",
+      "avgUsdPrice": 46.246944949494946,
+      "volatility": 37.5734223741453,
+      "sampleSize": 24,
+      "conflict_intensity": 4.270316818378008,
+      "garch_volatility": 0.11927468950198411,
+      "price_stability": 5.008262431072153
+    },
+    {
+      "month": "2023-03",
+      "avgUsdPrice": 46.191217361111114,
+      "volatility": 36.99661297689852,
+      "sampleSize": 24,
+      "conflict_intensity": 4.300111820553754,
+      "garch_volatility": 0.11874747828327806,
+      "price_stability": 5.514213228181474
+    },
+    {
+      "month": "2023-04",
+      "avgUsdPrice": 46.52945625000001,
+      "volatility": 35.61703886537595,
+      "sampleSize": 24,
+      "conflict_intensity": 3.5564950490263896,
+      "garch_volatility": 0.11822259742013937,
+      "price_stability": 1.7228991529719901
+    },
+    {
+      "month": "2023-05",
+      "avgUsdPrice": 47.32202496980676,
+      "volatility": 37.659802238872565,
+      "sampleSize": 24,
+      "conflict_intensity": 4.4622566792948755,
+      "garch_volatility": 0.11770003661206263,
+      "price_stability": 2.523356886023842
+    },
+    {
+      "month": "2023-06",
+      "avgUsdPrice": 46.93111108091788,
+      "volatility": 37.79237831653013,
+      "sampleSize": 23,
+      "conflict_intensity": 3.9153060027085806,
+      "garch_volatility": 0.11717978560407227,
+      "price_stability": 4.122552045651961
+    },
+    {
+      "month": "2023-07",
+      "avgUsdPrice": 47.37537774758454,
+      "volatility": 37.86761710157659,
+      "sampleSize": 24,
+      "conflict_intensity": 4.002983468622721,
+      "garch_volatility": 0.11666183418652133,
+      "price_stability": 2.9915748689631116
+    },
+    {
+      "month": "2023-08",
+      "avgUsdPrice": 47.58588958333333,
+      "volatility": 37.604592236120254,
+      "sampleSize": 24,
+      "conflict_intensity": 4.2819316781214445,
+      "garch_volatility": 0.11614617219489103,
+      "price_stability": 9.330116305613474
+    },
+    {
+      "month": "2023-09",
+      "avgUsdPrice": 47.44562708333334,
+      "volatility": 37.7275954711273,
+      "sampleSize": 24,
+      "conflict_intensity": 3.6145968552056424,
+      "garch_volatility": 0.1156327895095914,
+      "price_stability": 5.8062928461582555
+    },
+    {
+      "month": "2023-10",
+      "avgUsdPrice": 47.788210416666665,
+      "volatility": 37.98793615957038,
+      "sampleSize": 24,
+      "conflict_intensity": 4.217941685088257,
+      "garch_volatility": 0.1151216760557626,
+      "price_stability": 3.070076929700434
+    },
+    {
+      "month": "2023-11",
+      "avgUsdPrice": 48.09677847222222,
+      "volatility": 38.77087948884831,
+      "sampleSize": 24,
+      "conflict_intensity": 3.8646434356394272,
+      "garch_volatility": 0.11461282180307725,
+      "price_stability": 0.0909255770955961
+    },
+    {
+      "month": "2023-12",
+      "avgUsdPrice": 66.9897226010101,
+      "volatility": 38.99466934787855,
+      "sampleSize": 24,
+      "conflict_intensity": 3.6762829394902243,
+      "garch_volatility": 0.11410621676554357,
+      "price_stability": 0.0898161685972031
+    },
+    {
+      "month": "2024-01",
+      "avgUsdPrice": 67.75013371212121,
+      "volatility": 39.86458628340334,
+      "sampleSize": 22,
+      "conflict_intensity": 4.646489903030797,
+      "garch_volatility": 0.11360185100130946,
+      "price_stability": 1.5741919890071012
+    },
+    {
+      "month": "2024-02",
+      "avgUsdPrice": 68.25137121212121,
+      "volatility": 40.78738732182646,
+      "sampleSize": 22,
+      "conflict_intensity": 4.146947677857719,
+      "garch_volatility": 0.11309971461246732,
+      "price_stability": 2.788904504798583
+    },
+    {
+      "month": "2024-03",
+      "avgUsdPrice": 68.44490606060607,
+      "volatility": 41.15607355099322,
+      "sampleSize": 22,
+      "conflict_intensity": 4.32061633166938,
+      "garch_volatility": 0.11259979774485983,
+      "price_stability": 10.312319442241588
+    },
+    {
+      "month": "2024-04",
+      "avgUsdPrice": 68.359,
+      "volatility": 40.410391801404884,
+      "sampleSize": 22,
+      "conflict_intensity": 4.232365634324961,
+      "garch_volatility": 0.11210209058788664,
+      "price_stability": 14.26577069561336
+    },
+    {
+      "month": "2024-05",
+      "avgUsdPrice": 68.4979,
+      "volatility": 40.4522474224,
+      "sampleSize": 22,
+      "conflict_intensity": 4.725245061781728,
+      "garch_volatility": 0.11160658337431174,
+      "price_stability": 10.181419463835715
+    }
+  ],
+  "market_shocks": [
+    {
+      "region": "abyan",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 63.65348666451474,
+      "previous_price": 28.1917,
+      "current_price": 10.2467
+    },
+    {
+      "region": "abyan",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 203.38548020338254,
+      "previous_price": 10.2467,
+      "current_price": 31.087
+    },
+    {
+      "region": "abyan",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29926390307469,
+      "previous_price": 28.393,
+      "current_price": 8.149
+    },
+    {
+      "region": "abyan",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74573567308877,
+      "previous_price": 8.149,
+      "current_price": 28.3378
+    },
+    {
+      "region": "abyan",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69170882925124,
+      "previous_price": 28.3229,
+      "current_price": 7.7345
+    },
+    {
+      "region": "abyan",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9307001098972,
+      "previous_price": 7.7345,
+      "current_price": 28.4576
+    },
+    {
+      "region": "abyan",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65287179108104,
+      "previous_price": 28.4091,
+      "current_price": 6.9168
+    },
+    {
+      "region": "abyan",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.6225422160536,
+      "previous_price": 6.9168,
+      "current_price": 28.0561
+    },
+    {
+      "region": "abyan",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44616076784644,
+      "previous_price": 32.0064,
+      "current_price": 7.8588
+    },
+    {
+      "region": "abyan",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.219931796203,
+      "previous_price": 7.8588,
+      "current_price": 32.0026
+    },
+    {
+      "region": "abyan",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82781250000001,
+      "previous_price": 32.0,
+      "current_price": 8.0551
+    },
+    {
+      "region": "abyan",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3110203473576,
+      "previous_price": 8.0551,
+      "current_price": 32.0038
+    },
+    {
+      "region": "abyan",
+      "date": "2022-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 19.99543804173256,
+      "previous_price": 32.0038,
+      "current_price": 38.4031
+    },
+    {
+      "region": "abyan",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.89015318161822,
+      "previous_price": 40.0048,
+      "current_price": 8.845
+    },
+    {
+      "region": "abyan",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 8.845,
+      "current_price": 40.008
+    },
+    {
+      "region": "abyan",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58141858141859,
+      "previous_price": 40.04,
+      "current_price": 8.1756
+    },
+    {
+      "region": "abyan",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 474.92783404276133,
+      "previous_price": 8.1756,
+      "current_price": 47.0038
+    },
+    {
+      "region": "abyan",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.3450071842601,
+      "previous_price": 51.0143,
+      "current_price": 10.537
+    },
+    {
+      "region": "abyan",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.59779823479164,
+      "previous_price": 10.537,
+      "current_price": 52.0104
+    },
+    {
+      "region": "abyan",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 81.33930906126466,
+      "previous_price": 52.0104,
+      "current_price": 9.7055
+    },
+    {
+      "region": "abyan",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 518.4534542269847,
+      "previous_price": 9.7055,
+      "current_price": 60.024
+    },
+    {
+      "region": "abyan",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04675134025835,
+      "previous_price": 60.0817,
+      "current_price": 10.1858
+    },
+    {
+      "region": "abyan",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.10247599599444,
+      "previous_price": 10.1858,
+      "current_price": 60.0048
+    },
+    {
+      "region": "aden",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19691181047098,
+      "previous_price": 60.4108,
+      "current_price": 19.2125
+    },
+    {
+      "region": "aden",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17371502927784,
+      "previous_price": 19.2125,
+      "current_price": 60.1685
+    },
+    {
+      "region": "aden",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29914976636245,
+      "previous_price": 60.8421,
+      "current_price": 17.4622
+    },
+    {
+      "region": "aden",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74427048138267,
+      "previous_price": 17.4622,
+      "current_price": 60.7238
+    },
+    {
+      "region": "aden",
+      "date": "2021-04-01",
+      "shock_type": "price_surge",
+      "magnitude": 15.014048068287615,
+      "previous_price": 60.6845,
+      "current_price": 69.7957
+    },
+    {
+      "region": "aden",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.50426172385977,
+      "previous_price": 69.7957,
+      "current_price": 19.8888
+    },
+    {
+      "region": "aden",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9291862756928,
+      "previous_price": 19.8888,
+      "current_price": 73.1767
+    },
+    {
+      "region": "aden",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65292620725813,
+      "previous_price": 73.0519,
+      "current_price": 17.786
+    },
+    {
+      "region": "aden",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.62408636005847,
+      "previous_price": 17.786,
+      "current_price": 72.1443
+    },
+    {
+      "region": "aden",
+      "date": "2021-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 19.201209677419342,
+      "previous_price": 74.4,
+      "current_price": 88.6857
+    },
+    {
+      "region": "aden",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 63.07747472253137,
+      "previous_price": 88.6857,
+      "current_price": 32.745
+    },
+    {
+      "region": "aden",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 274.13284470911594,
+      "previous_price": 32.745,
+      "current_price": 122.5098
+    },
+    {
+      "region": "aden",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 76.62585714285714,
+      "previous_price": 140.0,
+      "current_price": 32.7238
+    },
+    {
+      "region": "aden",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3120481117719,
+      "previous_price": 32.7238,
+      "current_price": 130.0156
+    },
+    {
+      "region": "aden",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 80.42896747006823,
+      "previous_price": 131.5158,
+      "current_price": 25.739
+    },
+    {
+      "region": "aden",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 341.05326547262905,
+      "previous_price": 25.739,
+      "current_price": 113.5227
+    },
+    {
+      "region": "aden",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.14691338711214,
+      "previous_price": 117.6176,
+      "current_price": 24.5269
+    },
+    {
+      "region": "aden",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 395.41401481638525,
+      "previous_price": 24.5269,
+      "current_price": 121.5097
+    },
+    {
+      "region": "aden",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.34517470519441,
+      "previous_price": 119.3668,
+      "current_price": 21.074
+    },
+    {
+      "region": "aden",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 516.9972477934897,
+      "previous_price": 21.074,
+      "current_price": 130.026
+    },
+    {
+      "region": "aden",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 81.36588418356938,
+      "previous_price": 131.3596,
+      "current_price": 24.4777
+    },
+    {
+      "region": "aden",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 455.83000036768163,
+      "previous_price": 24.4777,
+      "current_price": 136.0544
+    },
+    {
+      "region": "aden",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.72936181290198,
+      "previous_price": 133.6818,
+      "current_price": 23.0877
+    },
+    {
+      "region": "aden",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 495.60285346743063,
+      "previous_price": 23.0877,
+      "current_price": 137.511
+    },
+    {
+      "region": "al bayda",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 67.36007652861198,
+      "previous_price": 38.2602,
+      "current_price": 12.4881
+    },
+    {
+      "region": "al bayda",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 221.20418638543896,
+      "previous_price": 12.4881,
+      "current_price": 40.1123
+    },
+    {
+      "region": "al bayda",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29931412623824,
+      "previous_price": 40.5614,
+      "current_price": 11.6414
+    },
+    {
+      "region": "al bayda",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 212.97180751456008,
+      "previous_price": 11.6414,
+      "current_price": 36.4343
+    },
+    {
+      "region": "al bayda",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69146405511447,
+      "previous_price": 32.369,
+      "current_price": 8.8395
+    },
+    {
+      "region": "al bayda",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 313.9182080434414,
+      "previous_price": 8.8395,
+      "current_price": 36.5883
+    },
+    {
+      "region": "al bayda",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65295953567322,
+      "previous_price": 36.526,
+      "current_price": 8.893
+    },
+    {
+      "region": "al bayda",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 341.6799730124817,
+      "previous_price": 8.893,
+      "current_price": 39.2786
+    },
+    {
+      "region": "al bayda",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.09795913157794,
+      "previous_price": 47.0094,
+      "current_price": 11.7063
+    },
+    {
+      "region": "al bayda",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 321.4593851174154,
+      "previous_price": 11.7063,
+      "current_price": 49.3373
+    },
+    {
+      "region": "al bayda",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.23454545454545,
+      "previous_price": 49.5,
+      "current_price": 12.7539
+    },
+    {
+      "region": "al bayda",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 299.9255129803433,
+      "previous_price": 12.7539,
+      "current_price": 51.0061
+    },
+    {
+      "region": "al bayda",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.87640370135105,
+      "previous_price": 53.8398,
+      "current_price": 11.9113
+    },
+    {
+      "region": "al bayda",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 359.05064938335863,
+      "previous_price": 11.9113,
+      "current_price": 54.6789
+    },
+    {
+      "region": "al bayda",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58134797105043,
+      "previous_price": 56.0561,
+      "current_price": 11.4459
+    },
+    {
+      "region": "al bayda",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 377.6470177093981,
+      "previous_price": 11.4459,
+      "current_price": 54.671
+    },
+    {
+      "region": "al bayda",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74228890237909,
+      "previous_price": 55.3488,
+      "current_price": 11.2124
+    },
+    {
+      "region": "al bayda",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.59994292033815,
+      "previous_price": 11.2124,
+      "current_price": 55.3444
+    },
+    {
+      "region": "al bayda",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.22666843876733,
+      "previous_price": 55.6778,
+      "current_price": 9.8958
+    },
+    {
+      "region": "al bayda",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 466.1230016774793,
+      "previous_price": 9.8958,
+      "current_price": 56.0224
+    },
+    {
+      "region": "al bayda",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04684866868891,
+      "previous_price": 56.0763,
+      "current_price": 9.5067
+    },
+    {
+      "region": "al bayda",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1055781711845,
+      "previous_price": 9.5067,
+      "current_price": 56.0045
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19688548809609,
+      "previous_price": 48.3286,
+      "current_price": 15.37
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17371502927784,
+      "previous_price": 15.37,
+      "current_price": 48.1348
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29922586371258,
+      "previous_price": 48.6736,
+      "current_price": 13.9697
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.7461935474634,
+      "previous_price": 13.9697,
+      "current_price": 48.5791
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69156703430237,
+      "previous_price": 48.5535,
+      "current_price": 13.2592
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.92943767346446,
+      "previous_price": 13.2592,
+      "current_price": 48.7845
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.6530113159197,
+      "previous_price": 48.7013,
+      "current_price": 11.8573
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.6252266536227,
+      "previous_price": 11.8573,
+      "current_price": 48.0962
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2021-10-01",
+      "shock_type": "price_surge",
+      "magnitude": 66.53311488225681,
+      "previous_price": 48.0962,
+      "current_price": 80.0961
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44616076784644,
+      "previous_price": 80.016,
+      "current_price": 19.647
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2194228126432,
+      "previous_price": 19.647,
+      "current_price": 80.0064
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.827875,
+      "previous_price": 80.0,
+      "current_price": 20.1377
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 371.8085978041187,
+      "previous_price": 20.1377,
+      "current_price": 95.0114
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.8901531816182,
+      "previous_price": 120.0144,
+      "current_price": 26.535
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 26.535,
+      "current_price": 120.024
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58135232987652,
+      "previous_price": 120.1201,
+      "current_price": 24.5269
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2978729476616,
+      "previous_price": 24.5269,
+      "current_price": 120.0096
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74225550179283,
+      "previous_price": 120.0336,
+      "current_price": 24.3161
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.59889126957034,
+      "previous_price": 24.3161,
+      "current_price": 120.024
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1626508031727,
+      "previous_price": 120.024,
+      "current_price": 21.4091
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.73351985837803,
+      "previous_price": 21.4091,
+      "current_price": 120.048
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04683456027377,
+      "previous_price": 120.1634,
+      "current_price": 20.3715
+    },
+    {
+      "region": "al dhale'e",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1053677932406,
+      "previous_price": 20.3715,
+      "current_price": 120.0096
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19702252790717,
+      "previous_price": 28.1917,
+      "current_price": 8.9658
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.1745075732227,
+      "previous_price": 8.9658,
+      "current_price": 28.0786
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29926390307469,
+      "previous_price": 28.393,
+      "current_price": 8.149
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 272.58436617989935,
+      "previous_price": 8.149,
+      "current_price": 30.3619
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69153328785767,
+      "previous_price": 30.3459,
+      "current_price": 8.287
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9292868348015,
+      "previous_price": 8.287,
+      "current_price": 30.4903
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 76.058781206572,
+      "previous_price": 30.4383,
+      "current_price": 7.2873
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 317.99980788495054,
+      "previous_price": 7.2873,
+      "current_price": 30.4609
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44629962896309,
+      "previous_price": 36.0072,
+      "current_price": 8.8411
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.221952019545,
+      "previous_price": 8.8411,
+      "current_price": 36.0029
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82777777777778,
+      "previous_price": 36.0,
+      "current_price": 9.062
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.31074817920995,
+      "previous_price": 9.062,
+      "current_price": 36.0043
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.89014089983696,
+      "previous_price": 36.0043,
+      "current_price": 7.9605
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 377.45242133031843,
+      "previous_price": 7.9605,
+      "current_price": 38.0076
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 80.65592302434408,
+      "previous_price": 38.038,
+      "current_price": 7.3581
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2961498212853,
+      "previous_price": 7.3581,
+      "current_price": 36.0029
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 78.09966928214772,
+      "previous_price": 37.0104,
+      "current_price": 8.1054
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 442.9565474868607,
+      "previous_price": 8.1054,
+      "current_price": 44.0088
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 81.74783647921579,
+      "previous_price": 43.0086,
+      "current_price": 7.85
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7337579617835,
+      "previous_price": 7.85,
+      "current_price": 44.0176
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04671594806162,
+      "previous_price": 44.0599,
+      "current_price": 7.4696
+    },
+    {
+      "region": "al hudaydah",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1011566884439,
+      "previous_price": 7.4696,
+      "current_price": 44.0035
+    },
+    {
+      "region": "al jawf",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19702089939142,
+      "previous_price": 40.2739,
+      "current_price": 12.8083
+    },
+    {
+      "region": "al jawf",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17426980942048,
+      "previous_price": 12.8083,
+      "current_price": 40.1123
+    },
+    {
+      "region": "al jawf",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29931412623824,
+      "previous_price": 40.5614,
+      "current_price": 11.6414
+    },
+    {
+      "region": "al jawf",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74683457316127,
+      "previous_price": 11.6414,
+      "current_price": 40.4826
+    },
+    {
+      "region": "al jawf",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69168316391217,
+      "previous_price": 40.4613,
+      "current_price": 11.0493
+    },
+    {
+      "region": "al jawf",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9300951191478,
+      "previous_price": 11.0493,
+      "current_price": 40.6537
+    },
+    {
+      "region": "al jawf",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65296025073674,
+      "previous_price": 40.5844,
+      "current_price": 9.8811
+    },
+    {
+      "region": "al jawf",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.6248798210725,
+      "previous_price": 9.8811,
+      "current_price": 40.0802
+    },
+    {
+      "region": "al jawf",
+      "date": "2021-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 15.023,
+      "previous_price": 40.0,
+      "current_price": 46.0092
+    },
+    {
+      "region": "al jawf",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 67.97336184936927,
+      "previous_price": 46.0092,
+      "current_price": 14.7352
+    },
+    {
+      "region": "al jawf",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2208046039416,
+      "previous_price": 14.7352,
+      "current_price": 60.0048
+    },
+    {
+      "region": "al jawf",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82783333333333,
+      "previous_price": 60.0,
+      "current_price": 15.1033
+    },
+    {
+      "region": "al jawf",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3118457555633,
+      "previous_price": 15.1033,
+      "current_price": 60.0072
+    },
+    {
+      "region": "al jawf",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.8901531816182,
+      "previous_price": 60.0072,
+      "current_price": 13.2675
+    },
+    {
+      "region": "al jawf",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 13.2675,
+      "current_price": 60.012
+    },
+    {
+      "region": "al jawf",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58128607844476,
+      "previous_price": 60.0601,
+      "current_price": 12.2635
+    },
+    {
+      "region": "al jawf",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2958780119868,
+      "previous_price": 12.2635,
+      "current_price": 60.0048
+    },
+    {
+      "region": "al jawf",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74217219178631,
+      "previous_price": 60.0168,
+      "current_price": 12.1581
+    },
+    {
+      "region": "al jawf",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.5968613516915,
+      "previous_price": 12.1581,
+      "current_price": 60.012
+    },
+    {
+      "region": "al jawf",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.16273411984271,
+      "previous_price": 60.012,
+      "current_price": 10.7045
+    },
+    {
+      "region": "al jawf",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7361390069598,
+      "previous_price": 10.7045,
+      "current_price": 60.024
+    },
+    {
+      "region": "al jawf",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04675134025835,
+      "previous_price": 60.0817,
+      "current_price": 10.1858
+    },
+    {
+      "region": "al jawf",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.10247599599444,
+      "previous_price": 10.1858,
+      "current_price": 60.0048
+    },
+    {
+      "region": "al maharah",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19684517074175,
+      "previous_price": 56.3834,
+      "current_price": 17.9317
+    },
+    {
+      "region": "al maharah",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17276108790583,
+      "previous_price": 17.9317,
+      "current_price": 56.1572
+    },
+    {
+      "region": "al maharah",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.59809205525232,
+      "previous_price": 58.4084,
+      "current_price": 16.5891
+    },
+    {
+      "region": "al maharah",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 266.0463798518304,
+      "previous_price": 16.5891,
+      "current_price": 60.7238
+    },
+    {
+      "region": "al maharah",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69157828309872,
+      "previous_price": 60.6919,
+      "current_price": 16.574
+    },
+    {
+      "region": "al maharah",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9292868348015,
+      "previous_price": 16.574,
+      "current_price": 60.9806
+    },
+    {
+      "region": "al maharah",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65287811737187,
+      "previous_price": 60.8766,
+      "current_price": 14.8217
+    },
+    {
+      "region": "al maharah",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 332.66494396729115,
+      "previous_price": 14.8217,
+      "current_price": 64.1283
+    },
+    {
+      "region": "al maharah",
+      "date": "2021-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 16.223991476907283,
+      "previous_price": 66.0793,
+      "current_price": 76.8
+    },
+    {
+      "region": "al maharah",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 73.97712765139279,
+      "previous_price": 78.0156,
+      "current_price": 20.3019
+    },
+    {
+      "region": "al maharah",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 333.4914466133712,
+      "previous_price": 20.3019,
+      "current_price": 88.007
+    },
+    {
+      "region": "al maharah",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.28556818181819,
+      "previous_price": 88.0,
+      "current_price": 21.7487
+    },
+    {
+      "region": "al maharah",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 277.0790897846768,
+      "previous_price": 21.7487,
+      "current_price": 82.0098
+    },
+    {
+      "region": "al maharah",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.8901531816182,
+      "previous_price": 100.012,
+      "current_price": 22.1125
+    },
+    {
+      "region": "al maharah",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 22.1125,
+      "current_price": 100.02
+    },
+    {
+      "region": "al maharah",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 81.2148039812148,
+      "previous_price": 100.1001,
+      "current_price": 18.804
+    },
+    {
+      "region": "al maharah",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 431.8442884492662,
+      "previous_price": 18.804,
+      "current_price": 100.008
+    },
+    {
+      "region": "al maharah",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74227216379414,
+      "previous_price": 100.028,
+      "current_price": 20.2634
+    },
+    {
+      "region": "al maharah",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.5992972551496,
+      "previous_price": 20.2634,
+      "current_price": 100.02
+    },
+    {
+      "region": "al maharah",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.16266746650669,
+      "previous_price": 100.02,
+      "current_price": 17.8409
+    },
+    {
+      "region": "al maharah",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7340436861369,
+      "previous_price": 17.8409,
+      "current_price": 100.04
+    },
+    {
+      "region": "al maharah",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04679027165001,
+      "previous_price": 100.1362,
+      "current_price": 16.9763
+    },
+    {
+      "region": "al maharah",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.103632711486,
+      "previous_price": 16.9763,
+      "current_price": 100.008
+    },
+    {
+      "region": "al mahwit",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19681493275728,
+      "previous_price": 32.2191,
+      "current_price": 10.2467
+    },
+    {
+      "region": "al mahwit",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17302155816014,
+      "previous_price": 10.2467,
+      "current_price": 32.0899
+    },
+    {
+      "region": "al mahwit",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.2990498966073,
+      "previous_price": 32.4491,
+      "current_price": 9.3132
+    },
+    {
+      "region": "al mahwit",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74298844650602,
+      "previous_price": 9.3132,
+      "current_price": 32.386
+    },
+    {
+      "region": "al mahwit",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69146405511447,
+      "previous_price": 32.369,
+      "current_price": 8.8395
+    },
+    {
+      "region": "al mahwit",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9280502290854,
+      "previous_price": 8.8395,
+      "current_price": 32.523
+    },
+    {
+      "region": "al mahwit",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65288365288366,
+      "previous_price": 32.4675,
+      "current_price": 7.9049
+    },
+    {
+      "region": "al mahwit",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.62309453630036,
+      "previous_price": 7.9049,
+      "current_price": 32.0641
+    },
+    {
+      "region": "al mahwit",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44616076784644,
+      "previous_price": 32.0064,
+      "current_price": 7.8588
+    },
+    {
+      "region": "al mahwit",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 336.91276021784506,
+      "previous_price": 7.8588,
+      "current_price": 34.3361
+    },
+    {
+      "region": "al mahwit",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82777777777778,
+      "previous_price": 36.0,
+      "current_price": 9.062
+    },
+    {
+      "region": "al mahwit",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.31074817920995,
+      "previous_price": 9.062,
+      "current_price": 36.0043
+    },
+    {
+      "region": "al mahwit",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.89014089983696,
+      "previous_price": 36.0043,
+      "current_price": 7.9605
+    },
+    {
+      "region": "al mahwit",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 7.9605,
+      "current_price": 36.0072
+    },
+    {
+      "region": "al mahwit",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58125208125209,
+      "previous_price": 36.036,
+      "current_price": 7.3581
+    },
+    {
+      "region": "al mahwit",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2961498212853,
+      "previous_price": 7.3581,
+      "current_price": 36.0029
+    },
+    {
+      "region": "al mahwit",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.90053139714644,
+      "previous_price": 36.6769,
+      "current_price": 8.1054
+    },
+    {
+      "region": "al mahwit",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.59686135169153,
+      "previous_price": 8.1054,
+      "current_price": 40.008
+    },
+    {
+      "region": "al mahwit",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1625674865027,
+      "previous_price": 40.008,
+      "current_price": 7.1364
+    },
+    {
+      "region": "al mahwit",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.73090073426374,
+      "previous_price": 7.1364,
+      "current_price": 40.016
+    },
+    {
+      "region": "al mahwit",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 81.01237064499618,
+      "previous_price": 40.0545,
+      "current_price": 7.6054
+    },
+    {
+      "region": "al mahwit",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 531.1804770294789,
+      "previous_price": 7.6054,
+      "current_price": 48.0038
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19681493275728,
+      "previous_price": 32.2191,
+      "current_price": 10.2467
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17302155816014,
+      "previous_price": 10.2467,
+      "current_price": 32.0899
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2020-10-01",
+      "shock_type": "price_surge",
+      "magnitude": 89.59890806764746,
+      "previous_price": 32.0899,
+      "current_price": 60.8421
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29914976636245,
+      "previous_price": 60.8421,
+      "current_price": 17.4622
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74427048138267,
+      "previous_price": 17.4622,
+      "current_price": 60.7238
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69158578229116,
+      "previous_price": 72.8303,
+      "current_price": 19.8888
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9291862756928,
+      "previous_price": 19.8888,
+      "current_price": 73.1767
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.17463980051872,
+      "previous_price": 77.9221,
+      "current_price": 17.786
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.62408636005847,
+      "previous_price": 17.786,
+      "current_price": 72.1443
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 76.35556222088915,
+      "previous_price": 72.0144,
+      "current_price": 17.0274
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 322.88194322092625,
+      "previous_price": 17.0274,
+      "current_price": 72.0058
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.66694444444444,
+      "previous_price": 72.0,
+      "current_price": 17.5198
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 311.01268279318253,
+      "previous_price": 17.5198,
+      "current_price": 72.0086
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 78.69842715648315,
+      "previous_price": 77.5093,
+      "current_price": 16.5107
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 360.39961964059665,
+      "previous_price": 16.5107,
+      "current_price": 76.0152
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.49140771879424,
+      "previous_price": 75.7424,
+      "current_price": 15.5337
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2981066970523,
+      "previous_price": 15.5337,
+      "current_price": 76.0061
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-03-01",
+      "shock_type": "price_drop",
+      "magnitude": 21.03686414643035,
+      "previous_price": 76.0061,
+      "current_price": 60.0168
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74217219178631,
+      "previous_price": 60.0168,
+      "current_price": 12.1581
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 442.9565474868606,
+      "previous_price": 12.1581,
+      "current_price": 66.0132
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 16.91919191919193,
+      "previous_price": 66.0132,
+      "current_price": 77.1821
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.37065329914579,
+      "previous_price": 77.1821,
+      "current_price": 13.6067
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 458.7717815487958,
+      "previous_price": 13.6067,
+      "current_price": 76.0304
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04677183046772,
+      "previous_price": 76.1035,
+      "current_price": 12.902
+    },
+    {
+      "region": "amanat al asimah",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1032398077818,
+      "previous_price": 12.902,
+      "current_price": 76.0061
+    },
+    {
+      "region": "amran",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19702252790717,
+      "previous_price": 28.1917,
+      "current_price": 8.9658
+    },
+    {
+      "region": "amran",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.1745075732227,
+      "previous_price": 8.9658,
+      "current_price": 28.0786
+    },
+    {
+      "region": "amran",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29926390307469,
+      "previous_price": 28.393,
+      "current_price": 8.149
+    },
+    {
+      "region": "amran",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 322.2628543379556,
+      "previous_price": 8.149,
+      "current_price": 34.4102
+    },
+    {
+      "region": "amran",
+      "date": "2021-01-01",
+      "shock_type": "price_surge",
+      "magnitude": 17.856914519531987,
+      "previous_price": 34.4102,
+      "current_price": 40.5548
+    },
+    {
+      "region": "amran",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69168316391217,
+      "previous_price": 40.4613,
+      "current_price": 11.0493
+    },
+    {
+      "region": "amran",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9300951191478,
+      "previous_price": 11.0493,
+      "current_price": 40.6537
+    },
+    {
+      "region": "amran",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65296025073674,
+      "previous_price": 40.5844,
+      "current_price": 9.8811
+    },
+    {
+      "region": "amran",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.6248798210725,
+      "previous_price": 9.8811,
+      "current_price": 40.0802
+    },
+    {
+      "region": "amran",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44616076784644,
+      "previous_price": 40.008,
+      "current_price": 9.8235
+    },
+    {
+      "region": "amran",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2194228126432,
+      "previous_price": 9.8235,
+      "current_price": 40.0032
+    },
+    {
+      "region": "amran",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82775000000001,
+      "previous_price": 40.0,
+      "current_price": 10.0689
+    },
+    {
+      "region": "amran",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3105304452324,
+      "previous_price": 10.0689,
+      "current_price": 40.0048
+    },
+    {
+      "region": "amran",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.89015318161822,
+      "previous_price": 40.0048,
+      "current_price": 8.845
+    },
+    {
+      "region": "amran",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 8.845,
+      "current_price": 40.008
+    },
+    {
+      "region": "amran",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58141858141859,
+      "previous_price": 40.04,
+      "current_price": 8.1756
+    },
+    {
+      "region": "amran",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2998678996038,
+      "previous_price": 8.1756,
+      "current_price": 40.0032
+    },
+    {
+      "region": "amran",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.7421721917863,
+      "previous_price": 40.0112,
+      "current_price": 8.1054
+    },
+    {
+      "region": "amran",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.59686135169153,
+      "previous_price": 8.1054,
+      "current_price": 40.008
+    },
+    {
+      "region": "amran",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1625674865027,
+      "previous_price": 40.008,
+      "current_price": 7.1364
+    },
+    {
+      "region": "amran",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.73090073426374,
+      "previous_price": 7.1364,
+      "current_price": 40.016
+    },
+    {
+      "region": "amran",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04684866868891,
+      "previous_price": 40.0545,
+      "current_price": 6.7905
+    },
+    {
+      "region": "amran",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1053677932406,
+      "previous_price": 6.7905,
+      "current_price": 40.0032
+    },
+    {
+      "region": "dhamar",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19681493275728,
+      "previous_price": 32.2191,
+      "current_price": 10.2467
+    },
+    {
+      "region": "dhamar",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 174.02578391091765,
+      "previous_price": 10.2467,
+      "current_price": 28.0786
+    },
+    {
+      "region": "dhamar",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29902041353013,
+      "previous_price": 24.3368,
+      "current_price": 6.9849
+    },
+    {
+      "region": "dhamar",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74298844650608,
+      "previous_price": 6.9849,
+      "current_price": 24.2895
+    },
+    {
+      "region": "dhamar",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69162327819153,
+      "previous_price": 24.2768,
+      "current_price": 6.6296
+    },
+    {
+      "region": "dhamar",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 329.2506335223845,
+      "previous_price": 6.6296,
+      "current_price": 28.4576
+    },
+    {
+      "region": "dhamar",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 69.56618156618156,
+      "previous_price": 32.4675,
+      "current_price": 9.8811
+    },
+    {
+      "region": "dhamar",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.6248798210725,
+      "previous_price": 9.8811,
+      "current_price": 40.0802
+    },
+    {
+      "region": "dhamar",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.99180163967206,
+      "previous_price": 40.008,
+      "current_price": 9.6052
+    },
+    {
+      "region": "dhamar",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 295.65027276891686,
+      "previous_price": 9.6052,
+      "current_price": 38.003
+    },
+    {
+      "region": "dhamar",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 73.9597638277898,
+      "previous_price": 38.6667,
+      "current_price": 10.0689
+    },
+    {
+      "region": "dhamar",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 260.8904646982292,
+      "previous_price": 10.0689,
+      "current_price": 36.3377
+    },
+    {
+      "region": "dhamar",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.06288187059735,
+      "previous_price": 40.6715,
+      "current_price": 10.1423
+    },
+    {
+      "region": "dhamar",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 373.3600859765536,
+      "previous_price": 10.1423,
+      "current_price": 48.0096
+    },
+    {
+      "region": "dhamar",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58125208125209,
+      "previous_price": 48.048,
+      "current_price": 9.8108
+    },
+    {
+      "region": "dhamar",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2954702980389,
+      "previous_price": 9.8108,
+      "current_price": 48.0038
+    },
+    {
+      "region": "dhamar",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74232193512645,
+      "previous_price": 48.0134,
+      "current_price": 9.7264
+    },
+    {
+      "region": "dhamar",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.60092120414544,
+      "previous_price": 9.7264,
+      "current_price": 48.0096
+    },
+    {
+      "region": "dhamar",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1627341198427,
+      "previous_price": 48.0096,
+      "current_price": 8.5636
+    },
+    {
+      "region": "dhamar",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7361390069597,
+      "previous_price": 8.5636,
+      "current_price": 48.0192
+    },
+    {
+      "region": "dhamar",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04684866868891,
+      "previous_price": 48.0654,
+      "current_price": 8.1486
+    },
+    {
+      "region": "dhamar",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1048769113712,
+      "previous_price": 8.1486,
+      "current_price": 48.0038
+    },
+    {
+      "region": "hadramaut",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 67.57339939083764,
+      "previous_price": 25.6746,
+      "current_price": 8.3254
+    },
+    {
+      "region": "hadramaut",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 249.30994306579865,
+      "previous_price": 8.3254,
+      "current_price": 29.08145
+    },
+    {
+      "region": "hadramaut",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29910259360311,
+      "previous_price": 30.421,
+      "current_price": 8.7311
+    },
+    {
+      "region": "hadramaut",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 299.9060828532488,
+      "previous_price": 8.7311,
+      "current_price": 34.9162
+    },
+    {
+      "region": "hadramaut",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69161927457581,
+      "previous_price": 38.4382,
+      "current_price": 10.49685
+    },
+    {
+      "region": "hadramaut",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.92990278035785,
+      "previous_price": 10.49685,
+      "current_price": 38.62105
+    },
+    {
+      "region": "hadramaut",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65295991202223,
+      "previous_price": 38.5552,
+      "current_price": 9.38705
+    },
+    {
+      "region": "hadramaut",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 318.43337363708514,
+      "previous_price": 9.38705,
+      "current_price": 39.27855
+    },
+    {
+      "region": "hadramaut",
+      "date": "2021-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 18.039902026881315,
+      "previous_price": 44.0529,
+      "current_price": 52.0
+    },
+    {
+      "region": "hadramaut",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.4967467292636,
+      "previous_price": 53.67675,
+      "current_price": 13.15255
+    },
+    {
+      "region": "hadramaut",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 310.59946550288726,
+      "previous_price": 13.15255,
+      "current_price": 54.0043
+    },
+    {
+      "region": "hadramaut",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82783890727744,
+      "previous_price": 55.33335,
+      "current_price": 13.9286
+    },
+    {
+      "region": "hadramaut",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 309.2791091710581,
+      "previous_price": 13.9286,
+      "current_price": 57.00685
+    },
+    {
+      "region": "hadramaut",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.89009385806587,
+      "previous_price": 58.6737,
+      "current_price": 12.9727
+    },
+    {
+      "region": "hadramaut",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3171737571978,
+      "previous_price": 12.9727,
+      "current_price": 58.67775
+    },
+    {
+      "region": "hadramaut",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.35192372126541,
+      "previous_price": 59.3927,
+      "current_price": 12.26345
+    },
+    {
+      "region": "hadramaut",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2978729476616,
+      "previous_price": 12.26345,
+      "current_price": 60.0048
+    },
+    {
+      "region": "hadramaut",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74225550179283,
+      "previous_price": 60.0168,
+      "current_price": 12.15805
+    },
+    {
+      "region": "hadramaut",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.59889126957034,
+      "previous_price": 12.15805,
+      "current_price": 60.012
+    },
+    {
+      "region": "hadramaut",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1626508031727,
+      "previous_price": 60.012,
+      "current_price": 10.70455
+    },
+    {
+      "region": "hadramaut",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.73351985837803,
+      "previous_price": 10.70455,
+      "current_price": 60.024
+    },
+    {
+      "region": "hadramaut",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04683456027377,
+      "previous_price": 60.0817,
+      "current_price": 10.18575
+    },
+    {
+      "region": "hadramaut",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1053677932406,
+      "previous_price": 10.18575,
+      "current_price": 60.0048
+    },
+    {
+      "region": "hajjah",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 64.22159963251573,
+      "previous_price": 24.1643,
+      "current_price": 8.6456
+    },
+    {
+      "region": "hajjah",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 224.773295086518,
+      "previous_price": 8.6456,
+      "current_price": 28.0786
+    },
+    {
+      "region": "hajjah",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29926390307469,
+      "previous_price": 28.393,
+      "current_price": 8.149
+    },
+    {
+      "region": "hajjah",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74573567308877,
+      "previous_price": 8.149,
+      "current_price": 28.3378
+    },
+    {
+      "region": "hajjah",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69170882925124,
+      "previous_price": 28.3229,
+      "current_price": 7.7345
+    },
+    {
+      "region": "hajjah",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9307001098972,
+      "previous_price": 7.7345,
+      "current_price": 28.4576
+    },
+    {
+      "region": "hajjah",
+      "date": "2021-07-01",
+      "shock_type": "price_surge",
+      "magnitude": 48.318199707635216,
+      "previous_price": 28.4576,
+      "current_price": 42.2078
+    },
+    {
+      "region": "hajjah",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 73.07772497026616,
+      "previous_price": 42.2078,
+      "current_price": 11.3633
+    },
+    {
+      "region": "hajjah",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 323.25908846901865,
+      "previous_price": 11.3633,
+      "current_price": 48.0962
+    },
+    {
+      "region": "hajjah",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.38811386658838,
+      "previous_price": 47.0094,
+      "current_price": 11.5699
+    },
+    {
+      "region": "hajjah",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 314.9024624240485,
+      "previous_price": 11.5699,
+      "current_price": 48.0038
+    },
+    {
+      "region": "hajjah",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 73.71628163394911,
+      "previous_price": 51.3333,
+      "current_price": 13.4923
+    },
+    {
+      "region": "hajjah",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 311.39538848083725,
+      "previous_price": 13.4923,
+      "current_price": 55.5067
+    },
+    {
+      "region": "hajjah",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.78953773155605,
+      "previous_price": 58.6737,
+      "current_price": 13.0317
+    },
+    {
+      "region": "hajjah",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 350.2843067289762,
+      "previous_price": 13.0317,
+      "current_price": 58.6797
+    },
+    {
+      "region": "hajjah",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.42627891849182,
+      "previous_price": 58.7254,
+      "current_price": 12.082
+    },
+    {
+      "region": "hajjah",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 396.64625062075817,
+      "previous_price": 12.082,
+      "current_price": 60.0048
+    },
+    {
+      "region": "hajjah",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.62900907119904,
+      "previous_price": 59.6834,
+      "current_price": 12.1581
+    },
+    {
+      "region": "hajjah",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.5968613516915,
+      "previous_price": 12.1581,
+      "current_price": 60.012
+    },
+    {
+      "region": "hajjah",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.16273411984271,
+      "previous_price": 60.012,
+      "current_price": 10.7045
+    },
+    {
+      "region": "hajjah",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7361390069598,
+      "previous_price": 10.7045,
+      "current_price": 60.024
+    },
+    {
+      "region": "hajjah",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.14041926326853,
+      "previous_price": 60.4155,
+      "current_price": 10.1858
+    },
+    {
+      "region": "hajjah",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.10247599599444,
+      "previous_price": 10.1858,
+      "current_price": 60.0048
+    },
+    {
+      "region": "ibb",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19681493275728,
+      "previous_price": 32.2191,
+      "current_price": 10.2467
+    },
+    {
+      "region": "ibb",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17302155816014,
+      "previous_price": 10.2467,
+      "current_price": 32.0899
+    },
+    {
+      "region": "ibb",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.2990498966073,
+      "previous_price": 32.4491,
+      "current_price": 9.3132
+    },
+    {
+      "region": "ibb",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 291.2113988747154,
+      "previous_price": 9.3132,
+      "current_price": 36.4343
+    },
+    {
+      "region": "ibb",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69168316391217,
+      "previous_price": 40.4613,
+      "current_price": 11.0493
+    },
+    {
+      "region": "ibb",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9300951191478,
+      "previous_price": 11.0493,
+      "current_price": 40.6537
+    },
+    {
+      "region": "ibb",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65296025073674,
+      "previous_price": 40.5844,
+      "current_price": 9.8811
+    },
+    {
+      "region": "ibb",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 321.8497940512696,
+      "previous_price": 9.8811,
+      "current_price": 41.6834
+    },
+    {
+      "region": "ibb",
+      "date": "2021-10-01",
+      "shock_type": "price_surge",
+      "magnitude": 15.292178661049718,
+      "previous_price": 41.6834,
+      "current_price": 48.0577
+    },
+    {
+      "region": "ibb",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.09964830011724,
+      "previous_price": 47.3415,
+      "current_price": 11.7882
+    },
+    {
+      "region": "ibb",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2190834902699,
+      "previous_price": 11.7882,
+      "current_price": 48.0038
+    },
+    {
+      "region": "ibb",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82791666666667,
+      "previous_price": 48.0,
+      "current_price": 12.0826
+    },
+    {
+      "region": "ibb",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3134921291775,
+      "previous_price": 12.0826,
+      "current_price": 48.0058
+    },
+    {
+      "region": "ibb",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.8901716042645,
+      "previous_price": 48.0058,
+      "current_price": 10.614
+    },
+    {
+      "region": "ibb",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 10.614,
+      "current_price": 48.0096
+    },
+    {
+      "region": "ibb",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58125208125209,
+      "previous_price": 48.048,
+      "current_price": 9.8108
+    },
+    {
+      "region": "ibb",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2954702980389,
+      "previous_price": 9.8108,
+      "current_price": 48.0038
+    },
+    {
+      "region": "ibb",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74232193512645,
+      "previous_price": 48.0134,
+      "current_price": 9.7264
+    },
+    {
+      "region": "ibb",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.60092120414544,
+      "previous_price": 9.7264,
+      "current_price": 48.0096
+    },
+    {
+      "region": "ibb",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1627341198427,
+      "previous_price": 48.0096,
+      "current_price": 8.5636
+    },
+    {
+      "region": "ibb",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7361390069597,
+      "previous_price": 8.5636,
+      "current_price": 48.0192
+    },
+    {
+      "region": "ibb",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04684866868891,
+      "previous_price": 48.0654,
+      "current_price": 8.1486
+    },
+    {
+      "region": "ibb",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1048769113712,
+      "previous_price": 8.1486,
+      "current_price": 48.0038
+    },
+    {
+      "region": "lahj",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19681493275728,
+      "previous_price": 32.2191,
+      "current_price": 10.2467
+    },
+    {
+      "region": "lahj",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17302155816014,
+      "previous_price": 10.2467,
+      "current_price": 32.0899
+    },
+    {
+      "region": "lahj",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.2990498966073,
+      "previous_price": 32.4491,
+      "current_price": 9.3132
+    },
+    {
+      "region": "lahj",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 334.67980930292487,
+      "previous_price": 9.3132,
+      "current_price": 40.4826
+    },
+    {
+      "region": "lahj",
+      "date": "2021-01-01",
+      "shock_type": "price_surge",
+      "magnitude": 20.213869662521684,
+      "previous_price": 40.4826,
+      "current_price": 48.6657
+    },
+    {
+      "region": "lahj",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69156703430237,
+      "previous_price": 48.5535,
+      "current_price": 13.2592
+    },
+    {
+      "region": "lahj",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.92943767346446,
+      "previous_price": 13.2592,
+      "current_price": 48.7845
+    },
+    {
+      "region": "lahj",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.6530113159197,
+      "previous_price": 48.7013,
+      "current_price": 11.8573
+    },
+    {
+      "region": "lahj",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 325.90640365007204,
+      "previous_price": 11.8573,
+      "current_price": 50.501
+    },
+    {
+      "region": "lahj",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44624408451644,
+      "previous_price": 60.012,
+      "current_price": 14.7352
+    },
+    {
+      "region": "lahj",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2208046039416,
+      "previous_price": 14.7352,
+      "current_price": 60.0048
+    },
+    {
+      "region": "lahj",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82783333333333,
+      "previous_price": 60.0,
+      "current_price": 15.1033
+    },
+    {
+      "region": "lahj",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3118457555633,
+      "previous_price": 15.1033,
+      "current_price": 60.0072
+    },
+    {
+      "region": "lahj",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.8901531816182,
+      "previous_price": 60.0072,
+      "current_price": 13.2675
+    },
+    {
+      "region": "lahj",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 13.2675,
+      "current_price": 60.012
+    },
+    {
+      "region": "lahj",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58128607844476,
+      "previous_price": 60.0601,
+      "current_price": 12.2635
+    },
+    {
+      "region": "lahj",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2958780119868,
+      "previous_price": 12.2635,
+      "current_price": 60.0048
+    },
+    {
+      "region": "lahj",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74217219178631,
+      "previous_price": 60.0168,
+      "current_price": 12.1581
+    },
+    {
+      "region": "lahj",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.5968613516915,
+      "previous_price": 12.1581,
+      "current_price": 60.012
+    },
+    {
+      "region": "lahj",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1626299740052,
+      "previous_price": 64.0128,
+      "current_price": 11.4182
+    },
+    {
+      "region": "lahj",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.73286507505554,
+      "previous_price": 11.4182,
+      "current_price": 64.0256
+    },
+    {
+      "region": "lahj",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.046755481897,
+      "previous_price": 62.752,
+      "current_price": 10.6385
+    },
+    {
+      "region": "lahj",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.10278704704615,
+      "previous_price": 10.6385,
+      "current_price": 62.6717
+    },
+    {
+      "region": "marib",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19688548809609,
+      "previous_price": 48.3286,
+      "current_price": 15.37
+    },
+    {
+      "region": "marib",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 239.27130774235525,
+      "previous_price": 15.37,
+      "current_price": 52.146
+    },
+    {
+      "region": "marib",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 70.64698081843821,
+      "previous_price": 53.541,
+      "current_price": 15.7159
+    },
+    {
+      "region": "marib",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 286.3844895933418,
+      "previous_price": 15.7159,
+      "current_price": 60.7238
+    },
+    {
+      "region": "marib",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69157828309872,
+      "previous_price": 60.6919,
+      "current_price": 16.574
+    },
+    {
+      "region": "marib",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9292868348015,
+      "previous_price": 16.574,
+      "current_price": 60.9806
+    },
+    {
+      "region": "marib",
+      "date": "2021-07-01",
+      "shock_type": "price_surge",
+      "magnitude": 19.795311951669873,
+      "previous_price": 60.9806,
+      "current_price": 73.0519
+    },
+    {
+      "region": "marib",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.00552620807947,
+      "previous_price": 73.0519,
+      "current_price": 16.7979
+    },
+    {
+      "region": "marib",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.62391727537374,
+      "previous_price": 16.7979,
+      "current_price": 68.1363
+    },
+    {
+      "region": "marib",
+      "date": "2021-10-01",
+      "shock_type": "price_surge",
+      "magnitude": 17.5527582213886,
+      "previous_price": 68.1363,
+      "current_price": 80.0961
+    },
+    {
+      "region": "marib",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 76.33364893286402,
+      "previous_price": 83.0166,
+      "current_price": 19.647
+    },
+    {
+      "region": "marib",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2194228126432,
+      "previous_price": 19.647,
+      "current_price": 80.0064
+    },
+    {
+      "region": "marib",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.98236024844721,
+      "previous_price": 80.5,
+      "current_price": 22.5542
+    },
+    {
+      "region": "marib",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 323.47545024873415,
+      "previous_price": 22.5542,
+      "current_price": 95.5115
+    },
+    {
+      "region": "marib",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.79797211792336,
+      "previous_price": 96.0115,
+      "current_price": 21.3165
+    },
+    {
+      "region": "marib",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 350.44542959679114,
+      "previous_price": 21.3165,
+      "current_price": 96.0192
+    },
+    {
+      "region": "marib",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 78.94983475304618,
+      "previous_price": 97.0971,
+      "current_price": 20.4391
+    },
+    {
+      "region": "marib",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2974739592252,
+      "previous_price": 20.4391,
+      "current_price": 100.008
+    },
+    {
+      "region": "marib",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74227216379414,
+      "previous_price": 100.028,
+      "current_price": 20.2634
+    },
+    {
+      "region": "marib",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.5992972551496,
+      "previous_price": 20.2634,
+      "current_price": 100.02
+    },
+    {
+      "region": "marib",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.16266746650669,
+      "previous_price": 100.02,
+      "current_price": 17.8409
+    },
+    {
+      "region": "marib",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 477.5560649967209,
+      "previous_price": 17.8409,
+      "current_price": 103.0412
+    },
+    {
+      "region": "marib",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.58023021867476,
+      "previous_price": 109.1484,
+      "current_price": 19.0134
+    },
+    {
+      "region": "marib",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 531.1843226356149,
+      "previous_price": 19.0134,
+      "current_price": 120.0096
+    },
+    {
+      "region": "raymah",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19688548809609,
+      "previous_price": 24.1643,
+      "current_price": 7.685
+    },
+    {
+      "region": "raymah",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17371502927784,
+      "previous_price": 7.685,
+      "current_price": 24.0674
+    },
+    {
+      "region": "raymah",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.29902041353013,
+      "previous_price": 24.3368,
+      "current_price": 6.9849
+    },
+    {
+      "region": "raymah",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74298844650608,
+      "previous_price": 6.9849,
+      "current_price": 24.2895
+    },
+    {
+      "region": "raymah",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69162327819153,
+      "previous_price": 24.2768,
+      "current_price": 6.6296
+    },
+    {
+      "region": "raymah",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.92868348014963,
+      "previous_price": 6.6296,
+      "current_price": 24.3922
+    },
+    {
+      "region": "raymah",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65275598958547,
+      "previous_price": 24.3506,
+      "current_price": 5.9287
+    },
+    {
+      "region": "raymah",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.62180579216357,
+      "previous_price": 5.9287,
+      "current_price": 24.0481
+    },
+    {
+      "region": "raymah",
+      "date": "2021-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 96.430949527234,
+      "previous_price": 24.0288,
+      "current_price": 47.2
+    },
+    {
+      "region": "raymah",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44616076784644,
+      "previous_price": 48.0096,
+      "current_price": 11.7882
+    },
+    {
+      "region": "raymah",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2190834902699,
+      "previous_price": 11.7882,
+      "current_price": 48.0038
+    },
+    {
+      "region": "raymah",
+      "date": "2022-03-01",
+      "shock_type": "price_surge",
+      "magnitude": 24.990104950024794,
+      "previous_price": 48.0038,
+      "current_price": 60.0
+    },
+    {
+      "region": "raymah",
+      "date": "2022-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 20.0,
+      "previous_price": 60.0,
+      "current_price": 48.0
+    },
+    {
+      "region": "raymah",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.345,
+      "previous_price": 48.0,
+      "current_price": 10.8744
+    },
+    {
+      "region": "raymah",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 341.45699992643273,
+      "previous_price": 10.8744,
+      "current_price": 48.0058
+    },
+    {
+      "region": "raymah",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.8901716042645,
+      "previous_price": 48.0058,
+      "current_price": 10.614
+    },
+    {
+      "region": "raymah",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 10.614,
+      "current_price": 48.0096
+    },
+    {
+      "region": "raymah",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58125208125209,
+      "previous_price": 48.048,
+      "current_price": 9.8108
+    },
+    {
+      "region": "raymah",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2954702980389,
+      "previous_price": 9.8108,
+      "current_price": 48.0038
+    },
+    {
+      "region": "raymah",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74232193512645,
+      "previous_price": 48.0134,
+      "current_price": 9.7264
+    },
+    {
+      "region": "raymah",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.60092120414544,
+      "previous_price": 9.7264,
+      "current_price": 48.0096
+    },
+    {
+      "region": "raymah",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1627341198427,
+      "previous_price": 48.0096,
+      "current_price": 8.5636
+    },
+    {
+      "region": "raymah",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7361390069597,
+      "previous_price": 8.5636,
+      "current_price": 48.0192
+    },
+    {
+      "region": "raymah",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04684866868891,
+      "previous_price": 48.0654,
+      "current_price": 8.1486
+    },
+    {
+      "region": "raymah",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1048769113712,
+      "previous_price": 8.1486,
+      "current_price": 48.0038
+    },
+    {
+      "region": "sana'a",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 70.06759598981094,
+      "previous_price": 34.2328,
+      "current_price": 10.2467
+    },
+    {
+      "region": "sana'a",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17302155816014,
+      "previous_price": 10.2467,
+      "current_price": 32.0899
+    },
+    {
+      "region": "sana'a",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.2990498966073,
+      "previous_price": 32.4491,
+      "current_price": 9.3132
+    },
+    {
+      "region": "sana'a",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74298844650602,
+      "previous_price": 9.3132,
+      "current_price": 32.386
+    },
+    {
+      "region": "sana'a",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.59526089777258,
+      "previous_price": 32.369,
+      "current_price": 10.1654
+    },
+    {
+      "region": "sana'a",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 299.9222853994924,
+      "previous_price": 10.1654,
+      "current_price": 40.6537
+    },
+    {
+      "region": "sana'a",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.435497383231,
+      "previous_price": 40.5844,
+      "current_price": 10.3752
+    },
+    {
+      "region": "sana'a",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 363.5688950574447,
+      "previous_price": 10.3752,
+      "current_price": 48.0962
+    },
+    {
+      "region": "sana'a",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44616076784644,
+      "previous_price": 48.0096,
+      "current_price": 11.7882
+    },
+    {
+      "region": "sana'a",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 324.18689876316995,
+      "previous_price": 11.7882,
+      "current_price": 50.004
+    },
+    {
+      "region": "sana'a",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.53865384615384,
+      "previous_price": 52.0,
+      "current_price": 11.6799
+    },
+    {
+      "region": "sana'a",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 345.2623738216937,
+      "previous_price": 11.6799,
+      "current_price": 52.0062
+    },
+    {
+      "region": "sana'a",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.74752336331036,
+      "previous_price": 51.6729,
+      "current_price": 11.4985
+    },
+    {
+      "region": "sana'a",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 11.4985,
+      "current_price": 52.0104
+    },
+    {
+      "region": "sana'a",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.4496736171266,
+      "previous_price": 51.7184,
+      "current_price": 10.6283
+    },
+    {
+      "region": "sana'a",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2993235042293,
+      "previous_price": 10.6283,
+      "current_price": 52.0042
+    },
+    {
+      "region": "sana'a",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74222622109947,
+      "previous_price": 52.0146,
+      "current_price": 10.537
+    },
+    {
+      "region": "sana'a",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.59779823479164,
+      "previous_price": 10.537,
+      "current_price": 52.0104
+    },
+    {
+      "region": "sana'a",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.16260594035039,
+      "previous_price": 52.0104,
+      "current_price": 9.2773
+    },
+    {
+      "region": "sana'a",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7321095577377,
+      "previous_price": 9.2773,
+      "current_price": 52.0208
+    },
+    {
+      "region": "sana'a",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04673636663927,
+      "previous_price": 52.0708,
+      "current_price": 8.8277
+    },
+    {
+      "region": "sana'a",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1024842257893,
+      "previous_price": 8.8277,
+      "current_price": 52.0042
+    },
+    {
+      "region": "shabwah",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19681493275728,
+      "previous_price": 32.2191,
+      "current_price": 10.2467
+    },
+    {
+      "region": "shabwah",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17302155816014,
+      "previous_price": 10.2467,
+      "current_price": 32.0899
+    },
+    {
+      "region": "shabwah",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.2990498966073,
+      "previous_price": 32.4491,
+      "current_price": 9.3132
+    },
+    {
+      "region": "shabwah",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 291.2113988747154,
+      "previous_price": 9.3132,
+      "current_price": 36.4343
+    },
+    {
+      "region": "shabwah",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69168316391217,
+      "previous_price": 40.4613,
+      "current_price": 11.0493
+    },
+    {
+      "region": "shabwah",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9300951191478,
+      "previous_price": 11.0493,
+      "current_price": 40.6537
+    },
+    {
+      "region": "shabwah",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 66.79942387255308,
+      "previous_price": 44.6429,
+      "current_price": 14.8217
+    },
+    {
+      "region": "shabwah",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.6228367866034,
+      "previous_price": 14.8217,
+      "current_price": 60.1202
+    },
+    {
+      "region": "shabwah",
+      "date": "2021-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 15.023000000000005,
+      "previous_price": 60.0,
+      "current_price": 69.0138
+    },
+    {
+      "region": "shabwah",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.22542448032134,
+      "previous_price": 69.0138,
+      "current_price": 15.7176
+    },
+    {
+      "region": "shabwah",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 281.768208886853,
+      "previous_price": 15.7176,
+      "current_price": 60.0048
+    },
+    {
+      "region": "shabwah",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82783333333333,
+      "previous_price": 60.0,
+      "current_price": 15.1033
+    },
+    {
+      "region": "shabwah",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3118457555633,
+      "previous_price": 15.1033,
+      "current_price": 60.0072
+    },
+    {
+      "region": "shabwah",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.8901531816182,
+      "previous_price": 60.0072,
+      "current_price": 13.2675
+    },
+    {
+      "region": "shabwah",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 13.2675,
+      "current_price": 60.012
+    },
+    {
+      "region": "shabwah",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58128607844476,
+      "previous_price": 60.0601,
+      "current_price": 12.2635
+    },
+    {
+      "region": "shabwah",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2958780119868,
+      "previous_price": 12.2635,
+      "current_price": 60.0048
+    },
+    {
+      "region": "shabwah",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74217219178631,
+      "previous_price": 60.0168,
+      "current_price": 12.1581
+    },
+    {
+      "region": "shabwah",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.5968613516915,
+      "previous_price": 12.1581,
+      "current_price": 60.012
+    },
+    {
+      "region": "shabwah",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.16273411984271,
+      "previous_price": 60.012,
+      "current_price": 10.7045
+    },
+    {
+      "region": "shabwah",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7361390069598,
+      "previous_price": 10.7045,
+      "current_price": 60.024
+    },
+    {
+      "region": "shabwah",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04675134025835,
+      "previous_price": 60.0817,
+      "current_price": 10.1858
+    },
+    {
+      "region": "shabwah",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.10247599599444,
+      "previous_price": 10.1858,
+      "current_price": 60.0048
+    },
+    {
+      "region": "socotra",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19685726594304,
+      "previous_price": 80.5477,
+      "current_price": 25.6167
+    },
+    {
+      "region": "socotra",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 213.17304726994496,
+      "previous_price": 25.6167,
+      "current_price": 80.2246
+    },
+    {
+      "region": "socotra",
+      "date": "2020-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 59.55218224833779,
+      "previous_price": 80.2246,
+      "current_price": 32.4491
+    },
+    {
+      "region": "socotra",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 28.24793291647534,
+      "previous_price": 32.4491,
+      "current_price": 23.2829
+    },
+    {
+      "region": "socotra",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 247.74491150157414,
+      "previous_price": 23.2829,
+      "current_price": 80.9651
+    },
+    {
+      "region": "socotra",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.6915258426272,
+      "previous_price": 80.9225,
+      "current_price": 22.0987
+    },
+    {
+      "region": "socotra",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.9284301791508,
+      "previous_price": 22.0987,
+      "current_price": 81.3074
+    },
+    {
+      "region": "socotra",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.65296025073674,
+      "previous_price": 81.1688,
+      "current_price": 19.7622
+    },
+    {
+      "region": "socotra",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.624373804536,
+      "previous_price": 19.7622,
+      "current_price": 80.1603
+    },
+    {
+      "region": "socotra",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44616076784644,
+      "previous_price": 80.016,
+      "current_price": 19.647
+    },
+    {
+      "region": "socotra",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2194228126432,
+      "previous_price": 19.647,
+      "current_price": 80.0064
+    },
+    {
+      "region": "socotra",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.827875,
+      "previous_price": 80.0,
+      "current_price": 20.1377
+    },
+    {
+      "region": "socotra",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3125034139947,
+      "previous_price": 20.1377,
+      "current_price": 80.0096
+    },
+    {
+      "region": "socotra",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.89015318161822,
+      "previous_price": 80.0096,
+      "current_price": 17.69
+    },
+    {
+      "region": "socotra",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 17.69,
+      "current_price": 80.016
+    },
+    {
+      "region": "socotra",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58131920414685,
+      "previous_price": 80.0801,
+      "current_price": 16.3513
+    },
+    {
+      "region": "socotra",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2968754777908,
+      "previous_price": 16.3513,
+      "current_price": 80.0064
+    },
+    {
+      "region": "socotra",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.67784020474267,
+      "previous_price": 80.0224,
+      "current_price": 20.2634
+    },
+    {
+      "region": "socotra",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 334.3673815845317,
+      "previous_price": 20.2634,
+      "current_price": 88.0176
+    },
+    {
+      "region": "socotra",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 82.1626924615077,
+      "previous_price": 80.016,
+      "current_price": 14.2727
+    },
+    {
+      "region": "socotra",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.73482942961033,
+      "previous_price": 14.2727,
+      "current_price": 80.032
+    },
+    {
+      "region": "socotra",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04682750605737,
+      "previous_price": 80.1089,
+      "current_price": 13.581
+    },
+    {
+      "region": "socotra",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.1053677932406,
+      "previous_price": 13.581,
+      "current_price": 80.0064
+    },
+    {
+      "region": "socotra",
+      "date": "2024-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 24.995000599927995,
+      "previous_price": 80.0096,
+      "current_price": 100.008
+    },
+    {
+      "region": "socotra",
+      "date": "2024-03-01",
+      "shock_type": "price_drop",
+      "magnitude": 20.0,
+      "previous_price": 100.008,
+      "current_price": 80.0064
+    },
+    {
+      "region": "socotra",
+      "date": "2024-04-01",
+      "shock_type": "price_surge",
+      "magnitude": 24.999999999999993,
+      "previous_price": 80.0064,
+      "current_price": 100.008
+    },
+    {
+      "region": "taizz",
+      "date": "2020-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 68.19681493275728,
+      "previous_price": 32.2191,
+      "current_price": 10.2467
+    },
+    {
+      "region": "taizz",
+      "date": "2020-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 222.9595869889818,
+      "previous_price": 10.2467,
+      "current_price": 33.0927
+    },
+    {
+      "region": "taizz",
+      "date": "2020-11-01",
+      "shock_type": "price_drop",
+      "magnitude": 71.2990498966073,
+      "previous_price": 32.4491,
+      "current_price": 9.3132
+    },
+    {
+      "region": "taizz",
+      "date": "2020-12-01",
+      "shock_type": "price_surge",
+      "magnitude": 421.6155564145513,
+      "previous_price": 9.3132,
+      "current_price": 48.5791
+    },
+    {
+      "region": "taizz",
+      "date": "2021-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 72.69156703430237,
+      "previous_price": 48.5535,
+      "current_price": 13.2592
+    },
+    {
+      "region": "taizz",
+      "date": "2021-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 267.92943767346446,
+      "previous_price": 13.2592,
+      "current_price": 48.7845
+    },
+    {
+      "region": "taizz",
+      "date": "2021-08-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.6530113159197,
+      "previous_price": 48.7013,
+      "current_price": 11.8573
+    },
+    {
+      "region": "taizz",
+      "date": "2021-09-01",
+      "shock_type": "price_surge",
+      "magnitude": 305.6252266536227,
+      "previous_price": 11.8573,
+      "current_price": 48.0962
+    },
+    {
+      "region": "taizz",
+      "date": "2022-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 75.44616076784644,
+      "previous_price": 48.0096,
+      "current_price": 11.7882
+    },
+    {
+      "region": "taizz",
+      "date": "2022-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 307.2190834902699,
+      "previous_price": 11.7882,
+      "current_price": 48.0038
+    },
+    {
+      "region": "taizz",
+      "date": "2022-05-01",
+      "shock_type": "price_drop",
+      "magnitude": 74.82791666666667,
+      "previous_price": 48.0,
+      "current_price": 12.0826
+    },
+    {
+      "region": "taizz",
+      "date": "2022-06-01",
+      "shock_type": "price_surge",
+      "magnitude": 297.3134921291775,
+      "previous_price": 12.0826,
+      "current_price": 48.0058
+    },
+    {
+      "region": "taizz",
+      "date": "2022-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 77.89013617607131,
+      "previous_price": 52.0062,
+      "current_price": 11.4985
+    },
+    {
+      "region": "taizz",
+      "date": "2022-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 352.3233465234596,
+      "previous_price": 11.4985,
+      "current_price": 52.0104
+    },
+    {
+      "region": "taizz",
+      "date": "2023-01-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.58141938557714,
+      "previous_price": 52.0521,
+      "current_price": 10.6283
+    },
+    {
+      "region": "taizz",
+      "date": "2023-02-01",
+      "shock_type": "price_surge",
+      "magnitude": 389.2993235042293,
+      "previous_price": 10.6283,
+      "current_price": 52.0042
+    },
+    {
+      "region": "taizz",
+      "date": "2023-04-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.74222622109947,
+      "previous_price": 52.0146,
+      "current_price": 10.537
+    },
+    {
+      "region": "taizz",
+      "date": "2023-05-01",
+      "shock_type": "price_surge",
+      "magnitude": 393.59779823479164,
+      "previous_price": 10.537,
+      "current_price": 52.0104
+    },
+    {
+      "region": "taizz",
+      "date": "2023-07-01",
+      "shock_type": "price_drop",
+      "magnitude": 79.41853936904926,
+      "previous_price": 52.0104,
+      "current_price": 10.7045
+    },
+    {
+      "region": "taizz",
+      "date": "2023-08-01",
+      "shock_type": "price_surge",
+      "magnitude": 460.7361390069598,
+      "previous_price": 10.7045,
+      "current_price": 60.024
+    },
+    {
+      "region": "taizz",
+      "date": "2023-10-01",
+      "shock_type": "price_drop",
+      "magnitude": 83.04675134025835,
+      "previous_price": 60.0817,
+      "current_price": 10.1858
+    },
+    {
+      "region": "taizz",
+      "date": "2023-11-01",
+      "shock_type": "price_surge",
+      "magnitude": 489.10247599599444,
+      "previous_price": 10.1858,
+      "current_price": 60.0048
+    }
+  ],
+  "market_clusters": [
+    {
+      "cluster_id": 1,
+      "main_market": "abyan",
+      "connected_markets": [
+        "abyan",
+        "taizz",
+        "raymah",
+        "ibb",
+        "lahj",
+        "al dhale'e",
+        "al bayda",
+        "aden",
+        "dhamar",
+        "amanat al asimah",
+        "hajjah",
+        "sana'a",
+        "al mahwit",
+        "al hudaydah",
+        "amran",
+        "al jawf",
+        "marib"
+      ],
+      "market_count": 17
+    },
+    {
+      "cluster_id": 2,
+      "main_market": "al maharah",
+      "connected_markets": [
+        "al maharah",
+        "shabwah",
+        "hadramaut",
+        "socotra"
+      ],
+      "market_count": 4
+    }
+  ],
+  "cluster_efficiency": [
+    {
+      "cluster_id": 1,
+      "internal_connectivity": 205367.40147756002,
+      "market_coverage": 0.8095238095238095,
+      "price_convergence": 17.5901323417777,
+      "stability": 21.513181424013837,
+      "efficiency_score": 9451.309888667303
+    },
+    {
+      "cluster_id": 2,
+      "internal_connectivity": 22399.95343188,
+      "market_coverage": 0.19047619047619047,
+      "price_convergence": 15.307847715949865,
+      "stability": 24.832372479659995,
+      "efficiency_score": 278.72354082667204
+    }
+  ],
+  "flow_analysis": [
+    {
+      "source": "abyan",
+      "target": "aden",
+      "total_flow": 2566.705158,
+      "avg_flow": 54.6107480425532,
+      "flow_count": 47,
+      "avg_price_differential": 54.6107480425532
+    },
+    {
+      "source": "abyan",
+      "target": "al bayda",
+      "total_flow": 352.005607,
+      "avg_flow": 7.489481,
+      "flow_count": 47,
+      "avg_price_differential": 7.489481
+    },
+    {
+      "source": "abyan",
+      "target": "al dhale'e",
+      "total_flow": 1894.518928,
+      "avg_flow": 40.308913361702125,
+      "flow_count": 47,
+      "avg_price_differential": 40.308913361702125
+    },
+    {
+      "source": "abyan",
+      "target": "lahj",
+      "total_flow": 577.71858,
+      "avg_flow": 12.291884680851064,
+      "flow_count": 47,
+      "avg_price_differential": 12.291884680851064
+    },
+    {
+      "source": "abyan",
+      "target": "taizz",
+      "total_flow": 420.77251500000006,
+      "avg_flow": 9.350500333333335,
+      "flow_count": 45,
+      "avg_price_differential": 9.350500333333335
+    },
+    {
+      "source": "aden",
+      "target": "abyan",
+      "total_flow": 2566.705158,
+      "avg_flow": 54.6107480425532,
+      "flow_count": 47,
+      "avg_price_differential": 54.6107480425532
+    },
+    {
+      "source": "aden",
+      "target": "al bayda",
+      "total_flow": 2281.900609,
+      "avg_flow": 48.55107678723404,
+      "flow_count": 47,
+      "avg_price_differential": 48.55107678723404
+    },
+    {
+      "source": "aden",
+      "target": "al dhale'e",
+      "total_flow": 701.81242,
+      "avg_flow": 14.93217914893617,
+      "flow_count": 47,
+      "avg_price_differential": 14.93217914893617
+    },
+    {
+      "source": "aden",
+      "target": "lahj",
+      "total_flow": 1990.8394379999997,
+      "avg_flow": 42.358285914893614,
+      "flow_count": 47,
+      "avg_price_differential": 42.358285914893614
+    },
+    {
+      "source": "aden",
+      "target": "taizz",
+      "total_flow": 2164.643006,
+      "avg_flow": 47.05745665217391,
+      "flow_count": 46,
+      "avg_price_differential": 47.05745665217391
+    },
+    {
+      "source": "al bayda",
+      "target": "abyan",
+      "total_flow": 352.005607,
+      "avg_flow": 7.489481,
+      "flow_count": 47,
+      "avg_price_differential": 7.489481
+    },
+    {
+      "source": "al bayda",
+      "target": "aden",
+      "total_flow": 2281.900609,
+      "avg_flow": 48.55107678723404,
+      "flow_count": 47,
+      "avg_price_differential": 48.55107678723404
+    },
+    {
+      "source": "al bayda",
+      "target": "al dhale'e",
+      "total_flow": 1609.714379,
+      "avg_flow": 34.24924210638298,
+      "flow_count": 47,
+      "avg_price_differential": 34.24924210638298
+    },
+    {
+      "source": "al bayda",
+      "target": "dhamar",
+      "total_flow": 327.72919099999996,
+      "avg_flow": 6.972961510638297,
+      "flow_count": 47,
+      "avg_price_differential": 6.972961510638297
+    },
+    {
+      "source": "al bayda",
+      "target": "lahj",
+      "total_flow": 316.12878700000005,
+      "avg_flow": 6.7261444042553205,
+      "flow_count": 47,
+      "avg_price_differential": 6.7261444042553205
+    },
+    {
+      "source": "al dhale'e",
+      "target": "abyan",
+      "total_flow": 1894.518928,
+      "avg_flow": 40.308913361702125,
+      "flow_count": 47,
+      "avg_price_differential": 40.308913361702125
+    },
+    {
+      "source": "al dhale'e",
+      "target": "al bayda",
+      "total_flow": 1609.714379,
+      "avg_flow": 34.24924210638298,
+      "flow_count": 47,
+      "avg_price_differential": 34.24924210638298
+    },
+    {
+      "source": "al dhale'e",
+      "target": "ibb",
+      "total_flow": 1728.238498,
+      "avg_flow": 36.77103187234042,
+      "flow_count": 47,
+      "avg_price_differential": 36.77103187234042
+    },
+    {
+      "source": "al dhale'e",
+      "target": "lahj",
+      "total_flow": 1326.297184,
+      "avg_flow": 28.219089021276595,
+      "flow_count": 47,
+      "avg_price_differential": 28.219089021276595
+    },
+    {
+      "source": "al dhale'e",
+      "target": "taizz",
+      "total_flow": 1513.9973050000003,
+      "avg_flow": 32.912984891304355,
+      "flow_count": 46,
+      "avg_price_differential": 32.912984891304355
+    },
+    {
+      "source": "al hudaydah",
+      "target": "al mahwit",
+      "total_flow": 121.17733899999999,
+      "avg_flow": 2.5782412553191487,
+      "flow_count": 47,
+      "avg_price_differential": 2.5782412553191487
+    },
+    {
+      "source": "al hudaydah",
+      "target": "amanat al asimah",
+      "total_flow": 1332.4378069999998,
+      "avg_flow": 28.34974057446808,
+      "flow_count": 47,
+      "avg_price_differential": 28.34974057446808
+    },
+    {
+      "source": "al hudaydah",
+      "target": "amran",
+      "total_flow": 170.517777,
+      "avg_flow": 3.6280378085106384,
+      "flow_count": 47,
+      "avg_price_differential": 3.6280378085106384
+    },
+    {
+      "source": "al hudaydah",
+      "target": "hajjah",
+      "total_flow": 529.721536,
+      "avg_flow": 11.77158968888889,
+      "flow_count": 45,
+      "avg_price_differential": 11.77158968888889
+    },
+    {
+      "source": "al hudaydah",
+      "target": "raymah",
+      "total_flow": 298.94847899999996,
+      "avg_flow": 6.360605936170212,
+      "flow_count": 47,
+      "avg_price_differential": 6.360605936170212
+    },
+    {
+      "source": "al jawf",
+      "target": "amanat al asimah",
+      "total_flow": 687.6390549999999,
+      "avg_flow": 14.63061819148936,
+      "flow_count": 47,
+      "avg_price_differential": 14.63061819148936
+    },
+    {
+      "source": "al jawf",
+      "target": "amran",
+      "total_flow": 533.658119,
+      "avg_flow": 11.354428063829788,
+      "flow_count": 47,
+      "avg_price_differential": 11.354428063829788
+    },
+    {
+      "source": "al jawf",
+      "target": "hajjah",
+      "total_flow": 219.83764000000002,
+      "avg_flow": 4.677396595744681,
+      "flow_count": 47,
+      "avg_price_differential": 4.677396595744681
+    },
+    {
+      "source": "al jawf",
+      "target": "marib",
+      "total_flow": 1363.885263,
+      "avg_flow": 29.018835382978722,
+      "flow_count": 47,
+      "avg_price_differential": 29.018835382978722
+    },
+    {
+      "source": "al jawf",
+      "target": "sana'a",
+      "total_flow": 268.264816,
+      "avg_flow": 5.707762042553191,
+      "flow_count": 47,
+      "avg_price_differential": 5.707762042553191
+    },
+    {
+      "source": "al maharah",
+      "target": "al bayda",
+      "total_flow": 1350.9886069999998,
+      "avg_flow": 28.744438446808505,
+      "flow_count": 47,
+      "avg_price_differential": 28.744438446808505
+    },
+    {
+      "source": "al maharah",
+      "target": "hadramaut",
+      "total_flow": 1240.0349560000002,
+      "avg_flow": 26.38372246808511,
+      "flow_count": 47,
+      "avg_price_differential": 26.38372246808511
+    },
+    {
+      "source": "al maharah",
+      "target": "marib",
+      "total_flow": 259.97998799999993,
+      "avg_flow": 5.651738869565216,
+      "flow_count": 46,
+      "avg_price_differential": 5.651738869565216
+    },
+    {
+      "source": "al maharah",
+      "target": "shabwah",
+      "total_flow": 1118.601074,
+      "avg_flow": 23.80002285106383,
+      "flow_count": 47,
+      "avg_price_differential": 23.80002285106383
+    },
+    {
+      "source": "al maharah",
+      "target": "socotra",
+      "total_flow": 547.7504869999999,
+      "avg_flow": 11.654265680851061,
+      "flow_count": 47,
+      "avg_price_differential": 11.654265680851061
+    },
+    {
+      "source": "al mahwit",
+      "target": "al hudaydah",
+      "total_flow": 121.17733899999999,
+      "avg_flow": 2.5782412553191487,
+      "flow_count": 47,
+      "avg_price_differential": 2.5782412553191487
+    },
+    {
+      "source": "al mahwit",
+      "target": "amanat al asimah",
+      "total_flow": 1275.4707739999994,
+      "avg_flow": 27.137676042553178,
+      "flow_count": 47,
+      "avg_price_differential": 27.137676042553178
+    },
+    {
+      "source": "al mahwit",
+      "target": "amran",
+      "total_flow": 202.096682,
+      "avg_flow": 4.393406130434783,
+      "flow_count": 46,
+      "avg_price_differential": 4.393406130434783
+    },
+    {
+      "source": "al mahwit",
+      "target": "hajjah",
+      "total_flow": 526.5116650000001,
+      "avg_flow": 11.202375851063833,
+      "flow_count": 47,
+      "avg_price_differential": 11.202375851063833
+    },
+    {
+      "source": "al mahwit",
+      "target": "raymah",
+      "total_flow": 318.335603,
+      "avg_flow": 6.920339195652174,
+      "flow_count": 46,
+      "avg_price_differential": 6.920339195652174
+    },
+    {
+      "source": "amanat al asimah",
+      "target": "al mahwit",
+      "total_flow": 1275.4707739999994,
+      "avg_flow": 27.137676042553178,
+      "flow_count": 47,
+      "avg_price_differential": 27.137676042553178
+    },
+    {
+      "source": "amanat al asimah",
+      "target": "amran",
+      "total_flow": 1208.892992,
+      "avg_flow": 25.721127489361702,
+      "flow_count": 47,
+      "avg_price_differential": 25.721127489361702
+    },
+    {
+      "source": "amanat al asimah",
+      "target": "dhamar",
+      "total_flow": 1191.312064,
+      "avg_flow": 25.34706519148936,
+      "flow_count": 47,
+      "avg_price_differential": 25.34706519148936
+    },
+    {
+      "source": "amanat al asimah",
+      "target": "hajjah",
+      "total_flow": 833.1302150000001,
+      "avg_flow": 17.726174787234047,
+      "flow_count": 47,
+      "avg_price_differential": 17.726174787234047
+    },
+    {
+      "source": "amanat al asimah",
+      "target": "sana'a",
+      "total_flow": 917.992167,
+      "avg_flow": 19.531748234042553,
+      "flow_count": 47,
+      "avg_price_differential": 19.531748234042553
+    },
+    {
+      "source": "amran",
+      "target": "al jawf",
+      "total_flow": 533.658119,
+      "avg_flow": 11.354428063829788,
+      "flow_count": 47,
+      "avg_price_differential": 11.354428063829788
+    },
+    {
+      "source": "amran",
+      "target": "al mahwit",
+      "total_flow": 202.096682,
+      "avg_flow": 4.393406130434783,
+      "flow_count": 46,
+      "avg_price_differential": 4.393406130434783
+    },
+    {
+      "source": "amran",
+      "target": "amanat al asimah",
+      "total_flow": 1208.892992,
+      "avg_flow": 25.721127489361702,
+      "flow_count": 47,
+      "avg_price_differential": 25.721127489361702
+    },
+    {
+      "source": "amran",
+      "target": "hajjah",
+      "total_flow": 528.040767,
+      "avg_flow": 11.234909936170212,
+      "flow_count": 47,
+      "avg_price_differential": 11.234909936170212
+    },
+    {
+      "source": "amran",
+      "target": "sana'a",
+      "total_flow": 346.182271,
+      "avg_flow": 7.365580234042554,
+      "flow_count": 47,
+      "avg_price_differential": 7.365580234042554
+    },
+    {
+      "source": "dhamar",
+      "target": "al dhale'e",
+      "total_flow": 1937.4435700000001,
+      "avg_flow": 41.22220361702128,
+      "flow_count": 47,
+      "avg_price_differential": 41.22220361702128
+    },
+    {
+      "source": "dhamar",
+      "target": "amanat al asimah",
+      "total_flow": 1191.312064,
+      "avg_flow": 25.34706519148936,
+      "flow_count": 47,
+      "avg_price_differential": 25.34706519148936
+    },
+    {
+      "source": "dhamar",
+      "target": "ibb",
+      "total_flow": 247.0191,
+      "avg_flow": 5.2557255319148934,
+      "flow_count": 47,
+      "avg_price_differential": 5.2557255319148934
+    },
+    {
+      "source": "dhamar",
+      "target": "raymah",
+      "total_flow": 160.68525400000004,
+      "avg_flow": 3.4188351914893627,
+      "flow_count": 47,
+      "avg_price_differential": 3.4188351914893627
+    },
+    {
+      "source": "dhamar",
+      "target": "sana'a",
+      "total_flow": 273.31989699999997,
+      "avg_flow": 5.815316957446808,
+      "flow_count": 47,
+      "avg_price_differential": 5.815316957446808
+    },
+    {
+      "source": "hadramaut",
+      "target": "abyan",
+      "total_flow": 408.80432200000007,
+      "avg_flow": 8.697964297872343,
+      "flow_count": 47,
+      "avg_price_differential": 8.697964297872343
+    },
+    {
+      "source": "hadramaut",
+      "target": "al bayda",
+      "total_flow": 177.965421,
+      "avg_flow": 3.786498319148936,
+      "flow_count": 47,
+      "avg_price_differential": 3.786498319148936
+    },
+    {
+      "source": "hadramaut",
+      "target": "al maharah",
+      "total_flow": 1240.0349560000002,
+      "avg_flow": 26.38372246808511,
+      "flow_count": 47,
+      "avg_price_differential": 26.38372246808511
+    },
+    {
+      "source": "hadramaut",
+      "target": "marib",
+      "total_flow": 1433.148478,
+      "avg_flow": 30.49252080851064,
+      "flow_count": 47,
+      "avg_price_differential": 30.49252080851064
+    },
+    {
+      "source": "hadramaut",
+      "target": "shabwah",
+      "total_flow": 139.138193,
+      "avg_flow": 3.0247433260869565,
+      "flow_count": 46,
+      "avg_price_differential": 3.0247433260869565
+    },
+    {
+      "source": "hajjah",
+      "target": "al mahwit",
+      "total_flow": 526.5116650000001,
+      "avg_flow": 11.202375851063833,
+      "flow_count": 47,
+      "avg_price_differential": 11.202375851063833
+    },
+    {
+      "source": "hajjah",
+      "target": "amanat al asimah",
+      "total_flow": 833.1302150000001,
+      "avg_flow": 17.726174787234047,
+      "flow_count": 47,
+      "avg_price_differential": 17.726174787234047
+    },
+    {
+      "source": "hajjah",
+      "target": "amran",
+      "total_flow": 528.040767,
+      "avg_flow": 11.234909936170212,
+      "flow_count": 47,
+      "avg_price_differential": 11.234909936170212
+    },
+    {
+      "source": "hajjah",
+      "target": "raymah",
+      "total_flow": 340.304977,
+      "avg_flow": 7.240531425531915,
+      "flow_count": 47,
+      "avg_price_differential": 7.240531425531915
+    },
+    {
+      "source": "hajjah",
+      "target": "sana'a",
+      "total_flow": 212.61306,
+      "avg_flow": 4.5236821276595744,
+      "flow_count": 47,
+      "avg_price_differential": 4.5236821276595744
+    },
+    {
+      "source": "ibb",
+      "target": "al dhale'e",
+      "total_flow": 1728.238498,
+      "avg_flow": 36.77103187234042,
+      "flow_count": 47,
+      "avg_price_differential": 36.77103187234042
+    },
+    {
+      "source": "ibb",
+      "target": "dhamar",
+      "total_flow": 247.0191,
+      "avg_flow": 5.2557255319148934,
+      "flow_count": 47,
+      "avg_price_differential": 5.2557255319148934
+    },
+    {
+      "source": "ibb",
+      "target": "lahj",
+      "total_flow": 409.58529000000004,
+      "avg_flow": 8.714580638297873,
+      "flow_count": 47,
+      "avg_price_differential": 8.714580638297873
+    },
+    {
+      "source": "ibb",
+      "target": "raymah",
+      "total_flow": 217.29197399999998,
+      "avg_flow": 4.723738565217391,
+      "flow_count": 46,
+      "avg_price_differential": 4.723738565217391
+    },
+    {
+      "source": "ibb",
+      "target": "taizz",
+      "total_flow": 222.77372299999996,
+      "avg_flow": 4.84290702173913,
+      "flow_count": 46,
+      "avg_price_differential": 4.84290702173913
+    },
+    {
+      "source": "lahj",
+      "target": "abyan",
+      "total_flow": 577.71858,
+      "avg_flow": 12.291884680851064,
+      "flow_count": 47,
+      "avg_price_differential": 12.291884680851064
+    },
+    {
+      "source": "lahj",
+      "target": "aden",
+      "total_flow": 1990.8394379999997,
+      "avg_flow": 42.358285914893614,
+      "flow_count": 47,
+      "avg_price_differential": 42.358285914893614
+    },
+    {
+      "source": "lahj",
+      "target": "al dhale'e",
+      "total_flow": 1326.297184,
+      "avg_flow": 28.219089021276595,
+      "flow_count": 47,
+      "avg_price_differential": 28.219089021276595
+    },
+    {
+      "source": "lahj",
+      "target": "ibb",
+      "total_flow": 409.58529000000004,
+      "avg_flow": 8.714580638297873,
+      "flow_count": 47,
+      "avg_price_differential": 8.714580638297873
+    },
+    {
+      "source": "lahj",
+      "target": "taizz",
+      "total_flow": 250.72949799999998,
+      "avg_flow": 5.450641260869565,
+      "flow_count": 46,
+      "avg_price_differential": 5.450641260869565
+    },
+    {
+      "source": "marib",
+      "target": "al jawf",
+      "total_flow": 1363.885263,
+      "avg_flow": 29.018835382978722,
+      "flow_count": 47,
+      "avg_price_differential": 29.018835382978722
+    },
+    {
+      "source": "marib",
+      "target": "amanat al asimah",
+      "total_flow": 799.2482539999999,
+      "avg_flow": 17.005281999999998,
+      "flow_count": 47,
+      "avg_price_differential": 17.005281999999998
+    },
+    {
+      "source": "marib",
+      "target": "amran",
+      "total_flow": 1889.412248,
+      "avg_flow": 40.20026059574468,
+      "flow_count": 47,
+      "avg_price_differential": 40.20026059574468
+    },
+    {
+      "source": "marib",
+      "target": "dhamar",
+      "total_flow": 1871.83132,
+      "avg_flow": 39.82619829787234,
+      "flow_count": 47,
+      "avg_price_differential": 39.82619829787234
+    },
+    {
+      "source": "marib",
+      "target": "sana'a",
+      "total_flow": 1598.5114229999997,
+      "avg_flow": 34.01088134042553,
+      "flow_count": 47,
+      "avg_price_differential": 34.01088134042553
+    },
+    {
+      "source": "raymah",
+      "target": "al hudaydah",
+      "total_flow": 298.94847899999996,
+      "avg_flow": 6.360605936170212,
+      "flow_count": 47,
+      "avg_price_differential": 6.360605936170212
+    },
+    {
+      "source": "raymah",
+      "target": "al mahwit",
+      "total_flow": 318.335603,
+      "avg_flow": 6.920339195652174,
+      "flow_count": 46,
+      "avg_price_differential": 6.920339195652174
+    },
+    {
+      "source": "raymah",
+      "target": "amanat al asimah",
+      "total_flow": 1159.5340319999998,
+      "avg_flow": 24.670936851063825,
+      "flow_count": 47,
+      "avg_price_differential": 24.670936851063825
+    },
+    {
+      "source": "raymah",
+      "target": "dhamar",
+      "total_flow": 160.68525400000004,
+      "avg_flow": 3.4188351914893627,
+      "flow_count": 47,
+      "avg_price_differential": 3.4188351914893627
+    },
+    {
+      "source": "raymah",
+      "target": "ibb",
+      "total_flow": 217.29197399999998,
+      "avg_flow": 4.723738565217391,
+      "flow_count": 46,
+      "avg_price_differential": 4.723738565217391
+    },
+    {
+      "source": "sana'a",
+      "target": "al mahwit",
+      "total_flow": 365.10604400000005,
+      "avg_flow": 7.937087913043479,
+      "flow_count": 46,
+      "avg_price_differential": 7.937087913043479
+    },
+    {
+      "source": "sana'a",
+      "target": "amanat al asimah",
+      "total_flow": 917.992167,
+      "avg_flow": 19.531748234042553,
+      "flow_count": 47,
+      "avg_price_differential": 19.531748234042553
+    },
+    {
+      "source": "sana'a",
+      "target": "amran",
+      "total_flow": 346.182271,
+      "avg_flow": 7.365580234042554,
+      "flow_count": 47,
+      "avg_price_differential": 7.365580234042554
+    },
+    {
+      "source": "sana'a",
+      "target": "dhamar",
+      "total_flow": 273.31989699999997,
+      "avg_flow": 5.815316957446808,
+      "flow_count": 47,
+      "avg_price_differential": 5.815316957446808
+    },
+    {
+      "source": "sana'a",
+      "target": "marib",
+      "total_flow": 1598.5114229999997,
+      "avg_flow": 34.01088134042553,
+      "flow_count": 47,
+      "avg_price_differential": 34.01088134042553
+    },
+    {
+      "source": "shabwah",
+      "target": "abyan",
+      "total_flow": 526.3718239999998,
+      "avg_flow": 11.199400510638295,
+      "flow_count": 47,
+      "avg_price_differential": 11.199400510638295
+    },
+    {
+      "source": "shabwah",
+      "target": "al bayda",
+      "total_flow": 284.28210299999995,
+      "avg_flow": 6.048555382978722,
+      "flow_count": 47,
+      "avg_price_differential": 6.048555382978722
+    },
+    {
+      "source": "shabwah",
+      "target": "al dhale'e",
+      "total_flow": 1385.25645,
+      "avg_flow": 29.473541489361704,
+      "flow_count": 47,
+      "avg_price_differential": 29.473541489361704
+    },
+    {
+      "source": "shabwah",
+      "target": "hadramaut",
+      "total_flow": 139.138193,
+      "avg_flow": 3.0247433260869565,
+      "flow_count": 46,
+      "avg_price_differential": 3.0247433260869565
+    },
+    {
+      "source": "shabwah",
+      "target": "marib",
+      "total_flow": 1311.714596,
+      "avg_flow": 27.908821191489363,
+      "flow_count": 47,
+      "avg_price_differential": 27.908821191489363
+    },
+    {
+      "source": "socotra",
+      "target": "abyan",
+      "total_flow": 1562.1903049999999,
+      "avg_flow": 33.23809159574468,
+      "flow_count": 47,
+      "avg_price_differential": 33.23809159574468
+    },
+    {
+      "source": "socotra",
+      "target": "al bayda",
+      "total_flow": 1277.3857560000001,
+      "avg_flow": 27.178420340425536,
+      "flow_count": 47,
+      "avg_price_differential": 27.178420340425536
+    },
+    {
+      "source": "socotra",
+      "target": "al maharah",
+      "total_flow": 547.7504869999999,
+      "avg_flow": 11.654265680851061,
+      "flow_count": 47,
+      "avg_price_differential": 11.654265680851061
+    },
+    {
+      "source": "socotra",
+      "target": "hadramaut",
+      "total_flow": 1166.4321049999996,
+      "avg_flow": 24.81770436170212,
+      "flow_count": 47,
+      "avg_price_differential": 24.81770436170212
+    },
+    {
+      "source": "socotra",
+      "target": "shabwah",
+      "total_flow": 1044.998223,
+      "avg_flow": 22.234004744680853,
+      "flow_count": 47,
+      "avg_price_differential": 22.234004744680853
+    },
+    {
+      "source": "taizz",
+      "target": "al dhale'e",
+      "total_flow": 1513.9973050000003,
+      "avg_flow": 32.912984891304355,
+      "flow_count": 46,
+      "avg_price_differential": 32.912984891304355
+    },
+    {
+      "source": "taizz",
+      "target": "dhamar",
+      "total_flow": 411.46007299999997,
+      "avg_flow": 8.944784195652174,
+      "flow_count": 46,
+      "avg_price_differential": 8.944784195652174
+    },
+    {
+      "source": "taizz",
+      "target": "ibb",
+      "total_flow": 222.77372299999996,
+      "avg_flow": 4.84290702173913,
+      "flow_count": 46,
+      "avg_price_differential": 4.84290702173913
+    },
+    {
+      "source": "taizz",
+      "target": "lahj",
+      "total_flow": 250.72949799999998,
+      "avg_flow": 5.450641260869565,
+      "flow_count": 46,
+      "avg_price_differential": 5.450641260869565
+    },
+    {
+      "source": "taizz",
+      "target": "raymah",
+      "total_flow": 406.713804,
+      "avg_flow": 8.841604434782608,
+      "flow_count": 46,
+      "avg_price_differential": 8.841604434782608
+    }
+  ],
+  "spatial_autocorrelation": {
+    "global": {
+      "moran_i": -0.013374171253723591,
+      "p_value": null,
+      "z_score": null,
+      "significance": false
+    },
+    "local": {
+      "shabwah": {
+        "local_i": -0.24684151985598377,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "hadramaut": {
+        "local_i": -0.43513395747246814,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "dhamar": {
+        "local_i": -0.2301279425814005,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "hajjah": {
+        "local_i": 1.1141375605022443,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "al dhale'e": {
+        "local_i": -3.782912743747405,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "al bayda": {
+        "local_i": -1.056183992542793,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "aden": {
+        "local_i": -0.29210492587069287,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "al jawf": {
+        "local_i": -0.06994590206995883,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "abyan": {
+        "local_i": -2.639906206503585,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "amanat al asimah": {
+        "local_i": -2.4070036060901288,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "al hudaydah": {
+        "local_i": 2.6996188912232575,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "sana'a": {
+        "local_i": 0.33048849070736674,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "raymah": {
+        "local_i": 2.461714081568846,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "taizz": {
+        "local_i": 0.2850181647044111,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "marib": {
+        "local_i": -2.9238297359139485,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "lahj": {
+        "local_i": -0.20778953471273837,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "ibb": {
+        "local_i": 0.34027509506357934,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "amran": {
+        "local_i": 1.400554713551504,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "socotra": {
+        "local_i": -0.5877957577003243,
+        "p_value": null,
+        "cluster_type": "low-low"
+      },
+      "al maharah": {
+        "local_i": 2.2583136381899203,
+        "p_value": null,
+        "cluster_type": "high-high"
+      },
+      "al mahwit": {
+        "local_i": 2.5851672079093153,
+        "p_value": null,
+        "cluster_type": "high-high"
+      }
+    }
+  },
+  "seasonal_analysis": {
+    "seasonal_strength": 0.18536082879103122,
+    "trend_strength": 0.6695248649000158,
+    "peak_month": 3,
+    "trough_month": 9,
+    "seasonal_pattern": [
+      -1.073599515221659,
+      -0.1351464325051419,
+      -4.536290780790221,
+      -1.8085878358303547,
+      -1.7823081231937146,
+      0.7015922346546197,
+      3.261897502840677,
+      3.21936259653914,
+      6.607519868874068,
+      0.001808158412264893,
+      -0.06259146074472555,
+      -4.39365621303495,
+      -1.073599515221659,
+      -0.1351464325051419,
+      -4.536290780790221,
+      -1.8085878358303547,
+      -1.7823081231937146,
+      0.7015922346546197,
+      3.261897502840677,
+      3.21936259653914,
+      6.607519868874068,
+      0.001808158412264893,
+      -0.06259146074472555,
+      -4.39365621303495,
+      -1.073599515221659,
+      -0.1351464325051419,
+      -4.536290780790221,
+      -1.8085878358303547,
+      -1.7823081231937146,
+      0.7015922346546197,
+      3.261897502840677,
+      3.21936259653914,
+      6.607519868874068,
+      0.001808158412264893,
+      -0.06259146074472555,
+      -4.39365621303495,
+      -1.073599515221659,
+      -0.1351464325051419,
+      -4.536290780790221,
+      -1.8085878358303547,
+      -1.7823081231937146,
+      0.7015922346546197,
+      3.261897502840677,
+      3.21936259653914,
+      6.607519868874068,
+      0.001808158412264893,
+      -0.06259146074472555
+    ]
+  },
+  "conflict_adjusted_metrics": [
+    {
+      "month": "2020-07",
+      "adjusted_price": 26.127643709573167
+    },
+    {
+      "month": "2020-08",
+      "adjusted_price": 30.564300864175024
+    },
+    {
+      "month": "2020-09",
+      "adjusted_price": 30.461740433464808
+    },
+    {
+      "month": "2020-10",
+      "adjusted_price": 30.25471655710996
+    },
+    {
+      "month": "2020-11",
+      "adjusted_price": 31.573237458675926
+    },
+    {
+      "month": "2020-12",
+      "adjusted_price": 33.241488032857184
+    },
+    {
+      "month": "2021-01",
+      "adjusted_price": 44.14079845848701
+    },
+    {
+      "month": "2021-02",
+      "adjusted_price": 44.65925685884774
+    },
+    {
+      "month": "2021-03",
+      "adjusted_price": 45.39015171307173
+    },
+    {
+      "month": "2021-04",
+      "adjusted_price": 34.4606290711414
+    },
+    {
+      "month": "2021-05",
+      "adjusted_price": 34.99411306128757
+    },
+    {
+      "month": "2021-06",
+      "adjusted_price": 35.88114847198806
+    },
+    {
+      "month": "2021-07",
+      "adjusted_price": 35.744806976392276
+    },
+    {
+      "month": "2021-08",
+      "adjusted_price": 37.076179428456015
+    },
+    {
+      "month": "2021-09",
+      "adjusted_price": 38.70632243861584
+    },
+    {
+      "month": "2021-10",
+      "adjusted_price": 53.10484891778284
+    },
+    {
+      "month": "2021-11",
+      "adjusted_price": 55.856893354378755
+    },
+    {
+      "month": "2021-12",
+      "adjusted_price": 42.941981587789705
+    },
+    {
+      "month": "2022-01",
+      "adjusted_price": 44.79015833392189
+    },
+    {
+      "month": "2022-02",
+      "adjusted_price": 45.98337668417361
+    },
+    {
+      "month": "2022-03",
+      "adjusted_price": 61.87344863616141
+    },
+    {
+      "month": "2022-04",
+      "adjusted_price": 46.36390227649674
+    },
+    {
+      "month": "2022-05",
+      "adjusted_price": 46.639734490392264
+    },
+    {
+      "month": "2022-06",
+      "adjusted_price": 47.432196855093075
+    },
+    {
+      "month": "2022-07",
+      "adjusted_price": 63.922274166791034
+    },
+    {
+      "month": "2022-08",
+      "adjusted_price": 64.77596277350702
+    },
+    {
+      "month": "2022-09",
+      "adjusted_price": 48.65411614156425
+    },
+    {
+      "month": "2022-10",
+      "adjusted_price": 48.738654201602266
+    },
+    {
+      "month": "2022-11",
+      "adjusted_price": 48.828065995095514
+    },
+    {
+      "month": "2022-12",
+      "adjusted_price": 48.50205469000345
+    },
+    {
+      "month": "2023-01",
+      "adjusted_price": 48.58606479501259
+    },
+    {
+      "month": "2023-02",
+      "adjusted_price": 48.22183601765925
+    },
+    {
+      "month": "2023-03",
+      "adjusted_price": 48.17749135891393
+    },
+    {
+      "month": "2023-04",
+      "adjusted_price": 48.18427405787016
+    },
+    {
+      "month": "2023-05",
+      "adjusted_price": 49.43365518979955
+    },
+    {
+      "month": "2023-06",
+      "adjusted_price": 48.768607690206885
+    },
+    {
+      "month": "2023-07",
+      "adjusted_price": 49.27180628701791
+    },
+    {
+      "month": "2023-08",
+      "adjusted_price": 49.623484863717984
+    },
+    {
+      "month": "2023-09",
+      "adjusted_price": 49.1605952278201
+    },
+    {
+      "month": "2023-10",
+      "adjusted_price": 49.80388926438894
+    },
+    {
+      "month": "2023-11",
+      "adjusted_price": 49.95554746420299
+    },
+    {
+      "month": "2023-12",
+      "adjusted_price": 69.45245434420286
+    },
+    {
+      "month": "2024-01",
+      "adjusted_price": 70.8981368343448
+    },
+    {
+      "month": "2024-02",
+      "adjusted_price": 71.08171986570834
+    },
+    {
+      "month": "2024-03",
+      "adjusted_price": 71.40214785005638
+    },
+    {
+      "month": "2024-04",
+      "adjusted_price": 71.25220282396819
+    },
+    {
+      "month": "2024-05",
+      "adjusted_price": 71.73459363717419
+    }
+  ],
+  "market_integration": {
+    "price_correlation": {
+      "abyan": {
+        "abyan": 1.0,
+        "aden": 0.9023240723777571,
+        "al bayda": 0.9154624680163318,
+        "al dhale'e": 0.9306817291262871,
+        "al hudaydah": 0.9048592240480853,
+        "al jawf": 0.8896226823958197,
+        "al maharah": 0.9320920345806023,
+        "al mahwit": 0.9322645917091242,
+        "amanat al asimah": 0.7989528864865616,
+        "amran": 0.7825694121737421,
+        "dhamar": 0.9227632586831893,
+        "hadramaut": 0.8964645284375592,
+        "hajjah": 0.9015010120387903,
+        "ibb": 0.8364885524348331,
+        "lahj": 0.8682918286667136,
+        "marib": 0.9529291500524372,
+        "raymah": 0.8496985238176059,
+        "sana'a": 0.8624979631766787,
+        "shabwah": 0.8334285622091229,
+        "socotra": 0.7993899554316346,
+        "taizz": 0.8968439525616025
+      },
+      "aden": {
+        "abyan": 0.9023240723777571,
+        "aden": 1.0,
+        "al bayda": 0.9508910748796082,
+        "al dhale'e": 0.950557300898824,
+        "al hudaydah": 0.9170612380019958,
+        "al jawf": 0.9655938558244885,
+        "al maharah": 0.9588055238922872,
+        "al mahwit": 0.9017712755094269,
+        "amanat al asimah": 0.8478414663883093,
+        "amran": 0.8203482722632699,
+        "dhamar": 0.9346508797173252,
+        "hadramaut": 0.9638959642733298,
+        "hajjah": 0.9586645764734982,
+        "ibb": 0.893845290045262,
+        "lahj": 0.9273906590306057,
+        "marib": 0.9632144491511268,
+        "raymah": 0.9628289248610007,
+        "sana'a": 0.9380595926310042,
+        "shabwah": 0.9166562918757285,
+        "socotra": 0.8031386217177214,
+        "taizz": 0.8820244997987343
+      },
+      "al bayda": {
+        "abyan": 0.9154624680163318,
+        "aden": 0.9508910748796082,
+        "al bayda": 1.0,
+        "al dhale'e": 0.9460333700139378,
+        "al hudaydah": 0.9770861311066936,
+        "al jawf": 0.987284460944375,
+        "al maharah": 0.9896672671509172,
+        "al mahwit": 0.9554223229223008,
+        "amanat al asimah": 0.9049911726762261,
+        "amran": 0.9078179970879312,
+        "dhamar": 0.9776672868077841,
+        "hadramaut": 0.978480414256688,
+        "hajjah": 0.9674684913627498,
+        "ibb": 0.9599392339767697,
+        "lahj": 0.9630683551972604,
+        "marib": 0.9668256216241766,
+        "raymah": 0.9511548276188123,
+        "sana'a": 0.9801068911275995,
+        "shabwah": 0.9554862224920784,
+        "socotra": 0.8911059502228597,
+        "taizz": 0.940868247845679
+      },
+      "al dhale'e": {
+        "abyan": 0.9306817291262871,
+        "aden": 0.950557300898824,
+        "al bayda": 0.9460333700139378,
+        "al dhale'e": 1.0,
+        "al hudaydah": 0.9007277581013285,
+        "al jawf": 0.9295243531018638,
+        "al maharah": 0.9663657786528164,
+        "al mahwit": 0.8739250389588449,
+        "amanat al asimah": 0.8132576424348711,
+        "amran": 0.7824671456110622,
+        "dhamar": 0.9539594544571042,
+        "hadramaut": 0.9561146664974447,
+        "hajjah": 0.9698755497694447,
+        "ibb": 0.8662456696051818,
+        "lahj": 0.9015275556312387,
+        "marib": 0.964387995010481,
+        "raymah": 0.9344311036120087,
+        "sana'a": 0.9142321660993563,
+        "shabwah": 0.8992091136111131,
+        "socotra": 0.7696022033653845,
+        "taizz": 0.8652396940522786
+      },
+      "al hudaydah": {
+        "abyan": 0.9048592240480853,
+        "aden": 0.9170612380019958,
+        "al bayda": 0.9770861311066936,
+        "al dhale'e": 0.9007277581013285,
+        "al hudaydah": 1.0,
+        "al jawf": 0.9704257407568375,
+        "al maharah": 0.969957004348025,
+        "al mahwit": 0.9644159792719476,
+        "amanat al asimah": 0.936158055774467,
+        "amran": 0.9472977328447965,
+        "dhamar": 0.9552516206846424,
+        "hadramaut": 0.9640634764863147,
+        "hajjah": 0.9354021108723785,
+        "ibb": 0.9750724656259042,
+        "lahj": 0.973862404974807,
+        "marib": 0.9477336498294032,
+        "raymah": 0.9154738054414272,
+        "sana'a": 0.968514926057836,
+        "shabwah": 0.9494141957698455,
+        "socotra": 0.9184675926785288,
+        "taizz": 0.9718940817911205
+      },
+      "al jawf": {
+        "abyan": 0.8896226823958197,
+        "aden": 0.9655938558244885,
+        "al bayda": 0.987284460944375,
+        "al dhale'e": 0.9295243531018638,
+        "al hudaydah": 0.9704257407568375,
+        "al jawf": 1.0,
+        "al maharah": 0.9828980198395413,
+        "al mahwit": 0.9456789020084304,
+        "amanat al asimah": 0.9121559023223422,
+        "amran": 0.9157150508509654,
+        "dhamar": 0.9525431731766589,
+        "hadramaut": 0.9783594646557118,
+        "hajjah": 0.9537042017019951,
+        "ibb": 0.9623240267410722,
+        "lahj": 0.966902234876917,
+        "marib": 0.9551164201411284,
+        "raymah": 0.9549612080688915,
+        "sana'a": 0.9734705474463451,
+        "shabwah": 0.9464629300709181,
+        "socotra": 0.8929684895384384,
+        "taizz": 0.938518918117627
+      },
+      "al maharah": {
+        "abyan": 0.9320920345806023,
+        "aden": 0.9588055238922872,
+        "al bayda": 0.9896672671509172,
+        "al dhale'e": 0.9663657786528164,
+        "al hudaydah": 0.969957004348025,
+        "al jawf": 0.9828980198395413,
+        "al maharah": 1.0,
+        "al mahwit": 0.945532004165631,
+        "amanat al asimah": 0.9082617101473448,
+        "amran": 0.8996750800400029,
+        "dhamar": 0.9780310921971321,
+        "hadramaut": 0.987458010439707,
+        "hajjah": 0.9745168285373413,
+        "ibb": 0.9522962567382347,
+        "lahj": 0.9681817053410435,
+        "marib": 0.9755000202577491,
+        "raymah": 0.9541845283019951,
+        "sana'a": 0.970709994931694,
+        "shabwah": 0.9526591602778192,
+        "socotra": 0.8789872626432188,
+        "taizz": 0.9471478765123399
+      },
+      "al mahwit": {
+        "abyan": 0.9322645917091242,
+        "aden": 0.9017712755094269,
+        "al bayda": 0.9554223229223008,
+        "al dhale'e": 0.8739250389588449,
+        "al hudaydah": 0.9644159792719476,
+        "al jawf": 0.9456789020084304,
+        "al maharah": 0.945532004165631,
+        "al mahwit": 1.0,
+        "amanat al asimah": 0.9143810349868966,
+        "amran": 0.9227507736156145,
+        "dhamar": 0.9298717785070357,
+        "hadramaut": 0.9266897551626408,
+        "hajjah": 0.9007780443160488,
+        "ibb": 0.9435333295407452,
+        "lahj": 0.9401591895944372,
+        "marib": 0.9538844612165553,
+        "raymah": 0.8688866293450603,
+        "sana'a": 0.9331773418318913,
+        "shabwah": 0.9021024351322442,
+        "socotra": 0.9265051648198722,
+        "taizz": 0.9685576078370882
+      },
+      "amanat al asimah": {
+        "abyan": 0.7989528864865616,
+        "aden": 0.8478414663883093,
+        "al bayda": 0.9049911726762261,
+        "al dhale'e": 0.8132576424348711,
+        "al hudaydah": 0.936158055774467,
+        "al jawf": 0.9121559023223422,
+        "al maharah": 0.9082617101473448,
+        "al mahwit": 0.9143810349868966,
+        "amanat al asimah": 1.0,
+        "amran": 0.973803572302745,
+        "dhamar": 0.8833061631267967,
+        "hadramaut": 0.9276302134119898,
+        "hajjah": 0.8866798458478959,
+        "ibb": 0.9690203236156311,
+        "lahj": 0.9658041608620672,
+        "marib": 0.8965558073531319,
+        "raymah": 0.847814841595853,
+        "sana'a": 0.9374060777539788,
+        "shabwah": 0.9355254526453908,
+        "socotra": 0.9025282235940845,
+        "taizz": 0.9662512660228114
+      },
+      "amran": {
+        "abyan": 0.7825694121737421,
+        "aden": 0.8203482722632699,
+        "al bayda": 0.9078179970879312,
+        "al dhale'e": 0.7824671456110622,
+        "al hudaydah": 0.9472977328447965,
+        "al jawf": 0.9157150508509654,
+        "al maharah": 0.8996750800400029,
+        "al mahwit": 0.9227507736156145,
+        "amanat al asimah": 0.973803572302745,
+        "amran": 1.0,
+        "dhamar": 0.8798439235866482,
+        "hadramaut": 0.9129194636502904,
+        "hajjah": 0.8604011176177506,
+        "ibb": 0.9840686948055762,
+        "lahj": 0.964533801552422,
+        "marib": 0.8709474679090833,
+        "raymah": 0.8332437425620706,
+        "sana'a": 0.9373321237215275,
+        "shabwah": 0.9289647523800426,
+        "socotra": 0.9572319119326963,
+        "taizz": 0.9695585861910606
+      },
+      "dhamar": {
+        "abyan": 0.9227632586831893,
+        "aden": 0.9346508797173252,
+        "al bayda": 0.9776672868077841,
+        "al dhale'e": 0.9539594544571042,
+        "al hudaydah": 0.9552516206846424,
+        "al jawf": 0.9525431731766589,
+        "al maharah": 0.9780310921971321,
+        "al mahwit": 0.9298717785070357,
+        "amanat al asimah": 0.8833061631267967,
+        "amran": 0.8798439235866482,
+        "dhamar": 1.0,
+        "hadramaut": 0.9680757921693006,
+        "hajjah": 0.9799608378712604,
+        "ibb": 0.9379430986292947,
+        "lahj": 0.951054109482822,
+        "marib": 0.9692910500682284,
+        "raymah": 0.9333379640810231,
+        "sana'a": 0.9751255267099335,
+        "shabwah": 0.9623115684808783,
+        "socotra": 0.8716136966809708,
+        "taizz": 0.9270894025173947
+      },
+      "hadramaut": {
+        "abyan": 0.8964645284375592,
+        "aden": 0.9638959642733298,
+        "al bayda": 0.978480414256688,
+        "al dhale'e": 0.9561146664974447,
+        "al hudaydah": 0.9640634764863147,
+        "al jawf": 0.9783594646557118,
+        "al maharah": 0.987458010439707,
+        "al mahwit": 0.9266897551626408,
+        "amanat al asimah": 0.9276302134119898,
+        "amran": 0.9129194636502904,
+        "dhamar": 0.9680757921693006,
+        "hadramaut": 1.0,
+        "hajjah": 0.9810466606307601,
+        "ibb": 0.9642503786253933,
+        "lahj": 0.9849802932740904,
+        "marib": 0.975179449632732,
+        "raymah": 0.969682186851444,
+        "sana'a": 0.9801456911065627,
+        "shabwah": 0.9751730144132669,
+        "socotra": 0.8774686251297779,
+        "taizz": 0.9462148420723495
+      },
+      "hajjah": {
+        "abyan": 0.9015010120387903,
+        "aden": 0.9586645764734982,
+        "al bayda": 0.9674684913627498,
+        "al dhale'e": 0.9698755497694447,
+        "al hudaydah": 0.9354021108723785,
+        "al jawf": 0.9537042017019951,
+        "al maharah": 0.9745168285373413,
+        "al mahwit": 0.9007780443160488,
+        "amanat al asimah": 0.8866798458478959,
+        "amran": 0.8604011176177506,
+        "dhamar": 0.9799608378712604,
+        "hadramaut": 0.9810466606307601,
+        "hajjah": 1.0,
+        "ibb": 0.9266865329584734,
+        "lahj": 0.9514520862762327,
+        "marib": 0.9746688901413724,
+        "raymah": 0.9464136031231757,
+        "sana'a": 0.9705280322347801,
+        "shabwah": 0.9645857087993638,
+        "socotra": 0.8315571682497339,
+        "taizz": 0.9095417550289315
+      },
+      "ibb": {
+        "abyan": 0.8364885524348331,
+        "aden": 0.893845290045262,
+        "al bayda": 0.9599392339767697,
+        "al dhale'e": 0.8662456696051818,
+        "al hudaydah": 0.9750724656259042,
+        "al jawf": 0.9623240267410722,
+        "al maharah": 0.9522962567382347,
+        "al mahwit": 0.9435333295407452,
+        "amanat al asimah": 0.9690203236156311,
+        "amran": 0.9840686948055762,
+        "dhamar": 0.9379430986292947,
+        "hadramaut": 0.9642503786253933,
+        "hajjah": 0.9266865329584734,
+        "ibb": 1.0,
+        "lahj": 0.9897191392521366,
+        "marib": 0.9273502107346859,
+        "raymah": 0.9075018938691625,
+        "sana'a": 0.980067092854674,
+        "shabwah": 0.9721966759327391,
+        "socotra": 0.9464059420922369,
+        "taizz": 0.97325890948313
+      },
+      "lahj": {
+        "abyan": 0.8682918286667136,
+        "aden": 0.9273906590306057,
+        "al bayda": 0.9630683551972604,
+        "al dhale'e": 0.9015275556312387,
+        "al hudaydah": 0.973862404974807,
+        "al jawf": 0.966902234876917,
+        "al maharah": 0.9681817053410435,
+        "al mahwit": 0.9401591895944372,
+        "amanat al asimah": 0.9658041608620672,
+        "amran": 0.964533801552422,
+        "dhamar": 0.951054109482822,
+        "hadramaut": 0.9849802932740904,
+        "hajjah": 0.9514520862762327,
+        "ibb": 0.9897191392521366,
+        "lahj": 1.0,
+        "marib": 0.9534779347069061,
+        "raymah": 0.9363320416988626,
+        "sana'a": 0.981482977256558,
+        "shabwah": 0.9798046591024632,
+        "socotra": 0.9250146024927468,
+        "taizz": 0.9761144795637995
+      },
+      "marib": {
+        "abyan": 0.9529291500524372,
+        "aden": 0.9632144491511268,
+        "al bayda": 0.9668256216241766,
+        "al dhale'e": 0.964387995010481,
+        "al hudaydah": 0.9477336498294032,
+        "al jawf": 0.9551164201411284,
+        "al maharah": 0.9755000202577491,
+        "al mahwit": 0.9538844612165553,
+        "amanat al asimah": 0.8965558073531319,
+        "amran": 0.8709474679090833,
+        "dhamar": 0.9692910500682284,
+        "hadramaut": 0.975179449632732,
+        "hajjah": 0.9746688901413724,
+        "ibb": 0.9273502107346859,
+        "lahj": 0.9534779347069061,
+        "marib": 1.0,
+        "raymah": 0.9368498138936587,
+        "sana'a": 0.9535140222241383,
+        "shabwah": 0.9402237212953154,
+        "socotra": 0.8601940206410346,
+        "taizz": 0.9430585883725243
+      },
+      "raymah": {
+        "abyan": 0.8496985238176059,
+        "aden": 0.9628289248610007,
+        "al bayda": 0.9511548276188123,
+        "al dhale'e": 0.9344311036120087,
+        "al hudaydah": 0.9154738054414272,
+        "al jawf": 0.9549612080688915,
+        "al maharah": 0.9541845283019951,
+        "al mahwit": 0.8688866293450603,
+        "amanat al asimah": 0.847814841595853,
+        "amran": 0.8332437425620706,
+        "dhamar": 0.9333379640810231,
+        "hadramaut": 0.969682186851444,
+        "hajjah": 0.9464136031231757,
+        "ibb": 0.9075018938691625,
+        "lahj": 0.9363320416988626,
+        "marib": 0.9368498138936587,
+        "raymah": 1.0,
+        "sana'a": 0.9451070616766196,
+        "shabwah": 0.9398794943354695,
+        "socotra": 0.8057600012578283,
+        "taizz": 0.8656439011407774
+      },
+      "sana'a": {
+        "abyan": 0.8624979631766787,
+        "aden": 0.9380595926310042,
+        "al bayda": 0.9801068911275995,
+        "al dhale'e": 0.9142321660993563,
+        "al hudaydah": 0.968514926057836,
+        "al jawf": 0.9734705474463451,
+        "al maharah": 0.970709994931694,
+        "al mahwit": 0.9331773418318913,
+        "amanat al asimah": 0.9374060777539788,
+        "amran": 0.9373321237215275,
+        "dhamar": 0.9751255267099335,
+        "hadramaut": 0.9801456911065627,
+        "hajjah": 0.9705280322347801,
+        "ibb": 0.980067092854674,
+        "lahj": 0.981482977256558,
+        "marib": 0.9535140222241383,
+        "raymah": 0.9451070616766196,
+        "sana'a": 1.0,
+        "shabwah": 0.9883526148241516,
+        "socotra": 0.90622981293868,
+        "taizz": 0.9456677567627854
+      },
+      "shabwah": {
+        "abyan": 0.8334285622091229,
+        "aden": 0.9166562918757285,
+        "al bayda": 0.9554862224920784,
+        "al dhale'e": 0.8992091136111131,
+        "al hudaydah": 0.9494141957698455,
+        "al jawf": 0.9464629300709181,
+        "al maharah": 0.9526591602778192,
+        "al mahwit": 0.9021024351322442,
+        "amanat al asimah": 0.9355254526453908,
+        "amran": 0.9289647523800426,
+        "dhamar": 0.9623115684808783,
+        "hadramaut": 0.9751730144132669,
+        "hajjah": 0.9645857087993638,
+        "ibb": 0.9721966759327391,
+        "lahj": 0.9798046591024632,
+        "marib": 0.9402237212953154,
+        "raymah": 0.9398794943354695,
+        "sana'a": 0.9883526148241516,
+        "shabwah": 1.0,
+        "socotra": 0.8885587321572533,
+        "taizz": 0.9332828073462404
+      },
+      "socotra": {
+        "abyan": 0.7993899554316346,
+        "aden": 0.8031386217177214,
+        "al bayda": 0.8911059502228597,
+        "al dhale'e": 0.7696022033653845,
+        "al hudaydah": 0.9184675926785288,
+        "al jawf": 0.8929684895384384,
+        "al maharah": 0.8789872626432188,
+        "al mahwit": 0.9265051648198722,
+        "amanat al asimah": 0.9025282235940845,
+        "amran": 0.9572319119326963,
+        "dhamar": 0.8716136966809708,
+        "hadramaut": 0.8774686251297779,
+        "hajjah": 0.8315571682497339,
+        "ibb": 0.9464059420922369,
+        "lahj": 0.9250146024927468,
+        "marib": 0.8601940206410346,
+        "raymah": 0.8057600012578283,
+        "sana'a": 0.90622981293868,
+        "shabwah": 0.8885587321572533,
+        "socotra": 1.0,
+        "taizz": 0.9468201475582075
+      },
+      "taizz": {
+        "abyan": 0.8968439525616025,
+        "aden": 0.8820244997987343,
+        "al bayda": 0.940868247845679,
+        "al dhale'e": 0.8652396940522786,
+        "al hudaydah": 0.9718940817911205,
+        "al jawf": 0.938518918117627,
+        "al maharah": 0.9471478765123399,
+        "al mahwit": 0.9685576078370882,
+        "amanat al asimah": 0.9662512660228114,
+        "amran": 0.9695585861910606,
+        "dhamar": 0.9270894025173947,
+        "hadramaut": 0.9462148420723495,
+        "hajjah": 0.9095417550289315,
+        "ibb": 0.97325890948313,
+        "lahj": 0.9761144795637995,
+        "marib": 0.9430585883725243,
+        "raymah": 0.8656439011407774,
+        "sana'a": 0.9456677567627854,
+        "shabwah": 0.9332828073462404,
+        "socotra": 0.9468201475582075,
+        "taizz": 1.0
+      }
+    },
+    "flow_density": 0.25,
+    "accessibility": {
+      "shabwah": 5,
+      "hadramaut": 5,
+      "dhamar": 5,
+      "hajjah": 5,
+      "al dhale'e": 5,
+      "al bayda": 5,
+      "aden": 5,
+      "al jawf": 5,
+      "abyan": 5,
+      "amanat al asimah": 5,
+      "al hudaydah": 5,
+      "sana'a": 5,
+      "raymah": 5,
+      "taizz": 5,
+      "marib": 5,
+      "lahj": 5,
+      "ibb": 5,
+      "amran": 5,
+      "socotra": 5,
+      "al maharah": 5,
+      "al mahwit": 5
+    },
+    "integration_score": 1.25
+  },
+  "metadata": {
+    "commodity": "Wage (Qualified Labour)",
+    "data_source": "Unified Data & Weights",
+    "processed_date": "2024-11-19T10:28:18.871816",
+    "analysis_parameters": {
+      "garch_parameters": {
+        "p": 1,
+        "q": 1
+      },
+      "spatial_weights": "distance_connectivity_hybrid",
+      "significance_level": 0.05
+    }
+  }
+}

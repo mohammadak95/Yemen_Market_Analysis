@@ -1,13 +1,13 @@
-// src/Dashboard.js
-
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid } from '@mui/material';
+import { useSelector } from 'react-redux';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import AnalysisWrapper from './components/common/AnalysisWrapper';
 import SpatialAnalysis from './components/analysis/spatial-analysis/SpatialAnalysis';
+import _ from 'lodash';
 
 import {
   Chart as ChartJS,
@@ -35,168 +35,184 @@ ChartJS.register(
 );
 
 // Split lazy imports for better error handling
-const ECMAnalysisLazy = React.lazy(() => 
-  import('./components/analysis/ecm/ECMAnalysis')
-    .then(module => {
-      if (!module.default) {
-        throw new Error('ECMAnalysis component not found');
-      }
-      return module;
-    })
+const ECMAnalysisLazy = React.lazy(() =>
+  import('./components/analysis/ecm/ECMAnalysis').then((module) => {
+    if (!module.default) {
+      throw new Error('ECMAnalysis component not found');
+    }
+    return module;
+  })
 );
 
-const PriceDifferentialAnalysisLazy = React.lazy(() => 
-  import('./components/analysis/price-differential/PriceDifferentialAnalysis')
-    .then(module => {
+const PriceDifferentialAnalysisLazy = React.lazy(() =>
+  import('./components/analysis/price-differential/PriceDifferentialAnalysis').then(
+    (module) => {
       if (!module.default) {
         throw new Error('PriceDifferentialAnalysis component not found');
       }
       return module;
-    })
-);
-
-const TVMIIAnalysisLazy = React.lazy(() => 
-  import('./components/analysis/tvmii/TVMIIAnalysis')
-    .then(module => {
-      if (!module.default) {
-        throw new Error('TVMIIAnalysis component not found');
-      }
-      return module;
-    })
-);
-
-const Dashboard = React.memo(({
-  data,
-  selectedAnalysis,
-  selectedCommodity,
-  selectedRegimes,
-  windowWidth,
-  spatialViewConfig,
-  onSpatialViewChange,
-}) => {
-  const processedData = useMemo(() => {
-    if (!data?.features) return [];
-    return data.features.map((feature) => ({
-      ...feature,
-      date: feature.date instanceof Date ? feature.date.toISOString() : feature.date,
-    }));
-  }, [data]);
-
-  // Map analysis types to components with explicit null checks
-  const getAnalysisComponent = useCallback((type) => {
-    const componentMap = {
-      ecm: ECMAnalysisLazy,
-      priceDiff: PriceDifferentialAnalysisLazy,
-      spatial: SpatialAnalysis,
-      tvmii: TVMIIAnalysisLazy,
-    };
-
-    const Component = componentMap[type];
-    if (!Component) {
-      console.warn(`No component found for analysis type: ${type}`);
-      return null;
     }
+  )
+);
 
-    return Component;
-  }, []);
+const TVMIIAnalysisLazy = React.lazy(() =>
+  import('./components/analysis/tvmii/TVMIIAnalysis').then((module) => {
+    if (!module.default) {
+      throw new Error('TVMIIAnalysis component not found');
+    }
+    return module;
+  })
+);
 
-  const renderInteractiveChart = useCallback(() => {
-    if (!selectedCommodity || selectedRegimes.length === 0) {
-      return (
-        <ErrorMessage message="Please select at least one regime and a commodity from the sidebar." />
+const Dashboard = React.memo(
+  ({
+    data,
+    selectedAnalysis,
+    selectedCommodity,
+    selectedRegimes,
+    windowWidth,
+    spatialViewConfig,
+    onSpatialViewChange,
+  }) => {
+    // Process features data for the interactive chart
+    const processedData = useMemo(() => {
+      if (!data?.features || !Array.isArray(data.features)) return [];
+
+      // Filter features by selected commodity and regimes
+      const filteredFeatures = data.features.filter(item => 
+        item.commodity?.toLowerCase() === selectedCommodity?.toLowerCase() &&
+        selectedRegimes.includes(item.regime?.toLowerCase())
       );
-    }
 
-    if (!processedData.length) {
-      return <LoadingSpinner />;
-    }
+      // Sort features by date
+      return _.sortBy(filteredFeatures, 'date').map(feature => ({
+        date: feature.date,
+        commodity: feature.commodity,
+        regime: feature.regime,
+        price: feature.price,
+        usdprice: feature.usdprice,
+        conflict_intensity: feature.conflict_intensity
+      }));
+    }, [data?.features, selectedCommodity, selectedRegimes]);
 
-    return (
-      <InteractiveChart
-        data={processedData}
-        selectedCommodity={selectedCommodity}
-        selectedRegimes={selectedRegimes}
-      />
-    );
-  }, [processedData, selectedCommodity, selectedRegimes]);
+    // Map analysis types to components with explicit null checks
+    const getAnalysisComponent = useCallback((type) => {
+      const componentMap = {
+        ecm: ECMAnalysisLazy,
+        priceDiff: PriceDifferentialAnalysisLazy,
+        spatial: SpatialAnalysis,
+        tvmii: TVMIIAnalysisLazy,
+      };
 
-  const renderAnalysisComponent = useCallback(() => {
-    if (!selectedAnalysis) {
-      return null;
-    }
+      const Component = componentMap[type];
+      if (!Component) {
+        console.warn(`No component found for analysis type: ${type}`);
+        return null;
+      }
 
-    const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
-    if (!AnalysisComponent) {
-      console.error(`Invalid analysis component for type: ${selectedAnalysis}`);
-      return <ErrorMessage message="Selected analysis type is not available." />;
-    }
+      return Component;
+    }, []);
 
-    const commonProps = {
+    const renderInteractiveChart = useCallback(() => {
+      if (!selectedCommodity || selectedRegimes.length === 0) {
+        return (
+          <ErrorMessage message="Please select at least one regime and a commodity from the sidebar." />
+        );
+      }
+
+      if (!processedData.length) {
+        return <ErrorMessage message="No data available for the selected criteria." />;
+      }
+
+      return (
+        <InteractiveChart
+          data={processedData}
+          selectedCommodity={selectedCommodity}
+          selectedRegimes={selectedRegimes}
+        />
+      );
+    }, [processedData, selectedCommodity, selectedRegimes]);
+
+    const renderAnalysisComponent = useCallback(() => {
+      if (!selectedAnalysis) {
+        return null;
+      }
+
+      const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
+      if (!AnalysisComponent) {
+        console.error(`Invalid analysis component for type: ${selectedAnalysis}`);
+        return <ErrorMessage message="Selected analysis type is not available." />;
+      }
+
+      const commonProps = {
+        selectedCommodity,
+        windowWidth,
+        spatialViewConfig,
+        onSpatialViewChange,
+        data: data,
+      };
+
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <AnalysisWrapper>
+            <AnalysisComponent {...commonProps} />
+          </AnalysisWrapper>
+        </Suspense>
+      );
+    }, [
+      selectedAnalysis,
       selectedCommodity,
       windowWidth,
       spatialViewConfig,
       onSpatialViewChange,
-      data: processedData,
-    };
+      data,
+      getAnalysisComponent,
+    ]);
+
+    // Add loading state for initial data
+    if (!data) {
+      return (
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
+        >
+          <LoadingSpinner />
+        </Box>
+      );
+    }
 
     return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <AnalysisWrapper>
-          <AnalysisComponent {...commonProps} />
-        </AnalysisWrapper>
-      </Suspense>
-    );
-  }, [
-    selectedAnalysis,
-    selectedCommodity,
-    windowWidth,
-    spatialViewConfig,
-    onSpatialViewChange,
-    processedData,
-    getAnalysisComponent,
-  ]);
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden',
+        }}
+      >
+        <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'auto' }}>
+          <Grid item xs={12}>
+            <Box
+              sx={{
+                width: '100%',
+                height: { xs: '300px', sm: '400px', md: '500px' },
+                position: 'relative',
+                mb: 2,
+              }}
+            >
+              {renderInteractiveChart()}
+            </Box>
+          </Grid>
 
-  // Add loading state for initial data
-  if (!data) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <LoadingSpinner />
+          {selectedAnalysis && (
+            <Grid item xs={12}>
+              {renderAnalysisComponent()}
+            </Grid>
+          )}
+        </Grid>
       </Box>
     );
   }
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
-      }}
-    >
-      <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'auto' }}>
-        <Grid item xs={12}>
-          <Box
-            sx={{
-              width: '100%',
-              height: { xs: '300px', sm: '400px', md: '500px' },
-              position: 'relative',
-              mb: 2,
-            }}
-          >
-            {renderInteractiveChart()}
-          </Box>
-        </Grid>
-
-        {selectedAnalysis && (
-          <Grid item xs={12}>
-            {renderAnalysisComponent()}
-          </Grid>
-        )}
-      </Grid>
-    </Box>
-  );
-});
+);
 
 Dashboard.displayName = 'Dashboard';
 
@@ -204,29 +220,20 @@ Dashboard.propTypes = {
   data: PropTypes.shape({
     features: PropTypes.arrayOf(
       PropTypes.shape({
-        date: PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.instanceOf(Date),
-        ]).isRequired,
+        date: PropTypes.string.isRequired,
         commodity: PropTypes.string.isRequired,
         regime: PropTypes.string.isRequired,
-        price: PropTypes.number,
-        usdprice: PropTypes.number,
-        conflict_intensity: PropTypes.number,
+        price: PropTypes.number.isRequired,
+        usdprice: PropTypes.number.isRequired,
+        conflict_intensity: PropTypes.number.isRequired,
       })
     ),
     commodities: PropTypes.arrayOf(PropTypes.string),
     regimes: PropTypes.arrayOf(PropTypes.string),
     dateRange: PropTypes.shape({
-      min: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.instanceOf(Date),
-      ]),
-      max: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.instanceOf(Date),
-      ]),
-    }),
+      min: PropTypes.instanceOf(Date),
+      max: PropTypes.instanceOf(Date)
+    })
   }),
   selectedAnalysis: PropTypes.string,
   selectedCommodity: PropTypes.string.isRequired,

@@ -1,0 +1,252 @@
+[
+  {
+    "date": "2021-04-30T00:00:00.000",
+    "tv_mii": 0.5420686672,
+    "commodity": "potatoes"
+  },
+  {
+    "date": "2023-11-30T00:00:00.000",
+    "tv_mii": 0.0976761753,
+    "commodity": "rice (imported)"
+  },
+  {
+    "date": "2022-03-31T00:00:00.000",
+    "tv_mii": 0.4683476932,
+    "commodity": "wheat flour"
+  },
+  {
+    "date": "2023-08-31T00:00:00.000",
+    "tv_mii": 0.1409807758,
+    "commodity": "beans (kidney red)"
+  },
+  {
+    "date": "2021-01-31T00:00:00.000",
+    "tv_mii": 0.771157277,
+    "commodity": "fuel (gas)"
+  },
+  {
+    "date": "2020-12-31T00:00:00.000",
+    "tv_mii": 0.7842729707,
+    "commodity": "oil (vegetable)"
+  },
+  {
+    "date": "2022-12-31T00:00:00.000",
+    "tv_mii": 0.2530921509,
+    "commodity": "oil (vegetable)"
+  },
+  {
+    "date": "2020-07-31T00:00:00.000",
+    "tv_mii": 0.98720709,
+    "commodity": "sugar"
+  },
+  {
+    "date": "2023-05-31T00:00:00.000",
+    "tv_mii": 0.161404058,
+    "commodity": "sugar"
+  },
+  {
+    "date": "2022-10-31T00:00:00.000",
+    "tv_mii": 0.1482147063,
+    "commodity": "eggs"
+  },
+  {
+    "date": "2022-08-31T00:00:00.000",
+    "tv_mii": 0.4371801889,
+    "commodity": "wheat flour"
+  },
+  {
+    "date": "2022-08-31T00:00:00.000",
+    "tv_mii": 0.1418575009,
+    "commodity": "eggs"
+  },
+  {
+    "date": "2024-02-29T00:00:00.000",
+    "tv_mii": 0.0657062643,
+    "commodity": "sugar"
+  },
+  {
+    "date": "2023-04-30T00:00:00.000",
+    "tv_mii": 0.1226772342,
+    "commodity": "lentils"
+  },
+  {
+    "date": "2022-02-28T00:00:00.000",
+    "tv_mii": 0.5476929376,
+    "commodity": "tomatoes"
+  },
+  {
+    "date": "2022-06-30T00:00:00.000",
+    "tv_mii": 0.3449778136,
+    "commodity": "fuel (petrol-gasoline)"
+  },
+  {
+    "date": "2023-02-28T00:00:00.000",
+    "tv_mii": 0.1114504632,
+    "commodity": "rice (imported)"
+  },
+  {
+    "date": "2022-01-31T00:00:00.000",
+    "tv_mii": 0.3294562901,
+    "commodity": "rice (imported)"
+  },
+  {
+    "date": "2023-07-31T00:00:00.000",
+    "tv_mii": 0.2781837217,
+    "commodity": "potatoes"
+  },
+  {
+    "date": "2021-07-31T00:00:00.000",
+    "tv_mii": 0.7620476757,
+    "commodity": "rice (imported)"
+  },
+  {
+    "date": "2022-07-31T00:00:00.000",
+    "tv_mii": 0.038206439,
+    "commodity": "salt"
+  },
+  {
+    "date": "2023-05-31T00:00:00.000",
+    "tv_mii": 0.1780828695,
+    "commodity": "fuel (diesel)"
+  },
+  {
+    "date": "2022-06-30T00:00:00.000",
+    "tv_mii": 0.45187695,
+    "commodity": "potatoes"
+  },
+  {
+    "date": "2022-12-31T00:00:00.000",
+    "tv_mii": 0.1508653141,
+    "commodity": "fuel (gas)"
+  },
+  {
+    "date": "2023-04-30T00:00:00.000",
+    "tv_mii": 0.0732577292,
+    "commodity": "onions"
+  },
+  {
+    "date": "2023-10-31T00:00:00.000",
+    "tv_mii": 0.1701389613,
+    "commodity": "fuel (diesel)"
+  },
+  {
+    "date": "2022-08-31T00:00:00.000",
+    "tv_mii": 0.0811122589,
+    "commodity": "lentils"
+  },
+  {
+    "date": "2021-01-31T00:00:00.000",
+    "tv_mii": 0.7795737326,
+    "commodity": "potatoes"
+  },
+  {
+    "date": "2022-09-30T00:00:00.000",
+    "tv_mii": 0.3372094705,
+    "commodity": "sugar"
+  },
+  {
+    "date": "2021-06-30T00:00:00.000",
+    "tv_mii": 0.7852110935,
+    "commodity": "rice (imported)"
+  },
+  {
+    "date": "2022-01-31T00:00:00.000",
+    "tv_mii": 0.365794577,
+    "commodity": "beans (kidney red)"
+  },
+  {
+    "date": "2022-01-31T00:00:00.000",
+    "tv_mii": 0.4006228312,
+    "commodity": "potatoes"
+  },
+  {
+    "date": "2022-03-31T00:00:00.000",
+    "tv_mii": 0.4843434983,
+    "commodity": "sugar"
+  },
+  {
+    "date": "2023-11-30T00:00:00.000",
+    "tv_mii": 0.0207827331,
+    "commodity": "salt"
+  },
+  {
+    "date": "2024-03-31T00:00:00.000",
+    "tv_mii": 0.0003557099,
+    "commodity": "eggs"
+  },
+  {
+    "date": "2023-03-31T00:00:00.000",
+    "tv_mii": 0.1706960471,
+    "commodity": "fuel (diesel)"
+  },
+  {
+    "date": "2022-12-31T00:00:00.000",
+    "tv_mii": 0.3498683805,
+    "commodity": "beans (kidney red)"
+  },
+  {
+    "date": "2023-01-31T00:00:00.000",
+    "tv_mii": 0.3913922542,
+    "commodity": "tomatoes"
+  },
+  {
+    "date": "2022-12-31T00:00:00.000",
+    "tv_mii": 0.363931138,
+    "commodity": "fuel (diesel)"
+  },
+  {
+    "date": "2022-07-31T00:00:00.000",
+    "tv_mii": 0.5810991701,
+    "commodity": "onions"
+  },
+  {
+    "date": "2022-10-31T00:00:00.000",
+    "tv_mii": 0.1292573724,
+    "commodity": "fuel (gas)"
+  },
+  {
+    "date": "2023-04-30T00:00:00.000",
+    "tv_mii": 0.1707896635,
+    "commodity": "salt"
+  },
+  {
+    "date": "2023-10-31T00:00:00.000",
+    "tv_mii": 0.0450991638,
+    "commodity": "eggs"
+  },
+  {
+    "date": "2021-03-31T00:00:00.000",
+    "tv_mii": 0.8961830071,
+    "commodity": "wheat"
+  },
+  {
+    "date": "2022-04-30T00:00:00.000",
+    "tv_mii": 0.5485064306,
+    "commodity": "exchange rate (unofficial)"
+  },
+  {
+    "date": "2022-11-30T00:00:00.000",
+    "tv_mii": 0.3551915811,
+    "commodity": "beans (kidney red)"
+  },
+  {
+    "date": "2022-03-31T00:00:00.000",
+    "tv_mii": 0.5185584774,
+    "commodity": "fuel (diesel)"
+  },
+  {
+    "date": "2021-06-30T00:00:00.000",
+    "tv_mii": 0.9278047647,
+    "commodity": "salt"
+  },
+  {
+    "date": "2023-07-31T00:00:00.000",
+    "tv_mii": 0.2079422587,
+    "commodity": "exchange rate (unofficial)"
+  },
+  {
+    "date": "2020-08-31T00:00:00.000",
+    "tv_mii": 0.9045070284,
+    "commodity": "fuel (diesel)"
+  }
+]

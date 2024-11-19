@@ -1,18 +1,6 @@
-// ===== appUtils.js =====
-
 // src/utils/appUtils.js
 
-// ==========================
-// Imports
-// ==========================
-import proj4 from 'proj4';
 import { parseISO, isValid as isValidDate, format as formatDate } from 'date-fns';
-
-// ==========================
-// Environment Variables
-// ==========================
-const PUBLIC_URL = process.env.PUBLIC_URL || '';
-const isGitHubPages = PUBLIC_URL.includes('github.io');
 
 // ==========================
 // Region Mapping
@@ -21,7 +9,7 @@ const isGitHubPages = PUBLIC_URL.includes('github.io');
 /**
  * Mapping between GeoBoundaries region identifiers and Enhanced data region identifiers.
  */
-const regionMapping = {
+export const regionMapping = {
   "san'a'": "sana'a",
   "san_a__governorate": "sana'a",
   "lahij_governorate": "lahj",
@@ -54,7 +42,7 @@ const regionMapping = {
 /**
  * List of regions to exclude from the mapping and merging process.
  */
-const excludedRegions = [
+export const excludedRegions = [
   'sa\'dah_governorate', // Example: Add the exact normalized region IDs
   // Add other regions as needed
 ];
@@ -768,4 +756,209 @@ export const calculateTVMIIScore = (answers) => {
   if (answers.timeVaryingNature?.trim().length > 50) score += 35;
   if (answers.implications?.trim().length > 50) score += 35;
   return score;
+};
+
+// Enhanced region mapping system with robust normalization and validation
+
+// Comprehensive mapping table for Yemen governorates
+const enhancedRegionMapping = {
+  // Standard mappings
+  "san'a'": "sana'a",
+  "san_a__governorate": "sana'a",
+  "sanaa": "sana'a",
+  "sanʿaʾ": "sana'a",
+  "lahij_governorate": "lahj",
+  "lahij": "lahj",
+  "_adan_governorate": "aden",
+  "al_hudaydah_governorate": "al hudaydah",
+  "ta_izz_governorate": "taizz",
+  "shabwah_governorate": "shabwah",
+  "hadhramaut": "hadramaut",
+  "hadramout": "hadramaut",
+  "abyan_governorate": "abyan",
+  "al_jawf_governorate": "al jawf",
+  "ibb_governorate": "ibb",
+  "al_bayda__governorate": "al bayda",
+  "ad_dali__governorate": "al dhale'e",
+  "al_mahwit_governorate": "al mahwit",
+  "hajjah_governorate": "hajjah",
+  "dhamar_governorate": "dhamar",
+  "_amran_governorate": "amran",
+  "al_mahrah_governorate": "al maharah",
+  "ma'rib_governorate": "marib",
+  "raymah_governorate": "raymah",
+  
+  // Additional variations
+  "sana": "sana'a",
+  "sanaa_gov": "sana'a",
+  "hudaydah": "al hudaydah",
+  "hodeidah": "al hudaydah",
+  "adan": "aden",
+  "taiz": "taizz",
+  "shabwa": "shabwah",
+  "hadramawt": "hadramaut",
+  "jawf": "al jawf",
+  "bayda": "al bayda",
+  "dhale": "al dhale'e",
+  "daleh": "al dhale'e",
+  "mahwit": "al mahwit",
+  "hodeida": "al hudaydah",
+  "capital_city": "amanat al asimah",
+  "capital": "amanat al asimah",
+  "mareb": "marib",
+  "maarib": "marib"
+};
+
+const normalizeArabicChars = (str) => {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // Remove diacritics
+    .replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)])  // Arabic numerals
+    .replace(/[اإأآ]/g, 'ا')  // Normalize Arabic alef variations
+    .replace(/[ىئي]/g, 'ي')  // Normalize Arabic yaa variations
+    .replace(/[ؤئ]/g, 'ء')  // Normalize Arabic hamza variations
+    .replace(/[ة]/g, 'ه');  // Normalize Arabic taa marbouta
+};
+
+export const normalizeRegionName = (name) => {
+  if (!name) return null;
+
+  // Initial cleanup
+  let cleaned = name.toLowerCase()
+    .trim()
+    .replace(/^_+/, '')               // Remove leading underscores
+    .replace(/_+/g, ' ')             // Replace underscores with spaces
+    .replace(/\s+/g, ' ')            // Normalize whitespace
+    .replace(/governorate$/i, '')     // Remove governorate suffix
+    .replace(/province$/i, '')        // Remove province suffix
+    .replace(/^gov[\s_]+/i, '')      // Remove gov prefix
+    .replace(/^governorate[\s_]+/i, '') // Remove governorate prefix
+    .trim();
+
+  // Check direct mapping first
+  if (REGION_MAPPINGS[cleaned]) {
+    return REGION_MAPPINGS[cleaned];
+  }
+
+  // Handle Arabic characters and diacritics
+  cleaned = cleaned
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // Remove diacritics
+    .replace(/[_-]+/g, ' ')           // Normalize separators
+    .replace(/ʿ/g, "'")               // Normalize special quotes
+    .replace(/['']/g, "'");           // Normalize quotes
+
+  // Check mapping again after normalization
+  if (REGION_MAPPINGS[cleaned]) {
+    return REGION_MAPPINGS[cleaned];
+  }
+
+  // Try without spaces
+  const withoutSpaces = cleaned.replace(/\s+/g, '');
+  if (REGION_MAPPINGS[withoutSpaces]) {
+    return REGION_MAPPINGS[withoutSpaces];
+  }
+
+  return cleaned;
+};
+
+export const validateRegionMapping = (regionName, geometryData) => {
+  const normalized = normalizeRegionName(regionName);
+  const hasGeometry = geometryData.features.some(feature => 
+    normalizeRegionName(feature.properties.shapeName) === normalized
+  );
+  
+  return {
+    original: regionName,
+    normalized,
+    hasGeometry,
+    possibleMatches: !hasGeometry ? findPossibleMatches(normalized, geometryData) : []
+  };
+};
+
+const findPossibleMatches = (normalized, geometryData) => {
+  const allRegions = geometryData.features.map(f => f.properties.shapeName);
+  return allRegions
+    .filter(region => {
+      const similarity = calculateSimilarity(normalized, normalizeRegionName(region));
+      return similarity > 0.7; // Threshold for similarity
+    })
+    .map(region => ({
+      name: region,
+      normalized: normalizeRegionName(region),
+      similarity: calculateSimilarity(normalized, normalizeRegionName(region))
+    }))
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, 3); // Return top 3 matches
+};
+
+const calculateSimilarity = (str1, str2) => {
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+  
+  if (longer.length === 0) return 1.0;
+  
+  return (longer.length - editDistance(longer, shorter)) / longer.length;
+};
+
+const editDistance = (str1, str2) => {
+  const matrix = Array(str2.length + 1).fill(null)
+    .map(() => Array(str1.length + 1).fill(null));
+
+  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+
+  for (let j = 1; j <= str2.length; j++) {
+    for (let i = 1; i <= str1.length; i++) {
+      const substitutionCost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i] + 1,
+        matrix[j - 1][i - 1] + substitutionCost
+      );
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+};
+
+// Debug utility to check all mappings
+export const debugMappings = (marketData, geometryData) => {
+  const results = {
+    matched: [],
+    unmatched: [],
+    summary: {
+      total: 0,
+      matched: 0,
+      unmatched: 0
+    }
+  };
+
+  const uniqueMarkets = new Set(marketData.map(m => m.market || m.region || m.admin1));
+  
+  uniqueMarkets.forEach(market => {
+    const validation = validateRegionMapping(market, geometryData);
+    
+    if (validation.hasGeometry) {
+      results.matched.push({
+        original: validation.original,
+        normalized: validation.normalized
+      });
+    } else {
+      results.unmatched.push({
+        original: validation.original,
+        normalized: validation.normalized,
+        possibleMatches: validation.possibleMatches
+      });
+    }
+  });
+
+  results.summary = {
+    total: uniqueMarkets.size,
+    matched: results.matched.length,
+    unmatched: results.unmatched.length,
+    matchRate: `${((results.matched.length / uniqueMarkets.size) * 100).toFixed(1)}%`
+  };
+
+  return results;
 };

@@ -22,8 +22,7 @@ import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
 import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
-import { useWindowSize } from './hooks';
-import { useData } from './hooks'; // Restore original data hook
+import { useWindowSize, useData } from './hooks';
 import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
@@ -55,7 +54,9 @@ const App = () => {
 
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
-  const { data, loading, error } = useData(); // Restored original data hook
+
+  // Use the useData hook for GeoJSON data
+  const { data: geoData, loading, error } = useData();
 
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
@@ -71,6 +72,13 @@ const App = () => {
     tutorials: false,
     welcome: false,
   });
+
+  // Set initial selected commodity when data loads
+  useEffect(() => {
+    if (geoData?.commodities?.length > 0 && !selectedCommodity) {
+      setSelectedCommodity(geoData.commodities[0]);
+    }
+  }, [geoData?.commodities, selectedCommodity]);
 
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
@@ -142,8 +150,8 @@ const App = () => {
           </StyledAppBar>
 
           <Sidebar
-            commodities={data?.commodities || []}
-            regimes={data?.regimes || []}
+            commodities={geoData?.commodities || []}
+            regimes={geoData?.regimes || ['unified', 'north', 'south']}
             selectedCommodity={selectedCommodity}
             setSelectedCommodity={setSelectedCommodity}
             selectedDate={selectedDate}
@@ -172,7 +180,7 @@ const App = () => {
           >
             <Toolbar />
             <Dashboard
-              data={data}
+              data={geoData}
               selectedCommodity={selectedCommodity}
               selectedDate={selectedDate}
               selectedRegimes={selectedGraphRegimes}

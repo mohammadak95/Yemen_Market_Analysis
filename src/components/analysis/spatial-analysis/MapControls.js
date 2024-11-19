@@ -29,7 +29,6 @@ const MapControls = ({
   onCommodityChange,
   onDateChange,
   onRefresh,
-  analysisResults,
   visualizationMode,
   onVisualizationModeChange,
   showFlows,
@@ -37,7 +36,8 @@ const MapControls = ({
 }) => {
   // Format date for display
   const formatDate = (dateStr) => {
-    return new Date(`${dateStr}-01`).toLocaleDateString('en-US', {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
     });
@@ -143,7 +143,6 @@ MapControls.propTypes = {
   onCommodityChange: PropTypes.func.isRequired,
   onDateChange: PropTypes.func.isRequired,
   onRefresh: PropTypes.func.isRequired,
-  analysisResults: PropTypes.object,
   visualizationMode: PropTypes.string.isRequired,
   onVisualizationModeChange: PropTypes.func.isRequired,
   showFlows: PropTypes.bool.isRequired,

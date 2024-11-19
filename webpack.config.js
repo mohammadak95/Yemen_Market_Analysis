@@ -261,14 +261,31 @@ module.exports = (env, argv) => {
       headers: {
         "Access-Control-Allow-Origin": "*",
       },
-      client: {
-        overlay: {
-          errors: true,
-          warnings: false,
-        },
-      },
       devMiddleware: {
         writeToDisk: true,
+      },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:5001', // Replace with your backend server's address
+          secure: false,
+          changeOrigin: true,
+          logLevel: 'debug', // Optional: Useful for debugging proxy issues
+        },
+        '/data': {
+          target: 'http://localhost:5001',
+          secure: false,
+          changeOrigin: true,
+          logLevel: 'debug',
+          pathRewrite: {
+            '^/data': '/public/data'
+          }
+        },
+        '/results': {
+          target: 'http://localhost:5001', // If your results are served by the backend
+          secure: false,
+          changeOrigin: true,
+          logLevel: 'debug',
+        },
       },
     },
 
@@ -280,7 +297,8 @@ module.exports = (env, argv) => {
     },
 
     // Source maps for better debugging in development
-    devtool: isDevelopment ? 'eval-cheap-module-source-map' : false,
+    devtool: isDevelopment ? 'eval-cheap-module-source-map' : 'source-map',
+
     mode: isDevelopment ? 'development' : 'production',
 
     // Cache configuration to improve build speed

@@ -4,6 +4,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
+const fs = require('fs-extra');
 
 const app = express();
 
@@ -17,31 +18,22 @@ const ALLOWED_ORIGINS = {
   production: ['https://mohammadak95.github.io']
 };
 
-
-// CORS Configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = ALLOWED_ORIGINS[NODE_ENV];
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+// Apply CORS middleware
+app.use(cors({
+  origin: ALLOWED_ORIGINS[NODE_ENV],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Origin',
     'X-Requested-With',
     'Content-Type',
     'Accept',
-    'Authorization'
+    'Authorization',
   ],
   credentials: true,
-  maxAge: 86400
-};
+  maxAge: 86400,
+}));
 
-// Apply middleware
-app.use(cors(corsOptions));
+// Apply standard middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -66,12 +58,119 @@ const staticOptions = {
   }
 };
 
-// Serve static files
+// Configure static file serving for all possible paths
 app.use('/results', express.static(path.join(__dirname, '..', 'results'), staticOptions));
 app.use('/data', express.static(path.join(__dirname, '..', 'public', 'data'), staticOptions));
+app.use('/public/data', express.static(path.join(__dirname, '..', 'public', 'data'), staticOptions));
+
+// Preprocessed data API endpoint
+app.get('/api/preprocessed-data', async (req, res) => {
+  try {
+    const { commodity } = req.query;
+    if (!commodity) {
+      return res.status(400).json({ error: 'Commodity parameter is required' });
+    }
+
+    // Normalize commodity name
+    const normalizedName = commodity.toLowerCase()
+      .replace(/[()]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+
+    // Define possible file paths with correct directory structure
+    const possiblePaths = [
+      path.join(__dirname, '..', 'public', 'data', 'preprocessed_by_commodity', 
+               `preprocessed_yemen_market_data_${normalizedName}.json`),
+      path.join(__dirname, '..', 'results', 'preprocessed_by_commodity',
+               `preprocessed_yemen_market_data_${normalizedName}.json`)
+    ];
+
+    // Enhanced file resolution with detailed logging
+    let data = null;
+    let foundPath = null;
+
+    console.log(`Looking for commodity data: ${normalizedName}`);
+    console.log('Search paths:');
+    
+    for (const filePath of possiblePaths) {
+      console.log(`- Checking: ${filePath}`);
+      
+      try {
+        const exists = await fs.pathExists(filePath);
+        if (exists) {
+          console.log(`  ✓ Found file at: ${filePath}`);
+          data = await fs.readJson(filePath);
+          foundPath = filePath;
+          break;
+        } else {
+          console.log(`  ✗ Not found at: ${filePath}`);
+        }
+      } catch (readError) {
+        console.warn(`  ! Error reading ${filePath}:`, readError.message);
+        continue;
+      }
+    }
+    
+    // Additional debug info
+    if (foundPath) {
+      console.log(`Successfully resolved file at: ${foundPath}`);
+    } else {
+      console.log('No matching files found in any location');
+    }
+
+    if (!data) {
+      console.warn(`Data not found for commodity: ${normalizedName}`);
+      console.warn('Checked paths:', possiblePaths);
+      return res.status(404).json({ 
+        error: 'Data not found',
+        commodity: normalizedName,
+        checkedPaths: possiblePaths
+      });
+    }
+
+    // Log successful file read
+    console.log(`Successfully read data from: ${foundPath}`);
+    res.json(data);
+
+  } catch (error) {
+    console.error('Error processing preprocessed data request:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Verify critical paths exist
+const verifyPaths = async () => {
+  const criticalPaths = [
+    path.join(__dirname, '..', 'public', 'data', 'preprocessed_by_commodity'),
+    path.join(__dirname, '..', 'results', 'preprocessed_by_commodity')
+  ];
+
+  for (const dirPath of criticalPaths) {
+    try {
+      const exists = await fs.pathExists(dirPath);
+      console.log(`Path check: ${dirPath} - ${exists ? '✓ exists' : '✗ missing'}`);
+      
+      if (exists) {
+        const files = await fs.readdir(dirPath);
+        console.log(`  Contains ${files.length} files`);
+        if (files.length > 0) {
+          console.log(`  First file: ${files[0]}`);
+        }
+      }
+    } catch (error) {
+      console.warn(`Could not check path ${dirPath}:`, error.message);
+    }
+  }
+};
 
 // Start server with error handling
 const startServer = async () => {
+  await verifyPaths();
   try {
     const server = app.listen(SERVER_PORT, () => {
       console.log(`Server running in ${NODE_ENV} mode on port ${SERVER_PORT}`);
@@ -91,7 +190,6 @@ const startServer = async () => {
   } catch (error) {
     if (error.code === 'EADDRINUSE') {
       console.log(`Port ${SERVER_PORT} is busy, trying ${SERVER_PORT + 1}...`);
-      // Try next port
       process.env.SERVER_PORT = SERVER_PORT + 1;
       startServer();
     } else {
@@ -104,18 +202,15 @@ const startServer = async () => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Start the server
-startServer();
-
-// Handle uncaught exceptions
+// Global error handlers
 process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
   if (error.code === 'EADDRINUSE') {
     console.log('Address in use, retrying...');
     setTimeout(() => {
       process.exit(1);
     }, 1000);
   } else {
-    console.error('Uncaught Exception:', error);
     process.exit(1);
   }
 });
@@ -124,3 +219,6 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
+
+// Start the server
+startServer();

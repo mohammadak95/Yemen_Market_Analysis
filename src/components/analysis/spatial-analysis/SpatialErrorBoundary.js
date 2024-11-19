@@ -18,6 +18,11 @@ class SpatialErrorBoundary extends React.Component {
     console.error('Spatial analysis error:', error, errorInfo);
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    // Prevent re-rendering if the error state hasn't changed
+    return this.state.hasError !== nextState.hasError;
+  }
+
   render() {
     if (this.state.hasError) {
       return (

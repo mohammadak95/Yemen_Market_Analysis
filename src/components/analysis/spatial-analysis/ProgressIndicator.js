@@ -1,7 +1,10 @@
+// src/components/analysis/spatial-analysis/ProgressIndicator.js
+
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Box, Typography, CircularProgress, LinearProgress } from '@mui/material';
 
-export const ProgressIndicator = ({ value, label, variant = 'circular', size = 24 }) => {
+const ProgressIndicator = ({ value, label, variant = 'circular', size = 24 }) => {
   return (
     <Box sx={{ 
       display: 'flex', 
@@ -15,7 +18,7 @@ export const ProgressIndicator = ({ value, label, variant = 'circular', size = 2
           variant="determinate" 
           value={value} 
           sx={{ 
-            color: theme => value === 100 ? theme.palette.success.main : theme.palette.primary.main 
+            color: (theme) => (value === 100 ? theme.palette.success.main : theme.palette.primary.main),
           }}
         />
       ) : (
@@ -26,10 +29,10 @@ export const ProgressIndicator = ({ value, label, variant = 'circular', size = 2
             sx={{
               height: 8,
               borderRadius: 4,
-              bgcolor: theme => theme.palette.grey[200],
+              bgcolor: (theme) => theme.palette.grey[200],
               '& .MuiLinearProgress-bar': {
                 borderRadius: 4,
-                bgcolor: theme => value === 100 ? theme.palette.success.main : theme.palette.primary.main,
+                bgcolor: (theme) => (value === 100 ? theme.palette.success.main : theme.palette.primary.main),
               }
             }}
           />
@@ -41,3 +44,12 @@ export const ProgressIndicator = ({ value, label, variant = 'circular', size = 2
     </Box>
   );
 };
+
+ProgressIndicator.propTypes = {
+  value: PropTypes.number.isRequired,
+  label: PropTypes.string,
+  variant: PropTypes.oneOf(['circular', 'linear']),
+  size: PropTypes.number,
+};
+
+export default ProgressIndicator;

@@ -3,11 +3,9 @@ import geopandas as gpd
 import numpy as np
 from pathlib import Path
 from libpysal.weights import KNN
-from datetime import datetime
 import logging
 import json
-import warnings
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional
 
 class TimeVaryingFlowGenerator:
     def __init__(self, 
@@ -32,7 +30,8 @@ class TimeVaryingFlowGenerator:
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        if not self.logger.handlers:
+            self.logger.addHandler(handler)
         
         # Initialize data structures
         self.gdf = None
@@ -97,17 +96,25 @@ class TimeVaryingFlowGenerator:
             self.logger.error(f"Error creating spatial weights: {e}")
             raise
     
-    def _calculate_period_flows(self, time_period: datetime, commodity: str, prices: pd.Series) -> List[Dict]:
+    def _calculate_period_flows(self, time_period: pd.Timestamp, commodity: str, prices: pd.Series) -> List[Dict]:
         """Calculate flows for a specific time period and commodity."""
         flows = []
         
-        # Set time_period to the start of the month
-        time_period = time_period.normalize().replace(day=1)
+        # Set time_period to the start of the time window
+        time_period = time_period.normalize()
+        if self.time_window == 'M':
+            time_period = time_period.replace(day=1)
+        elif self.time_window == 'W':
+            time_period = time_period - pd.Timedelta(days=time_period.weekday())  # Start of the week
         
         for idx in range(len(self.unique_regions)):
             source_region = self.unique_regions.iloc[idx]
             source_id = source_region['region_id']
-            source_price = prices.get(source_id, 0)
+            source_price = prices.get(source_id, np.nan)
+            
+            # Skip if source price is missing
+            if pd.isna(source_price):
+                continue
             
             # Get neighbors and their weights
             neighbor_indices = self.weights.neighbors[idx]
@@ -116,7 +123,11 @@ class TimeVaryingFlowGenerator:
                 try:
                     target_region = self.unique_regions.iloc[n_idx]
                     target_id = target_region['region_id']
-                    target_price = prices.get(target_id, 0)
+                    target_price = prices.get(target_id, np.nan)
+                    
+                    # Skip if target price is missing
+                    if pd.isna(target_price):
+                        continue
                     
                     # Calculate price differential
                     price_diff = abs(target_price - source_price)
@@ -157,46 +168,50 @@ class TimeVaryingFlowGenerator:
             flows_list = []
             temporal_stats = {}
             
-            # Process each commodity separately
-            for commodity in self.commodities:
-                self.logger.info(f"Processing flows for commodity: {commodity}")
-                commodity_data = self.gdf[self.gdf['commodity'] == commodity]
-                
-                # Group data by time window
-                grouped = commodity_data.groupby(pd.Grouper(key='date', freq=self.time_window))
-                
-                for time_period, period_data in grouped:
-                    if len(period_data) == 0:
-                        continue
-                    
-                    # Calculate average prices for period
-                    prices = period_data.groupby('region_id')['usdprice'].mean()
-                    
-                    # Calculate flows between regions
-                    period_flows = self._calculate_period_flows(time_period, commodity, prices)
-                    
-                    if period_flows:
-                        # Calculate period statistics
-                        stats_key = f"{time_period.strftime('%Y-%m-%d')}_{commodity}"
-                        stats = {
-                            'commodity': commodity,
-                            'flow_count': len(period_flows),
-                            'mean_price_diff': np.mean([f['price_differential'] for f in period_flows]),
-                            'max_price_diff': max(f['price_differential'] for f in period_flows),
-                            'mean_flow_weight': np.mean([f['flow_weight'] for f in period_flows]),
-                            'active_regions': len(set(f['source'] for f in period_flows) | 
-                                               set(f['target'] for f in period_flows))
-                        }
-                        
-                        flows_list.extend(period_flows)
-                        temporal_stats[stats_key] = stats
-                        
-                        self.logger.debug(f"Processed {commodity} for period {time_period}: {len(period_flows)} flows")
+            # Group data by commodity and time window
+            grouped = self.gdf.groupby(['commodity', pd.Grouper(key='date', freq=self.time_window)])
             
+            for (commodity, time_period), period_data in grouped:
+                if len(period_data) == 0:
+                    continue
+                
+                self.logger.info(f"Processing flows for commodity: {commodity} and period: {time_period}")
+                
+                # Calculate average prices for period
+                prices = period_data.groupby('region_id')['usdprice'].mean()
+                
+                # Calculate flows between regions
+                period_flows = self._calculate_period_flows(time_period, commodity, prices)
+                
+                if period_flows:
+                    # Calculate period statistics
+                    stats_key = (commodity, time_period)
+                    stats = {
+                        'commodity': commodity,
+                        'date': time_period,
+                        'flow_count': len(period_flows),
+                        'mean_price_diff': np.mean([f['price_differential'] for f in period_flows]),
+                        'max_price_diff': max(f['price_differential'] for f in period_flows),
+                        'mean_flow_weight': np.mean([f['flow_weight'] for f in period_flows]),
+                        'active_regions': len(set(f['source'] for f in period_flows) | 
+                                           set(f['target'] for f in period_flows))
+                    }
+                    
+                    flows_list.extend(period_flows)
+                    temporal_stats[stats_key] = stats
+                    
+                    self.logger.debug(f"Processed {commodity} for period {time_period}: {len(period_flows)} flows")
+            
+            # Convert flows_list to DataFrame with 'commodity' as part of the index
             self.flows = pd.DataFrame(flows_list)
+            self.flows.set_index(['commodity', 'date'], inplace=True)
+            
+            # Convert temporal_stats to DataFrame with 'commodity' and 'date' as index
+            self.temporal_stats = pd.DataFrame.from_dict(temporal_stats, orient='index')
+            self.temporal_stats.set_index(['commodity', 'date'], inplace=True)
             
             # Save results
-            self._save_results(self.flows, temporal_stats)
+            self._save_results()
             
             self.logger.info(f"Generated {len(self.flows)} total flows across {len(self.commodities)} commodities")
             
@@ -204,31 +219,34 @@ class TimeVaryingFlowGenerator:
             self.logger.error(f"Error calculating temporal flows: {e}")
             raise
     
-    def _save_results(self, flows: pd.DataFrame, temporal_stats: Dict) -> None:
+    def _save_results(self) -> None:
         """Save flow data and statistics."""
-        # Create commodity-specific directories
+        # Save combined results with 'commodity' as part of the index
+        flows_output_file = self.output_dir / 'all_flows.csv'
+        self.flows.to_csv(flows_output_file)
+        
+        stats_output_file = self.output_dir / 'all_statistics.csv'
+        self.temporal_stats.to_csv(stats_output_file)
+        
+        self.logger.info(f"All flows saved to {flows_output_file}")
+        self.logger.info(f"All statistics saved to {stats_output_file}")
+        
+        # Optionally, save commodity-specific files
         for commodity in self.commodities:
             commodity_dir = self.output_dir / commodity.lower().replace(' ', '_')
             commodity_dir.mkdir(parents=True, exist_ok=True)
             
             # Filter and save commodity-specific flows
-            commodity_flows = flows[flows['commodity'] == commodity]
+            commodity_flows = self.flows.loc[commodity]
             flow_file = commodity_dir / 'time_varying_flows.csv'
-            commodity_flows.to_csv(flow_file, index=False)
+            commodity_flows.to_csv(flow_file)
             
             # Filter and save commodity-specific statistics
-            commodity_stats = {k: v for k, v in temporal_stats.items() 
-                             if v['commodity'] == commodity}
-            stats_file = commodity_dir / 'flow_statistics.json'
-            with open(stats_file, 'w') as f:
-                json.dump(commodity_stats, f, indent=2)
+            commodity_stats = self.temporal_stats.loc[commodity]
+            stats_file = commodity_dir / 'flow_statistics.csv'
+            commodity_stats.to_csv(stats_file)
             
             self.logger.info(f"Results for {commodity} saved to {commodity_dir}")
-        
-        # Save combined results
-        flows.to_csv(self.output_dir / 'all_flows.csv', index=False)
-        with open(self.output_dir / 'all_statistics.json', 'w') as f:
-            json.dump(temporal_stats, f, indent=2)
     
     def generate(self) -> pd.DataFrame:
         """Execute the full flow map generation process."""
@@ -258,11 +276,14 @@ def main():
     print(f"\nGenerated {len(flows)} flows")
     print("\nSample of generated flows by commodity:")
     for commodity in generator.commodities:
-        commodity_flows = flows[flows['commodity'] == commodity]
-        print(f"\n{commodity}:")
-        print(f"Total flows: {len(commodity_flows)}")
-        print("Sample flows:")
-        print(commodity_flows.head())
+        try:
+            commodity_flows = flows.loc[commodity]
+            print(f"\n{commodity}:")
+            print(f"Total flows: {len(commodity_flows)}")
+            print("Sample flows:")
+            print(commodity_flows.head())
+        except KeyError:
+            continue
     
     print("\nOutput files saved to:", OUTPUT_DIR)
 
