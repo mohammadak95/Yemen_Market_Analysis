@@ -15,6 +15,7 @@ import {
 
 
 
+
 /**
  * Async thunk to fetch spatial data based on selected commodity and date.
  * This thunk fetches comprehensive spatial data, including time series, market structure,
@@ -27,17 +28,12 @@ export const fetchSpatialData = createAsyncThunk(
       const metric = await dispatch(startFetchMetric('spatial-data-fetch')).unwrap();
       const data = await spatialHandler.getSpatialData(commodity, date);
       
-      // Log completion using backgroundMonitor directly
-      backgroundMonitor.logMetric(metric.name, {
-        status: 'success',
-        metricId: metric.metricId,
-        dataSize: JSON.stringify(data).length,
-        commodity,
-        monthsCount: data.time_series_data?.length || 0
-      });
+      if (!data?.time_series_data) {
+        throw new Error(`Invalid data structure received: ${JSON.stringify(Object.keys(data || {}))}}`);
+      }
 
       return {
-        ...data,
+        data: data, 
         uniqueMonths: [...new Set(data.time_series_data.map(d => d.month))].sort(),
         selectedCommodity: commodity,
         selectedDate: date
@@ -203,72 +199,69 @@ const spatialSlice = createSlice({
         state.status.stage = 'fetching';
       })
       .addCase(fetchSpatialData.fulfilled, (state, action) => {
-        const {
-          time_series_data,
-          market_clusters,
-          market_shocks,
-          cluster_efficiency,
-          flow_analysis,
-          spatial_autocorrelation,
-          seasonal_analysis,
-          market_integration,
-          metadata,
-          uniqueMonths,
-          geoJSON,
-          flowMaps,
-          regression_analysis,
-        } = action.payload;
+        const { data: preprocessedData } = action.payload;
+        console.log('Preprocessed data:', preprocessedData);
 
-        // Update time series data
-        state.data.timeSeriesData = time_series_data;
+        // Stronger validation
+        if (!preprocessedData) {
+          state.status.error = 'No data received';
+          state.status.loading = false;
+          state.status.stage = 'error';
+          return;
+        }
 
-        // Update market clusters
-        state.data.marketClusters = market_clusters;
+        // Ensure time_series_data exists and has correct structure
+        const hasTimeSeriesData = Array.isArray(preprocessedData.time_series_data) && 
+                                 preprocessedData.time_series_data.length > 0;
 
-        // Update market shocks
-        state.data.marketShocks = market_shocks;
+        if (!hasTimeSeriesData) {
+          state.status.error = `Invalid time series data: ${JSON.stringify(Object.keys(preprocessedData))}`;
+          state.status.loading = false;
+          state.status.stage = 'error';
+          return;
+        }
 
-        // Update cluster efficiency
-        state.data.clusterEfficiency = cluster_efficiency;
-
-        // Update flow analysis
-        state.data.flowAnalysis = flow_analysis;
-
-        // Update spatial autocorrelation
-        state.data.spatialAutocorrelation = spatial_autocorrelation;
-
-        // Update seasonal analysis
-        state.data.seasonalAnalysis = seasonal_analysis;
-
-        // Update market integration
-        state.data.marketIntegration = market_integration;
-
-        // Update metadata
-        state.data.metadata = metadata;
-
-        // Update unique months
-        state.data.uniqueMonths = uniqueMonths;
-
-        // Update geoJSON
-        state.data.geoJSON = geoJSON;
-
-        // Update flow maps
-        state.data.flowMaps = flowMaps;
-
-        // Update regression analysis
-        state.data.regressionAnalysis = regression_analysis || DEFAULT_REGRESSION_DATA;
-
-        // Set loading status to complete
+        // Update time series data with proper normalization
+        state.data.timeSeriesData = preprocessedData.time_series_data.map(entry => ({
+          month: entry.month,
+          avgUsdPrice: entry.avgUsdPrice || 0,
+          volatility: entry.volatility || 0,
+          sampleSize: entry.sampleSize || 0,
+          conflict_intensity: entry.conflict_intensity || 0
+        }));
+  
+        // Update market data with proper validation
+        state.data.marketClusters = preprocessedData.market_clusters || [];
+        state.data.marketShocks = preprocessedData.market_shocks || [];
+        state.data.clusterEfficiency = preprocessedData.cluster_efficiency || [];
+        state.data.flowAnalysis = preprocessedData.flow_analysis || [];
+        state.data.spatialAutocorrelation = preprocessedData.spatial_autocorrelation || {
+          global: {},
+          local: {}
+        };
+        state.data.seasonalAnalysis = preprocessedData.seasonal_analysis || {};
+        state.data.marketIntegration = preprocessedData.market_integration || {};
+        state.data.metadata = preprocessedData.metadata || {};
+        state.data.regressionAnalysis = preprocessedData.regression_analysis || DEFAULT_REGRESSION_DATA;
+        state.data.geoJSON = preprocessedData.geoJSON || null;
+  
+        // Calculate unique months
+        state.data.uniqueMonths = [...new Set(
+          preprocessedData.time_series_data.map(d => d.month)
+        )].sort();
+  
+        // Update status
         state.status.loading = false;
         state.status.progress = 100;
         state.status.stage = 'complete';
+        state.status.error = null;
       })
       .addCase(fetchSpatialData.rejected, (state, action) => {
         state.status.loading = false;
         state.status.error = action.payload?.message || action.error.message;
         state.status.stage = 'error';
       });
-  },
+  }
 });
 
 // Export actions

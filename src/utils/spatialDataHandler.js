@@ -11,6 +11,8 @@ import {
 } from './dataUtils';
 import { pathResolver } from './pathResolver';
 import { pathValidator } from '../utils/pathValidator';
+import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
+
 
 
 
@@ -166,6 +168,13 @@ class SpatialDataHandler {
     return REGION_MAPPINGS[normalized] || normalized;
   }
 
+  normalizeCommodityName(commodity) {
+    return commodity.toLowerCase()
+      .replace(/[()]/g, '') 
+      .replace(/\s+/g, '_')
+      .trim();
+  }
+
   async initializeGeometry() {
     if (this.geometryCache) return this.geometryCache;
   
@@ -299,79 +308,30 @@ class SpatialDataHandler {
 
   async loadPreprocessedData(commodity) {
     try {
-      if (this.debugMode) {
-        console.log('[SpatialHandler] Loading preprocessed data for:', commodity);
-      }
-  
-      // Normalize commodity name to match file structure
-      const normalizedCommodity = commodity.toLowerCase()
-        .replace(/[\s()]+/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '');
-  
+      const normalizedCommodity = this.normalizeCommodityName(commodity);
       const filePath = `/data/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedCommodity}.json`;
       
-      if (this.debugMode) {
-        console.log('[SpatialHandler] Attempting to load from:', filePath);
-      }
-  
       const response = await fetch(filePath);
-      
       if (!response.ok) {
-        throw new Error(`Failed to fetch preprocessed data from ${filePath}: ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
-      // Read response as text
-      const textContent = await response.text();
+      const text = await response.text();
       
-      if (!textContent) {
-        throw new Error('Received empty response');
-      }
-  
-      // Pre-process the text content to handle NaN values before parsing
-      const sanitizedContent = textContent
-        .replace(/:\s*NaN/g, ': null')  // Replace NaN values with null
-        .replace(/:\s*Infinity/g, ': null')  // Replace Infinity values with null
-        .replace(/:\s*-Infinity/g, ': null'); // Replace -Infinity values with null
-  
-      // Parse JSON with error handling
-      let data;
-      try {
-        data = JSON.parse(sanitizedContent);
-      } catch (parseError) {
-        console.error('[SpatialHandler] JSON parse error:', {
-          error: parseError.message,
-          content: sanitizedContent.substring(0, 100) + '...'
-        });
-        throw new Error(`Failed to parse JSON: ${parseError.message}`);
-      }
-  
-      // Add additional data validation
+      // Replace NaN values with null before parsing
+      const sanitizedText = text
+        .replace(/:\s*NaN/g, ': null')
+        .replace(/:\s*Infinity/g, ': null')
+        .replace(/:\s*-Infinity/g, ': null');
+      
+      const data = JSON.parse(sanitizedText);
+      
       if (!this.validatePreprocessedData(data)) {
-        throw new Error('Invalid preprocessed data structure');
+        throw new Error('Invalid data structure');
       }
-  
-      // Clean numeric values in the parsed data
-      this.sanitizeNumericValues(data);
-  
-      if (this.debugMode) {
-        console.log('[SpatialHandler] Successfully loaded data:', {
-          commodity,
-          timeSeriesCount: data.time_series_data?.length || 0,
-          clustersCount: data.market_clusters?.length || 0,
-          shocksCount: data.market_shocks?.length || 0,
-          filePath
-        });
-      }
-  
+      
       return data;
-  
     } catch (error) {
-      console.error('[SpatialHandler] Failed to load preprocessed data:', {
-        commodity,
-        error: error.message,
-        stack: error.stack,
-      });
+      console.error('Preprocessed data load failed:', error);
       throw error;
     }
   }
@@ -412,20 +372,24 @@ class SpatialDataHandler {
   validatePreprocessedData(data) {
     if (!data || typeof data !== 'object') return false;
     
-    const requiredFields = [
+    const required = [
       'time_series_data',
       'market_clusters',
-      'market_shocks',
-      'metadata'
+      'market_shocks'
     ];
-
-    return requiredFields.every(field => {
-      const hasField = field in data;
-      if (!hasField && this.debugMode) {
-        console.warn(`[SpatialHandler] Missing required field: ${field}`);
-      }
-      return hasField;
-    });
+  
+    const missing = required.filter(field => !data[field]);
+    if (missing.length) {
+      console.warn('Missing fields:', missing);
+      return false;
+    }
+  
+    if (!Array.isArray(data.time_series_data)) {
+      console.warn('time_series_data is not an array');
+      return false;
+    }
+  
+    return true;
   }
 
   processFlowData(data) {
@@ -627,62 +591,47 @@ class SpatialDataHandler {
     };
   }
 
-  async getSpatialData(commodity, date) {
-    if (!commodity) throw new Error('Commodity parameter is required');
-
+  async getSpatialData(selectedCommodity, date) {
+    const commodity = selectedCommodity?.toLowerCase().trim() || 'beans (kidney red)'; // Fixed default
     const cacheKey = `${commodity}_${date || 'all'}`;
-    if (this.cache.has(cacheKey)) {
-      if (this.debugMode) {
-        console.log('[SpatialHandler] Cache hit:', { cacheKey });
-      }
-      return this.cache.get(cacheKey);
-    }
-
+    
     try {
-      if (this.debugMode) {
-        console.log('[SpatialHandler] Fetching spatial data:', {
-          commodity,
-          date,
-          cacheKey
-        });
+      console.log('Loading data for:', { commodity, date, cacheKey });
+  
+      // Load preprocessed data
+      const preprocessed = await this.loadPreprocessedData(commodity);
+      
+      // Validate essential fields
+      if (!preprocessed?.time_series_data) {
+        throw new Error(`Invalid data structure: ${Object.keys(preprocessed || {})}`);
       }
 
-      // Load all required data in parallel
-      const [geometryData, preprocessed, flows] = await Promise.allSettled([
-        this.initializeGeometry(),
-        this.loadPreprocessedData(commodity),
-        this.loadFlowData(commodity)
-      ]);
-
-      // Check for errors
-      const errors = [];
-      if (geometryData.status === 'rejected') errors.push('geometry: ' + geometryData.reason);
-      if (preprocessed.status === 'rejected') errors.push('preprocessed: ' + preprocessed.reason);
-      if (flows.status === 'rejected') errors.push('flows: ' + flows.reason);
-
-      if (errors.length > 0) {
-        throw new Error(`Data load failed: ${errors.join(', ')}`);
-      }
-
+      const filteredData = this.filterByDate(preprocessed.time_series_data, date);
+  
       // Process data
-      const result = this.processAllData(
-        geometryData.value,
-        preprocessed.value,
-        flows.value,
-        date
-      );
-
-      // Cache result
-      this.cache.set(cacheKey, result);
-      return result;
-
-    } catch (error) {
-      console.error('[SpatialHandler] getSpatialData failed:', {
-        commodity,
-        date,
-        error: error.message,
-        stack: error.stack
+      const result = {
+        time_series_data: filteredData,
+        market_clusters: preprocessed.market_clusters || [],
+        market_shocks: preprocessed.market_shocks || [],
+        cluster_efficiency: preprocessed.cluster_efficiency || [],
+        flow_analysis: preprocessed.flow_analysis || [],
+        spatial_autocorrelation: preprocessed.spatial_autocorrelation || {},
+        seasonal_analysis: preprocessed.seasonal_analysis || {},
+        market_integration: preprocessed.market_integration || {},
+        metadata: preprocessed.metadata || {},
+        regression_analysis: preprocessed.regression_analysis || DEFAULT_REGRESSION_DATA
+      };
+  
+      // Add debug logging
+      console.log('Processed result:', {
+        timeSeriesCount: result.time_series_data.length,
+        hasMarketClusters: Boolean(result.market_clusters.length)
       });
+  
+      return result;
+  
+    } catch (error) {
+      console.error('Failed to get spatial data:', error);
       throw error;
     }
   }
