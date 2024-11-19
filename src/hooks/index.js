@@ -2,7 +2,8 @@ import {
   useData,
   useECMData,
   usePriceDifferentialData,
-  useTVMIIData
+  useTVMIIData,
+  useRegressionAnalysis
 } from './dataHooks';
 
 import {
@@ -27,6 +28,7 @@ export {
   useECMData,
   usePriceDifferentialData,
   useTVMIIData,
+  useRegressionAnalysis,
 
   // Discovery & Methodology
   useDiscoveryData,

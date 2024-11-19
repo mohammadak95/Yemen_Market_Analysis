@@ -34,8 +34,7 @@ const REGION_MAPPINGS = {
   "lahej": "lahj", // From second mapping
 
   // Aden variations 
-  "_adan_governorate": "aden",
-  "adan": "aden",
+  "adan_governorate": "aden",
 
   // Hudaydah variations
   "al_hudaydah_governorate": "al hudaydah",

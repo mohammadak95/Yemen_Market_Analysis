@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDataPath } from '../utils/dataUtils';
+import { processRegressionData } from '../utils/dataProcessingUtils';
+import { DEFAULT_REGRESSION_DATA, isValidRegressionData } from '../types/dataTypes';
+
 
 /**
  * Custom hook to fetch and manage TV-MII data.
@@ -516,9 +519,56 @@ const useData = () => {
   return { data, loading, error };
 };
 
+/**
+ * Custom hook to fetch and process regression analysis data.
+ * 
+ * @param {string} selectedCommodity - The currently selected commodity
+ * @returns {Object} - Contains processed regression data, loading state, and error
+ */
+const useRegressionAnalysis = (selectedCommodity) => {
+  const dispatch = useDispatch();
+  const regressionData = useSelector(selectRegressionAnalysis) || DEFAULT_REGRESSION_DATA;
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
+
+  useEffect(() => {
+    if (selectedCommodity && !isValidRegressionData(regressionData)) {
+      dispatch(fetchRegressionAnalysis({ selectedCommodity }));
+    }
+  }, [selectedCommodity, dispatch, regressionData]);
+
+  const getResidualsForRegion = useCallback((regionId) => 
+    regressionData.residuals?.byRegion?.[regionId] || [], [regressionData]);
+
+  const getModelFitStatistics = useCallback(() => ({
+    r_squared: regressionData.model?.r_squared || 0,
+    adj_r_squared: regressionData.model?.adj_r_squared || 0,
+    mse: regressionData.model?.mse || 0,
+    observations: regressionData.model?.observations || 0
+  }), [regressionData]);
+
+  const getSpatialStatistics = useCallback(() => ({
+    moran_i: regressionData.spatial?.moran_i || { I: 0, 'p-value': 1 },
+    vif: regressionData.spatial?.vif || []
+  }), [regressionData]);
+
+  return {
+    data: regressionData,
+    isLoading,
+    error,
+    utils: {
+      getResidualsForRegion,
+      getModelFitStatistics,
+      getSpatialStatistics
+    }
+  };
+};
+
+// Add to exports
 export {
   useTVMIIData,
   usePriceDifferentialData,
   useECMData,
   useData,
+  useRegressionAnalysis,
 };
