@@ -1,6 +1,6 @@
 // src/components/analysis/spatial-analysis/SpatialAnalysis.js
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
 import MapComponent from './MapComponent';
@@ -19,6 +19,19 @@ const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
   // Destructure necessary data
   const { geoJSON, marketClusters, flowMaps } = spatialData || {};
 
+  // Memoize the data to avoid unnecessary re-renders
+  const memoizedGeoJSON = useMemo(() => geoJSON, [geoJSON]);
+  const memoizedMarketClusters = useMemo(() => marketClusters, [marketClusters]);
+  const memoizedFlowMaps = useMemo(() => flowMaps, [flowMaps]);
+
+  // Handle region selection (if applicable)
+  const handleRegionClick = useCallback(
+    (regionId) => {
+      dispatch(setSelectedRegion(regionId));
+    },
+    [dispatch]
+  );
+
   // Handle loading and error states
   if (loading) {
     return <LoadingSpinner />;
@@ -27,16 +40,6 @@ const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
   if (error) {
     return <ErrorMessage message={`Error loading spatial data: ${error}`} />;
   }
-
-  // Memoize the data to avoid unnecessary re-renders
-  const memoizedGeoJSON = useMemo(() => geoJSON, [geoJSON]);
-  const memoizedMarketClusters = useMemo(() => marketClusters, [marketClusters]);
-  const memoizedFlowMaps = useMemo(() => flowMaps, [flowMaps]);
-
-  // Handle region selection (if applicable)
-  const handleRegionClick = (regionId) => {
-    dispatch(setSelectedRegion(regionId));
-  };
 
   // Pass data and view config to MapComponent
   return (
