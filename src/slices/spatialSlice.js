@@ -1,11 +1,27 @@
-// spatialSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { createSelector } from 'reselect';
-import { spatialHandler } from '../utils/spatialDataHandler';
+// src/slices/spatialSlice.js
+
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { spatialHandler } from '../utils/spatialDataHandler';
 import { processRegressionData } from '../utils/dataProcessingUtils';
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 
+/**
+ * Helper function to calculate the centroid of a polygon.
+ * @param {Array} coordinates - Array of [lng, lat] pairs.
+ * @returns {Object} - Object with `lat` and `lng` properties.
+ */
+const calculateCentroid = (coordinates) => {
+  if (!coordinates || coordinates.length === 0) return { lat: 0, lng: 0 };
+  let sumX = 0,
+    sumY = 0;
+  coordinates.forEach((coord) => {
+    sumX += coord[0];
+    sumY += coord[1];
+  });
+  const len = coordinates.length;
+  return { lat: sumY / len, lng: sumX / len };
+};
 
 // Define initial state
 export const initialState = {
@@ -17,7 +33,7 @@ export const initialState = {
     geoJSON: null,
     metadata: null,
     uniqueMonths: [],
-    regressionAnalysis: DEFAULT_REGRESSION_DATA
+    regressionAnalysis: DEFAULT_REGRESSION_DATA,
   },
   ui: {
     selectedCommodity: '',
@@ -37,7 +53,9 @@ export const initialState = {
   },
 };
 
-// Create async thunk for fetching spatial data
+/**
+ * Async thunk to fetch spatial data based on selected commodity and date.
+ */
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
   async ({ selectedCommodity, selectedDate }, { rejectWithValue, dispatch }) => {
@@ -58,7 +76,7 @@ export const fetchSpatialData = createAsyncThunk(
 
       // Extract and validate unique months
       const uniqueMonths = data.timeSeriesData
-        ? [...new Set(data.timeSeriesData.map(d => d.month))]
+        ? [...new Set(data.timeSeriesData.map((d) => d.month))]
             .filter(Boolean)
             .sort()
         : [];
@@ -68,76 +86,32 @@ export const fetchSpatialData = createAsyncThunk(
         status: 'success',
         dataSize: JSON.stringify(data).length,
         commodity: selectedCommodity,
-        monthsCount: uniqueMonths.length
+        monthsCount: uniqueMonths.length,
       });
 
       return {
         ...data,
         uniqueMonths,
         selectedCommodity,
-        selectedDate: selectedDate || uniqueMonths[uniqueMonths.length - 1]
+        selectedDate: selectedDate || uniqueMonths[uniqueMonths.length - 1],
       };
-
     } catch (error) {
       dispatch(setLoadingStage('error'));
-      metric.finish({ 
-        status: 'error', 
+      metric.finish({
+        status: 'error',
         error: error.message,
-        commodity: selectedCommodity 
+        commodity: selectedCommodity,
       });
 
       return rejectWithValue({
         message: error.message,
         commodity: selectedCommodity,
         date: selectedDate,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
 );
-
-export const fetchRegressionAnalysis = createAsyncThunk(
-  'spatial/fetchRegressionAnalysis',
-  async ({ selectedCommodity }, { rejectWithValue }) => {
-    const metric = backgroundMonitor.startMetric('regression-analysis-fetch');
-
-    try {
-      const paths = ['spatial_analysis_results.json'];
-      const data = await fetchDataFromPaths(paths);
-      const processedData = processRegressionData(data, selectedCommodity);
-      
-      if (!processedData) {
-        throw new Error(`No regression data found for commodity: ${selectedCommodity}`);
-      }
-
-      metric.finish({ status: 'success', commodity: selectedCommodity });
-      return processedData;
-
-    } catch (error) {
-      metric.finish({ status: 'error', error: error.message, commodity: selectedCommodity });
-      return rejectWithValue({
-        message: error.message,
-        commodity: selectedCommodity,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }
-);
-
-// Helper function for fetching data
-const fetchDataFromPaths = async (paths) => {
-  for (const filepath of paths) {
-    try {
-      const response = await fetch(getDataPath(filepath));
-      if (response.ok) {
-        return await response.json();
-      }
-    } catch (e) {
-      console.warn(`Failed to load from ${filepath}:`, e);
-    }
-  }
-  throw new Error('Failed to load data from any path');
-};
 
 // Create the slice
 const spatialSlice = createSlice({
@@ -185,7 +159,7 @@ const spatialSlice = createSlice({
         state.status.error = null;
         state.status.progress = 100;
         state.status.stage = 'complete';
-        
+
         if (action.payload && typeof action.payload === 'object') {
           state.data = action.payload;
           if (action.payload.selectedCommodity) {
@@ -194,36 +168,41 @@ const spatialSlice = createSlice({
           if (action.payload.selectedDate) {
             state.ui.selectedDate = action.payload.selectedDate;
           }
+
+          // Assign coordinates to marketClusters by matching cluster names to geoJSON features
+          const geoFeatures = state.data.geoJSON?.features || [];
+
+          state.data.marketClusters = state.data.marketClusters.map((cluster) => {
+            const matchingFeature = geoFeatures.find(
+              (feature) =>
+                feature.properties.originalName.toLowerCase() ===
+                cluster.main_market.toLowerCase()
+            );
+
+            if (matchingFeature && matchingFeature.geometry.type === 'Polygon') {
+              const coordinates = matchingFeature.geometry.coordinates[0]; // Assuming Polygon
+              const centroid = calculateCentroid(coordinates);
+              return {
+                ...cluster,
+                main_market_coordinates: {
+                  lat: centroid.lat,
+                  lng: centroid.lng,
+                },
+              };
+            }
+
+            // If no matching feature found, log a warning and return cluster without coordinates
+            console.warn(
+              `No geoJSON feature found for main_market: ${cluster.main_market}`
+            );
+            return cluster;
+          });
         }
       })
       .addCase(fetchSpatialData.rejected, (state, action) => {
         state.status.loading = false;
+        state.status.error = action.payload?.message || 'An error occurred';
         state.status.stage = 'error';
-        state.status.progress = 0;
-        
-        state.status.error = {
-          message: action.payload?.message || 'Unknown error',
-          commodity: action.payload?.commodity,
-          date: action.payload?.date,
-          timestamp: action.payload?.timestamp || new Date().toISOString()
-        };
-      })
-      .addCase(fetchRegressionAnalysis.pending, (state) => {
-        state.status.loading = true;
-        state.status.error = null;
-      })
-      .addCase(fetchRegressionAnalysis.fulfilled, (state, action) => {
-        state.status.loading = false;
-        state.status.error = null;
-        state.data.regressionAnalysis = action.payload;
-      })
-      .addCase(fetchRegressionAnalysis.rejected, (state, action) => {
-        state.status.loading = false;
-        state.status.error = {
-          message: action.payload?.message || 'Failed to fetch regression analysis',
-          commodity: action.payload?.commodity,
-          timestamp: action.payload?.timestamp
-        };
       });
   },
 });

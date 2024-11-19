@@ -5,6 +5,15 @@ import PropTypes from 'prop-types';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 
+/**
+ * ClusterLayer Component
+ * 
+ * Renders markers for each market cluster on the map.
+ * Each marker displays the cluster ID and shows a popup with cluster details upon click.
+ * 
+ * Props:
+ * - clusters: Array of cluster objects containing cluster details and coordinates.
+ */
 const ClusterLayer = ({ clusters }) => {
   const map = useMap();
 
@@ -25,36 +34,67 @@ const ClusterLayer = ({ clusters }) => {
     }
 
     clusters.forEach((cluster) => {
-      const { cluster_id, main_market, connected_markets } = cluster;
+      const {
+        cluster_id,
+        main_market,
+        connected_markets,
+        main_market_coordinates,
+      } = cluster;
 
-      // Assume main_market_coordinates are available
-      const { lat, lng } = cluster.main_market_coordinates || {};
-      if (lat == null || lng == null) return;
+      // Validate coordinates
+      if (
+        !main_market_coordinates ||
+        typeof main_market_coordinates.lat !== 'number' ||
+        typeof main_market_coordinates.lng !== 'number'
+      ) {
+        console.warn(
+          `Cluster ${cluster_id} is missing main_market_coordinates. Skipping rendering this cluster.`
+        );
+        return; // Skip clusters without valid coordinates
+      }
 
+      const { lat, lng } = main_market_coordinates;
+
+      // Create a custom div icon for the cluster marker
+      const clusterIcon = L.divIcon({
+        className: 'custom-cluster-icon',
+        html: `<div style="
+                background-color: #1f78b4;
+                color: white;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              ">
+                ${cluster_id}
+              </div>`,
+      });
+
+      // Create a marker for the cluster
       const marker = L.marker([lat, lng], {
         pane: 'clusterPane',
         title: `Cluster ${cluster_id}`,
-        icon: L.divIcon({
-          className: 'custom-cluster-icon',
-          html: `<div style="background-color: #1f78b4; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                  ${cluster_id}
-                </div>`,
-        }),
+        icon: clusterIcon,
       });
 
+      // Bind a popup with cluster details
       marker.bindPopup(`
         <strong>Cluster ${cluster_id}</strong><br/>
         Main Market: ${main_market}<br/>
-        Markets: ${connected_markets.length}
+        Connected Markets: ${connected_markets.length}
       `);
 
+      // Add the marker to the map
       marker.addTo(map);
     });
   }, [clusters, map]);
 
-  return null;
+  return null; // This component does not render anything directly
 };
 
+// Define PropTypes for ClusterLayer
 ClusterLayer.propTypes = {
   clusters: PropTypes.arrayOf(
     PropTypes.shape({
@@ -64,7 +104,7 @@ ClusterLayer.propTypes = {
       main_market_coordinates: PropTypes.shape({
         lat: PropTypes.number.isRequired,
         lng: PropTypes.number.isRequired,
-      }),
+      }), // Made optional to handle missing coordinates
     })
   ).isRequired,
 };
