@@ -12,12 +12,11 @@ import { DEFAULT_GEOJSON } from '../../../constants/index';
 const MapComponent = ({
   geoJSON,
   marketClusters,
-  flowMaps,
+  flowData,
   spatialViewConfig,
   onSpatialViewChange,
   onRegionClick,
   selectedRegion,
-  flowData // Add flowData to the destructured props
 }) => {
   const { center, zoom } = spatialViewConfig;
   const [map, setMap] = useState(null);
@@ -115,10 +114,9 @@ const MapComponent = ({
       {marketClusters && marketClusters.length > 0 && (
         <ClusterLayer clusters={marketClusters} />
       )}
-      {flowMaps && flowMaps.length > 0 && (
-        <FlowLayer flowData={flowMaps} />
+      {flowData && flowData.length > 0 && (
+        <FlowLayer flowData={flowData} />
       )}
-      {/* Add other layers or components as needed */}
     </MapContainer>
   );
 };
@@ -133,20 +131,19 @@ MapComponent.propTypes = {
     PropTypes.shape({
       source: PropTypes.string.isRequired,
       target: PropTypes.string.isRequired,
-      source_lat: PropTypes.number,
-      source_lng: PropTypes.number,
-      target_lat: PropTypes.number,
-      target_lng: PropTypes.number,
-      flow_weight: PropTypes.number
+      totalFlow: PropTypes.number.isRequired,
+      avgFlow: PropTypes.number,
+      flowCount: PropTypes.number,
+      avgPriceDifferential: PropTypes.number
     })
   ),
   marketClusters: PropTypes.array,
-  flowMaps: PropTypes.array,
   spatialViewConfig: PropTypes.object.isRequired,
   onSpatialViewChange: PropTypes.func.isRequired,
   onRegionClick: PropTypes.func,
   selectedRegion: PropTypes.string
 };
+
 
 MapComponent.defaultProps = {
   geoJSON: DEFAULT_GEOJSON,

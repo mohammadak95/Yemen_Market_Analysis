@@ -179,28 +179,30 @@ const spatialSlice = createSlice({
           return;
         }
       
+        // Process flow data - standardize on one format
+        const processedFlows = preprocessedData.flow_analysis?.map(flow => ({
+          source: flow.source,
+          target: flow.target,
+          totalFlow: flow.total_flow || 0,
+          avgFlow: flow.avg_flow || 0,
+          flowCount: flow.flow_count || 0,
+          avgPriceDifferential: flow.avg_price_differential || 0,
+          // We'll derive coordinates later in the visualization layer
+          source_lat: null,
+          source_lng: null,
+          target_lat: null,
+          target_lng: null
+        })) || [];
+      
         // Update state with validated data
         state.data = {
           ...state.data,
-          timeSeriesData: preprocessedData.time_series_data.map(entry => ({
-            month: entry.month,
-            avgUsdPrice: entry.avgUsdPrice || 0,
-            volatility: entry.volatility || 0,
-            sampleSize: entry.sampleSize || 0,
-            conflict_intensity: entry.conflict_intensity || 0
-          })),
-          flowMaps: preprocessedData.flow_analysis?.map(flow => ({
-            source: flow.source,
-            target: flow.target,
-            totalFlow: flow.total_flow,
-            avgFlow: flow.avg_flow,
-            flowCount: flow.flow_count,
-            avgPriceDifferential: flow.avg_price_differential
-          })) || [],
+          timeSeriesData: preprocessedData.time_series_data,
+          flowMaps: processedFlows,  // Use only one flow array
+          flowAnalysis: processedFlows,  // Keep for backwards compatibility if needed
           marketClusters: preprocessedData.market_clusters || [],
           marketShocks: preprocessedData.market_shocks || [],
           clusterEfficiency: preprocessedData.cluster_efficiency || [],
-          flowAnalysis: preprocessedData.flow_analysis || [],
           spatialAutocorrelation: preprocessedData.spatial_autocorrelation || {
             global: {},
             local: {}
@@ -217,7 +219,7 @@ const spatialSlice = createSlice({
             preprocessedData.time_series_data.map(d => d.month)
           )].sort()
         };
-
+      
         // Sync UI state with metadata
         if (preprocessedData.metadata?.commodity) {
           state.ui.selectedCommodity = preprocessedData.metadata.commodity;
@@ -225,7 +227,7 @@ const spatialSlice = createSlice({
         if (preprocessedData.metadata?.processed_date) {
           state.ui.selectedDate = preprocessedData.metadata.processed_date;
         }
-
+      
         state.status.loading = false;
         state.status.progress = 100;
         state.status.stage = 'complete';
