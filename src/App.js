@@ -22,13 +22,21 @@ import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
 import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import WelcomeModal from './components/common/WelcomeModal';
-import { useWindowSize, useData } from './hooks';
+import { useWindowSize } from './hooks';
 import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
 } from './styles/theme';
+import { 
+  fetchAllSpatialData, 
+  fetchFlowData,
+  selectSpatialData,
+  selectLoadingStatus,
+  selectError 
+} from './slices/spatialSlice';
 
 const DRAWER_WIDTH = 240;
+const DEFAULT_DATE = '2020-10-01';
 
 const StyledAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
@@ -46,6 +54,9 @@ const StyledAppBar = styled(AppBar, {
 
 const App = () => {
   const dispatch = useDispatch();
+  const spatialData = useSelector(selectSpatialData);
+  const loading = useSelector(selectLoadingStatus);
+  const error = useSelector(selectError);
   const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
   const theme = React.useMemo(
     () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
@@ -55,12 +66,9 @@ const App = () => {
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
 
-  // Use the useData hook for GeoJSON data
-  const { data: geoData, loading, error } = useData();
-
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(DEFAULT_DATE);
   const [selectedAnalysis, setSelectedAnalysis] = useState('');
   const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']);
   const [spatialViewConfig, setSpatialViewConfig] = useState({
@@ -73,23 +81,57 @@ const App = () => {
     welcome: false,
   });
 
-  // Set initial selected commodity when data loads
   useEffect(() => {
-    if (geoData?.commodities?.length > 0 && !selectedCommodity) {
-      setSelectedCommodity(geoData.commodities[0]);
+    const initializeApp = async () => {
+      if (!spatialData?.commodities?.length && !loading) {
+        try {
+          console.log('Initializing application data...');
+          await dispatch(fetchAllSpatialData({ 
+            commodity: '', 
+            date: DEFAULT_DATE 
+          })).unwrap(); // Use unwrap to properly handle errors
+        } catch (err) {
+          console.error('Failed to initialize data:', err);
+        }
+      }
+
+      const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+      if (!hasSeenWelcome) {
+        setModalStates((prev) => ({ ...prev, welcome: true }));
+      }
+
+      setSidebarOpen(isSmUp);
+    };
+
+    initializeApp();
+  }, [dispatch, spatialData, loading, isSmUp]);
+
+  const fetchDataOnce = useCallback(async () => {
+    if (!spatialData?.commodities) {  // Changed condition
+      try {
+        console.log('Fetching initial data...');
+        await dispatch(fetchAllSpatialData({ 
+          commodity: '', 
+          date: DEFAULT_DATE 
+        }));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
     }
-  }, [geoData?.commodities, selectedCommodity]);
+  }, [dispatch, spatialData]);
 
   useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
-    if (!hasSeenWelcome) {
-      setModalStates((prev) => ({ ...prev, welcome: true }));
-    }
-  }, []);
+    fetchDataOnce();
+  }, [fetchDataOnce]);
 
   useEffect(() => {
-    setSidebarOpen(isSmUp);
-  }, [isSmUp]);
+    if (spatialData?.commodities?.length) {
+      const availableCommodities = spatialData.commodities.map(c => c.toLowerCase());
+      if (availableCommodities.length && !selectedCommodity) {
+        setSelectedCommodity(availableCommodities[0]);
+      }
+    }
+  }, [spatialData]);
 
   const handleToggleDarkMode = useCallback(() => {
     dispatch(toggleDarkMode());
@@ -110,7 +152,17 @@ const App = () => {
     }
   }, []);
 
-  if (loading) {
+  const handleCommodityChange = useCallback((newCommodity) => {
+    if (newCommodity) {
+      setSelectedCommodity(newCommodity);
+      dispatch(fetchAllSpatialData({ 
+        commodity: newCommodity.toLowerCase(), 
+        date: selectedDate || DEFAULT_DATE 
+      }));
+    }
+  }, [dispatch, selectedDate]);
+
+  if (loading && !spatialData) {
     return <LoadingSpinner />;
   }
 
@@ -150,10 +202,10 @@ const App = () => {
           </StyledAppBar>
 
           <Sidebar
-            commodities={geoData?.commodities || []}
-            regimes={geoData?.regimes || ['unified', 'north', 'south']}
-            selectedCommodity={selectedCommodity}
-            setSelectedCommodity={setSelectedCommodity}
+            commodities={spatialData?.commodities?.map(c => c.toLowerCase()) || []}
+            regimes={spatialData?.regimes || ['unified', 'north', 'south']}
+            selectedCommodity={selectedCommodity.toLowerCase()}
+            setSelectedCommodity={handleCommodityChange}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
             selectedAnalysis={selectedAnalysis}
@@ -180,7 +232,7 @@ const App = () => {
           >
             <Toolbar />
             <Dashboard
-              data={geoData}
+              spatialData={spatialData}
               selectedCommodity={selectedCommodity}
               selectedDate={selectedDate}
               selectedRegimes={selectedGraphRegimes}

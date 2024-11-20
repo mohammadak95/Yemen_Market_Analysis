@@ -29,24 +29,16 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
 import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
 
-// Utility function to capitalize words
 const capitalizeWords = (str) => {
-  return str.replace(/\b\w/g, (char) => char.toUpperCase());
+  return str
+    .split(/[_\s]+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 // Constant for drawer width
 const drawerWidth = 240;
 
-/**
- * NavigationItem Component
- *
- * A reusable navigation item that wraps Material-UI's ListItem and ListItemButton.
- *
- * Props:
- * - onClick: Function to handle click events. Defaults to an empty function.
- * - selected: Boolean indicating if the item is selected. Defaults to false.
- * - children: The content to display inside the navigation item (typically ListItemIcon and ListItemText).
- */
 const NavigationItem = ({ onClick = () => {}, selected = false, children }) => (
   <ListItem disablePadding>
     <ListItemButton onClick={onClick} selected={selected}>
@@ -72,51 +64,79 @@ NavigationItem.propTypes = {
  * - onSelectCommodity: Function to handle commodity selection.
  */
 
-const CommoditySelector = ({ commodities, selectedCommodity, onSelectCommodity }) => {
+const CommoditySelector = ({ 
+  commodities = [], 
+  selectedCommodity = '', 
+  onSelectCommodity 
+}) => {
   const dispatch = useDispatch();
-  const { uniqueMonths } = useSelector(selectSpatialData);
+  const { uniqueMonths, loading } = useSelector(selectSpatialData);
+  const [error, setError] = useState(null);
 
-  const handleCommoditySelect = useCallback(
-    (commodity) => {
-      if (commodity) {
-        const lowercaseCommodity = commodity.toLowerCase(); // Convert to lowercase
-        
-        // Dispatch without selectedDate if uniqueMonths is empty
-        const payload = {
-          selectedCommodity: lowercaseCommodity,
-        };
-        if (uniqueMonths?.length) {
-          payload.selectedDate = uniqueMonths[0];
-        }
+  useEffect(() => {
+    console.log('CommoditySelector props:', {
+      commodities,
+      selectedCommodity,
+      loading
+    });
+  }, [commodities, selectedCommodity, loading]);
 
-        dispatch(fetchSpatialData(payload));
-        onSelectCommodity(lowercaseCommodity); // Pass lowercase commodity to the callback
-      }
-    },
-    [dispatch, uniqueMonths, onSelectCommodity]
-  );
+  const handleCommoditySelect = useCallback(async (commodity) => {
+    if (!commodity) return;
+    
+    try {
+      setError(null);
+      const lowercaseCommodity = commodity.toLowerCase();
+      
+      await dispatch(fetchSpatialData({
+        selectedCommodity: lowercaseCommodity,
+        selectedDate: uniqueMonths?.[0]
+      })).unwrap();
+      
+      onSelectCommodity(lowercaseCommodity);
+    } catch (err) {
+      console.error('Error selecting commodity:', err);
+      setError('Failed to load commodity data');
+    }
+  }, [dispatch, uniqueMonths, onSelectCommodity]);
 
   return (
-    <FormControl fullWidth variant="outlined" size="small" margin="normal">
-      <InputLabel id="commodity-select-label">Select Commodity</InputLabel>
+    <FormControl 
+      fullWidth 
+      variant="outlined" 
+      size="small" 
+      margin="normal"
+      disabled={loading}
+      error={Boolean(error)}
+    >
+      <InputLabel id="commodity-select-label">
+        Select Commodity {loading ? '(Loading...)' : ''}
+      </InputLabel>
       <Select
         labelId="commodity-select-label"
         id="commodity-select"
         name="commodity"
-        value={selectedCommodity}
+        value={selectedCommodity || ''}
         onChange={(e) => handleCommoditySelect(e.target.value)}
-        label="Select Commodity"
-        aria-label="Select commodity"
+        label={`Select Commodity ${loading ? '(Loading...)' : ''}`}
       >
-        <MenuItem value="">
-          <em>Select a commodity</em>
-        </MenuItem>
+        {!commodities.length && (
+          <MenuItem value="">
+            <em>{loading ? 'Loading commodities...' : 'No commodities available'}</em>
+          </MenuItem>
+        )}
         {commodities.map((commodity) => (
-          <MenuItem key={commodity} value={commodity}>
+          <MenuItem 
+            key={commodity} 
+            value={commodity}
+          >
             {capitalizeWords(commodity)}
           </MenuItem>
         ))}
       </Select>
+      {error && (
+        <FormHelperText error>{error}</FormHelperText>
+      )}
     </FormControl>
   );
 };

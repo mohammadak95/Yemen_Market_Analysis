@@ -1,10 +1,11 @@
 // src/index.js
 
 import React from 'react';
+import { configureStore } from '@reduxjs/toolkit';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import PropTypes from 'prop-types';
-import store from './store';
+import store from './store/configureStore';
 import App from './App';
 import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 import { setupReduxDebugger } from './utils/debugUtils';

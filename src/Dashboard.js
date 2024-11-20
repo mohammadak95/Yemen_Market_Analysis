@@ -1,3 +1,5 @@
+//src/Dashboard.js
+
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid } from '@mui/material';
@@ -21,6 +23,13 @@ import {
   Filler,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import { 
+  selectSpatialData, 
+  selectFlowData,
+  selectTimeSeriesData,
+  selectMarketClusters,
+  selectVisualizationMode
+} from './slices/spatialSlice';
 
 // Register ChartJS components
 ChartJS.register(
@@ -64,36 +73,29 @@ const TVMIIAnalysisLazy = React.lazy(() =>
   })
 );
 
-const Dashboard = React.memo(
-  ({
-    data,
-    selectedAnalysis,
-    selectedCommodity,
-    selectedRegimes,
-    windowWidth,
-    spatialViewConfig,
-    onSpatialViewChange,
-  }) => {
-    // Process features data for the interactive chart
-    const processedData = useMemo(() => {
-      if (!data?.features || !Array.isArray(data.features)) return [];
+const Dashboard = React.memo(({
+  selectedAnalysis,
+  selectedCommodity,
+  selectedRegimes,
+  windowWidth,
+  spatialViewConfig,
+  onSpatialViewChange,
+}) => {
+  const spatialData = useSelector(selectSpatialData);
+  const timeSeriesData = useSelector(selectTimeSeriesData);
+  const marketClusters = useSelector(selectMarketClusters);
+  const visualizationMode = useSelector(selectVisualizationMode);
 
-      // Filter features by selected commodity and regimes
-      const filteredFeatures = data.features.filter(item => 
+  const processedData = useMemo(() => {
+    if (!timeSeriesData) return [];
+    
+    return timeSeriesData
+      .filter(item => 
         item.commodity?.toLowerCase() === selectedCommodity?.toLowerCase() &&
         selectedRegimes.includes(item.regime?.toLowerCase())
-      );
-
-      // Sort features by date
-      return _.sortBy(filteredFeatures, 'date').map(feature => ({
-        date: feature.date,
-        commodity: feature.commodity,
-        regime: feature.regime,
-        price: feature.price,
-        usdprice: feature.usdprice,
-        conflict_intensity: feature.conflict_intensity
-      }));
-    }, [data?.features, selectedCommodity, selectedRegimes]);
+      )
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [timeSeriesData, selectedCommodity, selectedRegimes]);
 
     // Map analysis types to components with explicit null checks
     const getAnalysisComponent = useCallback((type) => {
@@ -134,43 +136,42 @@ const Dashboard = React.memo(
     }, [processedData, selectedCommodity, selectedRegimes]);
 
     const renderAnalysisComponent = useCallback(() => {
-      if (!selectedAnalysis) {
-        return null;
-      }
-
+      if (!selectedAnalysis) return null;
+  
       const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
-      if (!AnalysisComponent) {
-        console.error(`Invalid analysis component for type: ${selectedAnalysis}`);
-        return <ErrorMessage message="Selected analysis type is not available." />;
-      }
-
-      const commonProps = {
-        selectedCommodity,
-        windowWidth,
-        spatialViewConfig,
-        onSpatialViewChange,
-        data: data,
-      };
-
+      if (!AnalysisComponent) return <ErrorMessage message="Selected analysis type is not available." />;
+  
       return (
         <Suspense fallback={<LoadingSpinner />}>
           <AnalysisWrapper>
-            <AnalysisComponent {...commonProps} />
+            <AnalysisComponent
+              spatialData={spatialData}
+              selectedCommodity={selectedCommodity}
+              windowWidth={windowWidth}
+              spatialViewConfig={spatialViewConfig}
+              onSpatialViewChange={onSpatialViewChange}
+              visualizationMode={visualizationMode}
+            />
           </AnalysisWrapper>
         </Suspense>
       );
     }, [
       selectedAnalysis,
+      spatialData,
       selectedCommodity,
       windowWidth,
       spatialViewConfig,
       onSpatialViewChange,
-      data,
-      getAnalysisComponent,
+      visualizationMode
     ]);
+  
+    if (!spatialData) return <LoadingSpinner />;
+  
+
+
 
     // Add loading state for initial data
-    if (!data) {
+    if (!spatialData) {
       return (
         <Box
           sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
@@ -243,7 +244,7 @@ Dashboard.propTypes = {
     center: PropTypes.arrayOf(PropTypes.number).isRequired,
     zoom: PropTypes.number.isRequired,
   }),
-  onSpatialViewChange: PropTypes.func,
+  onSpatialViewChange: PropTypes.func
 };
 
 export default Dashboard;

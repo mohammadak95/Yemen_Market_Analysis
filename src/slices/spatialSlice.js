@@ -15,8 +15,7 @@ import {
   calculateBoundingBox,
   findNeighboringRegions
 } from '../utils/marketAnalysisUtils';
-import { DEFAULT_GEOJSON, DEFAULT_VIEW, VISUALIZATION_MODES } from '../constants/index';
-import { getDataPath } from '../utils/dataUtils';
+import { DEFAULT_VIEW } from '../constants/index';
 
 // Initial State with Added Loading States
 export const initialState = {
@@ -45,7 +44,19 @@ export const initialState = {
     },
     metadata: null,
     // Cache for fetched data
-    cache: {}
+    cache: {},
+    // New: Flow data structure
+    flowData: {
+      flows: [],
+      metadata: null,
+      lastUpdated: null
+    },
+    // New: Spatial analysis results
+    spatialAnalysis: {
+      moranI: null,
+      clusters: [],
+      regressionResults: null
+    }
   },
   status: {
     loading: false,
@@ -58,11 +69,11 @@ export const initialState = {
     regressionError: null,
     visualizationLoading: false,
     visualizationError: null,
-    dataFetching: false,   // Added
-    dataCaching: false,    // Added
-    lastUpdated: null,     // Added
-    retryCount: 0,         // Added
-    lastError: null        // Added
+    dataFetching: false,
+    dataCaching: false,
+    lastUpdated: null,
+    retryCount: 0,
+    lastError: null
   },
   ui: {
     selectedCommodity: '',
@@ -80,7 +91,21 @@ export const initialState = {
   }
 };
 
-// Thunk Optimization: fetchAllSpatialData with Caching and Enhanced Error Handling
+export const fetchFlowData = createAsyncThunk(
+  'spatial/fetchFlowData',
+  async ({ commodity, date }, { getState, rejectWithValue }) => {
+    const metric = backgroundMonitor.startMetric('flow-data-fetch');
+    try {
+      const response = await spatialHandler.loadFlowDataWithRecovery(commodity);
+      metric.finish({ status: 'success' });
+      return response;
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const fetchAllSpatialData = createAsyncThunk(
   'spatial/fetchAllSpatialData',
   async ({ 
@@ -91,7 +116,7 @@ export const fetchAllSpatialData = createAsyncThunk(
     skipGeometry = false,
     regressionOnly = false,
     visualizationOnly = false,
-    forceRefresh = false // Added for cache bypass
+    forceRefresh = false
   }, { getState, rejectWithValue }) => {
     const metric = backgroundMonitor.startMetric('spatial-data-fetch');
     const state = getState();
@@ -243,7 +268,6 @@ export const fetchVisualizationData = ({ mode, filters }) => {
   });
 };
 
-// Error Handling Improvements: handleSpatialError Thunk
 export const handleSpatialError = createAsyncThunk(
   'spatial/handleError',
   async (error, { dispatch, getState, rejectWithValue }) => {
@@ -273,7 +297,6 @@ export const handleSpatialError = createAsyncThunk(
   }
 );
 
-// Performance Optimization: batchUpdateSpatialState Thunk
 export const batchUpdateSpatialState = createAsyncThunk(
   'spatial/batchUpdate',
   async (updates, { dispatch }) => {
@@ -295,7 +318,6 @@ export const batchUpdateSpatialState = createAsyncThunk(
   }
 );
 
-// Create Slice
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
@@ -357,6 +379,51 @@ const spatialSlice = createSlice({
         const { geometry, spatialData, regressionData, visualizationData, metadata, cacheKey, cacheTimestamp } = action.payload;
         const { regressionOnly, visualizationOnly } = action.meta.arg;
 
+        // Handle full data update
+        if (spatialData) {
+          // Add logging to debug
+          console.log('Received spatial data:', spatialData);
+          
+          // Ensure we're correctly setting commodities
+          if (spatialData.commodities) {
+            state.data.commodities = spatialData.commodities
+              .filter(commodity => 
+                typeof commodity === 'string' && 
+                commodity.trim().length > 0
+              )
+              .map(commodity => commodity.toLowerCase().trim());
+          }
+      
+          // Update rest of state
+          state.data = {
+            ...state.data,
+            timeSeriesData: spatialData.time_series_data || [],
+            flowMaps: spatialData.flowMaps || [],
+            marketClusters: spatialData.marketClusters || [],
+            marketShocks: spatialData.marketShocks || [],
+            spatialAutocorrelation: spatialData.spatialAutocorrelation || {
+              global: {},
+              local: {}
+            },
+            seasonalAnalysis: spatialData.seasonalAnalysis || {},
+            marketIntegration: spatialData.marketIntegration || {},
+            uniqueMonths: [...new Set(
+              spatialData.time_series_data?.map(d => d.month) || []
+            )].sort()
+          };
+        }
+
+        if (spatialData?.commodities) {
+          state.data.commodities = spatialData.commodities
+            .filter(commodity => 
+              typeof commodity === 'string' && 
+              commodity.trim().length > 0
+            )
+            .map(commodity => commodity.toLowerCase().trim())
+            .sort()
+            .filter((c, i, arr) => arr.indexOf(c) === i); // Remove duplicates
+        }
+
         // Handle regression-only update
         if (regressionOnly) {
           state.data.regressionAnalysis = regressionData;
@@ -383,6 +450,9 @@ const spatialSlice = createSlice({
         if (spatialData) {
           state.data = {
             ...state.data,
+            ...spatialData,
+            metadata,
+            commodities: spatialData.commodities || [],
             timeSeriesData: spatialData.time_series_data,
             flowMaps: spatialData.flowMaps,
             marketClusters: spatialData.marketClusters || [],
@@ -423,14 +493,17 @@ const spatialSlice = createSlice({
         }
 
         // Reset loading states
-        state.status.loading = false;
-        state.status.error = null;
-        state.status.progress = 100;
-        state.status.stage = 'complete';
-        state.status.geometryLoading = false;
-        state.status.regressionLoading = false;
-        state.status.visualizationLoading = false;
-        state.status.dataFetching = false; // Added
+        state.status = {
+          ...state.status,
+          loading: false,
+          dataFetching: false,
+          error: null,
+          progress: 100,
+          stage: 'complete',
+          geometryLoading: false,
+          regressionLoading: false,
+          visualizationLoading: false
+        };
       })
       .addCase(fetchAllSpatialData.rejected, (state, action) => {
         state.status.loading = false;
@@ -451,6 +524,24 @@ const spatialSlice = createSlice({
       })
       .addCase(batchUpdateSpatialState.fulfilled, (state, action) => {
         // Handle any state updates if necessary after batch updates
+      })
+      .addCase(fetchFlowData.pending, (state) => {
+        state.status.dataFetching = true;
+        state.status.error = null; // Add this
+      })
+      .addCase(fetchFlowData.fulfilled, (state, action) => {
+        state.data.flowData = {
+          flows: action.payload,
+          metadata: {
+            lastUpdated: new Date().toISOString()
+          }
+        };
+        state.status.dataFetching = false;
+        state.status.error = null; // Add this
+      })
+      .addCase(fetchFlowData.rejected, (state, action) => {
+        state.status.dataFetching = false;
+        state.status.error = action.payload; // Change this
       });
   }
 });
@@ -477,7 +568,6 @@ export const selectSpatialData = (state) => state.spatial.data;
 export const selectUIState = (state) => state.spatial.ui;
 export const selectLoadingStatus = (state) => state.spatial.status;
 export const selectTimeSeriesData = (state) => state.spatial.data.timeSeriesData;
-export const selectFlowData = (state) => state.spatial.data.flowMaps;
 export const selectMarketClusters = (state) => state.spatial.data.marketClusters;
 export const selectSpatialAutocorrelation = (state) => state.spatial.data.spatialAutocorrelation;
 export const selectMarketIntegration = (state) => state.spatial.data.marketIntegration;
@@ -495,6 +585,7 @@ export const selectVisualizationMode = (state) => state.spatial.ui.visualization
 export const selectActiveLayers = (state) => state.spatial.ui.activeLayers;
 export const selectAnalysisFilters = (state) => state.spatial.ui.analysisFilters;
 export const selectGeometryData = (state) => state.spatial.data.geometry;
+export const selectError = (state) => state.spatial.status.error;
 
 // Selector Optimization: Memoization for Heavy Selectors
 export const selectGeometryWithCache = createSelector(
@@ -554,8 +645,6 @@ export const selectRegionTimeSeriesData = createSelector(
   [selectTimeSeriesData, selectUIState],
   (data, ui) => data.filter(d => d.region === ui.selectedRegion)
 );
-
-// Removed selectRegionEfficiency as it referenced non-existent state property
 
 export const selectDetailedMetrics = createSelector(
   [selectTimeSeriesData, selectRegressionAnalysis, selectUIState],
@@ -639,8 +728,6 @@ export const selectFilteredMarketData = createSelector(
   }
 );
 
-// Removed the first selectGeometryStatus and kept the memoized one below
-
 export const selectRegionGeometry = createSelector(
   [selectGeoJSON, selectUIState],
   (geoJSON, ui) => {
@@ -711,7 +798,6 @@ export const selectActiveRegionData = createSelector(
   })
 );
 
-// Keep only one definition of selectActiveRegionDataOptimized
 export const selectActiveRegionDataOptimized = createSelector(
   [
     selectActiveRegionData,
@@ -756,7 +842,6 @@ export const selectActiveRegionDataOptimized = createSelector(
   }
 );
 
-// Add supporting selectors for geometric data (removed duplicate)
 export const selectGeometryStatus = createSelector(
   [selectGeometryData],
   (geometry) => ({
@@ -771,8 +856,29 @@ export const selectGeometryStatus = createSelector(
   })
 );
 
+export const selectFlowData = createSelector(
+  [selectSpatialData],
+  (data) => data?.flowData?.flows || []
+);
 
-// Add a simple cache for geometric computations
+export const selectSpatialAnalysisResults = createSelector(
+  [selectSpatialData],
+  (data) => data?.spatialAnalysis || null
+);
+
+export const selectFlowMetadata = createSelector(
+  [selectSpatialData],
+  (data) => data?.flowData?.metadata || null
+);
+
+export const selectFlowsByRegion = createSelector(
+  [selectFlowData, (_, regionId) => regionId],
+  (flows, regionId) => flows.filter(flow => 
+    flow.source === regionId || flow.target === regionId
+  )
+);
+
+
 const metricsCache = new Map();
 
 // Helper to clear cache when needed
