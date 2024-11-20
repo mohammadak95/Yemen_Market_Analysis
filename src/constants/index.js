@@ -1,6 +1,22 @@
 // src/constants/index.js
 
 
+export const DEFAULT_GEOJSON = {
+  type: 'FeatureCollection',
+  features: [],
+  crs: {
+    type: 'name',
+    properties: {
+      name: 'urn:ogc:def:crs:OGC:1.3:CRS84'
+    }
+  }
+};
+
+export const DEFAULT_VIEW = {
+  center: [15.3694, 44.191],
+  zoom: 6
+};
+
 export const VISUALIZATION_MODES = {
     PRICES: 'prices',
     MARKET_INTEGRATION: 'integration',

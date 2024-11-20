@@ -189,9 +189,131 @@ export function summarizeClusters(clusters) {
 
 export function calculateMarketMetrics(data) {
   return {
+    marketCoverage: calculateCoverage(data.marketClusters),
+    flowDensity: calculateFlowDensity(data.flowMaps),
+    priceCorrelation: calculatePriceCorrelation(data.timeSeriesData),
     overallVolatility: calculateVolatility(data.timeSeriesData),
     overallIntegration: calculateIntegration(data.spatialAutocorrelation),
     overallShockFrequency: calculateShockFrequency(data.detectedShocks),
     overallClusterEfficiency: calculateClusterEfficiency(data.marketClusters),
   };
+}
+
+export function validateCoordinates(coordinates) {
+  if (!coordinates || !Array.isArray(coordinates)) return false;
+  const [lat, lng] = coordinates;
+  return (
+    typeof lat === 'number' && 
+    typeof lng === 'number' &&
+    lat >= -90 && lat <= 90 &&
+    lng >= -180 && lng <= 180
+  );
+}
+
+// Add to marketAnalysisUtils.js
+export function calculateFlowMetrics(flowData) {
+  if (!Array.isArray(flowData)) return null;
+  
+  return {
+    marketCoverage: calculateFlowCoverage(flowData),
+    flowDensity: calculateFlowDensity(flowData),
+    networkEfficiency: calculateNetworkEfficiency(flowData)
+  };
+}
+
+export function calculateFlowCoverage(flows) {
+  const uniqueMarkets = new Set();
+  flows.forEach(flow => {
+    uniqueMarkets.add(flow.source);
+    uniqueMarkets.add(flow.target);
+  });
+  return uniqueMarkets.size;
+}
+
+export function calculateNetworkEfficiency(flows) {
+  const totalFlow = flows.reduce((sum, flow) => sum + flow.flow_weight, 0);
+  const avgFlow = totalFlow / flows.length;
+  return {
+    totalFlow,
+    avgFlow,
+    flowCount: flows.length
+  };
+}
+
+// Add to marketAnalysisUtils.js
+export function calculateEnhancedIntegrationScore(data) {
+  const weights = {
+    price_correlation: 0.35,
+    flow_density: 0.25,
+    accessibility: 0.20,
+    stability: 0.20
+  };
+
+  // Get the core metrics
+  const correlationScore = calculateCorrelationScore(data.price_correlation);
+  const flowScore = calculateFlowScore(data.flow_analysis);
+  const accessScore = calculateAccessibilityScore(data.accessibility);
+  const stabilityScore = calculateStabilityScore(data.market_shocks);
+
+  // Calculate weighted score with error handling
+  let totalScore = 0;
+  let totalWeight = 0;
+
+  Object.entries({
+    price_correlation: correlationScore,
+    flow_density: flowScore,
+    accessibility: accessScore,
+    stability: stabilityScore
+  }).forEach(([metric, score]) => {
+    if (typeof score === 'number' && !isNaN(score)) {
+      totalScore += score * (weights[metric] || 0);
+      totalWeight += weights[metric] || 0;
+    }
+  });
+
+  return totalWeight > 0 ? totalScore / totalWeight : 0;
+}
+
+function calculateCorrelationScore(correlation) {
+  if (!correlation) return 0;
+  
+  const values = Object.values(correlation)
+    .flatMap(obj => Object.values(obj))
+    .filter(v => typeof v === 'number');
+    
+  return values.length ? 
+    values.reduce((sum, v) => sum + v, 0) / values.length : 
+    0;
+}
+
+function calculateAccessibilityScore(accessibility) {
+  if (!accessibility) return 0;
+  
+  const values = Object.values(accessibility)
+    .filter(v => typeof v === 'number');
+    
+  return values.length ? 
+    values.reduce((sum, v) => sum + v, 0) / values.length : 
+    0;
+}
+
+export function calculateFlowPriceDifferentials(flows, timeSeriesData) {
+  if (!Array.isArray(flows) || !Array.isArray(timeSeriesData)) return flows;
+
+  const latestPrices = timeSeriesData.reduce((acc, entry) => {
+    if (entry.region && typeof entry.avgUsdPrice === 'number') {
+      acc[entry.region] = entry.avgUsdPrice;
+    }
+    return acc;
+  }, {});
+
+  return flows.map(flow => ({
+    ...flow,
+    price_differential: Math.abs(
+      (latestPrices[flow.source] || 0) - 
+      (latestPrices[flow.target] || 0)
+    ),
+    source_price: latestPrices[flow.source] || 0,
+    target_price: latestPrices[flow.target] || 0
+  }));
 }

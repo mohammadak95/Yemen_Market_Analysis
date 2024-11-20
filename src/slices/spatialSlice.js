@@ -12,19 +12,14 @@ import {
   calculateIntegration,
   calculateClusterEfficiency
 } from '../utils/marketAnalysisUtils';
+import { DEFAULT_GEOJSON, DEFAULT_VIEW } from '../constants/index';
 
 
-
-
-/**
- * Async thunk to fetch spatial data based on selected commodity and date.
- * This thunk fetches comprehensive spatial data, including time series, market structure,
- * spatial autocorrelation, seasonal analysis, market integration, and regression analysis.
- */
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
   async ({ commodity, date }, { rejectWithValue }) => {
     try {
+      await spatialHandler.initializeCoordinates();
       const data = await spatialHandler.getSpatialData(commodity, date);
       
       return {
@@ -41,25 +36,62 @@ export const fetchSpatialData = createAsyncThunk(
   }
 );
 
-/**
- * Initial state adhering to the updated structure.
- */
+export const fetchRegressionAnalysis = createAsyncThunk(
+  'spatial/fetchRegressionAnalysis',
+  async ({ commodity }, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(setLoadingStage('loading-regression'));
+      
+      // Start monitoring
+      const metric = backgroundMonitor.startMetric('regression-data-load');
+      
+      const data = await spatialHandler.loadRegressionAnalysis(commodity);
+      
+      if (!data || data === DEFAULT_REGRESSION_DATA) {
+        throw new Error('Failed to load regression data');
+      }
+
+      // Log success
+      metric.finish({ status: 'success', commodity });
+      dispatch(setLoadingStage('regression-complete'));
+      
+      return data;
+    } catch (error) {
+      dispatch(setLoadingStage('regression-error'));
+      console.error('[Spatial Slice] Regression analysis fetch failed:', error);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+const validateRegressionData = (data) => {
+  if (!data || typeof data !== 'object') return false;
+  
+  const requiredFields = {
+    model: ['coefficients', 'intercept', 'p_values', 'r_squared'],
+    spatial: ['moran_i', 'vif'],
+    residuals: ['raw', 'byRegion', 'stats']
+  };
+
+  return Object.entries(requiredFields).every(([key, fields]) => 
+    data[key] && fields.every(field => data[key][field] !== undefined)
+  );
+};
+
 export const initialState = {
   data: {
-    // Time series data from preprocessed_yemen_market_data_*.json
-    timeSeriesData: [],
-    flowMaps: [],  
-    // Market structure data
-    marketClusters: [], 
+    timeSeriesData: [], 
     marketShocks: [], 
     flowMaps: [], 
-    // Spatial analysis data
+    marketClusters: [],
     clusterEfficiency: [],
     flowAnalysis: [],
     spatialAutocorrelation: {
       global: { moran_i: null, p_value: null, z_score: null },
       local: {}, 
     },
+
+    geoJSON: DEFAULT_GEOJSON,
 
     // Additional analysis data
     seasonalAnalysis: {
@@ -77,7 +109,6 @@ export const initialState = {
     },
 
     // Analysis results and metadata
-    geoJSON: null,
     metadata: {
       commodity: null,
       data_source: null,
@@ -97,6 +128,7 @@ export const initialState = {
     selectedDate: '',
     selectedRegimes: ['unified'],
     selectedRegion: null,
+    view: DEFAULT_VIEW,
     view: {
       center: [15.3694, 44.191],
       zoom: 6,
@@ -111,9 +143,6 @@ export const initialState = {
   },
 };
 
-/**
- * Create the spatial slice with reducers and extra reducers to handle spatial data.
- */
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
@@ -170,7 +199,7 @@ const spatialSlice = createSlice({
      * Clears the regression analysis data, resetting it to default.
      */
     clearRegressionAnalysis: (state) => {
-      state.data.regressionAnalysis = initialState.data.regressionAnalysis;
+      state.data.regressionAnalysis = null;
     },
   },
   extraReducers: (builder) => {
@@ -183,68 +212,53 @@ const spatialSlice = createSlice({
       })
       .addCase(fetchSpatialData.fulfilled, (state, action) => {
         const { data: preprocessedData } = action.payload;
-        console.log('Preprocessed data:', preprocessedData);
-
-        // Stronger validation
-        if (!preprocessedData) {
-          state.status.error = 'No data received';
+        
+        if (!preprocessedData || !Array.isArray(preprocessedData.time_series_data)) {
+          state.status.error = 'Invalid data structure';
           state.status.loading = false;
           state.status.stage = 'error';
           return;
         }
-
-        // Ensure time_series_data exists and has correct structure
-        const hasTimeSeriesData = Array.isArray(preprocessedData.time_series_data) && 
-                                 preprocessedData.time_series_data.length > 0;
-
-        if (!hasTimeSeriesData) {
-          state.status.error = `Invalid time series data: ${JSON.stringify(Object.keys(preprocessedData))}`;
-          state.status.loading = false;
-          state.status.stage = 'error';
-          return;
-        }
-
-        // Update time series data with proper normalization
-        state.data.timeSeriesData = preprocessedData.time_series_data.map(entry => ({
-          month: entry.month,
-          avgUsdPrice: entry.avgUsdPrice || 0,
-          volatility: entry.volatility || 0,
-          sampleSize: entry.sampleSize || 0,
-          conflict_intensity: entry.conflict_intensity || 0
-        }));
-
-        if (preprocessedData.flow_analysis) {
-          state.data.flowMaps = preprocessedData.flow_analysis.map(flow => ({
+      
+        // Update state with validated data
+        state.data = {
+          ...state.data,
+          timeSeriesData: preprocessedData.time_series_data.map(entry => ({
+            month: entry.month,
+            avgUsdPrice: entry.avgUsdPrice || 0,
+            volatility: entry.volatility || 0,
+            sampleSize: entry.sampleSize || 0,
+            conflict_intensity: entry.conflict_intensity || 0
+          })),
+          flowMaps: preprocessedData.flow_analysis?.map(flow => ({
             source: flow.source,
             target: flow.target,
             totalFlow: flow.total_flow,
             avgFlow: flow.avg_flow,
             flowCount: flow.flow_count,
             avgPriceDifferential: flow.avg_price_differential
-          }));
-        }
-  
-        // Update market data with proper validation
-        state.data.marketClusters = preprocessedData.market_clusters || [];
-        state.data.marketShocks = preprocessedData.market_shocks || [];
-        state.data.clusterEfficiency = preprocessedData.cluster_efficiency || [];
-        state.data.flowAnalysis = preprocessedData.flow_analysis || [];
-        state.data.spatialAutocorrelation = preprocessedData.spatial_autocorrelation || {
-          global: {},
-          local: {}
+          })) || [],
+          marketClusters: preprocessedData.market_clusters || [],
+          marketShocks: preprocessedData.market_shocks || [],
+          clusterEfficiency: preprocessedData.cluster_efficiency || [],
+          flowAnalysis: preprocessedData.flow_analysis || [],
+          spatialAutocorrelation: preprocessedData.spatial_autocorrelation || {
+            global: {},
+            local: {}
+          },
+          seasonalAnalysis: preprocessedData.seasonal_analysis || {},
+          marketIntegration: preprocessedData.market_integration || {},
+          metadata: {
+            ...preprocessedData.metadata,
+            lastUpdated: new Date().toISOString()
+          },
+          regressionAnalysis: preprocessedData.regression_analysis || DEFAULT_REGRESSION_DATA,
+          geoJSON: preprocessedData.geoJSON || DEFAULT_GEOJSON,
+          uniqueMonths: [...new Set(
+            preprocessedData.time_series_data.map(d => d.month)
+          )].sort()
         };
-        state.data.seasonalAnalysis = preprocessedData.seasonal_analysis || {};
-        state.data.marketIntegration = preprocessedData.market_integration || {};
-        state.data.metadata = preprocessedData.metadata || {};
-        state.data.regressionAnalysis = preprocessedData.regression_analysis || DEFAULT_REGRESSION_DATA;
-        state.data.geoJSON = preprocessedData.geoJSON || null;
-  
-        // Calculate unique months
-        state.data.uniqueMonths = [...new Set(
-          preprocessedData.time_series_data.map(d => d.month)
-        )].sort();
-  
-        // Update status
+
         state.status.loading = false;
         state.status.progress = 100;
         state.status.stage = 'complete';
@@ -254,6 +268,26 @@ const spatialSlice = createSlice({
         state.status.loading = false;
         state.status.error = action.payload?.message || action.error.message;
         state.status.stage = 'error';
+      })
+      .addCase(fetchRegressionAnalysis.pending, (state) => {
+        state.status.loading = true;
+        state.status.error = null;
+      })
+      .addCase(fetchRegressionAnalysis.fulfilled, (state, action) => {
+        state.status.loading = false;
+        state.status.stage = 'regression-complete';
+        
+        if (action.payload && validateRegressionData(action.payload)) {
+          state.data.regressionAnalysis = action.payload;
+        } else {
+          state.status.error = 'Invalid regression data structure';
+          state.data.regressionAnalysis = DEFAULT_REGRESSION_DATA;
+        }
+      })
+      .addCase(fetchRegressionAnalysis.rejected, (state, action) => {
+        state.status.loading = false;
+        state.status.error = action.payload || 'Failed to fetch regression analysis';
+        // Keep the current regression data rather than resetting to default
       });
   }
 });
@@ -282,13 +316,17 @@ export const selectSpatialAutocorrelation = (state) => state.spatial.data.spatia
 export const selectMarketIntegration = (state) => state.spatial.data.marketIntegration;
 export const selectSeasonalAnalysis = (state) => state.spatial.data.seasonalAnalysis;
 export const selectUniqueMonths = (state) => state.spatial.data.uniqueMonths;
-export const selectRegressionAnalysis = (state) => state.spatial.data.regressionAnalysis;
 export const selectMarketShocks = (state) => state.spatial.data.marketShocks;
 export const selectClusterEfficiency = (state) => state.spatial.data.clusterEfficiency;
 export const selectFlowAnalysis = (state) => state.spatial.data.flowAnalysis;
 export const selectGeoJSON = (state) => state.spatial.data.geoJSON;
 export const selectMetadata = (state) => state.spatial.data.metadata;
 export const selectFlowMaps = (state) => state.spatial.data.flowMaps;
+export const selectRegressionAnalysis = state => state.spatial.data.regressionAnalysis;
+export const selectResiduals = state => state.spatial.data.regressionAnalysis?.residuals;
+export const selectModelStats = state => state.spatial.data.regressionAnalysis?.model;
+export const selectSpatialStats = state => state.spatial.data.regressionAnalysis?.spatial;
+
 
 // Add composite selectors
 export const selectSelectedRegionData = createSelector(
@@ -397,6 +435,29 @@ export const selectSpatialPatterns = createSelector(
     clusters: data?.market_clusters,
     autocorrelation: data?.spatial_autocorrelation,
     flows: data?.flow_analysis
+  })
+);
+
+export const selectResidualsByRegion = createSelector(
+  [selectResiduals, (_, regionId) => regionId],
+  (residuals, regionId) => residuals?.byRegion?.[regionId] || []
+);
+
+export const selectRegressionMetrics = createSelector(
+  [selectModelStats],
+  (model) => ({
+    r_squared: model?.r_squared || 0,
+    adj_r_squared: model?.adj_r_squared || 0,
+    mse: model?.mse || 0,
+    observations: model?.observations || 0
+  })
+);
+
+export const selectSpatialMetrics = createSelector(
+  [selectSpatialStats],
+  (spatial) => ({
+    moran_i: spatial?.moran_i || { I: 0, 'p-value': 0 },
+    vif: spatial?.vif || []
   })
 );
 
