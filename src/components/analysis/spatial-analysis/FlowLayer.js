@@ -2,53 +2,41 @@
 
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-const FlowLayer = ({ flowData }) => {
-  const map = useMap();
-
+const FlowLayer = ({ flowData, map }) => {
   useEffect(() => {
-    if (!flowData || !map) return;
+    if (!map || !Array.isArray(flowData)) return;
 
-    // Clear existing flow layers
-    map.eachLayer((layer) => {
-      if (layer.options && layer.options.pane === 'flowPane') {
-        map.removeLayer(layer);
+    const validFlows = flowData.filter(flow => {
+      const hasSourceCoords = flow.source_lat != null && flow.source_lng != null;
+      const hasTargetCoords = flow.target_lat != null && flow.target_lng != null;
+      
+      if (!hasSourceCoords || !hasTargetCoords) {
+        console.warn(`Flow missing coordinates: ${flow.source} -> ${flow.target}`);
+        return false;
       }
+      
+      return true;
     });
 
-    // Create a new pane for flows if it doesn't exist
-    if (!map.getPane('flowPane')) {
-      map.createPane('flowPane');
-      map.getPane('flowPane').style.zIndex = 650; // Adjust as needed
-    }
-
-    // Add flow lines to the map
-    flowData.forEach((flow) => {
-      const { source_lat, source_lng, target_lat, target_lng, flow_weight } = flow;
-
-      const latlngs = [
-        [source_lat, source_lng],
-        [target_lat, target_lng],
-      ];
-
-      const flowLine = L.polyline(latlngs, {
-        color: 'blue',
-        weight: Math.max(1, flow_weight * 2),
-        opacity: 0.6,
-        pane: 'flowPane',
+    const flowLines = validFlows.map(flow => {
+      const sourcePoint = L.latLng(flow.source_lat, flow.source_lng);
+      const targetPoint = L.latLng(flow.target_lat, flow.target_lng);
+      
+      return L.polyline([sourcePoint, targetPoint], {
+        color: '#2196f3',
+        weight: Math.max(1, Math.min(5, flow.flow_weight || 1)),
+        opacity: 0.6
       });
-
-      flowLine.bindPopup(`
-        <strong>Flow Information</strong><br/>
-        Source: ${flow.source}<br/>
-        Target: ${flow.target}<br/>
-        Weight: ${flow_weight}
-      `);
-
-      flowLine.addTo(map);
     });
+
+    const flowLayer = L.layerGroup(flowLines);
+    flowLayer.addTo(map);
+
+    return () => {
+      map.removeLayer(flowLayer);
+    };
   }, [flowData, map]);
 
   return null;
@@ -63,9 +51,10 @@ FlowLayer.propTypes = {
       source_lng: PropTypes.number.isRequired,
       target_lat: PropTypes.number.isRequired,
       target_lng: PropTypes.number.isRequired,
-      flow_weight: PropTypes.number.isRequired,
+      flow_weight: PropTypes.number
     })
   ).isRequired,
+  map: PropTypes.object
 };
 
-export default React.memo(FlowLayer);
+export default FlowLayer;

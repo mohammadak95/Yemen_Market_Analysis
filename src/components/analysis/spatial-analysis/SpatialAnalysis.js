@@ -7,6 +7,9 @@ import MapComponent from './MapComponent';
 import LoadingSpinner from '../../common/LoadingSpinner';
 import ErrorMessage from '../../common/ErrorMessage';
 import { setSelectedRegion } from '../../../slices/spatialSlice';
+import { selectGeoJSON, selectLoadingStatus } from '../../../slices/spatialSlice';
+import { DEFAULT_GEOJSON } from '../../../constants/index';
+
 
 const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
   // Access data from Redux store
@@ -15,9 +18,11 @@ const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
   const loading = useSelector((state) => state.spatial.status.loading);
   const error = useSelector((state) => state.spatial.status.error);
   const selectedRegion = useSelector((state) => state.spatial.ui.selectedRegion);
+  const geoJSON = useSelector(selectGeoJSON);
+
 
   // Destructure necessary data
-  const { geoJSON, marketClusters, flowMaps } = spatialData || {};
+  const { marketClusters, flowMaps } = spatialData || {};
 
   // Memoize the data to avoid unnecessary re-renders
   const memoizedGeoJSON = useMemo(() => geoJSON, [geoJSON]);
@@ -45,7 +50,7 @@ const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
   return (
     <div style={{ height: '600px', width: '100%' }}>
       <MapComponent
-        geoJSON={memoizedGeoJSON}
+        geoJSON={geoJSON || DEFAULT_GEOJSON}
         marketClusters={memoizedMarketClusters}
         flowMaps={memoizedFlowMaps}
         spatialViewConfig={spatialViewConfig}

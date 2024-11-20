@@ -7,6 +7,8 @@ import 'leaflet/dist/leaflet.css';
 import FlowLayer from './FlowLayer';
 import ClusterLayer from './ClusterLayer';
 import 'leaflet/dist/leaflet.css';
+import { DEFAULT_GEOJSON } from '../../../constants/index';
+
 
 const MapComponent = ({
   geoJSON,
@@ -18,7 +20,23 @@ const MapComponent = ({
   selectedRegion,
 }) => {
   const { center, zoom } = spatialViewConfig;
+  const [map, setMap] = useState(null);
   const mapRef = useRef();
+
+  useEffect(() => {
+    if (!map) return;
+    
+    const validFlowData = flowData?.filter(flow => 
+      flow.source_lat != null && 
+      flow.source_lng != null && 
+      flow.target_lat != null && 
+      flow.target_lng != null
+    ) || [];
+
+    if (validFlowData.length === 0) {
+      console.warn('No valid flow data available');
+    }
+  }, [map, flowData]);
 
   // Update map view when spatialViewConfig changes
   useEffect(() => {
@@ -106,16 +124,27 @@ const MapComponent = ({
 };
 
 MapComponent.propTypes = {
-  geoJSON: PropTypes.object.isRequired,
-  marketClusters: PropTypes.array,
-  flowMaps: PropTypes.array,
-  spatialViewConfig: PropTypes.shape({
-    center: PropTypes.arrayOf(PropTypes.number).isRequired,
-    zoom: PropTypes.number.isRequired,
-  }).isRequired,
-  onSpatialViewChange: PropTypes.func.isRequired,
-  onRegionClick: PropTypes.func,
-  selectedRegion: PropTypes.string,
+  geoJSON: PropTypes.shape({
+    type: PropTypes.string.isRequired,
+    features: PropTypes.array.isRequired,
+    crs: PropTypes.object
+  }),
+  flowData: PropTypes.arrayOf(
+    PropTypes.shape({
+      source: PropTypes.string.isRequired,
+      target: PropTypes.string.isRequired,
+      source_lat: PropTypes.number,
+      source_lng: PropTypes.number,
+      target_lat: PropTypes.number,
+      target_lng: PropTypes.number,
+      flow_weight: PropTypes.number
+    })
+  )
+};
+
+MapComponent.defaultProps = {
+  geoJSON: DEFAULT_GEOJSON,
+  flowData: []
 };
 
 export default MapComponent;

@@ -139,6 +139,25 @@ const DEFAULT_GEOJSON = {
   }
 };
 
+const convertUTMtoLatLng = (x, y, zone = 38) => {
+  // Basic UTM to LatLng conversion for Yemen (UTM zone 38N)
+  // Note: For production, use a proper UTM conversion library
+  const k0 = 0.9996;
+  const a = 6378137;
+  const e = 0.081819191;
+  const e1sq = 0.006739497;
+  
+  const n = a / Math.sqrt(1 - Math.pow(e * Math.sin(y * Math.PI / 180), 2));
+  const t = Math.pow(Math.tan(y * Math.PI / 180), 2);
+  const c = e1sq * Math.pow(Math.cos(y * Math.PI / 180), 2);
+  const lng = (x - 500000) / (n * k0);
+  
+  const lat = (y * Math.PI / 180) + 
+              ((3 * e1sq / 2) - (27 * Math.pow(e1sq, 3) / 32)) * Math.sin(2 * y * Math.PI / 180);
+  
+  return [lat * 180 / Math.PI, lng + (zone * 6 - 183)];
+};
+
 class SpatialDataHandler {
   // ===========================
   // Constructor and Initialization
@@ -484,29 +503,24 @@ class SpatialDataHandler {
 
   calculateCentroid(coordinates) {
     try {
-      // Handle different geometry types
       if (!Array.isArray(coordinates)) {
         console.warn('[SpatialHandler] Invalid coordinates format');
         return null;
       }
-  
-      // Important fix: GeoJSON is in EPSG:32638 but we need WGS84
-      const transform = (point) => {
-        const [x, y] = point;
-        return [y, x]; // Placeholder - needs actual transformation
-      };
-  
-      // MultiPolygon - array of polygons
+
+      // MultiPolygon handling
       if (Array.isArray(coordinates[0][0][0])) {
         const allPoints = coordinates.flat(2);
-        return this.calculateCentroidFromPoints(allPoints.map(transform));
+        const centroid = this.calculateCentroidFromPoints(allPoints);
+        return convertUTMtoLatLng(centroid.x, centroid.y);
       }
       
-      // Polygon - array of rings
+      // Polygon handling
       if (Array.isArray(coordinates[0][0])) {
-        return this.calculateCentroidFromPoints(coordinates[0].map(transform));
+        const centroid = this.calculateCentroidFromPoints(coordinates[0]);
+        return convertUTMtoLatLng(centroid.x, centroid.y);
       }
-  
+
       return null;
     } catch (error) {
       console.error('[SpatialHandler] Centroid calculation failed:', error);
@@ -523,7 +537,6 @@ class SpatialDataHandler {
 
     for (const point of points) {
       if (Array.isArray(point) && point.length >= 2) {
-        // GeoJSON coordinates are [longitude, latitude]
         sumX += point[0];
         sumY += point[1];
         count++;
@@ -533,8 +546,8 @@ class SpatialDataHandler {
     if (count === 0) return null;
 
     return {
-      longitude: sumX / count,
-      latitude: sumY / count
+      x: sumX / count,
+      y: sumY / count
     };
   }
 
@@ -695,16 +708,33 @@ class SpatialDataHandler {
       throw new Error('Invalid flow data structure: expected array');
     }
 
-    return data.map(row => ({
-      source: this.normalizeRegionName(row.source),
-      target: this.normalizeRegionName(row.target),
-      source_coordinates: this.coordinateCache.get(row.source),
-      target_coordinates: this.coordinateCache.get(row.target),
-      flow_weight: Number(row.flow_weight) || 0,
-      // [Keep existing fields]
-    })).filter(flow => 
-      flow.source_coordinates && 
-      flow.target_coordinates &&
+    return data.map(row => {
+      const source = this.normalizeRegionName(row.source);
+      const target = this.normalizeRegionName(row.target);
+      
+      // Get coordinates from cache
+      const sourceCoords = this.coordinateCache.get(source);
+      const targetCoords = this.coordinateCache.get(target);
+
+      if (!sourceCoords || !targetCoords) {
+        console.warn(`Missing coordinates for flow: ${source} -> ${target}`);
+      }
+
+      return {
+        source,
+        target,
+        source_lat: sourceCoords?.latitude,
+        source_lng: sourceCoords?.longitude,
+        target_lat: targetCoords?.latitude,
+        target_lng: targetCoords?.longitude,
+        flow_weight: Number(row.flow_weight) || 0,
+        // Keep other fields
+      };
+    }).filter(flow => 
+      flow.source_lat != null && 
+      flow.source_lng != null && 
+      flow.target_lat != null && 
+      flow.target_lng != null &&
       !this.excludedRegions.has(flow.source) &&
       !this.excludedRegions.has(flow.target)
     );
