@@ -13,6 +13,8 @@ import {
 import { pathResolver } from './pathResolver';
 import { pathValidator } from '../utils/pathValidator';
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
+import { VISUALIZATION_MODES } from '../constants/index';
+
 
 // Yemen region name mappings for normalization
 const REGION_MAPPINGS = {
@@ -973,6 +975,120 @@ class SpatialDataHandler {
     return arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length;
   }
 
+  async processVisualizationData(data, mode, filters = {}) {
+    const metric = backgroundMonitor.startMetric('visualization-processing');
+    
+    try {
+      let processedData;
+      
+      switch (mode) {
+        case VISUALIZATION_MODES.PRICES:
+          processedData = await this.processPriceVisualization(data, filters);
+          break;
+        
+        case VISUALIZATION_MODES.MARKET_INTEGRATION:
+          processedData = await this.processIntegrationVisualization(data, filters);
+          break;
+        
+        case VISUALIZATION_MODES.CLUSTERS:
+          processedData = await this.processClusterVisualization(data, filters);
+          break;
+        
+        case VISUALIZATION_MODES.SHOCKS:
+          processedData = await this.processShockVisualization(data, filters);
+          break;
+          
+        default:
+          throw new Error(`Unsupported visualization mode: ${mode}`);
+      }
+
+      metric.finish({ status: 'success', mode });
+      return processedData;
+      
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      throw error;
+    }
+  }
+
+  async processPriceVisualization(data, filters) {
+    const { timeSeriesData } = data;
+    if (!timeSeriesData?.length) return null;
+
+    // Process time series data for price visualization
+    const processedData = {
+      timeSeries: this.processTimeSeriesForVisualization(timeSeriesData),
+      metrics: calculateVisualizationMetrics.calculatePriceMetrics(timeSeriesData),
+      trends: this.calculatePriceTrends(timeSeriesData),
+      statistics: {
+        volatility: this.calculateVolatilityMetrics(timeSeriesData),
+        seasonality: this.detectSeasonalPatterns(timeSeriesData)
+      }
+    };
+
+    if (filters.timeRange) {
+      processedData.timeSeries = this.filterTimeSeriesData(
+        processedData.timeSeries,
+        filters.timeRange
+      );
+    }
+
+    return processedData;
+  }
+
+  async processIntegrationVisualization(data, filters) {
+    const {
+      marketIntegration,
+      flowAnalysis,
+      spatialAutocorrelation
+    } = data;
+
+    return {
+      correlationMatrix: this.processCorrelationMatrix(
+        marketIntegration.price_correlation,
+        filters
+      ),
+      flowMetrics: this.processFlowMetrics(flowAnalysis, filters),
+      spatialMetrics: {
+        moran: spatialAutocorrelation.global.moran_i,
+        clusters: this.processSpatialClusters(
+          spatialAutocorrelation.local,
+          filters
+        )
+      },
+      integrationScores: this.calculateIntegrationScores(data)
+    };
+  }
+
+  async processClusterVisualization(data, filters) {
+    const { marketClusters, clusterEfficiency } = data;
+
+    return {
+      clusters: this.processMarketClusters(marketClusters, filters),
+      efficiency: this.processClusterEfficiency(clusterEfficiency),
+      metrics: {
+        coverage: this.calculateMarketCoverage(marketClusters),
+        stability: this.calculateClusterStability(marketClusters),
+        connectivity: this.calculateClusterConnectivity(marketClusters)
+      },
+      spatialDistribution: this.analyzeClusterDistribution(marketClusters)
+    };
+  }
+
+  async processShockVisualization(data, filters) {
+    const { marketShocks, timeSeriesData } = data;
+
+    return {
+      shocks: this.processMarketShocks(marketShocks, filters),
+      patterns: this.analyzeShockPatterns(marketShocks),
+      impact: this.calculateShockImpact(marketShocks, timeSeriesData),
+      propagation: this.analyzeShockPropagation(marketShocks),
+      riskMetrics: this.calculateMarketRiskMetrics(marketShocks)
+    };
+  }
+
+
+
   // ===========================
   // Data Enhancement Methods
   // ===========================
@@ -1568,6 +1684,64 @@ class SpatialDataHandler {
   // ===========================
   // Additional Helper Methods
   // ===========================
+
+  processTimeSeriesForVisualization(timeSeriesData) {
+    return timeSeriesData.map(entry => ({
+      date: entry.month,
+      value: entry.avgUsdPrice,
+      volatility: entry.volatility,
+      conflictIntensity: entry.conflict_intensity,
+      sampleSize: entry.sampleSize
+    }));
+  }
+
+  processCorrelationMatrix(correlationData, filters) {
+    const matrix = { ...correlationData };
+    const minCorrelation = filters.minCorrelation || 0;
+
+    // Filter correlations based on threshold
+    Object.keys(matrix).forEach(market => {
+      matrix[market] = Object.fromEntries(
+        Object.entries(matrix[market]).filter(
+          ([_, value]) => Math.abs(value) >= minCorrelation
+        )
+      );
+    });
+
+    return matrix;
+  }
+
+  processFlowMetrics(flowData, filters) {
+    const minFlow = filters.minFlowWeight || 0;
+    
+    const filteredFlows = flowData.filter(flow => 
+      flow.total_flow >= minFlow
+    );
+
+    return {
+      flows: filteredFlows,
+      summary: this.calculateFlowSummaryStats(filteredFlows),
+      intensity: this.calculateFlowIntensityMatrix(filteredFlows)
+    };
+  }
+
+  calculateIntegrationScores(data) {
+    const {
+      marketIntegration,
+      flowAnalysis,
+      spatialAutocorrelation
+    } = data;
+
+    return {
+      overall: marketIntegration.integration_score,
+      byMarket: this.calculateMarketSpecificScores(data),
+      temporal: this.analyzeTemporalIntegration(data),
+      spatial: this.analyzeSpatialIntegration(
+        spatialAutocorrelation,
+        flowAnalysis
+      )
+    };
+  }
 
   // [Any additional helper methods can be placed here]
 

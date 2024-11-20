@@ -1,14 +1,10 @@
 // src/utils/marketAnalysisUtils.js
 
-import { 
-  selectTimeSeriesData,
-  selectMarketClusters,
-  selectSpatialAutocorrelation,
-  selectMarketIntegration
-} from '../slices/spatialSlice';
+import { ANALYSIS_THRESHOLDS } from '../constants/index';
+
 
 export function calculateVolatility(timeSeriesData) {
-  if (!timeSeriesData?.length) return {
+  if (!timeSeriesData.length) return {
     garch: 0,
     traditional: 0,
     stability: 0
@@ -21,7 +17,10 @@ export function calculateVolatility(timeSeriesData) {
   const priceStability = latestEntry.price_stability ?? 0;
 
   // Calculate traditional volatility as backup
-  const prices = timeSeriesData.map(d => d.avgUsdPrice).filter(p => p != null);
+  const prices = timeSeriesData.reduce((acc, d) => {
+    if (d.avgUsdPrice != null) acc.push(d.avgUsdPrice);
+    return acc;
+  }, []);
   const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
   const traditional = Math.sqrt(
     prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length
@@ -35,7 +34,7 @@ export function calculateVolatility(timeSeriesData) {
 }
 
 export function calculateMarketIntegration(data) {
-  if (!data?.market_integration) return null;
+  if (!data.market_integration) return null;
 
   const {
     price_correlation,
@@ -62,7 +61,7 @@ export function calculateIntegration(spatialAutocorrelation) {
 }
 
 export function calculateShockFrequency(shocks, timeRange) {
-  if (!Array.isArray(shocks) || !shocks.length) return {
+  if (!Array.isArray(shocks) || shocks.length === 0) return {
     frequency: 0,
     patterns: [],
     average_magnitude: 0
@@ -177,7 +176,7 @@ export function detectOutliers(timeSeriesData) {
 }
 
 export function summarizeClusters(clusters) {
-  if (!clusters?.length) return null;
+  if (!clusters.length) return null;
 
   return {
     count: clusters.length,
@@ -208,17 +207,6 @@ export function validateCoordinates(coordinates) {
     lat >= -90 && lat <= 90 &&
     lng >= -180 && lng <= 180
   );
-}
-
-// Add to marketAnalysisUtils.js
-export function calculateFlowMetrics(flowData) {
-  if (!Array.isArray(flowData)) return null;
-  
-  return {
-    marketCoverage: calculateFlowCoverage(flowData),
-    flowDensity: calculateFlowDensity(flowData),
-    networkEfficiency: calculateNetworkEfficiency(flowData)
-  };
 }
 
 export function calculateFlowCoverage(flows) {
@@ -317,3 +305,276 @@ export function calculateFlowPriceDifferentials(flows, timeSeriesData) {
     target_price: latestPrices[flow.target] || 0
   }));
 }
+
+export const calculateVisualizationMetrics = {
+  prices: {
+    calculateTrends: (timeSeriesData) => {
+      if (!timeSeriesData?.length) return null;
+      
+      const prices = timeSeriesData.map(d => ({
+        date: new Date(d.month),
+        price: d.avgUsdPrice
+      }));
+
+      // Sort by date
+      prices.sort((a, b) => a.date - b.date);
+
+      // Calculate moving averages
+      const shortTermMA = calculateMovingAverage(prices, 3);
+      const longTermMA = calculateMovingAverage(prices, 12);
+
+      // Calculate trends
+      return {
+        shortTerm: calculateTrendSlope(shortTermMA),
+        longTerm: calculateTrendSlope(longTermMA),
+        volatility: calculateVolatilityMetrics(prices),
+        seasonality: detectSeasonalPattern(prices)
+      };
+    },
+
+    processTimeSeries: (data, timeRange = null) => {
+      let processedData = data.map(d => ({
+        date: new Date(d.month),
+        value: d.avgUsdPrice,
+        volatility: d.volatility,
+        conflictIntensity: d.conflict_intensity
+      }));
+
+      if (timeRange) {
+        const [start, end] = timeRange;
+        processedData = processedData.filter(d => 
+          d.date >= start && d.date <= end
+        );
+      }
+
+      return processedData;
+    }
+  },
+
+  integration: {
+    calculateMetrics: (data) => {
+      const {
+        marketIntegration,
+        flowAnalysis,
+        spatialAutocorrelation
+      } = data;
+
+      // Process correlation matrix
+      const correlationMatrix = processCorrelationMatrix(
+        marketIntegration.price_correlation
+      );
+
+      // Calculate flow-based metrics
+      const flowMetrics = calculateFlowMetrics(flowAnalysis);
+
+      // Calculate spatial metrics
+      const spatialMetrics = calculateSpatialMetrics(
+        spatialAutocorrelation
+      );
+
+      return {
+        correlationMatrix,
+        flowMetrics,
+        spatialMetrics,
+        integrationScore: calculateOverallIntegration({
+          correlationMatrix,
+          flowMetrics,
+          spatialMetrics
+        })
+      };
+    },
+
+    calculateMarketConnectivity: (flowAnalysis) => {
+      return _.mapValues(_.groupBy(flowAnalysis, 'source'), flows => ({
+          totalFlow: _.sumBy(flows, 'total_flow'),
+          averageFlow: _.meanBy(flows, 'avg_flow'),
+          uniqueConnections: _.uniqBy(flows, 'target').length
+        }));
+    }
+  },
+
+  clusters: {
+    analyzeEfficiency: (clusters, flows) => {
+      return clusters.map(cluster => ({
+        ...cluster,
+        metrics: {
+          internalConnectivity: calculateInternalConnectivity(
+            cluster,
+            flows
+          ),
+          marketCoverage: calculateClusterCoverage(cluster),
+          priceConvergence: calculatePriceConvergence(
+            cluster,
+            flows
+          ),
+          stability: calculateClusterStability(cluster)
+        },
+        spatialMetrics: analyzeSpatialDistribution(
+          cluster,
+          flows
+        )
+      }));
+    },
+
+    calculateClusterDynamics: (clusters, timeSeriesData) => {
+      return clusters.map(cluster => ({
+        ...cluster,
+        dynamics: {
+          stability: assessClusterStability(
+            cluster,
+            timeSeriesData
+          ),
+          evolution: trackClusterEvolution(
+            cluster,
+            timeSeriesData
+          ),
+          resilience: measureClusterResilience(
+            cluster,
+            timeSeriesData
+          )
+        }
+      }));
+    }
+  },
+
+  shocks: {
+    analyzePatterns: (shocks, timeSeriesData) => {
+      // Group shocks by region
+      const shocksByRegion = _.groupBy(shocks, 'region');
+
+      return _.mapValues(shocksByRegion, (regionShocks) => ({
+        frequency: calculateShockFrequency(regionShocks),
+        magnitude: calculateAverageMagnitude(regionShocks),
+        recovery: analyzeRecoveryPatterns(
+          regionShocks,
+          timeSeriesData
+        ),
+        propagation: analyzeShockPropagation(
+          regionShocks,
+          timeSeriesData
+        )
+      }));
+    },
+
+    calculateSystemwideImpact: (shocks, timeSeriesData) => {
+      return {
+        overallVolatility: calculateSystemVolatility(
+          shocks,
+          timeSeriesData
+        ),
+        marketVulnerability: assessMarketVulnerability(
+          shocks,
+          timeSeriesData
+        ),
+        recoveryMetrics: analyzeSystemRecovery(
+          shocks,
+          timeSeriesData
+        )
+      };
+    }
+  }
+};
+
+// Helper functions for price analysis
+function calculateMovingAverage(data, window) {
+  return data.map((_, index) => {
+    const start = Math.max(0, index - window + 1);
+    const values = data.slice(start, index + 1);
+    return {
+      date: data[index].date,
+      value: _.meanBy(values, 'price')
+    };
+  });
+}
+
+function calculateTrendSlope(data) {
+  const n = data.length;
+  if (n < 2) return 0;
+
+  const xMean = _.meanBy(data, (_, i) => i);
+  const yMean = _.meanBy(data, 'value');
+
+  const numerator = _.sum(data.map((point, i) => 
+    (i - xMean) * (point.value - yMean)
+  ));
+
+  const denominator = _.sum(data.map((_, i) => 
+    Math.pow(i - xMean, 2)
+  ));
+
+  return numerator / denominator;
+}
+
+function detectSeasonalPattern(data) {
+  // Group by month
+  const monthlyData = _.groupBy(data, d => 
+    d.date.getMonth()
+  );
+
+  // Calculate monthly averages
+  return _.mapValues(monthlyData, monthData => ({
+    average: _.meanBy(monthData, 'price'),
+    volatility: calculateVolatility(monthData.map(d => d.price)),
+    trend: calculateTrendSlope(monthData)
+  }));
+}
+
+// Helper functions for integration analysis
+function processCorrelationMatrix(matrix) {
+  const markets = Object.keys(matrix);
+  
+  // Calculate key metrics
+  const metrics = {
+    averageCorrelation: calculateAverageCorrelation(matrix),
+    strongConnections: countStrongConnections(
+      matrix,
+      ANALYSIS_THRESHOLDS.MARKET_INTEGRATION.HIGH
+    ),
+    weakConnections: countWeakConnections(
+      matrix,
+      ANALYSIS_THRESHOLDS.MARKET_INTEGRATION.LOW
+    )
+  };
+
+  // Identify market clusters
+  const clusters = identifyMarketClusters(
+    matrix,
+    ANALYSIS_THRESHOLDS.MARKET_INTEGRATION.MODERATE
+  );
+
+  return {
+    matrix,
+    metrics,
+    clusters
+  };
+}
+
+function calculateFlowMetrics(flows) {
+  const metrics = {
+    totalFlow: _.sumBy(flows, 'total_flow'),
+    averageFlow: _.meanBy(flows, 'avg_flow'),
+    flowDensity: calculateFlowDensity(flows),
+    directionality: analyzeFlowDirectionality(flows)
+  };
+
+  const patterns = {
+    seasonal: detectFlowSeasonality(flows),
+    structural: identifyStructuralPatterns(flows),
+    anomalies: detectFlowAnomalies(flows)
+  };
+
+  return {
+    metrics,
+    patterns
+  };
+}
+
+// Export utility functions
+export const marketAnalysisUtils = {
+  calculateVisualizationMetrics,
+  calculateMovingAverage,
+  calculateTrendSlope,
+  detectSeasonalPattern,
+  processCorrelationMatrix,
+  calculateFlowMetrics
+};

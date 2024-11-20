@@ -12,7 +12,7 @@ import {
   calculateIntegration,
   calculateClusterEfficiency
 } from '../utils/marketAnalysisUtils';
-import { DEFAULT_GEOJSON, DEFAULT_VIEW } from '../constants/index';
+import { DEFAULT_GEOJSON, DEFAULT_VIEW, VISUALIZATION_MODES } from '../constants/index';
 
 
 export const fetchSpatialData = createAsyncThunk(
@@ -59,6 +59,29 @@ export const fetchRegressionAnalysis = createAsyncThunk(
     } catch (error) {
       dispatch(setLoadingStage('regression-error'));
       console.error('[Spatial Slice] Regression analysis fetch failed:', error);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const fetchVisualizationData = createAsyncThunk(
+  'spatial/fetchVisualizationData',
+  async ({ mode, filters }, { getState, rejectWithValue }) => {
+    try {
+      const state = getState();
+      const data = selectSpatialData(state);
+      
+      const visualizationData = await spatialHandler.processVisualizationData(
+        data,
+        mode,
+        filters
+      );
+
+      return {
+        mode,
+        data: visualizationData
+      };
+    } catch (error) {
       return rejectWithValue(error.message);
     }
   }
@@ -121,6 +144,12 @@ export const initialState = {
     },
     uniqueMonths: [],
     regressionAnalysis: DEFAULT_REGRESSION_DATA,
+    visualizationData: {
+      prices: null,
+      integration: null, 
+      clusters: null,
+      shocks: null
+    }
   },
 
   ui: {
@@ -133,6 +162,16 @@ export const initialState = {
       center: [15.3694, 44.191],
       zoom: 6,
     },
+    visualizationMode: VISUALIZATION_MODES.PRICES,
+    activeLayers: ['base', 'markets'],
+    selectedTimeRange: null,
+    showFlows: false,
+    selectedMetrics: [],
+    analysisFilters: {
+      minMarketCount: 2,
+      minFlowWeight: 0,
+      shockThreshold: 0.15
+    },
   },
 
   status: {
@@ -140,6 +179,8 @@ export const initialState = {
     error: null,
     progress: 0,
     stage: null,
+    visualizationLoading: false,
+    visualizationError: null
   },
 };
 
@@ -201,6 +242,39 @@ const spatialSlice = createSlice({
     clearRegressionAnalysis: (state) => {
       state.data.regressionAnalysis = null;
     },
+
+    setVisualizationMode: (state, action) => {
+      state.ui.visualizationMode = action.payload;
+    },
+
+    setActiveLayers: (state, action) => {
+      state.ui.activeLayers = action.payload;
+    },
+
+    toggleLayer: (state, action) => {
+      const layer = action.payload;
+      const index = state.ui.activeLayers.indexOf(layer);
+      if (index === -1) {
+        state.ui.activeLayers.push(layer);
+      } else {
+        state.ui.activeLayers.splice(index, 1);
+      }
+    },
+
+    setAnalysisFilters: (state, action) => {
+      state.ui.analysisFilters = {
+        ...state.ui.analysisFilters,
+        ...action.payload
+      };
+    },
+
+    setSelectedTimeRange: (state, action) => {
+      state.ui.selectedTimeRange = action.payload;
+    },
+
+    clearVisualizationData: (state) => {
+      state.data.visualizationData = initialState.data.visualizationData;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -288,6 +362,19 @@ const spatialSlice = createSlice({
         state.status.loading = false;
         state.status.error = action.payload || 'Failed to fetch regression analysis';
         // Keep the current regression data rather than resetting to default
+      })
+      .addCase(fetchVisualizationData.pending, (state) => {
+        state.status.visualizationLoading = true;
+        state.status.visualizationError = null;
+      })
+      .addCase(fetchVisualizationData.fulfilled, (state, action) => {
+        const { mode, data } = action.payload;
+        state.data.visualizationData[mode] = data;
+        state.status.visualizationLoading = false;
+      })
+      .addCase(fetchVisualizationData.rejected, (state, action) => {
+        state.status.visualizationLoading = false;
+        state.status.visualizationError = action.payload;
       });
   }
 });
@@ -326,6 +413,13 @@ export const selectRegressionAnalysis = state => state.spatial.data.regressionAn
 export const selectResiduals = state => state.spatial.data.regressionAnalysis?.residuals;
 export const selectModelStats = state => state.spatial.data.regressionAnalysis?.model;
 export const selectSpatialStats = state => state.spatial.data.regressionAnalysis?.spatial;
+export const selectVisualizationMode = (state) => state.spatial.ui.visualizationMode;
+export const selectActiveLayers = (state) => state.spatial.ui.activeLayers;
+export const selectAnalysisFilters = (state) => state.spatial.ui.analysisFilters;
+export const selectVisualizationData = (state) => {
+  const mode = selectVisualizationMode(state);
+  return state.spatial.data.visualizationData[mode];
+};
 
 
 // Add composite selectors
@@ -461,6 +555,25 @@ export const selectSpatialMetrics = createSelector(
   })
 );
 
+export const selectFilteredMarketData = createSelector(
+  [selectSpatialData, selectAnalysisFilters],
+  (data, filters) => {
+    if (!data) return null;
+    
+    return {
+      marketClusters: data.marketClusters.filter(
+        cluster => cluster.market_count >= filters.minMarketCount
+      ),
+      flowMaps: data.flowMaps.filter(
+        flow => flow.flow_weight >= filters.minFlowWeight
+      ),
+      marketShocks: data.marketShocks.filter(
+        shock => Math.abs(shock.magnitude) >= filters.shockThreshold
+      )
+    };
+  }
+);
+
 // Add error handling for data validation
 const validateSpatialData = (data) => {
   const required = [
@@ -478,5 +591,13 @@ const validateSpatialData = (data) => {
   return true;
 };
 
-// Export the reducer
+export const {
+  setVisualizationMode,
+  setActiveLayers,
+  toggleLayer,
+  setAnalysisFilters,
+  setSelectedTimeRange,
+  clearVisualizationData
+} = spatialSlice.actions;
+
 export default spatialSlice.reducer;

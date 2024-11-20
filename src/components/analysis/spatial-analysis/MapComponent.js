@@ -1,6 +1,6 @@
 // src/components/analysis/spatial-analysis/MapComponent.js
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -8,7 +8,6 @@ import FlowLayer from './FlowLayer';
 import ClusterLayer from './ClusterLayer';
 import 'leaflet/dist/leaflet.css';
 import { DEFAULT_GEOJSON } from '../../../constants/index';
-
 
 const MapComponent = ({
   geoJSON,
@@ -18,6 +17,7 @@ const MapComponent = ({
   onSpatialViewChange,
   onRegionClick,
   selectedRegion,
+  flowData // Add flowData to the destructured props
 }) => {
   const { center, zoom } = spatialViewConfig;
   const [map, setMap] = useState(null);
@@ -139,12 +139,22 @@ MapComponent.propTypes = {
       target_lng: PropTypes.number,
       flow_weight: PropTypes.number
     })
-  )
+  ),
+  marketClusters: PropTypes.array,
+  flowMaps: PropTypes.array,
+  spatialViewConfig: PropTypes.object.isRequired,
+  onSpatialViewChange: PropTypes.func.isRequired,
+  onRegionClick: PropTypes.func,
+  selectedRegion: PropTypes.string
 };
 
 MapComponent.defaultProps = {
   geoJSON: DEFAULT_GEOJSON,
-  flowData: []
+  flowData: [],
+  marketClusters: [],
+  flowMaps: [],
+  onRegionClick: null,
+  selectedRegion: null
 };
 
 export default MapComponent;
