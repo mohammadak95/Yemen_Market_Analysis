@@ -15,10 +15,46 @@ import {
 import { DEFAULT_GEOJSON, DEFAULT_VIEW, VISUALIZATION_MODES } from '../constants/index';
 import { getDataPath } from '../utils/dataUtils';
 
-function calculateVariance(values) {
-  const mean = _.mean(values);
-  return _.mean(values.map(v => Math.pow(v - mean, 2)));
-}
+export const initialState = {
+  data: {
+    geoData: null,
+    flowMaps: [],
+    timeSeriesData: [],
+    marketClusters: [],
+    marketShocks: [],
+    spatialAutocorrelation: {},
+    seasonalAnalysis: null,
+    marketIntegration: null,
+    regressionAnalysis: DEFAULT_REGRESSION_DATA,
+    uniqueMonths: [],
+    visualizationData: {
+      prices: null,
+      integration: null,
+      clusters: null,
+      shocks: null
+    },
+    metadata: null,
+    geoJSON: DEFAULT_GEOJSON
+  },
+  status: {
+    loading: false,
+    error: null,
+    progress: 0,
+    stage: 'idle',
+    regressionLoading: false,
+    regressionError: null,
+    visualizationLoading: false,
+    visualizationError: null
+  },
+  ui: {
+    selectedCommodity: '',
+    selectedDate: '',
+    selectedRegimes: ['unified'],
+    selectedRegion: null,
+    view: DEFAULT_VIEW,
+    activeLayers: []
+  }
+};
 
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
@@ -43,90 +79,22 @@ export const fetchSpatialData = createAsyncThunk(
 
 export const fetchRegressionAnalysis = createAsyncThunk(
   'spatial/fetchRegressionAnalysis',
-  async ({ commodity }, { rejectWithValue }) => {
+  async ({ selectedCommodity }, { getState, rejectWithValue }) => {
+    const metric = backgroundMonitor.startMetric('redux-regression-fetch');
     try {
-      // Use the correct server path
-      const response = await fetch('/results/spatial_analysis_results.json');
+      // If no commodity provided, use the one from metadata
+      const state = getState();
+      const commodityToUse = selectedCommodity || state.spatial.data.metadata?.commodity;
       
-      if (!response.ok) {
-        // Try fallback path if first attempt fails
-        const fallbackResponse = await fetch('/data/spatial_analysis_results.json');
-        if (!fallbackResponse.ok) {
-          throw new Error(`Failed to fetch regression analysis. Status: ${response.status}`);
-        }
-        response = fallbackResponse;
+      if (!commodityToUse) {
+        throw new Error('No commodity selected for regression analysis');
       }
 
-      const text = await response.text();
-      
-      // Safely parse JSON and handle invalid JSON
-      let allAnalyses;
-      try {
-        allAnalyses = JSON.parse(text);
-      } catch (parseError) {
-        console.error('Failed to parse regression analysis JSON:', parseError);
-        throw new Error('Invalid regression analysis data format');
-      }
-
-      if (!Array.isArray(allAnalyses)) {
-        throw new Error('Invalid regression analysis data structure');
-      }
-      
-      // Normalize commodity name for comparison
-      const normalizedCommodity = commodity.toLowerCase()
-        .replace(/[()]/g, '')
-        .replace(/\s+/g, '_')
-        .trim();
-      
-      const analysis = allAnalyses.find(
-        a => a.commodity.toLowerCase()
-          .replace(/[()]/g, '')
-          .replace(/\s+/g, '_')
-          .trim() === normalizedCommodity
-      );
-
-      if (!analysis) {
-        console.warn('Available commodities:', allAnalyses.map(a => a.commodity));
-        throw new Error(`No analysis found for commodity: ${commodity}`);
-      }
-
-      // Process the residuals
-      const processedResiduals = {
-        raw: analysis.residual || [],
-        byRegion: _.groupBy(analysis.residual || [], 'region_id'),
-        stats: {
-          mean: _.meanBy(analysis.residual || [], 'residual') || 0,
-          variance: calculateVariance(_.map(analysis.residual || [], 'residual')),
-          maxAbsolute: Math.max(..._.map(analysis.residual || [], r => Math.abs(r.residual))) || 0
-        }
-      };
-
-      // Return processed data
-      const processedData = {
-        model: {
-          coefficients: analysis.coefficients || {},
-          intercept: analysis.intercept || 0,
-          p_values: analysis.p_values || {},
-          r_squared: analysis.r_squared || 0,
-          adj_r_squared: analysis.adj_r_squared || 0,
-          mse: analysis.mse || 0,
-          observations: analysis.observations || 0
-        },
-        spatial: {
-          moran_i: analysis.moran_i || { I: 0, 'p-value': 1 },
-          vif: analysis.vif || []
-        },
-        residuals: processedResiduals
-      };
-
-      // Log successful data processing in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Processed regression analysis:', processedData);
-      }
-
-      return processedData;
+      const data = await spatialHandler.loadRegressionAnalysis(commodityToUse);
+      metric.finish({ status: 'success' });
+      return data;
     } catch (error) {
-      console.error('[fetchRegressionAnalysis] Error:', error);
+      metric.finish({ status: 'error', error: error.message });
       return rejectWithValue(error.message);
     }
   }
@@ -137,7 +105,7 @@ export const fetchVisualizationData = createAsyncThunk(
   async ({ mode, filters }, { getState, rejectWithValue }) => {
     try {
       const state = getState();
-      const data = selectSpatialData(state);
+      const data = state.spatial.data;
       
       const visualizationData = await spatialHandler.processVisualizationData(
         data,
@@ -155,193 +123,42 @@ export const fetchVisualizationData = createAsyncThunk(
   }
 );
 
-const validateRegressionData = (data) => {
-  if (!data || typeof data !== 'object') return false;
-  
-  const requiredFields = {
-    model: ['coefficients', 'intercept', 'p_values', 'r_squared'],
-    spatial: ['moran_i', 'vif'],
-    residuals: ['raw', 'byRegion', 'stats']
-  };
-
-  return Object.entries(requiredFields).every(([key, fields]) => 
-    data[key] && fields.every(field => data[key][field] !== undefined)
-  );
-};
-
-export const initialState = {
-  data: {
-    timeSeriesData: [], 
-    marketShocks: [], 
-    flowMaps: [], 
-    marketClusters: [],
-    clusterEfficiency: [],
-    flowAnalysis: [],
-    spatialAutocorrelation: {
-      global: { moran_i: null, p_value: null, z_score: null },
-      local: {}, 
-    },
-
-    geoJSON: DEFAULT_GEOJSON,
-
-    // Additional analysis data
-    seasonalAnalysis: {
-      seasonal_strength: null,
-      trend_strength: null,
-      peak_month: null,
-      trough_month: null,
-      seasonal_pattern: [],
-    },
-    marketIntegration: {
-      price_correlation: {},
-      flow_density: null,
-      accessibility: {},
-      integration_score: null,
-    },
-
-    // Analysis results and metadata
-    metadata: {
-      commodity: null,
-      data_source: null,
-      processed_date: null,
-      analysis_parameters: {
-        garch_parameters: { p: null, q: null },
-        spatial_weights: null,
-        significance_level: null,
-      },
-    },
-    uniqueMonths: [],
-    regressionAnalysis: DEFAULT_REGRESSION_DATA,
-    visualizationData: {
-      prices: null,
-      integration: null, 
-      clusters: null,
-      shocks: null
-    }
-  },
-
-  ui: {
-    selectedCommodity: '',
-    selectedDate: '',
-    selectedRegimes: ['unified'],
-    selectedRegion: null,
-    view: DEFAULT_VIEW,
-    view: {
-      center: [15.3694, 44.191],
-      zoom: 6,
-    },
-    visualizationMode: VISUALIZATION_MODES.PRICES,
-    activeLayers: ['base', 'markets'],
-    selectedTimeRange: null,
-    showFlows: false,
-    selectedMetrics: [],
-    analysisFilters: {
-      minMarketCount: 2,
-      minFlowWeight: 0,
-      shockThreshold: 0.15
-    },
-  },
-
-  status: {
-    loading: false,
-    error: null,
-    progress: 0,
-    stage: null,
-    visualizationLoading: false,
-    visualizationError: null
-  },
-};
-
 const spatialSlice = createSlice({
   name: 'spatial',
   initialState,
   reducers: {
-    /**
-     * Sets the progress percentage for loading operations.
-     */
     setProgress: (state, action) => {
       state.status.progress = action.payload;
     },
-    /**
-     * Sets the current loading stage (e.g., 'initializing', 'fetching', 'complete').
-     */
     setLoadingStage: (state, action) => {
       state.status.stage = action.payload;
     },
-    /**
-     * Sets the currently selected region for analysis.
-     */
-    setSelectedRegion: (state, action) => {
-      state.ui.selectedRegion = action.payload;
-    },
-    /**
-     * Sets the map view configuration (center and zoom level).
-     */
     setView: (state, action) => {
       state.ui.view = action.payload;
     },
-    /**
-     * Sets the selected commodity for market analysis.
-     */
     setSelectedCommodity: (state, action) => {
       state.ui.selectedCommodity = action.payload;
     },
-    /**
-     * Sets the selected date for time series and shock analysis.
-     */
     setSelectedDate: (state, action) => {
       state.ui.selectedDate = action.payload;
     },
-    /**
-     * Sets the selected regimes for spatial analysis.
-     */
+    setSelectedRegion: (state, action) => {
+      state.ui.selectedRegion = action.payload;
+    },
     setSelectedRegimes: (state, action) => {
       state.ui.selectedRegimes = action.payload;
     },
-    /**
-     * Resets the spatial slice state to its initial values.
-     */
-    resetState: (state) => {
-      Object.assign(state, initialState);
-    },
-    /**
-     * Clears the regression analysis data, resetting it to default.
-     */
-    clearRegressionAnalysis: (state) => {
-      state.data.regressionAnalysis = null;
-    },
-
-    setVisualizationMode: (state, action) => {
-      state.ui.visualizationMode = action.payload;
-    },
-
     setActiveLayers: (state, action) => {
       state.ui.activeLayers = action.payload;
     },
-
-    toggleLayer: (state, action) => {
-      const layer = action.payload;
-      const index = state.ui.activeLayers.indexOf(layer);
-      if (index === -1) {
-        state.ui.activeLayers.push(layer);
-      } else {
-        state.ui.activeLayers.splice(index, 1);
-      }
-    },
-
-    setAnalysisFilters: (state, action) => {
-      state.ui.analysisFilters = {
-        ...state.ui.analysisFilters,
-        ...action.payload
-      };
-    },
-
-    setSelectedTimeRange: (state, action) => {
-      state.ui.selectedTimeRange = action.payload;
-    },
-
-    clearVisualizationData: (state) => {
+    resetVisualizationData: (state) => {
       state.data.visualizationData = initialState.data.visualizationData;
+    },
+    syncUIWithData: (state) => {
+      if (state.data.metadata) {
+        state.ui.selectedCommodity = state.data.metadata.commodity || '';
+        state.ui.selectedDate = state.data.metadata.processed_date || '';
+      }
     }
   },
   extraReducers: (builder) => {
@@ -401,6 +218,14 @@ const spatialSlice = createSlice({
           )].sort()
         };
 
+        // Sync UI state with metadata
+        if (preprocessedData.metadata?.commodity) {
+          state.ui.selectedCommodity = preprocessedData.metadata.commodity;
+        }
+        if (preprocessedData.metadata?.processed_date) {
+          state.ui.selectedDate = preprocessedData.metadata.processed_date;
+        }
+
         state.status.loading = false;
         state.status.progress = 100;
         state.status.stage = 'complete';
@@ -412,16 +237,21 @@ const spatialSlice = createSlice({
         state.status.stage = 'error';
       })
       .addCase(fetchRegressionAnalysis.pending, (state) => {
-        state.status.loading = true;
-        state.status.error = null;
+        state.status.regressionLoading = true;
+        state.status.regressionError = null;
       })
       .addCase(fetchRegressionAnalysis.fulfilled, (state, action) => {
-        state.status.loading = false;
+        state.status.regressionLoading = false;
         state.data.regressionAnalysis = action.payload;
+        
+        // Ensure UI state is synced
+        if (!state.ui.selectedCommodity && state.data.metadata?.commodity) {
+          state.ui.selectedCommodity = state.data.metadata.commodity;
+        }
       })
       .addCase(fetchRegressionAnalysis.rejected, (state, action) => {
-        state.status.loading = false;
-        state.status.error = action.payload || 'Failed to fetch regression analysis';
+        state.status.regressionLoading = false;
+        state.status.regressionError = action.payload;
         state.data.regressionAnalysis = DEFAULT_REGRESSION_DATA;
       })
       .addCase(fetchVisualizationData.pending, (state) => {
@@ -444,13 +274,14 @@ const spatialSlice = createSlice({
 export const {
   setProgress,
   setLoadingStage,
-  setSelectedRegion,
   setView,
   setSelectedCommodity,
   setSelectedDate,
+  setSelectedRegion,
   setSelectedRegimes,
-  resetState,
-  clearRegressionAnalysis,
+  setActiveLayers,
+  resetVisualizationData,
+  syncUIWithData
 } = spatialSlice.actions;
 
 // Selectors
@@ -470,7 +301,6 @@ export const selectFlowAnalysis = (state) => state.spatial.data.flowAnalysis;
 export const selectGeoJSON = (state) => state.spatial.data.geoJSON;
 export const selectMetadata = (state) => state.spatial.data.metadata;
 export const selectFlowMaps = (state) => state.spatial.data.flowMaps;
-export const selectRegressionAnalysis = state => state.spatial.data.regressionAnalysis;
 export const selectResiduals = state => state.spatial.data.regressionAnalysis?.residuals;
 export const selectModelStats = state => state.spatial.data.regressionAnalysis?.model;
 export const selectSpatialStats = state => state.spatial.data.regressionAnalysis?.spatial;
@@ -481,6 +311,13 @@ export const selectVisualizationData = (state) => {
   const mode = selectVisualizationMode(state);
   return state.spatial.data.visualizationData[mode];
 };
+export const selectSelectedCommodity = (state) => state.spatial.ui.selectedCommodity;
+export const selectSelectedDate = (state) => state.spatial.ui.selectedDate;
+export const selectRegressionAnalysis = (state) => state.spatial.data.regressionAnalysis;
+export const selectRegressionLoading = (state) => state.spatial.status.regressionLoading;
+export const selectRegressionError = (state) => state.spatial.status.regressionError;
+
+
 
 
 // Add composite selectors
@@ -660,14 +497,5 @@ const validateSpatialData = (data) => {
   }
   return true;
 };
-
-export const {
-  setVisualizationMode,
-  setActiveLayers,
-  toggleLayer,
-  setAnalysisFilters,
-  setSelectedTimeRange,
-  clearVisualizationData
-} = spatialSlice.actions;
 
 export default spatialSlice.reducer;

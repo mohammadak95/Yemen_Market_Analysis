@@ -1,5 +1,4 @@
 // src/store/index.js
-// (Consolidating both store files into a single, more robust configuration)
 
 import { configureStore } from '@reduxjs/toolkit';
 import { createLogger } from 'redux-logger';
@@ -7,15 +6,13 @@ import themeReducer, { initialState as themeInitialState } from '../slices/theme
 import spatialReducer, { initialState as spatialInitialState } from '../slices/spatialSlice';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 
-let startTime = Date.now(); // or any other appropriate initial value
+const startTime = performance.now();
 
-// Define initial state structure
 const preloadedState = {
   theme: themeInitialState,
   spatial: spatialInitialState
 };
 
-// Enhanced spatial logger middleware
 const spatialLogger = (store) => (next) => (action) => {
   if (process.env.NODE_ENV === 'development' && 
       (action.type?.startsWith('spatial/') || action.type?.includes('spatial'))) {
@@ -41,7 +38,6 @@ const spatialLogger = (store) => (next) => (action) => {
   return next(action);
 };
 
-// Configure middleware based on environment
 const getOptimizedMiddleware = (getDefaultMiddleware) => {
   const middleware = getDefaultMiddleware({
     thunk: {
@@ -57,10 +53,10 @@ const getOptimizedMiddleware = (getDefaultMiddleware) => {
         'spatial.data.flowMaps',
         'spatial.data.marketClusters'
       ],
-      warnAfter: 2000, // Increased threshold for large datasets
+      warnAfter: 2000,
     },
     immutableCheck: {
-      warnAfter: 1000, // Increased threshold for large datasets
+      warnAfter: 1000,
       ignoredPaths: [
         'spatial.data',
         'spatial.status',
@@ -109,7 +105,6 @@ const getOptimizedMiddleware = (getDefaultMiddleware) => {
   return middleware;
 };
 
-// Create store with enhanced configuration
 const store = configureStore({
   reducer: {
     theme: themeReducer,
@@ -128,7 +123,6 @@ const store = configureStore({
   }
 });
 
-// Development helpers
 if (process.env.NODE_ENV === 'development') {
   window.__REDUX_STORE__ = store;
   window.__REDUX_MONITOR__ = {

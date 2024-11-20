@@ -8,7 +8,8 @@ import {
   getNetworkDataPath,
   getChoroplethDataPath,
   enhancedFetchJson,
-  getDataPath
+  getDataPath,
+  getRegressionDataPath
 } from './dataUtils';
 import { pathResolver } from './pathResolver';
 import { pathValidator } from '../utils/pathValidator';
@@ -353,23 +354,55 @@ class SpatialDataHandler {
 
   validateRegressionData(data) {
     if (!data?.model || !data?.spatial || !data?.residuals) {
+      console.warn('Missing required regression data sections');
       return false;
     }
   
-    return (
-      // Model validation
+    // Validate model section
+    const modelValid = (
       typeof data.model.r_squared === 'number' &&
       typeof data.model.adj_r_squared === 'number' &&
       typeof data.model.mse === 'number' &&
       typeof data.model.intercept === 'number' &&
       typeof data.model.observations === 'number' &&
-      // Spatial validation
-      data.spatial.moran_i &&
-      Array.isArray(data.spatial.vif) &&
-      // Residuals validation
-      Array.isArray(data.residuals.raw) &&
-      typeof data.residuals.stats === 'object'
+      data.model.coefficients &&
+      Object.keys(data.model.coefficients).length > 0
     );
+  
+    if (!modelValid) {
+      console.warn('Invalid model structure');
+      return false;
+    }
+  
+    // Validate spatial section
+    const spatialValid = (
+      data.spatial.moran_i &&
+      typeof data.spatial.moran_i.I === 'number' &&
+      typeof data.spatial.moran_i['p-value'] === 'number' &&
+      Array.isArray(data.spatial.vif)
+    );
+  
+    if (!spatialValid) {
+      console.warn('Invalid spatial structure');
+      return false;
+    }
+  
+    // Validate residuals section
+    const residualsValid = (
+      Array.isArray(data.residuals.raw) &&
+      typeof data.residuals.byRegion === 'object' &&
+      data.residuals.stats &&
+      typeof data.residuals.stats.mean === 'number' &&
+      typeof data.residuals.stats.variance === 'number' &&
+      typeof data.residuals.stats.maxAbsolute === 'number'
+    );
+  
+    if (!residualsValid) {
+      console.warn('Invalid residuals structure');
+      return false;
+    }
+  
+    return true;
   }
 
   validateMarketClusters(clusters) {
@@ -643,64 +676,102 @@ class SpatialDataHandler {
     }
   }
 
-  async loadRegressionAnalysis(commodity) {
+  async loadRegressionAnalysis(selectedCommodity) {
+    if (!selectedCommodity) {
+      console.warn('No commodity selected for regression analysis');
+      return DEFAULT_REGRESSION_DATA;
+    }
+  
+    const metric = backgroundMonitor.startMetric('regression-data-load');
+    
     try {
-      const cacheKey = `regression_${commodity}`;
+      // Get the cache key
+      const cacheKey = `regression_${selectedCommodity}`;
       const cached = this.cache.get(cacheKey);
       
       if (cached?.data) {
+        console.debug('Using cached regression data for:', selectedCommodity);
         return cached.data;
       }
-
-      // Use data path utility
-      const analysisPath = getDataPath('spatial_analysis_results.json');
-      
-      // Use fetch instead of fs.readFile
+  
+      // Get the regression data path
+      const analysisPath = getRegressionDataPath();
+      console.debug('Loading regression data from:', analysisPath);
+  
+      // Fetch the data
       const response = await fetch(analysisPath);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.error(`HTTP error! status: ${response.status}`);
+        return DEFAULT_REGRESSION_DATA;
       }
-
+  
       const text = await response.text();
-      const parsedData = JSON.parse(text);
       
-      // Normalize the commodity name
-      const normalizedCommodity = this.normalizeCommodityName(commodity);
-      
-      // Find analysis for specific commodity
-      const commodityAnalysis = parsedData.find(
-        analysis => this.normalizeCommodityName(analysis.commodity) === normalizedCommodity
-      );
-
-      if (!commodityAnalysis) {
-        throw new Error(`No spatial analysis found for commodity: ${commodity}`);
+      // Sanitize and parse the JSON text
+      const sanitizedText = this.sanitizeJsonText(text);
+      let parsedData;
+      try {
+        parsedData = JSON.parse(sanitizedText);
+        if (!Array.isArray(parsedData)) {
+          console.error('Invalid data format: expected array');
+          return DEFAULT_REGRESSION_DATA;
+        }
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        return DEFAULT_REGRESSION_DATA;
       }
-
+  
+      // Normalize commodity name for comparison
+      const normalizedSearchCommodity = this.normalizeCommodityName(selectedCommodity);
+      console.debug('Normalized commodity name:', normalizedSearchCommodity);
+  
+      // Find matching commodity data
+      const commodityAnalysis = parsedData.find(item => {
+        const normalizedItemCommodity = this.normalizeCommodityName(item.commodity);
+        return normalizedItemCommodity === normalizedSearchCommodity;
+      });
+  
+      if (!commodityAnalysis) {
+        console.warn(`No regression analysis found for commodity: ${selectedCommodity}`);
+        return DEFAULT_REGRESSION_DATA;
+      }
+  
+      // Process the analysis data
       const processedAnalysis = {
         model: {
           coefficients: commodityAnalysis.coefficients || {},
-          intercept: commodityAnalysis.intercept || 0,
+          intercept: this.sanitizeNumericValue(commodityAnalysis.intercept),
           p_values: commodityAnalysis.p_values || {},
-          r_squared: commodityAnalysis.r_squared || 0,
-          adj_r_squared: commodityAnalysis.adj_r_squared || 0,
-          mse: commodityAnalysis.mse || 0,
+          r_squared: this.sanitizeNumericValue(commodityAnalysis.r_squared),
+          adj_r_squared: this.sanitizeNumericValue(commodityAnalysis.adj_r_squared),
+          mse: this.sanitizeNumericValue(commodityAnalysis.mse),
           observations: commodityAnalysis.observations || 0
         },
         spatial: {
           moran_i: commodityAnalysis.moran_i || { I: 0, 'p-value': 1 },
-          vif: commodityAnalysis.vif || []
+          vif: Array.isArray(commodityAnalysis.vif) ? commodityAnalysis.vif : []
         },
-        residuals: this.processResiduals(commodityAnalysis.residual)
+        residuals: this.processResiduals(commodityAnalysis.residual || [])
       };
-
+  
+      // Validate the processed data
+      if (!this.validateRegressionData(processedAnalysis)) {
+        console.warn('Invalid regression data structure:', processedAnalysis);
+        return DEFAULT_REGRESSION_DATA;
+      }
+  
+      // Cache the valid results
       this.cache.set(cacheKey, {
         data: processedAnalysis,
         timestamp: Date.now()
       });
-
+  
+      metric.finish({ status: 'success' });
       return processedAnalysis;
+  
     } catch (error) {
-      console.error('[SpatialHandler] Failed to load regression analysis:', error);
+      console.error('Failed to load regression analysis:', error);
+      metric.finish({ status: 'error', error: error.message });
       return DEFAULT_REGRESSION_DATA;
     }
   }
@@ -723,23 +794,38 @@ class SpatialDataHandler {
         stats: { mean: 0, variance: 0, maxAbsolute: 0 }
       };
     }
-
+  
+    // Process raw residuals
     const rawResiduals = residualData.map(r => ({
-      region_id: r.region_id,
+      region_id: this.normalizeRegionName(r.region_id), // Normalize region names
       date: new Date(r.date).toISOString(),
-      residual: Number(r.residual)
-    }));
-
-    const byRegion = _.groupBy(rawResiduals, 'region_id');
-    const residualValues = rawResiduals.map(r => r.residual);
-
+      residual: this.sanitizeNumericValue(r.residual)
+    })).filter(r => r.residual !== null); // Filter out invalid residuals
+  
+    // Group by normalized region
+    const byRegion = rawResiduals.reduce((acc, curr) => {
+      if (!acc[curr.region_id]) {
+        acc[curr.region_id] = [];
+      }
+      acc[curr.region_id].push(curr);
+      return acc;
+    }, {});
+  
+    // Calculate statistics from valid residuals only
+    const residualValues = rawResiduals.map(r => r.residual).filter(r => r !== null);
     const stats = {
-      mean: _.mean(residualValues) || 0,
+      mean: residualValues.length > 0 ? 
+        residualValues.reduce((a, b) => a + b, 0) / residualValues.length : 0,
       variance: this.calculateVariance(residualValues),
-      maxAbsolute: Math.max(...residualValues.map(Math.abs)) || 0
+      maxAbsolute: residualValues.length > 0 ? 
+        Math.max(...residualValues.map(Math.abs)) : 0
     };
-
-    return { raw: rawResiduals, byRegion, stats };
+  
+    return {
+      raw: rawResiduals,
+      byRegion,
+      stats
+    };
   }
 
 

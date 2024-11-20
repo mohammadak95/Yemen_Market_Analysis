@@ -60,18 +60,17 @@ const getBasePath = () => {
 };
 
 export const getDataPath = (fileName = '') => {
-  // Check if we're on GitHub Pages
   const isGitHubPages = window.location.hostname.includes('github.io');
   const isProd = process.env.NODE_ENV === 'production';
+  const repoBase = '/Yemen_Market_Analysis';
   
   // Set base path based on environment
   let basePath;
   if (isGitHubPages) {
-    basePath = '/Yemen_Market_Analysis/results';
+    basePath = `${repoBase}/results`;
   } else if (isProd) {
     basePath = '/results';
   } else {
-    // In development, try multiple paths
     basePath = '/results';
   }
 
@@ -80,8 +79,16 @@ export const getDataPath = (fileName = '') => {
     .replace(/\/+/g, '/') // Replace multiple slashes
     .replace(/\/$/, '');  // Remove trailing slash
 
+  console.debug('Resolved data path:', {
+    isGitHubPages,
+    isProd, 
+    fileName,
+    cleanPath
+  });
+
   return cleanPath;
 };
+
 
 export const fetchWithRetry = async (url, options = {}, retries = 2) => {
   try {
@@ -131,6 +138,10 @@ export const enhancedFetchJson = async (url, options = {}) => {
     });
     throw error;
   }
+};
+
+export const getRegressionDataPath = () => {
+  return getDataPath('spatial_analysis_results.json');
 };
 
 
