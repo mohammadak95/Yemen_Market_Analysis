@@ -47,19 +47,18 @@ export const fetchSpatialData = createAsyncThunk(
 export const initialState = {
   data: {
     // Time series data from preprocessed_yemen_market_data_*.json
-    timeSeriesData: [], // Array of {month, avgUsdPrice, volatility, sampleSize, conflict_intensity, garch_volatility, price_stability}
-
+    timeSeriesData: [],
+    flowMaps: [],  
     // Market structure data
-    marketClusters: [], // Array of {cluster_id, main_market, connected_markets, market_count, metrics}
-    marketShocks: [], // Array of {region, date, magnitude, type, price_change, previous_price, current_price}
-    flowMaps: [], // From time_varying_flows.csv
-
+    marketClusters: [], 
+    marketShocks: [], 
+    flowMaps: [], 
     // Spatial analysis data
-    clusterEfficiency: [], // Array of {cluster_id, internal_connectivity, market_coverage, price_convergence, stability}
-    flowAnalysis: [], // Array of {source, target, total_flow, avg_flow, flow_count}
+    clusterEfficiency: [],
+    flowAnalysis: [],
     spatialAutocorrelation: {
       global: { moran_i: null, p_value: null, z_score: null },
-      local: {}, // Region-specific Moran's I values
+      local: {}, 
     },
 
     // Additional analysis data
@@ -213,6 +212,17 @@ const spatialSlice = createSlice({
           sampleSize: entry.sampleSize || 0,
           conflict_intensity: entry.conflict_intensity || 0
         }));
+
+        if (preprocessedData.flow_analysis) {
+          state.data.flowMaps = preprocessedData.flow_analysis.map(flow => ({
+            source: flow.source,
+            target: flow.target,
+            totalFlow: flow.total_flow,
+            avgFlow: flow.avg_flow,
+            flowCount: flow.flow_count,
+            avgPriceDifferential: flow.avg_price_differential
+          }));
+        }
   
         // Update market data with proper validation
         state.data.marketClusters = preprocessedData.market_clusters || [];
@@ -266,6 +276,7 @@ export const selectSpatialData = (state) => state.spatial.data;
 export const selectUIState = (state) => state.spatial.ui;
 export const selectLoadingStatus = (state) => state.spatial.status;
 export const selectTimeSeriesData = (state) => state.spatial.data.timeSeriesData;
+export const selectFlowData = state => state.spatial.data.flowMaps;
 export const selectMarketClusters = (state) => state.spatial.data.marketClusters;
 export const selectSpatialAutocorrelation = (state) => state.spatial.data.spatialAutocorrelation;
 export const selectMarketIntegration = (state) => state.spatial.data.marketIntegration;

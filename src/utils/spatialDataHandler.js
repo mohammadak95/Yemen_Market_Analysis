@@ -376,35 +376,38 @@ class SpatialDataHandler {
     }
   }
   
-  async loadFlowData(selectedCommodity = null) {
+  async loadFlowData(commodity) {
     try {
-      if (this.debugMode) {
-        console.log('[SpatialHandler] Loading flow data:', { selectedCommodity });
+      // Get preprocessed data path
+      const preprocessedPath = this.getPreprocessedDataPath(commodity);
+      
+      // Use the cache if available
+      const cacheKey = `flow_${commodity}`;
+      const cachedData = this.cache.get(cacheKey);
+      if (cachedData) {
+        return cachedData;
       }
 
-      // Load CSV data
-      const data = await pathResolver.loadFile(
-        'network_data', 
-        'time_varying_flows.csv',
-        { contentType: 'csv' }
-      );
+      const response = await window.fs.readFile(preprocessedPath, { encoding: 'utf8' });
+      const data = JSON.parse(this.sanitizeJsonText(response));
 
-      // Validate and process data
-      const processedData = this.processFlowData(data);
-
-      // Filter by commodity if needed
-      if (selectedCommodity) {
-        return this.filterFlowsByCommodity(processedData, selectedCommodity);
+      if (!data.flow_analysis) {
+        throw new Error('Flow analysis data not found in preprocessed file');
       }
 
-      return processedData;
+      // Process flow data
+      const processedFlows = this.processFlowAnalysis(data.flow_analysis);
+
+      // Cache the results
+      this.cache.set(cacheKey, {
+        data: processedFlows,
+        timestamp: Date.now()
+      });
+
+      return processedFlows;
 
     } catch (error) {
-      console.error('[SpatialHandler] Flow data load failed:', {
-        error: error.message,
-        stack: error.stack,
-        selectedCommodity
-      });
+      console.error('[SpatialHandler] Failed to load flow data:', error);
       throw error;
     }
   }
@@ -464,6 +467,24 @@ class SpatialDataHandler {
       .filter(Boolean)
       .map(row => this.processFlowRow(row))
       .filter(Boolean);
+  }
+
+  validateFlowData(flows) {
+    if (!Array.isArray(flows)) return false;
+    
+    return flows.every(flow => {
+      const hasRequiredFields = flow.source && 
+                              flow.target && 
+                              typeof flow.total_flow === 'number' &&
+                              typeof flow.avg_flow === 'number' &&
+                              typeof flow.flow_count === 'number';
+                              
+      const hasValidValues = flow.flow_count > 0 &&
+                            flow.total_flow >= 0 &&
+                            flow.avg_flow >= 0;
+                            
+      return hasRequiredFields && hasValidValues;
+    });
   }
 
   filterFlowsByCommodity(data, commodity) {
@@ -567,16 +588,24 @@ class SpatialDataHandler {
   }
 
   processFlowAnalysis(flows) {
-    if (!Array.isArray(flows)) return [];
+    if (!Array.isArray(flows)) {
+      console.warn('[SpatialHandler] Invalid flow data structure');
+      return [];
+    }
 
     return flows.map(flow => ({
       source: this.normalizeRegionName(flow.source),
       target: this.normalizeRegionName(flow.target),
       total_flow: this.sanitizeNumericValue(flow.total_flow),
       avg_flow: this.sanitizeNumericValue(flow.avg_flow),
-      flow_count: flow.flow_count,
+      flow_count: flow.flow_count || 0,
       avg_price_differential: this.sanitizeNumericValue(flow.avg_price_differential)
-    })).filter(flow => flow.source && flow.target);
+    })).filter(flow => 
+      flow.source && 
+      flow.target && 
+      !this.excludedRegions.has(flow.source) && 
+      !this.excludedRegions.has(flow.target)
+    );
   }
 
   processSpatialAutocorrelation(autocorrelation) {
@@ -654,46 +683,35 @@ class SpatialDataHandler {
   }
 
   async getSpatialData(selectedCommodity, date) {
-    const commodity = selectedCommodity?.toLowerCase().trim() || 'beans (kidney red)'; // Fixed default
+    const commodity = selectedCommodity?.toLowerCase().trim() || 'beans (kidney red)';
     const cacheKey = `${commodity}_${date || 'all'}`;
     
     try {
-      console.log('Loading data for:', { commodity, date, cacheKey });
-  
-      // Load preprocessed data
+      // Load preprocessed data 
       const preprocessed = await this.loadPreprocessedData(commodity);
       
-      // Validate essential fields
-      if (!preprocessed?.time_series_data) {
-        throw new Error(`Invalid data structure: ${Object.keys(preprocessed || {})}`);
-      }
+      // Validate and process flow data specifically
+      const flowData = preprocessed.flow_analysis ? 
+        this.processFlowAnalysis(preprocessed.flow_analysis) : [];
 
-      const filteredData = this.filterByDate(preprocessed.time_series_data, date);
-  
-      // Process data
       const result = {
-        time_series_data: filteredData,
-        market_clusters: preprocessed.market_clusters || [],
-        market_shocks: preprocessed.market_shocks || [],
-        cluster_efficiency: preprocessed.cluster_efficiency || [],
-        flow_analysis: preprocessed.flow_analysis || [],
-        spatial_autocorrelation: preprocessed.spatial_autocorrelation || {},
-        seasonal_analysis: preprocessed.seasonal_analysis || {},
-        market_integration: preprocessed.market_integration || {},
-        metadata: preprocessed.metadata || {},
-        regression_analysis: preprocessed.regression_analysis || DEFAULT_REGRESSION_DATA
+        ...preprocessed,
+        flowMaps: flowData,
+        // Ensure other data remains unchanged
+        timeSeriesData: preprocessed.time_series_data || [],
+        marketClusters: preprocessed.market_clusters || [],
+        marketShocks: preprocessed.market_shocks || [],
+        spatialAutocorrelation: preprocessed.spatial_autocorrelation || {},
+        metadata: {
+          ...preprocessed.metadata,
+          flowDataUpdated: new Date().toISOString()
+        }
       };
-  
-      // Add debug logging
-      console.log('Processed result:', {
-        timeSeriesCount: result.time_series_data.length,
-        hasMarketClusters: Boolean(result.market_clusters.length)
-      });
-  
+
       return result;
-  
+
     } catch (error) {
-      console.error('Failed to get spatial data:', error);
+      console.error('[SpatialHandler] Failed to get spatial data:', error);
       throw error;
     }
   }
