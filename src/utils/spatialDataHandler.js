@@ -648,47 +648,100 @@ class SpatialDataHandler {
       const cacheKey = `regression_${commodity}`;
       const cached = this.cache.get(cacheKey);
       
-      if (cached?.data && Date.now() - cached.timestamp < this.cacheConfig.TTL) {
+      if (cached?.data) {
         return cached.data;
       }
-  
-      // Add retry mechanism
-      const retryOptions = {
-        maxAttempts: 3,
-        delay: 1000,
-        backoff: 2
-      };
-  
-      let lastError;
-      for (let attempt = 1; attempt <= retryOptions.maxAttempts; attempt++) {
-        try {
-          const data = await this.fetchRegressionData(commodity);
-          if (data && this.validateRegressionData(data)) {
-            this.cache.set(cacheKey, {
-              data,
-              timestamp: Date.now()
-            });
-            return data;
-          }
-        } catch (error) {
-          lastError = error;
-          if (attempt < retryOptions.maxAttempts) {
-            await new Promise(resolve => 
-              setTimeout(resolve, retryOptions.delay * Math.pow(retryOptions.backoff, attempt - 1))
-            );
-          }
-        }
+
+      // Use data path utility
+      const analysisPath = getDataPath('spatial_analysis_results.json');
+      
+      // Use fetch instead of fs.readFile
+      const response = await fetch(analysisPath);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
-      throw lastError || new Error('Failed to load regression data');
-    } catch (error) {
-      console.error('[SpatialHandler] Regression analysis load failed:', {
-        error: error.message,
-        commodity
+
+      const text = await response.text();
+      const parsedData = JSON.parse(text);
+      
+      // Normalize the commodity name
+      const normalizedCommodity = this.normalizeCommodityName(commodity);
+      
+      // Find analysis for specific commodity
+      const commodityAnalysis = parsedData.find(
+        analysis => this.normalizeCommodityName(analysis.commodity) === normalizedCommodity
+      );
+
+      if (!commodityAnalysis) {
+        throw new Error(`No spatial analysis found for commodity: ${commodity}`);
+      }
+
+      const processedAnalysis = {
+        model: {
+          coefficients: commodityAnalysis.coefficients || {},
+          intercept: commodityAnalysis.intercept || 0,
+          p_values: commodityAnalysis.p_values || {},
+          r_squared: commodityAnalysis.r_squared || 0,
+          adj_r_squared: commodityAnalysis.adj_r_squared || 0,
+          mse: commodityAnalysis.mse || 0,
+          observations: commodityAnalysis.observations || 0
+        },
+        spatial: {
+          moran_i: commodityAnalysis.moran_i || { I: 0, 'p-value': 1 },
+          vif: commodityAnalysis.vif || []
+        },
+        residuals: this.processResiduals(commodityAnalysis.residual)
+      };
+
+      this.cache.set(cacheKey, {
+        data: processedAnalysis,
+        timestamp: Date.now()
       });
+
+      return processedAnalysis;
+    } catch (error) {
+      console.error('[SpatialHandler] Failed to load regression analysis:', error);
       return DEFAULT_REGRESSION_DATA;
     }
   }
+
+  // Helper method for commodity name normalization
+  normalizeCommodityName(commodity) {
+    if (!commodity) return '';
+    return commodity.toLowerCase()
+      .replace(/[()]/g, '')
+      .replace(/\s+/g, '_')
+      .trim();
+  }
+
+  // Helper method for processing residuals
+  processResiduals(residualData) {
+    if (!Array.isArray(residualData)) {
+      return {
+        raw: [],
+        byRegion: {},
+        stats: { mean: 0, variance: 0, maxAbsolute: 0 }
+      };
+    }
+
+    const rawResiduals = residualData.map(r => ({
+      region_id: r.region_id,
+      date: new Date(r.date).toISOString(),
+      residual: Number(r.residual)
+    }));
+
+    const byRegion = _.groupBy(rawResiduals, 'region_id');
+    const residualValues = rawResiduals.map(r => r.residual);
+
+    const stats = {
+      mean: _.mean(residualValues) || 0,
+      variance: this.calculateVariance(residualValues),
+      maxAbsolute: Math.max(...residualValues.map(Math.abs)) || 0
+    };
+
+    return { raw: rawResiduals, byRegion, stats };
+  }
+
 
   // ===========================
   // Data Processing Methods
@@ -931,49 +984,35 @@ class SpatialDataHandler {
     }
   }
 
-  processResiduals(residuals) {
-    if (!Array.isArray(residuals)) return [];
+  processResiduals(residualData) {
+    if (!Array.isArray(residualData)) return { raw: [], byRegion: {}, stats: {} };
 
-    // Process and group residuals by region
-    const byRegion = residuals.reduce((acc, r) => {
-      if (!r.region_id || !r.date) return acc;
-      
-      if (!acc[r.region_id]) {
-        acc[r.region_id] = [];
-      }
-      
-      acc[r.region_id].push({
-        date: new Date(r.date).toISOString(),
-        residual: this.sanitizeNumericValue(r.residual)
-      });
-      
-      return acc;
-    }, {});
+    const rawResiduals = residualData.map(r => ({
+      region_id: r.region_id,
+      date: new Date(r.date).toISOString(),
+      residual: Number(r.residual)
+    }));
 
-    // Calculate residual statistics
-    const allResiduals = residuals.map(r => r.residual).filter(r => !isNaN(r));
+    // Group residuals by region
+    const byRegion = _.groupBy(rawResiduals, 'region_id');
+
+    // Calculate statistics
+    const residualValues = rawResiduals.map(r => r.residual);
     const stats = {
-      mean: allResiduals.reduce((a, b) => a + b, 0) / allResiduals.length || 0,
-      variance: this.calculateVariance(allResiduals),
-      maxAbsolute: Math.max(...allResiduals.map(Math.abs)) || 0
+      mean: _.mean(residualValues) || 0,
+      variance: this.calculateVariance(residualValues),
+      maxAbsolute: Math.max(...residualValues.map(Math.abs)) || 0
     };
 
-    return {
-      raw: residuals.map(r => ({
-        region_id: r.region_id,
-        date: new Date(r.date).toISOString(),
-        residual: this.sanitizeNumericValue(r.residual)
-      })),
-      byRegion,
-      stats
-    };
+    return { raw: rawResiduals, byRegion, stats };
   }
 
-  calculateVariance(arr) {
-    if (!arr.length) return 0;
-    const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-    return arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length;
+  calculateVariance(values) {
+    if (!values.length) return 0;
+    const mean = _.mean(values);
+    return _.sum(values.map(v => Math.pow(v - mean, 2))) / values.length;
   }
+
 
   async processVisualizationData(data, mode, filters = {}) {
     const metric = backgroundMonitor.startMetric('visualization-processing');

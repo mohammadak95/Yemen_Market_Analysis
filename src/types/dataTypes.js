@@ -52,29 +52,36 @@
  * Default/placeholder values for regression data
  */
 export const DEFAULT_REGRESSION_DATA = {
-    model: {
-      coefficients: {},
-      intercept: 0,
-      p_values: {},
-      r_squared: 0,
-      adj_r_squared: 0,
-      mse: 0,
-      observations: 0
+  model: {
+    coefficients: {
+      spatial_lag_price: 0
     },
-    spatial: {
-      moran_i: { I: 0, 'p-value': 1 },
-      vif: []
+    intercept: 0,
+    p_values: {
+      spatial_lag_price: 1
     },
-    residuals: {
-      raw: [],
-      byRegion: {},
-      stats: {
-        mean: 0,
-        variance: 0,
-        maxAbsolute: 0
-      }
+    r_squared: 0,
+    adj_r_squared: 0,
+    mse: 0,
+    observations: 0
+  },
+  spatial: {
+    moran_i: {
+      I: 0,
+      'p-value': 1
+    },
+    vif: []
+  },
+  residuals: {
+    raw: [],
+    byRegion: {},
+    stats: {
+      mean: 0,
+      variance: 0,
+      maxAbsolute: 0
     }
-  };
+  }
+};
   
   /**
    * Type checking helpers
@@ -87,3 +94,4 @@ export const DEFAULT_REGRESSION_DATA = {
       Array.isArray(data.residuals?.raw)
     );
   };
+

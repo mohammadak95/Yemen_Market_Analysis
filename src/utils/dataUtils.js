@@ -60,8 +60,55 @@ const getBasePath = () => {
 };
 
 export const getDataPath = (fileName = '') => {
-  const basePath = getBasePath();
-  return cleanPath(`${basePath}/${fileName}`);
+  // Check if we're on GitHub Pages
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  // Set base path based on environment
+  let basePath;
+  if (isGitHubPages) {
+    basePath = '/Yemen_Market_Analysis/results';
+  } else if (isProd) {
+    basePath = '/results';
+  } else {
+    // In development, try multiple paths
+    basePath = '/results';
+  }
+
+  // Clean up the path
+  const cleanPath = `${basePath}/${fileName}`
+    .replace(/\/+/g, '/') // Replace multiple slashes
+    .replace(/\/$/, '');  // Remove trailing slash
+
+  return cleanPath;
+};
+
+export const fetchWithRetry = async (url, options = {}, retries = 2) => {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      // Try alternative path if first attempt fails
+      const altPath = url.replace('/results/', '/data/');
+      try {
+        const altResponse = await fetch(altPath, options);
+        if (altResponse.ok) {
+          return altResponse;
+        }
+      } catch (altError) {
+        console.warn('Alternative path failed:', altError);
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return fetchWithRetry(url, options, retries - 1);
+    }
+    throw error;
+  }
 };
 
 export const getNetworkDataPath = (fileName) => {

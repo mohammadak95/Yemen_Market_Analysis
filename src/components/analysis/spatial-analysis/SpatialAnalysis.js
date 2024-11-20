@@ -1,14 +1,19 @@
 // src/components/analysis/spatial-analysis/SpatialAnalysis.js
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
 import MapComponent from './MapComponent';
 import LoadingSpinner from '../../common/LoadingSpinner';
 import ErrorMessage from '../../common/ErrorMessage';
-import { setSelectedRegion } from '../../../slices/spatialSlice';
+import { setSelectedRegion, fetchRegressionAnalysis } from '../../../slices/spatialSlice';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
 import { selectGeoJSON, selectLoadingStatus } from '../../../slices/spatialSlice';
 import { DEFAULT_GEOJSON } from '../../../constants/index';
+
+
 
 
 const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
@@ -19,7 +24,8 @@ const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
   const error = useSelector((state) => state.spatial.status.error);
   const selectedRegion = useSelector((state) => state.spatial.ui.selectedRegion);
   const geoJSON = useSelector(selectGeoJSON);
-
+  const selectedCommodity = useSelector(state => state.spatial.ui.selectedCommodity);
+  const regressionAnalysis = useSelector(state => state.spatial.data.regressionAnalysis);
 
   // Destructure necessary data
   const { marketClusters, flowMaps } = spatialData || {};
@@ -36,6 +42,13 @@ const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
     },
     [dispatch]
   );
+
+  // Load regression analysis when commodity changes
+  useEffect(() => {
+    if (selectedCommodity) {
+      dispatch(fetchRegressionAnalysis({ commodity: selectedCommodity }));
+    }
+  }, [selectedCommodity, dispatch]);
 
   // Handle loading and error states
   if (loading) {
@@ -57,7 +70,41 @@ const SpatialAnalysis = ({ spatialViewConfig, onSpatialViewChange }) => {
         onSpatialViewChange={onSpatialViewChange}
         onRegionClick={handleRegionClick}
         selectedRegion={selectedRegion}
+        getRegionStyle={(feature) => ({
+          ...baseStyle,
+          fillColor: getResidualColor(
+            regressionAnalysis?.residuals?.byRegion[feature.properties.region_id]?.residual
+          ),
+          weight: selectedRegion === feature.properties.region_id ? 3 : 1,
+        })}
       />
+      
+      {regressionAnalysis && (
+        <Paper sx={{ p: 2, m: 2 }}>
+          <Typography variant="h6">Spatial Analysis Results</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <Typography variant="subtitle2">Spatial Lag Coefficient</Typography>
+              <Typography>
+                {regressionAnalysis.model.coefficients.spatial_lag_price?.toFixed(4)}
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="subtitle2">Moran's I</Typography>
+              <Typography>
+                {regressionAnalysis.spatial.moran_i.I?.toFixed(4)}
+                {' (p-value: '}{regressionAnalysis.spatial.moran_i['p-value']?.toFixed(3)}{')'}
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="subtitle2">Model Fit</Typography>
+              <Typography>
+                R² = {regressionAnalysis.model.r_squared?.toFixed(4)}
+              </Typography>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
     </div>
   );
 };

@@ -13,7 +13,12 @@ import {
   calculateClusterEfficiency
 } from '../utils/marketAnalysisUtils';
 import { DEFAULT_GEOJSON, DEFAULT_VIEW, VISUALIZATION_MODES } from '../constants/index';
+import { getDataPath } from '../utils/dataUtils';
 
+function calculateVariance(values) {
+  const mean = _.mean(values);
+  return _.mean(values.map(v => Math.pow(v - mean, 2)));
+}
 
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
@@ -38,27 +43,90 @@ export const fetchSpatialData = createAsyncThunk(
 
 export const fetchRegressionAnalysis = createAsyncThunk(
   'spatial/fetchRegressionAnalysis',
-  async ({ commodity }, { rejectWithValue, dispatch }) => {
+  async ({ commodity }, { rejectWithValue }) => {
     try {
-      dispatch(setLoadingStage('loading-regression'));
+      // Use the correct server path
+      const response = await fetch('/results/spatial_analysis_results.json');
       
-      // Start monitoring
-      const metric = backgroundMonitor.startMetric('regression-data-load');
-      
-      const data = await spatialHandler.loadRegressionAnalysis(commodity);
-      
-      if (!data || data === DEFAULT_REGRESSION_DATA) {
-        throw new Error('Failed to load regression data');
+      if (!response.ok) {
+        // Try fallback path if first attempt fails
+        const fallbackResponse = await fetch('/data/spatial_analysis_results.json');
+        if (!fallbackResponse.ok) {
+          throw new Error(`Failed to fetch regression analysis. Status: ${response.status}`);
+        }
+        response = fallbackResponse;
       }
 
-      // Log success
-      metric.finish({ status: 'success', commodity });
-      dispatch(setLoadingStage('regression-complete'));
+      const text = await response.text();
       
-      return data;
+      // Safely parse JSON and handle invalid JSON
+      let allAnalyses;
+      try {
+        allAnalyses = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse regression analysis JSON:', parseError);
+        throw new Error('Invalid regression analysis data format');
+      }
+
+      if (!Array.isArray(allAnalyses)) {
+        throw new Error('Invalid regression analysis data structure');
+      }
+      
+      // Normalize commodity name for comparison
+      const normalizedCommodity = commodity.toLowerCase()
+        .replace(/[()]/g, '')
+        .replace(/\s+/g, '_')
+        .trim();
+      
+      const analysis = allAnalyses.find(
+        a => a.commodity.toLowerCase()
+          .replace(/[()]/g, '')
+          .replace(/\s+/g, '_')
+          .trim() === normalizedCommodity
+      );
+
+      if (!analysis) {
+        console.warn('Available commodities:', allAnalyses.map(a => a.commodity));
+        throw new Error(`No analysis found for commodity: ${commodity}`);
+      }
+
+      // Process the residuals
+      const processedResiduals = {
+        raw: analysis.residual || [],
+        byRegion: _.groupBy(analysis.residual || [], 'region_id'),
+        stats: {
+          mean: _.meanBy(analysis.residual || [], 'residual') || 0,
+          variance: calculateVariance(_.map(analysis.residual || [], 'residual')),
+          maxAbsolute: Math.max(..._.map(analysis.residual || [], r => Math.abs(r.residual))) || 0
+        }
+      };
+
+      // Return processed data
+      const processedData = {
+        model: {
+          coefficients: analysis.coefficients || {},
+          intercept: analysis.intercept || 0,
+          p_values: analysis.p_values || {},
+          r_squared: analysis.r_squared || 0,
+          adj_r_squared: analysis.adj_r_squared || 0,
+          mse: analysis.mse || 0,
+          observations: analysis.observations || 0
+        },
+        spatial: {
+          moran_i: analysis.moran_i || { I: 0, 'p-value': 1 },
+          vif: analysis.vif || []
+        },
+        residuals: processedResiduals
+      };
+
+      // Log successful data processing in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Processed regression analysis:', processedData);
+      }
+
+      return processedData;
     } catch (error) {
-      dispatch(setLoadingStage('regression-error'));
-      console.error('[Spatial Slice] Regression analysis fetch failed:', error);
+      console.error('[fetchRegressionAnalysis] Error:', error);
       return rejectWithValue(error.message);
     }
   }
@@ -349,19 +417,12 @@ const spatialSlice = createSlice({
       })
       .addCase(fetchRegressionAnalysis.fulfilled, (state, action) => {
         state.status.loading = false;
-        state.status.stage = 'regression-complete';
-        
-        if (action.payload && validateRegressionData(action.payload)) {
-          state.data.regressionAnalysis = action.payload;
-        } else {
-          state.status.error = 'Invalid regression data structure';
-          state.data.regressionAnalysis = DEFAULT_REGRESSION_DATA;
-        }
+        state.data.regressionAnalysis = action.payload;
       })
       .addCase(fetchRegressionAnalysis.rejected, (state, action) => {
         state.status.loading = false;
         state.status.error = action.payload || 'Failed to fetch regression analysis';
-        // Keep the current regression data rather than resetting to default
+        state.data.regressionAnalysis = DEFAULT_REGRESSION_DATA;
       })
       .addCase(fetchVisualizationData.pending, (state) => {
         state.status.visualizationLoading = true;
@@ -502,18 +563,27 @@ export const selectRegionEfficiency = createSelector(
 );
 
 export const selectDetailedMetrics = createSelector(
-  [selectTimeSeriesData, selectUIState],
-  (data, ui) => {
-    if (!data?.length) return null;
+  [selectTimeSeriesData, selectRegressionAnalysis, selectUIState],
+  (timeData, regressionData, ui) => {
+    if (!timeData?.length || !regressionData) return null;
+
     return {
       priceStats: {
-        trend: calculatePriceTrend(data),
-        seasonality: detectSeasonality(data),
-        outliers: detectOutliers(data)
+        trend: calculatePriceTrend(timeData),
+        seasonality: detectSeasonality(timeData),
+        outliers: detectOutliers(timeData)
       },
-      volatility: calculateVolatility(data),
-      integration: calculateIntegration(data),
-      clusterEfficiency: calculateClusterEfficiency(data)
+      spatialDependence: {
+        moranI: regressionData.spatial.moran_i.I,
+        pValue: regressionData.spatial.moran_i['p-value'],
+        spatialLag: regressionData.model.coefficients.spatial_lag_price
+      },
+      modelFit: {
+        rSquared: regressionData.model.r_squared,
+        adjRSquared: regressionData.model.adj_r_squared,
+        mse: regressionData.model.mse,
+        observations: regressionData.model.observations
+      }
     };
   }
 );
