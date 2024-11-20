@@ -2,6 +2,137 @@
 
 import { ANALYSIS_THRESHOLDS } from '../constants/index';
 
+/**
+ * Calculate the center of mass for a GeoJSON geometry
+ * @param {Object} geometry - GeoJSON geometry object
+ * @returns {Object} Center coordinates {lat, lng}
+ */
+export const calculateCenterOfMass = (geometry) => {
+  if (!geometry?.coordinates) return null;
+
+  let points = [];
+  if (geometry.type === 'Polygon') {
+    points = geometry.coordinates[0];
+  } else if (geometry.type === 'MultiPolygon') {
+    points = geometry.coordinates.flatMap(poly => poly[0]);
+  } else {
+    return null;
+  }
+
+  const total = points.reduce((acc, [lng, lat]) => ({
+    lat: acc.lat + lat,
+    lng: acc.lng + lng
+  }), { lat: 0, lng: 0 });
+
+  return {
+    lat: total.lat / points.length,
+    lng: total.lng / points.length
+  };
+};
+
+/**
+ * Calculate bounding box for a GeoJSON geometry
+ * @param {Object} geometry - GeoJSON geometry object
+ * @returns {Object} Bounding box coordinates
+ */
+export const calculateBoundingBox = (geometry) => {
+  if (!geometry?.coordinates) return null;
+
+  let points = [];
+  if (geometry.type === 'Polygon') {
+    points = geometry.coordinates[0];
+  } else if (geometry.type === 'MultiPolygon') {
+    points = geometry.coordinates.flatMap(poly => poly[0]);
+  } else {
+    return null;
+  }
+
+  const bounds = points.reduce((acc, [lng, lat]) => ({
+    minLat: Math.min(acc.minLat, lat),
+    maxLat: Math.max(acc.maxLat, lat),
+    minLng: Math.min(acc.minLng, lng),
+    maxLng: Math.max(acc.maxLng, lng)
+  }), {
+    minLat: Infinity,
+    maxLat: -Infinity,
+    minLng: Infinity,
+    maxLng: -Infinity
+  });
+
+  return {
+    southWest: { lat: bounds.minLat, lng: bounds.minLng },
+    northEast: { lat: bounds.maxLat, lng: bounds.maxLng }
+  };
+};
+
+/**
+ * Find neighboring regions based on shared boundaries
+ * @param {Object} geometry - GeoJSON geometry object
+ * @param {string} regionId - Current region ID
+ * @param {Object} allGeometries - All region geometries
+ * @returns {Array} Array of neighboring region IDs
+ */
+export const findNeighboringRegions = (geometry, regionId, allGeometries) => {
+  if (!geometry || !allGeometries) return [];
+
+  const currentBounds = calculateBoundingBox(geometry);
+  if (!currentBounds) return [];
+
+  const neighbors = [];
+  const buffer = 0.001; // ~100m buffer for boundary intersection
+
+  Object.entries(allGeometries).forEach(([id, geo]) => {
+    if (id === regionId) return;
+
+    const otherBounds = calculateBoundingBox(geo);
+    if (!otherBounds) return;
+
+    // Check if bounding boxes overlap with buffer
+    const overlaps = !(
+      otherBounds.northEast.lat + buffer < currentBounds.southWest.lat ||
+      otherBounds.southWest.lat - buffer > currentBounds.northEast.lat ||
+      otherBounds.northEast.lng + buffer < currentBounds.southWest.lng ||
+      otherBounds.southWest.lng - buffer > currentBounds.northEast.lng
+    );
+
+    if (overlaps) {
+      neighbors.push(id);
+    }
+  });
+
+  return neighbors;
+};
+
+/**
+ * Calculate distance between two points
+ * @param {Object} point1 - {lat, lng}
+ * @param {Object} point2 - {lat, lng}
+ * @returns {number} Distance in kilometers
+ */
+export const calculateDistance = (point1, point2) => {
+  if (!point1 || !point2) return 0;
+
+  const R = 6371; // Earth's radius in km
+  const dLat = toRad(point2.lat - point1.lat);
+  const dLon = toRad(point2.lng - point1.lng);
+  const lat1 = toRad(point1.lat);
+  const lat2 = toRad(point2.lat);
+
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
+// Convert degrees to radians
+const toRad = (degrees) => degrees * Math.PI / 180;
+
+export const geometryUtils = {
+  calculateCenterOfMass,
+  calculateBoundingBox,
+  findNeighboringRegions,
+  calculateDistance
+};
 
 export function calculateVolatility(timeSeriesData) {
   if (!timeSeriesData.length) return {

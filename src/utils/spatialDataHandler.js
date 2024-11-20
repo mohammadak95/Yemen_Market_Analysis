@@ -142,25 +142,6 @@ const DEFAULT_GEOJSON = {
   }
 };
 
-const convertUTMtoLatLng = (x, y, zone = 38) => {
-  // Basic UTM to LatLng conversion for Yemen (UTM zone 38N)
-  // Note: For production, use a proper UTM conversion library
-  const k0 = 0.9996;
-  const a = 6378137;
-  const e = 0.081819191;
-  const e1sq = 0.006739497;
-  
-  const n = a / Math.sqrt(1 - Math.pow(e * Math.sin(y * Math.PI / 180), 2));
-  const t = Math.pow(Math.tan(y * Math.PI / 180), 2);
-  const c = e1sq * Math.pow(Math.cos(y * Math.PI / 180), 2);
-  const lng = (x - 500000) / (n * k0);
-  
-  const lat = (y * Math.PI / 180) + 
-              ((3 * e1sq / 2) - (27 * Math.pow(e1sq, 3) / 32)) * Math.sin(2 * y * Math.PI / 180);
-  
-  return [lat * 180 / Math.PI, lng + (zone * 6 - 183)];
-};
-
 class SpatialDataHandler {
   // ===========================
   // Constructor and Initialization
@@ -168,8 +149,9 @@ class SpatialDataHandler {
 
   constructor() {
     this.cache = new Map();
-    this.coordinateCache = new Map();
-    this.geometryCache = null;
+    this.geometryCache = null;      // For polygon boundaries
+    this.pointCache = null;         // For market point locations
+    this.coordinateCache = new Map(); // For normalized coordinates
     this.regionMappingCache = new Map();
     this.excludedRegions = new Set(
       excludedRegions.map((region) => this.normalizeRegionName(region))
@@ -211,6 +193,40 @@ class SpatialDataHandler {
   // ===========================
   // Normalization Methods
   // ===========================
+
+  convertUTMtoLatLng(easting, northing) {
+    // Constants for UTM Zone 38N to WGS84 conversion
+    const k0 = 0.9996;
+    const a = 6378137;
+    const e = 0.081819191;
+    const e1sq = 0.006739497;
+    const falseEasting = 500000;
+    const zone = 38;
+
+    const x = easting - falseEasting;
+    const y = northing;
+
+    const M = y / k0;
+    const mu = M / (a * (1 - e * e / 4 - 3 * e * e * e * e / 64));
+
+    const phi1 = mu + (3 * e1sq / 2 - 27 * e1sq * e1sq * e1sq / 32) * Math.sin(2 * mu);
+    const phi2 = phi1 + (21 * e1sq * e1sq / 16 - 55 * e1sq * e1sq * e1sq * e1sq / 32) * Math.sin(4 * mu);
+    const phi = phi2 + (151 * e1sq * e1sq * e1sq / 96) * Math.sin(6 * mu);
+
+    const N1 = a / Math.sqrt(1 - e * e * Math.sin(phi) * Math.sin(phi));
+    const T1 = Math.tan(phi) * Math.tan(phi);
+    const C1 = e * e * Math.cos(phi) * Math.cos(phi) / (1 - e * e);
+    const R1 = a * (1 - e * e) / Math.pow(1 - e * e * Math.sin(phi) * Math.sin(phi), 1.5);
+    const D = x / (N1 * k0);
+
+    const lat = phi - (N1 * Math.tan(phi) / R1) * (D * D / 2 - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * e * e) * D * D * D * D / 24 + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * e * e - 3 * C1 * C1) * D * D * D * D * D * D / 720);
+    const lon = ((zone * 6 - 183) + (D - (1 + 2 * T1 + C1) * D * D * D / 6 + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * e * e + 24 * T1 * T1) * D * D * D * D * D / 120) / Math.cos(phi)) * Math.PI / 180;
+
+    return {
+      lat: lat * 180 / Math.PI,
+      lng: lon
+    };
+  }
 
   normalizeRegionName(name) {
     if (!name) return null;
@@ -419,90 +435,92 @@ class SpatialDataHandler {
 
   async initializeGeometry() {
     if (this.geometryCache) return this.geometryCache;
-  
+
     try {
+      // Load administrative boundaries (polygons)
       const geojsonPath = getChoroplethDataPath('geoBoundaries-YEM-ADM1.geojson');
+      const response = await fetch(geojsonPath);
       
-      if (this.debugMode) {
-        console.log('[SpatialHandler] Loading geometry:', { path: geojsonPath });
+      if (!response.ok) {
+        throw new Error(`Failed to load geometry: ${response.status}`);
       }
-  
-      // Fetch GeoJSON data
-      let geojsonData;
-      try {
-        const response = await fetch(geojsonPath);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        geojsonData = await response.json();
-      } catch (fetchError) {
-        console.error('[SpatialHandler] Failed to fetch GeoJSON:', fetchError);
-        throw new Error('Failed to load geometry data');
-      }
-  
-      // Validate GeoJSON structure
-      if (!this.validateGeoJSON(geojsonData)) {
-        throw new Error('Invalid GeoJSON data structure');
-      }
-  
+
+      const polygonData = await response.json();
       this.geometryCache = new Map();
-      this.regionMappingCache.clear();
-  
-      // Process valid features
-      const processedFeatures = geojsonData.features
-        .filter(feature => feature?.properties?.shapeName && feature.geometry)
-        .map(feature => {
-          // Clean up shapeName
-          const cleanedName = this.cleanShapeName(feature.properties.shapeName);
-          const normalizedName = this.normalizeRegionName(cleanedName);
-  
-          if (this.debugMode && cleanedName !== normalizedName) {
-            console.log('[SpatialHandler] Name normalization:', {
-              original: feature.properties.shapeName,
-              cleaned: cleanedName,
-              normalized: normalizedName
-            });
-          }
-  
-          return {
-            original: feature.properties.shapeName,
-            cleaned: cleanedName,
-            normalized: normalizedName,
-            geometry: feature.geometry
-          };
-        });
-  
-      // Store in cache
-      processedFeatures.forEach(feature => {
-        this.geometryCache.set(feature.normalized, {
+
+      // Process polygon features
+      polygonData.features.forEach(feature => {
+        if (!feature?.properties?.shapeName) return;
+
+        const normalizedName = this.normalizeRegionName(feature.properties.shapeName);
+        
+        this.geometryCache.set(normalizedName, {
+          type: 'polygon',
           geometry: feature.geometry,
           properties: {
-            shapeName: feature.cleaned,
-            normalizedName: feature.normalized,
-            originalName: feature.original
+            originalName: feature.properties.shapeName,
+            normalizedName: normalizedName,
+            shapeISO: feature.properties.shapeISO
           }
         });
-  
-        // Cache additional mappings
-        this.regionMappingCache.set(feature.original.toLowerCase(), feature.normalized);
-        this.regionMappingCache.set(feature.normalized, feature.normalized);
-        this.regionMappingCache.set(feature.cleaned.toLowerCase(), feature.normalized);
+
+        // Cache name mappings
+        this.regionMappingCache.set(feature.properties.shapeName.toLowerCase(), normalizedName);
+        this.regionMappingCache.set(normalizedName, normalizedName);
       });
-  
-      if (this.debugMode) {
-        console.log('[SpatialHandler] Geometry initialized:', {
-          featureCount: processedFeatures.length,
-          regions: Array.from(this.geometryCache.keys())
-        });
-      }
-  
+
       return this.geometryCache;
-  
+
     } catch (error) {
-      console.error('[SpatialHandler] Geometry initialization failed:', {
-        error: error.message,
-        stack: error.stack
+      console.error('Failed to initialize geometry:', error);
+      throw error;
+    }
+  }
+
+  async initializePoints() {
+    if (this.pointCache) return this.pointCache;
+
+    try {
+      // Load market points
+      const pointsPath = getDataPath('unified_data.geojson');
+      const response = await fetch(pointsPath);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load points: ${response.status}`);
+      }
+
+      const pointData = await response.json();
+      this.pointCache = new Map();
+
+      // Process point features
+      pointData.features.forEach(feature => {
+        if (!feature?.properties?.admin1) return;
+
+        const normalizedName = this.normalizeRegionName(feature.properties.admin1);
+        
+        // Convert UTM coordinates to Lat/Lng
+        const utmCoords = feature.geometry.coordinates;
+        const latLng = this.convertUTMtoLatLng(utmCoords[0], utmCoords[1]);
+
+        this.pointCache.set(normalizedName, {
+          type: 'point',
+          coordinates: [latLng.lng, latLng.lat],
+          properties: {
+            originalName: feature.properties.admin1,
+            normalizedName: normalizedName,
+            population: feature.properties.population,
+            population_percentage: feature.properties.population_percentage
+          }
+        });
+
+        // Cache coordinates for other components
+        this.coordinateCache.set(normalizedName, latLng);
       });
+
+      return this.pointCache;
+
+    } catch (error) {
+      console.error('Failed to initialize points:', error);
       throw error;
     }
   }
@@ -1099,7 +1117,6 @@ class SpatialDataHandler {
     return _.sum(values.map(v => Math.pow(v - mean, 2))) / values.length;
   }
 
-
   async processVisualizationData(data, mode, filters = {}) {
     const metric = backgroundMonitor.startMetric('visualization-processing');
     
@@ -1212,7 +1229,44 @@ class SpatialDataHandler {
     };
   }
 
+  async createUnifiedGeoJSON(timeSeriesData) {
+    await Promise.all([
+      this.initializeGeometry(),
+      this.initializePoints()
+    ]);
 
+    const features = [];
+
+    // Create features combining polygons and points
+    for (const [regionName, polygonData] of this.geometryCache.entries()) {
+      const pointData = this.pointCache.get(regionName);
+      const timeSeriesForRegion = timeSeriesData.find(d => 
+        this.normalizeRegionName(d.region || d.admin1) === regionName
+      );
+
+      features.push({
+        type: 'Feature',
+        geometry: polygonData.geometry,
+        properties: {
+          region_id: regionName,
+          originalName: polygonData.properties.originalName,
+          shapeISO: polygonData.properties.shapeISO,
+          center: pointData ? pointData.coordinates : null,
+          population: pointData ? pointData.properties.population : null,
+          data: timeSeriesForRegion || {}
+        }
+      });
+    }
+
+    return {
+      type: 'FeatureCollection',
+      features,
+      crs: {
+        type: 'name',
+        properties: { name: 'urn:ogc:def:crs:OGC:1.3:CRS84' }
+      }
+    };
+  }
 
   // ===========================
   // Data Enhancement Methods
@@ -1866,6 +1920,12 @@ class SpatialDataHandler {
         flowAnalysis
       )
     };
+  }
+
+  getCoordinates(location) {
+    const normalizedLocation = this.normalizeRegionName(location);
+    const coordinates = this.geometryCache?.get(normalizedLocation) || this.pointCache?.get(normalizedLocation);
+    return coordinates ? coordinates : null;
   }
 
   // [Any additional helper methods can be placed here]
