@@ -139,6 +139,25 @@ class SpatialDataHandler {
     );
     this.missingGeometryWarnings = new Set();
     this.debugMode = process.env.NODE_ENV === 'development';
+    this.cacheConfig = {
+      TTL: 3600000, // 1 hour
+      maxSize: 100, // Maximum number of cached items
+      cleanupInterval: 300000 // 5 minutes
+    };
+    
+    // Start cache cleanup interval
+    if (typeof window !== 'undefined') {
+      setInterval(() => this.cleanupCache(), this.cacheConfig.cleanupInterval);
+    }
+  }
+  
+  cleanupCache() {
+    const now = Date.now();
+    for (const [key, value] of this.cache.entries()) {
+      if (now - value.timestamp > this.cacheConfig.TTL) {
+        this.cache.delete(key);
+      }
+    }
   }
 
   normalizeRegionName(name) {
@@ -306,6 +325,25 @@ class SpatialDataHandler {
     }
   }
 
+  sanitizeJsonText(text) {
+    if (!text) return '';
+    
+    return text
+      // Replace NaN values with null
+      .replace(/:\s*NaN/g, ': null')
+      // Replace Infinity values with null
+      .replace(/:\s*Infinity/g, ': null')
+      .replace(/:\s*-Infinity/g, ': null')
+      // Handle undefined values
+      .replace(/:\s*undefined/g, ': null')
+      // Clean up any potential invalid numeric strings
+      .replace(/:\s*"(NaN|Infinity|-Infinity)"/g, ': null')
+      // Handle empty values
+      .replace(/:\s*""/g, ': null')
+      // Clean up any trailing commas in arrays or objects
+      .replace(/,(\s*[}\]])/g, '$1');
+  }
+
   async loadPreprocessedData(commodity) {
     try {
       const normalizedCommodity = this.normalizeCommodityName(commodity);
@@ -317,19 +355,21 @@ class SpatialDataHandler {
       }
       const text = await response.text();
       
-      // Replace NaN values with null before parsing
-      const sanitizedText = text
-        .replace(/:\s*NaN/g, ': null')
-        .replace(/:\s*Infinity/g, ': null')
-        .replace(/:\s*-Infinity/g, ': null');
+      // Use the new sanitizeJsonText method
+      const sanitizedText = this.sanitizeJsonText(text);
       
-      const data = JSON.parse(sanitizedText);
-      
-      if (!this.validatePreprocessedData(data)) {
-        throw new Error('Invalid data structure');
+      try {
+        const data = JSON.parse(sanitizedText);
+        
+        if (!this.validatePreprocessedData(data)) {
+          throw new Error('Invalid data structure');
+        }
+        
+        return this.enhanceWithRealtimeMetrics(data);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error('Failed to parse data: ' + parseError.message);
       }
-      
-      return data;
     } catch (error) {
       console.error('Preprocessed data load failed:', error);
       throw error;
@@ -375,17 +415,40 @@ class SpatialDataHandler {
     const required = [
       'time_series_data',
       'market_clusters',
-      'market_shocks'
+      'market_shocks',
+      'spatial_autocorrelation',
+      'market_integration'
     ];
   
-    const missing = required.filter(field => !data[field]);
-    if (missing.length) {
-      console.warn('Missing fields:', missing);
+    // Enhanced validation
+    const validation = {
+      missingFields: required.filter(field => !data[field]),
+      invalidTypes: required.filter(field => {
+        const value = data[field];
+        switch (field) {
+          case 'time_series_data':
+            return !Array.isArray(value);
+          case 'market_clusters':
+            return !Array.isArray(value);
+          case 'market_shocks':
+            return !Array.isArray(value);
+          case 'spatial_autocorrelation':
+            return !value?.global || !value?.local;
+          case 'market_integration':
+            return !value?.price_correlation;
+          default:
+            return false;
+        }
+      })
+    };
+  
+    if (validation.missingFields.length > 0) {
+      console.warn('Missing required fields:', validation.missingFields);
       return false;
     }
   
-    if (!Array.isArray(data.time_series_data)) {
-      console.warn('time_series_data is not an array');
+    if (validation.invalidTypes.length > 0) {
+      console.warn('Invalid field types:', validation.invalidTypes);
       return false;
     }
   
@@ -432,7 +495,6 @@ class SpatialDataHandler {
       flow_weight: Number(row.flow_weight) || 0
     };
   }
-
 
   filterByDate(data, targetDate) {
     if (!targetDate || !Array.isArray(data)) return data;
@@ -804,6 +866,164 @@ class SpatialDataHandler {
       this.validateMarketConnections(cluster)
     ));
   }
+
+  async enhanceWithRealtimeMetrics(data) {
+    try {
+      // Deep clone the data to avoid mutations
+      const enhancedData = _.cloneDeep(data);
+
+      // Check if we need to enhance the data
+      if (this.shouldEnhanceData(enhancedData)) {
+        // Add GARCH volatility if missing
+        if (!enhancedData.time_series_data?.[0]?.garch_volatility) {
+          enhancedData.time_series_data = this.addGarchVolatility(enhancedData.time_series_data);
+        }
+
+        // Add price stability if missing
+        if (!enhancedData.time_series_data?.[0]?.price_stability) {
+          enhancedData.time_series_data = this.addPriceStability(enhancedData.time_series_data);
+        }
+
+        // Enhance market integration metrics if needed
+        if (!enhancedData.market_integration?.integration_score) {
+          enhancedData.market_integration = await this.enhanceMarketIntegration(enhancedData.market_integration);
+        }
+
+        // Add metadata about enhancement
+        enhancedData.metadata = {
+          ...enhancedData.metadata,
+          enhanced: true,
+          enhancement_date: new Date().toISOString(),
+          enhancement_version: '1.0'
+        };
+      }
+
+      return enhancedData;
+    } catch (error) {
+      console.warn('Error enhancing data:', error);
+      // Return original data if enhancement fails
+      return data;
+    }
+  }
+
+  // Helper methods for the enhancement
+  shouldEnhanceData(data) {
+    // Check if data needs enhancement based on missing metrics
+    return !data.time_series_data?.[0]?.garch_volatility ||
+           !data.time_series_data?.[0]?.price_stability ||
+           !data.market_integration?.integration_score;
+  }
+
+  addGarchVolatility(timeSeriesData) {
+    if (!Array.isArray(timeSeriesData)) return timeSeriesData;
+
+    return timeSeriesData.map(entry => ({
+      ...entry,
+      garch_volatility: entry.garch_volatility ?? this.calculateGarchVolatility(entry)
+    }));
+  }
+
+  calculateGarchVolatility(entry) {
+    // Simple volatility calculation as fallback
+    const price = entry.avgUsdPrice;
+    if (!price) return 0;
+    return Math.abs(price - (entry.previous_price ?? price)) / price;
+  }
+
+  addPriceStability(timeSeriesData) {
+    if (!Array.isArray(timeSeriesData)) return timeSeriesData;
+
+    return timeSeriesData.map((entry, index) => ({
+      ...entry,
+      price_stability: entry.price_stability ?? this.calculatePriceStability(timeSeriesData, index)
+    }));
+  }
+
+  calculatePriceStability(timeSeriesData, currentIndex) {
+    // Simple rolling stability calculation
+    const windowSize = 3;
+    const startIndex = Math.max(0, currentIndex - windowSize + 1);
+    const window = timeSeriesData.slice(startIndex, currentIndex + 1);
+    
+    const prices = window.map(d => d.avgUsdPrice).filter(p => p != null);
+    if (prices.length < 2) return 1;
+
+    const std = Math.sqrt(
+      prices.reduce((sum, price) => sum + Math.pow(price - prices[0], 2), 0) / prices.length
+    );
+    
+    return 1 / (1 + std);
+  }
+
+  async enhanceMarketIntegration(marketIntegration) {
+    if (!marketIntegration) return {};
+
+    return {
+      ...marketIntegration,
+      integration_score: marketIntegration.integration_score ?? 
+        this.calculateIntegrationScore(marketIntegration)
+    };
+  }
+
+  calculateIntegrationScore(marketIntegration) {
+    const weights = {
+      price_correlation: 0.4,
+      flow_density: 0.3,
+      accessibility: 0.3
+    };
+
+    // Calculate weighted average of available metrics
+    let score = 0;
+    let totalWeight = 0;
+
+    if (marketIntegration.price_correlation) {
+      score += weights.price_correlation * this.calculateAverageCorrelation(marketIntegration.price_correlation);
+      totalWeight += weights.price_correlation;
+    }
+
+    if (typeof marketIntegration.flow_density === 'number') {
+      score += weights.flow_density * marketIntegration.flow_density;
+      totalWeight += weights.flow_density;
+    }
+
+    if (marketIntegration.accessibility) {
+      score += weights.accessibility * this.calculateAverageAccessibility(marketIntegration.accessibility);
+      totalWeight += weights.accessibility;
+    }
+
+    return totalWeight > 0 ? score / totalWeight : 0;
+  }
+
+  calculateAverageCorrelation(correlationMatrix) {
+    if (!correlationMatrix || typeof correlationMatrix !== 'object') return 0;
+
+    let sum = 0;
+    let count = 0;
+
+    Object.values(correlationMatrix).forEach(correlations => {
+      if (typeof correlations === 'object') {
+        Object.values(correlations).forEach(value => {
+          if (typeof value === 'number' && !isNaN(value)) {
+            sum += value;
+            count++;
+          }
+        });
+      }
+    });
+
+    return count > 0 ? sum / count : 0;
+  }
+
+  calculateAverageAccessibility(accessibility) {
+    if (!accessibility || typeof accessibility !== 'object') return 0;
+
+    const values = Object.values(accessibility)
+      .filter(value => typeof value === 'number' && !isNaN(value));
+
+    return values.length > 0 ? 
+      values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+  }
+
 }
 
 export const spatialHandler = new SpatialDataHandler();

@@ -23,36 +23,20 @@ import {
  */
 export const fetchSpatialData = createAsyncThunk(
   'spatial/fetchSpatialData',
-  async ({ commodity, date }, { rejectWithValue, dispatch }) => {
+  async ({ commodity, date }, { rejectWithValue }) => {
     try {
-      const metric = await dispatch(startFetchMetric('spatial-data-fetch')).unwrap();
       const data = await spatialHandler.getSpatialData(commodity, date);
       
-      if (!data?.time_series_data) {
-        throw new Error(`Invalid data structure received: ${JSON.stringify(Object.keys(data || {}))}}`);
-      }
-
       return {
-        data: data, 
-        uniqueMonths: [...new Set(data.time_series_data.map(d => d.month))].sort(),
-        selectedCommodity: commodity,
-        selectedDate: date
+        data,
+        metadata: {
+          commodity,
+          date,
+          timestamp: new Date().toISOString()
+        }
       };
     } catch (error) {
-      // Handle error logging similarly
-      backgroundMonitor.logMetric('spatial-data-fetch-error', {
-        status: 'error',
-        error: error.message,
-        commodity,
-        date
-      });
-      
-      return rejectWithValue({
-        message: error.message,
-        commodity,
-        date,
-        timestamp: new Date().toISOString()
-      });
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -390,6 +374,21 @@ export const selectDetailedMetrics = createSelector(
     };
   }
 );
+
+export const selectMarketIntegrationMetrics = createSelector(
+  [selectSpatialData],
+  (data) => data?.market_integration
+);
+
+export const selectSpatialPatterns = createSelector(
+  [selectSpatialData],
+  (data) => ({
+    clusters: data?.market_clusters,
+    autocorrelation: data?.spatial_autocorrelation,
+    flows: data?.flow_analysis
+  })
+);
+
 // Add error handling for data validation
 const validateSpatialData = (data) => {
   const required = [

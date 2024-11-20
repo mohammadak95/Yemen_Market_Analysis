@@ -8,11 +8,52 @@ import {
 } from '../slices/spatialSlice';
 
 export function calculateVolatility(timeSeriesData) {
-  if (!timeSeriesData?.length) return 0;
-  const prices = timeSeriesData.map((d) => d.usdprice).filter((p) => p != null);
+  if (!timeSeriesData?.length) return {
+    garch: 0,
+    traditional: 0,
+    stability: 0
+  };
+
+  const latestEntry = timeSeriesData[timeSeriesData.length - 1];
+  
+  // Use precomputed metrics when available
+  const garchVolatility = latestEntry.garch_volatility ?? 0;
+  const priceStability = latestEntry.price_stability ?? 0;
+
+  // Calculate traditional volatility as backup
+  const prices = timeSeriesData.map(d => d.avgUsdPrice).filter(p => p != null);
   const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
-  const variance = prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length;
-  return Math.sqrt(variance) / mean;
+  const traditional = Math.sqrt(
+    prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length
+  ) / mean;
+
+  return {
+    garch: garchVolatility,
+    traditional: traditional,
+    stability: priceStability
+  };
+}
+
+export function calculateMarketIntegration(data) {
+  if (!data?.market_integration) return null;
+
+  const {
+    price_correlation,
+    flow_density,
+    integration_score,
+    accessibility
+  } = data.market_integration;
+
+  const spatialMetrics = data.spatial_autocorrelation?.global ?? {};
+
+  return {
+    correlationMatrix: price_correlation ?? {},
+    flowDensity: flow_density ?? 0,
+    integrationScore: integration_score ?? 0,
+    spatialDependence: spatialMetrics.moran_i ?? 0,
+    accessibility: accessibility ?? {},
+    significance: spatialMetrics.significance ?? false
+  };
 }
 
 export function calculateIntegration(spatialAutocorrelation) {
@@ -20,18 +61,72 @@ export function calculateIntegration(spatialAutocorrelation) {
   return spatialAutocorrelation.I;
 }
 
-export function calculateShockFrequency(shocks) {
-  if (!shocks?.length) return 0;
-  const timeRange = new Set(shocks.map((s) => s.date.substring(0, 7))).size;
-  return shocks.length / timeRange;
+export function calculateShockFrequency(shocks, timeRange) {
+  if (!Array.isArray(shocks) || !shocks.length) return {
+    frequency: 0,
+    patterns: [],
+    average_magnitude: 0
+  };
+
+  const uniqueMonths = new Set(shocks.map(s => s.date.substring(0, 7)));
+  const frequency = shocks.length / uniqueMonths.size;
+
+  const patterns = {
+    price_surge: shocks.filter(s => s.shock_type === 'price_surge').length,
+    price_drop: shocks.filter(s => s.shock_type === 'price_drop').length,
+    average_magnitude: shocks.reduce((acc, s) => acc + s.magnitude, 0) / shocks.length
+  };
+
+  return {
+    frequency,
+    patterns,
+    average_magnitude: patterns.average_magnitude
+  };
 }
 
 export function calculateClusterEfficiency(clusters) {
-  if (!clusters?.length) return 0;
-  return (
-    clusters.reduce((acc, cluster) => acc + cluster.market_count / cluster.connected_markets.length, 0) /
-    clusters.length
-  );
+  if (!Array.isArray(clusters) || !clusters.length) return {
+    efficiency: 0,
+    coverage: 0,
+    stability: 0
+  };
+
+  const metrics = clusters.reduce((acc, cluster) => ({
+    efficiency: acc.efficiency + (cluster.efficiency_score ?? 0),
+    coverage: acc.coverage + (cluster.market_coverage ?? 0),
+    stability: acc.stability + (cluster.stability ?? 0)
+  }), { efficiency: 0, coverage: 0, stability: 0 });
+
+  const count = clusters.length;
+  return {
+    efficiency: metrics.efficiency / count,
+    coverage: metrics.coverage / count,
+    stability: metrics.stability / count
+  };
+}
+
+export function calculateCompositeMetrics(data) {
+  const volatility = calculateVolatility(data.time_series_data);
+  const integration = calculateMarketIntegration(data);
+  const shocks = calculateShockFrequency(data.market_shocks);
+  const efficiency = calculateClusterEfficiency(data.cluster_efficiency);
+
+  return {
+    market_stability: {
+      price_stability: volatility.stability,
+      garch_volatility: volatility.garch,
+      shock_resistance: 1 - (shocks.frequency / 12) // Normalize to yearly basis
+    },
+    market_integration: {
+      spatial_correlation: integration.spatialDependence,
+      flow_density: integration.flowDensity,
+      cluster_efficiency: efficiency.efficiency
+    },
+    conflict_impact: {
+      price_effect: data.time_series_data?.slice(-1)[0]?.conflict_intensity ?? 0,
+      market_disruption: 1 - efficiency.stability
+    }
+  };
 }
 
 export function calculatePriceTrend(timeSeriesData) {
