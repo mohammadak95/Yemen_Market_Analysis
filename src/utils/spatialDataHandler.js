@@ -15,6 +15,8 @@ import { pathResolver } from './pathResolver';
 import { pathValidator } from '../utils/pathValidator';
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { VISUALIZATION_MODES } from '../constants/index';
+import { workerManager } from './workerManager';
+
 
 
 // Yemen region name mappings for normalization
@@ -477,28 +479,43 @@ class SpatialDataHandler {
     }
   }
 
-  async initializePoints() {
-    if (this.pointCache) return this.pointCache;
+// In spatialHandler.js
+async initializePoints() {
+  if (this.pointCache) return this.pointCache;
 
-    try {
-      // Load market points
-      const pointsPath = getDataPath('unified_data.geojson');
-      const response = await fetch(pointsPath);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load points: ${response.status}`);
-      }
+  try {
+    const response = await fetch(getDataPath('unified_data.geojson'));
+    if (!response.ok) {
+      throw new Error(`Failed to load points: ${response.status}`);
+    }
 
-      const pointData = await response.json();
-      this.pointCache = new Map();
+    const pointData = await response.json();
+    this.pointCache = new Map();
 
-      // Process point features
-      pointData.features.forEach(feature => {
+    // Process data in chunks to avoid blocking the main thread
+    const chunkSize = 1000;
+    const features = pointData.features || [];
+    const chunks = [];
+
+    for (let i = 0; i < features.length; i += chunkSize) {
+      chunks.push(features.slice(i, i + chunkSize));
+    }
+
+    const commodities = new Set();
+
+    for (const chunk of chunks) {
+      const { processedFeatures } = await workerManager.processGeoData({
+        features: chunk
+      });
+
+      processedFeatures.forEach(feature => {
+        if (feature?.properties?.commodity) {
+          commodities.add(feature.properties.commodity);
+        }
+
         if (!feature?.properties?.admin1) return;
 
         const normalizedName = this.normalizeRegionName(feature.properties.admin1);
-        
-        // Convert UTM coordinates to Lat/Lng
         const utmCoords = feature.geometry.coordinates;
         const latLng = this.convertUTMtoLatLng(utmCoords[0], utmCoords[1]);
 
@@ -507,23 +524,24 @@ class SpatialDataHandler {
           coordinates: [latLng.lng, latLng.lat],
           properties: {
             originalName: feature.properties.admin1,
-            normalizedName: normalizedName,
+            normalizedName,
             population: feature.properties.population,
             population_percentage: feature.properties.population_percentage
           }
         });
 
-        // Cache coordinates for other components
         this.coordinateCache.set(normalizedName, latLng);
       });
-
-      return this.pointCache;
-
-    } catch (error) {
-      console.error('Failed to initialize points:', error);
-      throw error;
     }
+
+    this.availableCommodities = [...commodities].sort();
+    return this.pointCache;
+
+  } catch (error) {
+    console.error('Failed to initialize points:', error);
+    throw error;
   }
+}
 
   async initializeCoordinates() {
     if (this.coordinateCache.size > 0) return;
@@ -942,18 +960,17 @@ class SpatialDataHandler {
     );
   }
 
-  processTimeSeriesData(data) {
-    if (!Array.isArray(data)) return [];
-
-    return data.map(entry => ({
-      month: entry.month,
-      avgUsdPrice: this.sanitizeNumericValue(entry.avgUsdPrice),
-      volatility: this.sanitizeNumericValue(entry.volatility),
-      sampleSize: entry.sampleSize,
-      conflict_intensity: this.sanitizeNumericValue(entry.conflict_intensity),
-      garch_volatility: this.sanitizeNumericValue(entry.garch_volatility),
-      price_stability: this.sanitizeNumericValue(entry.price_stability)
-    }));
+  async processTimeSeriesData(data) {
+    try {
+      const processed = await workerManager.processTimeSeriesData(
+        data,
+        this.selectedCommodity
+      );
+      return processed;
+    } catch (error) {
+      console.error('Error processing time series data:', error);
+      throw error;
+    }
   }
 
   processMarketShocks(shocks) {
@@ -1118,37 +1135,14 @@ class SpatialDataHandler {
   }
 
   async processVisualizationData(data, mode, filters = {}) {
-    const metric = backgroundMonitor.startMetric('visualization-processing');
-    
     try {
-      let processedData;
-      
-      switch (mode) {
-        case VISUALIZATION_MODES.PRICES:
-          processedData = await this.processPriceVisualization(data, filters);
-          break;
-        
-        case VISUALIZATION_MODES.MARKET_INTEGRATION:
-          processedData = await this.processIntegrationVisualization(data, filters);
-          break;
-        
-        case VISUALIZATION_MODES.CLUSTERS:
-          processedData = await this.processClusterVisualization(data, filters);
-          break;
-        
-        case VISUALIZATION_MODES.SHOCKS:
-          processedData = await this.processShockVisualization(data, filters);
-          break;
-          
-        default:
-          throw new Error(`Unsupported visualization mode: ${mode}`);
-      }
-
-      metric.finish({ status: 'success', mode });
-      return processedData;
-      
+      const visualData = await workerManager.calculateVisualization(data, {
+        mode,
+        filters
+      });
+      return visualData;
     } catch (error) {
-      metric.finish({ status: 'error', error: error.message });
+      console.error('Error calculating visualization:', error);
       throw error;
     }
   }

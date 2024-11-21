@@ -1,33 +1,22 @@
 // src/components/common/Navigation.js
 
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
-import {
-  Drawer,
-  Box,
-  Toolbar,
-  Divider,
-  Button,
-  Stack,
-  useTheme,
-  useMediaQuery,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  ListItemText,
-  Typography,
-  List,
-  ListItemIcon,
-  ListItem,
-  ListItemButton,
+import { 
+  Drawer, Box, Toolbar, Divider, Button, Stack,
+  useTheme, useMediaQuery, FormControl, InputLabel,
+  Select, MenuItem, Checkbox, ListItemText, Typography,
+  List, ListItemIcon, ListItem, ListItemButton,
+  FormHelperText
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
+import _ from 'lodash';
 import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
+import { useOptimizedData } from '../../hooks/useOptimizedData';
+import { debounce } from 'lodash';
 
 const capitalizeWords = (str) => {
   return str
@@ -53,6 +42,29 @@ NavigationItem.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
+const useLoadingState = () => useSelector(
+  state => state.spatial?.status?.dataFetching ?? false,
+  _.isEqual
+);
+
+const useUniqueMonths = () => useSelector(
+  state => state.spatial?.data?.uniqueMonths ?? [],
+  _.isEqual
+);
+
+const useSpatialDataMemo = () => useSelector(
+  state => {
+    const data = state.spatial?.data || {};
+    return {
+      geoData: data.geometry || {},
+      flows: data.flowMaps || [],
+      analysis: data.spatialAnalysis || {},
+      uniqueMonths: data.uniqueMonths || []
+    };
+  },
+  _.isEqual
+);
+
 /**
  * CommoditySelector Component
  *
@@ -64,41 +76,59 @@ NavigationItem.propTypes = {
  * - onSelectCommodity: Function to handle commodity selection.
  */
 
-const CommoditySelector = ({ 
+export const CommoditySelector = React.memo(({ 
   commodities = [], 
   selectedCommodity = '', 
   onSelectCommodity 
 }) => {
   const dispatch = useDispatch();
-  const { uniqueMonths, loading } = useSelector(selectSpatialData);
-  const [error, setError] = useState(null);
+  const { fetchData, isLoading, preloadData } = useOptimizedData();
+  const lastSelectionRef = useRef(selectedCommodity);
 
-  useEffect(() => {
-    console.log('CommoditySelector props:', {
-      commodities,
-      selectedCommodity,
-      loading
-    });
-  }, [commodities, selectedCommodity, loading]);
+  // Debounced preload function
+  const debouncedPreload = useMemo(
+    () => debounce((commodity) => {
+      if (commodity !== selectedCommodity) {
+        preloadData(commodity, "2020-10-01");
+      }
+    }, 300),
+    [preloadData, selectedCommodity]
+  );
 
-  const handleCommoditySelect = useCallback(async (commodity) => {
-    if (!commodity) return;
+  // Handle hover over menu items to preload data
+  const handleMenuItemHover = useCallback((commodity) => {
+    debouncedPreload(commodity);
+  }, [debouncedPreload]);
+
+  // Handle commodity selection
+  const handleCommoditySelect = useCallback(async (event) => {
+    const newCommodity = event.target.value;
     
+    // Prevent duplicate selections
+    if (newCommodity === lastSelectionRef.current) return;
+    
+    lastSelectionRef.current = newCommodity;
+
     try {
-      setError(null);
-      const lowercaseCommodity = commodity.toLowerCase();
-      
-      await dispatch(fetchSpatialData({
-        selectedCommodity: lowercaseCommodity,
-        selectedDate: uniqueMonths?.[0]
-      })).unwrap();
-      
-      onSelectCommodity(lowercaseCommodity);
-    } catch (err) {
-      console.error('Error selecting commodity:', err);
-      setError('Failed to load commodity data');
+      // Fetch data if not already preloaded
+      await fetchData(newCommodity, "2020-10-01");
+      onSelectCommodity(newCommodity);
+    } catch (error) {
+      console.error('Error selecting commodity:', error);
     }
-  }, [dispatch, uniqueMonths, onSelectCommodity]);
+  }, [fetchData, onSelectCommodity]);
+
+  // Memoize commodity options
+  const commodityOptions = useMemo(() => 
+    commodities.map(commodity => ({
+      value: commodity,
+      label: commodity
+        .split(/[_\s]+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+    })),
+    [commodities]
+  );
 
   return (
     <FormControl 
@@ -106,46 +136,39 @@ const CommoditySelector = ({
       variant="outlined" 
       size="small" 
       margin="normal"
-      disabled={loading}
-      error={Boolean(error)}
+      disabled={isLoading}
     >
       <InputLabel id="commodity-select-label">
-        Select Commodity {loading ? '(Loading...)' : ''}
+        Select Commodity {isLoading ? '(Loading...)' : ''}
       </InputLabel>
       <Select
         labelId="commodity-select-label"
         id="commodity-select"
-        name="commodity"
-        value={selectedCommodity || ''}
-        onChange={(e) => handleCommoditySelect(e.target.value)}
-        label={`Select Commodity ${loading ? '(Loading...)' : ''}`}
+        value={selectedCommodity}
+        onChange={handleCommoditySelect}
+        label={`Select Commodity ${isLoading ? '(Loading...)' : ''}`}
       >
-        {!commodities.length && (
-          <MenuItem value="">
-            <em>{loading ? 'Loading commodities...' : 'No commodities available'}</em>
-          </MenuItem>
-        )}
-        {commodities.map((commodity) => (
+        {commodityOptions.map(({ value, label }) => (
           <MenuItem 
-            key={commodity} 
-            value={commodity}
+            key={value} 
+            value={value}
+            onMouseEnter={() => handleMenuItemHover(value)}
           >
-            {capitalizeWords(commodity)}
+            {label}
           </MenuItem>
         ))}
       </Select>
-      {error && (
-        <FormHelperText error>{error}</FormHelperText>
-      )}
     </FormControl>
   );
-};
+});
 
 CommoditySelector.propTypes = {
   commodities: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   onSelectCommodity: PropTypes.func.isRequired,
 };
+
+CommoditySelector.displayName = 'CommoditySelector';
 
 /**
  * RegimeSelector Component

@@ -1,7 +1,8 @@
 // src/components/WelcomeModal.js
-
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useSelector, useDispatch } from 'react-redux';
+import { setHasSeenWelcome, selectHasSeenWelcome } from '../../store/welcomeModalSlice';
 import {
   Dialog,
   DialogTitle,
@@ -19,7 +20,9 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-const WelcomeModal = ({ open, onClose }) => {
+export const WelcomeModal = React.memo(({ open, onClose }) => {
+  const dispatch = useDispatch();
+  const hasSeenWelcome = useSelector(selectHasSeenWelcome);
   const [dontShowAgain, setDontShowAgain] = React.useState(false);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -31,6 +34,11 @@ const WelcomeModal = ({ open, onClose }) => {
   const handleClose = () => {
     onClose(dontShowAgain);
   };
+
+  // Don't render if user has seen welcome
+  if (hasSeenWelcome) {
+    return null;
+  }
 
   return (
     <Dialog
@@ -113,11 +121,11 @@ const WelcomeModal = ({ open, onClose }) => {
       </DialogActions>
     </Dialog>
   );
-};
+});
+
+WelcomeModal.displayName = 'WelcomeModal';
 
 WelcomeModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
 };
-
-export default WelcomeModal;

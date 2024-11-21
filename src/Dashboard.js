@@ -73,6 +73,15 @@ const TVMIIAnalysisLazy = React.lazy(() =>
   })
 );
 
+// Create stable selectors
+const selectDashboardData = state => ({
+  timeSeriesData: state.spatial?.data?.timeSeriesData || [],
+  loading: state.spatial?.status?.loading || false,
+  error: state.spatial?.status?.error || null,
+  visualizationMode: state.spatial?.ui?.visualizationMode || null,
+  spatialData: state.spatial?.data || {}
+});
+
 const Dashboard = React.memo(({
   selectedAnalysis,
   selectedCommodity,
@@ -81,13 +90,20 @@ const Dashboard = React.memo(({
   spatialViewConfig,
   onSpatialViewChange,
 }) => {
-  const spatialData = useSelector(selectSpatialData);
-  const timeSeriesData = useSelector(selectTimeSeriesData);
-  const marketClusters = useSelector(selectMarketClusters);
-  const visualizationMode = useSelector(selectVisualizationMode);
+  // Use single selector for all needed data to prevent multiple re-renders
+  const {
+    timeSeriesData,
+    loading,
+    error,
+    visualizationMode,
+    spatialData
+  } = useSelector(selectDashboardData, _.isEqual);
 
+  // Memoize data processing
   const processedData = useMemo(() => {
-    if (!timeSeriesData) return [];
+    if (!timeSeriesData?.length || !selectedCommodity || !selectedRegimes?.length) {
+      return [];
+    }
     
     return timeSeriesData
       .filter(item => 
@@ -97,145 +113,133 @@ const Dashboard = React.memo(({
       .sort((a, b) => new Date(a.date) - new Date(b.date));
   }, [timeSeriesData, selectedCommodity, selectedRegimes]);
 
-    // Map analysis types to components with explicit null checks
-    const getAnalysisComponent = useCallback((type) => {
-      const componentMap = {
-        ecm: ECMAnalysisLazy,
-        priceDiff: PriceDifferentialAnalysisLazy,
-        spatial: SpatialAnalysis,
-        tvmii: TVMIIAnalysisLazy,
-      };
+  // Memoize analysis component mapping
+  const analysisComponents = useMemo(() => ({
+    ecm: ECMAnalysisLazy,
+    priceDiff: PriceDifferentialAnalysisLazy,
+    spatial: SpatialAnalysis,
+    tvmii: TVMIIAnalysisLazy
+  }), []);
 
-      const Component = componentMap[type];
-      if (!Component) {
-        console.warn(`No component found for analysis type: ${type}`);
-        return null;
-      }
+  // Memoize analysis component selection
+  const getAnalysisComponent = useCallback((type) => {
+    return analysisComponents[type] || null;
+  }, [analysisComponents]);
 
-      return Component;
-    }, []);
-
-    const renderInteractiveChart = useCallback(() => {
-      if (!selectedCommodity || selectedRegimes.length === 0) {
-        return (
-          <ErrorMessage message="Please select at least one regime and a commodity from the sidebar." />
-        );
-      }
-
-      if (!processedData.length) {
-        return <ErrorMessage message="No data available for the selected criteria." />;
-      }
-
+  // Memoize chart rendering
+  const renderInteractiveChart = useCallback(() => {
+    if (!selectedCommodity || !selectedRegimes?.length) {
       return (
-        <InteractiveChart
-          data={processedData}
-          selectedCommodity={selectedCommodity}
-          selectedRegimes={selectedRegimes}
+        <ErrorMessage 
+          message="Please select at least one regime and a commodity from the sidebar." 
         />
       );
-    }, [processedData, selectedCommodity, selectedRegimes]);
+    }
 
-    const renderAnalysisComponent = useCallback(() => {
-      if (!selectedAnalysis) return null;
-  
-      const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
-      if (!AnalysisComponent) return <ErrorMessage message="Selected analysis type is not available." />;
-  
-      return (
-        <Suspense fallback={<LoadingSpinner />}>
-          <AnalysisWrapper>
-            <AnalysisComponent
-              spatialData={spatialData}
-              selectedCommodity={selectedCommodity}
-              windowWidth={windowWidth}
-              spatialViewConfig={spatialViewConfig}
-              onSpatialViewChange={onSpatialViewChange}
-              visualizationMode={visualizationMode}
-            />
-          </AnalysisWrapper>
-        </Suspense>
-      );
-    }, [
-      selectedAnalysis,
+    if (!processedData?.length) {
+      return <ErrorMessage message="No data available for the selected criteria." />;
+    }
+
+    return (
+      <InteractiveChart
+        data={processedData}
+        selectedCommodity={selectedCommodity}
+        selectedRegimes={selectedRegimes}
+      />
+    );
+  }, [processedData, selectedCommodity, selectedRegimes]);
+
+  // Memoize analysis component rendering
+  const renderAnalysisComponent = useCallback(() => {
+    if (!selectedAnalysis) return null;
+
+    const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
+    if (!AnalysisComponent) {
+      return <ErrorMessage message="Selected analysis type is not available." />;
+    }
+
+    const analysisProps = {
       spatialData,
       selectedCommodity,
       windowWidth,
       spatialViewConfig,
       onSpatialViewChange,
       visualizationMode
-    ]);
-  
-    if (!spatialData) return <LoadingSpinner />;
-  
-
-
-
-    // Add loading state for initial data
-    if (!spatialData) {
-      return (
-        <Box
-          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
-        >
-          <LoadingSpinner />
-        </Box>
-      );
-    }
+    };
 
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          overflow: 'hidden',
+      <Suspense fallback={<LoadingSpinner />}>
+        <AnalysisWrapper>
+          <AnalysisComponent {...analysisProps} />
+        </AnalysisWrapper>
+      </Suspense>
+    );
+  }, [
+    selectedAnalysis,
+    spatialData,
+    selectedCommodity,
+    windowWidth,
+    spatialViewConfig,
+    onSpatialViewChange,
+    visualizationMode,
+    getAnalysisComponent
+  ]);
+
+  if (loading) {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100%' 
         }}
       >
-        <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'auto' }}>
-          <Grid item xs={12}>
-            <Box
-              sx={{
-                width: '100%',
-                height: { xs: '300px', sm: '400px', md: '500px' },
-                position: 'relative',
-                mb: 2,
-              }}
-            >
-              {renderInteractiveChart()}
-            </Box>
-          </Grid>
-
-          {selectedAnalysis && (
-            <Grid item xs={12}>
-              {renderAnalysisComponent()}
-            </Grid>
-          )}
-        </Grid>
+        <LoadingSpinner />
       </Box>
     );
   }
-);
+
+  if (error) {
+    return <ErrorMessage message={error} />;
+  }
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'auto' }}>
+        <Grid item xs={12}>
+          <Box
+            sx={{
+              width: '100%',
+              height: { xs: '300px', sm: '400px', md: '500px' },
+              position: 'relative',
+              mb: 2,
+            }}
+          >
+            {renderInteractiveChart()}
+          </Box>
+        </Grid>
+
+        {selectedAnalysis && (
+          <Grid item xs={12}>
+            {renderAnalysisComponent()}
+          </Grid>
+        )}
+      </Grid>
+    </Box>
+  );
+});
 
 Dashboard.displayName = 'Dashboard';
 
 Dashboard.propTypes = {
-  data: PropTypes.shape({
-    features: PropTypes.arrayOf(
-      PropTypes.shape({
-        date: PropTypes.string.isRequired,
-        commodity: PropTypes.string.isRequired,
-        regime: PropTypes.string.isRequired,
-        price: PropTypes.number.isRequired,
-        usdprice: PropTypes.number.isRequired,
-        conflict_intensity: PropTypes.number.isRequired,
-      })
-    ),
-    commodities: PropTypes.arrayOf(PropTypes.string),
-    regimes: PropTypes.arrayOf(PropTypes.string),
-    dateRange: PropTypes.shape({
-      min: PropTypes.instanceOf(Date),
-      max: PropTypes.instanceOf(Date)
-    })
-  }),
   selectedAnalysis: PropTypes.string,
   selectedCommodity: PropTypes.string.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { ThemeProvider } from '@mui/material/styles';
 import {
@@ -16,12 +16,14 @@ import { toggleDarkMode } from './slices/themeSlice';
 import Header from './components/common/Header';
 import { Sidebar } from './components/common/Navigation';
 import Dashboard from './Dashboard';
+import { useDashboardData } from './hooks/useDashboardData';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorDisplay from './components/common/ErrorDisplay';
 import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
 import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
-import WelcomeModal from './components/common/WelcomeModal';
+import { WelcomeModal } from './components/common/WelcomeModal';
+import { selectHasSeenWelcome, setHasSeenWelcome } from './store/welcomeModalSlice';
 import { useWindowSize } from './hooks';
 import {
   lightThemeWithOverrides,
@@ -54,17 +56,51 @@ const StyledAppBar = styled(AppBar, {
 
 const App = () => {
   const dispatch = useDispatch();
-  const spatialData = useSelector(selectSpatialData);
-  const loading = useSelector(selectLoadingStatus);
-  const error = useSelector(selectError);
+  const { 
+    spatialData, 
+    loading, 
+    fetchData, 
+    preloadCommodityData 
+  } = useDashboardData(DEFAULT_DATE);
+  
   const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
-  const theme = React.useMemo(
+  const hasSeenWelcome = useSelector(selectHasSeenWelcome);
+  const error = useSelector(selectError);
+
+  const theme = useMemo(
     () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
     [isDarkMode]
   );
 
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
+
+  const [state, setState] = useState({
+    sidebarOpen: isSmUp,
+    selectedCommodity: '',
+    selectedDate: DEFAULT_DATE,
+    selectedAnalysis: '',
+    selectedGraphRegimes: ['unified'],
+    spatialViewConfig: {
+      center: [15.3694, 44.191],
+      zoom: 6,
+    },
+    modalStates: {
+      methodology: false,
+      tutorials: false
+    }
+  });
+
+  const updateState = useCallback((updates) => {
+    setState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  useEffect(() => {
+    if (!spatialData?.commodities?.length && !loading) {
+      fetchData('', DEFAULT_DATE);
+    }
+  }, [fetchData, spatialData, loading]);
+
 
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
@@ -78,18 +114,18 @@ const App = () => {
   const [modalStates, setModalStates] = useState({
     methodology: false,
     tutorials: false,
-    welcome: false,
+    // Remove welcome from local state since it's managed by Redux
   });
 
   useEffect(() => {
     const initializeApp = async () => {
+      // Only fetch if no data AND not already loading
       if (!spatialData?.commodities?.length && !loading) {
         try {
-          console.log('Initializing application data...');
           await dispatch(fetchAllSpatialData({ 
             commodity: '', 
             date: DEFAULT_DATE 
-          })).unwrap(); // Use unwrap to properly handle errors
+          })).unwrap();
         } catch (err) {
           console.error('Failed to initialize data:', err);
         }
@@ -105,6 +141,24 @@ const App = () => {
 
     initializeApp();
   }, [dispatch, spatialData, loading, isSmUp]);
+
+  useEffect(() => {
+    if (spatialData?.commodities?.length && !state.selectedCommodity) {
+      const defaultCommodity = spatialData.commodities[0]?.toLowerCase();
+      if (defaultCommodity) {
+        updateState({ selectedCommodity: defaultCommodity });
+        fetchData(defaultCommodity, DEFAULT_DATE);
+      }
+    }
+  }, [spatialData, state.selectedCommodity, fetchData, updateState]);
+
+  const handleCommodityChange = useCallback((newCommodity) => {
+    if (newCommodity && newCommodity !== state.selectedCommodity) {
+      updateState({ selectedCommodity: newCommodity });
+      fetchData(newCommodity, state.selectedDate || DEFAULT_DATE);
+    }
+  }, [fetchData, state.selectedCommodity, state.selectedDate, updateState]);
+
 
   const fetchDataOnce = useCallback(async () => {
     if (!spatialData?.commodities) {  // Changed condition
@@ -142,29 +196,16 @@ const App = () => {
   }, []);
 
   const handleModalToggle = useCallback((modalName, isOpen) => {
-    setModalStates((prev) => ({ ...prev, [modalName]: isOpen }));
+    if (modalName === 'welcome') {
+      // Let the WelcomeModal component handle its own state
+      return;
+    }
+    setModalStates(prev => ({ ...prev, [modalName]: isOpen }));
   }, []);
 
   const handleWelcomeModalClose = useCallback((dontShowAgain) => {
-    setModalStates((prev) => ({ ...prev, welcome: false }));
-    if (dontShowAgain) {
-      localStorage.setItem('hasSeenWelcome', 'true');
-    }
-  }, []);
-
-  const handleCommodityChange = useCallback((newCommodity) => {
-    if (newCommodity) {
-      setSelectedCommodity(newCommodity);
-      dispatch(fetchAllSpatialData({ 
-        commodity: newCommodity.toLowerCase(), 
-        date: selectedDate || DEFAULT_DATE 
-      }));
-    }
-  }, [dispatch, selectedDate]);
-
-  if (loading && !spatialData) {
-    return <LoadingSpinner />;
-  }
+    dispatch(setHasSeenWelcome(dontShowAgain));
+  }, [dispatch]);
 
   if (error) {
     return (
@@ -252,7 +293,7 @@ const App = () => {
             onClose={() => handleModalToggle('tutorials', false)}
           />
           <WelcomeModal
-            open={modalStates.welcome}
+            open={!hasSeenWelcome}
             onClose={handleWelcomeModalClose}
           />
         </Box>
