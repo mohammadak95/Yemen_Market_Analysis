@@ -1,157 +1,63 @@
 // useMarketAnalysis.js
 
-import { useMemo, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
-  selectSpatialData,
-  selectVisualizationMode,
-  selectAnalysisFilters,
-  selectActiveLayers,
-  setVisualizationMode,
-  setAnalysisFilters,
-  setActiveLayers,
-  fetchVisualizationData
-} from '../slices/spatialSlice';
-import { calculateVisualizationMetrics } from '../utils/marketAnalysisUtils';
-import { VISUALIZATION_MODES } from '../constants';
+  selectTimeSeriesData,       // Changed from getTimeSeriesData
+  selectMarketShocks,         // Changed from getMarketShocks
+  selectRegressionAnalysis,   // Changed from getRegressionAnalysis
+  selectSpatialAutocorrelation // Changed from getSpatialAutocorrelation
+} from '../selectors/optimizedSelectors';
 
 export function useMarketAnalysis() {
-  const dispatch = useDispatch();
-  
-  // Core data selectors
-  const data = useSelector(selectSpatialData);
-  const visualizationMode = useSelector(selectVisualizationMode);
-  const analysisFilters = useSelector(selectAnalysisFilters);
-  const activeLayers = useSelector(selectActiveLayers);
+  const timeSeriesData = useSelector(selectTimeSeriesData);
+  const shocksData = useSelector(selectMarketShocks);
+  const regressionAnalysis = useSelector(selectRegressionAnalysis);
+  const spatialAutocorrelation = useSelector(selectSpatialAutocorrelation);
 
-  // Memoized visualization data
-  const visualizationData = useMemo(() => {
-    if (!data) return null;
+  // Function to calculate price trend using linear regression
+  function calculatePriceTrend(data) {
+    if (!data || data.length === 0) return NaN;
 
-    try {
-      return calculateVisualizationMetrics[visualizationMode].calculateMetrics(
-        data,
-        analysisFilters
-      );
-    } catch (error) {
-      console.error('Error calculating visualization metrics:', error);
-      return null;
-    }
-  }, [data, visualizationMode, analysisFilters]);
+    // Extract prices and months (as numerical indices)
+    const prices = data.map((item) => item.avgUsdPrice).filter((price) => !isNaN(price));
+    const months = data.map((_, index) => index).slice(0, prices.length);
 
-  // Analysis metrics calculations
-  const analysisMetrics = useMemo(() => {
-    if (!data) return null;
-
-    const {
-      marketMetrics,
-      timeSeriesAnalysis,
-      spatialAnalysis
-    } = calculateVisualizationMetrics[visualizationMode].calculateAnalysisMetrics(
-      data,
-      analysisFilters
-    );
-
-    return {
-      marketMetrics,
-      timeSeriesAnalysis,
-      spatialAnalysis,
-      timestamp: new Date().toISOString()
-    };
-  }, [data, visualizationMode, analysisFilters]);
-
-  // Handlers for UI interactions
-  const handleVisualizationModeChange = useCallback(async (mode) => {
-    if (!VISUALIZATION_MODES[mode]) {
-      console.error(`Invalid visualization mode: ${mode}`);
-      return;
+    // Handle missing or NaN prices
+    if (prices.length < 2) {
+      return NaN;
     }
 
-    dispatch(setVisualizationMode(mode));
-    
-    // Fetch visualization-specific data if needed
-    await dispatch(fetchVisualizationData({
-      mode,
-      filters: analysisFilters
-    }));
-  }, [dispatch, analysisFilters]);
+    // Perform linear regression to calculate the slope (price trend)
+    const n = prices.length;
+    const sumX = months.reduce((sum, x) => sum + x, 0);
+    const sumY = prices.reduce((sum, y) => sum + y, 0);
+    const sumXY = months.reduce((sum, x, i) => sum + x * prices[i], 0);
+    const sumX2 = months.reduce((sum, x) => sum + x * x, 0);
 
-  const handleFiltersChange = useCallback((newFilters) => {
-    dispatch(setAnalysisFilters(newFilters));
-  }, [dispatch]);
+    const numerator = n * sumXY - sumX * sumY;
+    const denominator = n * sumX2 - sumX * sumX;
 
-  const handleLayerToggle = useCallback((layer) => {
-    dispatch(setActiveLayers(
-      activeLayers.includes(layer)
-        ? activeLayers.filter(l => l !== layer)
-        : [...activeLayers, layer]
-    ));
-  }, [dispatch, activeLayers]);
+    if (denominator === 0) return NaN;
 
-  // Time series analysis utilities
-  const getTimeSeriesMetrics = useCallback((timeRange = null) => {
-    if (!data?.timeSeriesData) return null;
+    const slope = numerator / denominator;
+    return slope;
+  }
 
-    return calculateVisualizationMetrics.prices.processTimeSeries(
-      data.timeSeriesData,
-      timeRange
-    );
-  }, [data]);
+  const priceTrend = calculatePriceTrend(timeSeriesData);
 
-  // Market integration analysis utilities
-  const getIntegrationMetrics = useCallback((marketId = null) => {
-    if (!data?.marketIntegration) return null;
+  // Extract metrics from regression analysis
+  const moransI = spatialAutocorrelation.global?.moran_i;
+  const spatialLagCoefficient = regressionAnalysis.model?.coefficients?.spatial_lag_price;
+  const rSquared = regressionAnalysis.model?.r_squared;
 
-    return calculateVisualizationMetrics.integration.calculateMetrics(
-      data,
-      marketId
-    );
-  }, [data]);
-
-  // Cluster analysis utilities
-  const getClusterMetrics = useCallback((clusterId = null) => {
-    if (!data?.marketClusters) return null;
-
-    return calculateVisualizationMetrics.clusters.analyzeEfficiency(
-      clusterId ? [data.marketClusters.find(c => c.cluster_id === clusterId)] 
-                : data.marketClusters,
-      data.flowAnalysis
-    );
-  }, [data]);
-
-  // Shock analysis utilities
-  const getShockMetrics = useCallback((regionId = null) => {
-    if (!data?.marketShocks) return null;
-
-    return calculateVisualizationMetrics.shocks.analyzePatterns(
-      regionId ? data.marketShocks.filter(s => s.region === regionId)
-               : data.marketShocks,
-      data.timeSeriesData
-    );
-  }, [data]);
+  // Count the number of shocks
+  const shocksCount = shocksData ? shocksData.length : 'NaN';
 
   return {
-    // Core state
-    data,
-    visualizationMode,
-    visualizationData,
-    analysisMetrics,
-    analysisFilters,
-    activeLayers,
-
-    // UI handlers
-    onVisualizationModeChange: handleVisualizationModeChange,
-    onFiltersChange: handleFiltersChange,
-    onLayerToggle: handleLayerToggle,
-
-    // Analysis utilities
-    getTimeSeriesMetrics,
-    getIntegrationMetrics,
-    getClusterMetrics,
-    getShockMetrics,
-
-    // Loading states
-    loading: false, // Add loading state management if needed
-    error: null, // Add error state management if needed
+    priceTrend: isNaN(priceTrend) ? 'NaN' : priceTrend.toFixed(2),
+    moransI: isNaN(moransI) ? 'NaN' : moransI.toFixed(4),
+    spatialLagCoefficient: isNaN(spatialLagCoefficient) ? 'NaN' : spatialLagCoefficient.toFixed(4),
+    rSquared: isNaN(rSquared) ? 'NaN' : rSquared.toFixed(4),
+    shocksCount,
   };
 }

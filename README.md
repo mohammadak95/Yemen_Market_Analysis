@@ -141,20 +141,18 @@ Yemen_Market_Analysis/
     npm run prepare-data               # Process spatial data
     npm run transform-spatial-weights  # Transform weights matrix
     npm run optimize:assets            # Optimize assets
+    npm run process-clusters           # Process market clusters
+    npm run calculate-metrics          # Calculate cluster metrics
     ```
-
-2. **Data flow:**
-    - Raw data → `scripts/prepareData.js`
-    - Optimization → `scripts/optimizeData.js`
-    - Asset processing → `scripts/optimizeAssets.js`
-    - Final outputs → `public/data/`
 
 ## 🧪 Testing
 
 ```bash
 npm test                    # Run all tests
 npm run test:coverage       # Run tests with coverage
-npm run test:watch         # Watch mode for development
+npm run test:watch          # Watch mode for development
+npm run test:integration    # Run integration tests
+npm run test:e2e            # Run end-to-end tests
 ```
 
 ## 🔧 Development Tools
@@ -164,6 +162,7 @@ npm run test:watch         # Watch mode for development
 ```bash
 npm run build:profile      # Generate bundle stats
 npm run analyze-bundle     # View bundle analysis
+npm run analyze-deps       # Analyze dependencies
 ```
 
 ### Debug Tools
@@ -171,21 +170,29 @@ npm run analyze-bundle     # View bundle analysis
 - **Redux DevTools** enabled in development
 - **Performance monitoring** via `window.__REDUX_PERF__`
 - **Service Worker** debugging through DevTools
+- **React Profiler** for performance profiling
+- **Logger Middleware** for Redux action logging
 
 ## 🚀 Deployment
 
-**Deploy to GitHub Pages:**
+1. **Deploy to GitHub Pages:**
 
-```bash
-npm run deploy
-```
+    ```bash
+    npm run deploy
+    ```
 
-**Test production build locally:**
+2. **Test production build locally:**
 
-```bash
-npm run build
-npm run serve-dist
-```
+    ```bash
+    npm run build
+    npm run serve-dist
+    ```
+
+3. **Deploy to custom server:**
+
+    ```bash
+    npm run deploy:custom
+    ```
 
 ## 🤝 Contributing
 
@@ -264,578 +271,7 @@ GitHub Actions automates:
 
 For the latest deployment status, check the Actions tab in the GitHub repository.
 
----
-
-# Technical Documentation
-
-## 🔍 Component Details
-
-### Analysis Components
-
-#### 1. TVMII (Two-Variable Market Integration Index)
-
-```
-src/components/analysis/tvmii/
-├── TVMIIAnalysis.js       # Main analysis component
-├── TVMIITutorial.js       # Interactive tutorial
-├── TVMIIChart.js          # Visualization component
-└── TVMIIInterpretation.js # Results interpretation
-```
-
-**Key Features:**
-
-- Real-time calculation of market integration indices
-- Interactive visualization of market pairs
-- Statistical significance testing
-- Time-series decomposition
-- Regime switching analysis
-
-**Usage Example:**
-
-```jsx
-<TVMIIAnalysis
-  marketData={marketData}
-  timeRange={[startDate, endDate]}
-  confidenceInterval={0.95}
-  regimeThreshold={0.5}
-/>
-```
-
-#### 2. Spatial Analysis Components
-
-```
-src/components/analysis/spatial-analysis/
-├── SpatialMap.js          # Core map component
-├── MapControls.js         # Map interaction controls
-├── MapLegend.js           # Dynamic legend
-├── SpatialDiagnostics.js  # Diagnostic tools
-└── TimeControls.js        # Temporal controls
-```
-
-**Features:**
-
-- Leaflet integration with custom controls
-- Dynamic choropleth mapping
-- Spatial weight matrix visualization
-- Moran's I calculation and visualization
-- LISA cluster analysis
-- Spatial regression diagnostics
-
-**Implementation Details:**
-
-```jsx
-// SpatialMap.js core functionality
-const SpatialMap = ({ 
-  geojsonData, 
-  weights, 
-  timeWindow, 
-  analysisType 
-}) => {
-  const mapRef = useRef(null);
-  const [spatialStats, setSpatialStats] = useState(null);
-
-  useEffect(() => {
-    // Calculate spatial statistics
-    const stats = calculateSpatialStatistics(geojsonData, weights);
-    setSpatialStats(stats);
-  }, [geojsonData, weights]);
-
-  // Map rendering and interaction handlers
-  // ...
-};
-```
-
-#### 3. ECM (Error Correction Model)
-
-```
-src/components/analysis/ecm/
-├── ECMAnalysis.js    # Main analysis component
-├── ECMResults.js     # Results display
-└── ECMTutorial.js    # Interactive guide
-```
-
-**Capabilities:**
-
-- Cointegration testing
-- Error correction estimation
-- Residual diagnostics
-- Impulse response analysis
-- Forecast generation
-
-#### 4. Price Differential Analysis
-
-```
-src/components/analysis/price-differential/
-├── PriceDifferentialAnalysis.js # Main component
-├── MarketPairInfo.js           # Pair analysis
-├── StationarityTest.js         # Unit root testing
-└── CointegrationAnalysis.js    # Integration analysis
-```
-
-### Interactive Graph Components
-
-The `InteractiveChart` component provides advanced visualization capabilities:
-
-```typescript
-interface InteractiveChartProps {
-  data: TimeSeriesData[];
-  dimensions: {
-    width: number;
-    height: number;
-  };
-  options: {
-    zoom: boolean;
-    pan: boolean;
-    tooltip: boolean;
-    legend: boolean;
-  };
-  annotations?: ChartAnnotation[];
-}
-```
-
-**Features:**
-
-- Customizable zoom levels
-- Pan and scroll navigation
-- Dynamic data loading
-- Responsive design
-- Custom annotations
-- Multiple Y-axes support
-
-## 📊 Data Processing Pipeline
-
-### 1. Data Ingestion
-
-```
-scripts/
-├── prepareData.js        # Main data preparation
-├── transformSpatial.js   # Spatial data processing
-└── optimizeData.js       # Data optimization
-```
-
-**Data Flow:**
-
-1. **Raw Data Input**
-   - Market prices (CSV)
-   - Spatial data (GeoJSON)
-   - Conflict data (JSON)
-   - Exchange rates (CSV)
-
-2. **Validation and Cleaning**
-
-    ```javascript
-    // Example data validation
-    const validateData = (data) => {
-      return data.filter(row => (
-        isValidDate(row.date) &&
-        !isNaN(row.price) &&
-        row.market_id !== null
-      ));
-    };
-    ```
-
-3. **Transformation**
-
-    ```javascript
-    // Data transformation example
-    const transformSpatialData = async (data) => {
-      // Convert coordinates
-      const projectedData = await projectCoordinates(data);
-      
-      // Calculate centroids
-      const withCentroids = calculateCentroids(projectedData);
-      
-      // Generate spatial weights
-      const weights = generateSpatialWeights(withCentroids);
-      
-      return {
-        projectedData,
-        weights
-      };
-    };
-    ```
-
-### 2. Spatial Data Processing
-
-#### Weight Matrix Generation
-
-```javascript
-const generateWeightMatrix = (points, options) => {
-  const matrix = [];
-  for (let i = 0; i < points.length; i++) {
-    matrix[i] = [];
-    for (let j = 0; j < points.length; j++) {
-      if (i !== j) {
-        matrix[i][j] = calculateWeight(
-          points[i],
-          points[j],
-          options.type,
-          options.cutoff
-        );
-      }
-    }
-  }
-  return normalizeMatrix(matrix);
-};
-```
-
-#### Spatial Statistics
-
-- Moran's I calculation
-- LISA statistics
-- Getis-Ord Gi* statistics
-- Spatial regression coefficients
-
-### 3. Time Series Processing
-
-```javascript
-const processTimeSeries = async (data) => {
-  // Decompose series
-  const decomposed = await decomposeSeries(data);
-  
-  // Test stationarity
-  const stationarityResults = await testStationarity(data);
-  
-  // Perform seasonal adjustment
-  const adjusted = await seasonalAdjustment(data);
-  
-  return {
-    decomposed,
-    stationarityResults,
-    adjusted
-  };
-};
-```
-
-### 4. Data Optimization
-
-```javascript
-// Optimize data for frontend consumption
-const optimizeForFrontend = (data) => {
-  return {
-    // Index data for quick lookup
-    indexed: createDataIndex(data),
-    
-    // Generate summary statistics
-    summary: calculateSummaryStats(data),
-    
-    // Create time-based chunks
-    chunks: createTimeChunks(data),
-    
-    // Compress large datasets
-    compressed: compressData(data)
-  };
-};
-```
-
-# Configuration and Deployment Guide
-
-## ⚙️ Advanced Configuration
-
-### 1. Webpack Configuration
-
-The project uses a sophisticated Webpack setup for optimal development and production builds:
-
-```javascript
-// webpack.config.js key features
-const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
-
-module.exports = (env, argv) => {
-  const isDevelopment = argv.mode === 'development';
-  
-  return {
-    optimization: {
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          // Vendor bundle optimization
-          mui: {
-            test: /[\\/]node_modules[\\/]@mui[\\/]/,
-            name: 'mui',
-            chunks: 'all',
-            priority: 30,
-          },
-          // Core React dependencies
-          core: {
-            test: /[\\/]node_modules[\\/](react|react-dom|redux)[\\/]/,
-            name: 'core',
-            priority: 40,
-          },
-          // Other libraries
-          lib: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'lib',
-            priority: 20,
-          }
-        }
-      },
-      // Production optimizations
-      minimize: !isDevelopment,
-      minimizer: [
-        new TerserPlugin({
-          terserOptions: {
-            compress: {
-              drop_console: !isDevelopment,
-            },
-          },
-        }),
-      ],
-    },
-    // Module rules for different file types
-    module: {
-      rules: [
-        // JavaScript/React processing
-        {
-          test: /\.(js|jsx)$/,
-          exclude: /node_modules/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true,
-            },
-          },
-        },
-        // Asset handling
-        {
-          test: /\.(png|jpg|jpeg|gif)$/i,
-          type: 'asset/resource',
-        },
-        // Data file handling
-        {
-          test: /\.(geojson|json|csv)$/,
-          type: 'asset/resource',
-        },
-      ],
-    },
-    // Development server configuration
-    devServer: {
-      static: {
-        directory: path.join(__dirname, 'public'),
-      },
-      compress: true,
-      port: 3000,
-      hot: true,
-      historyApiFallback: true,
-    },
-  };
-};
-```
-
-### 2. Environment Configuration
-
-```bash
-# .env.development
-NODE_ENV=development
-REACT_APP_API_URL=http://localhost:3001
-REACT_APP_MAPBOX_TOKEN=your_mapbox_token
-REACT_APP_ENABLE_CACHE=true
-REACT_APP_DEBUG_MODE=true
-
-# .env.production
-NODE_ENV=production
-REACT_APP_API_URL=https://api.example.com
-REACT_APP_ENABLE_CACHE=true
-REACT_APP_DEBUG_MODE=false
-```
-
-### 3. Performance Optimization
-
-```javascript
-// Performance optimization configurations
-module.exports = {
-  // Cache configuration
-  cache: {
-    type: 'filesystem',
-    buildDependencies: {
-      config: [__filename],
-    },
-    compression: 'gzip',
-  },
-  
-  // Performance budgets
-  performance: {
-    maxAssetSize: 512000,
-    maxEntrypointSize: 512000,
-    hints: 'warning',
-  },
-};
-```
-
-## 🚀 Comprehensive Deployment
-
-### 1. GitHub Pages Deployment
-
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          lfs: true
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '20'
-      
-      - name: Install Dependencies
-        run: |
-          npm ci
-        
-      - name: Prepare Data
-        run: |
-          npm run prepare-data
-          npm run optimize-data
-        
-      - name: Build
-        run: npm run build
-        env:
-          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
-        
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
-```
-
-### 2. Production Build Process
-
-```bash
-# Production build script
-#!/bin/bash
-
-# 1. Clean previous builds
-npm run clean
-
-# 2. Prepare and optimize data
-npm run prepare-data
-npm run optimize-data
-
-# 3. Run tests
-npm run test:coverage
-
-# 4. Build application
-NODE_ENV=production npm run build
-
-# 5. Verify bundle size
-npm run analyze-bundle
-
-# 6. Deploy
-npm run deploy
-```
-
-### 3. Server Configuration
-
-```javascript
-// server/app.js
-const express = require('express');
-const compression = require('compression');
-const cors = require('cors');
-const path = require('path');
-
-const app = express();
-
-// Middleware configuration
-app.use(compression());
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-
-// Security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  next();
-});
-
-// Static file serving
-app.use(express.static(path.join(__dirname, '../build')));
-
-// API routes
-app.use('/api/data', require('./routes/data'));
-app.use('/api/analysis', require('./routes/analysis'));
-
-// Error handling
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
-
-// Start the server
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-```
-
-### 4. Monitoring and Analytics
-
-```javascript
-// Monitoring setup
-const Sentry = require('@sentry/react');
-
-Sentry.init({
-  dsn: process.env.REACT_APP_SENTRY_DSN,
-  integrations: [
-    new Sentry.BrowserTracing(),
-    new Sentry.Replay(),
-  ],
-  tracesSampleRate: 1.0,
-});
-
-// Performance monitoring
-const { performance } = require('perf_hooks');
-const monitor = {
-  startTime: performance.now(),
-  
-  logPerformance: (label) => {
-    const duration = performance.now() - monitor.startTime;
-    console.log(`${label}: ${duration}ms`);
-  },
-  
-  resetTimer: () => {
-    monitor.startTime = performance.now();
-  },
-};
-```
-
-### 5. Cache Management
-
-```javascript
-// Cache configuration
-const cacheConfig = {
-  maxAge: 86400000, // 24 hours
-  staticFileOptions: {
-    etag: true,
-    lastModified: true,
-    setHeaders: (res, path) => {
-      if (path.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache');
-      } else {
-        res.setHeader('Cache-Control', 'public, max-age=31536000');
-      }
-    },
-  },
-};
-
-// Implementation
-app.use(express.static('build', cacheConfig.staticFileOptions));
-```
-
-# 🛠️ Testing and Debugging
-
-## 🧪 Testing Framework
+## 🛠️ Testing and Debugging
 
 ### 1. Jest and React Testing Library
 
@@ -874,66 +310,13 @@ describe('TVMIIAnalysis', () => {
 });
 ```
 
-## 🔍 Debugging Tools
+### 3. Debugging Tools
 
-### 1. Redux DevTools
+- **Redux DevTools** for state management debugging
+- **Performance monitoring** via `window.__REDUX_PERF__`
+- **Service Worker** debugging through DevTools
 
-```javascript
-// Redux middleware setup
-import { configureStore } from '@reduxjs/toolkit';
-import { createLogger } from 'redux-logger';
-
-const logger = createLogger({
-  collapsed: true,
-  duration: true,
-  diff: true,
-});
-
-const store = configureStore({
-  reducer: rootReducer,
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
-});
-```
-
-### 2. Performance Monitoring
-
-```javascript
-// Performance monitoring setup
-const { performance } = require('perf_hooks');
-const monitor = {
-  startTime: performance.now(),
-  
-  logPerformance: (label) => {
-    const duration = performance.now() - monitor.startTime;
-    console.log(`${label}: ${duration}ms`);
-  },
-  
-  resetTimer: () => {
-    monitor.startTime = performance.now();
-  },
-};
-```
-
-### 3. Service Worker Debugging
-
-```javascript
-// Service worker registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then((reg) => {
-        console.log('Service worker registered');
-      })
-      .catch((err) => {
-        console.error('Service worker registration failed:', err);
-      });
-  });
-}
-```
-
-# 🚀 Deployment and CI/CD
-
-## 📦 Automated Deployment
+## 🚀 Deployment and CI/CD
 
 ### 1. GitHub Actions
 
@@ -979,8 +362,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
 ```
-
----
 
 Feel free to explore the project, contribute, and reach out with any questions or suggestions!
 

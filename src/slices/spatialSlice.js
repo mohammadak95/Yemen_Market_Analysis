@@ -105,7 +105,7 @@ export const initialState = {
     selectedRegion: null,
     view: DEFAULT_VIEW,
     activeLayers: [],
-    visualizationMode: null,
+    visualizationMode: 'prices',
     analysisFilters: {
       minMarketCount: 0,
       minFlowWeight: 0,
@@ -350,6 +350,7 @@ const selectData = state => state.spatial?.data || {};
 const selectStatus = state => state.spatial?.status || {};
 const selectUI = state => state.spatial?.ui || {};
 
+
 export const selectLoadingStatus = createSelector(
   [selectStatus],
   status => Boolean(status.loading)
@@ -473,11 +474,13 @@ export const selectResiduals = (state) => state.spatial.data.regressionAnalysis?
 export const selectRegressionAnalysis = (state) => state.spatial.data.regressionAnalysis;
 export const selectModelStats = (state) => state.spatial.data.regressionAnalysis?.model;
 export const selectSpatialStats = (state) => state.spatial.data.regressionAnalysis?.spatial;
-export const selectVisualizationMode = (state) => state.spatial.ui.visualizationMode;
 export const selectActiveLayers = (state) => state.spatial.ui.activeLayers;
 export const selectAnalysisFilters = (state) => state.spatial.ui.analysisFilters;
 export const selectGeometryData = (state) => state.spatial.data.geometry;
 export const selectError = (state) => state.spatial.status.error;
+export const selectSelectedCommodity = (state) => state.spatial.ui.selectedCommodity;
+export const selectSelectedDate = (state) => state.spatial.ui.selectedDate;
+export const selectVisualizationMode = (state) => state.spatial.ui.visualizationMode;
 
 // Selector Optimization: Memoization for Heavy Selectors
 export const selectGeometryWithCache = createDeepEqualSelector(
@@ -795,11 +798,14 @@ const spatialSlice = createSlice({
     setView: (state, action) => {
       state.ui.view = action.payload;
     },
-    setSelectedCommodity: (state, action) => {
+    setSelectedCommodity(state, action) {
       state.ui.selectedCommodity = action.payload;
     },
-    setSelectedDate: (state, action) => {
+    setSelectedDate(state, action) {
       state.ui.selectedDate = action.payload;
+    },
+    setVisualizationMode(state, action) {
+      state.ui.visualizationMode = action.payload;
     },
     setSelectedRegion: (state, action) => {
       state.ui.selectedRegion = action.payload;
@@ -953,6 +959,7 @@ export const {
   setView,
   setSelectedCommodity,
   setSelectedDate,
+  setVisualizationMode,
   setSelectedRegion,
   setSelectedRegimes,
   setActiveLayers,
