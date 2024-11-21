@@ -15,6 +15,10 @@ import {
 } from '../slices/spatialSlice';
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { getDataPath } from '../utils/dataUtils';
+import { useRef } from 'react';
+
+
 
 export const useSpatialData = () => {
   const dispatch = useDispatch();

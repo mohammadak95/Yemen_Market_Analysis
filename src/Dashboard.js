@@ -1,9 +1,8 @@
-//src/Dashboard.js
-
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid } from '@mui/material';
 import { useSelector } from 'react-redux';
+import { useUnifiedData, getFilteredData } from './hooks/useUnifiedData';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
@@ -23,13 +22,6 @@ import {
   Filler,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { 
-  selectSpatialData, 
-  selectFlowData,
-  selectTimeSeriesData,
-  selectMarketClusters,
-  selectVisualizationMode
-} from './slices/spatialSlice';
 
 // Register ChartJS components
 ChartJS.register(
@@ -43,12 +35,10 @@ ChartJS.register(
   Filler
 );
 
-// Split lazy imports for better error handling
+// Lazy load analysis components
 const ECMAnalysisLazy = React.lazy(() =>
   import('./components/analysis/ecm/ECMAnalysis').then((module) => {
-    if (!module.default) {
-      throw new Error('ECMAnalysis component not found');
-    }
+    if (!module.default) throw new Error('ECMAnalysis component not found');
     return module;
   })
 );
@@ -56,9 +46,7 @@ const ECMAnalysisLazy = React.lazy(() =>
 const PriceDifferentialAnalysisLazy = React.lazy(() =>
   import('./components/analysis/price-differential/PriceDifferentialAnalysis').then(
     (module) => {
-      if (!module.default) {
-        throw new Error('PriceDifferentialAnalysis component not found');
-      }
+      if (!module.default) throw new Error('PriceDifferentialAnalysis component not found');
       return module;
     }
   )
@@ -66,21 +54,10 @@ const PriceDifferentialAnalysisLazy = React.lazy(() =>
 
 const TVMIIAnalysisLazy = React.lazy(() =>
   import('./components/analysis/tvmii/TVMIIAnalysis').then((module) => {
-    if (!module.default) {
-      throw new Error('TVMIIAnalysis component not found');
-    }
+    if (!module.default) throw new Error('TVMIIAnalysis component not found');
     return module;
   })
 );
-
-// Create stable selectors
-const selectDashboardData = state => ({
-  timeSeriesData: state.spatial?.data?.timeSeriesData || [],
-  loading: state.spatial?.status?.loading || false,
-  error: state.spatial?.status?.error || null,
-  visualizationMode: state.spatial?.ui?.visualizationMode || null,
-  spatialData: state.spatial?.data || {}
-});
 
 const Dashboard = React.memo(({
   selectedAnalysis,
@@ -90,28 +67,10 @@ const Dashboard = React.memo(({
   spatialViewConfig,
   onSpatialViewChange,
 }) => {
-  // Use single selector for all needed data to prevent multiple re-renders
-  const {
-    timeSeriesData,
-    loading,
-    error,
-    visualizationMode,
-    spatialData
-  } = useSelector(selectDashboardData, _.isEqual);
-
-  // Memoize data processing
-  const processedData = useMemo(() => {
-    if (!timeSeriesData?.length || !selectedCommodity || !selectedRegimes?.length) {
-      return [];
-    }
-    
-    return timeSeriesData
-      .filter(item => 
-        item.commodity?.toLowerCase() === selectedCommodity?.toLowerCase() &&
-        selectedRegimes.includes(item.regime?.toLowerCase())
-      )
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [timeSeriesData, selectedCommodity, selectedRegimes]);
+  const { data, loading, error, getFilteredData } = useUnifiedData();
+  const chartData = useMemo(() => {
+    return getFilteredData(selectedCommodity, selectedRegimes);
+  }, [getFilteredData, selectedCommodity, selectedRegimes]);
 
   // Memoize analysis component mapping
   const analysisComponents = useMemo(() => ({
@@ -121,12 +80,12 @@ const Dashboard = React.memo(({
     tvmii: TVMIIAnalysisLazy
   }), []);
 
-  // Memoize analysis component selection
+  // Get analysis component
   const getAnalysisComponent = useCallback((type) => {
     return analysisComponents[type] || null;
   }, [analysisComponents]);
 
-  // Memoize chart rendering
+  // Render interactive chart
   const renderInteractiveChart = useCallback(() => {
     if (!selectedCommodity || !selectedRegimes?.length) {
       return (
@@ -136,20 +95,20 @@ const Dashboard = React.memo(({
       );
     }
 
-    if (!processedData?.length) {
+    if (!chartData?.length) {
       return <ErrorMessage message="No data available for the selected criteria." />;
     }
 
     return (
       <InteractiveChart
-        data={processedData}
+        data={chartData}
         selectedCommodity={selectedCommodity}
         selectedRegimes={selectedRegimes}
       />
     );
-  }, [processedData, selectedCommodity, selectedRegimes]);
+  }, [chartData, selectedCommodity, selectedRegimes]);
 
-  // Memoize analysis component rendering
+  // Render analysis component
   const renderAnalysisComponent = useCallback(() => {
     if (!selectedAnalysis) return null;
 
@@ -159,12 +118,11 @@ const Dashboard = React.memo(({
     }
 
     const analysisProps = {
-      spatialData,
+      data,
       selectedCommodity,
       windowWidth,
       spatialViewConfig,
-      onSpatialViewChange,
-      visualizationMode
+      onSpatialViewChange
     };
 
     return (
@@ -176,12 +134,11 @@ const Dashboard = React.memo(({
     );
   }, [
     selectedAnalysis,
-    spatialData,
+    data,
     selectedCommodity,
     windowWidth,
     spatialViewConfig,
     onSpatialViewChange,
-    visualizationMode,
     getAnalysisComponent
   ]);
 
