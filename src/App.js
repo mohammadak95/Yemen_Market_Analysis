@@ -153,11 +153,34 @@ const App = () => {
   }, [spatialData, state.selectedCommodity, fetchData, updateState]);
 
   const handleCommodityChange = useCallback((newCommodity) => {
-    if (newCommodity && newCommodity !== state.selectedCommodity) {
-      updateState({ selectedCommodity: newCommodity });
-      fetchData(newCommodity, state.selectedDate || DEFAULT_DATE);
+    if (newCommodity && newCommodity !== selectedCommodity) {
+      // Update local state
+      setSelectedCommodity(newCommodity);
+      
+      // Fetch data for all analysis components
+      Promise.all([
+        // Fetch spatial data
+        dispatch(fetchSpatialData({
+          commodity: newCommodity,
+          date: selectedDate || DEFAULT_DATE
+        })),
+        
+        // Fetch ECM data
+        dispatch(fetchECMData()),
+        
+        // Fetch Price Differential data
+        dispatch(fetchPriceDiffData()),
+        
+        // Force refresh analysis components
+        dispatch({
+          type: 'analysis/refreshData',
+          payload: { commodity: newCommodity }
+        })
+      ]).catch(error => {
+        console.error('Error updating commodity data:', error);
+      });
     }
-  }, [fetchData, state.selectedCommodity, state.selectedDate, updateState]);
+  }, [dispatch, selectedCommodity, selectedDate]);
 
 
   const fetchDataOnce = useCallback(async () => {

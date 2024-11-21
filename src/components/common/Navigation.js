@@ -17,6 +17,9 @@ import _ from 'lodash';
 import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
 import { useOptimizedData } from '../../hooks/useOptimizedData';
 import { debounce } from 'lodash';
+import { useDashboardData } from '../../hooks/useDashboardData';
+import { fetchAllSpatialData } from '../../slices/spatialSlice';
+
 
 const capitalizeWords = (str) => {
   return str
@@ -82,53 +85,38 @@ export const CommoditySelector = React.memo(({
   onSelectCommodity 
 }) => {
   const dispatch = useDispatch();
-  const { fetchData, isLoading, preloadData } = useOptimizedData();
+  const { data, loading, fetchData } = useDashboardData();
   const lastSelectionRef = useRef(selectedCommodity);
-
-  // Debounced preload function
-  const debouncedPreload = useMemo(
-    () => debounce((commodity) => {
-      if (commodity !== selectedCommodity) {
-        preloadData(commodity, "2020-10-01");
-      }
-    }, 300),
-    [preloadData, selectedCommodity]
-  );
-
-  // Handle hover over menu items to preload data
-  const handleMenuItemHover = useCallback((commodity) => {
-    debouncedPreload(commodity);
-  }, [debouncedPreload]);
 
   // Handle commodity selection
   const handleCommoditySelect = useCallback(async (event) => {
     const newCommodity = event.target.value;
     
-    // Prevent duplicate selections
     if (newCommodity === lastSelectionRef.current) return;
-    
     lastSelectionRef.current = newCommodity;
 
     try {
-      // Fetch data if not already preloaded
-      await fetchData(newCommodity, "2020-10-01");
-      onSelectCommodity(newCommodity);
+      // Update commodity in spatial slice
+      dispatch({ 
+        type: 'spatial/setSelectedCommodity', 
+        payload: newCommodity 
+      });
+      
+      // Fetch all necessary data
+      await Promise.all([
+        // Fetch spatial data
+        dispatch(fetchAllSpatialData({ 
+          commodity: newCommodity,
+          date: "2020-10-01"
+        })),
+        
+        // Notify parent component
+        onSelectCommodity(newCommodity)
+      ]);
     } catch (error) {
       console.error('Error selecting commodity:', error);
     }
-  }, [fetchData, onSelectCommodity]);
-
-  // Memoize commodity options
-  const commodityOptions = useMemo(() => 
-    commodities.map(commodity => ({
-      value: commodity,
-      label: commodity
-        .split(/[_\s]+/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-    })),
-    [commodities]
-  );
+  }, [dispatch, fetchData, onSelectCommodity]);
 
   return (
     <FormControl 
@@ -136,25 +124,24 @@ export const CommoditySelector = React.memo(({
       variant="outlined" 
       size="small" 
       margin="normal"
-      disabled={isLoading}
+      disabled={loading}
     >
       <InputLabel id="commodity-select-label">
-        Select Commodity {isLoading ? '(Loading...)' : ''}
+        Select Commodity {loading ? '(Loading...)' : ''}
       </InputLabel>
       <Select
         labelId="commodity-select-label"
         id="commodity-select"
         value={selectedCommodity}
         onChange={handleCommoditySelect}
-        label={`Select Commodity ${isLoading ? '(Loading...)' : ''}`}
+        label={`Select Commodity ${loading ? '(Loading...)' : ''}`}
       >
-        {commodityOptions.map(({ value, label }) => (
+        {commodities.map(commodity => (
           <MenuItem 
-            key={value} 
-            value={value}
-            onMouseEnter={() => handleMenuItemHover(value)}
+            key={commodity} 
+            value={commodity}
           >
-            {label}
+            {capitalizeWords(commodity)}
           </MenuItem>
         ))}
       </Select>
@@ -162,13 +149,13 @@ export const CommoditySelector = React.memo(({
   );
 });
 
+CommoditySelector.displayName = 'CommoditySelector';
+
 CommoditySelector.propTypes = {
   commodities: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedCommodity: PropTypes.string.isRequired,
   onSelectCommodity: PropTypes.func.isRequired,
 };
-
-CommoditySelector.displayName = 'CommoditySelector';
 
 /**
  * RegimeSelector Component
@@ -294,6 +281,28 @@ export const Sidebar = ({
   const dispatch = useDispatch();
   const { geoData, flows, analysis, uniqueMonths } = useSelector(selectSpatialData);
 
+  const handleCommodityChange = useCallback(async (newCommodity) => {
+    if (newCommodity && newCommodity !== selectedCommodity) {
+      try {
+        // Update commodity in Redux store
+        await dispatch(fetchAllSpatialData({ 
+          commodity: newCommodity, 
+          date: "2020-10-01" 
+        }));
+        
+        // Update parent component
+        setSelectedCommodity(newCommodity);
+        
+        // Close sidebar on mobile
+        if (!isSmUp) {
+          setSidebarOpen(false);
+        }
+      } catch (error) {
+        console.error('Error changing commodity:', error);
+      }
+    }
+  }, [dispatch, selectedCommodity, isSmUp, setSelectedCommodity, setSidebarOpen]);
+
   const handleAnalysisChange = useCallback(
     (analysisType) => {
       setSelectedAnalysis(analysisType);
@@ -328,7 +337,7 @@ export const Sidebar = ({
           <CommoditySelector
             commodities={commodities}
             selectedCommodity={selectedCommodity}
-            onSelectCommodity={setSelectedCommodity} // Ensure this receives the lowercase value
+            onSelectCommodity={handleCommodityChange} // Ensure this receives the lowercase value
           />
 
           <RegimeSelector
