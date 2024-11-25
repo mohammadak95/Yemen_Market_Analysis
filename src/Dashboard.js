@@ -1,8 +1,7 @@
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid } from '@mui/material';
-import { useSelector } from 'react-redux';
-import { useUnifiedData, getFilteredData } from './hooks/useUnifiedData';
+import { useUnifiedData } from './hooks/useUnifiedData';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';

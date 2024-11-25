@@ -15,8 +15,6 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
 import _ from 'lodash';
 import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
-import { useOptimizedData } from '../../hooks/useOptimizedData';
-import { debounce } from 'lodash';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { fetchAllSpatialData } from '../../slices/spatialSlice';
 

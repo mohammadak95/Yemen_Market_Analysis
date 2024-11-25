@@ -30,13 +30,21 @@ const configureAppStore = () => {
             'spatial.data.visualizationData',
             'spatial.data.regressionAnalysis',
             'spatial.data.marketClusters',
-            'spatial.data.flowMaps'
+            'spatial.data.flowMaps',
+            'spatial.data.marketShocks',
+            'spatial.data.timeSeriesData',
+            'spatial.data.spatialAutocorrelation',
+            'spatial.data.seasonalAnalysis',
+            'spatial.data.marketIntegration',
+            'spatial.data.uniqueMonths'
           ],
           ignoredActions: [
             'spatial/fetchAllSpatialData/fulfilled',
             'spatial/fetchFlowData/fulfilled',
             'spatial/batchUpdate',
-            'spatial/updateGeometry'
+            'spatial/updateGeometry',
+            'spatial/updateData',
+            'spatial/updateUI'
           ]
         },
         immutableCheck: {
