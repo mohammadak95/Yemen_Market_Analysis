@@ -1,14 +1,14 @@
-// src/components/analysis/spatial-analysis/UnifiedSpatialDashboard.js
+// src/components/analysis/spatial-analysis/SpatialAnalysis.js.js
 
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Grid, Box, Paper, Tabs, Tab, Typography } from '@mui/material';
+import { Box, Paper, Tabs, Tab, Typography } from '@mui/material';
 import {
   selectSpatialDataOptimized,
   selectMarketClusters,
   selectMarketFlows,
   selectTimeSeriesData,
-  selectVisualizationMode
+  selectVisualizationMode,
 } from '../../../selectors/optimizedSelectors';
 import NetworkGraph from './components/network/NetworkGraph';
 import MarketHealthMetrics from './components/health/MarketHealthMetrics';
@@ -32,21 +32,32 @@ const UnifiedSpatialDashboard = () => {
       marketIntegration,
       spatialAutocorrelation,
       timeSeriesData: tsData,
-      clusterEfficiency,
       marketShocks,
-      uniqueMonths
-    } = spatialData;
+      uniqueMonths,
+    } = spatialData || {};
+
+    // Compute average volatility
+    const averageVolatility =
+      tsData && tsData.length > 0
+        ? tsData.reduce((acc, curr) => acc + (curr.volatility || 0), 0) / tsData.length
+        : 0;
+
+    // Compute conflict impact
+    const conflictImpact =
+      tsData && tsData.length > 0
+        ? tsData.reduce((acc, curr) => acc + (curr.conflictIntensity || 0), 0) / tsData.length
+        : 0;
+
+    // Compute shock frequency
+    const shockFrequency = (marketShocks?.length || 0) / (uniqueMonths?.length || 1);
 
     return {
-      integration: marketIntegration?.integration_score || 0,
-      spatialAutocorrelation: spatialAutocorrelation?.global?.moran_i || 0,
-      averageVolatility:
-        tsData?.reduce((acc, curr) => acc + curr.volatility, 0) / tsData?.length || 0,
-      clusterEfficiency:
-        clusterEfficiency?.reduce((acc, curr) => acc + curr.efficiency_score, 0) / clusterEfficiency?.length || 0,
-      conflictImpact:
-        tsData?.reduce((acc, curr) => acc + curr.conflict_intensity, 0) / tsData?.length || 0,
-      shockFrequency: (marketShocks?.length || 0) / (uniqueMonths?.length || 1)
+      integration: marketIntegration?.integrationScore || 0,
+      spatialAutocorrelation: spatialAutocorrelation?.global?.I || 0,
+      averageVolatility,
+      clusterEfficiency: 0, // Adjust if cluster efficiency data is available
+      conflictImpact,
+      shockFrequency,
     };
   }, [spatialData]);
 
@@ -60,7 +71,12 @@ const UnifiedSpatialDashboard = () => {
         <Typography variant="h5" gutterBottom>
           Spatial Market Analysis Dashboard
         </Typography>
-        <Tabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
           <Tab label="Market Health" />
           <Tab label="Integration Networks" />
           <Tab label="Price Shocks" />
@@ -82,9 +98,9 @@ const UnifiedSpatialDashboard = () => {
 
         <TabPanel value={activeTab} index={1}>
           <NetworkGraph
-            correlationMatrix={spatialData.marketIntegration?.price_correlation}
+            correlationMatrix={spatialData.marketIntegration?.priceCorrelation}
             accessibility={spatialData.marketIntegration?.accessibility}
-            flowDensity={spatialData.marketIntegration?.flow_density}
+            flowDensity={spatialData.marketIntegration?.flowDensity}
           />
         </TabPanel>
 
@@ -99,7 +115,8 @@ const UnifiedSpatialDashboard = () => {
 
         <TabPanel value={activeTab} index={3}>
           <ClusterEfficiencyDashboard
-            clusterEfficiency={spatialData.clusterEfficiency}
+            // Provide cluster efficiency data if available
+            clusterEfficiency={spatialData.clusterEfficiency || []}
             marketClusters={marketClusters}
             geometry={spatialData.geometry}
           />
@@ -137,7 +154,12 @@ const UnifiedSpatialDashboard = () => {
 // TabPanel component
 function TabPanel({ children, value, index, ...other }) {
   return (
-    <div role="tabpanel" hidden={value !== index} {...other} style={{ height: '100%' }}>
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      {...other}
+      style={{ height: '100%' }}
+    >
       {value === index && <Box sx={{ height: '100%' }}>{children}</Box>}
     </div>
   );
