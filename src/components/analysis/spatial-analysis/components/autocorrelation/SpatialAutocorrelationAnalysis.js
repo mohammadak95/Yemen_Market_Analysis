@@ -9,36 +9,114 @@ import {
   CardContent,
   Alert,
   useTheme,
+  CircularProgress
 } from '@mui/material';
-import { scaleLinear } from 'd3-scale';
-import { interpolateRdBu } from 'd3-scale-chromatic';
+import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { spatialHandler } from '../../../../../utils/spatialDataHandler';
 import MetricCard from '../common/MetricCard';
-import {MapContainer, TileLayer, GeoJSON} from 'react-leaflet';
 
+const transformRegionName = (name) => {
+  if (!name) return '';
 
+  // Additional transformations specific to autocorrelation data
+  const specialCases = {
+    // Handle the problematic cases
+    "'adan governorate": "aden",
+    "'adan": "aden",
+    "adan": "aden",
+    "'adan": "aden",
+    "ad dali' governorate": "ad dali",
+    "ad dali'": "ad dali",
+    "sa'dah governorate": "saada",
+    "sa'dah": "saada",
+    "sadah": "saada",
+    "al mahrah governorate": "al mahra",
+    "al mahrah": "al mahra",
+    "ma'rib governorate": "marib",
+    "ma'rib": "marib",
+    "socotra": "soqatra",
+    "socotra governorate": "soqatra",
+    // Handle variations with/without apostrophes and special characters
+    "sanʿaʾ governorate": "sanaa",
+    "san'a'": "sanaa",
+    "sana'a": "sanaa",
+    "ta'izz": "taiz",
+    "ta'izz governorate": "taiz",
+    "'amran": "amran",
+    "'amran governorate": "amran"
+  };
+
+  // First clean up the name
+  const cleaned = name.toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/governorate$/i, '')
+    .trim();
+
+  // Check special cases first
+  if (specialCases[cleaned]) {
+    return specialCases[cleaned];
+  }
+
+  // Then try with 'governorate' suffix
+  const withGovernorate = `${cleaned} governorate`;
+  if (specialCases[withGovernorate]) {
+    return specialCases[withGovernorate];
+  }
+
+  // If no special case matches, use spatialHandler's normalization
+  const normalized = spatialHandler.normalizeRegionName(name);
+  
+  // Handle null case and do post-processing
+  return normalized ? normalized
+    .replace(/^'/, '')  // Remove leading apostrophe
+    .replace(/'$/, '')  // Remove trailing apostrophe
+    .replace(/\s+/g, ' ') // Normalize spaces
+    .trim() : cleaned;  // Fall back to cleaned name if normalized is null
+};
 
 const SpatialAutocorrelationMap = ({ geometry, autocorrelationData }) => {
   const theme = useTheme();
 
-  // Process geometry to ensure valid GeoJSON
+  // Process geometry with normalized region names
   const processedGeometry = useMemo(() => {
     if (!geometry?.features) return null;
 
     return {
       type: 'FeatureCollection',
-      features: geometry.features.map(feature => ({
-        type: 'Feature',
-        geometry: {
-          type: feature.geometry.type,
-          coordinates: feature.geometry.coordinates
-        },
-        properties: {
-          ...feature.properties,
-          region_id: feature.properties.region_id || feature.properties.normalizedName,
-          local_i: autocorrelationData?.local?.[feature.properties.normalizedName]?.local_i || 0,
-          cluster_type: autocorrelationData?.local?.[feature.properties.normalizedName]?.cluster_type || 'not-significant'
+      features: geometry.features.map(feature => {
+        // Get original region names from feature properties
+        const originalName = feature.properties.originalName || 
+                           feature.properties.normalizedName ||
+                           feature.properties.region_id ||
+                           feature.properties.shapeName;  // Added shapeName as a fallback
+        
+        // Normalize the region name for matching
+        const normalizedName = transformRegionName(originalName);
+        
+        // Find matching autocorrelation data using normalized name
+        const regionData = autocorrelationData?.local?.[normalizedName];
+
+        if (process.env.NODE_ENV === 'development' && !regionData) {
+          console.warn(`No autocorrelation data found for region: ${originalName} (normalized: ${normalizedName})`);
         }
-      }))
+
+        return {
+          type: 'Feature',
+          geometry: {
+            type: feature.geometry.type,
+            coordinates: feature.geometry.coordinates
+          },
+          properties: {
+            ...feature.properties,
+            originalName,
+            normalizedName,
+            region_id: originalName,
+            local_i: regionData?.local_i || 0,
+            cluster_type: regionData?.cluster_type || 'not-significant'
+          }
+        };
+      })
     };
   }, [geometry, autocorrelationData]);
 
@@ -52,13 +130,16 @@ const SpatialAutocorrelationMap = ({ geometry, autocorrelationData }) => {
     switch (clusterType) {
       case 'high-high':
         color = theme.palette.error.main;
+        opacity = 0.8;
         break;
       case 'low-low':
         color = theme.palette.primary.main;
+        opacity = 0.8;
         break;
       case 'high-low':
       case 'low-high':
         color = theme.palette.warning.main;
+        opacity = 0.8;
         break;
       default:
         opacity = 0.4;
@@ -71,6 +152,18 @@ const SpatialAutocorrelationMap = ({ geometry, autocorrelationData }) => {
       color: 'white',
       fillOpacity: opacity
     };
+  };
+
+  // Create tooltip content with region name mappings
+  const createTooltipContent = (feature) => {
+    const { originalName, normalizedName, local_i, cluster_type } = feature.properties;
+    
+    return `
+      <strong>${originalName}</strong><br/>
+      ${normalizedName !== originalName ? `Normalized: ${normalizedName}<br/>` : ''}
+      Local Moran's I: ${local_i.toFixed(3)}<br/>
+      Cluster Type: ${cluster_type}
+    `;
   };
 
   return (
@@ -89,11 +182,7 @@ const SpatialAutocorrelationMap = ({ geometry, autocorrelationData }) => {
             data={processedGeometry}
             style={getFeatureStyle}
             onEachFeature={(feature, layer) => {
-              layer.bindTooltip(`
-                <strong>${feature.properties.region_id}</strong><br/>
-                Local Moran's I: ${feature.properties.local_i.toFixed(3)}<br/>
-                Cluster Type: ${feature.properties.cluster_type}
-              `);
+              layer.bindTooltip(createTooltipContent(feature));
             }}
           />
         )}
@@ -132,29 +221,39 @@ const SpatialAutocorrelationMap = ({ geometry, autocorrelationData }) => {
 };
 
 const SpatialAutocorrelationAnalysis = () => {
-  // Get data from Redux
   const spatialAutocorrelation = useSelector((state) => state.spatial.data.spatialAutocorrelation);
   const geometry = useSelector((state) => state.spatial.data.geometry.unified);
   const loading = useSelector((state) => state.spatial.status.loading);
 
   const { global, local } = spatialAutocorrelation || {};
 
-  // Calculate summary metrics
+  // Process local statistics with normalized region names
   const summaryMetrics = useMemo(() => {
     if (!local) return null;
 
-    const clusters = Object.values(local);
-    const highHigh = clusters.filter(c => c.cluster_type === 'high-high').length;
-    const lowLow = clusters.filter(c => c.cluster_type === 'low-low').length;
-    const outliers = clusters.filter(c => ['high-low', 'low-high'].includes(c.cluster_type)).length;
+    const processedClusters = Object.entries(local).map(([region, data]) => ({
+      ...data,
+      normalizedName: transformRegionName(region)
+    }));
+
+    const highHigh = processedClusters.filter(c => c.cluster_type === 'high-high').length;
+    const lowLow = processedClusters.filter(c => c.cluster_type === 'low-low').length;
+    const outliers = processedClusters.filter(c => 
+      ['high-low', 'low-high'].includes(c.cluster_type)
+    ).length;
 
     return {
       highHigh,
       lowLow,
       outliers,
-      totalClusters: clusters.length
+      totalClusters: processedClusters.length,
+      unmatchedRegions: processedClusters.filter(c => 
+        !geometry?.features?.some(f => 
+          transformRegionName(f.properties.normalizedName) === c.normalizedName
+        )
+      ).length
     };
-  }, [local]);
+  }, [local, geometry]);
 
   if (loading) {
     return (
@@ -170,6 +269,11 @@ const SpatialAutocorrelationAnalysis = () => {
         No spatial autocorrelation data available.
       </Alert>
     );
+  }
+
+  // Show warning if there are unmatched regions
+  if (summaryMetrics?.unmatchedRegions > 0 && process.env.NODE_ENV === 'development') {
+    console.warn(`${summaryMetrics.unmatchedRegions} regions could not be matched to geometry`);
   }
 
   return (
@@ -225,7 +329,7 @@ const SpatialAutocorrelationAnalysis = () => {
         </Paper>
       </Grid>
 
-      {/* Cluster Details */}
+      {/* Interpretation */}
       <Grid item xs={12}>
         <Card>
           <CardContent>
@@ -242,7 +346,6 @@ const SpatialAutocorrelationAnalysis = () => {
   );
 };
 
-// Helper function to interpret results
 const interpretResults = (moranI, metrics) => {
   if (!moranI || !metrics) return '';
 
