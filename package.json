@@ -16,6 +16,7 @@
     "@mui/x-data-grid": "^7.22.3",
     "@mui/x-date-pickers": "^7.20.0",
     "@nivo/heatmap": "^0.88.0",
+    "@nivo/line": "^0.88.0",
     "@reduxjs/toolkit": "^1.9.7",
     "@sentry/react": "^7.59.0",
     "@sentry/tracing": "^7.59.0",

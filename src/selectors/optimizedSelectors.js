@@ -9,12 +9,28 @@ const selectSpatialData = (state) => state.spatial?.data || {};
 const selectUiState = (state) => state.spatial?.ui || {};
 const selectStatus = (state) => state.spatial?.status || {};
 
-// Geometry Selectors
+// Direct selectors
+export const selectSpatialAutocorrelationDirect = (state) => state.spatial.data.spatialAutocorrelation;
+export const selectTimeSeriesDataDirect = (state) => state.spatial.data.timeSeriesData;
+export const selectGeometryDataDirect = (state) => state.spatial.data.geometry;
+
+// Memoized selectors with default values
+export const selectSpatialAutocorrelation = createSelector(
+  [selectSpatialData],
+  (data) => data.spatialAutocorrelation || {}
+);
+
+export const selectTimeSeriesData = createSelector(
+  [selectSpatialData],
+  (data) => data.timeSeriesData || []
+);
+
 export const selectGeometryData = createSelector(
   [selectSpatialData],
   (data) => data.geometry || null
 );
 
+// Rest of the file remains unchanged
 export const selectUnifiedGeometry = createSelector(
   [selectGeometryData],
   (geometry) => {
@@ -81,11 +97,6 @@ export const selectMarketClusters = createSelector(
 export const selectMarketFlows = createSelector(
   [selectSpatialData],
   (data) => data.flowMaps || []
-);
-
-export const selectTimeSeriesData = createSelector(
-  [selectSpatialData],
-  (data) => data.timeSeriesData || []
 );
 
 export const selectMarketShocks = createSelector(
@@ -178,11 +189,6 @@ export const selectFeatureDataWithMetrics = createSelector(
 export const selectMarketIntegration = createSelector(
   [selectSpatialData],
   (data) => data.marketIntegration || {}
-);
-
-export const selectSpatialAutocorrelation = createSelector(
-  [selectSpatialData],
-  (data) => data.spatialAutocorrelation || {}
 );
 
 export const selectRegressionAnalysis = createSelector(

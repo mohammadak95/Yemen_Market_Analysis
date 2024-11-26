@@ -2,15 +2,18 @@
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { useSelector } from 'react-redux';
 import { Polyline, Tooltip } from 'react-leaflet';
 import { scaleLinear } from 'd3-scale';
 import { useTheme } from '@mui/material/styles';
+import { selectMarketFlows } from '../../../../../selectors/optimizedSelectors';
 
-const FlowLines = ({ flows, metricType }) => {
+const FlowLines = ({ metricType }) => {
   const theme = useTheme();
+  const flows = useSelector(selectMarketFlows);
 
   // Determine the value range for scaling
-  const values = flows.map(flow => flow[metricType]);
+  const values = useMemo(() => flows.map(flow => flow[metricType]), [flows, metricType]);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
 
@@ -23,11 +26,20 @@ const FlowLines = ({ flows, metricType }) => {
     .domain([minValue, maxValue])
     .range([1, 8]), [minValue, maxValue]);
 
+  if (!flows.length) {
+    return null;
+  }
+
   return (
     <>
       {flows.map((flow, index) => {
-        const sourceCoords = [flow.source_coordinates[1], flow.source_coordinates[0]];
-        const targetCoords = [flow.target_coordinates[1], flow.target_coordinates[0]];
+        // Ensure coordinates exist and are in the correct format
+        if (!flow.sourceCoordinates || !flow.targetCoordinates) {
+          return null;
+        }
+
+        const sourceCoords = [flow.sourceCoordinates[1], flow.sourceCoordinates[0]];
+        const targetCoords = [flow.targetCoordinates[1], flow.targetCoordinates[0]];
 
         return (
           <Polyline
@@ -55,8 +67,7 @@ const FlowLines = ({ flows, metricType }) => {
 };
 
 FlowLines.propTypes = {
-  flows: PropTypes.array.isRequired,
-  metricType: PropTypes.string.isRequired,
+  metricType: PropTypes.oneOf(['total_flow', 'avg_price_differential', 'flow_count']).isRequired,
 };
 
 export default React.memo(FlowLines);

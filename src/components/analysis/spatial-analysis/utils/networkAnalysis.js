@@ -1,298 +1,217 @@
 // src/components/analysis/spatial-analysis/utils/networkAnalysis.js
 
-import Graph from 'graphology';
-import { eigenvector, betweenness, degree } from 'graphology-metrics/centrality';
-import { connectedComponents } from 'graphology-components';
-import { density } from 'graphology-metrics/graph';
-import { dijkstra } from 'graphology-shortest-path';
+const DEBUG = process.env.NODE_ENV === 'development';
 
-const debug = (message, data = {}) => {
-    if (process.env.NODE_ENV === 'development') {
-        console.group(`📊 NetworkAnalysis: ${message}`);
-        Object.entries(data).forEach(([key, value]) => {
-            console.log(`${key}:`, value);
-        });
-        console.groupEnd();
-    }
-};
-
-const createGraph = (nodes, links) => {
-    const graph = new Graph({ 
-        type: 'undirected',
-        allowSelfLoops: false,
-        multi: false
-    });
-
-    debug('Creating Graph', { nodeCount: nodes.length, linkCount: links.length });
-
-    nodes.forEach((node) => {
-        if (!node.id) {
-            debug('Invalid Node', { node });
-            return;
-        }
-
-        try {
-            graph.addNode(node.id, {
-                coordinates: node.coordinates,
-                name: node.name,
-                population: node.population,
-                type: node.type
-            });
-        } catch (error) {
-            debug('Node Addition Error', { node, error: error.message });
-        }
-    });
-
-    links.forEach((link) => {
-        if (!link.source || !link.target || typeof link.weight !== 'number') {
-            debug('Invalid Link', { link });
-            return;
-        }
-
-        try {
-            if (!graph.hasEdge(link.source, link.target)) {
-                graph.addUndirectedEdgeWithKey(
-                    `${link.source}-${link.target}`,
-                    link.source,
-                    link.target,
-                    {
-                        weight: link.weight,
-                        type: link.type || 'flow'
-                    }
-                );
-            }
-        } catch (error) {
-            debug('Edge Addition Error', { link, error: error.message });
-        }
-    });
-
-    return graph;
-};
-
-const analyzeNetworkMetrics = (graph) => {
-    const metrics = {
-        order: graph.order,
-        size: graph.size,
-        density: 0,
-        averageDegree: 0,
-        components: [],
-        isolatedNodes: []
-    };
-
-    try {
-        metrics.density = density(graph);
-    } catch (error) {
-        debug('Density Calculation Error', { error: error.message });
-    }
-
-    try {
-        const degrees = [];
-        graph.forEachNode(node => {
-            degrees.push(graph.degree(node));
-        });
-        metrics.averageDegree = degrees.reduce((a, b) => a + b, 0) / degrees.length;
-    } catch (error) {
-        debug('Average Degree Calculation Error', { error: error.message });
-    }
-
-    return metrics;
-};
-
+/**
+ * Calculate eigenvector centrality for the network
+ * @param {Array} nodes - Network nodes with coordinates
+ * @param {Array} links - Network links with flow values
+ * @returns {Object} Centrality metrics and network statistics
+ */
 export const eigenvectorCentrality = (nodes, links) => {
-    debug('Starting Eigenvector Centrality Calculation');
-    
-    const graph = createGraph(nodes, links);
-    const metrics = analyzeNetworkMetrics(graph);
-    debug('Graph Metrics', metrics);
-
-    let isolatedCount = 0;
-    graph.forEachNode((node) => {
-        if (graph.degree(node) === 0) {
-            graph.dropNode(node);
-            isolatedCount++;
-        }
-    });
-
-    if (isolatedCount > 0) {
-        debug('Removed Isolated Nodes', { count: isolatedCount });
-    }
-
-    const components = connectedComponents(graph);
-    debug('Component Analysis', { 
-        componentCount: components.length,
-        componentSizes: components.map(c => c.length)
-    });
-
-    if (graph.order === 0) {
-        debug('Empty Graph After Processing');
-        return {
-            centrality: {},
-            metrics,
-            components
-        };
+    if (DEBUG) {
+        console.group('Eigenvector Centrality Calculation');
+        console.log('Input Nodes:', nodes);
+        console.log('Input Links:', links);
     }
 
     try {
-        const centrality = eigenvector(graph, {
-            weighted: true,
-            maxIterations: 1000,
-            tolerance: 1e-6
-        });
+        // Initialize centrality scores
+        let centrality = nodes.reduce((acc, node) => {
+            acc[node.id] = 1.0; // Initial score
+            return acc;
+        }, {});
 
-        debug('Centrality Calculation Success', {
-            measureCount: Object.keys(centrality).length
-        });
+        // Parameters
+        const maxIterations = 100;
+        const tolerance = 1e-6;
+        let iteration = 0;
+        let delta = 1.0;
+
+        // Power iteration method
+        while (iteration < maxIterations && delta > tolerance) {
+            const prevCentrality = { ...centrality };
+            let maxScore = 0;
+
+            // Reset scores for this iteration
+            Object.keys(centrality).forEach(node => {
+                centrality[node] = 0;
+            });
+
+            // Update scores based on connections
+            links.forEach(link => {
+                // Weight by flow value
+                const weight = link.value;
+                
+                // Update both source and target (undirected)
+                centrality[link.source.id] += prevCentrality[link.target.id] * weight;
+                centrality[link.target.id] += prevCentrality[link.source.id] * weight;
+            });
+
+            // Normalize scores
+            Object.keys(centrality).forEach(node => {
+                maxScore = Math.max(maxScore, Math.abs(centrality[node]));
+            });
+
+            if (maxScore > 0) {
+                Object.keys(centrality).forEach(node => {
+                    centrality[node] /= maxScore;
+                });
+            }
+
+            // Calculate change
+            delta = Object.keys(centrality).reduce((acc, node) => {
+                return Math.max(acc, Math.abs(centrality[node] - prevCentrality[node]));
+            }, 0);
+
+            iteration++;
+        }
+
+        if (DEBUG) {
+            console.log('Centrality Calculation Complete:', {
+                iterations: iteration,
+                finalDelta: delta,
+                scores: centrality
+            });
+        }
+
+        // Calculate additional network metrics
+        const metrics = calculateNetworkMetrics(nodes, links, centrality);
+
+        if (DEBUG) {
+            console.log('Network Metrics:', metrics);
+            console.groupEnd();
+        }
 
         return {
             centrality,
             metrics,
-            components
+            components: findConnectedComponents(nodes, links)
         };
     } catch (error) {
-        debug('Eigenvector Centrality Failed', { error: error.message });
-        
-        try {
-            debug('Attempting Betweenness Centrality');
-            const centrality = betweenness(graph, { 
-                weighted: true,
-                normalized: true 
-            });
-            
-            return {
-                centrality,
-                metrics,
-                components,
-                usedFallback: true
-            };
-        } catch (fallbackError) {
-            debug('Betweenness Centrality Failed', { error: fallbackError.message });
-            
-            debug('Using Degree Centrality Fallback');
-            const degreeCentrality = {};
-            graph.forEachNode(node => {
-                degreeCentrality[node] = graph.degree(node);
-            });
-            
-            return {
-                centrality: degreeCentrality,
-                metrics,
-                components,
-                usedFallback: true
-            };
-        }
-    }
-};
-
-export const betweennessCentrality = (nodes, links) => {
-    debug('Starting Betweenness Centrality Calculation');
-    
-    const graph = createGraph(nodes, links);
-    const metrics = analyzeNetworkMetrics(graph);
-    debug('Graph Metrics', metrics);
-
-    const initialOrder = graph.order;
-    graph.forEachNode((node) => {
-        if (graph.degree(node) === 0) {
-            graph.dropNode(node);
-        }
-    });
-
-    const removedCount = initialOrder - graph.order;
-    if (removedCount > 0) {
-        debug('Removed Isolated Nodes', { count: removedCount });
-    }
-
-    if (graph.order === 0) {
-        debug('Empty Graph After Processing');
+        console.error('Error calculating centrality:', error);
         return {
             centrality: {},
-            metrics
+            metrics: getDefaultMetrics(),
+            components: []
         };
     }
+};
 
+/**
+ * Calculate various network metrics
+ * @param {Array} nodes - Network nodes
+ * @param {Array} links - Network links
+ * @param {Object} centrality - Calculated centrality scores
+ * @returns {Object} Network metrics
+ */
+const calculateNetworkMetrics = (nodes, links, centrality) => {
     try {
-        const centrality = betweenness(graph, {
-            weighted: true,
-            normalized: true
-        });
+        // Network density
+        const maxPossibleLinks = nodes.length * (nodes.length - 1) / 2;
+        const density = links.length / maxPossibleLinks;
 
-        debug('Centrality Calculation Success', {
-            measureCount: Object.keys(centrality).length
+        // Average degree
+        const degrees = nodes.map(node => 
+            links.filter(l => 
+                l.source.id === node.id || l.target.id === node.id
+            ).length
+        );
+        const averageConnectivity = degrees.reduce((a, b) => a + b, 0) / nodes.length;
+
+        // Calculate weighted clustering coefficient
+        let globalClusteringCoeff = 0;
+        nodes.forEach(node => {
+            const neighbors = new Set(links
+                .filter(l => l.source.id === node.id || l.target.id === node.id)
+                .map(l => l.source.id === node.id ? l.target.id : l.source.id)
+            );
+
+            if (neighbors.size > 1) {
+                let triangles = 0;
+                const neighborArr = Array.from(neighbors);
+                for (let i = 0; i < neighborArr.length; i++) {
+                    for (let j = i + 1; j < neighborArr.length; j++) {
+                        if (links.some(l => 
+                            (l.source.id === neighborArr[i] && l.target.id === neighborArr[j]) ||
+                            (l.source.id === neighborArr[j] && l.target.id === neighborArr[i])
+                        )) {
+                            triangles++;
+                        }
+                    }
+                }
+                globalClusteringCoeff += triangles / (neighbors.size * (neighbors.size - 1) / 2);
+            }
         });
+        globalClusteringCoeff /= nodes.length;
 
         return {
-            centrality,
-            metrics
+            density,
+            averageConnectivity,
+            globalClusteringCoeff,
+            marketCount: nodes.length,
+            linkCount: links.length,
+            maxCentrality: Math.max(...Object.values(centrality)),
+            minCentrality: Math.min(...Object.values(centrality))
         };
     } catch (error) {
-        debug('Betweenness Centrality Failed', { error: error.message });
-        
-        try {
-            debug('Using Degree Centrality Fallback');
-            const degreeCentrality = {};
-            graph.forEachNode(node => {
-                degreeCentrality[node] = graph.degree(node);
-            });
-            
-            return {
-                centrality: degreeCentrality,
-                metrics,
-                usedFallback: true
-            };
-        } catch (fallbackError) {
-            debug('Degree Centrality Fallback Failed', { error: fallbackError.message });
-            return {
-                centrality: {},
-                metrics,
-                error: error.message,
-                fallbackError: fallbackError.message
-            };
-        }
+        console.error('Error calculating network metrics:', error);
+        return getDefaultMetrics();
     }
 };
 
-export const validateNetworkData = (nodes, links) => {
-    const validation = {
-        valid: true,
-        nodes: {
-            total: nodes.length,
-            valid: 0,
-            invalid: [],
-        },
-        links: {
-            total: links.length,
-            valid: 0,
-            invalid: [],
-        }
-    };
+/**
+ * Find connected components in the network
+ * @param {Array} nodes - Network nodes
+ * @param {Array} links - Network links
+ * @returns {Array} Array of connected components
+ */
+const findConnectedComponents = (nodes, links) => {
+    const visited = new Set();
+    const components = [];
 
-    nodes.forEach((node, index) => {
-        if (!node.id || !node.coordinates || node.coordinates.some(isNaN)) {
-            validation.nodes.invalid.push({
-                index,
-                node,
-                reason: !node.id ? 'Missing ID' : 'Invalid coordinates'
-            });
-        } else {
-            validation.nodes.valid++;
+    nodes.forEach(node => {
+        if (!visited.has(node.id)) {
+            const component = [];
+            const queue = [node.id];
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                if (!visited.has(current)) {
+                    visited.add(current);
+                    component.push(current);
+
+                    // Add connected nodes to queue
+                    links
+                        .filter(l => l.source.id === current || l.target.id === current)
+                        .forEach(l => {
+                            const neighbor = l.source.id === current ? l.target.id : l.source.id;
+                            if (!visited.has(neighbor)) {
+                                queue.push(neighbor);
+                            }
+                        });
+                }
+            }
+            
+            if (component.length > 0) {
+                components.push(component);
+            }
         }
     });
 
-    links.forEach((link, index) => {
-        if (!link.source || !link.target || typeof link.weight !== 'number') {
-            validation.links.invalid.push({
-                index,
-                link,
-                reason: !link.source || !link.target ? 'Missing source/target' : 'Invalid weight'
-            });
-        } else {
-            validation.links.valid++;
-        }
-    });
-
-    validation.valid = 
-        validation.nodes.invalid.length === 0 && 
-        validation.links.invalid.length === 0;
-
-    return validation;
+    return components;
 };
+
+/**
+ * Get default metrics when calculation fails
+ * @returns {Object} Default network metrics
+ */
+const getDefaultMetrics = () => ({
+    density: 0,
+    averageConnectivity: 0,
+    globalClusteringCoeff: 0,
+    marketCount: 0,
+    linkCount: 0,
+    maxCentrality: 0,
+    minCentrality: 0
+});
