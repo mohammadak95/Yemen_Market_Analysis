@@ -1,67 +1,168 @@
 // src/components/analysis/spatial-analysis/hooks/useNetworkData.js
 
 import { useMemo } from 'react';
-import { eigenvectorCentrality, betweennessCentrality } from '../utils/networkAnalysis.js';
+import { normalizeCoordinates } from '../utils/coordinateHandler';
+import { eigenvectorCentrality, betweennessCentrality } from '../utils/networkAnalysis';
 
-const useNetworkData = (correlationMatrix = {}, accessibility = {}, threshold = 0.5) => {
-  return useMemo(() => {
-    const nodes = Object.keys(correlationMatrix).map(market => ({
-      id: market,
-      name: market,
-      accessibility: typeof accessibility[market] === 'number' ? accessibility[market] : 1
-    }));
+const debug = (message, data = {}) => {
+    if (process.env.NODE_ENV === 'development') {
+        console.group(`🔄 useNetworkData: ${message}`);
+        Object.entries(data).forEach(([key, value]) => {
+            console.log(`${key}:`, value);
+        });
+        console.groupEnd();
+    }
+};
 
-    const links = [];
-    const linksSet = new Set();
+const useNetworkData = (correlationMatrix = {}, flowData = [], threshold = 0.5) => {
+    return useMemo(() => {
+        debug('Starting Network Data Processing', {
+            flowDataLength: flowData?.length,
+            hasCorrelationMatrix: Boolean(correlationMatrix),
+            threshold
+        });
 
-    Object.entries(correlationMatrix).forEach(([source, correlations]) => {
-      Object.entries(correlations).forEach(([target, weight]) => {
-        if (Math.abs(weight) >= threshold) {
-          const sortedPair = [source, target].sort();
-          const edgeKey = sortedPair.join('-');
-          if (!linksSet.has(edgeKey)) {
-            linksSet.add(edgeKey);
-            links.push({ source: sortedPair[0], target: sortedPair[1], weight: Math.abs(weight) });
-          }
+        const nodesSet = new Set();
+        const nodes = [];
+        const nodeMap = {};
+
+        const flowLinks = flowData
+            .filter(flow => {
+                if (!flow.source || !flow.target) {
+                    debug('Invalid Flow Entry', { flow });
+                    return false;
+                }
+                return true;
+            })
+            .map((flow) => {
+                const source = flow.source;
+                const target = flow.target;
+
+                const sourceCoordinates = normalizeCoordinates(
+                    flow.source_coordinates, 
+                    source
+                );
+                const targetCoordinates = normalizeCoordinates(
+                    flow.target_coordinates,
+                    target
+                );
+
+                if (!sourceCoordinates || !targetCoordinates) {
+                    debug('Missing Coordinates', {
+                        source,
+                        target,
+                        hasSourceCoords: Boolean(sourceCoordinates),
+                        hasTargetCoords: Boolean(targetCoordinates)
+                    });
+                    return null;
+                }
+
+                nodesSet.add(source);
+                nodesSet.add(target);
+
+                if (!nodeMap[source]) {
+                    nodeMap[source] = {
+                        id: source,
+                        name: flow.source_coordinates?.properties?.originalName || source,
+                        coordinates: sourceCoordinates,
+                        population: flow.source_coordinates?.properties?.population || 0,
+                        type: 'market'
+                    };
+                }
+
+                if (!nodeMap[target]) {
+                    nodeMap[target] = {
+                        id: target,
+                        name: flow.target_coordinates?.properties?.originalName || target,
+                        coordinates: targetCoordinates,
+                        population: flow.target_coordinates?.properties?.population || 0,
+                        type: 'market'
+                    };
+                }
+
+                return {
+                    source,
+                    target,
+                    weight: flow.avgFlow || 1,
+                    sourceCoordinates,
+                    targetCoordinates,
+                };
+            })
+            .filter(Boolean);
+
+        debug('Flow Links Processed', {
+            totalFlows: flowData.length,
+            validFlows: flowLinks.length,
+            uniqueNodes: nodesSet.size
+        });
+
+        const correlationLinks = [];
+        Object.entries(correlationMatrix).forEach(([source, correlations]) => {
+            Object.entries(correlations).forEach(([target, weight]) => {
+                if (source !== target && Math.abs(weight) >= threshold) {
+                    if (!nodeMap[source] || !nodeMap[target]) {
+                        debug('Missing Node for Correlation', { source, target, weight });
+                        return;
+                    }
+
+                    correlationLinks.push({
+                        source,
+                        target,
+                        weight: Math.abs(weight),
+                        sourceCoordinates: nodeMap[source].coordinates,
+                        targetCoordinates: nodeMap[target].coordinates,
+                        type: 'correlation'
+                    });
+                }
+            });
+        });
+
+        nodes.push(...Object.values(nodeMap));
+        const links = [...flowLinks, ...correlationLinks];
+
+        let centralityMeasures = {};
+        try {
+            debug('Calculating Eigenvector Centrality');
+            centralityMeasures = eigenvectorCentrality(nodes, links);
+        } catch (error) {
+            debug('Eigenvector Centrality Failed', { error: error.message });
+            try {
+                debug('Attempting Betweenness Centrality');
+                centralityMeasures = betweennessCentrality(nodes, links);
+            } catch (fallbackError) {
+                debug('Betweenness Centrality Failed', { error: fallbackError.message });
+                debug('Using Degree Centrality Fallback');
+                nodes.forEach(node => {
+                    centralityMeasures[node.id] = links.filter(
+                        link => link.source === node.id || link.target === node.id
+                    ).length;
+                });
+            }
         }
-      });
-    });
 
-    console.log(`Correlation Threshold: ${threshold}`);
-    console.log(`Number of nodes: ${nodes.length}`);
-    console.log(`Number of links after thresholding: ${links.length}`);
+        const centralityValues = Object.values(centralityMeasures);
+        const maxCentrality = Math.max(...centralityValues, 1);
+        const minCentrality = Math.min(...centralityValues, 0);
 
-    // Choose centrality measure
-    let centralityMeasures = eigenvectorCentrality(nodes, links);
-    if (Object.keys(centralityMeasures).length === 0) {
-      console.warn('Eigenvector centrality failed or returned empty. Falling back to betweenness centrality.');
-      centralityMeasures = betweennessCentrality(nodes, links);
-    }
+        const normalizedCentrality = {};
+        Object.keys(centralityMeasures).forEach((nodeId) => {
+            normalizedCentrality[nodeId] =
+                (centralityMeasures[nodeId] - minCentrality) /
+                (maxCentrality - minCentrality || 1);
+        });
 
-    const centralityValues = Object.values(centralityMeasures);
+        debug('Network Processing Complete', {
+            nodeCount: nodes.length,
+            linkCount: links.length,
+            centralityMeasures: Object.keys(normalizedCentrality).length
+        });
 
-    // Check if centralityValues is empty
-    if (centralityValues.length === 0) {
-      console.warn('Centrality measures are empty. Assigning default values.');
-      nodes.forEach(node => {
-        centralityMeasures[node.id] = 0;
-      });
-    }
-
-    const maxCentrality = Math.max(...centralityValues);
-    const minCentrality = Math.min(...centralityValues);
-
-    const normalizedCentrality = {};
-    Object.keys(centralityMeasures).forEach(nodeId => {
-      normalizedCentrality[nodeId] = (centralityMeasures[nodeId] - minCentrality) / (maxCentrality - minCentrality || 1);
-    });
-
-    return {
-      nodes,
-      links,
-      centralityMeasures: normalizedCentrality
-    };
-  }, [correlationMatrix, accessibility, threshold]);
+        return {
+            nodes,
+            links,
+            centralityMeasures: normalizedCentrality
+        };
+    }, [correlationMatrix, flowData, threshold]);
 };
 
 export default useNetworkData;

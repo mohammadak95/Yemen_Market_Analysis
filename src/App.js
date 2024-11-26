@@ -23,6 +23,7 @@ import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
 import MethodologyModal from './components/methodology/MethodologyModal';
 import { TutorialsModal } from './components/discovery/Tutorials';
 import { WelcomeModal } from './components/common/WelcomeModal';
+import StateExporter from './components/utils/StateExporter';
 import { selectHasSeenWelcome, setHasSeenWelcome } from './store/welcomeModalSlice';
 import { useWindowSize } from './hooks';
 import {
@@ -114,12 +115,10 @@ const App = () => {
   const [modalStates, setModalStates] = useState({
     methodology: false,
     tutorials: false,
-    // Remove welcome from local state since it's managed by Redux
   });
 
   useEffect(() => {
     const initializeApp = async () => {
-      // Only fetch if no data AND not already loading
       if (!spatialData?.commodities?.length && !loading) {
         try {
           await dispatch(fetchAllSpatialData({ 
@@ -154,24 +153,13 @@ const App = () => {
 
   const handleCommodityChange = useCallback((newCommodity) => {
     if (newCommodity && newCommodity !== selectedCommodity) {
-      // Update local state
       setSelectedCommodity(newCommodity);
       
-      // Fetch data for all analysis components
       Promise.all([
-        // Fetch spatial data
-        dispatch(fetchSpatialData({
+        dispatch(fetchAllSpatialData({
           commodity: newCommodity,
           date: selectedDate || DEFAULT_DATE
         })),
-        
-        // Fetch ECM data
-        dispatch(fetchECMData()),
-        
-        // Fetch Price Differential data
-        dispatch(fetchPriceDiffData()),
-        
-        // Force refresh analysis components
         dispatch({
           type: 'analysis/refreshData',
           payload: { commodity: newCommodity }
@@ -182,9 +170,8 @@ const App = () => {
     }
   }, [dispatch, selectedCommodity, selectedDate]);
 
-
   const fetchDataOnce = useCallback(async () => {
-    if (!spatialData?.commodities) {  // Changed condition
+    if (!spatialData?.commodities) {
       try {
         console.log('Fetching initial data...');
         await dispatch(fetchAllSpatialData({ 
@@ -220,7 +207,6 @@ const App = () => {
 
   const handleModalToggle = useCallback((modalName, isOpen) => {
     if (modalName === 'welcome') {
-      // Let the WelcomeModal component handle its own state
       return;
     }
     setModalStates(prev => ({ ...prev, [modalName]: isOpen }));
@@ -306,6 +292,8 @@ const App = () => {
               onSpatialViewChange={setSpatialViewConfig}
             />
           </Box>
+
+          <StateExporter />
 
           <MethodologyModal
             open={modalStates.methodology}

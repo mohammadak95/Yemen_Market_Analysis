@@ -712,105 +712,105 @@ async initializePoints() {
     }
   }
 
-  async loadRegressionAnalysis(selectedCommodity) {
-    if (!selectedCommodity) {
-      console.warn('No commodity selected for regression analysis');
-      return DEFAULT_REGRESSION_DATA;
-    }
-  
-    const metric = backgroundMonitor.startMetric('regression-data-load');
-    
-    try {
-      // Get the cache key
-      const cacheKey = `regression_${selectedCommodity}`;
-      const cached = this.cache.get(cacheKey);
-      
-      if (cached?.data) {
-        console.debug('Using cached regression data for:', selectedCommodity);
-        return cached.data;
-      }
-  
-      // Get the regression data path
-      const analysisPath = getRegressionDataPath();
-      console.debug('Loading regression data from:', analysisPath);
-  
-      // Fetch the data
-      const response = await fetch(analysisPath);
-      if (!response.ok) {
-        console.error(`HTTP error! status: ${response.status}`);
-        return DEFAULT_REGRESSION_DATA;
-      }
-  
-      const text = await response.text();
-      
-      // Sanitize and parse the JSON text
-      const sanitizedText = this.sanitizeJsonText(text);
-      let parsedData;
-      try {
-        parsedData = JSON.parse(sanitizedText);
-        if (!Array.isArray(parsedData)) {
-          console.error('Invalid data format: expected array');
-          return DEFAULT_REGRESSION_DATA;
-        }
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        return DEFAULT_REGRESSION_DATA;
-      }
-  
-      // Normalize commodity name for comparison
-      const normalizedSearchCommodity = this.normalizeCommodityName(selectedCommodity);
-      console.debug('Normalized commodity name:', normalizedSearchCommodity);
-  
-      // Find matching commodity data
-      const commodityAnalysis = parsedData.find(item => {
-        const normalizedItemCommodity = this.normalizeCommodityName(item.commodity);
-        return normalizedItemCommodity === normalizedSearchCommodity;
-      });
-  
-      if (!commodityAnalysis) {
-        console.warn(`No regression analysis found for commodity: ${selectedCommodity}`);
-        return DEFAULT_REGRESSION_DATA;
-      }
-  
-      // Process the analysis data
-      const processedAnalysis = {
-        model: {
-          coefficients: commodityAnalysis.coefficients || {},
-          intercept: this.sanitizeNumericValue(commodityAnalysis.intercept),
-          p_values: commodityAnalysis.p_values || {},
-          r_squared: this.sanitizeNumericValue(commodityAnalysis.r_squared),
-          adj_r_squared: this.sanitizeNumericValue(commodityAnalysis.adj_r_squared),
-          mse: this.sanitizeNumericValue(commodityAnalysis.mse),
-          observations: commodityAnalysis.observations || 0
-        },
-        spatial: {
-          moran_i: commodityAnalysis.moran_i || { I: 0, 'p-value': 1 },
-          vif: Array.isArray(commodityAnalysis.vif) ? commodityAnalysis.vif : []
-        },
-        residuals: this.processResiduals(commodityAnalysis.residual || [])
-      };
-  
-      // Validate the processed data
-      if (!this.validateRegressionData(processedAnalysis)) {
-        console.warn('Invalid regression data structure:', processedAnalysis);
-        return DEFAULT_REGRESSION_DATA;
-      }
-  
-      // Cache the valid results
-      this.cache.set(cacheKey, {
-        data: processedAnalysis,
-        timestamp: Date.now()
-      });
-  
-      metric.finish({ status: 'success' });
-      return processedAnalysis;
-  
-    } catch (error) {
-      console.error('Failed to load regression analysis:', error);
-      metric.finish({ status: 'error', error: error.message });
-      return DEFAULT_REGRESSION_DATA;
-    }
+async loadRegressionAnalysis(selectedCommodity) {
+  if (!selectedCommodity) {
+    console.warn('No commodity selected for regression analysis');
+    return DEFAULT_REGRESSION_DATA;
   }
+
+  const metric = backgroundMonitor.startMetric('regression-data-fetch');
+  
+  try {
+    // Get the cache key
+    const cacheKey = `regression_${selectedCommodity}`;
+    const cached = this.cache.get(cacheKey);
+    
+    if (cached?.data) {
+      console.debug('Using cached regression data for:', selectedCommodity);
+      return cached.data;
+    }
+
+    // Get the regression data path
+    const analysisPath = getRegressionDataPath();
+    console.debug('Loading regression data from:', analysisPath);
+
+    // Fetch the data
+    const response = await fetch(analysisPath);
+    if (!response.ok) {
+      console.error(`HTTP error! status: ${response.status}`);
+      return DEFAULT_REGRESSION_DATA;
+    }
+
+    const text = await response.text();
+    
+    // Sanitize and parse the JSON text
+    const sanitizedText = this.sanitizeJsonText(text);
+    let parsedData;
+    try {
+      parsedData = JSON.parse(sanitizedText);
+      if (!Array.isArray(parsedData)) {
+        console.error('Invalid data format: expected array');
+        return DEFAULT_REGRESSION_DATA;
+      }
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return DEFAULT_REGRESSION_DATA;
+    }
+
+    // Normalize commodity name for comparison
+    const normalizedSearchCommodity = this.normalizeCommodityName(selectedCommodity);
+    console.debug('Normalized commodity name:', normalizedSearchCommodity);
+
+    // Find matching commodity data
+    const commodityAnalysis = parsedData.find(item => {
+      const normalizedItemCommodity = this.normalizeCommodityName(item.commodity);
+      return normalizedItemCommodity === normalizedSearchCommodity;
+    });
+
+    if (!commodityAnalysis) {
+      console.warn(`No regression analysis found for commodity: ${selectedCommodity}`);
+      return DEFAULT_REGRESSION_DATA;
+    }
+
+    // Transform the data to match our expected format
+    const processedAnalysis = {
+      model: {
+        coefficients: commodityAnalysis.coefficients || {},
+        intercept: this.sanitizeNumericValue(commodityAnalysis.intercept),
+        p_values: commodityAnalysis.p_values || {},
+        r_squared: this.sanitizeNumericValue(commodityAnalysis.r_squared),
+        adj_r_squared: this.sanitizeNumericValue(commodityAnalysis.adj_r_squared),
+        mse: this.sanitizeNumericValue(commodityAnalysis.mse),
+        observations: commodityAnalysis.observations || 0
+      },
+      spatial: {
+        moran_i: commodityAnalysis.moran_i || { I: 0, 'p-value': 1 },
+        vif: Array.isArray(commodityAnalysis.vif) ? commodityAnalysis.vif : []
+      },
+      residuals: this.processResiduals(commodityAnalysis.residual || [])
+    };
+
+    // Validate the processed data
+    if (!this.validateRegressionData(processedAnalysis)) {
+      console.warn('Invalid regression data structure:', processedAnalysis);
+      return DEFAULT_REGRESSION_DATA;
+    }
+
+    // Cache the valid results
+    this.cache.set(cacheKey, {
+      data: processedAnalysis,
+      timestamp: Date.now()
+    });
+
+    metric.finish({ status: 'success' });
+    return processedAnalysis;
+
+  } catch (error) {
+    console.error('Failed to load regression analysis:', error);
+    metric.finish({ status: 'error', error: error.message });
+    return DEFAULT_REGRESSION_DATA;
+  }
+}
 
   // Helper method for commodity name normalization
   normalizeCommodityName(commodity) {

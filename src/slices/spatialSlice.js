@@ -891,8 +891,12 @@ const spatialSlice = createSlice({
         } = action.payload;
         const { regressionOnly, visualizationOnly } = action.meta.arg;
 
-        if (regressionOnly) {
+        // Always update regression data if it's available
+        if (regressionData) {
           state.data.regressionAnalysis = regressionData;
+        }
+
+        if (regressionOnly) {
           state.status.regressionLoading = false;
           state.status.dataFetching = false;
           return;
@@ -914,7 +918,6 @@ const spatialSlice = createSlice({
         if (spatialData) {
           state.data = {
             ...state.data,
-            // Explicitly map snake_case to camelCase
             timeSeriesData: spatialData.timeSeriesData || [],
             flowMaps: spatialData.flowMaps || [],
             marketClusters: spatialData.marketClusters || [],
@@ -925,8 +928,7 @@ const spatialSlice = createSlice({
             },
             seasonalAnalysis: spatialData.seasonalAnalysis || {},
             marketIntegration: spatialData.marketIntegration || {},
-            uniqueMonths: spatialData.uniqueMonths || [],
-            // Do not spread spatialData directly to prevent duplicates
+            uniqueMonths: spatialData.uniqueMonths || []
           };
         }
 
@@ -937,7 +939,6 @@ const spatialSlice = createSlice({
         }
 
         if (cacheKey) {
-          // Store processed data in cache to prevent duplicates
           state.data.cache[cacheKey] = {
             geometry: state.data.geometry,
             spatialData: {

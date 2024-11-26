@@ -1,4 +1,4 @@
-// src/components/analysis/spatial-analysis/SpatialAnalysis.js.js
+// src/components/analysis/spatial-analysis/SpatialAnalysis.js
 
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -25,6 +25,12 @@ const UnifiedSpatialDashboard = () => {
   const flowData = useSelector(selectMarketFlows);
   const timeSeriesData = useSelector(selectTimeSeriesData);
   const visualizationMode = useSelector(selectVisualizationMode);
+
+  // Extract market sizes (e.g., population, GDP)
+  const marketSizes = useMemo(() => {
+    const sizes = spatialData?.marketIntegration?.marketSizes || {};
+    return Object.values(sizes);
+  }, [spatialData]);
 
   // Memoized computed metrics
   const marketHealthMetrics = useMemo(() => {
@@ -100,7 +106,8 @@ const UnifiedSpatialDashboard = () => {
           <NetworkGraph
             correlationMatrix={spatialData.marketIntegration?.priceCorrelation}
             accessibility={spatialData.marketIntegration?.accessibility}
-            flowDensity={spatialData.marketIntegration?.flowDensity}
+            flowData={spatialData.flowMaps}
+            marketSizes={marketSizes}
           />
         </TabPanel>
 
@@ -115,7 +122,6 @@ const UnifiedSpatialDashboard = () => {
 
         <TabPanel value={activeTab} index={3}>
           <ClusterEfficiencyDashboard
-            // Provide cluster efficiency data if available
             clusterEfficiency={spatialData.clusterEfficiency || []}
             marketClusters={marketClusters}
             geometry={spatialData.geometry}
