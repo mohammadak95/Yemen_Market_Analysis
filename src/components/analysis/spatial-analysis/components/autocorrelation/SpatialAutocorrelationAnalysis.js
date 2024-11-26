@@ -13,75 +13,8 @@ import {
 } from '@mui/material';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { spatialHandler } from '../../../../../utils/spatialDataHandler';
+import { transformRegionName } from '../../utils/spatialUtils';
 import MetricCard from '../common/MetricCard';
-
-const transformRegionName = (name) => {
-  if (!name) return '';
-
-  // Additional transformations specific to autocorrelation data
-  const specialCases = {
-    // Handle the problematic cases
-    "'adan governorate": "aden",
-    "'adan": "aden",
-    "ad dali' governorate": "al dhalee",
-    "ad dali'": "al dhalee",
-    "ad dali": "al dhalee",
-    "sa'dah governorate": "saada",
-    "sa'dah": "saada",
-    "sadah": "saada",
-    "al mahrah governorate": "mahrah",
-    "al mahrah": "mahrah",
-    "al mahra": "mahrah",
-    "ma'rib governorate": "marib",
-    "ma'rib": "marib",
-    "socotra governorate": "socotra",
-    // Handle variations with/without apostrophes and special characters
-    "sanʿaʾ governorate": "sanaa",
-    "san'a'": "sanaa",
-    "sana'a": "sanaa",
-    "ta'izz": "taizz",
-    "ta'izz governorate": "taizz",
-    "'amran": "amran",
-    "'amran governorate": "amran"
-  };
-
-  // First clean up the name
-  const cleaned = name.toLowerCase()
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/governorate$/i, '')
-    .replace(/ʿ/g, "'")  // Normalize special quotes
-    .replace(/['']/g, "'") // Normalize quotes
-    .trim();
-
-  // Check special cases first
-  if (specialCases[cleaned]) {
-    return specialCases[cleaned];
-  }
-
-  // Then try with 'governorate' suffix
-  const withGovernorate = `${cleaned} governorate`;
-  if (specialCases[withGovernorate]) {
-    return specialCases[withGovernorate];
-  }
-
-  // If no special case matches, use spatialHandler's normalization
-  const normalized = spatialHandler.normalizeRegionName(name);
-  
-  // Handle null case and do post-processing
-  if (!normalized) return cleaned;
-
-  const processed = normalized
-    .replace(/^'/, '')  // Remove leading apostrophe
-    .replace(/'$/, '')  // Remove trailing apostrophe
-    .replace(/\s+/g, ' ') // Normalize spaces
-    .trim();
-
-  // Additional post-processing for specific patterns
-  return processed
-    .replace(/^al-/, 'al ') // Normalize 'al-' prefix to 'al '
-    .replace(/^ad-/, 'al '); // Normalize 'ad-' prefix to 'al '
-};
 
 const SpatialAutocorrelationMap = ({ geometry, autocorrelationData }) => {
   const theme = useTheme();

@@ -4,6 +4,7 @@ import { Paper, Typography, Box } from '@mui/material';
 import { scaleLinear } from 'd3-scale';
 import SpatialErrorBoundary from '../../SpatialErrorBoundary';
 import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
+import { transformRegionName } from '../../utils/spatialUtils';
 
 const ResidualMap = ({ 
   geometry, 
@@ -34,15 +35,37 @@ const ResidualMap = ({
       .range(['blue', 'white', 'red']);
   }, [residualStats]);
 
-  // Process GeoJSON with safe preprocessing
+  // Process GeoJSON with safe preprocessing and name normalization
   const processedGeometry = useMemo(() => {
-    return geometry ? safeGeoJSONProcessor(geometry, 'residuals') : null;
+    if (!geometry) return null;
+    
+    const processed = safeGeoJSONProcessor(geometry, 'residuals');
+    if (!processed?.features) return null;
+
+    return {
+      ...processed,
+      features: processed.features.map(feature => {
+        const originalName = feature.properties.originalName || 
+                           feature.properties.region_id || 
+                           feature.properties.name;
+        const normalizedName = transformRegionName(originalName);
+
+        return {
+          ...feature,
+          properties: {
+            ...feature.properties,
+            originalName,
+            normalizedName
+          }
+        };
+      })
+    };
   }, [geometry]);
 
   // Feature styling based on residuals
   const getFeatureStyle = (feature) => {
-    const regionId = feature.properties.region_id;
-    const residualValue = residuals[regionId] || 0;
+    const normalizedName = feature.properties.normalizedName;
+    const residualValue = residuals[normalizedName] || 0;
 
     return {
       fillColor: colorScale(residualValue),
@@ -55,16 +78,21 @@ const ResidualMap = ({
 
   // Tooltip and interaction for each feature
   const onEachFeature = (feature, layer) => {
-    const regionId = feature.properties.region_id;
-    const residualValue = residuals[regionId];
+    const normalizedName = feature.properties.normalizedName;
+    const displayName = feature.properties.originalName || normalizedName;
+    const residualValue = residuals[normalizedName];
 
     if (residualValue !== undefined) {
       layer.bindTooltip(`
-        <strong>${regionId}</strong><br/>
+        <strong>${displayName}</strong><br/>
         Residual: ${residualValue.toFixed(4)}
       `);
     }
   };
+
+  if (!processedGeometry) {
+    return null;
+  }
 
   return (
     <SpatialErrorBoundary>
@@ -79,13 +107,11 @@ const ResidualMap = ({
             attribution="&copy; OpenStreetMap contributors"
           />
           
-          {processedGeometry && (
-            <GeoJSON
-              data={processedGeometry}
-              style={getFeatureStyle}
-              onEachFeature={onEachFeature}
-            />
-          )}
+          <GeoJSON
+            data={processedGeometry}
+            style={getFeatureStyle}
+            onEachFeature={onEachFeature}
+          />
         </MapContainer>
 
         {/* Residual Legend */}

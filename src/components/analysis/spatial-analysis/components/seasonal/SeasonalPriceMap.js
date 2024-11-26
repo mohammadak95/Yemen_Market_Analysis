@@ -14,6 +14,7 @@ import {
 import { scaleLinear } from 'd3-scale';
 import SpatialErrorBoundary from '../../SpatialErrorBoundary';
 import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
+import { transformRegionName } from '../../utils/spatialUtils';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -32,13 +33,18 @@ const SeasonalPriceMap = ({
     return {
       ...processedGeometry,
       features: processedGeometry.features.map(feature => {
-        const regionId = feature.properties.region_id;
-        const monthlyEffect = regionalPatterns[regionId]?.[selectedMonth] || 0;
+        const originalName = feature.properties.originalName || 
+                           feature.properties.region_id || 
+                           feature.properties.name;
+        const normalizedName = transformRegionName(originalName);
+        const monthlyEffect = regionalPatterns[normalizedName]?.[selectedMonth] || 0;
 
         return {
           ...feature,
           properties: {
             ...feature.properties,
+            originalName,
+            normalizedName,
             seasonalEffect: monthlyEffect
           }
         };
@@ -71,11 +77,11 @@ const SeasonalPriceMap = ({
 
   // Tooltip for each feature
   const onEachFeature = (feature, layer) => {
-    const regionId = feature.properties.region_id;
+    const displayName = feature.properties.originalName || feature.properties.normalizedName;
     const effect = feature.properties.seasonalEffect;
     
     layer.bindTooltip(`
-      <strong>${regionId}</strong><br/>
+      <strong>${displayName}</strong><br/>
       Seasonal Effect: ${(effect * 100).toFixed(1)}%
     `);
   };

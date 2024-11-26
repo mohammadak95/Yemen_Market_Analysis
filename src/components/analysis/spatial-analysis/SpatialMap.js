@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { getColorScale } from '../../../utils/colorScales';
 import { MAP_SETTINGS } from '../../../constants';
 import { safeGeoJSONProcessor } from '../../../utils/geoJSONProcessor';
+import { transformRegionName } from './utils/spatialUtils';
 
 const SpatialMap = ({ 
   visualizationData, 
@@ -11,6 +12,31 @@ const SpatialMap = ({
   onRegionClick,
   mapSettings = MAP_SETTINGS 
 }) => {
+  // Process geometry with standardized naming
+  const processedData = useMemo(() => {
+    if (!visualizationData?.geometry) return null;
+    
+    const processedGeometry = safeGeoJSONProcessor(visualizationData.geometry, visualizationMode);
+    
+    // Apply consistent region name transformation
+    if (processedGeometry?.features) {
+      processedGeometry.features = processedGeometry.features.map(feature => ({
+        ...feature,
+        properties: {
+          ...feature.properties,
+          normalizedName: transformRegionName(feature.properties.region_id || 
+                                            feature.properties.normalizedName || 
+                                            feature.properties.name)
+        }
+      }));
+    }
+
+    return {
+      ...visualizationData,
+      geometry: processedGeometry
+    };
+  }, [visualizationData, visualizationMode]);
+
   const getFeatureStyle = (feature) => {
     const colorScale = getColorScale(visualizationMode);
     const value = feature?.properties?.[`${visualizationMode}_value`];
@@ -24,16 +50,7 @@ const SpatialMap = ({
     };
   };
 
-  const geoJsonData = useMemo(() => {
-    if (!visualizationData?.geometry) return null;
-    
-    return safeGeoJSONProcessor(
-      visualizationData.geometry, 
-      visualizationMode
-    );
-  }, [visualizationData.geometry, visualizationMode]);
-
-  if (!geoJsonData?.features) return null;
+  if (!processedData?.geometry?.features) return null;
 
   return (
     <MapContainer
@@ -46,13 +63,16 @@ const SpatialMap = ({
         attribution={mapSettings.ATTRIBUTION}
       />
       <GeoJSON
-        data={geoJsonData}
+        data={processedData.geometry}
         style={getFeatureStyle}
         onEachFeature={(feature, layer) => {
-          const regionId = feature.properties.region_id;
-          if (regionId) {
+          const normalizedName = feature.properties.normalizedName;
+          const displayName = feature.properties.originalName || normalizedName;
+          
+          if (normalizedName) {
+            layer.bindTooltip(displayName);
             layer.on({
-              click: () => onRegionClick(regionId)
+              click: () => onRegionClick(normalizedName)
             });
           }
         }}

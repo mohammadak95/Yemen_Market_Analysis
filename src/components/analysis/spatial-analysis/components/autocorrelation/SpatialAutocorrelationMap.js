@@ -3,43 +3,39 @@ import { MapContainer, TileLayer, GeoJSON, CircleMarker } from 'react-leaflet';
 import { Box, Typography, Paper, Alert } from '@mui/material';
 import { scaleSequential } from 'd3-scale';
 import { interpolateRdYlBu } from 'd3-scale-chromatic';
+import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
+import { transformRegionName } from '../../utils/spatialUtils';
 
 const SpatialAutocorrelationMap = ({ 
   geometry, 
   autocorrelationData,
   selectedMetric = 'moran_i'
 }) => {
-  // Validate and process GeoJSON data
+  // Process geometry with standardized naming
   const processedGeometry = useMemo(() => {
-    if (!geometry?.features) {
-      console.warn('Invalid geometry data provided');
-      return null;
-    }
+    if (!geometry) return null;
+    
+    const processed = safeGeoJSONProcessor(geometry, 'autocorrelation');
+    if (!processed?.features) return null;
 
-    try {
-      // Create a deep copy and ensure valid GeoJSON structure
-      return {
-        type: 'FeatureCollection',
-        features: geometry.features.map(feature => ({
-          type: 'Feature',
-          geometry: {
-            type: feature.geometry.type,
-            coordinates: feature.geometry.coordinates
-          },
+    return {
+      ...processed,
+      features: processed.features.map(feature => {
+        const originalName = feature.properties.originalName || 
+                           feature.properties.region_id || 
+                           feature.properties.name;
+        const normalizedName = transformRegionName(originalName);
+
+        return {
+          ...feature,
           properties: {
             ...feature.properties,
-            region_id: feature.properties.region_id || feature.properties.normalizedName
+            originalName,
+            normalizedName
           }
-        })).filter(feature => 
-          feature.geometry && 
-          Array.isArray(feature.geometry.coordinates) &&
-          feature.properties.region_id
-        )
-      };
-    } catch (error) {
-      console.error('Error processing GeoJSON:', error);
-      return null;
-    }
+        };
+      })
+    };
   }, [geometry]);
 
   // Create color scale for visualization
@@ -56,8 +52,8 @@ const SpatialAutocorrelationMap = ({
 
   // Style function for GeoJSON features
   const getFeatureStyle = (feature) => {
-    const regionId = feature.properties.region_id;
-    const value = autocorrelationData?.[regionId]?.[selectedMetric];
+    const normalizedName = feature.properties.normalizedName;
+    const value = autocorrelationData?.[normalizedName]?.[selectedMetric];
 
     return {
       fillColor: value !== undefined && colorScale ? colorScale(value) : '#cccccc',
@@ -70,12 +66,13 @@ const SpatialAutocorrelationMap = ({
 
   // Tooltip content
   const onEachFeature = (feature, layer) => {
-    const regionId = feature.properties.region_id;
-    const data = autocorrelationData?.[regionId];
+    const normalizedName = feature.properties.normalizedName;
+    const displayName = feature.properties.originalName || normalizedName;
+    const data = autocorrelationData?.[normalizedName];
     
     if (data) {
       layer.bindTooltip(`
-        <strong>${regionId}</strong><br/>
+        <strong>${displayName}</strong><br/>
         Moran's I: ${data.moran_i?.toFixed(3) || 'N/A'}<br/>
         P-value: ${data.p_value?.toFixed(3) || 'N/A'}<br/>
         Z-score: ${data.z_score?.toFixed(3) || 'N/A'}

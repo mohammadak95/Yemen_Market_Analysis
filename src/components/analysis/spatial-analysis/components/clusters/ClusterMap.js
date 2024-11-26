@@ -5,9 +5,38 @@ import PropTypes from 'prop-types';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { scaleLinear } from 'd3-scale';
 import { useTheme } from '@mui/material/styles';
+import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
+import { transformRegionName } from '../../utils/spatialUtils';
 
 const ClusterMap = ({ clusters, selectedClusterId, onClusterSelect, geometry }) => {
   const theme = useTheme();
+
+  // Process geometry with standardized naming
+  const processedGeometry = useMemo(() => {
+    if (!geometry) return null;
+    
+    const processed = safeGeoJSONProcessor(geometry, 'clusters');
+    if (!processed?.features) return null;
+
+    return {
+      ...processed,
+      features: processed.features.map(feature => {
+        const originalName = feature.properties.originalName || 
+                           feature.properties.region_id || 
+                           feature.properties.name;
+        const normalizedName = transformRegionName(originalName);
+
+        return {
+          ...feature,
+          properties: {
+            ...feature.properties,
+            originalName,
+            normalizedName
+          }
+        };
+      })
+    };
+  }, [geometry]);
 
   // Define a color scale based on efficiency score
   const colorScale = useMemo(
@@ -18,12 +47,13 @@ const ClusterMap = ({ clusters, selectedClusterId, onClusterSelect, geometry }) 
     [theme]
   );
 
-  // Map region IDs to their clusters
+  // Map region IDs to their clusters using normalized names
   const regionClusterMap = useMemo(() => {
     const map = {};
     clusters.forEach(cluster => {
       cluster.connected_markets.forEach(market => {
-        map[market] = cluster;
+        const normalizedMarket = transformRegionName(market);
+        map[normalizedMarket] = cluster;
       });
     });
     return map;
@@ -31,8 +61,8 @@ const ClusterMap = ({ clusters, selectedClusterId, onClusterSelect, geometry }) 
 
   // Define style for each feature
   const getFeatureStyle = (feature) => {
-    const regionId = feature.properties.region_id;
-    const cluster = regionClusterMap[regionId];
+    const normalizedName = feature.properties.normalizedName;
+    const cluster = regionClusterMap[normalizedName];
 
     if (!cluster) {
       return {
@@ -58,15 +88,16 @@ const ClusterMap = ({ clusters, selectedClusterId, onClusterSelect, geometry }) 
 
   // Handle feature events
   const onEachFeature = (feature, layer) => {
-    const regionId = feature.properties.region_id;
-    const cluster = regionClusterMap[regionId];
+    const normalizedName = feature.properties.normalizedName;
+    const displayName = feature.properties.originalName || normalizedName;
+    const cluster = regionClusterMap[normalizedName];
 
     if (cluster) {
       layer.on('click', () => onClusterSelect(cluster.cluster_id));
 
       // Tooltip content
       const tooltipContent = `
-        <strong>${regionId}</strong><br/>
+        <strong>${displayName}</strong><br/>
         Cluster: ${cluster.main_market}<br/>
         Efficiency Score: ${cluster.efficiency_metrics.efficiency_score.toFixed(2)}<br/>
         Number of Markets: ${cluster.connected_markets.length}
@@ -76,13 +107,21 @@ const ClusterMap = ({ clusters, selectedClusterId, onClusterSelect, geometry }) 
     }
   };
 
+  if (!processedGeometry) {
+    return null;
+  }
+
   return (
     <MapContainer center={[15.3694, 44.191]} zoom={6} style={{ height: '500px', width: '100%' }}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; OpenStreetMap contributors"
       />
-      <GeoJSON data={geometry} style={getFeatureStyle} onEachFeature={onEachFeature} />
+      <GeoJSON 
+        data={processedGeometry} 
+        style={getFeatureStyle} 
+        onEachFeature={onEachFeature} 
+      />
     </MapContainer>
   );
 };

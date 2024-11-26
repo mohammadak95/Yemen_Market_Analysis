@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Tooltip } from 'react-leaflet';
 import { useTheme } from '@mui/material/styles';
 import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
+import { transformRegionName } from '../../utils/spatialUtils';
 import SpatialErrorBoundary from '../../SpatialErrorBoundary';
 
 const FlowMap = ({ 
@@ -21,33 +22,61 @@ const FlowMap = ({
     fillOpacity: 0.3
   };
 
-  // Process GeoJSON with safe preprocessing
+  // Process GeoJSON with safe preprocessing and name normalization
   const processedGeometry = useMemo(() => {
-    return geometry ? safeGeoJSONProcessor(geometry, 'flows') : null;
+    if (!geometry) return null;
+    
+    const processed = safeGeoJSONProcessor(geometry, 'flows');
+    if (!processed?.features) return null;
+
+    return {
+      ...processed,
+      features: processed.features.map(feature => {
+        const originalName = feature.properties.originalName || 
+                           feature.properties.region_id || 
+                           feature.properties.name;
+        const normalizedName = transformRegionName(originalName);
+
+        return {
+          ...feature,
+          properties: {
+            ...feature.properties,
+            originalName,
+            normalizedName
+          }
+        };
+      })
+    };
   }, [geometry]);
 
-  // Calculate flow line properties
+  // Calculate flow line properties with normalized names
   const flowLines = useMemo(() => {
     if (!flows || !marketCoordinates) return [];
 
     return flows
       .filter(flow => flow[metricType] > 0)
       .map(flow => {
-        const sourceCoords = marketCoordinates[flow.source];
-        const targetCoords = marketCoordinates[flow.target];
+        const normalizedSource = transformRegionName(flow.source);
+        const normalizedTarget = transformRegionName(flow.target);
+        const sourceCoords = marketCoordinates[normalizedSource];
+        const targetCoords = marketCoordinates[normalizedTarget];
 
         if (!sourceCoords || !targetCoords) return null;
 
         return {
           ...flow,
           sourceCoords,
-          targetCoords
+          targetCoords,
+          sourceName: markets?.[normalizedSource]?.originalName || flow.source,
+          targetName: markets?.[normalizedTarget]?.originalName || flow.target,
+          normalizedSource,
+          normalizedTarget
         };
       })
       .filter(Boolean);
-  }, [flows, marketCoordinates, metricType]);
+  }, [flows, marketCoordinates, metricType, markets]);
 
-  // Render flow lines
+  // Render flow lines with tooltips using original names
   const renderFlowLines = () => {
     return flowLines.map((flow, index) => {
       const lineWidth = Math.log(flow[metricType] + 1) * 2;
@@ -60,14 +89,22 @@ const FlowMap = ({
             color={theme.palette.primary.main}
             fillColor={theme.palette.primary.light}
             fillOpacity={0.7}
-          />
+          >
+            <Tooltip>
+              {flow.sourceName}
+            </Tooltip>
+          </CircleMarker>
           <CircleMarker
             center={flow.targetCoords}
             radius={3}
             color={theme.palette.secondary.main}
             fillColor={theme.palette.secondary.light}
             fillOpacity={0.7}
-          />
+          >
+            <Tooltip>
+              {flow.targetName}
+            </Tooltip>
+          </CircleMarker>
           <svg>
             <line
               x1={flow.sourceCoords[0]}
@@ -84,6 +121,10 @@ const FlowMap = ({
     });
   };
 
+  if (!processedGeometry) {
+    return null;
+  }
+
   return (
     <SpatialErrorBoundary>
       <MapContainer
@@ -96,12 +137,14 @@ const FlowMap = ({
           attribution="&copy; OpenStreetMap contributors"
         />
         
-        {processedGeometry && (
-          <GeoJSON 
-            data={processedGeometry} 
-            style={() => regionStyle} 
-          />
-        )}
+        <GeoJSON 
+          data={processedGeometry} 
+          style={() => regionStyle}
+          onEachFeature={(feature, layer) => {
+            const displayName = feature.properties.originalName || feature.properties.normalizedName;
+            layer.bindTooltip(displayName);
+          }}
+        />
         
         {renderFlowLines()}
       </MapContainer>

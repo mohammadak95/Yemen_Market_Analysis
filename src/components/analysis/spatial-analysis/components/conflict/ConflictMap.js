@@ -5,9 +5,38 @@ import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { useTheme } from '@mui/material/styles';
 import { scaleSequential } from 'd3-scale';
 import { interpolateRdYlBu } from 'd3-scale-chromatic';
+import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
+import { transformRegionName } from '../../utils/spatialUtils';
 
-const ConflictMap = ({ conflictData, selectedRegion, onRegionSelect, metricType }) => {
+const ConflictMap = ({ geometry, conflictData, selectedRegion, onRegionSelect, metricType }) => {
   const theme = useTheme();
+
+  // Process geometry with standardized naming
+  const processedGeometry = useMemo(() => {
+    if (!geometry) return null;
+    
+    const processed = safeGeoJSONProcessor(geometry, 'conflicts');
+    if (!processed?.features) return null;
+
+    return {
+      ...processed,
+      features: processed.features.map(feature => {
+        const originalName = feature.properties.originalName || 
+                           feature.properties.region_id || 
+                           feature.properties.name;
+        const normalizedName = transformRegionName(originalName);
+
+        return {
+          ...feature,
+          properties: {
+            ...feature.properties,
+            originalName,
+            normalizedName
+          }
+        };
+      })
+    };
+  }, [geometry]);
 
   const colorScale = useMemo(() => {
     const values = Object.values(conflictData).map(d => {
@@ -27,8 +56,16 @@ const ConflictMap = ({ conflictData, selectedRegion, onRegionSelect, metricType 
   }, [conflictData, metricType]);
 
   const getStyle = (feature) => {
-    const regionData = conflictData[feature.properties.region_id];
-    if (!regionData) return defaultStyle;
+    const normalizedName = feature.properties.normalizedName;
+    const regionData = conflictData[normalizedName];
+    if (!regionData) return {
+      fillColor: '#cccccc',
+      weight: 1,
+      opacity: 1,
+      color: 'white',
+      fillOpacity: 0.7,
+      dashArray: '3'
+    };
 
     let value;
     switch (metricType) {
@@ -40,13 +77,17 @@ const ConflictMap = ({ conflictData, selectedRegion, onRegionSelect, metricType 
 
     return {
       fillColor: colorScale(value),
-      weight: selectedRegion === feature.properties.region_id ? 2 : 1,
+      weight: selectedRegion === normalizedName ? 2 : 1,
       opacity: 1,
       color: 'white',
       fillOpacity: 0.7,
-      dashArray: selectedRegion === feature.properties.region_id ? '' : '3'
+      dashArray: selectedRegion === normalizedName ? '' : '3'
     };
   };
+
+  if (!processedGeometry) {
+    return null;
+  }
 
   return (
     <MapContainer
@@ -59,20 +100,23 @@ const ConflictMap = ({ conflictData, selectedRegion, onRegionSelect, metricType 
         attribution='&copy; OpenStreetMap contributors'
       />
       <GeoJSON
-        data={geometry}
+        data={processedGeometry}
         style={getStyle}
         onEachFeature={(feature, layer) => {
-          const regionData = conflictData[feature.properties.region_id];
+          const normalizedName = feature.properties.normalizedName;
+          const displayName = feature.properties.originalName || normalizedName;
+          const regionData = conflictData[normalizedName];
+          
           if (regionData) {
             layer.bindTooltip(`
-              <strong>${feature.properties.region_id}</strong><br/>
+              <strong>${displayName}</strong><br/>
               Price Impact: ${regionData.priceImpact.toFixed(2)}%<br/>
               Volatility: ${regionData.volatility.toFixed(2)}<br/>
               Correlation: ${regionData.correlation.toFixed(2)}
             `);
             
             layer.on({
-              click: () => onRegionSelect(feature.properties.region_id)
+              click: () => onRegionSelect(normalizedName)
             });
           }
         }}
@@ -81,4 +125,4 @@ const ConflictMap = ({ conflictData, selectedRegion, onRegionSelect, metricType 
   );
 };
 
-export default ConflictMap;
+export default React.memo(ConflictMap);

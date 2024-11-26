@@ -1,5 +1,96 @@
 // src/components/analysis/spatial-analysis/utils/spatialUtils.js
 
+import { spatialHandler } from '../../../../utils/spatialDataHandler';
+
+/**
+ * Transform and normalize region names to ensure consistency across the application.
+ * Handles special cases, variations in spelling, and different formats of region names.
+ * 
+ * @param {string} name - The original region name to transform
+ * @returns {string} - The normalized region name
+ */
+export const transformRegionName = (name) => {
+  if (!name) return '';
+
+  // Special cases mapping for Yemen regions
+  const specialCases = {
+    // Aden variations
+    "'adan governorate": "aden",
+    "'adan": "aden",
+    "ʿadan": "aden",
+    // Al Dhalee variations
+    "ad dali' governorate": "al dhalee",
+    "ad dali'": "al dhalee",
+    "ad dali": "al dhalee",
+    "al dhale": "al dhalee",
+    "al dhale'": "al dhalee",
+    // Saada variations
+    "sa'dah governorate": "saada",
+    "sa'dah": "saada",
+    "sadah": "saada",
+    "sa'ada": "saada",
+    // Mahrah variations
+    "al mahrah governorate": "mahrah",
+    "al mahrah": "mahrah",
+    "al mahra": "mahrah",
+    "mahrah governorate": "mahrah",
+    // Marib variations
+    "ma'rib governorate": "marib",
+    "ma'rib": "marib",
+    "mareb": "marib",
+    // Socotra variations
+    "socotra governorate": "socotra",
+    "soqatra": "socotra",
+    // Sanaa variations
+    "sanʿaʾ governorate": "sanaa",
+    "san'a'": "sanaa",
+    "sana'a": "sanaa",
+    "sanaa governorate": "sanaa",
+    // Taiz variations
+    "ta'izz": "taizz",
+    "ta'izz governorate": "taizz",
+    "taiz": "taizz",
+    // Amran variations
+    "'amran": "amran",
+    "'amran governorate": "amran",
+    "ʿamran": "amran"
+  };
+
+  // Clean up the name
+  const cleaned = name.toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/governorate$/i, '')
+    .replace(/ʿ/g, "'")  // Normalize special quotes
+    .replace(/['']/g, "'") // Normalize quotes
+    .trim();
+
+  // Check special cases first
+  if (specialCases[cleaned]) {
+    return specialCases[cleaned];
+  }
+
+  // Check with 'governorate' suffix
+  const withGovernorate = `${cleaned} governorate`;
+  if (specialCases[withGovernorate]) {
+    return specialCases[withGovernorate];
+  }
+
+  // Use spatialHandler's normalization as fallback
+  const normalized = spatialHandler.normalizeRegionName(name);
+  
+  if (!normalized) return cleaned;
+
+  // Post-process the normalized name
+  return normalized
+    .replace(/^'/, '')  // Remove leading apostrophe
+    .replace(/'$/, '')  // Remove trailing apostrophe
+    .replace(/\s+/g, ' ') // Normalize spaces
+    .replace(/^al-/, 'al ') // Normalize 'al-' prefix
+    .replace(/^ad-/, 'al ') // Normalize 'ad-' prefix
+    .trim();
+};
+
 /**
  * Calculate geographical distance between two features using the Haversine formula.
  */
@@ -76,7 +167,3 @@ export const calculateCoefficientOfVariation = (values) => {
   const stdDev = calculateStandardDeviation(values);
   return stdDev / mean;
 };
-
-/**
- * Additional utility functions can be defined here as needed.
- */
