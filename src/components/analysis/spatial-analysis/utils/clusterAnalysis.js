@@ -1,220 +1,140 @@
-// src/utils/clusterAnalysis.js
+// src/components/analysis/spatial-analysis/utils/clusterAnalysis.js
 
 import _ from 'lodash';
 
 /**
- * Calculate aggregated efficiency metrics for market clusters.
- * @param {Array} clusters - Array of market clusters with efficiency metrics.
- * @returns {Object} Aggregated efficiency metrics.
+ * Helper functions for statistical calculations with safety checks.
  */
-export const calculateEfficiencyMetrics = (clusters) => {
-  if (!clusters?.length) {
-    console.warn("calculateEfficiencyMetrics: No clusters provided.");
-    return null;
-  }
-
-  const metrics = clusters.reduce((acc, cluster) => {
-    const efficiency = cluster.efficiency_metrics?.efficiency_score || 0;
-    const connectivity = cluster.efficiency_metrics?.internal_connectivity || 0;
-    const coverage = cluster.efficiency_metrics?.market_coverage || 0;
-
-    acc.totalMarkets += cluster.market_count || 0;
-    acc.avgEfficiency += efficiency;
-    acc.avgConnectivity += connectivity;
-    acc.avgCoverage += coverage;
-
-    acc.maxEfficiency = Math.max(acc.maxEfficiency, efficiency);
-    acc.maxConnectivity = Math.max(acc.maxConnectivity, connectivity);
-
-    return acc;
-  }, {
-    totalMarkets: 0,
-    avgEfficiency: 0,
-    avgConnectivity: 0,
-    avgCoverage: 0,
-    maxEfficiency: 0,
-    maxConnectivity: 0,
-  });
-
-  const count = clusters.length;
-  const aggregatedMetrics = {
-    ...metrics,
-    avgEfficiency: metrics.avgEfficiency / count,
-    avgConnectivity: metrics.avgConnectivity / count,
-    avgCoverage: metrics.avgCoverage / count,
-  };
-
-  console.log("Aggregated Efficiency Metrics:", aggregatedMetrics);
-
-  return aggregatedMetrics;
+const Math = {
+  mean: (arr) => {
+    if (!Array.isArray(arr) || arr.length === 0) return 0;
+    const validNumbers = arr.filter(val => typeof val === 'number' && !isNaN(val));
+    if (validNumbers.length === 0) return 0;
+    return validNumbers.reduce((sum, val) => sum + val, 0) / validNumbers.length;
+  },
+  std: (arr) => {
+    if (!Array.isArray(arr) || arr.length <= 1) return 0;
+    const validNumbers = arr.filter(val => typeof val === 'number' && !isNaN(val));
+    if (validNumbers.length <= 1) return 0;
+    const mean = Math.mean(validNumbers);
+    const squareDiffs = validNumbers.map(val => (val - mean) ** 2);
+    const avgSquareDiff = Math.mean(squareDiffs);
+    return Math.sqrt(avgSquareDiff);
+  },
 };
 
 /**
- * Generate a connectivity matrix for visualization purposes.
+ * Calculate efficiency metrics for each market cluster.
  * @param {Array} clusters - Array of market clusters.
- * @returns {Object} Connectivity matrix containing markets and their connectivity scores.
+ * @param {Array} flowData - Array of flow data between markets.
+ * @param {Array} timeSeriesData - Array of time series data for markets.
+ * @returns {Array} Clusters with calculated efficiency metrics.
  */
-export const generateConnectivityMatrix = (clusters) => {
-  if (!clusters?.length) {
-    console.warn("generateConnectivityMatrix: No clusters provided.");
-    return { markets: [], matrix: [] };
+export const calculateEfficiencyMetrics = (clusters, flowData, timeSeriesData) => {
+  // Validate input parameters
+  if (!Array.isArray(clusters) || clusters.length === 0) {
+    console.warn("No valid clusters provided");
+    return [];
   }
 
-  const markets = new Set();
-  clusters.forEach(cluster => {
-    markets.add(cluster.main_market);
-    cluster.connected_markets.forEach(market => markets.add(market));
-  });
+  if (!Array.isArray(flowData)) {
+    console.warn("Invalid flow data provided");
+    flowData = [];
+  }
 
-  const marketArray = Array.from(markets);
-  const matrix = Array(marketArray.length).fill(0)
-    .map(() => Array(marketArray.length).fill(0));
+  if (!Array.isArray(timeSeriesData)) {
+    console.warn("Invalid time series data provided");
+    timeSeriesData = [];
+  }
 
-  clusters.forEach(cluster => {
-    const mainIndex = marketArray.indexOf(cluster.main_market);
-    if (mainIndex === -1) {
-      console.warn(`generateConnectivityMatrix: Main market '${cluster.main_market}' not found in marketArray.`);
-      return;
-    }
-    cluster.connected_markets.forEach(market => {
-      const marketIndex = marketArray.indexOf(market);
-      if (marketIndex === -1) {
-        console.warn(`generateConnectivityMatrix: Connected market '${market}' not found in marketArray.`);
-        return;
+  return clusters.map(cluster => {
+    try {
+      // Validate cluster structure
+      if (!cluster || !Array.isArray(cluster.connected_markets)) {
+        console.warn(`Invalid cluster structure: ${JSON.stringify(cluster)}`);
+        return {
+          ...cluster,
+          efficiency_metrics: {
+            internal_connectivity: 0,
+            market_coverage: 0,
+            price_convergence: 0,
+            stability: 0,
+            efficiency_score: 0,
+          },
+        };
       }
-      const connectivity = cluster.efficiency_metrics?.internal_connectivity || 0;
-      matrix[mainIndex][marketIndex] = connectivity;
-      matrix[marketIndex][mainIndex] = connectivity;
-    });
+
+      const markets = cluster.connected_markets;
+
+      // Calculate internal connectivity based on flow data
+      const internalFlows = flowData.filter(flow =>
+        flow?.source && flow?.target &&
+        markets.includes(flow.source) && markets.includes(flow.target)
+      );
+
+      const possibleConnections = markets.length * (markets.length - 1);
+      const actualConnections = internalFlows.length;
+      const internalConnectivity = possibleConnections > 0
+        ? actualConnections / possibleConnections
+        : 0;
+
+      // Calculate market coverage
+      const uniqueMarkets = timeSeriesData && timeSeriesData.length > 0
+        ? _.uniq(timeSeriesData.filter(d => d?.region).map(d => d.region))
+        : [];
+      const totalMarkets = uniqueMarkets.length || markets.length;
+      const marketCoverage = totalMarkets > 0 ? markets.length / totalMarkets : 0;
+
+      // Calculate price convergence
+      const clusterPrices = timeSeriesData.filter(d =>
+        d?.region && markets.includes(d.region)
+      );
+      const prices = clusterPrices
+        .map(d => d?.avgUsdPrice)
+        .filter(price => typeof price === 'number' && !isNaN(price));
+      
+      const priceConvergence = prices.length > 1
+        ? Math.max(0, Math.min(1, 1 - (Math.std(prices) / Math.mean(prices))))
+        : 0;
+
+      // Calculate stability
+      const volatilities = clusterPrices
+        .map(d => d?.volatility)
+        .filter(vol => typeof vol === 'number' && !isNaN(vol));
+      
+      const stability = volatilities.length > 0
+        ? Math.max(0, Math.min(1, 1 - (Math.mean(volatilities) / 100)))
+        : 0;
+
+      // Composite efficiency score
+      const metrics = [internalConnectivity, marketCoverage, priceConvergence, stability];
+      const validMetrics = metrics.filter(m => typeof m === 'number' && !isNaN(m));
+      const efficiencyScore = validMetrics.length > 0
+        ? validMetrics.reduce((sum, val) => sum + val, 0) / validMetrics.length
+        : 0;
+
+      return {
+        ...cluster,
+        efficiency_metrics: {
+          internal_connectivity: internalConnectivity,
+          market_coverage: marketCoverage,
+          price_convergence: priceConvergence,
+          stability,
+          efficiency_score: efficiencyScore,
+        },
+      };
+    } catch (error) {
+      console.error(`Error calculating metrics for cluster: ${error.message}`);
+      return {
+        ...cluster,
+        efficiency_metrics: {
+          internal_connectivity: 0,
+          market_coverage: 0,
+          price_convergence: 0,
+          stability: 0,
+          efficiency_score: 0,
+        },
+      };
+    }
   });
-
-  console.log("Connectivity Matrix:", { markets: marketArray, matrix });
-
-  return {
-    markets: marketArray,
-    matrix
-  };
-};
-
-/**
- * Calculate the health score of a cluster based on various metrics.
- * @param {Object} cluster - Market cluster with efficiency metrics.
- * @returns {number} Health score.
- */
-export const calculateClusterHealth = (cluster) => {
-  if (!cluster) {
-    console.warn("calculateClusterHealth: No cluster provided.");
-    return 0;
-  }
-
-  const metrics = cluster.efficiency_metrics || {};
-
-  // Weights for different components
-  const weights = {
-    efficiency: 0.3,
-    connectivity: 0.2,
-    coverage: 0.2,
-    stability: 0.3
-  };
-
-  const healthScore = (
-    weights.efficiency * (metrics.efficiency_score || 0) +
-    weights.connectivity * (metrics.internal_connectivity || 0) +
-    weights.coverage * (metrics.market_coverage || 0) +
-    weights.stability * (metrics.stability || 0)
-  );
-
-  console.log(`Cluster ID ${cluster.cluster_id} Health Score:`, healthScore);
-
-  return healthScore;
-};
-
-/**
- * Analyze the stability of a cluster over time.
- * @param {Object} cluster - Market cluster with efficiency metrics.
- * @param {Array} timeSeriesData - Array of time series data objects.
- * @returns {Object} Stability metrics.
- */
-export const analyzeClusterStability = (cluster, timeSeriesData) => {
-  if (!cluster) {
-    console.warn("analyzeClusterStability: No cluster provided.");
-    return null;
-  }
-  if (!timeSeriesData?.length) {
-    console.warn("analyzeClusterStability: No timeSeriesData provided.");
-    return null;
-  }
-
-  // Filter time series data for connected markets
-  const clusterShocks = timeSeriesData.filter(d => 
-    cluster.connected_markets.includes(d.region)
-  );
-
-  if (!clusterShocks.length) {
-    console.warn("analyzeClusterStability: No shocks found for the cluster.");
-    return null;
-  }
-
-  const priceVolatility = calculatePriceVolatility(clusterShocks);
-  const membershipStability = calculateMembershipStability(cluster);
-  const connectivityTrend = analyzeConnectivityTrend(cluster);
-
-  const stabilityMetrics = {
-    priceVolatility,
-    membershipStability,
-    connectivityTrend,
-    overallStability: (
-      priceVolatility * 0.4 +
-      membershipStability * 0.3 +
-      connectivityTrend * 0.3
-    )
-  };
-
-  console.log(`Cluster ID ${cluster.cluster_id} Stability Metrics:`, stabilityMetrics);
-
-  return stabilityMetrics;
-};
-
-/**
- * Calculate price volatility based on shock data.
- * @param {Array} shocks - Array of shock events related to the cluster.
- * @returns {number} Price volatility metric.
- */
-const calculatePriceVolatility = (shocks) => {
-  if (!shocks?.length) {
-    console.warn("calculatePriceVolatility: No shocks provided.");
-    return 1;
-  }
-  const meanPrice = _.meanBy(shocks, 'previous_price');
-  const variance = shocks.reduce((sum, p) => 
-    sum + Math.pow(p.previous_price - meanPrice, 2), 0) / shocks.length;
-  const volatility = Math.sqrt(variance) / meanPrice;
-  console.log("Price Volatility:", volatility);
-  return volatility;
-};
-
-/**
- * Calculate membership stability based on cluster metrics.
- * @param {Object} cluster - Market cluster with efficiency metrics.
- * @returns {number} Membership stability metric.
- */
-const calculateMembershipStability = (cluster) => {
-  // Implement actual logic based on historical membership data
-  // Placeholder implementation:
-  const stability = cluster.efficiency_metrics?.stability || 0;
-  console.log("Membership Stability:", stability);
-  return stability;
-};
-
-/**
- * Analyze connectivity trend based on cluster metrics.
- * @param {Object} cluster - Market cluster with efficiency metrics.
- * @returns {number} Connectivity trend metric.
- */
-const analyzeConnectivityTrend = (cluster) => {
-  // Implement actual logic based on historical connectivity data
-  // Placeholder implementation:
-  const connectivityTrend = cluster.efficiency_metrics?.internal_connectivity || 0;
-  console.log("Connectivity Trend:", connectivityTrend);
-  return connectivityTrend;
 };

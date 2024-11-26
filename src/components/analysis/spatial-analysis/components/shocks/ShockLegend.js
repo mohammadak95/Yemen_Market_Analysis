@@ -1,13 +1,12 @@
 // src/components/analysis/spatial-analysis/components/shocks/ShockLegend.js
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Box, Typography } from '@mui/material';
 
-const ShockLegend = ({ maxMagnitude, colorScale, stats }) => {
+const ShockLegend = ({ maxMagnitude, colorScale }) => {
   const steps = 5;
-  const values = Array.from({ length: steps }, (_, i) => 
-    (maxMagnitude * i) / (steps - 1)
-  );
+  const values = Array.from({ length: steps }, (_, i) => (maxMagnitude * i) / (steps - 1));
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -22,25 +21,20 @@ const ShockLegend = ({ maxMagnitude, colorScale, stats }) => {
                 width: 20,
                 height: 20,
                 backgroundColor: colorScale(value),
-                border: '1px solid rgba(0,0,0,0.1)'
+                border: '1px solid rgba(0,0,0,0.1)',
               }}
             />
-            <Typography variant="caption">
-              {value.toFixed(0)}
-            </Typography>
+            <Typography variant="caption">{(value * 100).toFixed(0)}%</Typography>
           </Box>
         ))}
       </Box>
-      <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
-        <Typography variant="caption">
-          Total Shocks: {stats.totalShocks}
-        </Typography>
-        <Typography variant="caption">
-          Avg Magnitude: {stats.avgMagnitude.toFixed(2)}
-        </Typography>
-      </Box>
     </Box>
   );
+};
+
+ShockLegend.propTypes = {
+  maxMagnitude: PropTypes.number.isRequired,
+  colorScale: PropTypes.func.isRequired,
 };
 
 export default ShockLegend;

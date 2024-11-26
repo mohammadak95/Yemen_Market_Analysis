@@ -104,10 +104,11 @@ const UnifiedSpatialDashboard = () => {
 
         <TabPanel value={activeTab} index={1}>
           <NetworkGraph
-            correlationMatrix={spatialData.marketIntegration?.priceCorrelation}
-            accessibility={spatialData.marketIntegration?.accessibility}
+            correlationMatrix={spatialData.marketIntegration.price_correlation}
             flowData={spatialData.flowMaps}
-            marketSizes={marketSizes}
+            accessibility={spatialData.marketIntegration.accessibility}
+            marketSizes={spatialData.marketSizes}
+            geometry={spatialData.geometry}
           />
         </TabPanel>
 

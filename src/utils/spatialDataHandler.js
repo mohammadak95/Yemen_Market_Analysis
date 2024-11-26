@@ -20,7 +20,7 @@ import { workerManager } from './workerManager';
 
 
 // Yemen region name mappings for normalization
-const REGION_MAPPINGS = {
+export const REGION_MAPPINGS = {
   // Sana'a variations
   "san'a'": "sana'a",
   "san_a__governorate": "sana'a",

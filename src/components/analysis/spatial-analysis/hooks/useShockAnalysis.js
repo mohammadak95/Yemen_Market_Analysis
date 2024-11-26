@@ -1,23 +1,30 @@
 // src/components/analysis/spatial-analysis/hooks/useShockAnalysis.js
 
 import { useMemo } from 'react';
-import { analyzeShockPropagation, calculateShockStatistics } from '../utils/shockAnalysis';
+import { analyzeMarketShocks, calculateShockStatistics, analyzeShockPropagation } from '../utils/shockAnalysis';
 
-export const useShockAnalysis = (shocks, spatialAutocorrelation, selectedDate) => {
+/**
+ * Hook to process shock data and compute shock statistics.
+ * @param {Array} timeSeriesData - Array of time series data for markets.
+ * @param {Object} spatialAutocorrelation - Spatial autocorrelation data.
+ * @param {number} threshold - Threshold for detecting shocks.
+ * @returns {Object} Processed shocks and statistics.
+ */
+export const useShockAnalysis = (timeSeriesData, spatialAutocorrelation, threshold = 0.1) => {
   return useMemo(() => {
-    const processedShocks = shocks.map(shock => ({
-      ...shock,
-      clusterType: spatialAutocorrelation[shock.region]?.cluster_type,
-      localMoranI: spatialAutocorrelation[shock.region]?.local_i
-    }));
+    // Analyze market shocks
+    const shocks = analyzeMarketShocks(timeSeriesData, threshold);
 
-    const stats = calculateShockStatistics(processedShocks);
-    const patterns = analyzeShockPropagation(processedShocks, selectedDate);
+    // Calculate shock statistics
+    const shockStats = calculateShockStatistics(shocks);
+
+    // Analyze shock propagation patterns
+    const propagationPatterns = analyzeShockPropagation(shocks, spatialAutocorrelation);
 
     return {
-      processedShocks,
-      shockStats: stats,
-      propagationPatterns: patterns
+      shocks,
+      shockStats,
+      propagationPatterns,
     };
-  }, [shocks, spatialAutocorrelation, selectedDate]);
+  }, [timeSeriesData, spatialAutocorrelation, threshold]);
 };

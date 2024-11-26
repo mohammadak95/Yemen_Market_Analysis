@@ -1,217 +1,339 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import {
+  Box, Paper, Typography, Grid, Card, CardContent,
+  Slider, FormControl, InputLabel, Select, MenuItem,
+  Tooltip, IconButton, Chip
+} from '@mui/material';
+import { Info as InfoIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+import {
   MapContainer,
   TileLayer,
-  Polyline,
   CircleMarker,
-  Tooltip,
-  useMapEvents,
+  Polyline,
 } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Paper, Box, Typography, Slider } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import useNetworkData from '../../hooks/useNetworkData';
-import NetworkGraphLegend from './NetworkGraphLegend';
+import { scaleLinear } from 'd3-scale';
+import _ from 'lodash';
+import { normalizeCoordinates } from '../../utils/coordinateHandler';
 
-const debug = (message, data = {}) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.group(`🌐 NetworkGraph: ${message}`);
-    Object.entries(data).forEach(([key, value]) => {
-      console.log(`${key}:`, value);
-    });
-    console.groupEnd();
-  }
+// Reference coordinates for positioning
+const YEMEN_REFERENCE_COORDINATES = {
+  'sana\'a': [44.2067, 15.3694],
+  'aden': [45.0357, 12.7797],
+  'taizz': [44.0075, 13.5769],
+  'al hudaydah': [42.9552, 14.7979],
+  'ibb': [44.1821, 13.9673],
+  'dhamar': [44.4018, 14.5430],
+  'hadramaut': [48.7867, 15.9320],
+  'al jawf': [45.5837, 16.7875],
+  'marib': [45.3223, 15.4542],
+  'shabwah': [47.0124, 14.7616],
+  'abyan': [46.3262, 13.6339],
+  'lahj': [44.8838, 13.0382],
+  'al bayda': [45.5723, 14.3516],
+  'al dhale\'e': [44.7313, 13.7247],
+  'hajjah': [43.6027, 15.6943],
+  'amran': [43.9436, 16.0174],
+  'al mahwit': [43.5446, 15.4700],
+  'raymah': [43.7117, 14.6779],
+  'amanat al asimah': [44.2067, 15.3694]
 };
 
-const YEMEN_BOUNDS = {
-  center: [15.3694, 44.191],
-  zoom: 6,
-  bounds: {
-    minLon: 41.0,
-    maxLon: 54.0,
-    minLat: 12.0,
-    maxLat: 19.0,
-  },
-};
-
-// Custom component to handle map interactions (if needed)
-const MapInteractionHandler = ({ setTooltipInfo }) => {
-  useMapEvents({
-    mousemove: (e) => {
-      // Handle global map interactions here if needed
-    },
-  });
-  return null;
-};
-
-const NetworkGraph = ({ correlationMatrix, flowData, marketSizes }) => {
+const NetworkGraph = ({ correlationMatrix, flowData, accessibility, marketSizes, geometry }) => {
   const theme = useTheme();
+  const [selectedMarket, setSelectedMarket] = useState(null);
   const [threshold, setThreshold] = useState(0.5);
-  const [hoveredNodeId, setHoveredNodeId] = useState(null);
+  const [visualizationType, setVisualizationType] = useState('flows');
+  const [metricType, setMetricType] = useState('volume');
 
-  const { nodes, links, centralityMeasures } = useNetworkData(
-    correlationMatrix,
-    flowData,
-    threshold
-  );
-
-  const handleNodeHover = useCallback(
-    (node) => {
-      if (node) {
-        setHoveredNodeId(node.id);
-      } else {
-        setHoveredNodeId(null);
-      }
-    },
-    []
-  );
-
-  const validateCoordinates = useCallback((coords) => {
-    if (!Array.isArray(coords) || coords.length !== 2) return false;
-    const [lon, lat] = coords;
-    return (
-      !isNaN(lon) &&
-      !isNaN(lat) &&
-      lon >= YEMEN_BOUNDS.bounds.minLon &&
-      lon <= YEMEN_BOUNDS.bounds.maxLon &&
-      lat >= YEMEN_BOUNDS.bounds.minLat &&
-      lat <= YEMEN_BOUNDS.bounds.maxLat
-    );
-  }, []);
-
-  const { validNodes, validLinks } = useMemo(() => {
-    const filteredNodes = nodes.filter((n) => validateCoordinates(n.coordinates));
-    const filteredLinks = links.filter(
-      (l) =>
-        validateCoordinates(l.sourceCoordinates) && validateCoordinates(l.targetCoordinates)
-    );
-
-    debug('Filtered Data', {
-      totalNodes: nodes.length,
-      validNodes: filteredNodes.length,
-      totalLinks: links.length,
-      validLinks: filteredLinks.length,
+  // Process coordinates and network data
+  const { nodes, links, centralityMeasures } = useMemo(() => {
+    // Create nodes with coordinates
+    const nodeMap = new Map();
+    
+    // First pass: collect all market references
+    const markets = new Set();
+    flowData.forEach(flow => {
+      markets.add(flow.source);
+      markets.add(flow.target);
     });
+
+    // Second pass: create nodes with coordinates
+    markets.forEach(marketId => {
+      const coords = YEMEN_REFERENCE_COORDINATES[marketId.toLowerCase()] || 
+                    getCoordinatesFromGeometry(marketId, geometry);
+      
+      if (coords) {
+        nodeMap.set(marketId, {
+          id: marketId,
+          coordinates: coords,
+          size: marketSizes?.[marketId] || 1,
+          accessibility: accessibility?.[marketId] || 0
+        });
+      }
+    });
+
+    // Process links
+    const processedLinks = [];
+    if (visualizationType === 'flows') {
+      flowData.forEach(flow => {
+        const sourceNode = nodeMap.get(flow.source);
+        const targetNode = nodeMap.get(flow.target);
+        
+        if (sourceNode && targetNode && flow.totalFlow >= threshold) {
+          processedLinks.push({
+            source: flow.source,
+            target: flow.target,
+            sourceCoordinates: sourceNode.coordinates,
+            targetCoordinates: targetNode.coordinates,
+            value: metricType === 'volume' ? flow.totalFlow : flow.avgPriceDifferential,
+            type: 'flow'
+          });
+        }
+      });
+    } else {
+      // Process correlation links
+      Object.entries(correlationMatrix || {}).forEach(([source, correlations]) => {
+        Object.entries(correlations).forEach(([target, value]) => {
+          const sourceNode = nodeMap.get(source);
+          const targetNode = nodeMap.get(target);
+          
+          if (sourceNode && targetNode && Math.abs(value) >= threshold) {
+            processedLinks.push({
+              source,
+              target,
+              sourceCoordinates: sourceNode.coordinates,
+              targetCoordinates: targetNode.coordinates,
+              value: Math.abs(value),
+              type: 'correlation'
+            });
+          }
+        });
+      });
+    }
+
+    // Calculate network centrality
+    const centrality = calculateNetworkCentrality(Array.from(nodeMap.values()), processedLinks);
 
     return {
-      validNodes: filteredNodes,
-      validLinks: filteredLinks,
+      nodes: Array.from(nodeMap.values()),
+      links: processedLinks,
+      centralityMeasures: centrality
     };
-  }, [nodes, links, validateCoordinates]);
+  }, [correlationMatrix, flowData, threshold, visualizationType, metricType, marketSizes, accessibility, geometry]);
 
-  // Function to determine node color based on centrality
-  const getNodeColor = (node) => {
-    const centrality = centralityMeasures[node.id] || 0;
-    if (centrality > 0.7) return hoveredNodeId === node.id ? '#FF3B30' : '#FF3B30AA'; // Red
-    if (centrality > 0.4) return hoveredNodeId === node.id ? '#FF9500' : '#FF9500AA'; // Orange
-    return hoveredNodeId === node.id ? '#34C759' : '#34C759AA'; // Green
-  };
+  // Color scales
+  const nodeColorScale = useMemo(() => 
+    scaleLinear()
+      .domain([0, 1])
+      .range([theme.palette.primary.light, theme.palette.primary.dark])
+  , [theme]);
 
-  // Function to determine link color
-  const getLinkColor = (link) => {
-    const isSourceHovered = hoveredNodeId === link.source;
-    const isTargetHovered = hoveredNodeId === link.target;
-    if (isSourceHovered || isTargetHovered) return '#FF8C00'; // Dark Orange
-    return '#3C3C3CAA'; // Dark Gray with transparency
-  };
+  const linkColorScale = useMemo(() => 
+    scaleLinear()
+      .domain([0, _.maxBy(links, 'value')?.value || 1])
+      .range([theme.palette.grey[300], theme.palette.primary.main])
+  , [links, theme]);
 
-  if (!validNodes.length || !validLinks.length) {
-    return (
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6">No valid network data available</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Found {nodes.length} nodes and {links.length} links, but none were within valid bounds.
-        </Typography>
-      </Paper>
-    );
-  }
+  const handleMarketClick = useCallback((marketId) => {
+    setSelectedMarket(marketId);
+  }, []);
 
   return (
     <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h6" gutterBottom>
-        Market Integration Network
-      </Typography>
-
-      <Box sx={{ width: 300, mb: 2 }}>
-        <Typography variant="body2">
-          Connection Threshold: {threshold.toFixed(2)}
-        </Typography>
-        <Slider
-          value={threshold}
-          onChange={(_, value) => setThreshold(value)}
-          min={0}
-          max={1}
-          step={0.05}
-          marks
-          valueLabelDisplay="auto"
-        />
+      {/* Controls */}
+      <Box sx={{ mb: 2 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Visualization Type</InputLabel>
+              <Select
+                value={visualizationType}
+                onChange={(e) => setVisualizationType(e.target.value)}
+              >
+                <MenuItem value="flows">Trade Flows</MenuItem>
+                <MenuItem value="correlation">Price Correlation</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Metric</InputLabel>
+              <Select
+                value={metricType}
+                onChange={(e) => setMetricType(e.target.value)}
+                disabled={visualizationType === 'correlation'}
+              >
+                <MenuItem value="volume">Flow Volume</MenuItem>
+                <MenuItem value="price">Price Differential</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography gutterBottom>
+              Threshold: {threshold.toFixed(2)}
+            </Typography>
+            <Slider
+              value={threshold}
+              onChange={(_, value) => setThreshold(value)}
+              min={0}
+              max={1}
+              step={0.05}
+            />
+          </Grid>
+        </Grid>
       </Box>
 
-      <Box sx={{ flexGrow: 1, minHeight: '500px', position: 'relative' }}>
+      {/* Map and Network Visualization */}
+      <Box sx={{ flexGrow: 1, height: 500 }}>
         <MapContainer
-          center={YEMEN_BOUNDS.center}
-          zoom={YEMEN_BOUNDS.zoom}
+          center={[15.3694, 44.191]}
+          zoom={6}
           style={{ height: '100%', width: '100%' }}
-          scrollWheelZoom={true}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
+            attribution='&copy; OpenStreetMap contributors'
           />
-
-          {/* Render Links */}
-          {validLinks.map((link, index) => (
+          
+          {/* Render network links */}
+          {links.map((link, i) => (
             <Polyline
-              key={`link-${index}`}
+              key={`${link.source}-${link.target}-${i}`}
               positions={[
+                // Swap coordinates for Leaflet [lat, lon]
                 [link.sourceCoordinates[1], link.sourceCoordinates[0]],
-                [link.targetCoordinates[1], link.targetCoordinates[0]],
+                [link.targetCoordinates[1], link.targetCoordinates[0]]
               ]}
-              color={getLinkColor(link)}
-              weight={Math.max(1, Math.sqrt(link.weight) * 2)}
-            />
-          ))}
-
-          {/* Render Nodes */}
-          {validNodes.map((node) => (
-            <CircleMarker
-              key={`node-${node.id}`}
-              center={[node.coordinates[1], node.coordinates[0]]}
-              radius={Math.sqrt(marketSizes[node.id] || 1) * 5}
-              color={getNodeColor(node)}
-              fillOpacity={0.8}
-              stroke={hoveredNodeId === node.id}
-              weight={hoveredNodeId === node.id ? 2 : 1}
-              eventHandlers={{
-                mouseover: (e) => {
-                  e.target.openPopup();
-                  handleNodeHover(node);
-                },
-                mouseout: () => {
-                  handleNodeHover(null);
-                },
+              pathOptions={{
+                color: linkColorScale(link.value),
+                weight: Math.max(1, Math.sqrt(link.value) * 2),
+                opacity: selectedMarket ? 
+                  (link.source === selectedMarket || link.target === selectedMarket ? 0.8 : 0.2)
+                  : 0.6
               }}
             >
               <Tooltip>
                 <div>
-                  <strong>Market:</strong> {node.name}
-                  <br />
-                  <strong>Population:</strong> {node.population?.toLocaleString() || 'N/A'}
-                  <br />
-                  <strong>Centrality:</strong> {(centralityMeasures[node.id] || 0).toFixed(3)}
+                  <strong>{link.source} → {link.target}</strong><br/>
+                  {visualizationType === 'flows' ? 
+                    `Flow: ${link.value.toFixed(2)}` :
+                    `Correlation: ${link.value.toFixed(2)}`
+                  }
+                </div>
+              </Tooltip>
+            </Polyline>
+          ))}
+
+          {/* Render market nodes */}
+          {nodes.map((node) => (
+            <CircleMarker
+              key={node.id}
+              // Swap coordinates for Leaflet [lat, lon]
+              center={[node.coordinates[1], node.coordinates[0]]}
+              radius={Math.sqrt(node.size / Math.PI) * 5}
+              fillColor={nodeColorScale(centralityMeasures[node.id] || 0)}
+              color={selectedMarket === node.id ? theme.palette.secondary.main : '#fff'}
+              weight={selectedMarket === node.id ? 2 : 1}
+              fillOpacity={0.8}
+              eventHandlers={{
+                click: () => handleMarketClick(node.id)
+              }}
+            >
+              <Tooltip>
+                <div>
+                  <strong>{node.id}</strong><br/>
+                  Size: {node.size.toLocaleString()}<br/>
+                  Integration: {(node.accessibility * 100).toFixed(1)}%<br/>
+                  Centrality: {(centralityMeasures[node.id] || 0).toFixed(3)}
                 </div>
               </Tooltip>
             </CircleMarker>
           ))}
-
-          {/* Handle global map interactions */}
-          <MapInteractionHandler setTooltipInfo={() => {}} />
         </MapContainer>
       </Box>
 
-      <NetworkGraphLegend />
+      {/* Network Statistics */}
+      <Card sx={{ mt: 2 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Network Statistics
+          </Typography>
+          <Grid container spacing={1}>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Active Markets</Typography>
+              <Typography variant="h6">{nodes.length}</Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Active Links</Typography>
+              <Typography variant="h6">{links.length}</Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Network Density</Typography>
+              <Typography variant="h6">
+                {(links.length / (nodes.length * (nodes.length - 1) / 2)).toFixed(3)}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Avg. Connectivity</Typography>
+              <Typography variant="h6">
+                {(links.length / nodes.length).toFixed(2)}
+              </Typography>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
     </Paper>
   );
+};
+
+// Helper function to extract coordinates from geometry
+const getCoordinatesFromGeometry = (marketId, geometry) => {
+  if (!geometry || !marketId) return null;
+
+  // Try to find in points
+  const point = geometry.points?.find(p => 
+    p.properties?.normalizedName?.toLowerCase() === marketId.toLowerCase()
+  );
+  if (point?.coordinates) {
+    return point.coordinates;
+  }
+
+  // Try to find in polygons
+  const polygon = geometry.polygons?.find(p => 
+    p.properties?.normalizedName?.toLowerCase() === marketId.toLowerCase()
+  );
+  if (polygon?.geometry?.coordinates) {
+    // Use first coordinate as representative point
+    const coords = polygon.geometry.coordinates[0][0];
+    return coords;
+  }
+
+  return null;
+};
+
+// Helper function to calculate network centrality measures
+const calculateNetworkCentrality = (nodes, links) => {
+  const centrality = {};
+  nodes.forEach(node => {
+    const nodeLinks = links.filter(
+      link => link.source === node.id || link.target === node.id
+    );
+    
+    // Calculate weighted degree centrality
+    centrality[node.id] = nodeLinks.reduce(
+      (sum, link) => sum + link.value,
+      0
+    );
+  });
+
+  // Normalize centrality values
+  const maxCentrality = Math.max(...Object.values(centrality), 1);
+  Object.keys(centrality).forEach(nodeId => {
+    centrality[nodeId] = centrality[nodeId] / maxCentrality;
+  });
+
+  return centrality;
 };
 
 export default NetworkGraph;

@@ -1,211 +1,80 @@
-// src/components/analysis/spatial-analysis/components/flows/FlowNetworkAnalysis.js
+// src/components/analysis/spatial-analysis/components/flows/FlowMap.js
 
-import React, { useMemo, useState } from 'react';
-import { 
-  Paper, Box, Typography, Grid, Card, CardContent,
-  Slider, FormControl, InputLabel, Select, MenuItem,
-  ToggleButtonGroup, ToggleButton 
-} from '@mui/material';
+import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker } from 'react-leaflet';
 import { useTheme } from '@mui/material/styles';
-import {
-  ResponsiveContainer, Sankey, Tooltip as RechartsTooltip,
-  LineChart, Line, XAxis, YAxis, CartesianGrid
-} from 'recharts';
-import FlowMap from './FlowMap';
-import FlowMetricsPanel from './FlowMetricsPanel';
-import { useFlowAnalysis } from '../../hooks/useFlowAnalysis';
+import FlowLines from './FlowLines';
 
-const FlowNetworkAnalysis = ({
-  flows,
-  spatialAutocorrelation,
-  marketIntegration,
-  geometry,
-  marketClusters
-}) => {
+const FlowMap = ({ flows, metricType, geometry }) => {
   const theme = useTheme();
-  const [flowThreshold, setFlowThreshold] = useState(0);
-  const [viewMode, setViewMode] = useState('map'); // 'map', 'sankey', 'metrics'
-  const [metricType, setMetricType] = useState('volume'); // 'volume', 'price_diff', 'frequency'
-  const [timeAggregation, setTimeAggregation] = useState('monthly');
 
-  const { 
-    flowMetrics,
-    networkStats,
-    timeSeriesFlows,
-    marketConnectivity
-  } = useFlowAnalysis(flows, marketIntegration, flowThreshold);
-
-  const handleThresholdChange = (event, newValue) => {
-    setFlowThreshold(newValue);
+  // Define style for regions
+  const regionStyle = {
+    fillColor: '#cccccc',
+    weight: 1,
+    opacity: 1,
+    color: 'white',
+    fillOpacity: 0.7,
   };
 
-  const filteredFlows = useMemo(() => {
-    return flows.filter(flow => flow.total_flow >= flowThreshold);
-  }, [flows, flowThreshold]);
+  // Collect unique markets from flows
+  const markets = useMemo(() => {
+    const marketSet = new Set();
+    flows.forEach(flow => {
+      marketSet.add(flow.source);
+      marketSet.add(flow.target);
+    });
+    return Array.from(marketSet);
+  }, [flows]);
 
-  const sankeyData = useMemo(() => {
-    return {
-      nodes: [...new Set([
-        ...filteredFlows.map(f => f.source),
-        ...filteredFlows.map(f => f.target)
-      ])].map(id => ({
-        id,
-        name: id,
-        value: flowMetrics.regionMetrics[id]?.totalFlow || 0
-      })),
-      links: filteredFlows.map(flow => ({
-        source: flow.source,
-        target: flow.target,
-        value: flow[metricType === 'volume' ? 'total_flow' : 
-               metricType === 'price_diff' ? 'avg_price_differential' : 
-               'flow_count']
-      }))
-    };
-  }, [filteredFlows, flowMetrics, metricType]);
+  // Map markets to coordinates
+  const marketCoordinates = useMemo(() => {
+    const coords = {};
+    flows.forEach(flow => {
+      coords[flow.source] = flow.source_coordinates;
+      coords[flow.target] = flow.target_coordinates;
+    });
+    return coords;
+  }, [flows]);
 
   return (
-    <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Market Flow Network Analysis
-        </Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Metric Type</InputLabel>
-              <Select
-                value={metricType}
-                onChange={(e) => setMetricType(e.target.value)}
-              >
-                <MenuItem value="volume">Flow Volume</MenuItem>
-                <MenuItem value="price_diff">Price Differential</MenuItem>
-                <MenuItem value="frequency">Flow Frequency</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Typography gutterBottom>
-              Flow Threshold: {flowThreshold.toFixed(2)}
-            </Typography>
-            <Slider
-              value={flowThreshold}
-              onChange={handleThresholdChange}
-              min={0}
-              max={Math.max(...flows.map(f => f.total_flow))}
-              step={0.1}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_, value) => value && setViewMode(value)}
-              size="small"
-            >
-              <ToggleButton value="map">Map View</ToggleButton>
-              <ToggleButton value="sankey">Network View</ToggleButton>
-              <ToggleButton value="metrics">Metrics</ToggleButton>
-            </ToggleButtonGroup>
-          </Grid>
-        </Grid>
-      </Box>
-
-      <Box sx={{ flexGrow: 1 }}>
-        {viewMode === 'map' && (
-          <FlowMap
-            flows={filteredFlows}
-            geometry={geometry}
-            metricType={metricType}
-            flowMetrics={flowMetrics}
-          />
-        )}
-
-        {viewMode === 'sankey' && (
-          <Card sx={{ height: '500px' }}>
-            <CardContent sx={{ height: '100%' }}>
-              <ResponsiveContainer>
-                <Sankey
-                  data={sankeyData}
-                  nodeWidth={15}
-                  nodePadding={10}
-                  linkColor={theme.palette.primary.light}
-                  nodeColor={theme.palette.primary.main}
-                >
-                  <RechartsTooltip
-                    content={({ payload }) => {
-                      if (!payload?.length) return null;
-                      const data = payload[0].payload;
-                      return (
-                        <Box sx={{ bgcolor: 'background.paper', p: 1, border: 1 }}>
-                          {data.source && (
-                            <Typography variant="body2">
-                              {data.source} → {data.target}
-                            </Typography>
-                          )}
-                          <Typography variant="body2">
-                            Value: {data.value?.toFixed(2)}
-                          </Typography>
-                        </Box>
-                      );
-                    }}
-                  />
-                </Sankey>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {viewMode === 'metrics' && (
-          <FlowMetricsPanel
-            flowMetrics={flowMetrics}
-            networkStats={networkStats}
-            timeAggregation={timeAggregation}
-            onTimeAggregationChange={setTimeAggregation}
-          />
-        )}
-      </Box>
-
-      <Card sx={{ mt: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Flow Trends Over Time
-          </Typography>
-          <Box sx={{ height: 300 }}>
-            <ResponsiveContainer>
-              <LineChart data={timeSeriesFlows[timeAggregation]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date"
-                  tickFormatter={(date) => new Date(date).toLocaleDateString()}
-                />
-                <YAxis />
-                <RechartsTooltip />
-                <Line
-                  type="monotone"
-                  dataKey="totalFlow"
-                  stroke={theme.palette.primary.main}
-                  name="Total Flow"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="avgPriceDiff"
-                  stroke={theme.palette.secondary.main}
-                  name="Avg Price Differential"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="flowCount"
-                  stroke={theme.palette.error.main}
-                  name="Flow Count"
-                  strokeDasharray="3 3"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Box>
-        </CardContent>
-      </Card>
-    </Paper>
+    <MapContainer center={[15.3694, 44.191]} zoom={6} style={{ height: '500px', width: '100%' }}>
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors"
+      />
+      {geometry && (
+        <GeoJSON data={geometry} style={() => regionStyle} />
+      )}
+      {/* Render markets as CircleMarkers */}
+      {markets.map(market => {
+        const coords = marketCoordinates[market];
+        if (!coords) return null;
+        return (
+          <CircleMarker
+            key={market}
+            center={[coords[1], coords[0]]}
+            radius={5}
+            fillColor={theme.palette.primary.main}
+            color="#fff"
+            weight={1}
+            opacity={1}
+            fillOpacity={0.8}
+          >
+          </CircleMarker>
+        );
+      })}
+      {/* Render flow lines */}
+      <FlowLines flows={flows} metricType={metricType} />
+    </MapContainer>
   );
 };
 
-export default FlowNetworkAnalysis;
+FlowMap.propTypes = {
+  flows: PropTypes.array.isRequired,
+  metricType: PropTypes.string.isRequired,
+  geometry: PropTypes.object,
+};
+
+export default React.memo(FlowMap);
