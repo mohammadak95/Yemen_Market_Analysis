@@ -11,9 +11,13 @@ import {
   ListItemText,
   Divider,
   Tooltip,
-  IconButton
+  IconButton,
+  Chip,
+  Alert
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 
 const NetworkGraphLegend = ({ 
   metrics, 
@@ -21,6 +25,11 @@ const NetworkGraphLegend = ({
   colorScales,
   keyMarkets 
 }) => {
+  // Validate input data
+  const hasValidMetrics = metrics?.centrality?.metrics;
+  const hasValidColorScale = colorScales?.[analysisMetric];
+  const hasValidKeyMarkets = Array.isArray(keyMarkets) && keyMarkets.length > 0;
+
   const getMetricDescription = (metric) => {
     switch(metric) {
       case 'market_integration':
@@ -35,16 +44,28 @@ const NetworkGraphLegend = ({
   };
 
   const getColorGradient = (scale) => {
-    const steps = 5;
-    const gradient = [];
-    for (let i = 0; i < steps; i++) {
-      gradient.push(scale(i / (steps - 1)));
+    if (!scale) return [];
+    try {
+      const steps = 5;
+      const gradient = [];
+      for (let i = 0; i < steps; i++) {
+        const color = scale(i / (steps - 1));
+        if (color && typeof color.hex === 'function') {
+          gradient.push(color);
+        }
+      }
+      return gradient;
+    } catch (error) {
+      console.error('Error generating color gradient:', error);
+      return [];
     }
-    return gradient;
   };
 
   const renderColorScale = () => {
+    if (!hasValidColorScale) return null;
+    
     const gradient = getColorGradient(colorScales[analysisMetric]);
+    if (!gradient.length) return null;
     
     return (
       <Box sx={{ mt: 2, mb: 3 }}>
@@ -70,7 +91,7 @@ const NetworkGraphLegend = ({
               key={i} 
               sx={{ 
                 flex: 1,
-                bgcolor: color
+                bgcolor: color.hex()
               }} 
             />
           ))}
@@ -88,7 +109,7 @@ const NetworkGraphLegend = ({
   };
 
   const renderKeyMarkets = () => {
-    if (!keyMarkets?.length) return null;
+    if (!hasValidKeyMarkets) return null;
 
     return (
       <Box sx={{ mt: 3 }}>
@@ -102,13 +123,22 @@ const NetworkGraphLegend = ({
         </Typography>
         <List dense>
           {keyMarkets
-            .sort((a, b) => b.metrics.integration - a.metrics.integration)
+            .filter(market => market && typeof market.significance === 'number')
+            .sort((a, b) => b.significance - a.significance)
             .slice(0, 5)
             .map((market, i) => (
               <ListItem key={i} sx={{ py: 0.5 }}>
                 <ListItemText
                   primary={market.market}
-                  secondary={`${market.role} (${(market.metrics.integration * 100).toFixed(1)}% integration)`}
+                  secondary={
+                    <React.Fragment>
+                      {market.role?.charAt(0).toUpperCase() + market.role?.slice(1) || 'Unknown Role'}
+                      <br />
+                      <Typography variant="caption" color="text.secondary">
+                        Significance: {(market.significance * 100).toFixed(1)}%
+                      </Typography>
+                    </React.Fragment>
+                  }
                 />
               </ListItem>
             ))}
@@ -118,7 +148,7 @@ const NetworkGraphLegend = ({
   };
 
   const renderNetworkMetrics = () => {
-    if (!metrics?.centrality) return null;
+    if (!hasValidMetrics) return null;
 
     const { metrics: centralityMetrics } = metrics.centrality;
     
@@ -132,24 +162,59 @@ const NetworkGraphLegend = ({
             </IconButton>
           </Tooltip>
         </Typography>
+        
+        <Box sx={{ mb: 1 }}>
+          <Chip
+            size="small"
+            icon={centralityMetrics.converged ? <CheckCircleIcon /> : <ErrorIcon />}
+            label={centralityMetrics.converged ? "Converged" : "Not Converged"}
+            color={centralityMetrics.converged ? "success" : "warning"}
+            sx={{ mr: 1 }}
+          />
+          <Typography variant="caption" color="text.secondary">
+            {centralityMetrics.iterations} iterations
+          </Typography>
+        </Box>
+
         <List dense>
           <ListItem sx={{ py: 0.5 }}>
             <ListItemText 
               primary="Average Centrality"
-              secondary={centralityMetrics.avgCentrality.toFixed(3)}
+              secondary={!isNaN(centralityMetrics.avgCentrality) ? 
+                centralityMetrics.avgCentrality.toFixed(3) : 'N/A'}
             />
           </ListItem>
           <ListItem sx={{ py: 0.5 }}>
             <ListItemText 
-              primary="Centralization"
-              secondary={((centralityMetrics.maxCentrality - centralityMetrics.minCentrality) / 
-                centralityMetrics.maxCentrality).toFixed(3)}
+              primary="Centrality Range"
+              secondary={!isNaN(centralityMetrics.minCentrality) && !isNaN(centralityMetrics.maxCentrality) ?
+                `${centralityMetrics.minCentrality.toFixed(3)} - ${centralityMetrics.maxCentrality.toFixed(3)}` : 'N/A'}
             />
           </ListItem>
+          {centralityMetrics.maxDiff && !isNaN(centralityMetrics.maxDiff) && (
+            <ListItem sx={{ py: 0.5 }}>
+              <ListItemText 
+                primary="Convergence Error"
+                secondary={centralityMetrics.maxDiff.toExponential(2)}
+              />
+            </ListItem>
+          )}
         </List>
       </Box>
     );
   };
+
+  if (!hasValidMetrics && !hasValidColorScale && !hasValidKeyMarkets) {
+    return (
+      <Card variant="outlined">
+        <CardContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            No valid network analysis data available
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card variant="outlined">
@@ -160,11 +225,15 @@ const NetworkGraphLegend = ({
         
         {renderColorScale()}
         
-        <Divider sx={{ my: 2 }} />
+        {(hasValidKeyMarkets || hasValidMetrics) && (
+          <Divider sx={{ my: 2 }} />
+        )}
         
         {renderKeyMarkets()}
         
-        <Divider sx={{ my: 2 }} />
+        {hasValidMetrics && (
+          <Divider sx={{ my: 2 }} />
+        )}
         
         {renderNetworkMetrics()}
 

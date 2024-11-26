@@ -3,161 +3,185 @@
 import { createSelector } from 'reselect';
 import _ from 'lodash';
 
-// Base selectors
-const selectSpatialState = (state) => state.spatial || {};
-const selectSpatialData = (state) => state.spatial?.data || {};
-const selectUiState = (state) => state.spatial?.ui || {};
-const selectStatus = (state) => state.spatial?.status || {};
+// Base selectors with proper memoization
+const selectSpatialSlice = state => state.spatial || {};
 
-// Direct selectors
-export const selectSpatialAutocorrelationDirect = (state) => state.spatial.data.spatialAutocorrelation;
-export const selectTimeSeriesDataDirect = (state) => state.spatial.data.timeSeriesData;
-export const selectGeometryDataDirect = (state) => state.spatial.data.geometry;
+const selectSpatialState = createSelector(
+  [selectSpatialSlice],
+  spatial => spatial
+);
 
-// Memoized selectors with default values
+const selectSpatialData = createSelector(
+  [selectSpatialState],
+  spatial => spatial.data || {}
+);
+
+const selectUiState = createSelector(
+  [selectSpatialState],
+  spatial => spatial.ui || {}
+);
+
+const selectStatus = createSelector(
+  [selectSpatialState],
+  spatial => spatial.status || {}
+);
+
+// Memoized data selectors
 export const selectSpatialAutocorrelation = createSelector(
   [selectSpatialData],
-  (data) => data.spatialAutocorrelation || {}
+  data => data.spatialAutocorrelation || {}
 );
 
 export const selectTimeSeriesData = createSelector(
   [selectSpatialData],
-  (data) => data.timeSeriesData || []
+  data => data.timeSeriesData || []
 );
 
 export const selectGeometryData = createSelector(
   [selectSpatialData],
-  (data) => data.geometry || null
+  data => data.geometry || null
 );
 
-// Rest of the file remains unchanged
+// Unified geometry selector
 export const selectUnifiedGeometry = createSelector(
   [selectGeometryData],
-  (geometry) => {
+  geometry => {
     if (!geometry) return null;
-
-    // Return existing unified GeoJSON if available
     if (geometry.unified) return geometry.unified;
 
-    // Construct unified GeoJSON from points and polygons
-    const features = [];
+    try {
+      const features = [];
 
-    if (geometry.polygons) {
-      features.push(
-        ...geometry.polygons.map((polygon) => ({
-          type: 'Feature',
-          geometry: polygon.geometry,
+      if (geometry.polygons) {
+        features.push(
+          ...geometry.polygons.map(polygon => ({
+            type: 'Feature',
+            geometry: polygon.geometry,
+            properties: {
+              ...polygon.properties,
+              id: polygon.properties.shapeISO,
+              region_id: polygon.properties.normalizedName,
+              feature_type: 'polygon',
+            },
+          }))
+        );
+      }
+
+      if (geometry.points) {
+        features.push(
+          ...geometry.points.map(point => ({
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: point.coordinates,
+            },
+            properties: {
+              ...point.properties,
+              id: point.properties.normalizedName,
+              region_id: point.properties.normalizedName,
+              feature_type: 'point',
+            },
+          }))
+        );
+      }
+
+      return {
+        type: 'FeatureCollection',
+        features,
+        crs: {
+          type: 'name',
           properties: {
-            ...polygon.properties,
-            id: polygon.properties.shapeISO,
-            region_id: polygon.properties.normalizedName,
-            feature_type: 'polygon',
+            name: 'urn:ogc:def:crs:OGC:1.3:CRS84',
           },
-        }))
-      );
-    }
-
-    if (geometry.points) {
-      features.push(
-        ...geometry.points.map((point) => ({
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: point.coordinates,
-          },
-          properties: {
-            ...point.properties,
-            id: point.properties.normalizedName,
-            region_id: point.properties.normalizedName,
-            feature_type: 'point',
-          },
-        }))
-      );
-    }
-
-    return {
-      type: 'FeatureCollection',
-      features,
-      crs: {
-        type: 'name',
-        properties: {
-          name: 'urn:ogc:def:crs:OGC:1.3:CRS84',
         },
-      },
-    };
+      };
+    } catch (error) {
+      console.error('Error creating unified geometry:', error);
+      return null;
+    }
   }
 );
 
 // Market Data Selectors
 export const selectMarketClusters = createSelector(
   [selectSpatialData],
-  (data) => data.marketClusters || []
+  data => data.marketClusters || []
 );
 
 export const selectMarketFlows = createSelector(
   [selectSpatialData],
-  (data) => data.flowMaps || []
+  data => data.flowMaps || []
 );
 
 export const selectMarketShocks = createSelector(
   [selectSpatialData],
-  (data) => data.marketShocks || []
+  data => data.marketShocks || []
 );
 
 // UI State Selectors
 export const selectVisualizationMode = createSelector(
   [selectUiState],
-  (ui) => ui.visualizationMode || 'prices'
+  ui => ui.visualizationMode || 'prices'
 );
 
 export const selectSelectedCommodity = createSelector(
   [selectUiState],
-  (ui) => ui.selectedCommodity
+  ui => ui.selectedCommodity
 );
 
 export const selectSelectedDate = createSelector(
   [selectUiState],
-  (ui) => ui.selectedDate
+  ui => ui.selectedDate
 );
 
 // Combined Data Selectors
 export const selectClustersWithCoordinates = createSelector(
   [selectMarketClusters, selectGeometryData],
   (clusters, geometry) => {
-    if (!clusters.length || !geometry?.points) return [];
+    if (!clusters?.length || !geometry?.points) return [];
 
-    return clusters.map((cluster) => {
-      const mainMarketPoint = geometry.points.find(
-        (point) => point.properties.normalizedName === cluster.mainMarket
-      );
+    try {
+      return clusters.map(cluster => {
+        const mainMarketPoint = geometry.points.find(
+          point => point.properties.normalizedName === cluster.mainMarket
+        );
 
-      return {
-        ...cluster,
-        mainMarketCoordinates: mainMarketPoint?.coordinates || [NaN, NaN],
-      };
-    });
+        return {
+          ...cluster,
+          mainMarketCoordinates: mainMarketPoint?.coordinates || [NaN, NaN],
+        };
+      });
+    } catch (error) {
+      console.error('Error processing clusters with coordinates:', error);
+      return [];
+    }
   }
 );
 
 export const selectFlowsWithCoordinates = createSelector(
   [selectMarketFlows, selectGeometryData],
   (flows, geometry) => {
-    if (!flows.length || !geometry?.points) return [];
+    if (!flows?.length || !geometry?.points) return [];
 
-    return flows.map((flow) => {
-      const sourcePoint = geometry.points.find(
-        (point) => point.properties.normalizedName === flow.source
-      );
-      const targetPoint = geometry.points.find(
-        (point) => point.properties.normalizedName === flow.target
-      );
+    try {
+      return flows.map(flow => {
+        const sourcePoint = geometry.points.find(
+          point => point.properties.normalizedName === flow.source
+        );
+        const targetPoint = geometry.points.find(
+          point => point.properties.normalizedName === flow.target
+        );
 
-      return {
-        ...flow,
-        sourceCoordinates: sourcePoint?.coordinates || [NaN, NaN],
-        targetCoordinates: targetPoint?.coordinates || [NaN, NaN],
-      };
-    });
+        return {
+          ...flow,
+          sourceCoordinates: sourcePoint?.coordinates || [NaN, NaN],
+          targetCoordinates: targetPoint?.coordinates || [NaN, NaN],
+        };
+      });
+    } catch (error) {
+      console.error('Error processing flows with coordinates:', error);
+      return [];
+    }
   }
 );
 
@@ -166,45 +190,49 @@ export const selectFeatureDataWithMetrics = createSelector(
   (geometry, timeSeriesData) => {
     if (!geometry?.features || !timeSeriesData?.length) return null;
 
-    const timeSeriesByRegion = _.keyBy(timeSeriesData, 'region');
+    try {
+      const timeSeriesByRegion = _.keyBy(timeSeriesData, 'region');
 
-    return {
-      ...geometry,
-      features: geometry.features.map((feature) => {
-        const regionData = timeSeriesByRegion[feature.properties.region_id];
-
-        return {
-          ...feature,
-          properties: {
-            ...feature.properties,
-            ...(regionData || {}),
-          },
-        };
-      }),
-    };
+      return {
+        ...geometry,
+        features: geometry.features.map(feature => {
+          const regionData = timeSeriesByRegion[feature.properties.region_id];
+          return {
+            ...feature,
+            properties: {
+              ...feature.properties,
+              ...(regionData || {}),
+            },
+          };
+        }),
+      };
+    } catch (error) {
+      console.error('Error processing feature data with metrics:', error);
+      return null;
+    }
   }
 );
 
 // Analysis Data Selectors
 export const selectMarketIntegration = createSelector(
   [selectSpatialData],
-  (data) => data.marketIntegration || {}
+  data => data.marketIntegration || {}
 );
 
 export const selectRegressionAnalysis = createSelector(
   [selectSpatialData],
-  (data) => data.regressionAnalysis || {}
+  data => data.regressionAnalysis || {}
 );
 
 export const selectSeasonalAnalysis = createSelector(
   [selectSpatialData],
-  (data) => data.seasonalAnalysis || {}
+  data => data.seasonalAnalysis || {}
 );
 
 // Status Selectors
 export const selectLoadingStatus = createSelector(
   [selectStatus],
-  (status) => ({
+  status => ({
     loading: status.loading || false,
     error: status.error || null,
     progress: status.progress || 0,
@@ -215,17 +243,27 @@ export const selectLoadingStatus = createSelector(
 // Region-specific Selectors
 export const selectPolygonsByRegion = createSelector(
   [selectGeometryData],
-  (geometry) => {
+  geometry => {
     if (!geometry?.polygons) return {};
-    return _.keyBy(geometry.polygons, 'properties.normalizedName');
+    try {
+      return _.keyBy(geometry.polygons, 'properties.normalizedName');
+    } catch (error) {
+      console.error('Error processing polygons by region:', error);
+      return {};
+    }
   }
 );
 
 export const selectPointsByRegion = createSelector(
   [selectGeometryData],
-  (geometry) => {
+  geometry => {
     if (!geometry?.points) return {};
-    return _.keyBy(geometry.points, 'properties.normalizedName');
+    try {
+      return _.keyBy(geometry.points, 'properties.normalizedName');
+    } catch (error) {
+      console.error('Error processing points by region:', error);
+      return {};
+    }
   }
 );
 
@@ -252,37 +290,48 @@ export const selectSpatialDataOptimized = createSelector(
     autocorrelation,
     regression,
     seasonal
-  ) => ({
-    geometry,
-    marketClusters: clusters,
-    flowMaps: flows,
-    timeSeriesData,
-    marketShocks: shocks,
-    marketIntegration: integration,
-    spatialAutocorrelation: autocorrelation,
-    regressionAnalysis: regression,
-    seasonalAnalysis: seasonal,
-    uniqueMonths:
-      timeSeriesData
-        ?.map((d) => d.month)
-        .filter((v, i, a) => a.indexOf(v) === i)
-        .sort() || [],
-  })
+  ) => {
+    try {
+      return {
+        geometry,
+        marketClusters: clusters,
+        flowMaps: flows,
+        timeSeriesData,
+        marketShocks: shocks,
+        marketIntegration: integration,
+        spatialAutocorrelation: autocorrelation,
+        regressionAnalysis: regression,
+        seasonalAnalysis: seasonal,
+        uniqueMonths: timeSeriesData
+          ?.map(d => d.month)
+          .filter((v, i, a) => a.indexOf(v) === i)
+          .sort() || [],
+      };
+    } catch (error) {
+      console.error('Error creating optimized spatial data:', error);
+      return null;
+    }
+  }
 );
 
-// Helper Selectors for Visualization
+// Visualization Data Selector
 export const selectVisualizationData = createSelector(
   [selectSpatialDataOptimized, selectVisualizationMode],
   (data, mode) => {
     if (!data || !mode) return null;
 
-    return {
-      ...data,
-      visualizationMode: mode,
-      metadata: {
-        timestamp: new Date().toISOString(),
-        mode,
-      },
-    };
+    try {
+      return {
+        ...data,
+        visualizationMode: mode,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          mode,
+        },
+      };
+    } catch (error) {
+      console.error('Error creating visualization data:', error);
+      return null;
+    }
   }
 );

@@ -28,39 +28,68 @@ export const calculateEigenvectorCentrality = (nodes, links, options = { maxIter
 
   try {
     const adjacencyMatrix = createAdjacencyMatrix(nodes, links);
+    if (!adjacencyMatrix.length) {
+      throw new Error('Failed to create adjacency matrix');
+    }
+
     let centrality = new Array(nodes.length).fill(1);
     let iterations = 0;
     let converged = false;
+    let maxDiff = Infinity;
 
     while (iterations < options.maxIterations && !converged) {
-      const newCentrality = multiplyMatrixVector(adjacencyMatrix, centrality);
-      const norm = Math.sqrt(newCentrality.reduce((sum, x) => sum + x * x, 0));
+      // Calculate new centrality scores
+      const newCentralityResult = multiplyMatrixVector(adjacencyMatrix, centrality);
       
-      // Normalize
-      newCentrality = newCentrality.map(x => x / (norm || 1));
+      // Check for valid multiplication result
+      if (!newCentralityResult.length) {
+        throw new Error('Matrix multiplication failed');
+      }
+
+      // Calculate normalization factor
+      const norm = Math.sqrt(newCentralityResult.reduce((sum, x) => sum + x * x, 0)) || 1;
+      
+      // Create normalized centrality vector
+      const normalizedCentrality = newCentralityResult.map(x => x / norm);
+      
+      // Calculate maximum difference for convergence check
+      maxDiff = Math.max(...centrality.map((x, i) => Math.abs(x - normalizedCentrality[i])));
       
       // Check convergence
-      const diff = centrality.reduce((sum, x, i) => sum + Math.abs(x - newCentrality[i]), 0);
-      converged = diff < options.tolerance;
-      centrality = newCentrality;
+      converged = maxDiff < options.tolerance;
+      
+      // Update centrality vector
+      centrality = normalizedCentrality;
       iterations++;
     }
 
-    // Create centrality mapping
+    // Create centrality mapping with validation
     const centralityMap = {};
+    let validScores = true;
+
     nodes.forEach((node, i) => {
-      centralityMap[node.id] = centrality[i];
+      if (isNaN(centrality[i])) {
+        validScores = false;
+        centralityMap[node.id] = 0;
+      } else {
+        centralityMap[node.id] = Math.max(0, Math.min(1, centrality[i])); // Clamp values between 0 and 1
+      }
     });
 
-    return {
-      centrality: centralityMap,
-      metrics: {
-        maxCentrality: Math.max(...centrality),
-        minCentrality: Math.min(...centrality),
-        avgCentrality: _.mean(centrality),
-        iterations
-      }
+    if (!validScores) {
+      backgroundMonitor.logError('eigenvector-centrality-calculation', new Error('Invalid centrality scores detected'));
+    }
+
+    const metrics = {
+      maxCentrality: Math.max(...Object.values(centralityMap)),
+      minCentrality: Math.min(...Object.values(centralityMap)),
+      avgCentrality: _.mean(Object.values(centralityMap)),
+      iterations,
+      converged,
+      maxDiff
     };
+
+    return { centrality: centralityMap, metrics };
   } catch (error) {
     backgroundMonitor.logError('eigenvector-centrality-calculation', error);
     return {
@@ -69,7 +98,9 @@ export const calculateEigenvectorCentrality = (nodes, links, options = { maxIter
         maxCentrality: 0,
         minCentrality: 0,
         avgCentrality: 0,
-        iterations: 0
+        iterations: 0,
+        converged: false,
+        maxDiff: Infinity
       }
     };
   }

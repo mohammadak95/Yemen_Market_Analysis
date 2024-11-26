@@ -10,6 +10,14 @@ const ClusterComparisonTable = ({ clusters }) => {
     return Number(value).toFixed(2);
   };
 
+  const safeGet = (obj, path, defaultValue = '') => {
+    try {
+      return path.split('.').reduce((acc, part) => acc?.[part], obj) ?? defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
+  };
+
   const columns = [
     { field: 'cluster_id', headerName: 'Cluster ID', width: 100 },
     { field: 'main_market', headerName: 'Main Market', width: 150 },
@@ -51,14 +59,14 @@ const ClusterComparisonTable = ({ clusters }) => {
   ];
 
   const rows = clusters.map((cluster) => ({
-    id: cluster.cluster_id,
-    cluster_id: cluster.cluster_id,
-    main_market: cluster.main_market,
-    efficiency_score: cluster.efficiency_metrics?.efficiency_score,
-    internal_connectivity: cluster.efficiency_metrics?.internal_connectivity,
-    market_coverage: cluster.efficiency_metrics?.market_coverage,
-    price_convergence: cluster.efficiency_metrics?.price_convergence,
-    stability: cluster.efficiency_metrics?.stability,
+    id: cluster.cluster_id || Math.random().toString(36).substr(2, 9),
+    cluster_id: cluster.cluster_id || '',
+    main_market: cluster.main_market || '',
+    efficiency_score: safeGet(cluster, 'efficiency_metrics.efficiency_score'),
+    internal_connectivity: safeGet(cluster, 'efficiency_metrics.internal_connectivity'),
+    market_coverage: safeGet(cluster, 'efficiency_metrics.market_coverage'),
+    price_convergence: safeGet(cluster, 'efficiency_metrics.price_convergence'),
+    stability: safeGet(cluster, 'efficiency_metrics.stability'),
     market_count: cluster.connected_markets?.length || 0,
   }));
 
@@ -69,13 +77,25 @@ const ClusterComparisonTable = ({ clusters }) => {
         rows={rows}
         pageSize={5}
         rowsPerPageOptions={[5, 10, 20]}
+        disableSelectionOnClick
       />
     </div>
   );
 };
 
 ClusterComparisonTable.propTypes = {
-  clusters: PropTypes.array.isRequired,
+  clusters: PropTypes.arrayOf(PropTypes.shape({
+    cluster_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    main_market: PropTypes.string,
+    efficiency_metrics: PropTypes.shape({
+      efficiency_score: PropTypes.number,
+      internal_connectivity: PropTypes.number,
+      market_coverage: PropTypes.number,
+      price_convergence: PropTypes.number,
+      stability: PropTypes.number,
+    }),
+    connected_markets: PropTypes.array,
+  })).isRequired,
 };
 
 export default ClusterComparisonTable;

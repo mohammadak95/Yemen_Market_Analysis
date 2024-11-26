@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { 
   Paper, 
@@ -23,7 +23,9 @@ import {
   selectSpatialAutocorrelation,
   selectGeometryData,
   selectMarketShocks,
+  selectSpatialDataOptimized,
 } from '../../../../../selectors/optimizedSelectors';
+import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
 import TimeControl from './TimeControl';
 import ShockLegend from './ShockLegend';
 import { useShockAnalysis } from '../../hooks/useShockAnalysis';
@@ -34,15 +36,29 @@ const DEFAULT_ZOOM = 6;
 
 const ShockPropagationMap = () => {
   const theme = useTheme();
+  const geoJsonLayerRef = useRef(null);
 
   // Selectors
   const timeSeriesData = useSelector(selectTimeSeriesData);
   const spatialAutocorrelation = useSelector(selectSpatialAutocorrelation);
   const geometry = useSelector(selectGeometryData);
   const shockData = useSelector(selectMarketShocks);
+  const spatialData = useSelector(selectSpatialDataOptimized);
+
+  // Process GeoJSON with safe preprocessing
+  const processedGeometry = useMemo(() => {
+    return geometry ? safeGeoJSONProcessor(geometry, 'shocks') : null;
+  }, [geometry]);
+
+  // Get unique dates from timeSeriesData
+  const timeRange = useMemo(() => {
+    if (!timeSeriesData?.length) return [];
+    const dates = timeSeriesData.map(d => d.date).filter(Boolean);
+    return [...new Set(dates)].sort();
+  }, [timeSeriesData]);
 
   // Local state
-  const [selectedDate, setSelectedDate] = useState(timeRange[0]);
+  const [selectedDate, setSelectedDate] = useState(() => timeRange[0] || '');
   const [shockType, setShockType] = useState('all');
   const [threshold, setThreshold] = useState(0.1);
 
@@ -104,10 +120,10 @@ const ShockPropagationMap = () => {
     return getTooltipContent(feature, regionShocks);
   }, [filteredShocks]);
 
-  if (!geometry || !timeRange.length) {
+  if (!processedGeometry || !timeRange.length) {
     return (
       <Alert severity="warning" sx={{ m: 2 }}>
-        No spatial data available for shock analysis.
+        No valid spatial data available for shock analysis.
       </Alert>
     );
   }
@@ -171,9 +187,10 @@ const ShockPropagationMap = () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; OpenStreetMap contributors'
           />
-          {geometry && (
+          {processedGeometry && (
             <GeoJSON
-              data={geometry}
+              ref={geoJsonLayerRef}
+              data={processedGeometry}
               style={getFeatureStyleMemo}
               onEachFeature={(feature, layer) => {
                 layer.bindTooltip(getTooltipContentMemo(feature));
