@@ -23,25 +23,24 @@ const transformRegionName = (name) => {
     // Handle the problematic cases
     "'adan governorate": "aden",
     "'adan": "aden",
-    "adan": "aden",
-    "'adan": "aden",
-    "ad dali' governorate": "ad dali",
-    "ad dali'": "ad dali",
+    "ad dali' governorate": "al dhalee",
+    "ad dali'": "al dhalee",
+    "ad dali": "al dhalee",
     "sa'dah governorate": "saada",
     "sa'dah": "saada",
     "sadah": "saada",
-    "al mahrah governorate": "al mahra",
-    "al mahrah": "al mahra",
+    "al mahrah governorate": "mahrah",
+    "al mahrah": "mahrah",
+    "al mahra": "mahrah",
     "ma'rib governorate": "marib",
     "ma'rib": "marib",
-    "socotra": "soqatra",
-    "socotra governorate": "soqatra",
+    "socotra governorate": "socotra",
     // Handle variations with/without apostrophes and special characters
     "sanʿaʾ governorate": "sanaa",
     "san'a'": "sanaa",
     "sana'a": "sanaa",
-    "ta'izz": "taiz",
-    "ta'izz governorate": "taiz",
+    "ta'izz": "taizz",
+    "ta'izz governorate": "taizz",
     "'amran": "amran",
     "'amran governorate": "amran"
   };
@@ -51,6 +50,8 @@ const transformRegionName = (name) => {
     .trim()
     .replace(/\s+/g, ' ')
     .replace(/governorate$/i, '')
+    .replace(/ʿ/g, "'")  // Normalize special quotes
+    .replace(/['']/g, "'") // Normalize quotes
     .trim();
 
   // Check special cases first
@@ -68,15 +69,30 @@ const transformRegionName = (name) => {
   const normalized = spatialHandler.normalizeRegionName(name);
   
   // Handle null case and do post-processing
-  return normalized ? normalized
+  if (!normalized) return cleaned;
+
+  const processed = normalized
     .replace(/^'/, '')  // Remove leading apostrophe
     .replace(/'$/, '')  // Remove trailing apostrophe
     .replace(/\s+/g, ' ') // Normalize spaces
-    .trim() : cleaned;  // Fall back to cleaned name if normalized is null
+    .trim();
+
+  // Additional post-processing for specific patterns
+  return processed
+    .replace(/^al-/, 'al ') // Normalize 'al-' prefix to 'al '
+    .replace(/^ad-/, 'al '); // Normalize 'ad-' prefix to 'al '
 };
 
 const SpatialAutocorrelationMap = ({ geometry, autocorrelationData }) => {
   const theme = useTheme();
+
+  // Debug: Log available region names in autocorrelation data
+  useMemo(() => {
+    if (process.env.NODE_ENV === 'development' && autocorrelationData?.local) {
+      console.log('Available regions in autocorrelation data:', 
+        Object.keys(autocorrelationData.local).sort());
+    }
+  }, [autocorrelationData]);
 
   // Process geometry with normalized region names
   const processedGeometry = useMemo(() => {
@@ -99,6 +115,15 @@ const SpatialAutocorrelationMap = ({ geometry, autocorrelationData }) => {
 
         if (process.env.NODE_ENV === 'development' && !regionData) {
           console.warn(`No autocorrelation data found for region: ${originalName} (normalized: ${normalizedName})`);
+          // Debug: Log attempted variations
+          const variations = [
+            originalName?.toLowerCase(),
+            normalizedName,
+            `${normalizedName} governorate`,
+            normalizedName?.replace(/^al-/, 'al '),
+            normalizedName?.replace(/^ad-/, 'al ')
+          ];
+          console.debug(`Attempted variations for ${originalName}:`, variations);
         }
 
         return {
