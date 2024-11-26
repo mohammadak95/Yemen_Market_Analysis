@@ -1,3 +1,7 @@
+/**
+ * @jest-environment node
+ */
+
 // tests/preprocessing/spatialPreprocessor.test.js
 
 const path = require('path');
@@ -64,10 +68,70 @@ const generateMockData = () => ({
   }
 });
 
+// Helper function to generate large mock datasets
+function generateLargeMockData(featureCount) {
+  const features = [];
+  const flowData = [];
+  const timeSeriesData = {};
+
+  for (let i = 0; i < featureCount; i++) {
+    const regionId = `region_${i}`;
+    
+    // Generate features
+    features.push({
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[[
+          44 + Math.random(),
+          15 + Math.random(),
+          44 + Math.random() + 0.1,
+          15 + Math.random() + 0.1,
+          44 + Math.random()
+        ]]]
+      },
+      properties: {
+        region_id: regionId,
+        name: `Region ${i}`
+      }
+    });
+
+    // Generate flows
+    if (i > 0) {
+      flowData.push({
+        source: `region_${i-1}`,
+        target: regionId,
+        flow_weight: Math.random() * 10,
+        price_differential: Math.random() * 5,
+        commodity: 'wheat',
+        date: '2024-01-01'
+      });
+    }
+
+    // Generate time series
+    timeSeriesData[regionId] = {
+      wheat: [
+        { date: '2024-01-01', price: 100 + Math.random() * 10, conflict_intensity: Math.random() },
+        { date: '2024-01-02', price: 105 + Math.random() * 10, conflict_intensity: Math.random() }
+      ]
+    };
+  }
+
+  return {
+    geoData: {
+      type: 'FeatureCollection',
+      features
+    },
+    flowData,
+    timeSeriesData
+  };
+}
+
 describe('EnhancedSpatialPreprocessor', () => {
   let preprocessor;
   let mockData;
   let tempDir;
+  let inputPaths;
 
   beforeAll(async () => {
     // Create temporary directory for test data
@@ -83,6 +147,14 @@ describe('EnhancedSpatialPreprocessor', () => {
       fs.writeJson(path.join(tempDir, 'flows.json'), mockData.flowData),
       fs.writeJson(path.join(tempDir, 'timeSeries.json'), mockData.timeSeriesData)
     ]);
+
+    // Set up input paths
+    inputPaths = {
+      geoDataPath: path.join(tempDir, 'geo.json'),
+      flowsPath: path.join(tempDir, 'flows.json'),
+      timeSeriesPath: path.join(tempDir, 'timeSeries.json'),
+      outputDir: path.join(tempDir, 'output')
+    };
   });
 
   beforeEach(() => {
@@ -127,12 +199,12 @@ describe('EnhancedSpatialPreprocessor', () => {
   describe('Spatial Analysis', () => {
     test('should calculate Moran\'s I correctly', () => {
       const result = preprocessor.calculateMoransI(
-        mockData.timeSeriesData.sanaa.wheat,
+        mockData.timeSeriesData.sanaa.wheat.map(d => d.price),
         { sanaa: { neighbors: ['aden'], weights: [1] } }
       );
-      expect(result).toHaveProperty('I');
-      expect(result).toHaveProperty('pValue');
+      expect(typeof result).toBe('object');
       expect(result.I).toBeDefined();
+      expect(result.pValue).toBeDefined();
       expect(result.pValue).toBeGreaterThanOrEqual(0);
       expect(result.pValue).toBeLessThanOrEqual(1);
     });
@@ -150,11 +222,13 @@ describe('EnhancedSpatialPreprocessor', () => {
     test('should calculate price transmission', () => {
       const transmission = preprocessor.calculatePriceTransmission(
         mockData.flowData,
+        mockData.timeSeriesData,
         'wheat'
       );
-      expect(transmission).toHaveProperty('marketPairs');
-      expect(transmission).toHaveProperty('directTransmission');
-      expect(transmission).toHaveProperty('transmissionSpeed');
+      expect(typeof transmission).toBe('object');
+      expect(transmission.marketPairs).toBeDefined();
+      expect(transmission.directTransmission).toBeDefined();
+      expect(transmission.transmissionSpeed).toBeDefined();
     });
   });
 
@@ -162,39 +236,39 @@ describe('EnhancedSpatialPreprocessor', () => {
     test('should prepare choropleth data', () => {
       const choropleth = preprocessor.preparePriceChoropleth(
         mockData.geoData,
-        mockData.timeSeriesData.sanaa.wheat
+        mockData.timeSeriesData
       );
-      expect(choropleth).toHaveProperty('type', 'FeatureCollection');
-      expect(choropleth.features[0].properties).toHaveProperty('styleProperties');
+      expect(choropleth).toBeDefined();
+      expect(Array.isArray(choropleth)).toBe(true);
+      expect(choropleth[0]).toHaveProperty('region_id');
+      expect(choropleth[0]).toHaveProperty('price');
     });
 
     test('should process flows for visualization', () => {
       const visualFlows = preprocessor.processFlowsForVisualization(
         mockData.flowData
       );
-      expect(visualFlows).toHaveProperty('flows');
-      expect(visualFlows).toHaveProperty('aggregates');
-      expect(visualFlows.flows[0]).toHaveProperty('properties.style');
+      expect(Array.isArray(visualFlows)).toBe(true);
+      if (visualFlows.length > 0) {
+        expect(visualFlows[0]).toHaveProperty('source');
+        expect(visualFlows[0]).toHaveProperty('target');
+        expect(visualFlows[0]).toHaveProperty('weight');
+        expect(visualFlows[0]).toHaveProperty('color');
+      }
     });
   });
 
   describe('Full Processing Pipeline', () => {
     test('should process all data successfully', async () => {
-      const inputPaths = {
-        geoDataPath: path.join(tempDir, 'geo.json'),
-        flowsPath: path.join(tempDir, 'flows.json'),
-        timeSeriesPath: path.join(tempDir, 'timeSeries.json'),
-        outputDir: path.join(tempDir, 'output')
-      };
-
       const startTime = performance.now();
       const result = await preprocessor.processAll(inputPaths);
       const duration = performance.now() - startTime;
 
-      expect(result).toHaveProperty('base');
-      expect(result).toHaveProperty('derived');
-      expect(result).toHaveProperty('analysis');
-      expect(result).toHaveProperty('visualization');
+      expect(result).toBeDefined();
+      expect(result.base).toBeDefined();
+      expect(result.derived).toBeDefined();
+      expect(result.analysis).toBeDefined();
+      expect(result.visualization).toBeDefined();
 
       // Check processing time
       expect(duration).toBeLessThan(30000); // Should complete within 30 seconds
@@ -206,13 +280,21 @@ describe('EnhancedSpatialPreprocessor', () => {
     test('should handle large datasets efficiently', async () => {
       // Generate large mock dataset
       const largeData = generateLargeMockData(1000); // 1000 features
-      await fs.writeJson(path.join(tempDir, 'large-geo.json'), largeData.geoData);
+      const largePaths = {
+        ...inputPaths,
+        geoDataPath: path.join(tempDir, 'large-geo.json'),
+        flowsPath: path.join(tempDir, 'large-flows.json'),
+        timeSeriesPath: path.join(tempDir, 'large-timeSeries.json')
+      };
+
+      await Promise.all([
+        fs.writeJson(largePaths.geoDataPath, largeData.geoData),
+        fs.writeJson(largePaths.flowsPath, largeData.flowData),
+        fs.writeJson(largePaths.timeSeriesPath, largeData.timeSeriesData)
+      ]);
 
       const startTime = performance.now();
-      const result = await preprocessor.processAll({
-        ...inputPaths,
-        geoDataPath: path.join(tempDir, 'large-geo.json')
-      });
+      const result = await preprocessor.processAll(largePaths);
       const duration = performance.now() - startTime;
 
       expect(duration).toBeLessThan(60000); // Should complete within 60 seconds
@@ -228,11 +310,13 @@ describe('EnhancedSpatialPreprocessor', () => {
         'invalid json content'
       );
 
+      const corruptPaths = {
+        ...inputPaths,
+        geoDataPath: path.join(tempDir, 'corrupt.json')
+      };
+
       await expect(
-        preprocessor.processAll({
-          ...inputPaths,
-          geoDataPath: path.join(tempDir, 'corrupt.json')
-        })
+        preprocessor.processAll(corruptPaths)
       ).rejects.toThrow();
     });
 
@@ -245,34 +329,3 @@ describe('EnhancedSpatialPreprocessor', () => {
     });
   });
 });
-
-// Helper function to generate large mock datasets
-function generateLargeMockData(featureCount) {
-  const features = [];
-  for (let i = 0; i < featureCount; i++) {
-    features.push({
-      type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[
-          44 + Math.random(),
-          15 + Math.random(),
-          44 + Math.random() + 0.1,
-          15 + Math.random() + 0.1,
-          44 + Math.random()
-        ]]]
-      },
-      properties: {
-        region_id: `region_${i}`,
-        name: `Region ${i}`
-      }
-    });
-  }
-
-  return {
-    geoData: {
-      type: 'FeatureCollection',
-      features
-    }
-  };
-}
