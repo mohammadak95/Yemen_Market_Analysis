@@ -1,217 +1,702 @@
 // src/components/analysis/spatial-analysis/utils/networkAnalysis.js
 
+import _ from 'lodash';
+import { backgroundMonitor } from '../../../../utils/backgroundMonitor';
+
 const DEBUG = process.env.NODE_ENV === 'development';
 
 /**
- * Calculate eigenvector centrality for the network
- * @param {Array} nodes - Network nodes with coordinates
- * @param {Array} links - Network links with flow values
- * @returns {Object} Centrality metrics and network statistics
- */
-export const eigenvectorCentrality = (nodes, links) => {
-    if (DEBUG) {
-        console.group('Eigenvector Centrality Calculation');
-        console.log('Input Nodes:', nodes);
-        console.log('Input Links:', links);
-    }
-
-    try {
-        // Initialize centrality scores
-        let centrality = nodes.reduce((acc, node) => {
-            acc[node.id] = 1.0; // Initial score
-            return acc;
-        }, {});
-
-        // Parameters
-        const maxIterations = 100;
-        const tolerance = 1e-6;
-        let iteration = 0;
-        let delta = 1.0;
-
-        // Power iteration method
-        while (iteration < maxIterations && delta > tolerance) {
-            const prevCentrality = { ...centrality };
-            let maxScore = 0;
-
-            // Reset scores for this iteration
-            Object.keys(centrality).forEach(node => {
-                centrality[node] = 0;
-            });
-
-            // Update scores based on connections
-            links.forEach(link => {
-                // Weight by flow value
-                const weight = link.value;
-                
-                // Update both source and target (undirected)
-                centrality[link.source.id] += prevCentrality[link.target.id] * weight;
-                centrality[link.target.id] += prevCentrality[link.source.id] * weight;
-            });
-
-            // Normalize scores
-            Object.keys(centrality).forEach(node => {
-                maxScore = Math.max(maxScore, Math.abs(centrality[node]));
-            });
-
-            if (maxScore > 0) {
-                Object.keys(centrality).forEach(node => {
-                    centrality[node] /= maxScore;
-                });
-            }
-
-            // Calculate change
-            delta = Object.keys(centrality).reduce((acc, node) => {
-                return Math.max(acc, Math.abs(centrality[node] - prevCentrality[node]));
-            }, 0);
-
-            iteration++;
-        }
-
-        if (DEBUG) {
-            console.log('Centrality Calculation Complete:', {
-                iterations: iteration,
-                finalDelta: delta,
-                scores: centrality
-            });
-        }
-
-        // Calculate additional network metrics
-        const metrics = calculateNetworkMetrics(nodes, links, centrality);
-
-        if (DEBUG) {
-            console.log('Network Metrics:', metrics);
-            console.groupEnd();
-        }
-
-        return {
-            centrality,
-            metrics,
-            components: findConnectedComponents(nodes, links)
-        };
-    } catch (error) {
-        console.error('Error calculating centrality:', error);
-        return {
-            centrality: {},
-            metrics: getDefaultMetrics(),
-            components: []
-        };
-    }
-};
-
-/**
- * Calculate various network metrics
+ * Calculate eigenvector centrality for market network
  * @param {Array} nodes - Network nodes
  * @param {Array} links - Network links
- * @param {Object} centrality - Calculated centrality scores
- * @returns {Object} Network metrics
+ * @param {Object} options - Calculation options
+ * @returns {Object} Centrality metrics and scores
  */
-const calculateNetworkMetrics = (nodes, links, centrality) => {
-    try {
-        // Network density
-        const maxPossibleLinks = nodes.length * (nodes.length - 1) / 2;
-        const density = links.length / maxPossibleLinks;
+export const calculateEigenvectorCentrality = (nodes, links, options = { maxIterations: 50, tolerance: 1e-6 }) => {
+  if (!nodes?.length || !links?.length) {
+    if (DEBUG) console.warn('Missing nodes or links for centrality calculation');
+    return {
+      centrality: {},
+      metrics: {
+        maxCentrality: 0,
+        minCentrality: 0,
+        avgCentrality: 0,
+        iterations: 0
+      }
+    };
+  }
 
-        // Average degree
-        const degrees = nodes.map(node => 
-            links.filter(l => 
-                l.source.id === node.id || l.target.id === node.id
-            ).length
-        );
-        const averageConnectivity = degrees.reduce((a, b) => a + b, 0) / nodes.length;
+  try {
+    const adjacencyMatrix = createAdjacencyMatrix(nodes, links);
+    let centrality = new Array(nodes.length).fill(1);
+    let iterations = 0;
+    let converged = false;
 
-        // Calculate weighted clustering coefficient
-        let globalClusteringCoeff = 0;
-        nodes.forEach(node => {
-            const neighbors = new Set(links
-                .filter(l => l.source.id === node.id || l.target.id === node.id)
-                .map(l => l.source.id === node.id ? l.target.id : l.source.id)
-            );
-
-            if (neighbors.size > 1) {
-                let triangles = 0;
-                const neighborArr = Array.from(neighbors);
-                for (let i = 0; i < neighborArr.length; i++) {
-                    for (let j = i + 1; j < neighborArr.length; j++) {
-                        if (links.some(l => 
-                            (l.source.id === neighborArr[i] && l.target.id === neighborArr[j]) ||
-                            (l.source.id === neighborArr[j] && l.target.id === neighborArr[i])
-                        )) {
-                            triangles++;
-                        }
-                    }
-                }
-                globalClusteringCoeff += triangles / (neighbors.size * (neighbors.size - 1) / 2);
-            }
-        });
-        globalClusteringCoeff /= nodes.length;
-
-        return {
-            density,
-            averageConnectivity,
-            globalClusteringCoeff,
-            marketCount: nodes.length,
-            linkCount: links.length,
-            maxCentrality: Math.max(...Object.values(centrality)),
-            minCentrality: Math.min(...Object.values(centrality))
-        };
-    } catch (error) {
-        console.error('Error calculating network metrics:', error);
-        return getDefaultMetrics();
+    while (iterations < options.maxIterations && !converged) {
+      const newCentrality = multiplyMatrixVector(adjacencyMatrix, centrality);
+      const norm = Math.sqrt(newCentrality.reduce((sum, x) => sum + x * x, 0));
+      
+      // Normalize
+      newCentrality = newCentrality.map(x => x / (norm || 1));
+      
+      // Check convergence
+      const diff = centrality.reduce((sum, x, i) => sum + Math.abs(x - newCentrality[i]), 0);
+      converged = diff < options.tolerance;
+      centrality = newCentrality;
+      iterations++;
     }
-};
 
-/**
- * Find connected components in the network
- * @param {Array} nodes - Network nodes
- * @param {Array} links - Network links
- * @returns {Array} Array of connected components
- */
-const findConnectedComponents = (nodes, links) => {
-    const visited = new Set();
-    const components = [];
-
-    nodes.forEach(node => {
-        if (!visited.has(node.id)) {
-            const component = [];
-            const queue = [node.id];
-            
-            while (queue.length > 0) {
-                const current = queue.shift();
-                if (!visited.has(current)) {
-                    visited.add(current);
-                    component.push(current);
-
-                    // Add connected nodes to queue
-                    links
-                        .filter(l => l.source.id === current || l.target.id === current)
-                        .forEach(l => {
-                            const neighbor = l.source.id === current ? l.target.id : l.source.id;
-                            if (!visited.has(neighbor)) {
-                                queue.push(neighbor);
-                            }
-                        });
-                }
-            }
-            
-            if (component.length > 0) {
-                components.push(component);
-            }
-        }
+    // Create centrality mapping
+    const centralityMap = {};
+    nodes.forEach((node, i) => {
+      centralityMap[node.id] = centrality[i];
     });
 
-    return components;
+    return {
+      centrality: centralityMap,
+      metrics: {
+        maxCentrality: Math.max(...centrality),
+        minCentrality: Math.min(...centrality),
+        avgCentrality: _.mean(centrality),
+        iterations
+      }
+    };
+  } catch (error) {
+    backgroundMonitor.logError('eigenvector-centrality-calculation', error);
+    return {
+      centrality: {},
+      metrics: {
+        maxCentrality: 0,
+        minCentrality: 0,
+        avgCentrality: 0,
+        iterations: 0
+      }
+    };
+  }
 };
 
 /**
- * Get default metrics when calculation fails
- * @returns {Object} Default network metrics
+ * Create weighted adjacency matrix for market network
+ * @param {Array} nodes - Network nodes
+ * @param {Array} links - Network links
+ * @returns {Array} Adjacency matrix
  */
-const getDefaultMetrics = () => ({
-    density: 0,
-    averageConnectivity: 0,
-    globalClusteringCoeff: 0,
-    marketCount: 0,
-    linkCount: 0,
-    maxCentrality: 0,
-    minCentrality: 0
-});
+const createAdjacencyMatrix = (nodes, links) => {
+  try {
+    const n = nodes.length;
+    const matrix = Array(n).fill().map(() => Array(n).fill(0));
+    const nodeIndex = new Map(nodes.map((node, i) => [node.id, i]));
+
+    // Normalize link values
+    const maxFlow = Math.max(...links.map(l => l.totalFlow || 0));
+    
+    links.forEach(link => {
+      const i = nodeIndex.get(link.source.id || link.source);
+      const j = nodeIndex.get(link.target.id || link.target);
+      
+      if (i !== undefined && j !== undefined) {
+        const normalizedValue = maxFlow > 0 ? (link.totalFlow || 0) / maxFlow : 0;
+        matrix[i][j] = normalizedValue;
+        matrix[j][i] = normalizedValue; // Undirected network
+      }
+    });
+
+    return matrix;
+  } catch (error) {
+    backgroundMonitor.logError('adjacency-matrix-creation', error);
+    return [];
+  }
+};
+
+/**
+ * Calculate market power and network influence metrics
+ * @param {string} market - Market identifier
+ * @param {Array} flows - Flow data
+ * @param {Object} marketIntegration - Market integration data
+ * @returns {Object} Market influence metrics
+ */
+export const calculateMarketInfluence = (market, flows, marketIntegration) => {
+  if (!market || !flows?.length || !marketIntegration) {
+    return {
+      flowCentrality: 0,
+      priceInfluence: 0,
+      volumeShare: 0,
+      connections: 0,
+      significance: 0
+    };
+  }
+
+  try {
+    const marketFlows = flows.filter(f => f.source === market || f.target === market);
+    const correlations = marketIntegration.price_correlation?.[market] || {};
+    
+    // Calculate normalized metrics
+    const totalVolume = _.sumBy(flows, 'totalFlow') || 1;
+    const marketVolume = _.sumBy(marketFlows, 'totalFlow');
+    const avgCorrelation = _.mean(Object.values(correlations));
+    
+    // Calculate significance score
+    const significance = calculateSignificanceScore(marketFlows, flows, correlations);
+
+    return {
+      flowCentrality: flows.length > 0 ? marketFlows.length / flows.length : 0,
+      priceInfluence: avgCorrelation || 0,
+      volumeShare: totalVolume > 0 ? marketVolume / totalVolume : 0,
+      connections: marketFlows.length,
+      significance
+    };
+  } catch (error) {
+    backgroundMonitor.logError('market-influence-calculation', error);
+    return {
+      flowCentrality: 0,
+      priceInfluence: 0,
+      volumeShare: 0,
+      connections: 0,
+      significance: 0
+    };
+  }
+};
+
+/**
+ * Calculate network cohesion metrics
+ * @param {Array} nodes - Network nodes
+ * @param {Array} links - Network links
+ * @returns {Object} Network cohesion metrics
+ */
+export const calculateNetworkCohesion = (nodes, links) => {
+  if (!nodes?.length || !links?.length) {
+    return {
+      density: 0,
+      components: 0,
+      largestComponent: 0,
+      isolatedMarkets: 0,
+      avgFlowStrength: 0,
+      cohesionScore: 0
+    };
+  }
+
+  try {
+    // Calculate basic network metrics
+    const density = calculateNetworkDensity(nodes, links);
+    const components = findConnectedComponents(nodes, links);
+    const avgFlowStrength = _.meanBy(links, 'totalFlow') || 0;
+
+    // Calculate advanced metrics
+    const componentSizes = components.map(c => c.length);
+    const largestComponent = Math.max(...componentSizes);
+    const isolatedMarkets = components.filter(c => c.length === 1).length;
+
+    // Calculate overall cohesion score
+    const cohesionScore = calculateCohesionScore({
+      density,
+      componentRatio: largestComponent / nodes.length,
+      isolationRatio: 1 - (isolatedMarkets / nodes.length),
+      flowStrengthNorm: normalizeFlowStrength(avgFlowStrength, links)
+    });
+
+    return {
+      density,
+      components: components.length,
+      largestComponent,
+      isolatedMarkets,
+      avgFlowStrength,
+      cohesionScore,
+      componentDistribution: calculateComponentDistribution(componentSizes, nodes.length)
+    };
+  } catch (error) {
+    backgroundMonitor.logError('network-cohesion-calculation', error);
+    return {
+      density: 0,
+      components: 0,
+      largestComponent: 0,
+      isolatedMarkets: 0,
+      avgFlowStrength: 0,
+      cohesionScore: 0,
+      componentDistribution: {}
+    };
+  }
+};
+
+/**
+ * Identify key market roles based on network position
+ * @param {Array} flows - Flow data
+ * @param {Object} marketIntegration - Market integration data
+ * @returns {Array} Key markets with roles
+ */
+export const identifyKeyMarkets = (flows, marketIntegration) => {
+  if (!flows?.length || !marketIntegration) {
+    return [];
+  }
+
+  try {
+    const markets = new Set(flows.map(f => f.source));
+    const keyMarkets = [];
+
+    markets.forEach(market => {
+      const influence = calculateMarketInfluence(market, flows, marketIntegration);
+      const role = determineMarketRole(influence, flows, marketIntegration);
+
+      if (role.significance > 0.5) {
+        keyMarkets.push({
+          market,
+          role: role.type,
+          significance: role.significance,
+          metrics: {
+            ...influence,
+            role_confidence: role.confidence
+          }
+        });
+      }
+    });
+
+    return _.orderBy(keyMarkets, ['metrics.significance'], ['desc']);
+  } catch (error) {
+    backgroundMonitor.logError('key-markets-identification', error);
+    return [];
+  }
+};
+
+/**
+ * Calculate market integration score
+ * @param {string} market - Market identifier
+ * @param {Object} marketIntegration - Market integration data
+ * @returns {Object} Integration metrics
+ */
+export const calculateMarketIntegrationScore = (market, marketIntegration) => {
+  if (!market || !marketIntegration) {
+    return {
+      integrationScore: 0,
+      correlations: {},
+      accessibility: 0
+    };
+  }
+
+  try {
+    const correlations = marketIntegration.price_correlation?.[market] || {};
+    const accessibility = marketIntegration.accessibility?.[market] || 0;
+    
+    const avgCorrelation = Object.values(correlations).length > 0
+      ? _.mean(Object.values(correlations))
+      : 0;
+
+    // Calculate weighted integration score
+    const integrationScore = avgCorrelation * (accessibility / 5);
+
+    return {
+      integrationScore,
+      correlations,
+      accessibility,
+      correlationStats: calculateCorrelationStats(correlations)
+    };
+  } catch (error) {
+    backgroundMonitor.logError('market-integration-score-calculation', error);
+    return {
+      integrationScore: 0,
+      correlations: {},
+      accessibility: 0,
+      correlationStats: {
+        mean: 0,
+        std: 0,
+        min: 0,
+        max: 0
+      }
+    };
+  }
+};
+
+/**
+ * Calculate price transmission efficiency between markets
+ * @param {Array} flows - Flow data
+ * @param {Object} marketIntegration - Market integration data
+ * @returns {Object} Transmission efficiency metrics
+ */
+export const calculatePriceTransmission = (flows, marketIntegration) => {
+  if (!flows?.length || !marketIntegration) {
+    return {};
+  }
+
+  try {
+    const transmission = {};
+    const markets = new Set(flows.map(f => f.source));
+
+    markets.forEach(market => {
+      const connections = flows.filter(f => 
+        f.source === market || f.target === market
+      );
+
+      if (connections.length > 0) {
+        const efficiency = connections.reduce((acc, conn) => {
+          const otherMarket = conn.source === market ? conn.target : conn.source;
+          const correlation = marketIntegration.price_correlation?.[market]?.[otherMarket] || 0;
+          return acc + (correlation * conn.totalFlow);
+        }, 0) / connections.reduce((sum, conn) => sum + conn.totalFlow, 0);
+
+        transmission[market] = efficiency;
+      }
+    });
+
+    return transmission;
+  } catch (error) {
+    backgroundMonitor.logError('price-transmission-calculation', error);
+    return {};
+  }
+};
+
+/**
+ * Helper Functions
+ */
+
+/**
+ * Calculate network density
+ * @param {Array} nodes - Network nodes
+ * @param {Array} links - Network links
+ * @returns {number} Network density
+ */
+const calculateNetworkDensity = (nodes, links) => {
+  const maxPossibleLinks = (nodes.length * (nodes.length - 1)) / 2;
+  return maxPossibleLinks > 0 ? links.length / maxPossibleLinks : 0;
+};
+
+/**
+ * Find connected components using depth-first search
+ * @param {Array} nodes - Network nodes
+ * @param {Array} links - Network links
+ * @returns {Array} Connected components
+ */
+const findConnectedComponents = (nodes, links) => {
+  const visited = new Set();
+  const components = [];
+
+  nodes.forEach(node => {
+    if (!visited.has(node.id)) {
+      const component = [];
+      const stack = [node.id];
+
+      while (stack.length > 0) {
+        const current = stack.pop();
+        if (!visited.has(current)) {
+          visited.add(current);
+          component.push(current);
+
+          links
+            .filter(l => l.source === current || l.target === current)
+            .forEach(l => {
+              const neighbor = l.source === current ? l.target : l.source;
+              if (!visited.has(neighbor)) {
+                stack.push(neighbor);
+              }
+            });
+        }
+      }
+
+      components.push(component);
+    }
+  });
+
+  return components;
+};
+
+/**
+ * Calculate significance score for market influence
+ * @param {Array} marketFlows - Market-specific flows
+ * @param {Array} allFlows - All network flows
+ * @param {Object} correlations - Price correlations
+ * @returns {number} Significance score
+ */
+const calculateSignificanceScore = (marketFlows, allFlows, correlations) => {
+  const flowShare = allFlows.length > 0 ? marketFlows.length / allFlows.length : 0;
+  const avgCorrelation = _.mean(Object.values(correlations)) || 0;
+  return (flowShare * 0.6) + (avgCorrelation * 0.4);
+};
+
+/**
+ * Determine market role based on influence metrics
+ * @param {Object} influence - Market influence metrics
+ * @param {Array} flows - Flow data
+ * @param {Object} marketIntegration - Market integration data
+ * @returns {Object} Market role classification
+ */
+const determineMarketRole = (influence, flows, marketIntegration) => {
+  const { flowCentrality, priceInfluence, volumeShare } = influence;
+
+  // Calculate role scores
+  const hubScore = (flowCentrality * 0.4) + (volumeShare * 0.4) + (priceInfluence * 0.2);
+  const bridgeScore = (flowCentrality * 0.3) + (priceInfluence * 0.5) + (volumeShare * 0.2);
+  const peripheralScore = 1 - ((flowCentrality + volumeShare + priceInfluence) / 3);
+
+  // Determine primary role
+  const scores = {
+    hub: hubScore,
+    bridge: bridgeScore,
+    peripheral: peripheralScore
+  };
+
+  const role = _.maxBy(Object.entries(scores), '[1]');
+  
+  return {
+    type: role[0],
+    significance: role[1],
+    confidence: calculateRoleConfidence(scores)
+  };
+};
+
+/**
+ * Calculate confidence in role assignment
+ * @param {Object} scores - Role scores
+ * @returns {number} Confidence score
+ */
+const calculateRoleConfidence = (scores) => {
+  const values = Object.values(scores);
+  const max = Math.max(...values);
+  const others = values.filter(v => v !== max);
+  const avgOthers = _.mean(others);
+  
+  // Confidence is based on how distinctly the role stands out
+  return (max - avgOthers) / max;
+};
+
+/**
+ * Calculate cohesion score from component metrics
+ * @param {Object} metrics - Component metrics
+ * @returns {number} Cohesion score
+ */
+const calculateCohesionScore = (metrics) => {
+  const weights = {
+    density: 0.3,
+    componentRatio: 0.3,
+    isolationRatio: 0.2,
+    flowStrengthNorm: 0.2
+  };
+
+  return Object.entries(weights).reduce((score, [metric, weight]) => {
+    return score + (metrics[metric] * weight);
+  }, 0);
+};
+
+/**
+ * Calculate component size distribution
+ * @param {Array} componentSizes - Array of component sizes
+ * @param {number} totalNodes - Total number of nodes
+ * @returns {Object} Component distribution metrics
+ */
+const calculateComponentDistribution = (componentSizes, totalNodes) => {
+  try {
+    const sorted = [...componentSizes].sort((a, b) => b - a);
+    const total = sorted.reduce((sum, size) => sum + size, 0);
+
+    return {
+      distribution: sorted.map(size => size / total),
+      gini: calculateGiniCoefficient(sorted),
+      entropy: calculateEntropyMeasure(sorted, total),
+      largest_component_ratio: sorted[0] / totalNodes
+    };
+  } catch (error) {
+    backgroundMonitor.logError('component-distribution-calculation', error);
+    return {
+      distribution: [],
+      gini: 0,
+      entropy: 0,
+      largest_component_ratio: 0
+    };
+  }
+};
+
+/**
+ * Calculate Gini coefficient for component distribution
+ * @param {Array} values - Array of values
+ * @returns {number} Gini coefficient
+ */
+const calculateGiniCoefficient = (values) => {
+  if (!values?.length) return 0;
+
+  try {
+    const sorted = [...values].sort((a, b) => a - b);
+    const n = sorted.length;
+    const mean = _.mean(sorted);
+    
+    if (mean === 0) return 0;
+
+    const summation = sorted.reduce((sum, value, i) => {
+      return sum + ((2 * i - n + 1) * value);
+    }, 0);
+
+    return summation / (Math.pow(n, 2) * mean);
+  } catch (error) {
+    backgroundMonitor.logError('gini-coefficient-calculation', error);
+    return 0;
+  }
+};
+
+/**
+ * Calculate entropy measure for component distribution
+ * @param {Array} values - Array of values
+ * @param {number} total - Total sum of values
+ * @returns {number} Entropy measure
+ */
+const calculateEntropyMeasure = (values, total) => {
+  if (!values?.length || total === 0) return 0;
+
+  try {
+    return -values.reduce((entropy, value) => {
+      const p = value / total;
+      return p > 0 ? entropy + (p * Math.log(p)) : entropy;
+    }, 0);
+  } catch (error) {
+    backgroundMonitor.logError('entropy-measure-calculation', error);
+    return 0;
+  }
+};
+
+/**
+ * Normalize flow strength relative to network
+ * @param {number} avgStrength - Average flow strength
+ * @param {Array} links - Network links
+ * @returns {number} Normalized flow strength
+ */
+const normalizeFlowStrength = (avgStrength, links) => {
+  if (!links?.length) return 0;
+
+  try {
+    const maxFlow = Math.max(...links.map(l => l.totalFlow || 0));
+    return maxFlow > 0 ? avgStrength / maxFlow : 0;
+  } catch (error) {
+    backgroundMonitor.logError('flow-strength-normalization', error);
+    return 0;
+  }
+};
+
+/**
+ * Calculate correlation statistics
+ * @param {Object} correlations - Correlation values
+ * @returns {Object} Correlation statistics
+ */
+const calculateCorrelationStats = (correlations) => {
+  if (!correlations || Object.keys(correlations).length === 0) {
+    return {
+      mean: 0,
+      std: 0,
+      min: 0,
+      max: 0
+    };
+  }
+
+  try {
+    const values = Object.values(correlations);
+    const mean = _.mean(values);
+    const std = Math.sqrt(
+      values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
+    );
+
+    return {
+      mean,
+      std,
+      min: Math.min(...values),
+      max: Math.max(...values)
+    };
+  } catch (error) {
+    backgroundMonitor.logError('correlation-stats-calculation', error);
+    return {
+      mean: 0,
+      std: 0,
+      min: 0,
+      max: 0
+    };
+  }
+};
+
+/**
+ * Matrix-vector multiplication with numerical stability
+ * @param {Array} matrix - Input matrix
+ * @param {Array} vector - Input vector
+ * @returns {Array} Result vector
+ */
+const multiplyMatrixVector = (matrix, vector) => {
+  if (!matrix?.length || !vector?.length) return [];
+
+  try {
+    return matrix.map(row => 
+      row.reduce((sum, cell, i) => {
+        const product = cell * vector[i];
+        return sum + (isNaN(product) ? 0 : product);
+      }, 0)
+    );
+  } catch (error) {
+    backgroundMonitor.logError('matrix-vector-multiplication', error);
+    return [];
+  }
+};
+
+/**
+ * Analyze overall network structure
+ * @param {Array} flows - Flow data
+ * @param {Object} marketIntegration - Market integration data
+ * @returns {Object} Network structure analysis
+ */
+export const analyzeMarketNetwork = (flows, marketIntegration) => {
+  if (!flows?.length || !marketIntegration) {
+    return {
+      markets: {},
+      global: {
+        density: 0,
+        avgIntegration: 0,
+        flowDensity: 0
+      }
+    };
+  }
+
+  try {
+    const markets = new Set(flows.map(f => f.source));
+    const networkAnalysis = {
+      markets: {},
+      global: {
+        density: flows.length / (markets.size * (markets.size - 1)),
+        avgIntegration: marketIntegration.integration_score || 0,
+        flowDensity: marketIntegration.flow_density || 0
+      }
+    };
+
+    // Analyze individual markets
+    markets.forEach(market => {
+      const marketFlows = flows.filter(f => f.source === market || f.target === market);
+      const integration = calculateMarketIntegrationScore(market, marketIntegration);
+
+      networkAnalysis.markets[market] = {
+        integration,
+        flows: {
+          count: marketFlows.length,
+          totalVolume: _.sumBy(marketFlows, 'totalFlow'),
+          avgFlow: _.meanBy(marketFlows, 'avgFlow')
+        },
+        influence: calculateMarketInfluence(market, flows, marketIntegration)
+      };
+    });
+
+    return networkAnalysis;
+  } catch (error) {
+    backgroundMonitor.logError('market-network-analysis', error);
+    return {
+      markets: {},
+      global: {
+        density: 0,
+        avgIntegration: 0,
+        flowDensity: 0
+      }
+    };
+  }
+};
+
+// Export utility functions for testing
+export const testUtils = {
+  calculateNetworkDensity,
+  findConnectedComponents,
+  calculateSignificanceScore,
+  determineMarketRole,
+  calculateRoleConfidence,
+  calculateCohesionScore,
+  calculateComponentDistribution,
+  calculateGiniCoefficient,
+  calculateEntropyMeasure,
+  normalizeFlowStrength,
+  calculateCorrelationStats,
+  multiplyMatrixVector
+};

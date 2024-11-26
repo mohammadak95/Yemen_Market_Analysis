@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { getColorScale } from '../../../utils/colorScales';
 import { MAP_SETTINGS } from '../../../constants';
+import { safeGeoJSONProcessor } from '../../../utils/geoJSONProcessor';
 
 const SpatialMap = ({ 
   visualizationData, 
@@ -23,20 +24,14 @@ const SpatialMap = ({
     };
   };
 
-  const geoJsonData = useMemo(() => ({
-    ...visualizationData.geometry,
-    features: visualizationData.geometry?.features?.map(feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        [`${visualizationMode}_value`]: 
-          visualizationMode === 'prices' ? feature.properties.avgUsdPrice :
-          visualizationMode === 'integration' ? feature.properties.integrationScore :
-          visualizationMode === 'conflicts' ? feature.properties.conflictIntensity :
-          null
-      }
-    }))
-  }), [visualizationData.geometry, visualizationMode]);
+  const geoJsonData = useMemo(() => {
+    if (!visualizationData?.geometry) return null;
+    
+    return safeGeoJSONProcessor(
+      visualizationData.geometry, 
+      visualizationMode
+    );
+  }, [visualizationData.geometry, visualizationMode]);
 
   if (!geoJsonData?.features) return null;
 
@@ -54,9 +49,12 @@ const SpatialMap = ({
         data={geoJsonData}
         style={getFeatureStyle}
         onEachFeature={(feature, layer) => {
-          layer.on({
-            click: () => onRegionClick(feature.properties.region_id)
-          });
+          const regionId = feature.properties.region_id;
+          if (regionId) {
+            layer.on({
+              click: () => onRegionClick(regionId)
+            });
+          }
         }}
       />
     </MapContainer>

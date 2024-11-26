@@ -1,60 +1,67 @@
-// src/components/analysis/spatial-analysis/components/seasonal/SeasonalPriceMap.js
-
 import React, { useMemo, useState } from 'react';
 import { 
-  Paper, Box, Typography, Grid, Card, CardContent,
-  ToggleButtonGroup, ToggleButton, Slider 
-} from '@mui/material';
-import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
+  MapContainer, 
+  TileLayer, 
+  GeoJSON 
+} from 'react-leaflet';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  ResponsiveContainer, Tooltip as RechartsTooltip 
-} from 'recharts';
-import { useTheme } from '@mui/material/styles';
-import { scaleSequential } from 'd3-scale';
-import { interpolateRdYlBu } from 'd3-scale-chromatic';
-import SeasonalLegend from './SeasonalLegend';
-import { useSeasonalAnalysis } from '../../hooks/useSeasonalAnalysis';
+  Box, 
+  ToggleButtonGroup, 
+  ToggleButton, 
+  Typography, 
+  Paper 
+} from '@mui/material';
+import { scaleLinear } from 'd3-scale';
+import SpatialErrorBoundary from '../../SpatialErrorBoundary';
+import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
 
-const SeasonalPriceMap = ({ seasonalAnalysis, geometry, timeSeriesData }) => {
-  const theme = useTheme();
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const SeasonalPriceMap = ({ 
+  geometryData, 
+  regionalPatterns 
+}) => {
   const [selectedMonth, setSelectedMonth] = useState(0);
-  const [seasonalityThreshold, setSeasonalityThreshold] = useState(0.1);
 
-  const { 
-    seasonalPatterns,
-    regionalPatterns,
-    seasonalStrength,
-    monthlyAverages
-  } = useSeasonalAnalysis(seasonalAnalysis, timeSeriesData);
-
-  const colorScale = useMemo(() => 
-    scaleSequential(interpolateRdYlBu)
-      .domain([-1, 1])
-  , []);
-
+  // Process GeoJSON with safe preprocessing
   const mapData = useMemo(() => {
-    if (!geometry || !regionalPatterns) return null;
+    if (!geometryData?.features || !regionalPatterns) return null;
+
+    const processedGeometry = safeGeoJSONProcessor(geometryData, 'seasonal');
 
     return {
-      ...geometry,
-      features: geometry.features.map(feature => ({
-        ...feature,
-        properties: {
-          ...feature.properties,
-          seasonalEffect: regionalPatterns[feature.properties.region_id]?.[selectedMonth] || 0,
-          seasonalStrength: seasonalStrength[feature.properties.region_id] || 0
-        }
-      }))
-    };
-  }, [geometry, regionalPatterns, seasonalStrength, selectedMonth]);
+      ...processedGeometry,
+      features: processedGeometry.features.map(feature => {
+        const regionId = feature.properties.region_id;
+        const monthlyEffect = regionalPatterns[regionId]?.[selectedMonth] || 0;
 
+        return {
+          ...feature,
+          properties: {
+            ...feature.properties,
+            seasonalEffect: monthlyEffect
+          }
+        };
+      })
+    };
+  }, [geometryData, regionalPatterns, selectedMonth]);
+
+  // Color scale for seasonal effects
+  const colorScale = useMemo(() => {
+    const effects = mapData?.features?.map(f => f.properties.seasonalEffect) || [];
+    const minEffect = Math.min(...effects);
+    const maxEffect = Math.max(...effects);
+
+    return scaleLinear()
+      .domain([minEffect, 0, maxEffect])
+      .range(['blue', 'white', 'red']);
+  }, [mapData]);
+
+  // Feature styling
   const getFeatureStyle = (feature) => {
     const effect = feature.properties.seasonalEffect;
-    const strength = feature.properties.seasonalStrength;
-
     return {
-      fillColor: strength > seasonalityThreshold ? colorScale(effect) : '#cccccc',
+      fillColor: colorScale(effect),
       weight: 1,
       opacity: 1,
       color: 'white',
@@ -62,124 +69,95 @@ const SeasonalPriceMap = ({ seasonalAnalysis, geometry, timeSeriesData }) => {
     };
   };
 
+  // Tooltip for each feature
+  const onEachFeature = (feature, layer) => {
+    const regionId = feature.properties.region_id;
+    const effect = feature.properties.seasonalEffect;
+    
+    layer.bindTooltip(`
+      <strong>${regionId}</strong><br/>
+      Seasonal Effect: ${(effect * 100).toFixed(1)}%
+    `);
+  };
+
   return (
-    <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Seasonal Price Patterns
-        </Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" gutterBottom>
-              Month Selection
-            </Typography>
-            <ToggleButtonGroup
-              value={selectedMonth}
-              exclusive
-              onChange={(_, value) => value !== null && setSelectedMonth(value)}
-              size="small"
-              sx={{ flexWrap: 'wrap' }}
-            >
-              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                .map((month, index) => (
-                  <ToggleButton key={month} value={index}>
-                    {month}
-                  </ToggleButton>
-                ))}
-            </ToggleButtonGroup>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" gutterBottom>
-              Seasonality Threshold
-            </Typography>
-            <Slider
-              value={seasonalityThreshold}
-              onChange={(_, value) => setSeasonalityThreshold(value)}
-              min={0}
-              max={0.5}
-              step={0.01}
-              valueLabelDisplay="auto"
-              valueLabelFormat={x => `${(x * 100).toFixed(0)}%`}
+    <SpatialErrorBoundary>
+      <Box sx={{ height: '100%', position: 'relative' }}>
+        <MapContainer
+          center={[15.5, 48]} // Yemen's approximate center
+          zoom={6}
+          style={{ height: '100%', width: '100%' }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap contributors"
+          />
+          
+          {mapData && (
+            <GeoJSON
+              data={mapData}
+              style={getFeatureStyle}
+              onEachFeature={onEachFeature}
             />
-          </Grid>
-        </Grid>
-      </Box>
+          )}
+        </MapContainer>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={8}>
-          <Box sx={{ height: 500, width: '100%' }}>
-            <MapContainer
-              center={[15.3694, 44.191]}
-              zoom={6}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; OpenStreetMap contributors'
-              />
-              {mapData && (
-                <GeoJSON
-                  data={mapData}
-                  style={getFeatureStyle}
-                  onEachFeature={(feature, layer) => {
-                    const effect = feature.properties.seasonalEffect;
-                    const strength = feature.properties.seasonalStrength;
-                    
-                    layer.bindTooltip(`
-                      <strong>${feature.properties.region_id}</strong><br/>
-                      Seasonal Effect: ${(effect * 100).toFixed(1)}%<br/>
-                      Seasonal Strength: ${(strength * 100).toFixed(1)}%
-                    `);
-                  }}
-                />
-              )}
-            </MapContainer>
+        {/* Month Selection */}
+        <Paper 
+          sx={{ 
+            position: 'absolute', 
+            bottom: 10, 
+            left: 10, 
+            p: 2, 
+            zIndex: 1000 
+          }}
+        >
+          <Typography variant="subtitle2" gutterBottom>
+            Select Month
+          </Typography>
+          <ToggleButtonGroup
+            value={selectedMonth}
+            exclusive
+            onChange={(_, newMonth) => newMonth !== null && setSelectedMonth(newMonth)}
+            orientation="horizontal"
+            size="small"
+          >
+            {MONTHS.map((month, index) => (
+              <ToggleButton key={month} value={index}>
+                {month}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Paper>
+
+        {/* Seasonal Effect Legend */}
+        <Paper 
+          sx={{ 
+            position: 'absolute', 
+            bottom: 10, 
+            right: 10, 
+            p: 2, 
+            zIndex: 1000 
+          }}
+        >
+          <Typography variant="subtitle2">
+            Seasonal Price Effect
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="caption">Low</Typography>
+            <Box 
+              sx={{ 
+                width: 100, 
+                height: 10, 
+                background: `linear-gradient(to right, blue, white, red)` 
+              }} 
+            />
+            <Typography variant="caption">High</Typography>
           </Box>
-          <SeasonalLegend colorScale={colorScale} />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Seasonal Pattern
-              </Typography>
-              <Box sx={{ height: 300 }}>
-                <ResponsiveContainer>
-                  <LineChart data={monthlyAverages}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="month" 
-                      tickFormatter={(_, i) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}
-                    />
-                    <YAxis 
-                      label={{ 
-                        value: 'Price Effect (%)', 
-                        angle: -90, 
-                        position: 'insideLeft' 
-                      }}
-                    />
-                    <RechartsTooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="effect"
-                      stroke={theme.palette.primary.main}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                Peak Month: {seasonalAnalysis.peak_month}<br/>
-                Trough Month: {seasonalAnalysis.trough_month}<br/>
-                Overall Seasonal Strength: {(seasonalAnalysis.seasonal_strength * 100).toFixed(1)}%
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Paper>
+        </Paper>
+      </Box>
+    </SpatialErrorBoundary>
   );
 };
 
-export default SeasonalPriceMap;
+export default React.memo(SeasonalPriceMap);

@@ -2,7 +2,11 @@
 
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Box, Paper, Tabs, Tab, Typography, Alert } from '@mui/material';
+import { 
+  Box, Paper, Tabs, Tab, Typography, Alert, Grid, 
+  Card, CardContent 
+} from '@mui/material';
+import _ from 'lodash';
 import {
   selectSpatialDataOptimized,
   selectMarketClusters,
@@ -13,20 +17,29 @@ import {
   selectGeometryData
 } from '../../../selectors/optimizedSelectors';
 import NetworkGraph from './components/network/NetworkGraph';
-import NetworkGraphLegend from './components/network/NetworkGraphLegend';
 import MarketHealthMetrics from './components/health/MarketHealthMetrics';
 import ShockPropagationMap from './components/shocks/ShockPropagationMap';
-import ClusterEfficiencyDashboard from './components/network/ClusterEfficiencyDashboard';
-import ClusterMap from './components/network/ClusterMap';
+import ClusterEfficiencyDashboard from './components/clusters/ClusterEfficiencyDashboard'; // Corrected import path
 import SeasonalPriceMap from './components/seasonal/SeasonalPriceMap';
 import ConflictImpactDashboard from './components/conflict/ConflictImpactDashboard';
 import FlowNetworkAnalysis from './components/flows/FlowNetworkAnalysis';
-import { useClusterEfficiency, useComparativeClusters } from './hooks/useClusterEfficiency';
+import SpatialAutocorrelationAnalysis from './components/autocorrelation/SpatialAutocorrelationAnalysis';
+import MetricCard from './components/common/MetricCard';
+import { useClusterEfficiency } from './hooks/useClusterEfficiency';
+import {
+  calculateCoefficientOfVariation,
+  calculateMarketCoverage,
+  calculateConflictImpact,
+  calculateNorthSouthDisparity,
+} from './utils/spatialAnalysis'; // Corrected imports
 
 const DEBUG = process.env.NODE_ENV === 'development';
 
-const UnifiedSpatialDashboard = () => {
+const SpatialAnalysis = React.memo(() => {
   const [activeTab, setActiveTab] = useState(0);
+  const [timeWindow, setTimeWindow] = useState('6M');
+  
+  // Selectors
   const spatialData = useSelector(selectSpatialDataOptimized);
   const marketClusters = useSelector(selectMarketClusters);
   const flowData = useSelector(selectMarketFlows);
@@ -35,58 +48,127 @@ const UnifiedSpatialDashboard = () => {
   const marketIntegration = useSelector(selectMarketIntegration);
   const geometryData = useSelector(selectGeometryData);
 
-  // Use our new hooks for cluster analysis
-  const processedClusters = useClusterEfficiency();
-  const comparativeClusters = useComparativeClusters();
+  // Process clusters
+  const { clusters: processedClusters, metrics: clusterMetrics } = useClusterEfficiency();
 
-  if (DEBUG) {
-    console.group('UnifiedSpatialDashboard Render');
-    console.log('Spatial Data:', spatialData);
-    console.log('Processed Clusters:', processedClusters);
-    console.log('Comparative Metrics:', comparativeClusters);
-  }
-
-  // Memoized computed metrics
-  const marketHealthMetrics = useMemo(() => {
+  // Calculate key economic indicators
+  const economicIndicators = useMemo(() => {
     if (!spatialData) return null;
 
-    const {
-      marketIntegration,
-      spatialAutocorrelation,
-      timeSeriesData: tsData,
-      marketShocks,
-      uniqueMonths,
-    } = spatialData;
+    const calculatePriceDispersion = () => {
+      if (!timeSeriesData?.length) return 0;
+      const latestData = _.last(timeSeriesData);
+      const prices = Object.values(latestData?.prices || {});
+      return prices.length ? calculateCoefficientOfVariation(prices) : 0;
+    };
 
-    // Compute metrics using actual data
-    const averageVolatility = tsData?.reduce((acc, curr) => 
-      acc + (curr.volatility || 0), 0) / (tsData?.length || 1);
-
-    const conflictImpact = tsData?.reduce((acc, curr) => 
-      acc + (curr.conflict_intensity || 0), 0) / (tsData?.length || 1);
-
-    const shockFrequency = (marketShocks?.length || 0) / (uniqueMonths?.length || 1);
-
-    // Include cluster efficiency from our processed data
-    const clusterEfficiency = processedClusters?.reduce((acc, cluster) => 
-      acc + cluster.metrics.efficiency_score, 0) / (processedClusters?.length || 1);
+    const calculateMarketEfficiency = () => {
+      const integrationScore = spatialData.marketIntegration?.integration_score || 0;
+      const spatialCorrelation = spatialData.spatialAutocorrelation?.global?.moran_i || 0;
+      const priceConvergence = calculatePriceDispersion();
+      
+      return (integrationScore + spatialCorrelation + (1 - priceConvergence)) / 3;
+    };
 
     return {
-      integration: marketIntegration?.integration_score || 0,
-      spatialAutocorrelation: spatialAutocorrelation?.global?.I || 0,
-      averageVolatility,
-      clusterEfficiency,
-      conflictImpact,
-      shockFrequency,
+      marketEfficiency: calculateMarketEfficiency(),
+      spatialIntegration: spatialData.marketIntegration?.integration_score || 0,
+      spatialAutocorrelation: spatialData.spatialAutocorrelation?.global?.moran_i || 0,
+      marketCoverage: calculateMarketCoverage(spatialData),
+      priceDispersion: calculatePriceDispersion(),
+      conflictImpact: calculateConflictImpact(spatialData),
+      northSouthDisparity: calculateNorthSouthDisparity(spatialData),
+      seasonalityStrength: spatialData.seasonalAnalysis?.seasonal_strength || 0
     };
-  }, [spatialData, processedClusters]);
+  }, [spatialData, timeSeriesData]);
 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-    if (DEBUG) {
-      console.log('Tab changed:', newValue);
+  const tabPanels = useMemo(() => [
+    {
+      label: "Market Integration Overview",
+      component: (
+        <MarketHealthMetrics
+          metrics={economicIndicators}
+          timeSeriesData={timeSeriesData}
+          spatialPatterns={spatialData?.spatialAutocorrelation}
+        />
+      )
+    },
+    {
+      label: "Spatial Autocorrelation",
+      component: (
+        <SpatialAutocorrelationAnalysis
+          spatialData={spatialData}
+          geometryData={geometryData}
+        />
+      )
+    },
+    {
+      label: "Market Network Analysis",
+      component: (
+        <NetworkGraph
+          flows={flowData}
+          geometryData={geometryData}
+          marketIntegration={marketIntegration}
+        />
+      )
+    },
+    {
+      label: "Cluster Analysis",
+      component: (
+        <ClusterEfficiencyDashboard
+          clusters={processedClusters}
+          metrics={clusterMetrics}
+          geometryData={geometryData}
+        />
+      )
+    },
+    {
+      label: "Price Shock Analysis",
+      component: (
+        <ShockPropagationMap
+          shocks={spatialData?.marketShocks}
+          spatialAutocorrelation={spatialData?.spatialAutocorrelation?.local}
+          timeRange={spatialData?.uniqueMonths}
+          geometry={geometryData}
+        />
+      )
+    },
+    {
+      label: "Seasonal Patterns",
+      component: (
+        <SeasonalPriceMap
+          seasonalAnalysis={spatialData?.seasonalAnalysis}
+          geometry={geometryData}
+          timeSeriesData={timeSeriesData}
+        />
+      )
+    },
+    {
+      label: "Conflict Impact",
+      component: (
+        <ConflictImpactDashboard
+          timeSeriesData={timeSeriesData}
+          spatialClusters={spatialData?.spatialAutocorrelation?.local}
+          timeWindow={timeWindow}
+        />
+      )
+    },
+    {
+      label: "Flow Network",
+      component: (
+        <FlowNetworkAnalysis
+          flows={flowData}
+          spatialAutocorrelation={spatialData?.spatialAutocorrelation?.local}
+          marketIntegration={marketIntegration}
+          geometry={geometryData}
+          marketClusters={marketClusters}
+        />
+      )
     }
-  };
+  ], [
+    economicIndicators, timeSeriesData, spatialData, geometryData, flowData,
+    marketIntegration, processedClusters, clusterMetrics, timeWindow, marketClusters
+  ]);
 
   if (!spatialData) {
     return (
@@ -100,110 +182,63 @@ const UnifiedSpatialDashboard = () => {
     <Box sx={{ flexGrow: 1, height: '100%', overflow: 'hidden' }}>
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Typography variant="h5" gutterBottom>
-          Spatial Market Analysis Dashboard
+          Yemen Market Spatial Analysis Dashboard
         </Typography>
+        
+        {economicIndicators && (
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Market Efficiency Score"
+                value={economicIndicators.marketEfficiency}
+                format="percentage"
+                description="Overall market integration and efficiency"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Spatial Integration"
+                value={economicIndicators.spatialIntegration}
+                format="number"
+                description="Market integration strength"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Price Dispersion"
+                value={economicIndicators.priceDispersion}
+                format="percentage"
+                description="Cross-regional price variation"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Conflict Impact"
+                value={economicIndicators.conflictImpact}
+                format="number"
+                description="Conflict-price correlation"
+              />
+            </Grid>
+          </Grid>
+        )}
+
         <Tabs
           value={activeTab}
-          onChange={handleTabChange}
+          onChange={(e, newValue) => setActiveTab(newValue)}
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab label="Market Health" />
-          <Tab label="Network Analysis" />
-          <Tab label="Cluster Analysis" />
-          <Tab label="Price Shocks" />
-          <Tab label="Seasonal Patterns" />
-          <Tab label="Conflict Impact" />
-          <Tab label="Flow Analysis" />
+          {tabPanels.map((panel, index) => (
+            <Tab key={index} label={panel.label} />
+          ))}
         </Tabs>
       </Paper>
 
       <Box sx={{ height: 'calc(100% - 120px)', overflow: 'auto', p: 2 }}>
-        <TabPanel value={activeTab} index={0}>
-          <MarketHealthMetrics
-            metrics={marketHealthMetrics}
-            timeSeriesData={timeSeriesData}
-            spatialPatterns={spatialData.spatialAutocorrelation}
-          />
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={1}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <NetworkGraph
-              flows={flowData}
-              geometryData={geometryData}
-              marketIntegration={marketIntegration}
-            />
-            <NetworkGraphLegend 
-              metrics={marketHealthMetrics}
-              flowData={flowData}
-            />
-          </Box>
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={2}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <ClusterMap 
-              marketClusters={marketClusters}
-              geometryData={geometryData}
-            />
-            <ClusterEfficiencyDashboard 
-              clusters={processedClusters}
-              comparativeMetrics={comparativeClusters}
-            />
-          </Box>
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={3}>
-          <ShockPropagationMap
-            shocks={spatialData.marketShocks}
-            spatialAutocorrelation={spatialData.spatialAutocorrelation?.local}
-            timeRange={spatialData.uniqueMonths}
-            geometry={spatialData.geometry}
-          />
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={4}>
-          <SeasonalPriceMap
-            seasonalAnalysis={spatialData.seasonalAnalysis}
-            geometry={spatialData.geometry}
-            timeSeriesData={timeSeriesData}
-          />
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={5}>
-          <ConflictImpactDashboard
-            timeSeriesData={timeSeriesData}
-            spatialClusters={spatialData.spatialAutocorrelation?.local}
-          />
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={6}>
-          <FlowNetworkAnalysis
-            flows={flowData}
-            spatialAutocorrelation={spatialData.spatialAutocorrelation?.local}
-            marketIntegration={marketIntegration}
-            geometry={geometryData}
-            marketClusters={marketClusters}
-          />
-        </TabPanel>
+        {tabPanels[activeTab].component}
       </Box>
     </Box>
   );
-};
+});
 
-// TabPanel component
-function TabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      {...other}
-      style={{ height: '100%' }}
-    >
-      {value === index && <Box sx={{ height: '100%' }}>{children}</Box>}
-    </div>
-  );
-}
-
-export default UnifiedSpatialDashboard;
+export default SpatialAnalysis;

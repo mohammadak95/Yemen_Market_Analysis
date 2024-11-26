@@ -1,195 +1,135 @@
-// src/components/analysis/spatial-analysis/SpatialErrorBoundary.js
-
 import React from 'react';
-import PropTypes from 'prop-types';
-import {
-  Box,
-  Button,
-  Alert,
-  AlertTitle,
-  Typography,
-  Collapse,
-  IconButton,
-  Paper,
+import { 
+  Typography, 
+  Paper, 
+  Box, 
+  Button 
 } from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  ExpandMore as ExpandMoreIcon,
-  BugReport as BugReportIcon,
-  Close as CloseIcon,
-} from '@mui/icons-material';
-import { backgroundMonitor } from '../../../utils/backgroundMonitor';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { validateGeoJSON } from '../../../utils/geoJSONProcessor';
 
 class SpatialErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
+    this.state = { 
+      hasError: false, 
       errorInfo: null,
-      showDetails: false,
-      errorType: null,
+      errorType: null
     };
   }
 
   static getDerivedStateFromError(error) {
-    // Categorize the error
-    let errorType = 'UNKNOWN';
-
-    if (error.message?.includes('WebGL') || error.message?.includes('canvas')) {
-      errorType = 'RENDERING';
-    } else if (error.message?.includes('GeoJSON') || error.message?.includes('topology')) {
-      errorType = 'SPATIAL_DATA';
-    } else if (error.message?.includes('projection') || error.message?.includes('coordinate')) {
-      errorType = 'PROJECTION';
-    }
-
-    return {
+    return { 
       hasError: true,
-      error,
-      errorType,
+      errorType: error.message?.includes('GeoJSON') ? 'SPATIAL_DATA' : 'RENDERING'
     };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log to background monitor
-    backgroundMonitor.logError('spatial-analysis', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      errorType: this.state.errorType,
-      timestamp: new Date().toISOString(),
-      metadata: {
-        visualizationMode: this.props.visualizationMode,
-        dataTimestamp: this.props.dataTimestamp,
-      },
-    });
-
-    this.setState({
-      errorInfo,
-    });
+    console.error('Spatial Visualization Error:', error, errorInfo);
+    
+    // Optional: Log to error tracking service
+    if (window.errorTracker) {
+      window.errorTracker.logError({
+        type: 'SpatialVisualizationError',
+        context: {
+          errorType: this.state.errorType,
+          message: error.message
+        }
+      });
+    }
   }
 
   handleRetry = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-      errorType: null,
-    });
-
-    if (this.props.onRetry) {
-      this.props.onRetry();
-    }
-  };
-
-  handleReportError = () => {
-    const errorReport = {
-      error: this.state.error?.message,
-      errorType: this.state.errorType,
-      componentStack: this.state.errorInfo?.componentStack,
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      visualizationMode: this.props.visualizationMode,
-    };
-
-    // Log detailed error report
-    backgroundMonitor.logMetric('error-report', errorReport);
-
-    // Notify user
-    this.props.onErrorReport?.(errorReport);
-  };
-
-  renderErrorMessage() {
-    const { errorType, error } = this.state;
-
-    switch (errorType) {
-      case 'RENDERING':
-        return {
-          title: 'Visualization Error',
-          message: 'An error occurred while rendering the map. Please try refreshing the page.',
-        };
-      case 'SPATIAL_DATA':
-        return {
-          title: 'Data Error',
-          message:
-            'There was an issue processing the spatial data. Please check your data sources.',
-        };
-      case 'PROJECTION':
-        return {
-          title: 'Projection Error',
-          message: 'A coordinate projection error occurred. Please contact support.',
-        };
-      default:
-        return {
-          title: 'Unknown Error',
-          message: error?.message || 'An unexpected error occurred.',
-        };
-    }
+    this.setState({ hasError: false, errorInfo: null, errorType: null });
   }
 
-  render() {
-    if (!this.state.hasError) {
-      return this.props.children;
-    }
+  renderErrorMessage() {
+    const { errorType } = this.state;
 
-    const { title, message } = this.renderErrorMessage();
-    const { showDetails } = this.state;
+    const errorMessages = {
+      'SPATIAL_DATA': {
+        title: 'Geographic Data Visualization Error',
+        description: 'There was an issue processing the geographic data. This could be due to invalid or incomplete map data.',
+        suggestions: [
+          'Verify the integrity of your GeoJSON files',
+          'Check that all required properties are present',
+          'Ensure consistent region identifiers'
+        ]
+      },
+      'RENDERING': {
+        title: 'Map Rendering Error',
+        description: 'An unexpected error occurred while rendering the map.',
+        suggestions: [
+          'Refresh the page',
+          'Check your internet connection',
+          'Verify data sources'
+        ]
+      }
+    };
+
+    const currentError = errorMessages[errorType] || errorMessages['RENDERING'];
 
     return (
-      <Paper sx={{ p: 2, backgroundColor: 'background.default' }}>
-        <Alert severity="error" action={
-          <IconButton size="small" onClick={() => this.setState({ hasError: false })}>
-            <CloseIcon fontSize="inherit" />
-          </IconButton>
-        }>
-          <AlertTitle>{title}</AlertTitle>
-          {message}
-        </Alert>
-
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 3, 
+          m: 2, 
+          textAlign: 'center', 
+          backgroundColor: 'error.light',
+          color: 'error.contrastText'
+        }}
+      >
+        <ErrorOutlineIcon 
+          sx={{ 
+            fontSize: 60, 
+            color: 'error.contrastText',
+            mb: 2 
+          }} 
+        />
+        <Typography variant="h5" gutterBottom>
+          {currentError.title}
+        </Typography>
+        <Typography variant="body1" paragraph>
+          {currentError.description}
+        </Typography>
+        
         <Box sx={{ mt: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={<RefreshIcon />}
-            onClick={this.handleRetry}
-            sx={{ mr: 2 }}
-          >
-            Retry
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<BugReportIcon />}
-            onClick={this.handleReportError}
-          >
-            Report Error
-          </Button>
+          <Typography variant="subtitle2">Suggested Actions:</Typography>
+          <ul style={{ 
+            textAlign: 'left', 
+            paddingLeft: '20px',
+            color: 'error.contrastText' 
+          }}>
+            {currentError.suggestions.map((suggestion, index) => (
+              <li key={index}>
+                <Typography variant="body2">{suggestion}</Typography>
+              </li>
+            ))}
+          </ul>
         </Box>
 
-        <Box sx={{ mt: 2 }}>
-          <Button
-            size="small"
-            endIcon={<ExpandMoreIcon />}
-            onClick={() => this.setState({ showDetails: !showDetails })}
+        <Box sx={{ mt: 3 }}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={this.handleRetry}
           >
-            {showDetails ? 'Hide Details' : 'Show Details'}
+            Retry Visualization
           </Button>
-          <Collapse in={showDetails}>
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mt: 1 }}>
-              {this.state.errorInfo?.componentStack}
-            </Typography>
-          </Collapse>
         </Box>
       </Paper>
     );
   }
-}
 
-SpatialErrorBoundary.propTypes = {
-  children: PropTypes.node,
-  onRetry: PropTypes.func,
-  onErrorReport: PropTypes.func,
-  visualizationMode: PropTypes.string,
-  dataTimestamp: PropTypes.string,
-};
+  render() {
+    if (this.state.hasError) {
+      return this.renderErrorMessage();
+    }
+
+    return this.props.children;
+  }
+}
 
 export default SpatialErrorBoundary;

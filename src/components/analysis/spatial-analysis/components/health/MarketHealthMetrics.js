@@ -7,41 +7,7 @@ import {
   ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
 import { useTheme } from '@mui/material/styles';
-
-const MetricCard = ({ title, value, trend, description }) => {
-  const theme = useTheme();
-  const trendColor = trend >= 0 ? theme.palette.success.main : theme.palette.error.main;
-
-  return (
-    <Paper 
-      elevation={2} 
-      sx={{ 
-        p: 2, 
-        height: '100%', 
-        display: 'flex', 
-        flexDirection: 'column' 
-      }}
-    >
-      <Typography variant="h6" gutterBottom>
-        {title}
-      </Typography>
-      <Typography variant="h4" sx={{ my: 2 }}>
-        {typeof value === 'number' ? value.toFixed(2) : value}
-      </Typography>
-      {trend !== undefined && (
-        <Typography 
-          variant="body2" 
-          sx={{ color: trendColor, mt: 'auto' }}
-        >
-          {trend >= 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(2)}%
-        </Typography>
-      )}
-      <Typography variant="body2" color="text.secondary">
-        {description}
-      </Typography>
-    </Paper>
-  );
-};
+import MetricCard from '../common/MetricCard';
 
 const MarketHealthMetrics = ({ metrics, timeSeriesData, spatialPatterns }) => {
   const theme = useTheme();
@@ -85,6 +51,7 @@ const MarketHealthMetrics = ({ metrics, timeSeriesData, spatialPatterns }) => {
             title="Market Integration"
             value={metrics.integration}
             trend={trends.integration}
+            format="number"
             description="Overall market integration score"
           />
         </Grid>
@@ -95,6 +62,7 @@ const MarketHealthMetrics = ({ metrics, timeSeriesData, spatialPatterns }) => {
             title="Spatial Dependence"
             value={metrics.spatialAutocorrelation}
             trend={trends.spatialDependence}
+            format="number"
             description="Moran's I spatial autocorrelation"
           />
         </Grid>
@@ -104,6 +72,7 @@ const MarketHealthMetrics = ({ metrics, timeSeriesData, spatialPatterns }) => {
           <MetricCard
             title="Cluster Efficiency"
             value={metrics.clusterEfficiency}
+            format="percentage"
             description="Average market cluster efficiency"
           />
         </Grid>
@@ -113,6 +82,7 @@ const MarketHealthMetrics = ({ metrics, timeSeriesData, spatialPatterns }) => {
           <MetricCard
             title="Shock Frequency"
             value={metrics.shockFrequency}
+            format="number"
             description="Average shocks per month"
           />
         </Grid>
