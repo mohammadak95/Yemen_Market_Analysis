@@ -144,7 +144,7 @@ describe('EnhancedSpatialPreprocessor', () => {
     // Write mock data files
     await Promise.all([
       fs.writeJson(path.join(tempDir, 'geo.json'), mockData.geoData),
-      fs.writeJson(path.join(tempDir, 'flows.json'), mockData.flowData),
+      fs.writeJson(path.join(tempDir, 'flows.json'), mockData.flowData, { spaces: 2 }),
       fs.writeJson(path.join(tempDir, 'timeSeries.json'), mockData.timeSeriesData)
     ]);
 
@@ -280,6 +280,8 @@ describe('EnhancedSpatialPreprocessor', () => {
     test('should handle large datasets efficiently', async () => {
       // Generate large mock dataset
       const largeData = generateLargeMockData(1000); // 1000 features
+      
+      // Create paths for large dataset
       const largePaths = {
         ...inputPaths,
         geoDataPath: path.join(tempDir, 'large-geo.json'),
@@ -287,9 +289,10 @@ describe('EnhancedSpatialPreprocessor', () => {
         timeSeriesPath: path.join(tempDir, 'large-timeSeries.json')
       };
 
+      // Write large dataset files
       await Promise.all([
         fs.writeJson(largePaths.geoDataPath, largeData.geoData),
-        fs.writeJson(largePaths.flowsPath, largeData.flowData),
+        fs.writeJson(largePaths.flowsPath, largeData.flowData, { spaces: 2 }),
         fs.writeJson(largePaths.timeSeriesPath, largeData.timeSeriesData)
       ]);
 

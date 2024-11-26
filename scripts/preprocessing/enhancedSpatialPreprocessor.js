@@ -2,7 +2,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const winston = require('winston');
 const chroma = require('chroma-js');
-const csv = require('csv-parse/sync');
 
 class EnhancedSpatialPreprocessor {
   constructor(config) {
@@ -74,7 +73,7 @@ class EnhancedSpatialPreprocessor {
       return this.processedData;
     } catch (error) {
       this.logger.error('Preprocessing failed:', error);
-      throw error;
+      throw new Error(`Preprocessing failed: ${error.message}`);
     }
   }
 
@@ -97,7 +96,7 @@ class EnhancedSpatialPreprocessor {
       };
     } catch (error) {
       this.logger.error('Error processing base data:', error);
-      throw error;
+      throw new Error(`Error processing base data: ${error.message}`);
     }
   }
 
@@ -134,7 +133,7 @@ class EnhancedSpatialPreprocessor {
         return this.normalizeGeoData(data);
       } catch (error) {
         this.logger.error('Error loading GeoJSON data:', error);
-        return { type: 'FeatureCollection', features: [] };
+        throw new Error(`Error loading GeoJSON data: ${error.message}`);
       }
     });
   }
@@ -145,6 +144,9 @@ class EnhancedSpatialPreprocessor {
    * @returns {Object} The normalized GeoJSON data.
    */
   normalizeGeoData(geoData) {
+    if (!geoData || !geoData.type || !geoData.features) {
+      throw new Error('Invalid GeoJSON format');
+    }
     return geoData;
   }
 
@@ -156,15 +158,14 @@ class EnhancedSpatialPreprocessor {
   async loadFlowData(filepath) {
     return await this.fileQueue.add(async () => {
       try {
-        const csvContent = await fs.readFile(filepath, 'utf-8');
-        const records = csv.parse(csvContent, {
-          columns: true,
-          skip_empty_lines: true
-        });
-        return records;
+        const data = await fs.readJson(filepath);
+        if (!Array.isArray(data)) {
+          throw new Error('Flow data must be an array');
+        }
+        return data;
       } catch (error) {
         this.logger.error('Error loading flow data:', error);
-        return [];
+        throw new Error(`Error loading flow data: ${error.message}`);
       }
     });
   }
@@ -178,10 +179,13 @@ class EnhancedSpatialPreprocessor {
     return await this.fileQueue.add(async () => {
       try {
         const data = await fs.readJson(filepath);
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid time series data format');
+        }
         return data;
       } catch (error) {
         this.logger.error('Error loading time series data:', error);
-        return {};
+        throw new Error(`Error loading time series data: ${error.message}`);
       }
     });
   }
@@ -201,6 +205,7 @@ class EnhancedSpatialPreprocessor {
       ]);
     } catch (error) {
       this.logger.error('Error saving processed data:', error);
+      throw new Error(`Error saving processed data: ${error.message}`);
     }
   }
 
