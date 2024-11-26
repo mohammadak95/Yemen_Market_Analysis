@@ -214,6 +214,10 @@ module.exports = (env, argv) => {
             },
           },
           {
+            from: 'data/preprocessed_by_commodity',
+            to: 'data/preprocessed_by_commodity'
+          },
+          {
             from: 'node_modules/leaflet/dist/images',
             to: 'static/media'
           },
