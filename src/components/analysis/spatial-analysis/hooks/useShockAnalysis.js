@@ -29,27 +29,57 @@ export const useShockAnalysis = (
 
       let shocks = [];
 
-      if (marketShocks && marketShocks.length > 0) {
-        // Use existing market shocks
-        shocks = marketShocks.filter((shock) => shock.magnitude >= threshold);
+      // Use existing market shocks if available
+      if (Array.isArray(marketShocks) && marketShocks.length > 0) {
+        shocks = marketShocks.filter(shock => (
+          shock && 
+          typeof shock.magnitude === 'number' && 
+          !isNaN(shock.magnitude) &&
+          shock.magnitude >= threshold &&
+          shock.region &&
+          shock.date &&
+          shock.shock_type &&
+          typeof shock.previous_price === 'number' &&
+          typeof shock.current_price === 'number'
+        ));
+
+        console.log('Using existing market shocks:', {
+          total: marketShocks.length,
+          valid: shocks.length
+        });
       } else {
-        // Compute shocks from timeSeriesData
-        shocks = analyzeMarketShocks(timeSeriesData, threshold);
+        // Compute shocks from time series data
+        const validTimeSeriesData = timeSeriesData.filter(d => (
+          d && 
+          d.region && 
+          typeof d.usdPrice === 'number' && 
+          !isNaN(d.usdPrice) &&
+          d.month
+        ));
+
+        console.log('Computing shocks from time series:', {
+          total: timeSeriesData.length,
+          valid: validTimeSeriesData.length
+        });
+
+        shocks = analyzeMarketShocks(validTimeSeriesData, threshold);
       }
 
-      // Calculate statistics
-      const shockStats = calculateShockStatistics(shocks);
+      // Calculate statistics with spatial context
+      const shockStats = calculateShockStatistics(shocks, spatialAutocorrelation);
 
-      // Analyze propagation with monitoring
+      // Analyze propagation patterns
       const propagationPatterns = analyzeShockPropagation(
         shocks,
-        spatialAutocorrelation
-      );
-      DEBUG_SHOCK_ANALYSIS.monitorPropagationPatterns(
-        propagationPatterns.propagationPatterns
+        spatialAutocorrelation,
+        timeSeriesData
       );
 
-      metric.finish({ status: 'success', shockCount: shocks.length });
+      metric.finish({ 
+        status: 'success', 
+        shockCount: shocks.length,
+        spatialCorrelation: spatialAutocorrelation.global?.I || 0
+      });
 
       return {
         shocks,
@@ -74,41 +104,75 @@ const analyzeMarketShocks = (timeSeriesData, threshold) => {
   const metric = backgroundMonitor.startMetric('market-shock-analysis');
 
   try {
-    // Ensure timeSeriesData includes region
-    const sortedData = timeSeriesData
-      .filter((data) => data.region && data.usdPrice)
-      .sort((a, b) => {
-        if (a.region === b.region) {
-          return new Date(a.month) - new Date(b.month);
-        }
-        return a.region.localeCompare(b.region);
+    // Group data by region
+    const dataByRegion = timeSeriesData.reduce((acc, data) => {
+      if (!data.region || typeof data.usdPrice !== 'number' || !data.month) return acc;
+      
+      if (!acc[data.region]) {
+        acc[data.region] = {
+          timeSeries: [],
+          meanPrice: 0,
+          stdDev: 0
+        };
+      }
+      
+      acc[data.region].timeSeries.push({
+        date: data.month,
+        price: data.usdPrice,
+        conflictIntensity: data.conflictIntensity || 0
       });
+      return acc;
+    }, {});
+
+    // Calculate regional statistics
+    Object.values(dataByRegion).forEach(region => {
+      const prices = region.timeSeries.map(d => d.price);
+      region.meanPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+      region.stdDev = calculateStandardDeviation(prices);
+    });
 
     const shocks = [];
-    const previousPrices = {};
 
-    sortedData.forEach((data) => {
-      const region = data.region;
-      const currentPrice = data.usdPrice;
-      const previousPrice = previousPrices[region];
-
-      if (previousPrice !== undefined) {
-        const priceChange = calculatePriceChange(currentPrice, previousPrice);
+    // Analyze each region's time series
+    Object.entries(dataByRegion).forEach(([region, data]) => {
+      const sortedData = data.timeSeries.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Use fixed window size for consistency
+      const WINDOW_SIZE = 3;
+      
+      for (let i = WINDOW_SIZE; i < sortedData.length; i++) {
+        const currentPrice = sortedData[i].price;
+        const windowPrices = sortedData.slice(i - WINDOW_SIZE, i).map(d => d.price);
+        const baselinePrice = calculateRobustBaseline(windowPrices);
+        
+        // Calculate price change
+        const priceChange = (currentPrice - baselinePrice) / baselinePrice;
+        
+        // Detect shocks
         if (Math.abs(priceChange) >= threshold) {
-          shocks.push({
+          const shock = {
             region,
-            date: data.month + '-01',
-            magnitude: Math.abs(priceChange),
+            date: sortedData[i].date + '-01', // Add day for consistent format
+            magnitude: Math.abs(priceChange) * 100, // Convert to percentage
             shock_type: priceChange > 0 ? 'price_surge' : 'price_drop',
             price_change: priceChange,
-            previous_price: previousPrice,
+            previous_price: baselinePrice,
             current_price: currentPrice,
-          });
+            conflict_intensity: sortedData[i].conflictIntensity,
+            baseline_period: {
+              start: sortedData[i - WINDOW_SIZE].date,
+              end: sortedData[i - 1].date
+            }
+          };
+          
+          shocks.push(shock);
         }
       }
+    });
 
-      // Update the previous price for the region
-      previousPrices[region] = currentPrice;
+    console.log('Shock analysis complete:', {
+      totalShocks: shocks.length,
+      regionsAnalyzed: Object.keys(dataByRegion).length
     });
 
     metric.finish({ status: 'success', shockCount: shocks.length });
@@ -120,16 +184,20 @@ const analyzeMarketShocks = (timeSeriesData, threshold) => {
   }
 };
 
-const calculatePriceChange = (currentPrice, previousPrice) => {
-  if (previousPrice === 0) return 0;
-  return (currentPrice - previousPrice) / previousPrice;
+const calculateRobustBaseline = (prices) => {
+  if (!prices || prices.length === 0) return 0;
+  return prices.reduce((a, b) => a + b, 0) / prices.length;
 };
 
+const calculateStandardDeviation = (values) => {
+  if (!values || values.length < 2) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const squareDiffs = values.map(value => Math.pow(value - mean, 2));
+  const variance = squareDiffs.reduce((a, b) => a + b, 0) / values.length;
+  return Math.sqrt(variance);
+};
 
-/**
- * Calculate shock statistics
- */
-const calculateShockStatistics = (shocks) => {
+const calculateShockStatistics = (shocks, spatialAutocorrelation) => {
   if (!Array.isArray(shocks) || shocks.length === 0) {
     return getDefaultShockStats();
   }
@@ -154,7 +222,8 @@ const calculateShockStatistics = (shocks) => {
       avgMagnitude: magnitudes.reduce((a, b) => a + b, 0) / magnitudes.length,
       shockTypes,
       regionsAffected: uniqueRegions.size,
-      temporalDistribution
+      temporalDistribution,
+      spatialCorrelation: spatialAutocorrelation?.global?.I || 0
     };
   } catch (error) {
     console.error('Error calculating shock statistics:', error);
@@ -162,9 +231,6 @@ const calculateShockStatistics = (shocks) => {
   }
 };
 
-/**
- * Analyze shock propagation patterns
- */
 const analyzeShockPropagation = (shocks, spatialAutocorrelation) => {
   const metric = backgroundMonitor.startMetric('shock-propagation-analysis');
 
@@ -173,114 +239,60 @@ const analyzeShockPropagation = (shocks, spatialAutocorrelation) => {
       return getDefaultPropagationPatterns();
     }
 
-    // Group shocks by region and time
-    const shocksByRegionTime = shocks.reduce((acc, shock) => {
-      const key = `${shock.region}_${shock.date}`;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(shock);
+    // Group shocks by month
+    const shocksByMonth = shocks.reduce((acc, shock) => {
+      const month = shock.date.substring(0, 7);
+      if (!acc[month]) acc[month] = [];
+      acc[month].push(shock);
       return acc;
     }, {});
 
-    // Identify propagation patterns
     const propagationPatterns = [];
-    Object.values(shocksByRegionTime).forEach(regionShocks => {
-      if (regionShocks.length > 1) {
-        // Sort by magnitude to find primary shock
-        const sortedShocks = [...regionShocks].sort((a, b) => b.magnitude - a.magnitude);
-        const primaryShock = sortedShocks[0];
-        
+
+    // Analyze each month
+    Object.entries(shocksByMonth).forEach(([month, monthShocks]) => {
+      if (monthShocks.length > 1) {
+        // Find primary shock considering spatial correlation
+        const primaryShock = monthShocks.reduce((max, shock) => {
+          const spatialWeight = spatialAutocorrelation.local?.[shock.region]?.local_i || 1;
+          const weightedMagnitude = shock.magnitude * spatialWeight;
+          return weightedMagnitude > max.weightedMagnitude ? 
+            { ...shock, weightedMagnitude } : max;
+        }, { ...monthShocks[0], weightedMagnitude: monthShocks[0].magnitude });
+
         // Add propagation pattern
         propagationPatterns.push({
           sourceRegion: primaryShock.region,
           date: primaryShock.date,
           magnitude: primaryShock.magnitude,
-          affectedRegions: sortedShocks.slice(1).map(s => ({
-            region: s.region,
-            magnitude: s.magnitude,
-            timeLag: calculateTimeLag(primaryShock.date, s.date)
-          }))
+          spatialCorrelation: spatialAutocorrelation.local?.[primaryShock.region]?.local_i || 0,
+          affectedRegions: monthShocks
+            .filter(s => s !== primaryShock)
+            .map(s => ({
+              region: s.region,
+              magnitude: s.magnitude,
+              spatialCorrelation: spatialAutocorrelation.local?.[s.region]?.local_i || 0
+            }))
         });
       }
     });
-
-    // Calculate propagation metrics
-    const propagationMetrics = {
-      averagePropagationTime: calculateAveragePropagationTime(propagationPatterns),
-      spatialCorrelation: spatialAutocorrelation.global?.I || 0,
-      clusterCount: propagationPatterns.length
-    };
 
     metric.finish({ status: 'success', patternCount: propagationPatterns.length });
 
     return {
       propagationPatterns,
-      spatialClusters: identifySpatialClusters(propagationPatterns),
-      propagationMetrics
+      spatialClusters: [],
+      propagationMetrics: {
+        averagePropagationTime: 0,
+        spatialCorrelation: spatialAutocorrelation.global?.I || 0,
+        clusterCount: propagationPatterns.length
+      }
     };
   } catch (error) {
     console.error('Error analyzing shock propagation:', error);
     metric.finish({ status: 'failed', error: error.message });
     return getDefaultPropagationPatterns();
   }
-};
-
-/**
- * Calculate time lag between dates in days
- */
-const calculateTimeLag = (date1, date2) => {
-  const d1 = new Date(date1);
-  const d2 = new Date(date2);
-  return Math.abs(d2 - d1) / (1000 * 60 * 60 * 24);
-};
-
-/**
- * Calculate average propagation time
- */
-const calculateAveragePropagationTime = (patterns) => {
-  if (!patterns.length) return 0;
-  
-  const timeLags = patterns.flatMap(p => 
-    p.affectedRegions.map(r => r.timeLag)
-  );
-  
-  return timeLags.length > 0 
-    ? timeLags.reduce((a, b) => a + b, 0) / timeLags.length 
-    : 0;
-};
-
-/**
- * Identify spatial clusters in propagation patterns
- */
-const identifySpatialClusters = (patterns) => {
-  if (!patterns.length) return [];
-
-  // Simple clustering based on region proximity
-  const clusters = [];
-  patterns.forEach(pattern => {
-    const regions = [pattern.sourceRegion, ...pattern.affectedRegions.map(r => r.region)];
-    
-    // Check if regions belong to existing cluster
-    let foundCluster = false;
-    for (const cluster of clusters) {
-      if (regions.some(r => cluster.regions.includes(r))) {
-        cluster.regions.push(...regions);
-        cluster.regions = [...new Set(cluster.regions)]; // Remove duplicates
-        foundCluster = true;
-        break;
-      }
-    }
-
-    // Create new cluster if no existing cluster found
-    if (!foundCluster) {
-      clusters.push({
-        regions: [...new Set(regions)],
-        centerRegion: pattern.sourceRegion,
-        magnitude: pattern.magnitude
-      });
-    }
-  });
-
-  return clusters;
 };
 
 const getDefaultShockStats = () => ({
@@ -308,6 +320,5 @@ export const __testing = {
   getDefaultPropagationPatterns,
   analyzeMarketShocks,
   calculateShockStatistics,
-  analyzeShockPropagation,
-  identifySpatialClusters
+  analyzeShockPropagation
 };

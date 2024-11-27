@@ -10,7 +10,6 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { scaleLinear } from 'd3-scale';
-import { interpolateRdBu } from 'd3-scale-chromatic';
 import { useTheme } from '@mui/material/styles';
 import { backgroundMonitor } from '../../../../../utils/backgroundMonitor';
 import {
@@ -18,21 +17,20 @@ import {
   selectSpatialAutocorrelation,
   selectGeometryData,
   selectMarketShocks,
-  // Removed selectFilteredShocks since we handle filtering locally now
-} from '../../../../../selectors/shockSelectors'
+} from '../../../../../selectors/shockSelectors';
 import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
 import { useShockAnalysis } from '../../hooks/useShockAnalysis';
 import { getTooltipContent } from '../../utils/shockMapUtils';
 import TimeControl from './TimeControl';
 import ShockLegend from './ShockLegend';
-import { DEBUG_SHOCK_ANALYSIS, debugShockAnalysis, monitorMapPerformance } from '../../../../../utils/shockAnalysisDebug';
+import { monitorMapPerformance } from '../../../../../utils/shockAnalysisDebug';
 
 const DEFAULT_CENTER = [15.3694, 44.191];
 const DEFAULT_ZOOM = 6;
 const DEFAULT_THRESHOLD = 0.1;
 
 const ShockPropagationMap = () => {
-  const debugMonitor = useRef(DEBUG_SHOCK_ANALYSIS.initializeDebugMonitor('ShockPropagationMap'));
+  const cleanupRef = useRef(monitorMapPerformance('ShockPropagationMap'));
   const theme = useTheme();
   const geoJsonLayerRef = useRef(null);
   const mapRef = useRef(null);
@@ -47,13 +45,12 @@ const ShockPropagationMap = () => {
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
   const [error, setError] = useState(null);
 
-
   // Use shock analysis hook
   const { shocks, shockStats, propagationPatterns } = useShockAnalysis(
     timeSeriesData,
     spatialAutocorrelation,
     threshold,
-    marketShocks // Pass existing marketShocks
+    marketShocks
   );
 
   // Calculate time range
@@ -79,11 +76,16 @@ const ShockPropagationMap = () => {
 
   // Get filtered shocks based on current criteria
   const filteredShocks = useMemo(() => {
+    if (!shocks?.length) return [];
+    
     return shocks.filter((shock) => {
+      if (!shock?.region || !shock?.date || typeof shock?.magnitude !== 'number') {
+        return false;
+      }
       if (selectedDate && shock.date !== selectedDate) return false;
       if (shockType && shockType !== 'all' && shock.shock_type !== shockType)
         return false;
-      if (typeof threshold === 'number' && shock.magnitude < threshold)
+      if (typeof threshold === 'number' && shock.magnitude < threshold * 100)
         return false;
       return true;
     });
@@ -127,8 +129,9 @@ const ShockPropagationMap = () => {
       const processed = {
         ...baseGeometry,
         features: baseGeometry.features.map(feature => {
+          const regionId = feature.properties.region_id;
           const regionShocks = filteredShocks.filter(
-            s => s.region === feature.properties.region_id
+            s => s.region === regionId
           );
           
           return {
@@ -155,18 +158,6 @@ const ShockPropagationMap = () => {
     }
   }, [baseGeometry, filteredShocks]);
 
-  // Set initial date if needed
-  useEffect(() => {
-    if (timeRange.length && !selectedDate) {
-      setSelectedDate(timeRange[0]);
-    }
-  }, [timeRange, selectedDate]);
-
-  // Debug monitoring
-  useEffect(() => {
-    debugShockAnalysis(shocks, shockStats, propagationPatterns);
-  }, [shocks, shockStats, propagationPatterns]);
-
   // Color scale generation
   const colorScale = useMemo(() => {
     const maxMagnitude = Math.max(
@@ -174,12 +165,9 @@ const ShockPropagationMap = () => {
       ...filteredShocks.map(s => s.magnitude)
     );
 
-    const scale = scaleLinear()
+    return scaleLinear()
       .domain([0, maxMagnitude || 1])
       .range([theme.palette.warning.light, theme.palette.error.dark]);
-
-    DEBUG_SHOCK_ANALYSIS.validateColorScale(scale, maxMagnitude);
-    return scale;
   }, [shockStats.maxMagnitude, filteredShocks, theme]);
 
   // Feature style calculation
@@ -209,7 +197,6 @@ const ShockPropagationMap = () => {
     setSelectedDate(date);
   }, []);
 
-  // Reset map view
   const handleResetView = useCallback(() => {
     if (mapRef.current) {
       mapRef.current.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
@@ -219,10 +206,8 @@ const ShockPropagationMap = () => {
   // Cleanup
   useEffect(() => {
     return () => {
-      if (debugMonitor.current) {
-        const metric = backgroundMonitor.startMetric('shock-analysis-cleanup');
-        debugMonitor.current.finish();
-        metric.finish({ status: 'success' });
+      if (cleanupRef.current) {
+        cleanupRef.current();
       }
     };
   }, []);
@@ -247,13 +232,13 @@ const ShockPropagationMap = () => {
   // Loading state
   if (!processedGeometry || !marketShocks?.length) {
     return (
-      <Alert severity="warning" sx={{ m: 2 }}>
-        No valid spatial data available for shock analysis.
-        {!processedGeometry && ' Missing geometry data.'}
-        {!marketShocks?.length && ' Missing shock data.'}
+      <Alert severity="info" sx={{ m: 2 }}>
+        Loading shock analysis data...
+        {!processedGeometry && ' Preparing geometry data.'}
+        {!marketShocks?.length && ' Processing market shocks.'}
       </Alert>
     );
- }
+  }
 
   return (
     <Paper sx={{ p: 2 }}>

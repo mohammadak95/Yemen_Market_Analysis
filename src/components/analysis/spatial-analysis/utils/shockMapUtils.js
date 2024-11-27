@@ -3,6 +3,7 @@
 import { validateNumber } from '../../../../utils/numberValidation';
 import { getTextColor } from '../../../../utils/colorUtils';
 import { backgroundMonitor } from '../../../../utils/backgroundMonitor';
+import { DEBUG_SHOCK_ANALYSIS } from '../../../../utils/shockAnalysisDebug';
 
 /**
  * Get feature style for map rendering
@@ -11,20 +12,27 @@ import { backgroundMonitor } from '../../../../utils/backgroundMonitor';
  * @returns {Object} Leaflet style object
  */
 export const getFeatureStyle = (magnitude, colorScale) => {
+  const metric = backgroundMonitor.startMetric('feature-style-calculation');
+  
   try {
-    const validMagnitude = validateNumber(magnitude, 0);
-    const color = colorScale(validMagnitude);
+    // Ensure magnitude is a valid number
+    const validMagnitude = typeof magnitude === 'number' && !isNaN(magnitude) 
+      ? magnitude 
+      : 0;
     
-    return {
-      fillColor: color,
+    const style = {
+      fillColor: validMagnitude > 0 ? colorScale(validMagnitude) : '#cccccc',
       weight: 1,
       opacity: 1,
       color: 'white',
-      fillOpacity: validMagnitude > 0 ? 0.7 : 0.3,
-      className: `shock-magnitude-${Math.round(validMagnitude * 100)}`
+      fillOpacity: validMagnitude > 0 ? 0.7 : 0.3
     };
+
+    metric.finish({ status: 'success', magnitude: validMagnitude });
+    return style;
   } catch (error) {
     console.error('Error generating feature style:', error);
+    metric.finish({ status: 'failed', error: error.message });
     return {
       fillColor: '#cccccc',
       weight: 1,
@@ -36,63 +44,60 @@ export const getFeatureStyle = (magnitude, colorScale) => {
 };
 
 /**
- * Generate tooltip content for features
+ * Generate tooltip content for map features
  * @param {Object} feature - GeoJSON feature
  * @param {Array} regionShocks - Array of shocks for the region
- * @returns {string} HTML content for tooltip
+ * @returns {string} HTML tooltip content
  */
 export const getTooltipContent = (feature, regionShocks) => {
+  const metric = backgroundMonitor.startMetric('tooltip-content-generation');
+  
   try {
-    if (!feature?.properties?.region_id || !Array.isArray(regionShocks)) {
-      return 'Invalid region data';
+    if (!feature?.properties?.region_id) {
+      throw new Error('Invalid feature properties');
     }
 
-    const totalMagnitude = regionShocks.reduce(
-      (sum, shock) => sum + validateNumber(shock.magnitude, 0),
-      0
-    );
+    if (!Array.isArray(regionShocks)) {
+      regionShocks = [];
+    }
 
-    const avgMagnitude = regionShocks.length > 0 ? 
-      totalMagnitude / regionShocks.length : 0;
+    const metrics = {
+      shockCount: regionShocks.length,
+      avgMagnitude: regionShocks.length > 0
+        ? regionShocks.reduce((sum, s) => sum + s.magnitude, 0) / regionShocks.length
+        : 0,
+      totalImpact: regionShocks.reduce((sum, s) => sum + s.magnitude, 0),
+      latestShock: regionShocks.length > 0
+        ? [...regionShocks].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+        : null
+    };
 
-    const latestShock = [...regionShocks]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      [0];
+    DEBUG_SHOCK_ANALYSIS.log('Tooltip metrics:', {
+      region: feature.properties.region_id,
+      metrics
+    });
 
-    const shockTypes = regionShocks.reduce((acc, shock) => {
-      acc[shock.shock_type] = (acc[shock.shock_type] || 0) + 1;
-      return acc;
-    }, {});
-
-    return `
+    const content = `
       <div class="shock-tooltip">
-        <h4>${feature.properties.originalName || feature.properties.region_id}</h4>
-        ${regionShocks.length > 0 ? `
-          <div class="shock-stats">
-            <p>Number of Shocks: ${regionShocks.length}</p>
-            <p>Average Magnitude: ${(avgMagnitude * 100).toFixed(1)}%</p>
-            <p>Total Impact: ${(totalMagnitude * 100).toFixed(1)}%</p>
-            ${latestShock ? `
-              <p>Latest Shock: ${formatShockType(latestShock.shock_type)}</p>
-              <p>Date: ${new Date(latestShock.date).toLocaleDateString()}</p>
-            ` : ''}
-          </div>
-          ${Object.keys(shockTypes).length > 0 ? `
-            <div class="shock-types">
-              <h5>Shock Distribution:</h5>
-              ${Object.entries(shockTypes)
-                .map(([type, count]) => 
-                  `<p>${formatShockType(type)}: ${count}</p>`
-                )
-                .join('')}
-            </div>
+        <strong>${escapeHtml(feature.properties.region_id)}</strong>
+        <br/>
+        ${metrics.shockCount > 0 ? `
+          <span>Number of Shocks: ${metrics.shockCount}</span><br/>
+          <span>Average Magnitude: ${metrics.avgMagnitude.toFixed(1)}%</span><br/>
+          <span>Total Impact: ${metrics.totalImpact.toFixed(1)}%</span><br/>
+          ${metrics.latestShock ? `
+            <span>Latest: ${formatShockType(metrics.latestShock.shock_type)}</span>
           ` : ''}
-        ` : '<p>No significant shocks detected</p>'}
+        ` : 'No significant shocks detected'}
       </div>
     `;
+
+    metric.finish({ status: 'success', shockCount: metrics.shockCount });
+    return content;
   } catch (error) {
-    console.error('Error generating tooltip content:', error);
-    return 'Error loading region data';
+    console.error('Error generating tooltip:', error);
+    metric.finish({ status: 'failed', error: error.message });
+    return '<div class="shock-tooltip">Error loading shock data</div>';
   }
 };
 
@@ -123,22 +128,29 @@ export const calculateShockIntensity = (regionShocks, threshold = 0) => {
       throw new Error('Invalid shocks data');
     }
 
-    const significantShocks = regionShocks.filter(
-      shock => validateNumber(shock.magnitude, 0) >= threshold
+    // Filter valid shocks
+    const significantShocks = regionShocks.filter(shock => 
+      shock && 
+      typeof shock.magnitude === 'number' && 
+      !isNaN(shock.magnitude) &&
+      shock.magnitude >= threshold
     );
 
     const metrics = {
       totalShocks: significantShocks.length,
       totalMagnitude: significantShocks.reduce(
-        (sum, shock) => sum + validateNumber(shock.magnitude, 0),
+        (sum, shock) => sum + shock.magnitude,
         0
       ),
       averageMagnitude: 0,
       maxMagnitude: Math.max(
-        ...significantShocks.map(shock => validateNumber(shock.magnitude, 0))
+        ...significantShocks.map(shock => shock.magnitude),
+        0
       ),
       shockTypes: significantShocks.reduce((acc, shock) => {
-        acc[shock.shock_type] = (acc[shock.shock_type] || 0) + 1;
+        if (shock.shock_type) {
+          acc[shock.shock_type] = (acc[shock.shock_type] || 0) + 1;
+        }
         return acc;
       }, {})
     };
@@ -146,6 +158,7 @@ export const calculateShockIntensity = (regionShocks, threshold = 0) => {
     metrics.averageMagnitude = metrics.totalShocks > 0 ?
       metrics.totalMagnitude / metrics.totalShocks : 0;
 
+    DEBUG_SHOCK_ANALYSIS.log('Shock intensity metrics:', metrics);
     metric.finish({ status: 'success', metrics });
     return metrics;
 
@@ -162,24 +175,17 @@ export const calculateShockIntensity = (regionShocks, threshold = 0) => {
   }
 };
 
-/**
- * Generate legend data for shock map
- * @param {number} maxMagnitude - Maximum shock magnitude
- * @param {number} steps - Number of legend steps
- * @returns {Array} Legend data array
- */
-export const generateLegendData = (maxMagnitude, steps = 5) => {
-  try {
-    const validMax = validateNumber(maxMagnitude, 1);
-    return Array.from({ length: steps }, (_, i) => ({
-      value: (validMax * i) / (steps - 1),
-      label: `${((validMax * i * 100) / (steps - 1)).toFixed(0)}%`
-    }));
-  } catch (error) {
-    console.error('Error generating legend data:', error);
-    return Array.from({ length: steps }, (_, i) => ({
-      value: i / (steps - 1),
-      label: `${((i * 100) / (steps - 1)).toFixed(0)}%`
-    }));
-  }
+const escapeHtml = (str) => {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+};
+
+// Export for testing
+export const __testing = {
+  escapeHtml,
+  calculateShockIntensity,
+  getFeatureStyle,
+  getTooltipContent,
+  formatShockType
 };
