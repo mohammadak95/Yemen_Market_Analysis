@@ -959,32 +959,26 @@ class SpatialDataHandler {
         firstFeature: data.features?.[0]?.properties
       });
   
-      // Group by region and month to avoid duplicates
-      const groupedData = {};
-      
-      data.features.forEach(feature => {
-        const region = this.normalizeRegionName(feature.properties.admin1);
+      // Process each feature directly to maintain region_id
+      const timeSeriesData = data.features.map(feature => {
         const date = new Date(feature.properties.date);
         const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const key = `${region}_${month}`;
+        const region_id = this.normalizeRegionName(feature.properties.region_id || feature.properties.admin1);
   
-        if (!groupedData[key]) {
-          groupedData[key] = [];
-        }
-        groupedData[key].push(feature);
-      });
-  
-      // Process each group without averaging values
-      const timeSeriesData = Object.entries(groupedData).flatMap(([key, features]) => {
-        const [region, month] = key.split('_');
-  
-        return features.map(feature => ({
-          region,
+        return {
+          region: region_id, // Use region_id as our region
           month,
           usdPrice: feature.properties.usdprice ?? null,
           conflictIntensity: feature.properties.conflict_intensity ?? null,
-          additionalProperties: feature.properties // Include other properties if needed
-        }));
+          additionalProperties: {
+            ...feature.properties,
+            region: region_id, // Keep it consistent
+            population: feature.properties.population,
+            conflict_intensity: feature.properties.conflict_intensity,
+            commodity: feature.properties.commodity,
+            regime: feature.properties.exchange_rate_regime || 'unified'
+          }
+        };
       });
   
       // Filter out invalid entries
