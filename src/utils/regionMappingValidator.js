@@ -1,6 +1,7 @@
 // src/utils/spatialMappingValidator.js
 
 import { REGION_MAPPINGS } from './spatialDataHandler';
+import { backgroundMonitor } from './backgroundMonitor';
 
 /**
  * Normalize region name using mapping
@@ -9,8 +10,92 @@ import { REGION_MAPPINGS } from './spatialDataHandler';
  */
 export const normalizeRegionName = (name) => {
   if (!name) return '';
-  const normalized = name.toLowerCase().trim();
+  const normalized = name.toLowerCase().trim()
+    .replace(/[_-]+/g, ' ')           // Normalize separators
+    .replace(/ʿ/g, "'")               // Normalize special quotes
+    .replace(/['']/g, "'")            // Normalize quotes
+    .replace(/\s+/g, ' ')             // Normalize spaces
+    .replace(/governorate$/i, '')      // Remove governorate suffix
+    .trim();
+  
   return REGION_MAPPINGS[normalized] || normalized;
+};
+
+/**
+ * Validate network data region mappings
+ * @param {Array} nodes - Network nodes
+ * @param {Array} links - Network links
+ * @returns {Object} Validation results
+ */
+export const validateNetworkData = (nodes, links) => {
+  const errors = [];
+  const warnings = [];
+  const nodeIds = new Set(nodes.map(n => n.id));
+  const unmappedRegions = new Set();
+  const invalidLinks = [];
+
+  // Validate links
+  links.forEach(link => {
+    const sourceNormalized = normalizeRegionName(link.source);
+    const targetNormalized = normalizeRegionName(link.target);
+
+    if (!nodeIds.has(sourceNormalized)) {
+      unmappedRegions.add(link.source);
+      invalidLinks.push({
+        link,
+        reason: `Source region "${link.source}" not found in nodes`
+      });
+    }
+
+    if (!nodeIds.has(targetNormalized)) {
+      unmappedRegions.add(link.target);
+      invalidLinks.push({
+        link,
+        reason: `Target region "${link.target}" not found in nodes`
+      });
+    }
+  });
+
+  if (unmappedRegions.size > 0) {
+    errors.push({
+      type: 'unmapped_regions',
+      regions: Array.from(unmappedRegions),
+      message: 'Some regions in links are not mapped to nodes'
+    });
+  }
+
+  if (invalidLinks.length > 0) {
+    warnings.push({
+      type: 'invalid_links',
+      links: invalidLinks,
+      message: 'Some links reference non-existent nodes'
+    });
+  }
+
+  // Log validation results for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.group('Network Data Validation');
+    console.log('Nodes:', nodes.length);
+    console.log('Links:', links.length);
+    console.log('Unmapped Regions:', Array.from(unmappedRegions));
+    console.log('Invalid Links:', invalidLinks);
+    console.groupEnd();
+
+    backgroundMonitor.logMetric('network-validation', {
+      nodeCount: nodes.length,
+      linkCount: links.length,
+      unmappedCount: unmappedRegions.size,
+      invalidLinkCount: invalidLinks.length
+    });
+  }
+
+  return {
+    errors,
+    warnings,
+    isValid: errors.length === 0,
+    unmappedRegions: Array.from(unmappedRegions),
+    invalidLinks
+  };
 };
 
 /**

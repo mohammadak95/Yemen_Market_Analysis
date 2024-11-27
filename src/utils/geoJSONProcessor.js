@@ -4,134 +4,226 @@
  */
 import { backgroundMonitor } from './backgroundMonitor';
 
+// Yemen's approximate bounding box
+const YEMEN_BOUNDS = {
+  minLat: 12.0,
+  maxLat: 19.0,
+  minLon: 41.0,
+  maxLon: 54.0
+};
+
+/**
+ * Validate and normalize coordinates for Yemen's geographic region
+ */
+const validateAndNormalizeCoordinates = (coordinates, type) => {
+  if (!Array.isArray(coordinates)) return null;
+
+  const isInYemenBounds = (coord) => {
+    const [lon, lat] = coord;
+    return (
+      typeof lat === 'number' &&
+      typeof lon === 'number' &&
+      lat >= YEMEN_BOUNDS.minLat &&
+      lat <= YEMEN_BOUNDS.maxLat &&
+      lon >= YEMEN_BOUNDS.minLon &&
+      lon <= YEMEN_BOUNDS.maxLon
+    );
+  };
+
+  switch (type) {
+    case 'Point':
+      if (coordinates.length === 2) {
+        const [x, y] = coordinates;
+        if (!isInYemenBounds([x, y]) && isInYemenBounds([y, x])) {
+          return [y, x]; // Swap coordinates if valid
+        }
+        if (isInYemenBounds([x, y])) {
+          return [x, y];
+        }
+      }
+      return null;
+
+    case 'Polygon':
+      if (!Array.isArray(coordinates[0])) return null;
+
+      const normalizedPolygon = coordinates.map(ring => {
+        if (!Array.isArray(ring)) return null;
+        const normalizedRing = ring.map(coord => {
+          if (!Array.isArray(coord) || coord.length !== 2) return null;
+          const [x, y] = coord;
+          if (isInYemenBounds([x, y])) return [x, y];
+          if (isInYemenBounds([y, x])) return [y, x];
+          return null;
+        });
+        return normalizedRing.every(c => c !== null) ? normalizedRing : null;
+      });
+
+      if (normalizedPolygon.every(r => r !== null)) {
+        return normalizedPolygon;
+      }
+      return null;
+
+    default:
+      return null;
+  }
+};
+
+/**
+ * Convert unified geometry format to GeoJSON
+ */
+const convertUnifiedToGeoJSON = (geometry) => {
+  if (!geometry) return null;
+
+  try {
+    const features = [];
+
+    // Process polygons
+    if (Array.isArray(geometry.polygons)) {
+      geometry.polygons.forEach(polygon => {
+        if (polygon.geometry?.coordinates) {
+          const normalizedCoords = validateAndNormalizeCoordinates(
+            polygon.geometry.coordinates,
+            'Polygon'
+          );
+          if (normalizedCoords) {
+            features.push({
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: normalizedCoords
+              },
+              properties: {
+                ...polygon.properties,
+                region_id: polygon.properties?.normalizedName,
+                feature_type: 'polygon'
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // Process points
+    if (Array.isArray(geometry.points)) {
+      geometry.points.forEach(point => {
+        const normalizedCoords = validateAndNormalizeCoordinates(
+          point.coordinates,
+          'Point'
+        );
+        if (normalizedCoords) {
+          features.push({
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: normalizedCoords
+            },
+            properties: {
+              ...point.properties,
+              region_id: point.properties?.normalizedName,
+              feature_type: 'point'
+            }
+          });
+        }
+      });
+    }
+
+    if (features.length === 0) {
+      throw new Error('No valid features after coordinate normalization');
+    }
+
+    return {
+      type: 'FeatureCollection',
+      features,
+      crs: {
+        type: 'name',
+        properties: {
+          name: 'urn:ogc:def:crs:OGC:1.3:CRS84'
+        }
+      }
+    };
+  } catch (error) {
+    backgroundMonitor.logError('unified-geojson-conversion', {
+      message: error.message,
+      stack: error.stack,
+      geometry
+    });
+    return null;
+  }
+};
+
+/**
+ * Preprocess GeoJSON data
+ */
 export const preprocessGeoJSON = (geoJSON, visualizationMode = null) => {
   const processingMetric = backgroundMonitor.startMetric('geojson-preprocessing', {
     mode: visualizationMode,
-    hasFeatures: !!geoJSON?.features
+    hasFeatures: !!geoJSON?.features || !!(geoJSON?.points || geoJSON?.polygons)
   });
 
-  if (!geoJSON || !geoJSON.features) {
-    backgroundMonitor.logError('geojson-preprocessing', {
-      message: 'Invalid GeoJSON structure',
-      geoJSON
-    });
-    processingMetric.finish({ status: 'failed', reason: 'invalid-structure' });
-    return geoJSON;
-  }
-
   try {
+    // Handle unified geometry format
+    if (!geoJSON?.features && (geoJSON?.points || geoJSON?.polygons)) {
+      geoJSON = convertUnifiedToGeoJSON(geoJSON);
+      if (!geoJSON) {
+        throw new Error('Failed to convert unified format');
+      }
+    }
+
+    if (!geoJSON?.features?.length) {
+      throw new Error('Invalid GeoJSON structure');
+    }
+
     backgroundMonitor.logMetric('geojson-features', {
       featureCount: geoJSON.features.length,
       type: geoJSON.type,
       mode: visualizationMode
     });
 
+    const validFeatures = geoJSON.features.filter(feature => {
+      if (!feature?.geometry?.type) return false;
+      const normalizedCoords = validateAndNormalizeCoordinates(
+        feature.geometry.coordinates,
+        feature.geometry.type
+      );
+      if (normalizedCoords) {
+        feature.geometry.coordinates = normalizedCoords;
+        return true;
+      }
+      return false;
+    });
+
+    if (validFeatures.length === 0) {
+      throw new Error('No valid features after filtering');
+    }
+
     const processed = {
       ...geoJSON,
-      features: geoJSON.features.map(feature => {
-        if (!feature.type || !feature.geometry || !feature.properties) {
-          backgroundMonitor.logError('geojson-feature-processing', {
-            message: 'Invalid feature structure',
-            feature
-          });
-          return feature;
-        }
+      features: validFeatures.map(feature => {
+        // Ensure properties object exists
+        feature.properties = feature.properties || {};
 
-        // Fallback region identification strategy
-        const regionId = 
-          feature.properties.region_id || 
-          feature.properties.normalizedName || 
-          feature.properties.name || 
+        // Normalize region identification
+        const regionId =
+          feature.properties.region_id ||
+          feature.properties.normalizedName ||
+          feature.properties.name ||
           feature.id;
 
-        // Dynamic value extraction based on visualization mode
-        const extractValue = () => {
-          switch (visualizationMode) {
-            case 'network':
-              // Special handling for network visualization
-              if (feature.geometry.type === 'Point') {
-                const coordinates = feature.geometry.coordinates;
-                if (!Array.isArray(coordinates) || coordinates.length !== 2 || 
-                    coordinates.some(coord => !Number.isFinite(coord))) {
-                  backgroundMonitor.logError('geojson-network-point', {
-                    message: 'Invalid point coordinates',
-                    coordinates
-                  });
-                  return null;
-                }
-                return {
-                  coordinates,
-                  name: feature.properties.originalName || feature.properties.name,
-                  population: feature.properties.population || 0
-                };
-              }
-              return null;
-            case 'prices': 
-              return feature.properties.avgUsdPrice ?? 
-                     feature.properties.price ?? 
-                     null;
-            case 'integration': 
-              return feature.properties.integrationScore ?? 
-                     feature.properties.market_integration ?? 
-                     null;
-            case 'conflicts': 
-              return feature.properties.conflictIntensity ?? 
-                     feature.properties.conflict_intensity ?? 
-                     null;
-            default: 
-              return null;
-          }
-        };
+        // Extract visualization value
+        const value = visualizationMode === 'shocks'
+          ? feature.properties.shock_magnitude || feature.properties.magnitude || 0
+          : feature.properties[`${visualizationMode}_value`] || null;
 
-        // Process coordinates for network points
-        const processedCoordinates = 
-          visualizationMode === 'network' && 
-          feature.geometry.type === 'Point' &&
-          Array.isArray(feature.geometry.coordinates) &&
-          feature.geometry.coordinates.length === 2 &&
-          feature.geometry.coordinates.every(coord => Number.isFinite(coord))
-            ? feature.geometry.coordinates
-            : feature.geometry.coordinates;
-
-        const processedFeature = {
+        return {
           ...feature,
-          geometry: {
-            ...feature.geometry,
-            coordinates: processedCoordinates
-          },
           properties: {
             ...feature.properties,
             region_id: regionId,
             normalizedName: regionId,
             originalName: feature.properties.originalName || feature.properties.name,
-            [`${visualizationMode}_value`]: extractValue()
+            value
           }
         };
-
-        backgroundMonitor.logMetric('geojson-feature-processing', {
-          featureType: feature.geometry.type,
-          hasCoordinates: !!processedCoordinates,
-          hasValue: !!processedFeature.properties[`${visualizationMode}_value`]
-        });
-
-        return processedFeature;
-      }).filter(feature => {
-        // Additional validation for network mode
-        if (visualizationMode === 'network' && feature.geometry.type === 'Point') {
-          const coords = feature.geometry.coordinates;
-          const isValid = Array.isArray(coords) && 
-            coords.length === 2 && 
-            coords.every(coord => Number.isFinite(coord));
-          
-          if (!isValid) {
-            backgroundMonitor.logError('geojson-network-validation', {
-              message: 'Invalid network point',
-              coordinates: coords
-            });
-          }
-          return isValid;
-        }
-        return true;
       })
     };
 
@@ -142,105 +234,60 @@ export const preprocessGeoJSON = (geoJSON, visualizationMode = null) => {
     });
 
     return processed;
+
   } catch (error) {
     backgroundMonitor.logError('geojson-preprocessing', {
       message: error.message,
       stack: error.stack
     });
     processingMetric.finish({ status: 'failed', error: error.message });
-    return geoJSON;
+    return null;
   }
 };
 
 /**
  * Validate GeoJSON structure
- * @param {Object} geoJSON - GeoJSON to validate
- * @returns {boolean} Validity of GeoJSON
  */
 export const validateGeoJSON = (geoJSON) => {
   const validationMetric = backgroundMonitor.startMetric('geojson-validation');
 
-  if (!geoJSON || !geoJSON.features) {
-    backgroundMonitor.logError('geojson-validation', {
-      message: 'Missing GeoJSON or features array'
+  try {
+    // Ensure features exist
+    if (!geoJSON?.features?.length) {
+      throw new Error('Missing GeoJSON or features array');
+    }
+
+    const isValid = geoJSON.features.every(feature => {
+      if (!feature?.geometry?.type || !feature.geometry.coordinates) {
+        return false;
+      }
+
+      const normalizedCoords = validateAndNormalizeCoordinates(
+        feature.geometry.coordinates,
+        feature.geometry.type
+      );
+
+      return normalizedCoords !== null;
     });
-    validationMetric.finish({ status: 'failed', reason: 'missing-data' });
+
+    validationMetric.finish({
+      status: isValid ? 'success' : 'failed',
+      featureCount: geoJSON.features.length
+    });
+
+    return isValid;
+  } catch (error) {
+    backgroundMonitor.logError('geojson-validation', {
+      message: error.message,
+      geoJSON
+    });
+    validationMetric.finish({ status: 'failed', reason: error.message });
     return false;
   }
-  
-  const isValid = geoJSON.features.every(feature => {
-    const valid = feature.type === 'Feature' && 
-      feature.geometry && 
-      feature.properties;
-
-    if (!valid) {
-      backgroundMonitor.logError('geojson-validation', {
-        message: 'Invalid feature',
-        feature
-      });
-    }
-    return valid;
-  });
-
-  validationMetric.finish({
-    status: isValid ? 'success' : 'failed',
-    featureCount: geoJSON.features.length
-  });
-
-  return isValid;
-};
-
-/**
- * Validate network-specific GeoJSON
- * @param {Object} geoJSON - GeoJSON to validate
- * @returns {boolean} Validity for network visualization
- */
-export const validateNetworkGeoJSON = (geoJSON) => {
-  const validationMetric = backgroundMonitor.startMetric('network-geojson-validation');
-
-  if (!validateGeoJSON(geoJSON)) {
-    validationMetric.finish({ status: 'failed', reason: 'invalid-geojson' });
-    return false;
-  }
-
-  const pointFeatures = geoJSON.features.filter(
-    feature => feature.geometry.type === 'Point'
-  );
-
-  const isValid = pointFeatures.every(feature => {
-    const coords = feature.geometry.coordinates;
-    const hasValidCoords = Array.isArray(coords) && 
-      coords.length === 2 && 
-      coords.every(coord => Number.isFinite(coord));
-    
-    const hasValidProperties = feature.properties && 
-      (feature.properties.originalName || feature.properties.name);
-
-    if (!hasValidCoords || !hasValidProperties) {
-      backgroundMonitor.logError('network-geojson-validation', {
-        message: 'Invalid network feature',
-        hasValidCoords,
-        hasValidProperties,
-        feature
-      });
-    }
-
-    return hasValidCoords && hasValidProperties;
-  });
-
-  validationMetric.finish({
-    status: isValid ? 'success' : 'failed',
-    pointFeatureCount: pointFeatures.length
-  });
-
-  return isValid;
 };
 
 /**
  * Error-safe GeoJSON processing
- * @param {Object} geoJSON - Original GeoJSON
- * @param {string} visualizationMode - Current visualization mode
- * @returns {Object} Processed GeoJSON or original if processing fails
  */
 export const safeGeoJSONProcessor = (geoJSON, visualizationMode) => {
   const processingMetric = backgroundMonitor.startMetric('safe-geojson-processing', {
@@ -249,26 +296,45 @@ export const safeGeoJSONProcessor = (geoJSON, visualizationMode) => {
   });
 
   try {
+    // Handle unified format
+    if (!geoJSON?.features && (geoJSON?.points || geoJSON?.polygons)) {
+      const unified = convertUnifiedToGeoJSON(geoJSON);
+      if (!unified) {
+        throw new Error('Failed to convert unified format');
+      }
+      geoJSON = unified;
+    }
+
+    // Process GeoJSON
     const processedGeoJSON = preprocessGeoJSON(geoJSON, visualizationMode);
-    
-    // Use network-specific validation for network mode
-    const isValid = visualizationMode === 'network'
-      ? validateNetworkGeoJSON(processedGeoJSON)
-      : validateGeoJSON(processedGeoJSON);
+    if (!processedGeoJSON) {
+      throw new Error('Failed to process GeoJSON');
+    }
+
+    // Validate result
+    if (!validateGeoJSON(processedGeoJSON)) {
+      backgroundMonitor.logError('geojson-validation-failed', {
+        processedGeoJSON
+      });
+      processingMetric.finish({ status: 'failed', error: 'Validation failed' });
+      return null;
+    }
 
     processingMetric.finish({
-      status: isValid ? 'success' : 'failed',
-      inputFeatures: geoJSON?.features?.length,
-      outputFeatures: processedGeoJSON?.features?.length
+      status: 'success',
+      inputFeatures: geoJSON?.features?.length || 0,
+      outputFeatures: processedGeoJSON.features.length
     });
 
-    return isValid ? processedGeoJSON : geoJSON;
+    return processedGeoJSON;
+
   } catch (error) {
     backgroundMonitor.logError('safe-geojson-processing', {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
+      input: geoJSON
     });
     processingMetric.finish({ status: 'failed', error: error.message });
-    return geoJSON;
+    return null;
   }
 };

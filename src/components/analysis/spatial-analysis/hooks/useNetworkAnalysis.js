@@ -10,14 +10,31 @@ import {
 } from '../utils/networkAnalysis';
 import { safeGeoJSONProcessor } from '../../../../utils/geoJSONProcessor';
 import { backgroundMonitor } from '../../../../utils/backgroundMonitor';
+import { spatialHandler } from '../../../../utils/spatialDataHandler';
+import { validateNetworkData } from '../../../../utils/regionMappingValidator';
+import { YEMEN_REFERENCE_COORDINATES } from '../utils/coordinateHandler';
+import { normalizeRegionName } from '../../../../utils/regionMappingValidator.js';
 
-const debugLog = (message, data) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[NetworkAnalysis Hook] ${message}:`, data);
-  }
+/**
+ * Create base nodes from Yemen reference coordinates
+ * @returns {Array} Array of network nodes
+ */
+const createNodesFromReference = () => {
+  return Object.entries(YEMEN_REFERENCE_COORDINATES).map(([name, coordinates]) => ({
+    id: normalizeRegionName(name),
+    name,
+    x: coordinates[0],
+    y: coordinates[1],
+    population: 0,
+    region_id: normalizeRegionName(name)
+  }));
 };
 
-// Convert GeoJSON point to network node
+/**
+ * Convert GeoJSON point feature to network node
+ * @param {Object} feature - GeoJSON feature
+ * @returns {Object|null} Network node or null if invalid
+ */
 const convertGeoJSONPointToNode = (feature) => {
   if (!feature?.geometry?.coordinates || 
       feature.geometry.type !== 'Point' || 
@@ -42,117 +59,76 @@ const convertGeoJSONPointToNode = (feature) => {
     return null;
   }
 
-  const normalizedName = name
-    .toLowerCase()
-    .replace(/['']/g, '')
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_]/g, '')
-    .trim();
+  const id = normalizeRegionName(name);
+
+  // Cross-reference with reference coordinates
+  const referenceCoords = YEMEN_REFERENCE_COORDINATES[name];
+  if (referenceCoords) {
+    // Use reference coordinates if available
+    return {
+      id,
+      name,
+      x: referenceCoords[0],
+      y: referenceCoords[1],
+      population: feature.properties?.population || 0,
+      region_id: id
+    };
+  }
 
   const node = {
-    id: normalizedName,
+    id,
     name,
     x,
     y,
     population: feature.properties?.population || 0,
-    region_id: feature.properties?.region_id,
+    region_id: id
   };
 
   backgroundMonitor.logMetric('node-creation', {
     nodeId: node.id,
     coordinates: [x, y],
-    hasPopulation: !!node.population
+    hasPopulation: !!node.population,
+    usedReference: false
   });
 
   return node;
 };
 
-// Validate network data structure
-const validateNetworkData = (nodes, links) => {
-  const validationMetric = backgroundMonitor.startMetric('network-validation', {
-    nodeCount: nodes.length,
-    linkCount: links.length
-  });
-
-  if (!Array.isArray(nodes) || !Array.isArray(links)) {
-    backgroundMonitor.logError('network-validation', {
-      message: 'Invalid data structure',
-      nodesType: typeof nodes,
-      linksType: typeof links
-    });
-    validationMetric.finish({ status: 'failed' });
-    return false;
-  }
+/**
+ * Process and merge nodes from multiple sources
+ * @param {Array} referenceNodes - Nodes from reference coordinates
+ * @param {Array} featureNodes - Nodes from GeoJSON features
+ * @returns {Array} Merged and deduplicated nodes
+ */
+const mergeNodes = (referenceNodes, featureNodes) => {
+  const nodeMap = new Map();
   
-  // Validate nodes
-  const validNodes = nodes.every(node => {
-    const isValid = node && 
-      typeof node.id === 'string' && 
-      typeof node.x === 'number' && 
-      typeof node.y === 'number' &&
-      Number.isFinite(node.x) && 
-      Number.isFinite(node.y);
-    
-    if (!isValid) {
-      backgroundMonitor.logError('network-validation', {
-        message: 'Invalid node',
-        node
-      });
+  // Add reference nodes first
+  referenceNodes.forEach(node => {
+    nodeMap.set(node.id, node);
+  });
+
+  // Add or update with feature nodes
+  featureNodes.forEach(node => {
+    if (node && node.id) {
+      const existing = nodeMap.get(node.id);
+      if (existing) {
+        // Update existing node with any additional information
+        nodeMap.set(node.id, {
+          ...existing,
+          population: node.population || existing.population
+        });
+      } else {
+        nodeMap.set(node.id, node);
+      }
     }
-    return isValid;
   });
 
-  // Validate links
-  const validLinks = links.every(link => {
-    const isValid = link && 
-      typeof link.source === 'string' &&
-      typeof link.target === 'string' &&
-      typeof link.value === 'number' &&
-      Number.isFinite(link.value);
-    
-    if (!isValid) {
-      backgroundMonitor.logError('network-validation', {
-        message: 'Invalid link',
-        link
-      });
-    }
-    return isValid;
-  });
-
-  // Additional validation for ForceGraph2D
-  const nodeIds = new Set(nodes.map(n => n.id));
-  const validReferences = links.every(link => {
-    const hasValidRefs = nodeIds.has(link.source) && nodeIds.has(link.target);
-    if (!hasValidRefs) {
-      backgroundMonitor.logError('network-validation', {
-        message: 'Invalid link references',
-        link,
-        sourceExists: nodeIds.has(link.source),
-        targetExists: nodeIds.has(link.target),
-        validNodes: Array.from(nodeIds)
-      });
-    }
-    return hasValidRefs;
-  });
-
-  const isValid = validNodes && validLinks && validReferences;
-  validationMetric.finish({
-    status: isValid ? 'success' : 'failed',
-    validNodes,
-    validLinks,
-    validReferences
-  });
-
-  return isValid;
+  return Array.from(nodeMap.values());
 };
 
 /**
  * Hook to process network data and compute network metrics
- * @param {Object} geometry - GeoJSON geometry data
- * @param {Array} flows - Flow data between markets
- * @param {Object} marketIntegration - Market integration data
- * @param {number} flowThreshold - Threshold for filtering flows
- * @returns {Object} Processed network data and metrics
  */
 export const useNetworkAnalysis = (geometry, flows, marketIntegration, flowThreshold = 0.1) => {
   return useMemo(() => {
@@ -164,140 +140,85 @@ export const useNetworkAnalysis = (geometry, flows, marketIntegration, flowThres
     });
 
     try {
-      if (!geometry || !flows?.length || !marketIntegration) {
-        backgroundMonitor.logError('network-analysis', {
-          message: 'Missing required data',
-          hasGeometry: !!geometry,
-          flowCount: flows?.length,
-          hasMarketIntegration: !!marketIntegration
-        });
-        analysisMetric.finish({ status: 'failed', reason: 'missing-data' });
-        return {
-          nodes: [],
-          links: [],
-          metrics: {},
-          error: 'Missing required data'
-        };
+      // Validation checks
+      if (!flows?.length) {
+        throw new Error('No flow data available');
       }
 
-      // Process geometry
-      const processedGeometry = safeGeoJSONProcessor(geometry, 'network');
-      if (!processedGeometry?.features) {
-        backgroundMonitor.logError('network-analysis', {
-          message: 'Invalid geometry data',
-          processedGeometry
-        });
-        analysisMetric.finish({ status: 'failed', reason: 'invalid-geometry' });
-        return {
-          nodes: [],
-          links: [],
-          metrics: {},
-          error: 'Invalid geometry data'
-        };
+      // Create base nodes from reference coordinates
+      const referenceNodes = createNodesFromReference();
+
+      // Process geometry and create additional nodes if available
+      let featureNodes = [];
+      if (geometry) {
+        const processedGeometry = safeGeoJSONProcessor(geometry, 'network');
+        if (processedGeometry?.features) {
+          featureNodes = processedGeometry.features
+            .filter(feature => feature.geometry?.type === 'Point')
+            .map(convertGeoJSONPointToNode)
+            .filter(Boolean);
+        }
       }
 
-      // Create nodes from market points
-      const nodes = processedGeometry.features
-        .filter(feature => feature.geometry?.type === 'Point')
-        .map(convertGeoJSONPointToNode)
-        .filter(Boolean);
-
-      backgroundMonitor.logMetric('node-processing', {
-        inputFeatures: processedGeometry.features.length,
-        pointFeatures: processedGeometry.features.filter(f => f.geometry?.type === 'Point').length,
-        outputNodes: nodes.length
-      });
+      // Merge nodes from both sources
+      const nodes = mergeNodes(referenceNodes, featureNodes);
 
       // Process links with validation
       const links = flows
-        .filter(flow => {
-          const isValid = flow.totalFlow >= flowThreshold && Number.isFinite(flow.totalFlow);
-          if (!isValid) {
-            backgroundMonitor.logError('network-analysis', {
-              message: 'Invalid flow',
-              flow
-            });
-          }
-          return isValid;
-        })
-        .map(flow => {
-          const source = flow.source?.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-          const target = flow.target?.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-          return {
-            source,
-            target,
-            value: flow.totalFlow || 0,
-            avgFlow: flow.avgFlow || 0,
-            flowCount: flow.flowCount || 0,
-          };
-        })
-        .filter(link => {
-          const isValid = nodes.some(n => n.id === link.source) && 
-            nodes.some(n => n.id === link.target);
-          if (!isValid) {
-            backgroundMonitor.logError('network-analysis', {
-              message: 'Invalid link references',
-              link,
-              sourceExists: nodes.some(n => n.id === link.source),
-              targetExists: nodes.some(n => n.id === link.target)
-            });
-          }
-          return isValid;
-        });
+        .filter(flow => flow.totalFlow >= flowThreshold && Number.isFinite(flow.totalFlow))
+        .map(flow => ({
+          source: normalizeRegionName(flow.source),
+          target: normalizeRegionName(flow.target),
+          value: flow.totalFlow || 0,
+          avgFlow: flow.avgFlow || 0,
+          flowCount: flow.flowCount || 0
+        }));
 
-      backgroundMonitor.logMetric('link-processing', {
-        inputFlows: flows.length,
-        validFlows: links.length,
-        threshold: flowThreshold
-      });
-
-      // Validate network data structure
-      if (!validateNetworkData(nodes, links)) {
+      // Validate network data
+      const validation = validateNetworkData(nodes, links);
+      
+      if (!validation.isValid) {
         backgroundMonitor.logError('network-analysis', {
-          message: 'Network data validation failed',
-          nodeCount: nodes.length,
-          linkCount: links.length
+          message: 'Network validation failed',
+          errors: validation.errors,
+          warnings: validation.warnings
         });
-        analysisMetric.finish({ status: 'failed', reason: 'validation-failed' });
+        
+        // Filter out invalid links
+        const validLinks = links.filter(link => {
+          return nodes.some(n => n.id === link.source) && 
+                 nodes.some(n => n.id === link.target);
+        });
+
+        // Calculate metrics with valid data
+        const metrics = calculateNetworkMetrics(nodes, validLinks, marketIntegration);
+
+        analysisMetric.finish({ 
+          status: 'partial-success',
+          invalidLinksRemoved: links.length - validLinks.length
+        });
+
         return {
-          nodes: [],
-          links: [],
-          metrics: {},
-          error: 'Invalid network data structure'
+          nodes,
+          links: validLinks,
+          metrics,
+          warnings: validation.warnings,
+          error: null
         };
       }
 
-      // Calculate network metrics
-      const centrality = calculateEigenvectorCentrality(nodes, links);
-      const keyMarkets = identifyKeyMarkets(flows, marketIntegration);
-      const networkAnalysis = analyzeMarketNetwork(flows, marketIntegration);
-
-      const maxFlow = Math.max(...links.map(l => l.value), 0);
-      const minFlow = Math.min(...links.map(l => l.value), 0);
-
-      backgroundMonitor.logMetric('network-metrics', {
-        nodeCount: nodes.length,
-        linkCount: links.length,
-        maxFlow,
-        minFlow,
-        keyMarketsCount: keyMarkets?.length,
-        hasCentrality: !!centrality?.metrics
-      });
+      // Calculate metrics with all data
+      const metrics = calculateNetworkMetrics(nodes, links, marketIntegration);
 
       analysisMetric.finish({ status: 'success' });
 
       return {
         nodes,
         links,
-        metrics: {
-          centrality,
-          keyMarkets,
-          maxFlow,
-          minFlow,
-          networkAnalysis
-        },
+        metrics,
         error: null
       };
+
     } catch (error) {
       backgroundMonitor.logError('network-analysis', {
         message: error.message,
@@ -312,4 +233,33 @@ export const useNetworkAnalysis = (geometry, flows, marketIntegration, flowThres
       };
     }
   }, [geometry, flows, marketIntegration, flowThreshold]);
+};
+
+/**
+ * Calculate network metrics
+ */
+const calculateNetworkMetrics = (nodes, links, marketIntegration) => {
+  const centrality = calculateEigenvectorCentrality(nodes, links);
+  const keyMarkets = identifyKeyMarkets(links, marketIntegration);
+  const networkAnalysis = analyzeMarketNetwork(links, marketIntegration);
+
+  const maxFlow = Math.max(...links.map(l => l.value), 0);
+  const minFlow = Math.min(...links.map(l => l.value), 0);
+
+  backgroundMonitor.logMetric('network-metrics', {
+    nodeCount: nodes.length,
+    linkCount: links.length,
+    maxFlow,
+    minFlow,
+    keyMarketsCount: keyMarkets?.length,
+    hasCentrality: !!centrality?.metrics
+  });
+
+  return {
+    centrality,
+    keyMarkets,
+    maxFlow,
+    minFlow,
+    networkAnalysis
+  };
 };

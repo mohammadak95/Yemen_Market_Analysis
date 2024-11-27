@@ -8,7 +8,7 @@ const YEMEN_BOUNDS = {
 };
 
 // Accurate coordinates for major Yemen cities/governorates
-const YEMEN_REFERENCE_COORDINATES = {
+export const YEMEN_REFERENCE_COORDINATES = {
   'sana\'a': [44.2067, 15.3694],
   'aden': [45.0357, 12.7797],
   'taizz': [44.0075, 13.5769],

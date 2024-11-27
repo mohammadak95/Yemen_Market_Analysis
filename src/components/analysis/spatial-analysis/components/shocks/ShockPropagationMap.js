@@ -1,96 +1,193 @@
-import React, { useMemo, useState, useCallback, useRef } from 'react';
+// src/components/analysis/spatial-analysis/components/shocks/ShockPropagationMap.js
+
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { 
-  Paper, 
-  Box, 
-  Typography, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem,
-  Slider,
-  Alert,
-  Tooltip,
-  IconButton,
+  Paper, Box, Typography, FormControl, InputLabel, 
+  Select, MenuItem, Slider, Alert, Tooltip, IconButton,
+  Button 
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { scaleLinear } from 'd3-scale';
 import { interpolateRdBu } from 'd3-scale-chromatic';
 import { useTheme } from '@mui/material/styles';
+import { backgroundMonitor } from '../../../../../utils/backgroundMonitor';
 import { 
-  selectTimeSeriesData, 
+  selectTimeSeriesData,
   selectSpatialAutocorrelation,
   selectGeometryData,
   selectMarketShocks,
-  selectSpatialDataOptimized,
-} from '../../../../../selectors/optimizedSelectors';
+  selectFilteredShocks
+} from '../../../../../selectors/shockSelectors';
 import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
+import { useShockAnalysis } from '../../hooks/useShockAnalysis';
+import { getTooltipContent } from '../../utils/shockMapUtils';
 import TimeControl from './TimeControl';
 import ShockLegend from './ShockLegend';
-import { useShockAnalysis } from '../../hooks/useShockAnalysis';
-import { getFeatureStyle, getTooltipContent } from './shockMapUtils';
+import { DEBUG_SHOCK_ANALYSIS, debugShockAnalysis, monitorMapPerformance } from '../../../../../utils/shockAnalysisDebug';
 
 const DEFAULT_CENTER = [15.3694, 44.191];
 const DEFAULT_ZOOM = 6;
+const DEFAULT_THRESHOLD = 0.1;
 
 const ShockPropagationMap = () => {
+  const debugMonitor = useRef(DEBUG_SHOCK_ANALYSIS.initializeDebugMonitor('ShockPropagationMap'));
   const theme = useTheme();
   const geoJsonLayerRef = useRef(null);
+  const mapRef = useRef(null);
 
-  // Selectors
+  // Local state
+  const [selectedDate, setSelectedDate] = useState('');
+  const [shockType, setShockType] = useState('all');
+  const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
+  const [error, setError] = useState(null);
+
+  // Data selection
   const timeSeriesData = useSelector(selectTimeSeriesData);
   const spatialAutocorrelation = useSelector(selectSpatialAutocorrelation);
   const geometry = useSelector(selectGeometryData);
   const shockData = useSelector(selectMarketShocks);
-  const spatialData = useSelector(selectSpatialDataOptimized);
 
-  // Process GeoJSON with safe preprocessing
-  const processedGeometry = useMemo(() => {
-    return geometry ? safeGeoJSONProcessor(geometry, 'shocks') : null;
+  // Memoize filter parameters
+  const filterParams = useMemo(() => ({
+    date: selectedDate,
+    shockType,
+    threshold
+  }), [selectedDate, shockType, threshold]);
+
+  // Get filtered shocks based on current criteria
+  const filteredShocks = useSelector(state => selectFilteredShocks(state, filterParams));
+
+  // Process base geometry
+  const baseGeometry = useMemo(() => {
+    const metric = backgroundMonitor.startMetric('base-geometry-processing');
+    
+    try {
+      if (!geometry) {
+        throw new Error('Missing geometry data');
+      }
+
+      const processed = safeGeoJSONProcessor(geometry, 'base');
+      if (!processed) {
+        throw new Error('Failed to process base geometry');
+      }
+
+      metric.finish({ 
+        status: 'success', 
+        featureCount: processed.features?.length 
+      });
+      
+      return processed;
+    } catch (error) {
+      console.error('Base geometry processing error:', error);
+      setError(`Geometry processing error: ${error.message}`);
+      metric.finish({ status: 'failed', error: error.message });
+      return null;
+    }
   }, [geometry]);
 
-  // Get unique dates from timeSeriesData
+  // Add shock data to features
+  const processedGeometry = useMemo(() => {
+    if (!baseGeometry?.features) return null;
+
+    const metric = backgroundMonitor.startMetric('shock-geometry-processing');
+    
+    try {
+      const processed = {
+        ...baseGeometry,
+        features: baseGeometry.features.map(feature => {
+          const regionShocks = filteredShocks.filter(
+            s => s.region === feature.properties.region_id
+          );
+          
+          return {
+            ...feature,
+            properties: {
+              ...feature.properties,
+              shocks: regionShocks,
+              shock_magnitude: regionShocks.reduce((sum, s) => sum + s.magnitude, 0)
+            }
+          };
+        })
+      };
+
+      metric.finish({ 
+        status: 'success', 
+        featureCount: processed.features.length 
+      });
+      
+      return processed;
+    } catch (error) {
+      console.error('Shock geometry processing error:', error);
+      metric.finish({ status: 'failed', error: error.message });
+      return baseGeometry;
+    }
+  }, [baseGeometry, filteredShocks]);
+
+  // Calculate time range
   const timeRange = useMemo(() => {
-    if (!timeSeriesData?.length) return [];
-    const dates = timeSeriesData.map(d => d.date).filter(Boolean);
-    return [...new Set(dates)].sort();
+    if (!timeSeriesData?.length) {
+      return [];
+    }
+
+    const dates = timeSeriesData
+      .map(d => d.date)
+      .filter(Boolean)
+      .sort();
+
+    return [...new Set(dates)];
   }, [timeSeriesData]);
 
-  // Local state
-  const [selectedDate, setSelectedDate] = useState(() => timeRange[0] || '');
-  const [shockType, setShockType] = useState('all');
-  const [threshold, setThreshold] = useState(0.1);
+  // Set initial date if needed
+  useEffect(() => {
+    if (timeRange.length && !selectedDate) {
+      setSelectedDate(timeRange[0]);
+    }
+  }, [timeRange, selectedDate]);
 
-  // Use custom hook for shock analysis
+  // Use shock analysis hook
   const { shocks, shockStats, propagationPatterns } = useShockAnalysis(
     timeSeriesData,
     spatialAutocorrelation,
     threshold
   );
 
-  // Color scale for shock magnitude
-  const colorScale = useMemo(() => 
-    scaleLinear()
-      .domain([0, shockStats.maxMagnitude || 1])
-      .range([theme.palette.warning.light, theme.palette.error.dark])
-  , [shockStats.maxMagnitude, theme]);
+  // Debug monitoring
+  useEffect(() => {
+    debugShockAnalysis(shocks, shockStats, propagationPatterns);
+  }, [shocks, shockStats, propagationPatterns]);
 
-  // Filter shocks based on selected criteria
-  const filteredShocks = useMemo(() => {
-    if (!shocks?.length) return [];
-    
-    return shocks.filter(shock => 
-      shock.date === selectedDate && 
-      (shockType === 'all' || shock.shock_type === shockType)
+  // Color scale generation
+  const colorScale = useMemo(() => {
+    const maxMagnitude = Math.max(
+      shockStats.maxMagnitude || 0,
+      ...filteredShocks.map(s => s.magnitude)
     );
-  }, [shocks, selectedDate, shockType]);
 
-  // Handlers
-  const handleDateChange = useCallback((date) => {
-    setSelectedDate(date);
-  }, []);
+    const scale = scaleLinear()
+      .domain([0, maxMagnitude || 1])
+      .range([theme.palette.warning.light, theme.palette.error.dark]);
 
+    DEBUG_SHOCK_ANALYSIS.validateColorScale(scale, maxMagnitude);
+    return scale;
+  }, [shockStats.maxMagnitude, filteredShocks, theme]);
+
+  // Feature style calculation
+  const getFeatureStyleMemo = useCallback((feature) => {
+    const magnitude = feature.properties.shock_magnitude || 0;
+    const color = magnitude > 0 ? colorScale(magnitude) : theme.palette.action.hover;
+    
+    return {
+      fillColor: color,
+      weight: 2,
+      opacity: 1,
+      color: theme.palette.divider,
+      fillOpacity: 0.7
+    };
+  }, [colorScale, theme]);
+
+  // Event handlers
   const handleShockTypeChange = useCallback((event) => {
     setShockType(event.target.value);
   }, []);
@@ -99,31 +196,52 @@ const ShockPropagationMap = () => {
     setThreshold(newValue);
   }, []);
 
-  // Get feature style with memoization
-  const getFeatureStyleMemo = useCallback((feature) => {
-    const regionShocks = filteredShocks.filter(
-      (s) => s.region === feature.properties.region_id
-    );
-    const totalMagnitude = regionShocks.reduce(
-      (sum, shock) => sum + shock.magnitude, 
-      0
-    );
+  const handleDateChange = useCallback((date) => {
+    setSelectedDate(date);
+  }, []);
 
-    return getFeatureStyle(totalMagnitude, colorScale);
-  }, [filteredShocks, colorScale]);
+  // Reset map view
+  const handleResetView = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    }
+  }, []);
 
-  // Get tooltip content with memoization
-  const getTooltipContentMemo = useCallback((feature) => {
-    const regionShocks = filteredShocks.filter(
-      (s) => s.region === feature.properties.region_id
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (debugMonitor.current) {
+        const metric = backgroundMonitor.startMetric('shock-analysis-cleanup');
+        debugMonitor.current.finish();
+        metric.finish({ status: 'success' });
+      }
+    };
+  }, []);
+
+  // Error state
+  if (error) {
+    return (
+      <Alert 
+        severity="error" 
+        sx={{ m: 2 }}
+        action={
+          <Button color="inherit" size="small" onClick={() => window.location.reload()}>
+            Reload
+          </Button>
+        }
+      >
+        {error}
+      </Alert>
     );
-    return getTooltipContent(feature, regionShocks);
-  }, [filteredShocks]);
+  }
 
+  // Loading state
   if (!processedGeometry || !timeRange.length) {
     return (
       <Alert severity="warning" sx={{ m: 2 }}>
         No valid spatial data available for shock analysis.
+        {!processedGeometry && ' Missing geometry data.'}
+        {!timeRange.length && ' Missing time series data.'}
       </Alert>
     );
   }
@@ -139,6 +257,7 @@ const ShockPropagationMap = () => {
         </Tooltip>
       </Typography>
 
+      {/* Controls */}
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2 }}>
         <FormControl size="small">
           <InputLabel>Shock Type</InputLabel>
@@ -163,14 +282,20 @@ const ShockPropagationMap = () => {
             valueLabelFormat={(value) => `${(value * 100).toFixed(0)}%`}
           />
         </Box>
+
+        <Button size="small" onClick={handleResetView}>
+          Reset View
+        </Button>
       </Box>
 
+      {/* Time Control */}
       <TimeControl 
         timeRange={timeRange}
         selectedDate={selectedDate}
         onChange={handleDateChange}
       />
 
+      {/* Map Container */}
       <Box sx={{ 
         position: 'relative', 
         height: '500px', 
@@ -179,6 +304,7 @@ const ShockPropagationMap = () => {
         borderRadius: 1 
       }}>
         <MapContainer
+          ref={mapRef}
           center={DEFAULT_CENTER}
           zoom={DEFAULT_ZOOM}
           style={{ height: '100%', width: '100%' }}
@@ -193,12 +319,13 @@ const ShockPropagationMap = () => {
               data={processedGeometry}
               style={getFeatureStyleMemo}
               onEachFeature={(feature, layer) => {
-                layer.bindTooltip(getTooltipContentMemo(feature));
+                layer.bindTooltip(getTooltipContent(feature, feature.properties.shocks || []));
               }}
             />
           )}
         </MapContainer>
 
+        {/* Legend */}
         <Box sx={{ 
           position: 'absolute', 
           top: 16, 
@@ -222,7 +349,7 @@ const ShockPropagationMap = () => {
           Analysis Summary
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {`${filteredShocks.length} shocks detected for ${selectedDate} `}
+          {`${filteredShocks.length} shocks detected for ${selectedDate || 'selected date'} `}
           {`(${(threshold * 100).toFixed(0)}% threshold). `}
           {propagationPatterns.propagationMetrics?.averagePropagationTime > 0 &&
             `Average propagation time: ${propagationPatterns.propagationMetrics.averagePropagationTime.toFixed(1)} days.`}

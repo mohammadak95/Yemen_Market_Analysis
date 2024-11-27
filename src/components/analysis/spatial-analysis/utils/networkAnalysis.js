@@ -119,14 +119,14 @@ const createAdjacencyMatrix = (nodes, links) => {
     const nodeIndex = new Map(nodes.map((node, i) => [node.id, i]));
 
     // Normalize link values
-    const maxFlow = Math.max(...links.map(l => l.totalFlow || 0));
+    const maxFlow = Math.max(...links.map(l => l.value || 0));
     
     links.forEach(link => {
-      const i = nodeIndex.get(link.source.id || link.source);
-      const j = nodeIndex.get(link.target.id || link.target);
+      const i = nodeIndex.get(link.source);
+      const j = nodeIndex.get(link.target);
       
       if (i !== undefined && j !== undefined) {
-        const normalizedValue = maxFlow > 0 ? (link.totalFlow || 0) / maxFlow : 0;
+        const normalizedValue = maxFlow > 0 ? (link.value || 0) / maxFlow : 0;
         matrix[i][j] = normalizedValue;
         matrix[j][i] = normalizedValue; // Undirected network
       }

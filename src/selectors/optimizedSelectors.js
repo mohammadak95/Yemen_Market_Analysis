@@ -26,23 +26,56 @@ const selectStatus = createSelector(
   spatial => spatial.status || {}
 );
 
-// Memoized data selectors
+// Memoized data selectors with proper validation
 export const selectSpatialAutocorrelation = createSelector(
   [selectSpatialData],
-  data => data.spatialAutocorrelation || {}
+  data => {
+    try {
+      const autocorrelation = data.spatialAutocorrelation || {};
+      return {
+        global: autocorrelation.global || { I: 0, 'p-value': 1 },
+        local: autocorrelation.local || {}
+      };
+    } catch (error) {
+      console.error('Error selecting spatial autocorrelation:', error);
+      return { global: { I: 0, 'p-value': 1 }, local: {} };
+    }
+  }
 );
 
 export const selectTimeSeriesData = createSelector(
   [selectSpatialData],
-  data => data.timeSeriesData || []
+  data => {
+    try {
+      return Array.isArray(data.timeSeriesData) ? data.timeSeriesData : [];
+    } catch (error) {
+      console.error('Error selecting time series data:', error);
+      return [];
+    }
+  }
 );
 
 export const selectGeometryData = createSelector(
   [selectSpatialData],
-  data => data.geometry || null
+  data => {
+    try {
+      const geometry = data.geometry;
+      if (!geometry) return null;
+
+      return {
+        points: Array.isArray(geometry.points) ? geometry.points : [],
+        polygons: Array.isArray(geometry.polygons) ? geometry.polygons : [],
+        unified: geometry.unified || null,
+        type: geometry.type || 'unified'
+      };
+    } catch (error) {
+      console.error('Error selecting geometry data:', error);
+      return null;
+    }
+  }
 );
 
-// Unified geometry selector
+// Unified geometry selector with proper validation
 export const selectUnifiedGeometry = createSelector(
   [selectGeometryData],
   geometry => {
@@ -52,33 +85,38 @@ export const selectUnifiedGeometry = createSelector(
     try {
       const features = [];
 
-      if (geometry.polygons) {
+      if (Array.isArray(geometry.polygons)) {
         features.push(
           ...geometry.polygons.map(polygon => ({
             type: 'Feature',
-            geometry: polygon.geometry,
+            geometry: {
+              type: 'Polygon',
+              coordinates: Array.isArray(polygon.geometry?.coordinates) 
+                ? polygon.geometry.coordinates 
+                : [[]]
+            },
             properties: {
               ...polygon.properties,
-              id: polygon.properties.shapeISO,
-              region_id: polygon.properties.normalizedName,
+              id: polygon.properties?.shapeISO,
+              region_id: polygon.properties?.normalizedName,
               feature_type: 'polygon',
             },
           }))
         );
       }
 
-      if (geometry.points) {
+      if (Array.isArray(geometry.points)) {
         features.push(
           ...geometry.points.map(point => ({
             type: 'Feature',
             geometry: {
               type: 'Point',
-              coordinates: point.coordinates,
+              coordinates: Array.isArray(point.coordinates) ? point.coordinates : [0, 0]
             },
             properties: {
               ...point.properties,
-              id: point.properties.normalizedName,
-              region_id: point.properties.normalizedName,
+              id: point.properties?.normalizedName,
+              region_id: point.properties?.normalizedName,
               feature_type: 'point',
             },
           }))
@@ -102,20 +140,41 @@ export const selectUnifiedGeometry = createSelector(
   }
 );
 
-// Market Data Selectors
+// Market Data Selectors with proper validation
 export const selectMarketClusters = createSelector(
   [selectSpatialData],
-  data => data.marketClusters || []
+  data => {
+    try {
+      return Array.isArray(data.marketClusters) ? data.marketClusters : [];
+    } catch (error) {
+      console.error('Error selecting market clusters:', error);
+      return [];
+    }
+  }
 );
 
 export const selectMarketFlows = createSelector(
   [selectSpatialData],
-  data => data.flowMaps || []
+  data => {
+    try {
+      return Array.isArray(data.flowMaps) ? data.flowMaps : [];
+    } catch (error) {
+      console.error('Error selecting market flows:', error);
+      return [];
+    }
+  }
 );
 
 export const selectMarketShocks = createSelector(
   [selectSpatialData],
-  data => data.marketShocks || []
+  data => {
+    try {
+      return Array.isArray(data.marketShocks) ? data.marketShocks : [];
+    } catch (error) {
+      console.error('Error selecting market shocks:', error);
+      return [];
+    }
+  }
 );
 
 // UI State Selectors
@@ -134,61 +193,13 @@ export const selectSelectedDate = createSelector(
   ui => ui.selectedDate
 );
 
-// Combined Data Selectors
-export const selectClustersWithCoordinates = createSelector(
-  [selectMarketClusters, selectGeometryData],
-  (clusters, geometry) => {
-    if (!clusters?.length || !geometry?.points) return [];
-
-    try {
-      return clusters.map(cluster => {
-        const mainMarketPoint = geometry.points.find(
-          point => point.properties.normalizedName === cluster.mainMarket
-        );
-
-        return {
-          ...cluster,
-          mainMarketCoordinates: mainMarketPoint?.coordinates || [NaN, NaN],
-        };
-      });
-    } catch (error) {
-      console.error('Error processing clusters with coordinates:', error);
-      return [];
-    }
-  }
-);
-
-export const selectFlowsWithCoordinates = createSelector(
-  [selectMarketFlows, selectGeometryData],
-  (flows, geometry) => {
-    if (!flows?.length || !geometry?.points) return [];
-
-    try {
-      return flows.map(flow => {
-        const sourcePoint = geometry.points.find(
-          point => point.properties.normalizedName === flow.source
-        );
-        const targetPoint = geometry.points.find(
-          point => point.properties.normalizedName === flow.target
-        );
-
-        return {
-          ...flow,
-          sourceCoordinates: sourcePoint?.coordinates || [NaN, NaN],
-          targetCoordinates: targetPoint?.coordinates || [NaN, NaN],
-        };
-      });
-    } catch (error) {
-      console.error('Error processing flows with coordinates:', error);
-      return [];
-    }
-  }
-);
-
+// Feature data selector with metrics
 export const selectFeatureDataWithMetrics = createSelector(
   [selectUnifiedGeometry, selectTimeSeriesData],
   (geometry, timeSeriesData) => {
-    if (!geometry?.features || !timeSeriesData?.length) return null;
+    if (!geometry?.features || !Array.isArray(timeSeriesData)) {
+      return null;
+    }
 
     try {
       const timeSeriesByRegion = _.keyBy(timeSeriesData, 'region');
@@ -196,15 +207,15 @@ export const selectFeatureDataWithMetrics = createSelector(
       return {
         ...geometry,
         features: geometry.features.map(feature => {
-          const regionData = timeSeriesByRegion[feature.properties.region_id];
+          const regionData = timeSeriesByRegion[feature.properties?.region_id] || {};
           return {
             ...feature,
             properties: {
               ...feature.properties,
-              ...(regionData || {}),
-            },
+              ...(regionData || {})
+            }
           };
-        }),
+        })
       };
     } catch (error) {
       console.error('Error processing feature data with metrics:', error);
@@ -213,20 +224,74 @@ export const selectFeatureDataWithMetrics = createSelector(
   }
 );
 
-// Analysis Data Selectors
+// Analysis Data Selectors with proper validation
 export const selectMarketIntegration = createSelector(
   [selectSpatialData],
-  data => data.marketIntegration || {}
+  data => {
+    try {
+      const integration = data.marketIntegration || {};
+      return {
+        price_correlation: integration.price_correlation || {},
+        flow_density: integration.flow_density || 0,
+        accessibility: integration.accessibility || {},
+        integration_score: integration.integration_score || 0
+      };
+    } catch (error) {
+      console.error('Error selecting market integration:', error);
+      return {
+        price_correlation: {},
+        flow_density: 0,
+        accessibility: {},
+        integration_score: 0
+      };
+    }
+  }
 );
 
 export const selectRegressionAnalysis = createSelector(
   [selectSpatialData],
-  data => data.regressionAnalysis || {}
+  data => {
+    try {
+      const regression = data.regressionAnalysis || {};
+      return {
+        model: regression.model || {},
+        spatial: regression.spatial || { moran_i: { I: 0, 'p-value': 1 }, vif: [] },
+        residuals: regression.residuals || { raw: [], byRegion: {}, stats: {} }
+      };
+    } catch (error) {
+      console.error('Error selecting regression analysis:', error);
+      return {
+        model: {},
+        spatial: { moran_i: { I: 0, 'p-value': 1 }, vif: [] },
+        residuals: { raw: [], byRegion: {}, stats: {} }
+      };
+    }
+  }
 );
 
 export const selectSeasonalAnalysis = createSelector(
   [selectSpatialData],
-  data => data.seasonalAnalysis || {}
+  data => {
+    try {
+      const seasonal = data.seasonalAnalysis || {};
+      return {
+        seasonal_strength: seasonal.seasonal_strength || 0,
+        trend_strength: seasonal.trend_strength || 0,
+        peak_month: seasonal.peak_month || 0,
+        trough_month: seasonal.trough_month || 0,
+        seasonal_pattern: seasonal.seasonal_pattern || []
+      };
+    } catch (error) {
+      console.error('Error selecting seasonal analysis:', error);
+      return {
+        seasonal_strength: 0,
+        trend_strength: 0,
+        peak_month: 0,
+        trough_month: 0,
+        seasonal_pattern: []
+      };
+    }
+  }
 );
 
 // Status Selectors
@@ -240,34 +305,82 @@ export const selectLoadingStatus = createSelector(
   })
 );
 
-// Region-specific Selectors
-export const selectPolygonsByRegion = createSelector(
-  [selectGeometryData],
-  geometry => {
-    if (!geometry?.polygons) return {};
+// New selectors for visualization and spatial data
+export const selectVisualizationData = createSelector(
+  [selectFeatureDataWithMetrics, selectMarketFlows, selectMarketClusters],
+  (featureData, flows, clusters) => {
     try {
-      return _.keyBy(geometry.polygons, 'properties.normalizedName');
+      return {
+        features: featureData?.features || [],
+        flows: flows || [],
+        clusters: clusters || [],
+        timestamp: Date.now()
+      };
     } catch (error) {
-      console.error('Error processing polygons by region:', error);
-      return {};
+      console.error('Error selecting visualization data:', error);
+      return {
+        features: [],
+        flows: [],
+        clusters: [],
+        timestamp: Date.now()
+      };
     }
   }
 );
 
-export const selectPointsByRegion = createSelector(
-  [selectGeometryData],
-  geometry => {
-    if (!geometry?.points) return {};
+export const selectFlowsWithCoordinates = createSelector(
+  [selectMarketFlows, selectGeometryData],
+  (flows, geometry) => {
     try {
-      return _.keyBy(geometry.points, 'properties.normalizedName');
+      if (!flows || !geometry?.points) return [];
+
+      const pointsMap = new Map(
+        geometry.points.map(point => [
+          point.properties?.normalizedName,
+          point.coordinates || [0, 0]
+        ])
+      );
+
+      return flows.map(flow => ({
+        ...flow,
+        sourceCoordinates: pointsMap.get(flow.source) || [0, 0],
+        targetCoordinates: pointsMap.get(flow.target) || [0, 0]
+      }));
     } catch (error) {
-      console.error('Error processing points by region:', error);
-      return {};
+      console.error('Error selecting flows with coordinates:', error);
+      return [];
     }
   }
 );
 
-// Complete Spatial Data Selector
+export const selectClustersWithCoordinates = createSelector(
+  [selectMarketClusters, selectGeometryData],
+  (clusters, geometry) => {
+    try {
+      if (!clusters || !geometry?.points) return [];
+
+      const pointsMap = new Map(
+        geometry.points.map(point => [
+          point.properties?.normalizedName,
+          point.coordinates || [0, 0]
+        ])
+      );
+
+      return clusters.map(cluster => ({
+        ...cluster,
+        markets: cluster.markets.map(market => ({
+          ...market,
+          coordinates: pointsMap.get(market.name) || [0, 0]
+        }))
+      }));
+    } catch (error) {
+      console.error('Error selecting clusters with coordinates:', error);
+      return [];
+    }
+  }
+);
+
+// Complete Spatial Data Selector with proper validation
 export const selectSpatialDataOptimized = createSelector(
   [
     selectUnifiedGeometry,
@@ -302,35 +415,10 @@ export const selectSpatialDataOptimized = createSelector(
         spatialAutocorrelation: autocorrelation,
         regressionAnalysis: regression,
         seasonalAnalysis: seasonal,
-        uniqueMonths: timeSeriesData
-          ?.map(d => d.month)
-          .filter((v, i, a) => a.indexOf(v) === i)
-          .sort() || [],
+        uniqueMonths: _.uniq(timeSeriesData?.map(d => d.month)).sort() || [],
       };
     } catch (error) {
       console.error('Error creating optimized spatial data:', error);
-      return null;
-    }
-  }
-);
-
-// Visualization Data Selector
-export const selectVisualizationData = createSelector(
-  [selectSpatialDataOptimized, selectVisualizationMode],
-  (data, mode) => {
-    if (!data || !mode) return null;
-
-    try {
-      return {
-        ...data,
-        visualizationMode: mode,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          mode,
-        },
-      };
-    } catch (error) {
-      console.error('Error creating visualization data:', error);
       return null;
     }
   }
