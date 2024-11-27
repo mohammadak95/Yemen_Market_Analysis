@@ -127,17 +127,17 @@ const ShockPropagationMap = () => {
 
   // Calculate time range
   const timeRange = useMemo(() => {
-    if (!timeSeriesData?.length) {
-      return [];
+    if (!shockData?.length) {
+        return [];
     }
 
-    const dates = timeSeriesData
+    const dates = shockData
       .map(d => d.date)
       .filter(Boolean)
       .sort();
 
     return [...new Set(dates)];
-  }, [timeSeriesData]);
+}, [shockData]);
 
   // Set initial date if needed
   useEffect(() => {
@@ -236,15 +236,15 @@ const ShockPropagationMap = () => {
   }
 
   // Loading state
-  if (!processedGeometry || !timeRange.length) {
+  if (!processedGeometry || !shockData?.length) {
     return (
       <Alert severity="warning" sx={{ m: 2 }}>
         No valid spatial data available for shock analysis.
         {!processedGeometry && ' Missing geometry data.'}
-        {!timeRange.length && ' Missing time series data.'}
+        {!shockData?.length && ' Missing shock data.'}
       </Alert>
     );
-  }
+ }
 
   return (
     <Paper sx={{ p: 2 }}>

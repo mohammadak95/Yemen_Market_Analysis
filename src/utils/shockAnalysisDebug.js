@@ -18,14 +18,14 @@ export const DEBUG_SHOCK_ANALYSIS = {
     console.group(`🔍 Shock Analysis Debug: ${component}`);
     
     const startTime = performance.now();
-    backgroundMonitor.startMetric(`shock-analysis-${component}`, { monitorId });
+    const metric = backgroundMonitor.startMetric(`shock-analysis-${component}`, { monitorId });
 
     return {
       finish: () => {
         const duration = performance.now() - startTime;
         console.log(`${component} render duration: ${duration.toFixed(2)}ms`);
         console.groupEnd();
-        backgroundMonitor.finishMetric(`shock-analysis-${component}`, {
+        metric.finish({
           duration,
           component
         });
@@ -358,12 +358,6 @@ export const monitorMapPerformance = (feature, magnitude) => {
 /**
  * Validate feature data for tooltips
  */
-/**
- * Validate tooltip data and feature properties
- * @param {Object} feature - GeoJSON feature
- * @param {Array} regionShocks - Array of shocks for the region
- * @returns {Object} Validation results and processed data
- */
 export const validateTooltipData = (feature, regionShocks) => {
   const metric = backgroundMonitor.startMetric('tooltip-validation');
 
@@ -389,7 +383,7 @@ export const validateTooltipData = (feature, regionShocks) => {
     }
 
     // Log validation results in development
-    if (DEBUG) {
+    if (process.env.NODE_ENV === 'development') {
       console.group('Tooltip Data Validation');
       console.table(validation);
       if (validation.shockMetrics) {
@@ -515,9 +509,12 @@ const processTooltipData = (feature, regionShocks) => {
       0
     );
 
-    const latestShock = _.maxBy(regionShocks, 
-      shock => new Date(shock.date).getTime()
-    );
+    const latestShock = regionShocks.reduce((latest, shock) => {
+      if (!latest || new Date(shock.date) > new Date(latest.date)) {
+        return shock;
+      }
+      return latest;
+    }, null);
 
     return {
       regionId: feature.properties.region_id,
