@@ -13,13 +13,13 @@ import { scaleLinear } from 'd3-scale';
 import { interpolateRdBu } from 'd3-scale-chromatic';
 import { useTheme } from '@mui/material/styles';
 import { backgroundMonitor } from '../../../../../utils/backgroundMonitor';
-import { 
+import {
   selectTimeSeriesData,
   selectSpatialAutocorrelation,
   selectGeometryData,
   selectMarketShocks,
-  selectFilteredShocks
-} from '../../../../../selectors/shockSelectors';
+  // Removed selectFilteredShocks since we handle filtering locally now
+} from '../../../../../selectors/shockSelectors'
 import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
 import { useShockAnalysis } from '../../hooks/useShockAnalysis';
 import { getTooltipContent } from '../../utils/shockMapUtils';
@@ -37,27 +37,57 @@ const ShockPropagationMap = () => {
   const geoJsonLayerRef = useRef(null);
   const mapRef = useRef(null);
 
-  // Local state
+  const timeSeriesData = useSelector(selectTimeSeriesData);
+  const spatialAutocorrelation = useSelector(selectSpatialAutocorrelation);
+  const geometry = useSelector(selectGeometryData);
+  const marketShocks = useSelector(selectMarketShocks);
+
   const [selectedDate, setSelectedDate] = useState('');
   const [shockType, setShockType] = useState('all');
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
   const [error, setError] = useState(null);
 
-  // Data selection
-  const timeSeriesData = useSelector(selectTimeSeriesData);
-  const spatialAutocorrelation = useSelector(selectSpatialAutocorrelation);
-  const geometry = useSelector(selectGeometryData);
-  const shockData = useSelector(selectMarketShocks);
 
-  // Memoize filter parameters
-  const filterParams = useMemo(() => ({
-    date: selectedDate,
-    shockType,
-    threshold
-  }), [selectedDate, shockType, threshold]);
+  // Use shock analysis hook
+  const { shocks, shockStats, propagationPatterns } = useShockAnalysis(
+    timeSeriesData,
+    spatialAutocorrelation,
+    threshold,
+    marketShocks // Pass existing marketShocks
+  );
+
+  // Calculate time range
+  const timeRange = useMemo(() => {
+    if (!shocks?.length) {
+      return [];
+    }
+
+    const dates = shocks
+      .map((d) => d.date)
+      .filter(Boolean)
+      .sort();
+
+    return [...new Set(dates)];
+  }, [shocks]);
+
+  // Set initial date if needed
+  useEffect(() => {
+    if (timeRange.length && !selectedDate) {
+      setSelectedDate(timeRange[0]);
+    }
+  }, [timeRange, selectedDate]);
 
   // Get filtered shocks based on current criteria
-  const filteredShocks = useSelector(state => selectFilteredShocks(state, filterParams));
+  const filteredShocks = useMemo(() => {
+    return shocks.filter((shock) => {
+      if (selectedDate && shock.date !== selectedDate) return false;
+      if (shockType && shockType !== 'all' && shock.shock_type !== shockType)
+        return false;
+      if (typeof threshold === 'number' && shock.magnitude < threshold)
+        return false;
+      return true;
+    });
+  }, [shocks, selectedDate, shockType, threshold]);
 
   // Process base geometry
   const baseGeometry = useMemo(() => {
@@ -125,33 +155,12 @@ const ShockPropagationMap = () => {
     }
   }, [baseGeometry, filteredShocks]);
 
-  // Calculate time range
-  const timeRange = useMemo(() => {
-    if (!shockData?.length) {
-        return [];
-    }
-
-    const dates = shockData
-      .map(d => d.date)
-      .filter(Boolean)
-      .sort();
-
-    return [...new Set(dates)];
-}, [shockData]);
-
   // Set initial date if needed
   useEffect(() => {
     if (timeRange.length && !selectedDate) {
       setSelectedDate(timeRange[0]);
     }
   }, [timeRange, selectedDate]);
-
-  // Use shock analysis hook
-  const { shocks, shockStats, propagationPatterns } = useShockAnalysis(
-    timeSeriesData,
-    spatialAutocorrelation,
-    threshold
-  );
 
   // Debug monitoring
   useEffect(() => {
@@ -236,12 +245,12 @@ const ShockPropagationMap = () => {
   }
 
   // Loading state
-  if (!processedGeometry || !shockData?.length) {
+  if (!processedGeometry || !marketShocks?.length) {
     return (
       <Alert severity="warning" sx={{ m: 2 }}>
         No valid spatial data available for shock analysis.
         {!processedGeometry && ' Missing geometry data.'}
-        {!shockData?.length && ' Missing shock data.'}
+        {!marketShocks?.length && ' Missing shock data.'}
       </Alert>
     );
  }

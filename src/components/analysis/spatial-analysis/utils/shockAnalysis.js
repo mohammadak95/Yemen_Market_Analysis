@@ -9,43 +9,42 @@
 export const analyzeMarketShocks = (timeSeriesData, threshold = 0.1) => {
   const shocks = [];
 
-  // Group data by region
-  const dataByRegion = {};
-  timeSeriesData.forEach((dataPoint) => {
-    const { region, date, avgUsdPrice } = dataPoint;
-    if (!dataByRegion[region]) {
-      dataByRegion[region] = [];
-    }
-    dataByRegion[region].push({ date, avgUsdPrice });
-  });
+  // Ensure timeSeriesData includes region
+  const sortedData = timeSeriesData
+    .filter((data) => data.region && data.usdPrice)
+    .sort((a, b) => {
+      if (a.region === b.region) {
+        return new Date(a.month) - new Date(b.month);
+      }
+      return a.region.localeCompare(b.region);
+    });
 
-  // Detect shocks for each region
-  Object.entries(dataByRegion).forEach(([region, regionData]) => {
-    // Sort data by date
-    const sortedData = regionData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  const previousPrices = {};
 
-    // Calculate percentage changes and detect shocks
-    for (let i = 1; i < sortedData.length; i++) {
-      const prevPrice = sortedData[i - 1].avgUsdPrice;
-      const currPrice = sortedData[i].avgUsdPrice;
-      const priceChange = (currPrice - prevPrice) / prevPrice;
+  sortedData.forEach((data) => {
+    const { region, month, usdPrice: currentPrice } = data;
+    const previousPrice = previousPrices[region];
 
+    if (previousPrice !== undefined) {
+      const priceChange = calculatePriceChange(currentPrice, previousPrice);
       if (Math.abs(priceChange) >= threshold) {
         shocks.push({
           region,
-          date: sortedData[i].date,
+          date: month + '-01',
           magnitude: Math.abs(priceChange),
-          direction: priceChange > 0 ? 'increase' : 'decrease',
           shock_type: priceChange > 0 ? 'price surge' : 'price drop',
-          prevPrice,
-          currPrice
+          previous_price: previousPrice,
+          current_price: currentPrice,
         });
       }
     }
+
+    previousPrices[region] = currentPrice;
   });
 
   return shocks;
 };
+
 
 /**
  * Calculates shock statistics such as total shocks, maximum magnitude, and average magnitude.

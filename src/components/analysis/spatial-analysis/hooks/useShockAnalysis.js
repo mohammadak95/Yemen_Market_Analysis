@@ -4,32 +4,112 @@ import { useMemo } from 'react';
 import { backgroundMonitor } from '../../../../utils/backgroundMonitor';
 import { DEBUG_SHOCK_ANALYSIS } from '../../../../utils/shockAnalysisDebug';
 
-/**
- * Analyze market shocks from time series data
- */
+export const useShockAnalysis = (
+  timeSeriesData,
+  spatialAutocorrelation,
+  threshold = 0.1,
+  marketShocks
+) => {
+  return useMemo(() => {
+    const metric = backgroundMonitor.startMetric('shock-analysis', {
+      hasTimeData: !!timeSeriesData?.length,
+      hasAutocorrelation: !!spatialAutocorrelation,
+      threshold,
+    });
+
+    try {
+      if (!timeSeriesData?.length || !spatialAutocorrelation) {
+        console.warn('Missing required data for shock analysis');
+        return {
+          shocks: [],
+          shockStats: getDefaultShockStats(),
+          propagationPatterns: getDefaultPropagationPatterns(),
+        };
+      }
+
+      let shocks = [];
+
+      if (marketShocks && marketShocks.length > 0) {
+        // Use existing market shocks
+        shocks = marketShocks.filter((shock) => shock.magnitude >= threshold);
+      } else {
+        // Compute shocks from timeSeriesData
+        shocks = analyzeMarketShocks(timeSeriesData, threshold);
+      }
+
+      // Calculate statistics
+      const shockStats = calculateShockStatistics(shocks);
+
+      // Analyze propagation with monitoring
+      const propagationPatterns = analyzeShockPropagation(
+        shocks,
+        spatialAutocorrelation
+      );
+      DEBUG_SHOCK_ANALYSIS.monitorPropagationPatterns(
+        propagationPatterns.propagationPatterns
+      );
+
+      metric.finish({ status: 'success', shockCount: shocks.length });
+
+      return {
+        shocks,
+        shockStats,
+        propagationPatterns,
+      };
+    } catch (error) {
+      console.error('Error in shock analysis:', error);
+      backgroundMonitor.logError('shock-analysis', error);
+      metric.finish({ status: 'failed', error: error.message });
+
+      return {
+        shocks: [],
+        shockStats: getDefaultShockStats(),
+        propagationPatterns: getDefaultPropagationPatterns(),
+      };
+    }
+  }, [timeSeriesData, spatialAutocorrelation, threshold, marketShocks]);
+};
+
 const analyzeMarketShocks = (timeSeriesData, threshold) => {
   const metric = backgroundMonitor.startMetric('market-shock-analysis');
-  
+
   try {
-    if (!Array.isArray(timeSeriesData)) return [];
+    // Ensure timeSeriesData includes region
+    const sortedData = timeSeriesData
+      .filter((data) => data.region && data.usdPrice)
+      .sort((a, b) => {
+        if (a.region === b.region) {
+          return new Date(a.month) - new Date(b.month);
+        }
+        return a.region.localeCompare(b.region);
+      });
 
-    const shocks = timeSeriesData.reduce((acc, data) => {
-      if (!data || !data.region || !data.avgUsdPrice) return acc;
+    const shocks = [];
+    const previousPrices = {};
 
-      // Calculate price changes
-      const priceChange = calculatePriceChange(data);
-      if (Math.abs(priceChange) >= threshold) {
-        acc.push({
-          region: data.region,
-          date: data.date,
-          magnitude: Math.abs(priceChange),
-          shock_type: priceChange > 0 ? 'price_surge' : 'price_drop',
-          price_change: priceChange,
-          base_price: data.avgUsdPrice
-        });
+    sortedData.forEach((data) => {
+      const region = data.region;
+      const currentPrice = data.usdPrice;
+      const previousPrice = previousPrices[region];
+
+      if (previousPrice !== undefined) {
+        const priceChange = calculatePriceChange(currentPrice, previousPrice);
+        if (Math.abs(priceChange) >= threshold) {
+          shocks.push({
+            region,
+            date: data.month + '-01',
+            magnitude: Math.abs(priceChange),
+            shock_type: priceChange > 0 ? 'price_surge' : 'price_drop',
+            price_change: priceChange,
+            previous_price: previousPrice,
+            current_price: currentPrice,
+          });
+        }
       }
-      return acc;
-    }, []);
+
+      // Update the previous price for the region
+      previousPrices[region] = currentPrice;
+    });
 
     metric.finish({ status: 'success', shockCount: shocks.length });
     return shocks;
@@ -40,13 +120,11 @@ const analyzeMarketShocks = (timeSeriesData, threshold) => {
   }
 };
 
-/**
- * Calculate price change percentage
- */
-const calculatePriceChange = (data) => {
-  if (!data.previousPrice || data.previousPrice === 0) return 0;
-  return (data.avgUsdPrice - data.previousPrice) / data.previousPrice;
+const calculatePriceChange = (currentPrice, previousPrice) => {
+  if (previousPrice === 0) return 0;
+  return (currentPrice - previousPrice) / previousPrice;
 };
+
 
 /**
  * Calculate shock statistics
@@ -203,61 +281,6 @@ const identifySpatialClusters = (patterns) => {
   });
 
   return clusters;
-};
-
-/**
- * Hook for shock analysis
- */
-export const useShockAnalysis = (timeSeriesData, spatialAutocorrelation, threshold = 0.1) => {
-  return useMemo(() => {
-    const metric = backgroundMonitor.startMetric('shock-analysis', {
-      hasTimeData: !!timeSeriesData?.length,
-      hasAutocorrelation: !!spatialAutocorrelation,
-      threshold
-    });
-
-    try {
-      if (!timeSeriesData?.length || !spatialAutocorrelation) {
-        console.warn('Missing required data for shock analysis');
-        return {
-          shocks: [],
-          shockStats: getDefaultShockStats(),
-          propagationPatterns: getDefaultPropagationPatterns()
-        };
-      }
-
-      // Process shocks with validation
-      const shocks = analyzeMarketShocks(timeSeriesData, threshold);
-      if (!DEBUG_SHOCK_ANALYSIS.validateShockData(shocks)) {
-        throw new Error('Invalid shock data structure');
-      }
-
-      // Calculate statistics
-      const shockStats = calculateShockStatistics(shocks);
-      
-      // Analyze propagation with monitoring
-      const propagationPatterns = analyzeShockPropagation(shocks, spatialAutocorrelation);
-      DEBUG_SHOCK_ANALYSIS.monitorPropagationPatterns(propagationPatterns.propagationPatterns);
-
-      metric.finish({ status: 'success', shockCount: shocks.length });
-
-      return {
-        shocks,
-        shockStats,
-        propagationPatterns
-      };
-    } catch (error) {
-      console.error('Error in shock analysis:', error);
-      backgroundMonitor.logError('shock-analysis', error);
-      metric.finish({ status: 'failed', error: error.message });
-
-      return {
-        shocks: [],
-        shockStats: getDefaultShockStats(),
-        propagationPatterns: getDefaultPropagationPatterns()
-      };
-    }
-  }, [timeSeriesData, spatialAutocorrelation, threshold]);
 };
 
 const getDefaultShockStats = () => ({
