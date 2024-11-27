@@ -1,7 +1,10 @@
 // src/utils/spatialMappingValidator.js
 
-import { REGION_MAPPINGS } from './spatialDataHandler';
+
 import { backgroundMonitor } from './backgroundMonitor';
+import { spatialHandler } from './spatialDataHandler';
+
+const REGION_MAPPINGS = spatialHandler.REGION_MAPPINGS;
 
 /**
  * Normalize region name using mapping

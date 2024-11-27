@@ -30,42 +30,87 @@ const HeatMapCell = ({ x, y, width, height, value, maxValue }) => {
   );
 };
 
-const ConflictCorrelationMatrix = ({ regionalCorrelations }) => {
+const ConflictCorrelationMatrix = ({ regionalCorrelations = [] }) => {
   const theme = useTheme();
+
+  // Return early if no data
+  if (!Array.isArray(regionalCorrelations) || regionalCorrelations.length === 0) {
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Regional Correlation Matrix
+          </Typography>
+          <Box sx={{ height: 400, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No correlation data available
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Transform correlation data for visualization
   const { data, regions, maxCorrelation } = useMemo(() => {
-    const uniqueRegions = [...new Set([
-      ...regionalCorrelations.map(d => d.region1),
-      ...regionalCorrelations.map(d => d.region2)
-    ])].sort();
+    try {
+      const uniqueRegions = [...new Set([
+        ...regionalCorrelations.map(d => d.region1),
+        ...regionalCorrelations.map(d => d.region2)
+      ])].sort();
 
-    const transformedData = [];
-    const maxValue = Math.max(...regionalCorrelations.map(d => Math.abs(d.correlation)));
+      const transformedData = [];
+      const maxValue = Math.max(...regionalCorrelations.map(d => Math.abs(d.correlation)));
 
-    uniqueRegions.forEach((region1, i) => {
-      uniqueRegions.forEach((region2, j) => {
-        const correlation = regionalCorrelations.find(
-          d => (d.region1 === region1 && d.region2 === region2) ||
-               (d.region1 === region2 && d.region2 === region1)
-        );
-        
-        transformedData.push({
-          x: i,
-          y: j,
-          region1,
-          region2,
-          value: correlation ? correlation.correlation : 0
+      uniqueRegions.forEach((region1, i) => {
+        uniqueRegions.forEach((region2, j) => {
+          const correlation = regionalCorrelations.find(
+            d => (d.region1 === region1 && d.region2 === region2) ||
+                 (d.region1 === region2 && d.region2 === region1)
+          );
+          
+          transformedData.push({
+            x: i,
+            y: j,
+            region1,
+            region2,
+            value: correlation ? correlation.correlation : 0
+          });
         });
       });
-    });
 
-    return {
-      data: transformedData,
-      regions: uniqueRegions,
-      maxCorrelation: maxValue
-    };
+      return {
+        data: transformedData,
+        regions: uniqueRegions,
+        maxCorrelation: maxValue
+      };
+    } catch (error) {
+      console.error('Error processing correlation data:', error);
+      return {
+        data: [],
+        regions: [],
+        maxCorrelation: 0
+      };
+    }
   }, [regionalCorrelations]);
+
+  // Return early if data processing failed
+  if (!data.length) {
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Regional Correlation Matrix
+          </Typography>
+          <Box sx={{ height: 400, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              Error processing correlation data
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -138,6 +183,8 @@ const ConflictImpactDashboard = ({
 
   // Transform time series data for charts
   const chartData = useMemo(() => {
+    if (!timeSeriesData) return [];
+    
     return timeSeriesData.map(d => ({
       date: d.month,
       price: d.avgUsdPrice,

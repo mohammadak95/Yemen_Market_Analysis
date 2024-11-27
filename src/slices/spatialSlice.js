@@ -133,49 +133,19 @@ export const fetchFlowData = createAsyncThunk(
 
 export const fetchAllSpatialData = createAsyncThunk(
   'spatial/fetchAllSpatialData',
-  async (
-    {
-      commodity,
-      date,
-      visualizationMode,
-      filters,
-      skipGeometry = false,
-      regressionOnly = false,
-      visualizationOnly = false,
-      forceRefresh = false
-    },
-    { getState, rejectWithValue }
-  ) => {
+  async ({
+    commodity,
+    date,
+    visualizationMode,
+    filters,
+    skipGeometry = false,
+    regressionOnly = false,
+    visualizationOnly = false,
+    forceRefresh = false
+  }, { getState, rejectWithValue }) => {
     const metric = backgroundMonitor.startMetric('spatial-data-fetch');
     const state = getState();
     const cacheKey = `${commodity}_${date}`;
-
-    // Cache Check
-    if (state.spatial.data.cache[cacheKey] && !forceRefresh) {
-      const cachedData = state.spatial.data.cache[cacheKey];
-
-      // Process cached data to map snake_case to camelCase
-      const processedData = {
-        ...cachedData,
-        spatialData: {
-          ...cachedData.spatialData,
-          timeSeriesData: cachedData.spatialData.time_series_data || [],
-          flowMaps: cachedData.spatialData.flow_analysis || [],
-          marketClusters: cachedData.spatialData.market_clusters || [],
-          marketShocks: cachedData.spatialData.market_shocks || [],
-          spatialAutocorrelation: cachedData.spatialData.spatial_autocorrelation || {
-            global: {},
-            local: {}
-          },
-          seasonalAnalysis: cachedData.spatialData.seasonal_analysis || {},
-          marketIntegration: cachedData.spatialData.market_integration || {},
-          uniqueMonths: [...new Set(cachedData.spatialData.time_series_data?.map(d => d.month) || [])].sort()
-        }
-      };
-
-      metric.finish({ status: 'success (cache)' });
-      return processedData;
-    }
 
     try {
       let result = {
@@ -224,69 +194,43 @@ export const fetchAllSpatialData = createAsyncThunk(
 
       // Standard full data load
       if (!skipGeometry) {
-        // Initialize geometry if needed
-        if (!state.spatial.data.geometry.unified) {
-          await Promise.all([
-            spatialHandler.initializeGeometry(),
-            spatialHandler.initializePoints()
-          ]);
+        await Promise.all([
+          spatialHandler.initializeGeometry(),
+          spatialHandler.initializePoints()
+        ]);
 
-          result.geometry = {
-            polygons: Array.from(spatialHandler.geometryCache.values()),
-            points: Array.from(spatialHandler.pointCache.values()),
-            unified: await spatialHandler.createUnifiedGeoJSON([])
-          };
-        } else {
-          result.geometry = state.spatial.data.geometry;
-        }
+        result.geometry = {
+          polygons: Array.from(spatialHandler.geometryCache.values()),
+          points: Array.from(spatialHandler.pointCache.values()),
+          unified: await spatialHandler.createUnifiedGeoJSON([])
+        };
       }
 
-      // Get preprocessed spatial data
-      const preprocessedData = await spatialHandler.getSpatialData(commodity, date);
-      console.log('Loaded preprocessed data:', preprocessedData);
-
-      // Create unified GeoJSON with time series data
-      const unifiedGeoJSON = await spatialHandler.createUnifiedGeoJSON(
-        preprocessedData.time_series_data
-      );
-
-      // Process flow data with coordinates
-      const processedFlows =
-        preprocessedData.flow_analysis?.map(flow => ({
-          source: flow.source,
-          target: flow.target,
-          totalFlow: flow.total_flow || 0,
-          avgFlow: flow.avg_flow || 0,
-          flowCount: flow.flow_count || 0,
-          avgPriceDifferential: flow.avg_price_differential || 0,
-          source_coordinates: spatialHandler.getCoordinates(flow.source),
-          target_coordinates: spatialHandler.getCoordinates(flow.target)
-        })) || [];
-
+      // Get spatial data using the enhanced method
+      const spatialData = await spatialHandler.getSpatialData(commodity, date);
+      
       result.spatialData = {
-        timeSeriesData: preprocessedData.time_series_data || [],
-        flowMaps: processedFlows || [],
-        marketClusters: preprocessedData.market_clusters || [],
-        marketShocks: preprocessedData.market_shocks || [],
-        spatialAutocorrelation: preprocessedData.spatial_autocorrelation || {
-          global: {},
-          local: {}
-        },
-        seasonalAnalysis: preprocessedData.seasonal_analysis || {},
-        marketIntegration: preprocessedData.market_integration || {},
-        uniqueMonths: [...new Set(preprocessedData.time_series_data?.map(d => d.month) || [])].sort()
+        timeSeriesData: spatialData.timeSeriesData || [],
+        flowMaps: spatialData.flowMaps || [],
+        marketClusters: spatialData.marketClusters || [],
+        marketShocks: spatialData.marketShocks || [],
+        spatialAutocorrelation: spatialData.spatialAutocorrelation || {},
+        seasonalAnalysis: spatialData.seasonalAnalysis || {},
+        marketIntegration: spatialData.marketIntegration || {},
+        uniqueMonths: [...new Set(spatialData.timeSeriesData?.map(d => d.month) || [])].sort()
       };
 
-      // Add result to cache
+      // Update cache
       result.cacheTimestamp = Date.now();
       const updatedResult = {
         ...result,
         cacheKey
       };
+
       metric.finish({ status: 'success' });
       return updatedResult;
+
     } catch (error) {
-      // Enhanced Error Handling
       const enhancedError = {
         message: error.message,
         details: {
@@ -434,7 +378,6 @@ export const selectTimeSeriesData = createDeepEqualSelector(
     state => state.spatial?.ui?.selectedDate || ''
   ],
   (timeSeriesData, selectedRegimes, selectedDate) => {
-    // Memoize filtered data to maintain referential equality
     return useMemo(() => 
       timeSeriesData.filter(d => 
         (!selectedDate || d.month === selectedDate) &&

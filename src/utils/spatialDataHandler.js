@@ -17,122 +17,7 @@ import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { VISUALIZATION_MODES } from '../constants/index';
 import { workerManager } from './workerManager';
 
-
-
-// Yemen region name mappings for normalization
-export const REGION_MAPPINGS = {
-  // Sana'a variations
-  "san'a'": "sana'a",
-  "san_a__governorate": "sana'a",
-  "sanaa": "sana'a",
-  "sanʿaʾ": "amanat al asimah", // From second mapping
-  "sana": "sana'a",
-  "sanaa_city": "amanat al asimah", // From second mapping
-  "capital_city": "amanat al asimah",
-  "capital_secretariat": "amanat al asimah",
-  "capital": "amanat al asimah",
-  "amanat al asimah": "amanat al asimah", // Ensuring consistency
-  "san'a' governorate": "sana'a",
-  "sanʿaʾ": "sana'a",
-  "sanʿaʾ governorate": "sana'a",
-
-  // Lahj variations
-  "lahij_governorate": "lahj",
-  "lahij": "lahj",
-  "lahej": "lahj", // From second mapping
-
-  // Aden variations 
-  "adan_governorate": "aden",
-
-  // Hudaydah variations
-  "al_hudaydah_governorate": "al hudaydah",
-  "hudaydah": "al hudaydah",
-  "hodeidah": "al hudaydah",
-  "hodeida": "al hudaydah", // From second mapping
-  "hudaidah": "al hudaydah", // From second mapping
-
-  // Taizz variations
-  "ta_izz_governorate": "taizz",
-  "taiz": "taizz",
-  "taʿizz": "taizz", // From second mapping
-
-  // Shabwah variations
-  "shabwah_governorate": "shabwah",
-  "shabwa": "shabwah",
-
-  // Hadramaut variations
-  "hadhramaut": "hadramaut",
-  "hadramout": "hadramaut",
-  "hadramawt": "hadramaut", // From second mapping
-
-  // Bayda variations
-  "al_bayda__governorate": "al bayda",
-  "bayda": "al bayda",
-  "al bayda'": "al bayda", // From second mapping
-
-  // Al Dhale'e variations
-  "ad_dali__governorate": "al dhale'e",
-  "dhale": "al dhale'e",
-  "daleh": "al dhale'e",
-  "ad dali": "al dhale'e", // From second mapping
-
-  // Al Jawf variations
-  "al_jawf_governorate": "al jawf",
-  "jawf": "al jawf",
-
-  // Al Mahrah variations
-  "al_mahrah_governorate": "al maharah",
-  "mahrah": "al maharah",
-  "al mahra": "al maharah", // From second mapping
-
-  // Marib variations
-  "ma'rib_governorate": "marib",
-  "maarib": "marib",
-  "mareb": "marib", // From second mapping
-
-  // Other governorates
-  "abyan_governorate": "abyan",
-  "abbyan_governorate": "abyan", // Potential typo handled
-  "ibb_governorate": "ibb",
-  "al_mahwit_governorate": "al mahwit",
-  "mahwit": "al mahwit",
-  "hajjah_governorate": "hajjah",
-  "dhamar_governorate": "dhamar",
-  "_amran_governorate": "amran",
-  "raymah_governorate": "raymah",
-
-  // Fix for Taizz variations
-  "taizz": "ta'izz",
-  "taiz": "ta'izz",
-  "taʿizz": "ta'izz",
-
-  // Fix for Al Dhale'e variations
-  "al dhale'e": "ad dali'",
-  "dhale": "ad dali'",
-  "al dhale": "ad dali'",
-  "ad dali": "ad dali'",
-  "ad-dali": "ad dali'",
-
-  // Fix for Sana'a variations
-  "sana'a": "amanat al asimah",
-  "sanaa": "amanat al asimah",
-  "sana": "amanat al asimah",
-
-  // Fix for Amran variations
-  "amran": "'amran",
-  "amran governorate": "'amran",
-
-  // Fix for Marib variations
-  "marib": "ma'rib",
-  "maarib": "ma'rib",
-  "mareb": "ma'rib",
-
-  // Fix for Al Maharah variations
-  "al maharah": "al mahrah",
-  "maharah": "al mahrah",
-  "al mahra": "al mahrah"
-};
-
+// Default GeoJSON structure
 const DEFAULT_GEOJSON = {
   type: 'FeatureCollection',
   features: [],
@@ -146,8 +31,130 @@ const DEFAULT_GEOJSON = {
 
 class SpatialDataHandler {
   // ===========================
-  // Constructor and Initialization
+  // Class Properties
   // ===========================
+
+  // Yemen region name mappings for normalization
+  REGION_MAPPINGS = {
+    // Sana'a variations
+    "san'a'": "sana'a",
+    "san_a__governorate": "sana'a",
+    "sanaa": "sana'a",
+    "sanʿaʾ": "amanat al asimah", // From second mapping
+    "sana": "sana'a",
+    "sanaa_city": "amanat al asimah", // From second mapping
+    "capital_city": "amanat al asimah",
+    "capital_secretariat": "amanat al asimah",
+    "capital": "amanat al asimah",
+    "amanat al asimah": "amanat al asimah", // Ensuring consistency
+    "san'a' governorate": "sana'a",
+    "sanʿaʾ": "sana'a",
+    "sanʿaʾ governorate": "sana'a",
+
+    // Lahj variations
+    "lahij_governorate": "lahj",
+    "lahij": "lahj",
+    "lahej": "lahj", // From second mapping
+
+    // Aden variations 
+    "adan_governorate": "aden",
+
+    // Hudaydah variations
+    "al_hudaydah_governorate": "al hudaydah",
+    "hudaydah": "al hudaydah",
+    "hodeidah": "al hudaydah",
+    "hodeida": "al hudaydah", // From second mapping
+    "hudaidah": "al hudaydah", // From second mapping
+
+    // Taizz variations
+    "ta_izz_governorate": "taizz",
+    "taiz": "taizz",
+    "taʿizz": "taizz", // From second mapping
+
+    // Shabwah variations
+    "shabwah_governorate": "shabwah",
+    "shabwa": "shabwah",
+
+    // Hadramaut variations
+    "hadhramaut": "hadramaut",
+    "hadramout": "hadramaut",
+    "hadramawt": "hadramaut", // From second mapping
+
+    // Bayda variations
+    "al_bayda__governorate": "al bayda",
+    "bayda": "al bayda",
+    "al bayda'": "al bayda", // From second mapping
+
+    // Al Dhale'e variations
+    "ad_dali__governorate": "al dhale'e",
+    "dhale": "al dhale'e",
+    "daleh": "al dhale'e",
+    "ad dali": "al dhale'e", // From second mapping
+    "ad-dali": "al dhale'e",
+
+    // Al Jawf variations
+    "al_jawf_governorate": "al jawf",
+    "jawf": "al jawf",
+
+    // Al Mahrah variations
+    "al_mahrah_governorate": "al mahrah",
+    "mahrah": "al mahrah",
+    "al mahra": "al mahrah", // From second mapping
+
+    // Marib variations
+    "ma'rib_governorate": "marib",
+    "maarib": "marib",
+    "mareb": "marib", // From second mapping
+
+    // Other governorates
+    "abyan_governorate": "abyan",
+    "abbyan_governorate": "abyan", // Potential typo handled
+    "ibb_governorate": "ibb",
+    "al_mahwit_governorate": "al mahwit",
+    "mahwit": "al mahwit",
+    "hajjah_governorate": "hajjah",
+    "dhamar_governorate": "dhamar",
+    "_amran_governorate": "amran",
+    "raymah_governorate": "raymah",
+
+    // Fix for Taizz variations
+    "taizz": "ta'izz",
+    "taiz": "ta'izz",
+    "taʿizz": "ta'izz",
+
+    // Fix for Al Dhale'e variations
+    "al dhale'e": "ad dali'",
+    "al dhale": "ad dali'",
+    "dhale": "ad dali'",
+    "ad dali": "ad dali'",
+    
+    // Fix for Sana'a variations
+    "sana'a": "amanat al asimah",
+    "sanaa": "amanat al asimah",
+    "sana": "amanat al asimah",
+
+    // Fix for Amran variations
+    "amran": "'amran",
+    "amran governorate": "'amran",
+
+    // Fix for Marib variations
+    "marib": "ma'rib",
+    "maarib": "ma'rib",
+    "mareb": "ma'rib",
+
+    // Fix for Al Maharah variations
+    "al maharah": "al mahrah",
+    "maharah": "al mahrah",
+    "al mahra": "al mahrah"
+  };
+
+  // Valid region names after normalization
+  validRegionNames = new Set([
+    'abyan', 'aden', 'al bayda', 'al hudaydah', 'al jawf', 
+    'al mahrah', 'al mahwit', 'amanat al asimah', "'amran", 'dhamar', 
+    'hadramaut', 'hajjah', 'ibb', 'lahj', "ma'rib", 'raymah', 'saada', 
+    'shabwah', 'socotra', "ta'izz", 'ad dali'
+  ]);
 
   constructor() {
     this.cache = new Map();
@@ -177,26 +184,28 @@ class SpatialDataHandler {
   // Cache Management
   // ===========================
 
-  cleanupCache() {
+  cleanupCache = () => {
     const now = Date.now();
     for (const [key, value] of this.cache.entries()) {
       if (now - value.timestamp > this.cacheConfig.TTL) {
         this.cache.delete(key);
       }
     }
-  }
+  };
 
-  clearCache() {
+  clearCache = () => {
     this.cache.clear();
     this.geometryCache = null;
     this.regionMappingCache.clear();
-  }
+    this.coordinateCache.clear();
+    this.pointCache = null;
+  };
 
   // ===========================
   // Normalization Methods
   // ===========================
 
-  convertUTMtoLatLng(easting, northing) {
+  convertUTMtoLatLng = (easting, northing) => {
     // Constants for UTM Zone 38N to WGS84 conversion
     const k0 = 0.9996;
     const a = 6378137;
@@ -211,64 +220,64 @@ class SpatialDataHandler {
     const M = y / k0;
     const mu = M / (a * (1 - e * e / 4 - 3 * e * e * e * e / 64));
 
-    const phi1 = mu + (3 * e1sq / 2 - 27 * e1sq * e1sq * e1sq / 32) * Math.sin(2 * mu);
-    const phi2 = phi1 + (21 * e1sq * e1sq / 16 - 55 * e1sq * e1sq * e1sq * e1sq / 32) * Math.sin(4 * mu);
-    const phi = phi2 + (151 * e1sq * e1sq * e1sq / 96) * Math.sin(6 * mu);
+    const phi1 = mu + (3 * e1sq / 2 - 27 * Math.pow(e1sq, 3) / 32) * Math.sin(2 * mu);
+    const phi2 = phi1 + (21 * Math.pow(e1sq, 2) / 16 - 55 * Math.pow(e1sq, 4) / 32) * Math.sin(4 * mu);
+    const phi = phi2 + (151 * Math.pow(e1sq, 3) / 96) * Math.sin(6 * mu);
 
     const N1 = a / Math.sqrt(1 - e * e * Math.sin(phi) * Math.sin(phi));
     const T1 = Math.tan(phi) * Math.tan(phi);
-    const C1 = e * e * Math.cos(phi) * Math.cos(phi) / (1 - e * e);
-    const R1 = a * (1 - e * e) / Math.pow(1 - e * e * Math.sin(phi) * Math.sin(phi), 1.5);
+    const C1 = (e * e * Math.cos(phi) * Math.cos(phi)) / (1 - e * e);
+    const R1 = (a * (1 - e * e)) / Math.pow(1 - e * e * Math.sin(phi) * Math.sin(phi), 1.5);
     const D = x / (N1 * k0);
 
-    const lat = phi - (N1 * Math.tan(phi) / R1) * (D * D / 2 - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * e * e) * D * D * D * D / 24 + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * e * e - 3 * C1 * C1) * D * D * D * D * D * D / 720);
-    const lon = ((zone * 6 - 183) + (D - (1 + 2 * T1 + C1) * D * D * D / 6 + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * e * e + 24 * T1 * T1) * D * D * D * D * D / 120) / Math.cos(phi)) * Math.PI / 180;
+    const lat = phi - (N1 * Math.tan(phi) / R1) * (
+      (D * D) / 2 -
+      (5 + 3 * T1 + 10 * C1 - 4 * Math.pow(C1, 2) - 9 * e * e) * Math.pow(D, 4) / 24 +
+      (61 + 90 * T1 + 298 * C1 + 45 * Math.pow(T1, 2) - 252 * e * e - 3 * Math.pow(C1, 2)) * Math.pow(D, 6) / 720
+    );
+    const lon = ((zone * 6 - 183) + (D - (1 + 2 * T1 + C1) * Math.pow(D, 3) / 6 +
+      (5 - 2 * C1 + 28 * T1 - 3 * Math.pow(C1, 2) + 8 * e * e + 24 * Math.pow(T1, 2)) * Math.pow(D, 5) / 120)
+    ) / Math.cos(phi) * (180 / Math.PI);
 
     return {
-      lat: lat * 180 / Math.PI,
+      lat: lat * (180 / Math.PI),
       lng: lon
     };
-  }
+  };
 
-  normalizeRegionName(name) {
+  normalizeRegionName = (name) => {
     if (!name) return null;
 
-    // Convert to lowercase and clean up
-    const cleaned = name.toLowerCase()
-      .trim()
+    // Keep original name for fallback
+    const originalName = name.toLowerCase().trim();
+
+    // More aggressive normalization if needed
+    const normalized = originalName
       .replace(/\s+/g, ' ')
       .replace(/governorate$/i, '')
       .replace(/province$/i, '')
+      .replace(/[_-]+/g, ' ')
+      .replace(/ʿ/g, "'")
+      .replace(/['']/g, "'")
       .trim();
 
-    // Check direct mapping
-    if (REGION_MAPPINGS[cleaned]) {
-      return REGION_MAPPINGS[cleaned];
-    }
+    // Return original if all else fails
+    return originalName;
+  };
 
-    // Handle Arabic characters and diacritics
-    const normalized = cleaned
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')  // Remove diacritics
-      .replace(/[_-]+/g, ' ')           // Normalize separators
-      .replace(/ʿ/g, "'")               // Normalize special quotes
-      .replace(/['']/g, "'");           // Normalize quotes
-
-    return REGION_MAPPINGS[normalized] || normalized;
-  }
-
-  normalizeCommodityName(commodity) {
+  normalizeCommodityName = (commodity) => {
+    if (!commodity) return '';
     return commodity.toLowerCase()
       .replace(/[()]/g, '') 
       .replace(/\s+/g, '_')
       .trim();
-  }
+  };
 
   // ===========================
   // Validation Methods
   // ===========================
 
-  validateGeoJSON(data) {
+  validateGeoJSON = (data) => {
     if (!data || typeof data !== 'object') return false;
     if (data.type !== 'FeatureCollection') return false;
     if (!Array.isArray(data.features)) return false;
@@ -281,9 +290,9 @@ class SpatialDataHandler {
     }
 
     return true;
-  }
+  };
 
-  validateFlowData(flows) {
+  validateFlowData = (flows) => {
     if (!Array.isArray(flows)) return false;
     
     const validations = flows.map(flow => {
@@ -304,27 +313,27 @@ class SpatialDataHandler {
       valid: validations.every(v => v.valid),
       details: validations
     };
-  }
-  
-  validateMarket(market) {
+  };
+
+  validateMarket = (market) => {
     const normalized = this.normalizeRegionName(market);
     return (
       normalized &&
       !this.excludedRegions.has(normalized) &&
       this.coordinateCache.has(normalized)
     );
-  }
-  
-  validateFlowMetrics(flow) {
+  };
+
+  validateFlowMetrics = (flow) => {
     return (
       typeof flow.flow_weight === 'number' &&
       flow.flow_weight >= 0 &&
       typeof flow.flow_count === 'number' &&
       flow.flow_count > 0
     );
-  }
+  };
 
-  validatePreprocessedData(data) {
+  validatePreprocessedData = (data) => {
     if (!data || typeof data !== 'object') return false;
     
     const required = [
@@ -368,9 +377,9 @@ class SpatialDataHandler {
     }
   
     return true;
-  }
+  };
 
-  validateRegressionData(data) {
+  validateRegressionData = (data) => {
     if (!data?.model || !data?.spatial || !data?.residuals) {
       console.warn('Missing required regression data sections');
       return false;
@@ -421,21 +430,26 @@ class SpatialDataHandler {
     }
   
     return true;
-  }
+  };
 
-  validateMarketClusters(clusters) {
+  validateMarketClusters = (clusters) => {
     return clusters.every(cluster => (
       cluster.main_market && 
       Array.isArray(cluster.connected_markets) &&
       this.validateMarketConnections(cluster)
     ));
-  }
+  };
+
+  validateMarketConnections = (cluster) => {
+    // Implement specific validation logic if needed
+    return true;
+  };
 
   // ===========================
   // Data Initialization
   // ===========================
 
-  async initializeGeometry() {
+  initializeGeometry = async () => {
     if (this.geometryCache) return this.geometryCache;
 
     try {
@@ -456,6 +470,11 @@ class SpatialDataHandler {
 
         const normalizedName = this.normalizeRegionName(feature.properties.shapeName);
         
+        if (!normalizedName) {
+          console.warn('Unable to normalize region name:', feature.properties.shapeName);
+          return;
+        }
+
         this.geometryCache.set(normalizedName, {
           type: 'polygon',
           geometry: feature.geometry,
@@ -477,73 +496,80 @@ class SpatialDataHandler {
       console.error('Failed to initialize geometry:', error);
       throw error;
     }
-  }
+  };
 
-// In spatialHandler.js
-async initializePoints() {
-  if (this.pointCache) return this.pointCache;
+  initializePoints = async () => {
+    if (this.pointCache) return this.pointCache;
 
-  try {
-    const response = await fetch(getDataPath('unified_data.geojson'));
-    if (!response.ok) {
-      throw new Error(`Failed to load points: ${response.status}`);
-    }
+    try {
+      const response = await fetch(getDataPath('unified_data.geojson'));
+      if (!response.ok) {
+        throw new Error(`Failed to load points: ${response.status}`);
+      }
 
-    const pointData = await response.json();
-    this.pointCache = new Map();
+      const pointData = await response.json();
+      this.pointCache = new Map();
 
-    // Process data in chunks to avoid blocking the main thread
-    const chunkSize = 1000;
-    const features = pointData.features || [];
-    const chunks = [];
+      // Process data in chunks to avoid blocking the main thread
+      const chunkSize = 1000;
+      const features = pointData.features || [];
+      const chunks = [];
 
-    for (let i = 0; i < features.length; i += chunkSize) {
-      chunks.push(features.slice(i, i + chunkSize));
-    }
+      for (let i = 0; i < features.length; i += chunkSize) {
+        chunks.push(features.slice(i, i + chunkSize));
+      }
 
-    const commodities = new Set();
+      const commodities = new Set();
 
-    for (const chunk of chunks) {
-      const { processedFeatures } = await workerManager.processGeoData({
-        features: chunk
-      });
-
-      processedFeatures.forEach(feature => {
-        if (feature?.properties?.commodity) {
-          commodities.add(feature.properties.commodity);
-        }
-
-        if (!feature?.properties?.admin1) return;
-
-        const normalizedName = this.normalizeRegionName(feature.properties.admin1);
-        const utmCoords = feature.geometry.coordinates;
-        const latLng = this.convertUTMtoLatLng(utmCoords[0], utmCoords[1]);
-
-        this.pointCache.set(normalizedName, {
-          type: 'point',
-          coordinates: [latLng.lng, latLng.lat],
-          properties: {
-            originalName: feature.properties.admin1,
-            normalizedName,
-            population: feature.properties.population,
-            population_percentage: feature.properties.population_percentage
-          }
+      for (const chunk of chunks) {
+        const { processedFeatures } = await workerManager.processGeoData({
+          features: chunk
         });
 
-        this.coordinateCache.set(normalizedName, latLng);
-      });
+        processedFeatures.forEach(feature => {
+          if (feature?.properties?.commodity) {
+            commodities.add(feature.properties.commodity);
+          }
+
+          if (!feature?.properties?.admin1) {
+            console.warn('Missing admin1 in feature:', feature);
+            return;
+          }
+
+          const normalizedName = this.normalizeRegionName(feature.properties.admin1);
+          if (!normalizedName) {
+            console.warn('Unable to normalize admin1:', feature.properties.admin1);
+            return;
+          }
+
+          const utmCoords = feature.geometry.coordinates;
+          const latLng = this.convertUTMtoLatLng(utmCoords[0], utmCoords[1]);
+
+          this.pointCache.set(normalizedName, {
+            type: 'point',
+            coordinates: [latLng.lng, latLng.lat],
+            properties: {
+              originalName: feature.properties.admin1,
+              normalizedName,
+              population: feature.properties.population,
+              population_percentage: feature.properties.population_percentage
+            }
+          });
+
+          this.coordinateCache.set(normalizedName, latLng);
+        });
+      }
+
+      this.availableCommodities = [...commodities].sort();
+      return this.pointCache;
+
+    } catch (error) {
+      console.error('Failed to initialize points:', error);
+      throw error;
     }
+  };
 
-    this.availableCommodities = [...commodities].sort();
-    return this.pointCache;
-
-  } catch (error) {
-    console.error('Failed to initialize points:', error);
-    throw error;
-  }
-}
-
-  async initializeCoordinates() {
+  initializeCoordinates = async () => {
     if (this.coordinateCache.size > 0) return;
     
     try {
@@ -566,13 +592,13 @@ async initializePoints() {
       console.error('[SpatialHandler] Failed to initialize coordinates:', error);
       throw error;
     }
-  }
+  };
 
   // ===========================
   // Centroid Calculation
   // ===========================
 
-  calculateCentroid(coordinates) {
+  calculateCentroid = (coordinates) => {
     try {
       if (!Array.isArray(coordinates)) {
         console.warn('[SpatialHandler] Invalid coordinates format');
@@ -583,13 +609,13 @@ async initializePoints() {
       if (Array.isArray(coordinates[0][0][0])) {
         const allPoints = coordinates.flat(2);
         const centroid = this.calculateCentroidFromPoints(allPoints);
-        return convertUTMtoLatLng(centroid.x, centroid.y);
+        return this.convertUTMtoLatLng(centroid.x, centroid.y);
       }
       
       // Polygon handling
       if (Array.isArray(coordinates[0][0])) {
         const centroid = this.calculateCentroidFromPoints(coordinates[0]);
-        return convertUTMtoLatLng(centroid.x, centroid.y);
+        return this.convertUTMtoLatLng(centroid.x, centroid.y);
       }
 
       return null;
@@ -597,9 +623,9 @@ async initializePoints() {
       console.error('[SpatialHandler] Centroid calculation failed:', error);
       return null;
     }
-  }
+  };
 
-  calculateCentroidFromPoints(points) {
+  calculateCentroidFromPoints = (points) => {
     if (!Array.isArray(points) || points.length === 0) return null;
 
     let sumX = 0;
@@ -620,13 +646,13 @@ async initializePoints() {
       x: sumX / count,
       y: sumY / count
     };
-  }
+  };
 
   // ===========================
   // Data Loading Methods
   // ===========================
 
-  async loadPreprocessedData(commodity) {
+  loadPreprocessedData = async (commodity) => {
     try {
       const normalizedCommodity = this.normalizeCommodityName(commodity);
       const filePath = `/data/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedCommodity}.json`;
@@ -656,9 +682,9 @@ async initializePoints() {
       console.error('Preprocessed data load failed:', error);
       throw error;
     }
-  }
+  };
 
-  async loadFlowDataWithRecovery(commodity) {
+  loadFlowDataWithRecovery = async (commodity) => {
     try {
       const data = await this.loadFlowData(commodity);
       return data;
@@ -674,22 +700,25 @@ async initializePoints() {
         return [];
       }
     }
-  }
+  };
 
-  async loadFlowData(commodity) {
+  loadFlowData = async (commodity) => {
     try {
       // Get preprocessed data path
-      const preprocessedPath = this.getPreprocessedDataPath(commodity);
+      const preprocessedPath = getPrecomputedDataPath(commodity);
       
       // Use the cache if available
       const cacheKey = `flow_${commodity}`;
       const cachedData = this.cache.get(cacheKey);
       if (cachedData) {
-        return cachedData;
+        return cachedData.data;
       }
 
-      const response = await window.fs.readFile(preprocessedPath, { encoding: 'utf8' });
-      const data = JSON.parse(this.sanitizeJsonText(response));
+      const response = await fetch(preprocessedPath);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
 
       if (!data.flow_analysis) {
         throw new Error('Flow analysis data not found in preprocessed file');
@@ -710,166 +739,129 @@ async initializePoints() {
       console.error('[SpatialHandler] Failed to load flow data:', error);
       throw error;
     }
-  }
+  };
 
-async loadRegressionAnalysis(selectedCommodity) {
-  if (!selectedCommodity) {
-    console.warn('No commodity selected for regression analysis');
-    return DEFAULT_REGRESSION_DATA;
-  }
-
-  const metric = backgroundMonitor.startMetric('regression-data-fetch');
-  
-  try {
-    // Get the cache key
-    const cacheKey = `regression_${selectedCommodity}`;
-    const cached = this.cache.get(cacheKey);
-    
-    if (cached?.data) {
-      console.debug('Using cached regression data for:', selectedCommodity);
-      return cached.data;
+  loadBackupFlowData = async (commodity) => {
+    try {
+      // Define backup data path or logic here
+      const backupPath = `/data/backup_flow_data_${this.normalizeCommodityName(commodity)}.json`;
+      const response = await fetch(backupPath);
+      if (!response.ok) {
+        throw new Error(`Backup HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return this.processFlowAnalysis(data.flow_analysis);
+    } catch (error) {
+      console.error('[SpatialHandler] Failed to load backup flow data:', error);
+      throw error;
     }
+  };
 
-    // Get the regression data path
-    const analysisPath = getRegressionDataPath();
-    console.debug('Loading regression data from:', analysisPath);
-
-    // Fetch the data
-    const response = await fetch(analysisPath);
-    if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status}`);
+  loadRegressionAnalysis = async (selectedCommodity) => {
+    if (!selectedCommodity) {
+      console.warn('No commodity selected for regression analysis');
       return DEFAULT_REGRESSION_DATA;
     }
 
-    const text = await response.text();
+    const metric = backgroundMonitor.startMetric('regression-data-fetch');
     
-    // Sanitize and parse the JSON text
-    const sanitizedText = this.sanitizeJsonText(text);
-    let parsedData;
     try {
-      parsedData = JSON.parse(sanitizedText);
-      if (!Array.isArray(parsedData)) {
-        console.error('Invalid data format: expected array');
+      // Get the cache key
+      const cacheKey = `regression_${selectedCommodity}`;
+      const cached = this.cache.get(cacheKey);
+      
+      if (cached?.data) {
+        console.debug('Using cached regression data for:', selectedCommodity);
+        return cached.data;
+      }
+
+      // Get the regression data path
+      const analysisPath = getRegressionDataPath();
+      console.debug('Loading regression data from:', analysisPath);
+
+      // Fetch the data
+      const response = await fetch(analysisPath);
+      if (!response.ok) {
+        console.error(`HTTP error! status: ${response.status}`);
         return DEFAULT_REGRESSION_DATA;
       }
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      return DEFAULT_REGRESSION_DATA;
-    }
 
-    // Normalize commodity name for comparison
-    const normalizedSearchCommodity = this.normalizeCommodityName(selectedCommodity);
-    console.debug('Normalized commodity name:', normalizedSearchCommodity);
-
-    // Find matching commodity data
-    const commodityAnalysis = parsedData.find(item => {
-      const normalizedItemCommodity = this.normalizeCommodityName(item.commodity);
-      return normalizedItemCommodity === normalizedSearchCommodity;
-    });
-
-    if (!commodityAnalysis) {
-      console.warn(`No regression analysis found for commodity: ${selectedCommodity}`);
-      return DEFAULT_REGRESSION_DATA;
-    }
-
-    // Transform the data to match our expected format
-    const processedAnalysis = {
-      model: {
-        coefficients: commodityAnalysis.coefficients || {},
-        intercept: this.sanitizeNumericValue(commodityAnalysis.intercept),
-        p_values: commodityAnalysis.p_values || {},
-        r_squared: this.sanitizeNumericValue(commodityAnalysis.r_squared),
-        adj_r_squared: this.sanitizeNumericValue(commodityAnalysis.adj_r_squared),
-        mse: this.sanitizeNumericValue(commodityAnalysis.mse),
-        observations: commodityAnalysis.observations || 0
-      },
-      spatial: {
-        moran_i: commodityAnalysis.moran_i || { I: 0, 'p-value': 1 },
-        vif: Array.isArray(commodityAnalysis.vif) ? commodityAnalysis.vif : []
-      },
-      residuals: this.processResiduals(commodityAnalysis.residual || [])
-    };
-
-    // Validate the processed data
-    if (!this.validateRegressionData(processedAnalysis)) {
-      console.warn('Invalid regression data structure:', processedAnalysis);
-      return DEFAULT_REGRESSION_DATA;
-    }
-
-    // Cache the valid results
-    this.cache.set(cacheKey, {
-      data: processedAnalysis,
-      timestamp: Date.now()
-    });
-
-    metric.finish({ status: 'success' });
-    return processedAnalysis;
-
-  } catch (error) {
-    console.error('Failed to load regression analysis:', error);
-    metric.finish({ status: 'error', error: error.message });
-    return DEFAULT_REGRESSION_DATA;
-  }
-}
-
-  // Helper method for commodity name normalization
-  normalizeCommodityName(commodity) {
-    if (!commodity) return '';
-    return commodity.toLowerCase()
-      .replace(/[()]/g, '')
-      .replace(/\s+/g, '_')
-      .trim();
-  }
-
-  // Helper method for processing residuals
-  processResiduals(residualData) {
-    if (!Array.isArray(residualData)) {
-      return {
-        raw: [],
-        byRegion: {},
-        stats: { mean: 0, variance: 0, maxAbsolute: 0 }
-      };
-    }
-  
-    // Process raw residuals
-    const rawResiduals = residualData.map(r => ({
-      region_id: this.normalizeRegionName(r.region_id), // Normalize region names
-      date: new Date(r.date).toISOString(),
-      residual: this.sanitizeNumericValue(r.residual)
-    })).filter(r => r.residual !== null); // Filter out invalid residuals
-  
-    // Group by normalized region
-    const byRegion = rawResiduals.reduce((acc, curr) => {
-      if (!acc[curr.region_id]) {
-        acc[curr.region_id] = [];
+      const text = await response.text();
+      
+      // Sanitize and parse the JSON text
+      const sanitizedText = this.sanitizeJsonText(text);
+      let parsedData;
+      try {
+        parsedData = JSON.parse(sanitizedText);
+        if (!Array.isArray(parsedData)) {
+          console.error('Invalid data format: expected array');
+          return DEFAULT_REGRESSION_DATA;
+        }
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        return DEFAULT_REGRESSION_DATA;
       }
-      acc[curr.region_id].push(curr);
-      return acc;
-    }, {});
-  
-    // Calculate statistics from valid residuals only
-    const residualValues = rawResiduals.map(r => r.residual).filter(r => r !== null);
-    const stats = {
-      mean: residualValues.length > 0 ? 
-        residualValues.reduce((a, b) => a + b, 0) / residualValues.length : 0,
-      variance: this.calculateVariance(residualValues),
-      maxAbsolute: residualValues.length > 0 ? 
-        Math.max(...residualValues.map(Math.abs)) : 0
-    };
-  
-    return {
-      raw: rawResiduals,
-      byRegion,
-      stats
-    };
-  }
 
+      // Normalize commodity name for comparison
+      const normalizedSearchCommodity = this.normalizeCommodityName(selectedCommodity);
+      console.debug('Normalized commodity name:', normalizedSearchCommodity);
+
+      // Find matching commodity data
+      const commodityAnalysis = parsedData.find(item => {
+        const normalizedItemCommodity = this.normalizeCommodityName(item.commodity);
+        return normalizedItemCommodity === normalizedSearchCommodity;
+      });
+
+      if (!commodityAnalysis) {
+        console.warn(`No regression analysis found for commodity: ${selectedCommodity}`);
+        return DEFAULT_REGRESSION_DATA;
+      }
+
+      // Transform the data to match our expected format
+      const processedAnalysis = {
+        model: {
+          coefficients: commodityAnalysis.coefficients || {},
+          intercept: this.sanitizeNumericValue(commodityAnalysis.intercept),
+          p_values: commodityAnalysis.p_values || {},
+          r_squared: this.sanitizeNumericValue(commodityAnalysis.r_squared),
+          adj_r_squared: this.sanitizeNumericValue(commodityAnalysis.adj_r_squared),
+          mse: this.sanitizeNumericValue(commodityAnalysis.mse),
+          observations: commodityAnalysis.observations || 0
+        },
+        spatial: {
+          moran_i: commodityAnalysis.moran_i || { I: 0, 'p-value': 1 },
+          vif: Array.isArray(commodityAnalysis.vif) ? commodityAnalysis.vif : []
+        },
+        residuals: this.processResiduals(commodityAnalysis.residual || [])
+      };
+
+      // Validate the processed data
+      if (!this.validateRegressionData(processedAnalysis)) {
+        console.warn('Invalid regression data structure:', processedAnalysis);
+        return DEFAULT_REGRESSION_DATA;
+      }
+
+      // Cache the valid results
+      this.cache.set(cacheKey, {
+        data: processedAnalysis,
+        timestamp: Date.now()
+      });
+
+      metric.finish({ status: 'success' });
+      return processedAnalysis;
+
+    } catch (error) {
+      console.error('Failed to load regression analysis:', error);
+      metric.finish({ status: 'error', error: error.message });
+      return DEFAULT_REGRESSION_DATA;
+    }
+  };
 
   // ===========================
   // Data Processing Methods
   // ===========================
 
-  processFlowDataSafely(data) {
+  processFlowDataSafely = (data) => {
     return data.map(row => {
       try {
         return this.processFlowRow(row);
@@ -878,9 +870,9 @@ async loadRegressionAnalysis(selectedCommodity) {
         return null;
       }
     }).filter(Boolean);
-  }
+  };
 
-  processFlowData(data) {
+  processFlowData = (data) => {
     if (!Array.isArray(data)) {
       throw new Error('Invalid flow data structure: expected array');
     }
@@ -900,12 +892,12 @@ async loadRegressionAnalysis(selectedCommodity) {
       return {
         source,
         target,
-        source_lat: sourceCoords?.latitude,
-        source_lng: sourceCoords?.longitude,
-        target_lat: targetCoords?.latitude,
-        target_lng: targetCoords?.longitude,
+        source_lat: sourceCoords?.lat || null,
+        source_lng: sourceCoords?.lng || null,
+        target_lat: targetCoords?.lat || null,
+        target_lng: targetCoords?.lng || null,
         flow_weight: Number(row.flow_weight) || 0,
-        // Keep other fields
+        // Keep other fields as needed
       };
     }).filter(flow => 
       flow.source_lat != null && 
@@ -915,9 +907,9 @@ async loadRegressionAnalysis(selectedCommodity) {
       !this.excludedRegions.has(flow.source) &&
       !this.excludedRegions.has(flow.target)
     );
-  }
+  };
 
-  processFlowRow(row) {
+  processFlowRow = (row) => {
     if (!row || typeof row !== 'object') return null;
 
     const source = this.normalizeRegionName(row.source);
@@ -937,9 +929,9 @@ async loadRegressionAnalysis(selectedCommodity) {
       target_price: Number(row.target_price) || 0,
       flow_weight: Number(row.flow_weight) || 0
     };
-  }
+  };
 
-  processFlowAnalysis(flows) {
+  processFlowAnalysis = (flows) => {
     if (!Array.isArray(flows)) {
       console.warn('[SpatialHandler] Invalid flow data structure');
       return [];
@@ -958,15 +950,71 @@ async loadRegressionAnalysis(selectedCommodity) {
       !this.excludedRegions.has(flow.source) && 
       !this.excludedRegions.has(flow.target)
     );
-  }
+  };
 
   async processTimeSeriesData(data) {
     try {
-      const processed = await workerManager.processTimeSeriesData(
-        data,
-        this.selectedCommodity
-      );
-      return processed;
+      console.debug('Starting timeSeriesData processing:', {
+        featureCount: data.features?.length,
+        firstFeature: data.features?.[0]?.properties
+      });
+  
+      // Group by region and month to avoid duplicates
+      const groupedData = {};
+      
+      data.features.forEach(feature => {
+        const region = this.normalizeRegionName(feature.properties.admin1);
+        const date = new Date(feature.properties.date);
+        const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const key = `${region}_${month}`;
+  
+        if (!groupedData[key]) {
+          groupedData[key] = [];
+        }
+        groupedData[key].push(feature);
+      });
+  
+      // Process each group without averaging values
+      const timeSeriesData = Object.entries(groupedData).flatMap(([key, features]) => {
+        const [region, month] = key.split('_');
+  
+        return features.map(feature => ({
+          region,
+          month,
+          usdPrice: feature.properties.usdprice ?? null,
+          conflictIntensity: feature.properties.conflict_intensity ?? null,
+          additionalProperties: feature.properties // Include other properties if needed
+        }));
+      });
+  
+      // Filter out invalid entries
+      const validData = timeSeriesData.filter(entry => {
+        const isValid = Boolean(
+          entry.region && 
+          entry.usdPrice !== null &&
+          !isNaN(entry.usdPrice)
+        );
+  
+        if (!isValid) {
+          console.warn('Invalid time series entry:', entry);
+        }
+  
+        return isValid;
+      });
+  
+      // Sort by region and month for consistent output
+      const sortedData = _.sortBy(validData, ['region', 'month']);
+  
+      // Log summary
+      console.debug('Time series processing complete:', {
+        inputFeatures: data.features.length,
+        outputEntries: sortedData.length,
+        uniqueRegions: new Set(sortedData.map(d => d.region)).size,
+        uniqueMonths: new Set(sortedData.map(d => d.month)).size,
+        sampleEntries: sortedData.slice(0, 3)
+      });
+  
+      return sortedData;
     } catch (error) {
       console.error('Error processing time series data:', error);
       throw error;
@@ -1517,39 +1565,6 @@ async loadRegressionAnalysis(selectedCommodity) {
   // Data Processing Pipeline
   // ===========================
 
-  async getSpatialData(selectedCommodity, date) {
-    const commodity = selectedCommodity?.toLowerCase().trim() || 'beans (kidney red)';
-    const cacheKey = `${commodity}_${date || 'all'}`;
-    
-    try {
-      // Load preprocessed data 
-      const preprocessed = await this.loadPreprocessedData(commodity);
-      
-      // Validate and process flow data specifically
-      const flowData = preprocessed.flow_analysis ? 
-        this.processFlowAnalysis(preprocessed.flow_analysis) : [];
-
-      const result = {
-        ...preprocessed,
-        flowMaps: flowData,
-        timeSeriesData: preprocessed.time_series_data || [],
-        marketClusters: preprocessed.market_clusters || [],
-        marketShocks: preprocessed.market_shocks || [],
-        spatialAutocorrelation: preprocessed.spatial_autocorrelation || {},
-        geoJSON: preprocessed.geoJSON || await this.getDefaultGeoJSON(), // Add this line
-        metadata: {
-          ...preprocessed.metadata,
-          flowDataUpdated: new Date().toISOString()
-        }
-      };
-
-      return result;
-    } catch (error) {
-      console.error('[SpatialHandler] Failed to get spatial data:', error);
-      throw error;
-    }
-  }
-
   processAllData(geometryData, preprocessed, flows, date) {
     if (!preprocessed?.time_series_data) {
       throw new Error('Missing time series data');
@@ -1774,34 +1789,94 @@ async loadRegressionAnalysis(selectedCommodity) {
     const cacheKey = `${commodity}_${date || 'all'}`;
     
     try {
-      // Load preprocessed data 
+      console.debug('Loading spatial data:', { commodity, date, cacheKey });
+  
+      // Load enhanced unified data
+      const response = await fetch(getDataPath('enhanced_unified_data_with_residual.geojson'));
+      if (!response.ok) {
+        throw new Error(`Failed to load enhanced data: ${response.status}`);
+      }
+      
+      const enhancedData = await response.json();
+    
+      
+      // Filter data for selected commodity
+      const filteredData = {
+        ...enhancedData,
+        features: enhancedData.features.filter(feature => {
+          const featureCommodity = this.normalizeCommodityName(feature.properties.commodity || '');
+          const targetCommodity = this.normalizeCommodityName(commodity);
+          return featureCommodity === targetCommodity;
+        })
+      };
+  
+      // Log filtering stats
+      console.debug('Filtered data stats:', {
+        originalCount: enhancedData.features.length,
+        filteredCount: filteredData.features.length,
+        commodity: this.normalizeCommodityName(commodity)
+      });
+  
+      if (!filteredData.features || filteredData.features.length === 0) {
+        console.warn(`No features found for commodity: ${commodity}`);
+        return {
+          flowMaps: [],
+          timeSeriesData: [],
+          marketClusters: [],
+          marketShocks: [],
+          spatialAutocorrelation: {},
+          metadata: {
+            commodity,
+            date: date || 'all',
+            timestamp: new Date().toISOString()
+          }
+        };
+      }
+  
+      // Process time series data from enhanced data
+      const timeSeriesData = await this.processTimeSeriesData(filteredData);
+      
+      // Log processed time series data summary
+      console.debug('Time series data processed:', {
+        entries: timeSeriesData.length,
+        uniqueRegions: new Set(timeSeriesData.map(d => d.region)).size,
+        uniqueMonths: new Set(timeSeriesData.map(d => d.month)).size,
+        firstEntry: timeSeriesData[0],
+        lastEntry: timeSeriesData[timeSeriesData.length - 1]
+      });
+  
+      // Load preprocessed data for other analyses
       const preprocessed = await this.loadPreprocessedData(commodity);
       
-      // Validate and process flow data specifically
-      const flowData = preprocessed.flow_analysis ? 
-        this.processFlowAnalysis(preprocessed.flow_analysis) : [];
-
       const result = {
-        ...preprocessed,
-        flowMaps: flowData,
-        // Ensure other data remains unchanged
-        timeSeriesData: preprocessed.time_series_data || [],
+        flowMaps: preprocessed.flow_analysis ? 
+          this.processFlowAnalysis(preprocessed.flow_analysis) : [],
+        timeSeriesData, // Use time series data from enhanced data
         marketClusters: preprocessed.market_clusters || [],
         marketShocks: preprocessed.market_shocks || [],
         spatialAutocorrelation: preprocessed.spatial_autocorrelation || {},
         metadata: {
-          ...preprocessed.metadata,
-          flowDataUpdated: new Date().toISOString()
+          commodity,
+          date: date || 'all',
+          timestamp: new Date().toISOString()
         }
       };
-
+  
+      // Final verification of result
+      console.debug('Spatial data result:', {
+        timeSeriesCount: result.timeSeriesData.length,
+        flowMapsCount: result.flowMaps.length,
+        marketClustersCount: result.marketClusters.length,
+        marketShocksCount: result.marketShocks.length
+      });
+  
       return result;
-
     } catch (error) {
       console.error('[SpatialHandler] Failed to get spatial data:', error);
       throw error;
     }
   }
+
 
   async getDefaultGeoJSON() {
     try {
@@ -1852,7 +1927,7 @@ async loadRegressionAnalysis(selectedCommodity) {
           };
         }),
     };
-  }
+}
 
   // ===========================
   // Additional Helper Methods
@@ -1926,4 +2001,9 @@ async loadRegressionAnalysis(selectedCommodity) {
 
 }
 
-export const spatialHandler = new SpatialDataHandler();
+
+// Create singleton instance
+const spatialHandler = new SpatialDataHandler();
+
+// Export the singleton
+export { spatialHandler };
