@@ -30,7 +30,6 @@ const DEFAULT_GEOJSON = {
   }
 };
 
-
 class SpatialDataHandler {
   static _pendingRequests = new Map();
   static _instance = null;
@@ -856,66 +855,93 @@ flow.target &&
 };
 
 async processTimeSeriesData(data) {
-try {
-console.debug('Starting timeSeriesData processing:', {
-  featureCount: data.features?.length,
-  firstFeature: data.features?.[0]?.properties
-});
-
-// Process each feature directly to maintain region_id
-const timeSeriesData = data.features.map(feature => {
-  const date = new Date(feature.properties.date);
-  const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  const region_id = this.normalizeRegionName(feature.properties.region_id || feature.properties.admin1);
-
-  return {
-    region: region_id, // Use region_id as our region
-    month,
-    usdPrice: feature.properties.usdprice ?? null,
-    conflictIntensity: feature.properties.conflict_intensity ?? null,
-    additionalProperties: {
-      ...feature.properties,
-      region: region_id, // Keep it consistent
-      population: feature.properties.population,
-      conflict_intensity: feature.properties.conflict_intensity,
-      commodity: feature.properties.commodity,
-      regime: feature.properties.exchange_rate_regime || 'unified'
+  try {
+    // Validate input data structure
+    if (!data?.features || !Array.isArray(data.features)) {
+      console.error('Invalid data format: Expected "features" array');
+      return [];
     }
-  };
-});
 
-// Filter out invalid entries
-const validData = timeSeriesData.filter(entry => {
-  const isValid = Boolean(
-    entry.region && 
-    entry.usdPrice !== null &&
-    !isNaN(entry.usdPrice)
-  );
+    console.debug('Starting timeSeriesData processing:', {
+      featureCount: data.features.length,
+      firstFeature: data.features?.[0]?.properties,
+    });
 
-  if (!isValid) {
-    console.warn('Invalid time series entry:', entry);
+    // Process each feature
+    const timeSeriesData = data.features.map((feature) => {
+      try {
+        // Validate required properties
+        if (!feature?.properties?.date || !feature?.properties?.region_id) {
+          console.warn('Feature missing required properties:', feature);
+          return null;
+        }
+
+        // Parse date and generate month string
+        const date = new Date(feature.properties.date);
+        if (isNaN(date.getTime())) {
+          console.warn('Invalid date format for feature:', feature);
+          return null;
+        }
+        const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        // Normalize region ID
+        const region_id = this.normalizeRegionName(
+          feature.properties.region_id || feature.properties.admin1
+        );
+
+        // Construct the processed entry
+        return {
+          region: region_id, // Use normalized region ID
+          month,
+          usdPrice: feature.properties.usdprice ?? null,
+          conflictIntensity: feature.properties.conflict_intensity ?? null,
+          additionalProperties: {
+            ...feature.properties,
+            region: region_id, // Keep normalized region ID consistent
+            population: feature.properties.population ?? null,
+            conflict_intensity: feature.properties.conflict_intensity ?? null,
+            commodity: feature.properties.commodity ?? null,
+            regime: feature.properties.exchange_rate_regime || 'unified',
+          },
+        };
+      } catch (featureError) {
+        console.warn('Error processing feature:', feature, featureError);
+        return null; // Skip invalid feature
+      }
+    }).filter(Boolean); // Remove null entries
+
+    // Validate and filter processed data
+    const validData = timeSeriesData.filter((entry) => {
+      const isValid = Boolean(
+        entry.region &&
+        entry.usdPrice !== null &&
+        !isNaN(entry.usdPrice)
+      );
+
+      if (!isValid) {
+        console.warn('Invalid time series entry:', entry);
+      }
+
+      return isValid;
+    });
+
+    // Sort by region and month for consistent output
+    const sortedData = _.sortBy(validData, ['region', 'month']);
+
+    // Log summary
+    console.debug('Time series processing complete:', {
+      inputFeatures: data.features.length,
+      outputEntries: sortedData.length,
+      uniqueRegions: new Set(sortedData.map((d) => d.region)).size,
+      uniqueMonths: new Set(sortedData.map((d) => d.month)).size,
+      sampleEntries: sortedData.slice(0, 3),
+    });
+
+    return sortedData;
+  } catch (error) {
+    console.error('Error processing time series data:', error);
+    throw error;
   }
-
-  return isValid;
-});
-
-// Sort by region and month for consistent output
-const sortedData = _.sortBy(validData, ['region', 'month']);
-
-// Log summary
-console.debug('Time series processing complete:', {
-  inputFeatures: data.features.length,
-  outputEntries: sortedData.length,
-  uniqueRegions: new Set(sortedData.map(d => d.region)).size,
-  uniqueMonths: new Set(sortedData.map(d => d.month)).size,
-  sampleEntries: sortedData.slice(0, 3)
-});
-
-return sortedData;
-} catch (error) {
-console.error('Error processing time series data:', error);
-throw error;
-}
 }
 
 processMarketShocks(shocks) {
@@ -1691,7 +1717,8 @@ async getSpatialData(selectedCommodity, date) {
       console.debug('Loading spatial data:', { commodity, date, cacheKey });
 
       // Load enhanced unified data
-      const response = await fetch(getDataPath('enhanced_unified_data_with_residual.geojson'), {
+      const dataPath = getDataPath('enhanced_unified_data_with_residual.geojson');
+      const response = await fetch(dataPath, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -1708,7 +1735,7 @@ async getSpatialData(selectedCommodity, date) {
       // Filter data for the selected commodity
       const filteredData = {
         ...enhancedData,
-        features: enhancedData.features.filter(feature => {
+        features: enhancedData.features.filter((feature) => {
           const featureCommodity = this.normalizeCommodityName(feature.properties?.commodity || '');
           const targetCommodity = this.normalizeCommodityName(commodity);
           return featureCommodity === targetCommodity;
@@ -1730,6 +1757,7 @@ async getSpatialData(selectedCommodity, date) {
           marketClusters: [],
           marketShocks: [],
           spatialAutocorrelation: {},
+          commodities: [], // Return an empty commodities array
           metadata: {
             commodity,
             date: date || 'all',
@@ -1738,14 +1766,17 @@ async getSpatialData(selectedCommodity, date) {
         };
       }
 
+      // Extract commodities from the data
+      const commodities = this.extractCommodities(enhancedData);
+
       // Process time series data from enhanced data
       const timeSeriesData = await this.processTimeSeriesData(filteredData);
 
       // Log processed time series data summary
       console.debug('Time series data processed:', {
         entries: timeSeriesData.length,
-        uniqueRegions: new Set(timeSeriesData.map(d => d.region)).size,
-        uniqueMonths: new Set(timeSeriesData.map(d => d.month)).size,
+        uniqueRegions: new Set(timeSeriesData.map((d) => d.region)).size,
+        uniqueMonths: new Set(timeSeriesData.map((d) => d.month)).size,
         firstEntry: timeSeriesData[0],
         lastEntry: timeSeriesData[timeSeriesData.length - 1],
       });
@@ -1761,6 +1792,7 @@ async getSpatialData(selectedCommodity, date) {
         marketClusters: preprocessed.market_clusters || [],
         marketShocks: preprocessed.market_shocks || [],
         spatialAutocorrelation: preprocessed.spatial_autocorrelation || {},
+        commodities, // Include the extracted commodities
         metadata: {
           commodity,
           date: date || 'all',
@@ -1782,6 +1814,18 @@ async getSpatialData(selectedCommodity, date) {
       throw error;
     }
   });
+}
+
+extractCommodities(data) {
+  const commoditiesSet = new Set();
+  if (data.features && Array.isArray(data.features)) {
+    data.features.forEach((feature) => {
+      if (feature.properties && feature.properties.commodity) {
+        commoditiesSet.add(feature.properties.commodity.toLowerCase());
+      }
+    });
+  }
+  return Array.from(commoditiesSet);
 }
 
 

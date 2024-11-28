@@ -1,6 +1,5 @@
 // src/slices/spatialSlice.js
 
-import { useMemo } from 'react';
 import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { createSelectorCreator, lruMemoize } from 'reselect';
 import _ from 'lodash';
@@ -79,7 +78,7 @@ export const initialState = {
       clusters: [],
       regressionResults: null
     },
-    commodities: [] // Initialized as an empty array
+    commodities: []
   },
   status: {
     loading: false,
@@ -217,7 +216,8 @@ export const fetchAllSpatialData = createAsyncThunk(
         spatialAutocorrelation: spatialData.spatialAutocorrelation || {},
         seasonalAnalysis: spatialData.seasonalAnalysis || {},
         marketIntegration: spatialData.marketIntegration || {},
-        uniqueMonths: [...new Set(spatialData.timeSeriesData?.map(d => d.month) || [])].sort()
+        uniqueMonths: [...new Set(spatialData.timeSeriesData?.map(d => d.month) || [])].sort(),
+        commodities: spatialData.commodities || [] // Add this line
       };
 
       // Update cache
@@ -377,15 +377,11 @@ export const selectTimeSeriesData = createDeepEqualSelector(
     state => state.spatial?.ui?.selectedRegimes || ['unified'],
     state => state.spatial?.ui?.selectedDate || ''
   ],
-  (timeSeriesData, selectedRegimes, selectedDate) => {
-    return useMemo(() => 
-      timeSeriesData.filter(d => 
-        (!selectedDate || d.month === selectedDate) &&
-        (!selectedRegimes.length || selectedRegimes.includes(d.regime))
-      ),
-      [timeSeriesData, selectedRegimes, selectedDate]
-    );
-  }
+  (timeSeriesData, selectedRegimes, selectedDate) => 
+    timeSeriesData.filter(d => 
+      (!selectedDate || d.month === selectedDate) &&
+      (!selectedRegimes.length || selectedRegimes.includes(d.regime))
+    )
 );
 
 // Market clusters with filtering
@@ -722,28 +718,12 @@ export const selectCommodityInfo = createDeepEqualSelector(
     selectLoadingStatus,
     selectUniqueMonths
   ],
-  (commodities, selectedCommodity, loading, uniqueMonths) => {
-    // Create a stable reference for arrays
-    const stableUnique = useMemo(() => [...uniqueMonths], [uniqueMonths]);
-    const stableCommodities = useMemo(() => [...commodities], [commodities]);
-    
-    return {
-      commodities: stableCommodities,
-      selectedCommodity,
-      loading,
-      uniqueMonths: stableUnique
-    };
-  }
-);
-
-
-
-export const selectVisualizationData = createDeepEqualSelector(
-  [
-    state => state.spatial.data.visualizationData,
-    state => state.spatial.ui.visualizationMode
-  ],
-  (visualizationData, mode) => mode ? visualizationData[mode] : null
+  (commodities, selectedCommodity, loading, uniqueMonths) => ({
+    commodities: [...(commodities || [])],
+    selectedCommodity: selectedCommodity || '',
+    loading: loading || false,
+    uniqueMonths: [...(uniqueMonths || [])]
+  })
 );
 
 // Metrics Cache and Helper
@@ -817,12 +797,6 @@ const spatialSlice = createSlice({
         state.status.dataFetching = true;
       })
       .addCase(fetchAllSpatialData.fulfilled, (state, action) => {
-        if (spatialHandler.availableCommodities?.length) {
-          state.data.commodities = [
-            ...new Set([...(state.data.commodities || []), ...spatialHandler.availableCommodities])
-          ].sort();
-        }
-
         const {
           geometry,
           spatialData,
@@ -833,74 +807,82 @@ const spatialSlice = createSlice({
           cacheTimestamp
         } = action.payload;
         const { regressionOnly, visualizationOnly } = action.meta.arg;
-
-        // Always update regression data if it's available
-        if (regressionData) {
-          state.data.regressionAnalysis = regressionData;
+      
+        // Update commodities from spatialData
+        if (spatialData?.commodities?.length > 0) {
+          state.data.commodities = [...new Set([
+            ...(state.data.commodities || []),
+            ...spatialData.commodities
+          ])].sort();
         }
 
-        if (regressionOnly) {
-          state.status.regressionLoading = false;
-          state.status.dataFetching = false;
-          return;
-        }
+    // Always update regression data if it's available
+    if (regressionData) {
+      state.data.regressionAnalysis = regressionData;
+    }
 
-        if (visualizationOnly) {
-          if (visualizationData) {
-            state.data.visualizationData[visualizationData.mode] = visualizationData.data;
-          }
-          state.status.visualizationLoading = false;
-          state.status.dataFetching = false;
-          return;
-        }
+    if (regressionOnly) {
+      state.status.regressionLoading = false;
+      state.status.dataFetching = false;
+      return;
+    }
 
-        if (geometry) {
-          state.data.geometry = geometry;
-        }
+    if (visualizationOnly) {
+      if (visualizationData) {
+        state.data.visualizationData[visualizationData.mode] = visualizationData.data;
+      }
+      state.status.visualizationLoading = false;
+      state.status.dataFetching = false;
+      return;
+    }
 
-        if (spatialData) {
-          state.data = {
-            ...state.data,
-            timeSeriesData: spatialData.timeSeriesData || [],
-            flowMaps: spatialData.flowMaps || [],
-            marketClusters: spatialData.marketClusters || [],
-            marketShocks: spatialData.marketShocks || [],
-            spatialAutocorrelation: spatialData.spatialAutocorrelation || {
-              global: {},
-              local: {}
-            },
-            seasonalAnalysis: spatialData.seasonalAnalysis || {},
-            marketIntegration: spatialData.marketIntegration || {},
-            uniqueMonths: spatialData.uniqueMonths || []
-          };
-        }
+    if (geometry) {
+      state.data.geometry = geometry;
+    }
 
-        if (metadata) {
-          state.data.metadata = metadata;
-          state.ui.selectedCommodity = metadata.commodity;
-          state.ui.selectedDate = metadata.date;
-        }
+    if (spatialData) {
+      state.data = {
+        ...state.data,
+        timeSeriesData: spatialData.timeSeriesData || [],
+        flowMaps: spatialData.flowMaps || [],
+        marketClusters: spatialData.marketClusters || [],
+        marketShocks: spatialData.marketShocks || [],
+        spatialAutocorrelation: spatialData.spatialAutocorrelation || {
+          global: {},
+          local: {}
+        },
+        seasonalAnalysis: spatialData.seasonalAnalysis || {},
+        marketIntegration: spatialData.marketIntegration || {},
+        uniqueMonths: spatialData.uniqueMonths || []
+      };
+    }
 
-        if (cacheKey) {
-          state.data.cache[cacheKey] = {
-            geometry: state.data.geometry,
-            spatialData: {
-              timeSeriesData: state.data.timeSeriesData,
-              flowMaps: state.data.flowMaps,
-              marketClusters: state.data.marketClusters,
-              marketShocks: state.data.marketShocks,
-              spatialAutocorrelation: state.data.spatialAutocorrelation,
-              seasonalAnalysis: state.data.seasonalAnalysis,
-              marketIntegration: state.data.marketIntegration,
-              uniqueMonths: state.data.uniqueMonths
-            },
-            regressionData,
-            visualizationData,
-            metadata,
-            cacheTimestamp
-          };
-          state.status.lastUpdated = cacheTimestamp;
-        }
+    if (metadata) {
+      state.data.metadata = metadata;
+      state.ui.selectedCommodity = metadata.commodity;
+      state.ui.selectedDate = metadata.date;
+    }
+
+    if (cacheKey) {
+      state.data.cache[cacheKey] = {
+        geometry: state.data.geometry,
+        spatialData: {
+          timeSeriesData: state.data.timeSeriesData,
+          flowMaps: state.data.flowMaps,
+          marketClusters: state.data.marketClusters,
+          marketShocks: state.data.marketShocks,
+          spatialAutocorrelation: state.data.spatialAutocorrelation,
+          seasonalAnalysis: state.data.seasonalAnalysis,
+          marketIntegration: state.data.marketIntegration,
+          uniqueMonths: state.data.uniqueMonths
+        },
+        regressionData,
+        visualizationData,
+        metadata,
+        cacheTimestamp
+      };
+      state.status.lastUpdated = cacheTimestamp;
+    }
 
         state.status = {
           ...state.status,

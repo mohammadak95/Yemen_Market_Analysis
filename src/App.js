@@ -31,11 +31,11 @@ import {
   darkThemeWithOverrides,
 } from './styles/theme';
 import { 
-  fetchAllSpatialData, 
-  fetchFlowData,
+  fetchAllSpatialData,
   selectSpatialData,
   selectLoadingStatus,
-  selectError 
+  selectError,
+  selectCommodityInfo
 } from './slices/spatialSlice';
 
 const DRAWER_WIDTH = 240;
@@ -55,22 +55,50 @@ const StyledAppBar = styled(AppBar, {
   },
 }));
 
-const App = () => {
+const useAppState = () => {
   const dispatch = useDispatch();
-  const { spatialData, loading, fetchData } = useDashboardData(DEFAULT_DATE);
-  const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
+  const { data, loading } = useDashboardData();
   const error = useSelector(selectError);
   const hasSeenWelcome = useSelector(selectHasSeenWelcome);
+  const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
+  const { commodities } = useSelector(selectCommodityInfo);
 
-  const theme = useMemo(
-    () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
+  // Theme setup
+  const theme = useMemo(() => 
+    isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides,
     [isDarkMode]
   );
 
+  return {
+    dispatch,
+    data,
+    loading,
+    error,
+    hasSeenWelcome,
+    isDarkMode,
+    commodities,
+    theme
+  };
+};
+
+const App = () => {
+  // Initialize hook-based state
+  const {
+    dispatch,
+    data,
+    loading,
+    error,
+    hasSeenWelcome,
+    isDarkMode,
+    commodities,
+    theme
+  } = useAppState();
+
+  // Media query hooks
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
 
-  // Individual state variables
+  // Local state initialization
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedDate, setSelectedDate] = useState(DEFAULT_DATE);
@@ -85,80 +113,51 @@ const App = () => {
     tutorials: false,
   });
 
+  // Initial data loading
   useEffect(() => {
-    if (!spatialData?.commodities?.length && !loading) {
-      fetchData('', DEFAULT_DATE);
+    if (!commodities.length && !loading) {
+      dispatch(fetchAllSpatialData({ 
+        commodity: '', 
+        date: DEFAULT_DATE 
+      }));
     }
-  }, [fetchData, spatialData, loading]);
+  }, [dispatch, commodities.length, loading]);
 
+  // Default commodity selection
   useEffect(() => {
-    if (spatialData?.commodities?.length && !selectedCommodity) {
-      const defaultCommodity = spatialData.commodities[0]?.toLowerCase();
+    if (commodities.length && !selectedCommodity) {
+      const defaultCommodity = commodities[0]?.toLowerCase();
       if (defaultCommodity) {
         setSelectedCommodity(defaultCommodity);
-        fetchData(defaultCommodity, DEFAULT_DATE);
+        dispatch(fetchAllSpatialData({
+          commodity: defaultCommodity,
+          date: DEFAULT_DATE
+        }));
       }
     }
-  }, [spatialData, selectedCommodity, fetchData]);
+  }, [commodities, selectedCommodity, dispatch]);
 
+  // Callback handlers
   const handleCommodityChange = useCallback((newCommodity) => {
     if (newCommodity && newCommodity !== selectedCommodity) {
       setSelectedCommodity(newCommodity);
-
-      Promise.all([
-        dispatch(fetchAllSpatialData({
-          commodity: newCommodity,
-          date: selectedDate || DEFAULT_DATE
-        })),
-        dispatch({
-          type: 'analysis/refreshData',
-          payload: { commodity: newCommodity }
-        })
-      ]).catch(error => {
-        console.error('Error updating commodity data:', error);
-      });
+      dispatch(fetchAllSpatialData({
+        commodity: newCommodity,
+        date: selectedDate || DEFAULT_DATE
+      }));
     }
   }, [dispatch, selectedCommodity, selectedDate]);
-
-  const fetchDataOnce = useCallback(async () => {
-    if (!spatialData?.commodities) {
-      try {
-        console.log('Fetching initial data...');
-        await dispatch(fetchAllSpatialData({ 
-          commodity: '', 
-          date: DEFAULT_DATE 
-        }));
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      }
-    }
-  }, [dispatch, spatialData]);
-
-  useEffect(() => {
-    fetchDataOnce();
-  }, [fetchDataOnce]);
-
-  useEffect(() => {
-    if (spatialData?.commodities?.length) {
-      const availableCommodities = spatialData.commodities.map(c => c.toLowerCase());
-      if (availableCommodities.length && !selectedCommodity) {
-        setSelectedCommodity(availableCommodities[0]);
-      }
-    }
-  }, [spatialData]);
 
   const handleToggleDarkMode = useCallback(() => {
     dispatch(toggleDarkMode());
   }, [dispatch]);
 
   const handleDrawerToggle = useCallback(() => {
-    setSidebarOpen((prev) => !prev);
+    setSidebarOpen(prev => !prev);
   }, []);
 
   const handleModalToggle = useCallback((modalName, isOpen) => {
-    if (modalName === 'welcome') {
-      return;
-    }
+    if (modalName === 'welcome') return;
     setModalStates(prev => ({ ...prev, [modalName]: isOpen }));
   }, []);
 
@@ -202,8 +201,8 @@ const App = () => {
           </StyledAppBar>
 
           <Sidebar
-            commodities={spatialData?.commodities?.map(c => c.toLowerCase()) || []}
-            regimes={spatialData?.regimes || ['unified', 'north', 'south']}
+            commodities={commodities.map(c => c.toLowerCase())}
+            regimes={data?.regimes || ['unified', 'north', 'south']}
             selectedCommodity={selectedCommodity.toLowerCase()}
             setSelectedCommodity={handleCommodityChange}
             selectedDate={selectedDate}
@@ -232,7 +231,7 @@ const App = () => {
           >
             <Toolbar />
             <Dashboard
-              spatialData={spatialData}
+              spatialData={data}
               selectedCommodity={selectedCommodity}
               selectedDate={selectedDate}
               selectedRegimes={selectedGraphRegimes}

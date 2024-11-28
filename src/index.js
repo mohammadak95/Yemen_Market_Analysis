@@ -1,9 +1,6 @@
-// src/index.js
-
-import React from 'react';
-import { configureStore } from '@reduxjs/toolkit';
+import React, { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Provider } from 'react-redux';
+import { Provider, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
 import store from './store/configureStore';
 import App from './App';
@@ -11,20 +8,25 @@ import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 import { setupReduxDebugger } from './utils/debugUtils';
 import { backgroundMonitor } from './utils/backgroundMonitor';
 import { spatialHandler } from './utils/spatialDataHandler';
-import { fetchSpatialData } from './slices/spatialSlice';
+import { fetchAllSpatialData } from './slices/spatialSlice';
 import './utils/leafletSetup';
 import 'leaflet/dist/leaflet.css';
 import './styles/leaflet-overrides.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { useSelector } from 'react-redux';
 
-// DataLoader component with prop types
+const DEFAULT_DATE = '2020-10-01';
+const DEFAULT_COMMODITY = 'beans (kidney red)';
+
+// Data Loader Component
 const DataLoader = React.memo(({ selectedCommodity, selectedDate }) => {
   const [hasLoaded, setHasLoaded] = React.useState(false);
+  const dispatch = useDispatch();
 
   React.useEffect(() => {
-    if (!selectedCommodity || hasLoaded) return;
+    if (!selectedCommodity || hasLoaded) {
+      return;
+    }
 
     let metric;
     try {
@@ -42,7 +44,7 @@ const DataLoader = React.memo(({ selectedCommodity, selectedDate }) => {
       }
     };
 
-    store.dispatch(fetchSpatialData({ 
+    dispatch(fetchAllSpatialData({ 
       commodity: selectedCommodity, 
       date: selectedDate 
     }))
@@ -64,7 +66,7 @@ const DataLoader = React.memo(({ selectedCommodity, selectedDate }) => {
         date: selectedDate,
       });
     });
-  }, [selectedCommodity, selectedDate, hasLoaded]);
+  }, [selectedCommodity, selectedDate, hasLoaded, dispatch]);
 
   return null;
 });
@@ -76,15 +78,18 @@ DataLoader.propTypes = {
 
 DataLoader.displayName = 'DataLoader';
 
-// AppWithProviders component with proper initialization
+// App Wrapper Component
 const AppWithProviders = React.memo(() => {
-  const selectedCommodity = React.useMemo(() => 'beans (kidney red)', []);
-  const selectedDate = React.useMemo(() => '2020-10-01', []);
+  const selectedCommodity = useMemo(() => DEFAULT_COMMODITY, []);
+  const selectedDate = useMemo(() => DEFAULT_DATE, []);
 
   return (
     <Provider store={store}>
       <ReduxDebugWrapper>
-        <DataLoader selectedCommodity={selectedCommodity} selectedDate={selectedDate} />
+        <DataLoader 
+          selectedCommodity={selectedCommodity} 
+          selectedDate={selectedDate} 
+        />
         <App />
       </ReduxDebugWrapper>
     </Provider>
@@ -96,14 +101,13 @@ AppWithProviders.displayName = 'AppWithProviders';
 // Initialize the application
 const initializeApp = async () => {
   try {
+    const startTime = performance.now();
+
     // Initialize services in development
     if (process.env.NODE_ENV === 'development') {
-      backgroundMonitor.init(); // Using init instead of initialize
+      await backgroundMonitor.init();
       setupReduxDebugger(store);
 
-      const startTime = performance.now();
-
-      // Log initial metrics
       backgroundMonitor.logMetric('app-init', {
         timestamp: Date.now(),
         environment: process.env.NODE_ENV,
@@ -123,13 +127,12 @@ const initializeApp = async () => {
           timestamp: Date.now(),
           metrics: {
             loadTime,
-            cacheInitialized: spatialHandler.geometryCache !== null,
+            cacheInitialized: Boolean(spatialHandler.geometryCache),
             reduxStoreSize: JSON.stringify(store.getState()).length,
           },
         });
       });
 
-      // Log debug information
       console.debug(`
         🚀 Yemen Market Analysis Dashboard
         ================================
