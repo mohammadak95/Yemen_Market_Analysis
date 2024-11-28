@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import chroma from 'chroma-js';
+import { transformRegionName } from '../../utils/spatialUtils';
 
 const LISAMap = React.memo(({ localMorans, geometry }) => {
   // Generate dynamic color scale using chroma.js
@@ -36,7 +37,7 @@ const LISAMap = React.memo(({ localMorans, geometry }) => {
 
   const { styleFunction, legendItems, statistics } = useMemo(() => {
     const getStyle = (feature) => {
-      const regionId = feature.properties.normalizedName;
+      const regionId = feature.properties.region_id;
       const result = localMorans[regionId];
 
       if (!result) {
@@ -101,7 +102,8 @@ const LISAMap = React.memo(({ localMorans, geometry }) => {
         label: 'Not Significant',
         color: clusterColors['not-significant'],
         description: 'No significant spatial autocorrelation',
-        count: Object.keys(localMorans).length - stats.significant,
+        count:
+          Object.keys(localMorans).length - (stats.significant || 0),
       },
     ];
 
@@ -114,7 +116,7 @@ const LISAMap = React.memo(({ localMorans, geometry }) => {
 
   const onEachFeature = useCallback(
     (feature, layer) => {
-      const regionId = feature.properties.normalizedName;
+      const regionId = feature.properties.region_id;
       const result = localMorans[regionId];
 
       if (result) {
@@ -128,7 +130,7 @@ const LISAMap = React.memo(({ localMorans, geometry }) => {
             <strong>Local Moran's I:</strong> ${result.local_i.toFixed(
               3
             )}<br/>
-            <strong>p-value:</strong> ${result.p_value.toFixed(3)}<br/>
+            <strong>p-value:</strong> ${result.p_value?.toFixed(3) || 'N/A'}<br/>
             ${
               result.p_value < 0.05
                 ? '<strong style="color: #2196f3;">Statistically Significant</strong>'

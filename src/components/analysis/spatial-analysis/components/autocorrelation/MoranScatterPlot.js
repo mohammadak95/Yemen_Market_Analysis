@@ -61,8 +61,8 @@ const MoranScatterPlot = React.memo(() => {
     // Create weights matrix
     const weights = createWeightsMatrix(updatedGeoJSON);
 
-    // Calculate standardized values
-    const prices = timeSeriesData.map(d => d.avgUsdPrice);
+    // Calculate standardized prices
+    const prices = timeSeriesData.map(d => d.usdPrice);
     const meanPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
     const stdPrice = Math.sqrt(
       prices.reduce((sum, p) => sum + Math.pow(p - meanPrice, 2), 0) / prices.length
@@ -84,9 +84,9 @@ const MoranScatterPlot = React.memo(() => {
       y: standardizedLags[i],
       // Use 'normalizedName' to match the keys in moranResults.local
       cluster: moranResults.local[d.normalizedName]?.cluster_type || 'not-significant',
-      price: d.avgUsdPrice,
+      price: d.usdPrice,
       spatialLag: spatialLags[i],
-      significance: moranResults.local[d.normalizedName]?.p_value < 0.05,
+      significance: moranResults.local[d.normalizedName]?.['p-value'] < 0.05,
     }));
   }, [timeSeriesData, moranResults, geometryData]);
 
@@ -134,7 +134,7 @@ const MoranScatterPlot = React.memo(() => {
 
   const renderQuadrantLabels = useCallback(() => {
     if (!scatterData.length) return null;
-    
+
     return (
       <>
         <text
@@ -201,69 +201,61 @@ const MoranScatterPlot = React.memo(() => {
     );
   }
 
+  const moranI = moranResults.global?.moran_i || 0;
+  const interpretation = interpretMoranScatter(moranI, scatterData);
+
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
         Moran Scatter Plot
       </Typography>
-
-      <Box sx={{ height: 500 }}>
-        <ResponsiveContainer>
-          <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 40 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="x"
-              type="number"
-              name="Standardized Price"
-              domain={['auto', 'auto']}
-              tick={{ fontSize: 12 }}
-            >
-              <Label value="Standardized Price" position="bottom" offset={20} />
-            </XAxis>
-            <YAxis
-              dataKey="y"
-              type="number"
-              name="Spatial Lag"
-              domain={['auto', 'auto']}
-              tick={{ fontSize: 12 }}
-            >
-              <Label value="Spatial Lag" angle={-90} position="left" offset={-20} />
-            </YAxis>
-            <Tooltip content={CustomTooltip} cursor={{ strokeDasharray: '3 3' }} />
-            <ReferenceLine x={0} stroke={theme.palette.divider} />
-            <ReferenceLine y={0} stroke={theme.palette.divider} />
-            {Object.entries(clusterColors).map(([cluster, color]) => (
-              <Scatter
-                key={cluster}
-                name={cluster}
-                data={scatterData.filter(d => d.cluster === cluster)}
-                fill={color}
-                opacity={0.8}
+      <ResponsiveContainer width="100%" height={400}>
+        <ScatterChart
+          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+        >
+          <CartesianGrid />
+          <XAxis 
+            type="number" 
+            dataKey="x" 
+            name="Standardized Price" 
+            label={{ value: 'Standardized Price', position: 'insideBottomRight', offset: -10 }} 
+          />
+          <YAxis 
+            type="number" 
+            dataKey="y" 
+            name="Standardized Spatial Lag" 
+            label={{ value: 'Standardized Spatial Lag', angle: -90, position: 'insideLeft', offset: 10 }} 
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <ReferenceLine x={0} y={0} stroke={theme.palette.text.secondary} />
+          <Scatter 
+            name="Regions" 
+            data={scatterData} 
+            fill="#8884d8" 
+            shape="circle"
+          >
+            {scatterData.map((entry, index) => (
+              <circle
+                key={`circle-${index}`}
+                cx={0}
+                cy={0}
+                r={5}
+                fill={clusterColors[entry.cluster] || '#8884d8'}
+                stroke={entry.significance ? '#000' : 'none'}
+                strokeWidth={entry.significance ? 1 : 0}
               />
             ))}
-            {renderQuadrantLabels()}
-          </ScatterChart>
-        </ResponsiveContainer>
-      </Box>
-
+          </Scatter>
+          {renderQuadrantLabels()}
+        </ScatterChart>
+      </ResponsiveContainer>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle2" gutterBottom>
-          Interpretation
-        </Typography>
-        <Typography variant="body2">
-          Moran's I: {moranResults.global.moran_i.toFixed(3)}
-          {moranResults.global.p_value ? 
-            ` (p-value: ${moranResults.global.p_value.toFixed(3)})` : 
-            ''}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {interpretMoranScatter(moranResults.global.moran_i, scatterData)}
+        <Typography variant="body1">
+          {interpretation}
         </Typography>
       </Box>
     </Paper>
   );
 });
-
-MoranScatterPlot.displayName = 'MoranScatterPlot';
 
 export default MoranScatterPlot;

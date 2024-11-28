@@ -19,21 +19,21 @@ export const transformRegionName = (name) => {
     "'adan": "aden",
     "ʿadan": "aden",
     // Al Dhalee variations
-    "ad dali' governorate": "al dhalee",
-    "ad dali'": "al dhalee",
-    "ad dali": "al dhalee",
-    "al dhale": "al dhalee",
-    "al dhale'": "al dhalee",
+    "ad dali' governorate": "al dhale'e",
+    "ad dali'": "al dhale'e",
+    "ad dali": "al dhale'e",
+    "al dhale": "al dhale'e",
+    "al dhale'": "al dhale'e",
     // Saada variations
     "sa'dah governorate": "saada",
     "sa'dah": "saada",
     "sadah": "saada",
     "sa'ada": "saada",
     // Mahrah variations
-    "al mahrah governorate": "mahrah",
-    "al mahrah": "mahrah",
-    "al mahra": "mahrah",
-    "mahrah governorate": "mahrah",
+    "al mahrah governorate": "al maharah",
+    "al mahrah": "al maharah",
+    "al mahra": "al maharah",
+    "mahrah governorate": "al maharah",
     // Marib variations
     "ma'rib governorate": "marib",
     "ma'rib": "marib",
@@ -42,10 +42,10 @@ export const transformRegionName = (name) => {
     "socotra governorate": "socotra",
     "soqatra": "socotra",
     // Sanaa variations
-    "sanʿaʾ governorate": "sanaa",
-    "san'a'": "sanaa",
-    "sana'a": "sanaa",
-    "sanaa governorate": "sanaa",
+    "sanʿaʾ governorate": "sana'a",
+    "san'a'": "sana'a",
+    "sana'a": "sana'a",
+    "sanaa governorate": "sana'a",
     // Taiz variations
     "ta'izz": "taizz",
     "ta'izz governorate": "taizz",
@@ -53,14 +53,47 @@ export const transformRegionName = (name) => {
     // Amran variations
     "'amran": "amran",
     "'amran governorate": "amran",
-    "ʿamran": "amran"
+    "ʿamran": "amran",
+    // Al Mahwit variations
+    "al mahwit": "al mahwit",
+    "al mawhit": "al mahwit",
+    // Raymah variations
+    "raymah": "raymah",
+    "raimah": "raymah",
+    // Al Hudaydah variations
+    "al hudaydah": "al hudaydah",
+    "hodeidah": "al hudaydah",
+    "al hodeidah": "al hudaydah",
+    // Other regions
+    "ib": "ibb",
+    "ibb": "ibb",
+    "lahej": "lahj",
+    "lahj": "lahj",
+    "shabwa": "shabwah",
+    "dhamar": "dhamar",
+    "hajjah": "hajjah",
+    "abyan": "abyan",
+    "al bayda'": "al bayda",
+    "al bayda": "al bayda",
+    "al jawf": "al jawf",
+    "al jawaf": "al jawf",
+    "hadramawt": "hadramaut",
+    "hadramaut": "hadramaut",
+    "taiz": "taizz",
+    "taizz": "taizz",
+    "amanat al asimah": "amanat al asimah",
+    "sana'a city": "amanat al asimah",
+    "al dhale'e": "al dhale'e",
+    "al dhale": "al dhale'e",
+    "al dhali'": "al dhale'e",
+    "al mahrah": "al maharah",
   };
 
   // Clean up the name
   const cleaned = name.toLowerCase()
     .trim()
     .replace(/\s+/g, ' ')
-    .replace(/governorate$/i, '')
+    .replace(/ governorate$/i, '')
     .replace(/ʿ/g, "'")  // Normalize special quotes
     .replace(/['']/g, "'") // Normalize quotes
     .trim();
@@ -70,15 +103,9 @@ export const transformRegionName = (name) => {
     return specialCases[cleaned];
   }
 
-  // Check with 'governorate' suffix
-  const withGovernorate = `${cleaned} governorate`;
-  if (specialCases[withGovernorate]) {
-    return specialCases[withGovernorate];
-  }
-
   // Use spatialHandler's normalization as fallback
   const normalized = spatialHandler.normalizeRegionName(name);
-  
+
   if (!normalized) return cleaned;
 
   // Post-process the normalized name

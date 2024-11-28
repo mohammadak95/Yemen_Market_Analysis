@@ -4,48 +4,48 @@ import { createSelector } from 'reselect';
 import _ from 'lodash';
 
 // Base selectors with proper memoization
-const selectSpatialSlice = state => state.spatial || {};
+const selectSpatialSlice = (state) => state.spatial || {};
 
 const selectSpatialState = createSelector(
   [selectSpatialSlice],
-  spatial => spatial
+  (spatial) => spatial
 );
 
 const selectSpatialData = createSelector(
   [selectSpatialState],
-  spatial => spatial.data || {}
+  (spatial) => spatial.data || {}
 );
 
 const selectUiState = createSelector(
   [selectSpatialState],
-  spatial => spatial.ui || {}
+  (spatial) => spatial.ui || {}
 );
 
-const selectStatus = createSelector(
+export const selectStatus = createSelector(
   [selectSpatialState],
-  spatial => spatial.status || {}
+  (spatial) => spatial.status || {}
 );
 
 // Memoized data selectors with proper validation
 export const selectSpatialAutocorrelation = createSelector(
   [selectSpatialData],
-  data => {
+  (data) => {
     try {
       const autocorrelation = data.spatialAutocorrelation || {};
       return {
-        global: autocorrelation.global || { I: 0, 'p-value': 1 },
+        global: autocorrelation.global || { moran_i: 0, p_value: 1 },
         local: autocorrelation.local || {}
       };
     } catch (error) {
       console.error('Error selecting spatial autocorrelation:', error);
-      return { global: { I: 0, 'p-value': 1 }, local: {} };
+      return { global: { moran_i: 0, p_value: 1 }, local: {} };
     }
   }
 );
 
 export const selectTimeSeriesData = createSelector(
   [selectSpatialData],
-  data => {
+  (data) => {
     try {
       return Array.isArray(data.timeSeriesData) ? data.timeSeriesData : [];
     } catch (error) {
@@ -57,7 +57,7 @@ export const selectTimeSeriesData = createSelector(
 
 export const selectGeometryData = createSelector(
   [selectSpatialData],
-  data => {
+  (data) => {
     try {
       const geometry = data.geometry;
       if (!geometry) return null;
@@ -66,7 +66,7 @@ export const selectGeometryData = createSelector(
         points: Array.isArray(geometry.points) ? geometry.points : [],
         polygons: Array.isArray(geometry.polygons) ? geometry.polygons : [],
         unified: geometry.unified || null,
-        type: geometry.type || 'unified'
+        type: geometry.type || 'unified',
       };
     } catch (error) {
       console.error('Error selecting geometry data:', error);
@@ -78,7 +78,7 @@ export const selectGeometryData = createSelector(
 // Unified geometry selector with proper validation
 export const selectUnifiedGeometry = createSelector(
   [selectGeometryData],
-  geometry => {
+  (geometry) => {
     if (!geometry) return null;
     if (geometry.unified) return geometry.unified;
 
@@ -87,18 +87,18 @@ export const selectUnifiedGeometry = createSelector(
 
       if (Array.isArray(geometry.polygons)) {
         features.push(
-          ...geometry.polygons.map(polygon => ({
+          ...geometry.polygons.map((polygon) => ({
             type: 'Feature',
             geometry: {
               type: 'Polygon',
-              coordinates: Array.isArray(polygon.geometry?.coordinates) 
-                ? polygon.geometry.coordinates 
-                : [[]]
+              coordinates: Array.isArray(polygon.geometry?.coordinates)
+                ? polygon.geometry.coordinates
+                : [[]],
             },
             properties: {
               ...polygon.properties,
               id: polygon.properties?.shapeISO,
-              region_id: polygon.properties?.normalizedName,
+              region_id: transformRegionName(polygon.properties?.normalizedName),
               feature_type: 'polygon',
             },
           }))
@@ -107,16 +107,18 @@ export const selectUnifiedGeometry = createSelector(
 
       if (Array.isArray(geometry.points)) {
         features.push(
-          ...geometry.points.map(point => ({
+          ...geometry.points.map((point) => ({
             type: 'Feature',
             geometry: {
               type: 'Point',
-              coordinates: Array.isArray(point.coordinates) ? point.coordinates : [0, 0]
+              coordinates: Array.isArray(point.coordinates)
+                ? point.coordinates
+                : [0, 0],
             },
             properties: {
               ...point.properties,
-              id: point.properties?.normalizedName,
-              region_id: point.properties?.normalizedName,
+              id: transformRegionName(point.properties?.normalizedName),
+              region_id: transformRegionName(point.properties?.normalizedName),
               feature_type: 'point',
             },
           }))
