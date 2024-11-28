@@ -57,16 +57,10 @@ const StyledAppBar = styled(AppBar, {
 
 const App = () => {
   const dispatch = useDispatch();
-  const { 
-    spatialData, 
-    loading, 
-    fetchData, 
-    preloadCommodityData 
-  } = useDashboardData(DEFAULT_DATE);
-  
+  const { spatialData, loading, fetchData } = useDashboardData(DEFAULT_DATE);
   const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
-  const hasSeenWelcome = useSelector(selectHasSeenWelcome);
   const error = useSelector(selectError);
+  const hasSeenWelcome = useSelector(selectHasSeenWelcome);
 
   const theme = useMemo(
     () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
@@ -76,33 +70,7 @@ const App = () => {
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
 
-  const [state, setState] = useState({
-    sidebarOpen: isSmUp,
-    selectedCommodity: '',
-    selectedDate: DEFAULT_DATE,
-    selectedAnalysis: '',
-    selectedGraphRegimes: ['unified'],
-    spatialViewConfig: {
-      center: [15.3694, 44.191],
-      zoom: 6,
-    },
-    modalStates: {
-      methodology: false,
-      tutorials: false
-    }
-  });
-
-  const updateState = useCallback((updates) => {
-    setState(prev => ({ ...prev, ...updates }));
-  }, []);
-
-  useEffect(() => {
-    if (!spatialData?.commodities?.length && !loading) {
-      fetchData('', DEFAULT_DATE);
-    }
-  }, [fetchData, spatialData, loading]);
-
-
+  // Individual state variables
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedDate, setSelectedDate] = useState(DEFAULT_DATE);
@@ -118,43 +86,25 @@ const App = () => {
   });
 
   useEffect(() => {
-    const initializeApp = async () => {
-      if (!spatialData?.commodities?.length && !loading) {
-        try {
-          await dispatch(fetchAllSpatialData({ 
-            commodity: '', 
-            date: DEFAULT_DATE 
-          })).unwrap();
-        } catch (err) {
-          console.error('Failed to initialize data:', err);
-        }
-      }
-
-      const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
-      if (!hasSeenWelcome) {
-        setModalStates((prev) => ({ ...prev, welcome: true }));
-      }
-
-      setSidebarOpen(isSmUp);
-    };
-
-    initializeApp();
-  }, [dispatch, spatialData, loading, isSmUp]);
+    if (!spatialData?.commodities?.length && !loading) {
+      fetchData('', DEFAULT_DATE);
+    }
+  }, [fetchData, spatialData, loading]);
 
   useEffect(() => {
-    if (spatialData?.commodities?.length && !state.selectedCommodity) {
+    if (spatialData?.commodities?.length && !selectedCommodity) {
       const defaultCommodity = spatialData.commodities[0]?.toLowerCase();
       if (defaultCommodity) {
-        updateState({ selectedCommodity: defaultCommodity });
+        setSelectedCommodity(defaultCommodity);
         fetchData(defaultCommodity, DEFAULT_DATE);
       }
     }
-  }, [spatialData, state.selectedCommodity, fetchData, updateState]);
+  }, [spatialData, selectedCommodity, fetchData]);
 
   const handleCommodityChange = useCallback((newCommodity) => {
     if (newCommodity && newCommodity !== selectedCommodity) {
       setSelectedCommodity(newCommodity);
-      
+
       Promise.all([
         dispatch(fetchAllSpatialData({
           commodity: newCommodity,
