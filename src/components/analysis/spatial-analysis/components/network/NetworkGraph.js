@@ -3,7 +3,6 @@
 import React, { useMemo, useCallback, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import ForceGraph2D from 'react-force-graph-2d';
 import {
   Box,
   Paper,
@@ -19,66 +18,35 @@ import {
   Slider,
   Card,
   CardContent,
-  Alert,
-  LinearProgress
+  Alert
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup } from 'react-leaflet';
 import chroma from 'chroma-js';
 import {
   calculateMarketIntegrationScore,
   calculateMarketInfluence,
 } from '../../utils/networkAnalysis';
-import { 
-  selectUnifiedGeometry, 
-  selectMarketFlows, 
-  selectMarketIntegration,
-} from '../../../../../selectors/optimizedSelectors';
 import { useNetworkAnalysis } from '../../hooks/useNetworkAnalysis';
 import { backgroundMonitor } from '../../../../../utils/backgroundMonitor';
-import NetworkGraphLegend from './NetworkGraphLegend';
-
-// Error boundary component for ForceGraph
-class ForceGraphErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    backgroundMonitor.logError('force-graph-render', {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
-    });
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <Alert severity="error" sx={{ m: 2 }}>
-          Error rendering network graph: {this.state.error?.message}
-        </Alert>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 const NetworkGraph = React.memo(() => {
   const theme = useTheme();
   const [analysisMetric, setAnalysisMetric] = useState('market_integration');
   const [flowThreshold, setFlowThreshold] = useState(0.1);
-  const [isLoading, setIsLoading] = useState(false);
-  const fgRef = useRef(null);
+  const mapRef = useRef(null);
 
-  // Redux selectors
-  const geometry = useSelector(selectUnifiedGeometry);
-  const flows = useSelector(selectMarketFlows);
-  const marketIntegration = useSelector(selectMarketIntegration);
+  // Get data from Redux
+  const geometry = useSelector(state => state.spatial.data.geometry);
+  const flows = useSelector(state => state.spatial.data.flowMaps);
+  const marketIntegration = useSelector(state => state.spatial.data.marketIntegration);
+
+  // Calculate valid min and max for the slider
+  const maxFlowValue = useMemo(() => {
+    if (!flows?.length) return 1;
+    const max = Math.max(...flows.map(flow => flow.total_flow || 0));
+    return max > 0 ? max : 1;
+  }, [flows]);
 
   // Use network analysis hook
   const { nodes, links, metrics, error } = useNetworkAnalysis(
@@ -121,11 +89,7 @@ const NetworkGraph = React.memo(() => {
           return theme.palette.grey[300];
       }
     } catch (error) {
-      backgroundMonitor.logError('node-color-calculation', {
-        message: error.message,
-        node,
-        analysisMetric
-      });
+      console.error('Error calculating node color:', error);
       return theme.palette.grey[300];
     }
   }, [analysisMetric, metrics, marketIntegration, colorScales, theme, links]);
@@ -147,76 +111,50 @@ const NetworkGraph = React.memo(() => {
       const networkMetrics = metrics.networkAnalysis?.markets[node.id];
 
       return `
-        <strong>Market:</strong> ${node.name}<br/>
-        <strong>Role:</strong> ${keyMarket ? keyMarket.role : 'Secondary'}<br/>
-        <strong>Integration Score:</strong> ${((integration.integrationScore || 0) * 100).toFixed(1)}%<br/>
-        <strong>Centrality:</strong> ${(metrics.centrality.centrality[node.id] || 0).toFixed(3)}<br/>
-        <strong>Flow Volume Share:</strong> ${((influence.volumeShare || 0) * 100).toFixed(1)}%<br/>
-        <strong>Connections:</strong> ${influence.connections || 0}<br/>
-        ${networkMetrics ? `<strong>Market Power:</strong> ${(networkMetrics.flows.totalVolume || 0).toFixed(2)}` : ''}
+        <div style="padding: 8px;">
+          <div style="font-weight: bold; margin-bottom: 4px;">${node.name}</div>
+          <div>Role: ${keyMarket ? keyMarket.role : 'Secondary'}</div>
+          <div>Integration: ${((integration.integrationScore || 0) * 100).toFixed(1)}%</div>
+          <div>Centrality: ${(metrics.centrality.centrality[node.id] || 0).toFixed(3)}</div>
+          <div>Flow Share: ${((influence.volumeShare || 0) * 100).toFixed(1)}%</div>
+          <div>Connections: ${influence.connections || 0}</div>
+          ${networkMetrics ? `<div>Volume: ${(networkMetrics.flows.totalVolume || 0).toFixed(2)}</div>` : ''}
+        </div>
       `;
     } catch (error) {
-      backgroundMonitor.logError('tooltip-generation', {
-        message: error.message,
-        node
-      });
+      console.error('Error generating tooltip:', error);
       return node.name;
     }
   }, [metrics, marketIntegration, links]);
 
   // Graph zoom handling
-  const handleEngineStop = useCallback((fg) => {
-    if (fg) {
-      fg.zoomToFit(400);
-    }
-  }, []);
-
-  // Handle graph initialization
-  const handleGraphInit = useCallback(() => {
-    setIsLoading(true);
-    const initMetric = backgroundMonitor.startMetric('graph-initialization');
-    
-    try {
-      if (fgRef.current) {
-        fgRef.current.zoomToFit(400);
-      }
-      initMetric.finish({ status: 'success' });
-    } catch (error) {
-      backgroundMonitor.logError('graph-initialization', {
-        message: error.message,
-        stack: error.stack
-      });
-      initMetric.finish({ status: 'failed' });
-    } finally {
-      setIsLoading(false);
+  const handleEngineStop = useCallback(() => {
+    if (fgRef.current) {
+      fgRef.current.zoomToFit(400);
     }
   }, []);
 
   if (error) {
     return (
-      <Paper sx={{ p: 2 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      </Paper>
+      <Alert severity="error" sx={{ m: 2 }}>
+        {error}
+      </Alert>
     );
   }
 
   if (!flows?.length || !geometry) {
     return (
-      <Paper sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+      <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
         <CircularProgress />
-      </Paper>
+      </Box>
     );
   }
 
   if (!nodes.length || !links.length) {
     return (
-      <Paper sx={{ p: 2 }}>
-        <Alert severity="warning">
-          No valid network data available for visualization. Please ensure market locations and flow data are properly configured.
-        </Alert>
-      </Paper>
+      <Alert severity="warning" sx={{ m: 2 }}>
+        No valid network data available for visualization. Please ensure market locations and flow data are properly configured.
+      </Alert>
     );
   }
 
@@ -232,7 +170,6 @@ const NetworkGraph = React.memo(() => {
               </IconButton>
             </Tooltip>
           </Typography>
-          {isLoading && <LinearProgress sx={{ mt: 1 }} />}
         </Grid>
 
         <Grid item xs={12} md={3}>
@@ -259,45 +196,35 @@ const NetworkGraph = React.memo(() => {
             onChange={(e, newValue) => setFlowThreshold(newValue)}
             aria-labelledby="flow-threshold-slider"
             step={0.1}
-            marks
+            marks={[
+              { value: 0, label: '0' },
+              { value: maxFlowValue / 2, label: (maxFlowValue / 2).toFixed(1) },
+              { value: maxFlowValue, label: maxFlowValue.toFixed(1) }
+            ]}
             min={0}
-            max={Math.max(...(flows.map(flow => flow.totalFlow) || [1]))}
+            max={maxFlowValue}
             valueLabelDisplay="auto"
           />
         </Grid>
 
         <Grid item xs={12}>
-          <Box sx={{ display: 'flex', height: 600 }}>
-            <Box sx={{ flex: 1, position: 'relative' }}>
-              <ForceGraphErrorBoundary>
-                <ForceGraph2D
-                  graphData={{ nodes, links }}
-                  nodeColor={getNodeColor}
-                  linkColor={() => theme.palette.grey[400]}
-                  nodeLabel={getNodeTooltip}
-                  linkWidth={getLinkWidth}
-                  nodeRelSize={6}
-                  linkDirectionalParticles={2}
-                  linkDirectionalParticleSpeed={(d) => d.value * 0.0001}
-                  d3VelocityDecay={0.3}
-                  cooldownTicks={100}
-                  onEngineStop={() => handleEngineStop(fgRef.current)}
-                  onEngineStart={handleGraphInit}
-                  enableNodeDrag
-                  enableZoomPanInteraction
-                  ref={fgRef}
-                />
-              </ForceGraphErrorBoundary>
-            </Box>
-
-            <Box sx={{ width: 250, ml: 2 }}>
-              <NetworkGraphLegend
-                metrics={metrics}
-                analysisMetric={analysisMetric}
-                colorScales={colorScales}
-                keyMarkets={metrics.keyMarkets}
-              />
-            </Box>
+          <Box sx={{ height: 600, position: 'relative' }}>
+            <ForceGraph2D
+              ref={fgRef}
+              graphData={{ nodes, links }}
+              nodeColor={getNodeColor}
+              linkColor={() => theme.palette.grey[400]}
+              nodeLabel={getNodeTooltip}
+              linkWidth={getLinkWidth}
+              nodeRelSize={6}
+              linkDirectionalParticles={2}
+              linkDirectionalParticleSpeed={(d) => d.value * 0.0001}
+              d3VelocityDecay={0.3}
+              cooldownTicks={100}
+              onEngineStop={handleEngineStop}
+              enableNodeDrag={true}
+              enableZoomPanInteraction={true}
+            />
           </Box>
         </Grid>
 
