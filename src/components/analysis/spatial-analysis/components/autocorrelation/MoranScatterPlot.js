@@ -10,12 +10,13 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  Legend
+  Legend,
+  Label
 } from 'recharts';
-import { Paper, Typography, Box } from '@mui/material';
+import { Paper, Typography, Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 
-// Consistent color scheme with LISAMap
+// Consistent color scheme
 const CLUSTER_COLORS = {
   'high-high': '#ff0000',
   'low-low': '#0000ff',
@@ -24,30 +25,102 @@ const CLUSTER_COLORS = {
   'not-significant': '#999999'
 };
 
+// Helper functions for calculations
+const calculateMean = (values) => {
+  if (!values || !values.length) return 0;
+  return values.reduce((sum, val) => sum + val, 0) / values.length;
+};
+
+const calculateStandardDeviation = (values, mean) => {
+  if (!values || !values.length) return 1;
+  const squareDiffs = values.map(value => {
+    const diff = value - mean;
+    return diff * diff;
+  });
+  const avgSquareDiff = calculateMean(squareDiffs);
+  return Math.sqrt(avgSquareDiff);
+};
+
+const standardizeValues = (values) => {
+  const mean = calculateMean(values);
+  const std = calculateStandardDeviation(values, mean);
+  return values.map(value => (value - mean) / std);
+};
+
+const CustomTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const point = payload[0].payload;
+  
+  return (
+    <Box sx={{ 
+      bgcolor: 'background.paper', 
+      p: 1.5,
+      border: 1,
+      borderColor: 'grey.300',
+      borderRadius: 1,
+      boxShadow: 1,
+      minWidth: 200
+    }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+        {point.name}
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 0.5 }}>
+        Standardized Price: {point.x.toFixed(3)}
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 0.5 }}>
+        Local Moran's I: {point.y.toFixed(3)}
+      </Typography>
+      <Typography variant="body2" sx={{ 
+        color: point.color,
+        fontWeight: 'bold'
+      }}>
+        Pattern: {point.cluster.replace('-', ' ').toUpperCase()}
+      </Typography>
+    </Box>
+  );
+};
+
 const MoranScatterPlot = ({ data, timeSeriesData }) => {
+  // Debug log to verify input data
+  console.log('MoranScatterPlot received:', { data, timeSeriesData });
+
   const scatterData = useMemo(() => {
-    if (!data?.local || !timeSeriesData?.length) return [];
+    if (!data?.local || !timeSeriesData?.length) {
+      console.warn('Missing required data for scatter plot:', { 
+        hasLocal: Boolean(data?.local), 
+        timeSeriesLength: timeSeriesData?.length 
+      });
+      return [];
+    }
     
     try {
-      const processedData = Object.entries(data.local).map(([region, metrics]) => {
-        // Find the corresponding time series data for this region
-        const regionData = timeSeriesData.find(d => d.region === region);
-        if (!regionData) return null;
+      // Extract prices and standardize them
+      const prices = timeSeriesData.map(d => d.usdPrice).filter(p => !isNaN(p));
+      const standardizedPrices = standardizeValues(prices);
+      const priceMap = new Map(timeSeriesData.map((d, i) => [d.region, standardizedPrices[i]]));
 
-        // Handle missing p-value
-        const hasClusterType = Boolean(metrics.cluster_type);
+      const processedData = Object.entries(data.local).map(([region, metrics]) => {
+        const standardizedPrice = priceMap.get(region);
+        if (typeof standardizedPrice !== 'number') {
+          console.warn(`No valid price data found for region: ${region}`);
+          return null;
+        }
 
         return {
           name: region,
-          x: regionData.standardized_price || 0,
+          x: standardizedPrice,
           y: metrics.local_i || 0,
-          price: regionData.price || 0,
+          price: timeSeriesData.find(d => d.region === region)?.usdPrice || 0,
           localI: metrics.local_i,
           cluster: metrics.cluster_type || 'not-significant',
-          significance: hasClusterType, // Consider significant if it has a cluster type
-          color: CLUSTER_COLORS[metrics.cluster_type || 'not-significant']
+          color: CLUSTER_COLORS[metrics.cluster_type] || CLUSTER_COLORS['not-significant']
         };
       }).filter(Boolean);
+
+      console.log('Processed scatter data:', {
+        points: processedData.length,
+        sample: processedData[0]
+      });
 
       return processedData;
     } catch (error) {
@@ -58,93 +131,76 @@ const MoranScatterPlot = ({ data, timeSeriesData }) => {
 
   if (!scatterData.length) {
     return (
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="body1" color="error">
-          No data available for Moran scatter plot
+      <Alert severity="warning" sx={{ m: 2 }}>
+        <Typography variant="subtitle1">
+          Unable to display Moran scatter plot
         </Typography>
-      </Paper>
+        <Typography variant="body2">
+          No valid data available for visualization
+        </Typography>
+      </Alert>
     );
   }
 
-  // Group data by cluster type for separate scatter plots
+  // Group data by cluster type
   const groupedData = Object.keys(CLUSTER_COLORS).reduce((acc, clusterType) => {
     acc[clusterType] = scatterData.filter(d => d.cluster === clusterType);
     return acc;
   }, {});
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <Box sx={{ width: '100%', height: 500 }}>
       <Typography variant="h6" gutterBottom>
         Moran Scatter Plot
       </Typography>
       
-      <Box sx={{ height: 400 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              type="number"
-              dataKey="x"
-              name="Standardized Price"
-              label={{ value: 'Standardized Price', position: 'bottom' }}
+      <ResponsiveContainer>
+        <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 60 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            type="number"
+            dataKey="x"
+            name="Standardized Price"
+          >
+            <Label
+              value="Standardized Price"
+              position="bottom"
+              offset={40}
             />
-            <YAxis
-              type="number"
-              dataKey="y"
-              name="Local Moran's I"
-              label={{ value: "Local Moran's I", angle: -90, position: 'left' }}
+          </XAxis>
+          <YAxis
+            type="number"
+            dataKey="y"
+            name="Local Moran's I"
+          >
+            <Label
+              value="Local Moran's I"
+              angle={-90}
+              position="left"
+              offset={40}
             />
-            <Tooltip
-              content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                const point = payload[0].payload;
-                return (
-                  <Box sx={{ 
-                    bgcolor: 'background.paper', 
-                    p: 1, 
-                    border: 1,
-                    borderColor: 'grey.300',
-                    borderRadius: 1,
-                    boxShadow: 1
-                  }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                      {point.name}
-                    </Typography>
-                    <Typography variant="body2">
-                      Price: ${point.price.toFixed(2)}
-                    </Typography>
-                    <Typography variant="body2">
-                      Local Moran's I: {point.localI !== null ? point.localI.toFixed(3) : 'N/A'}
-                    </Typography>
-                    <Typography variant="body2" sx={{ 
-                      color: point.color,
-                      fontWeight: 'bold'
-                    }}>
-                      Pattern: {point.cluster.replace('-', ' ').toUpperCase()}
-                    </Typography>
-                  </Box>
-                );
-              }}
-            />
-            <ReferenceLine x={0} stroke="#666" strokeDasharray="3 3" />
-            <ReferenceLine y={0} stroke="#666" strokeDasharray="3 3" />
-            <Legend />
-            
-            {/* Render a separate scatter for each cluster type */}
-            {Object.entries(groupedData).map(([clusterType, clusterData]) => (
-              clusterData.length > 0 && (
-                <Scatter
-                  key={clusterType}
-                  name={clusterType.replace('-', ' ').toUpperCase()}
-                  data={clusterData}
-                  fill={CLUSTER_COLORS[clusterType]}
-                  shape="circle"
-                />
-              )
-            ))}
-          </ScatterChart>
-        </ResponsiveContainer>
-      </Box>
+          </YAxis>
+          
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          
+          <ReferenceLine x={0} stroke="#666" strokeDasharray="3 3" />
+          <ReferenceLine y={0} stroke="#666" strokeDasharray="3 3" />
+          
+          {/* Render a separate scatter for each cluster type */}
+          {Object.entries(groupedData).map(([clusterType, clusterData]) => (
+            clusterData.length > 0 && (
+              <Scatter
+                key={clusterType}
+                name={clusterType.replace('-', ' ').toUpperCase()}
+                data={clusterData}
+                fill={CLUSTER_COLORS[clusterType]}
+                shape="circle"
+              />
+            )
+          ))}
+        </ScatterChart>
+      </ResponsiveContainer>
 
       <Box sx={{ mt: 2 }}>
         <Typography variant="body2" color="text.secondary">
@@ -176,7 +232,7 @@ const MoranScatterPlot = ({ data, timeSeriesData }) => {
           ))}
         </Box>
       </Box>
-    </Paper>
+    </Box>
   );
 };
 
@@ -185,15 +241,14 @@ MoranScatterPlot.propTypes = {
     global: PropTypes.shape({
       moran_i: PropTypes.number,
       p_value: PropTypes.number,
-      z_score: PropTypes.number,
-      significance: PropTypes.bool
+      z_score: PropTypes.number
     }),
     local: PropTypes.object
   }),
   timeSeriesData: PropTypes.arrayOf(PropTypes.shape({
     region: PropTypes.string,
-    price: PropTypes.number,
-    standardized_price: PropTypes.number
+    usdPrice: PropTypes.number,
+    month: PropTypes.string
   }))
 };
 

@@ -1,7 +1,7 @@
 // src/components/analysis/spatial-analysis/components/autocorrelation/SpatialAutocorrelationAnalysis.js
 
 import React, { useMemo } from 'react';
-import { Grid, Paper, Typography, Box, Alert } from '@mui/material';
+import { Grid, Paper, Typography, Box, Alert, Stack } from '@mui/material';
 import PropTypes from 'prop-types';
 import { interpretMoranResults } from '../../utils/spatialAutocorrelationUtils';
 import { LISAMap } from './LISAMap';
@@ -9,13 +9,6 @@ import MoranScatterPlot from './MoranScatterPlot';
 import MetricCard from '../common/MetricCard';
 
 const SpatialAutocorrelationAnalysis = ({ spatialData, geometryData }) => {
-  // Debug log to verify data
-  console.log('SpatialAutocorrelationAnalysis received:', { 
-    spatialData, 
-    geometryData,
-    hasUnified: Boolean(geometryData?.unified)
-  });
-
   // Process and validate spatial autocorrelation data
   const processedData = useMemo(() => {
     if (!spatialData?.spatialAutocorrelation) {
@@ -49,7 +42,7 @@ const SpatialAutocorrelationAnalysis = ({ spatialData, geometryData }) => {
       },
       local,
       stats: patternStats,
-      geometry: geometryData?.unified, // Use the unified geometry
+      geometry: geometryData?.unified,
       timeSeriesData: spatialData.timeSeriesData
     };
   }, [spatialData, geometryData]);
@@ -70,99 +63,116 @@ const SpatialAutocorrelationAnalysis = ({ spatialData, geometryData }) => {
   const { global, stats } = processedData;
   const interpretation = interpretMoranResults(global, stats);
 
-  // Debug log for LISA map data
-  console.log('Preparing LISA map data:', {
-    localMorans: processedData.local,
-    geometry: processedData.geometry,
-    hasFeatures: processedData.geometry?.features?.length > 0
-  });
-
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={12}>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Spatial Price Autocorrelation Analysis
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {interpretation}
-          </Typography>
-        </Paper>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <MetricCard
-          title="Global Moran's I"
-          value={global.moran_i}
-          format="number"
-          description="Measure of overall spatial autocorrelation"
-        />
-        <MetricCard
-          title="High-Price Clusters"
-          value={stats.highHigh}
-          format="integer"
-          description="Number of high-price clusters"
-        />
-        <MetricCard
-          title="Low-Price Clusters"
-          value={stats.lowLow}
-          format="integer"
-          description="Number of low-price clusters"
-        />
-        <MetricCard
-          title="Spatial Pattern Coverage"
-          value={stats.total > 0 ? 
-            ((stats.highHigh + stats.lowLow + stats.highLow + stats.lowHigh) / stats.total) * 100 : 0}
-          format="percentage"
-          description="Percentage of regions showing spatial patterns"
-        />
-      </Grid>
-
-      <Grid item xs={12} md={8}>
-        {processedData.geometry?.features ? (
-          <LISAMap 
-            localMorans={processedData.local}
-            geometry={processedData.geometry}
-          />
-        ) : (
-          <Alert severity="warning" sx={{ m: 2 }}>
-            <Typography variant="subtitle1">
-              Unable to display LISA map
+    <Box sx={{ p: 2 }}>
+      <Grid container spacing={2}>
+        {/* Header Section */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Spatial Price Autocorrelation Analysis
             </Typography>
-            <Typography variant="body2">
-              Geometry data is not properly formatted
+            <Typography variant="body2" color="text.secondary">
+              {interpretation}
             </Typography>
-          </Alert>
-        )}
-      </Grid>
+          </Paper>
+        </Grid>
 
-      <Grid item xs={12}>
-        <MoranScatterPlot 
-          data={spatialData.spatialAutocorrelation}
-          timeSeriesData={spatialData.timeSeriesData}
-        />
-      </Grid>
+        {/* Main Content Section */}
+        <Grid item xs={12} container spacing={2}>
+          {/* Left Column - Metrics */}
+          <Grid item xs={12} md={4}>
+            <Stack spacing={2}>
+              <Paper sx={{ p: 2 }}>
+                <Stack spacing={2}>
+                  <MetricCard
+                    title="Global Moran's I"
+                    value={global.moran_i}
+                    format="number"
+                    description="Measure of overall spatial autocorrelation"
+                    sx={{ height: 'auto' }}
+                  />
+                  <MetricCard
+                    title="High-Price Clusters"
+                    value={stats.highHigh}
+                    format="integer"
+                    description="Number of high-price clusters"
+                    sx={{ height: 'auto' }}
+                  />
+                  <MetricCard
+                    title="Low-Price Clusters"
+                    value={stats.lowLow}
+                    format="integer"
+                    description="Number of low-price clusters"
+                    sx={{ height: 'auto' }}
+                  />
+                  <MetricCard
+                    title="Pattern Coverage"
+                    value={stats.total > 0 ? 
+                      ((stats.highHigh + stats.lowLow + stats.highLow + stats.lowHigh) / stats.total) * 100 : 0}
+                    format="percentage"
+                    description="Regions with spatial patterns"
+                    sx={{ height: 'auto' }}
+                  />
+                </Stack>
+              </Paper>
 
-      <Grid item xs={12}>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Analysis Notes
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            • Global Moran's I ranges from -1 (perfect dispersion) to +1 (perfect clustering)
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            • High-High clusters indicate areas with high prices surrounded by other high-price areas
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            • Low-Low clusters show areas with low prices surrounded by other low-price areas
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            • Outliers (High-Low or Low-High) indicate price disparities between neighboring regions
-          </Typography>
-        </Paper>
+              {/* Analysis Notes */}
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Analysis Notes
+                </Typography>
+                <Stack spacing={1}>
+                  <Typography variant="body2" color="text.secondary">
+                    • Global Moran's I: -1 (dispersion) to +1 (clustering)
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    • High-High: High prices near high prices
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    • Low-Low: Low prices near low prices
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    • Outliers: Price disparities between neighbors
+                  </Typography>
+                </Stack>
+              </Paper>
+            </Stack>
+          </Grid>
+
+          {/* Right Column - Map */}
+          <Grid item xs={12} md={8}>
+            {processedData.geometry?.features ? (
+              <Paper sx={{ p: 2, height: '100%' }}>
+                <LISAMap 
+                  localMorans={processedData.local}
+                  geometry={processedData.geometry}
+                />
+              </Paper>
+            ) : (
+              <Alert severity="warning">
+                <Typography variant="subtitle1">
+                  Unable to display LISA map
+                </Typography>
+                <Typography variant="body2">
+                  Geometry data is not properly formatted
+                </Typography>
+              </Alert>
+            )}
+          </Grid>
+        </Grid>
+
+        {/* Bottom Section - Scatter Plot */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <MoranScatterPlot 
+              data={spatialData.spatialAutocorrelation}
+              timeSeriesData={spatialData.timeSeriesData}
+            />
+          </Paper>
+        </Grid>
       </Grid>
-    </Grid>
+    </Box>
   );
 };
 
