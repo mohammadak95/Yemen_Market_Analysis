@@ -350,37 +350,107 @@ const NetworkGraph = React.memo(() => {
                 About This Visualization
               </Typography>
               <Typography variant="body2" paragraph>
-                This tool visualizes the market network structure in Yemen, showing how different markets are connected through trade flows and their relative importance in the network.
-              </Typography>
-              <Typography variant="subtitle2" gutterBottom>
-                Key Features:
+                The Market Network Graph provides a sophisticated visualization of Yemen's market system,
+                revealing complex trade relationships, market hierarchies, and price transmission patterns.
+                This interactive tool helps identify critical market hubs, assess system resilience, and
+                guide market development strategies.
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={4}>
-                  <Typography variant="body2" paragraph>
-                    <strong>Market Integration:</strong> Shows how well each market is integrated with others. 
-                    Redder colors indicate higher integration levels, meaning the market prices move more closely 
-                    with other markets.
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Visual Elements:
                   </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    <li>Nodes represent individual markets, sized by importance</li>
+                    <li>Lines show trade connections and flow strength</li>
+                    <li>Colors indicate different market characteristics</li>
+                    <li>Interactive tooltips provide detailed metrics</li>
+                  </Box>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <Typography variant="body2" paragraph>
-                    <strong>Market Centrality:</strong> Indicates how important each market is in the network. 
-                    Darker green colors show markets that are more central and influential in the trade network.
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Analysis Metrics:
                   </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    <li>
+                      <strong>Market Integration:</strong> Red intensity shows price co-movement strength
+                    </li>
+                    <li>
+                      <strong>Market Centrality:</strong> Green intensity indicates network importance
+                    </li>
+                    <li>
+                      <strong>Flow Volume:</strong> Blue intensity shows trade volume levels
+                    </li>
+                    <li>
+                      <strong>Network Density:</strong> Overall connectivity measure
+                    </li>
+                  </Box>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <Typography variant="body2" paragraph>
-                    <strong>Flow Volume:</strong> Represents the volume of trade flows. Line thickness shows 
-                    the strength of trade connections, while darker blue colors indicate markets with higher 
-                    total trade volumes.
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Interactive Features:
                   </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    <li>Metric selection for different analyses</li>
+                    <li>Flow threshold adjustment</li>
+                    <li>Detailed market statistics on click</li>
+                    <li>Dynamic network statistics updates</li>
+                  </Box>
                 </Grid>
               </Grid>
-              <Typography variant="body2" paragraph>
-                Use the controls above to switch between different metrics and adjust the flow threshold 
-                to focus on stronger trade connections. Click on any market for detailed statistics.
+              <Typography variant="body2" sx={{ fontWeight: 'bold', mt: 2, mb: 1 }}>
+                Interpretation Guide:
               </Typography>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Market Roles and Characteristics:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, m: 0, mb: 2 }}>
+                  <li>
+                    <strong>Hub Markets:</strong> Large nodes with many connections indicate major
+                    distribution centers crucial for price stability
+                  </li>
+                  <li>
+                    <strong>Bridge Markets:</strong> Markets connecting different regions, critical
+                    for inter-regional trade
+                  </li>
+                  <li>
+                    <strong>Peripheral Markets:</strong> Smaller nodes with fewer connections,
+                    potentially requiring integration support
+                  </li>
+                  <li>
+                    <strong>Isolated Markets:</strong> Disconnected or weakly connected nodes
+                    indicating potential access issues
+                  </li>
+                </Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Network Analysis Applications:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                  <li>
+                    <strong>Market Development:</strong> Identify areas needing improved connectivity
+                    or infrastructure
+                  </li>
+                  <li>
+                    <strong>Risk Assessment:</strong> Evaluate system vulnerability to disruptions
+                    in key markets or trade routes
+                  </li>
+                  <li>
+                    <strong>Integration Planning:</strong> Guide interventions to strengthen weak
+                    market connections
+                  </li>
+                  <li>
+                    <strong>Policy Support:</strong> Inform decisions on market system development
+                    and trade facilitation
+                  </li>
+                </Box>
+                <Typography variant="body2" sx={{ mt: 2 }}>
+                  For optimal analysis, combine different metrics to understand both structural
+                  (centrality) and functional (integration) aspects of the market system. Pay
+                  special attention to markets showing high centrality but low integration, as
+                  these may represent opportunities for targeted interventions.
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>

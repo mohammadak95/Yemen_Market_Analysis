@@ -25,22 +25,14 @@ const YEMEN_COORDINATES = {
   'socotra': [53.87, 12.47]
 };
 
-/**
- * Custom hook for analyzing market clusters and calculating efficiency metrics
- * @param {Array} clusters - Raw cluster data
- * @param {Array} flowMaps - Market flow data
- * @param {Object} geometryData - Geographic data for markets
- * @returns {Object} Processed clusters and metrics
- */
 const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
   return useMemo(() => {
     // Debug input parameters
-    console.log('useClusterAnalysis detailed input:', {
+    console.log('useClusterAnalysis input:', {
       hasClusters: Boolean(clusters?.length),
       clustersCount: clusters?.length,
       hasFlowMaps: Boolean(flowMaps?.length),
-      flowMapsCount: flowMaps?.length,
-      rawClusters: clusters
+      flowMapsCount: flowMaps?.length
     });
 
     // Enhanced initial validation
@@ -64,126 +56,112 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
     try {
       // Process clusters and calculate metrics
       const processedClusters = clusters.map((cluster) => {
-        // Debug cluster processing
-        console.log('Processing cluster:', {
-          clusterId: cluster.cluster_id,
-          marketCount: cluster.market_count,
-          hasConnectedMarkets: Boolean(cluster.connected_markets?.length),
-          connectedMarketsCount: cluster.connected_markets?.length,
-          mainMarket: cluster.main_market,
-          rawCluster: cluster
-        });
-
-        // Get markets from connected_markets array
-        const markets = cluster.connected_markets || [];
-        if (!markets.length) {
-          console.warn('No markets found in cluster:', cluster);
+        if (!cluster?.connected_markets?.length || !cluster.main_market) {
+          console.warn('Invalid cluster structure:', cluster);
           return null;
         }
 
-        // Get coordinates for each market
-        const marketCoords = markets.map(marketId => {
-          const coords = YEMEN_COORDINATES[marketId.toLowerCase()];
-          if (!coords) {
-            console.warn(`No coordinates found for market: ${marketId}`);
-            return null;
-          }
-          return {
-            lon: coords[0], // longitude
-            lat: coords[1]  // latitude
-          };
-        }).filter(Boolean);
+        // Normalize market names and filter invalid ones
+        const markets = cluster.connected_markets
+          .map(market => market.toLowerCase().trim())
+          .filter(market => YEMEN_COORDINATES[market]);
 
-        // Debug market coordinates
-        console.log('Market coordinates found:', {
-          totalMarkets: markets.length,
-          foundCoordinates: marketCoords.length,
-          marketIds: markets,
-          coordinates: marketCoords
-        });
+        if (markets.length === 0) {
+          console.warn('No valid markets found in cluster:', cluster.cluster_id);
+          return null;
+        }
+
+        // Get market coordinates
+        const marketCoords = markets
+          .map(market => ({
+            id: market,
+            coords: YEMEN_COORDINATES[market]
+          }))
+          .filter(Boolean);
 
         if (marketCoords.length === 0) {
-          console.warn('No valid coordinates found for cluster:', cluster.cluster_id);
+          console.warn('No coordinates found for cluster markets:', cluster.cluster_id);
           return null;
         }
 
-        // Calculate average coordinates for cluster center
+        // Calculate cluster center
         const center = marketCoords.reduce(
-          (acc, coord) => ({
-            lat: acc.lat + coord.lat / marketCoords.length,
-            lon: acc.lon + coord.lon / marketCoords.length
+          (acc, { coords }) => ({
+            lat: acc.lat + coords[1] / marketCoords.length,
+            lon: acc.lon + coords[0] / marketCoords.length
           }),
           { lat: 0, lon: 0 }
         );
 
-        // Calculate cluster metrics
-        const clusterFlows = flowMaps.filter(flow =>
-          markets.includes(flow.source) || markets.includes(flow.target)
-        );
+        // Get cluster flows
+        const clusterFlows = flowMaps.filter(flow => {
+          const source = flow.source?.toLowerCase();
+          const target = flow.target?.toLowerCase();
+          return markets.includes(source) && markets.includes(target);
+        });
 
-        const efficiency = calculateClusterEfficiency(clusterFlows, markets);
+        // Calculate metrics
+        const flowMetrics = calculateFlowMetrics(clusterFlows, markets);
         const coverage = markets.length / Object.keys(YEMEN_COORDINATES).length;
+        const efficiency = calculateClusterEfficiency(clusterFlows, markets);
 
+        // Create processed cluster object
         const processedCluster = {
           cluster_id: cluster.cluster_id,
+          main_market: cluster.main_market.toLowerCase(),
           market_count: markets.length,
           markets,
+          center_coordinates: [center.lon, center.lat],
           center_lat: center.lat,
           center_lon: center.lon,
-          main_market: cluster.main_market,
+          bounds: calculateClusterBounds(marketCoords),
           metrics: {
             efficiency,
-            coverage
+            coverage,
+            flow_density: flowMetrics.density,
+            avg_flow: flowMetrics.averageFlow,
+            total_flow: flowMetrics.totalFlow,
+            internal_connectivity: flowMetrics.connectivity
           }
         };
 
-        console.log('Processed cluster:', processedCluster);
+        // Add geographical region references if available
+        if (geometryData?.features) {
+          processedCluster.region_refs = geometryData.features
+            .filter(f => markets.includes(f.properties.region_id?.toLowerCase()))
+            .map(f => f.properties.region_id);
+        }
+
         return processedCluster;
-      }).filter(Boolean); // Remove any null clusters
+      }).filter(Boolean);
 
       // Calculate overall metrics
-      const totalMarkets = new Set(clusters.flatMap(c => c.connected_markets || [])).size;
+      const totalMarkets = new Set(
+        clusters.flatMap(c => c.connected_markets || []).map(m => m.toLowerCase())
+      ).size;
 
-      const averageEfficiency = processedClusters.length > 0 ? 
-        processedClusters.reduce(
-          (acc, cluster) => acc + cluster.metrics.efficiency,
-          0
-        ) / processedClusters.length : 
-        0;
-
-      const totalCoverage = totalMarkets / Object.keys(YEMEN_COORDINATES).length;
-      const networkDensity = calculateNetworkDensity(flowMaps, clusters);
-
-      // Debug final results
-      console.log('Cluster analysis results:', {
-        processedClustersCount: processedClusters.length,
-        totalMarkets,
-        averageEfficiency,
-        totalCoverage,
-        networkDensity,
-        clusterCenters: processedClusters.map(c => ({
-          id: c.cluster_id,
-          lat: c.center_lat,
-          lon: c.center_lon
-        }))
-      });
+      const metrics = {
+        totalClusters: processedClusters.length,
+        averageEfficiency: calculateAverageMetric(processedClusters, 'efficiency'),
+        averageCoverage: calculateAverageMetric(processedClusters, 'coverage'),
+        totalCoverage: totalMarkets / Object.keys(YEMEN_COORDINATES).length,
+        networkDensity: calculateNetworkDensity(flowMaps, clusters),
+        clusterStats: {
+          minSize: Math.min(...processedClusters.map(c => c.market_count)),
+          maxSize: Math.max(...processedClusters.map(c => c.market_count)),
+          avgSize: processedClusters.reduce((acc, c) => acc + c.market_count, 0) / processedClusters.length
+        }
+      };
 
       return {
         clusters: processedClusters,
-        metrics: {
-          averageEfficiency,
-          totalCoverage,
-          networkDensity
-        },
+        metrics,
         error: null,
         isValid: true
       };
+
     } catch (error) {
-      console.error('Error in cluster analysis:', error, {
-        errorStack: error.stack,
-        clusters: clusters?.length,
-        flowMaps: flowMaps?.length
-      });
+      console.error('Error in cluster analysis:', error);
       return {
         clusters: [],
         metrics: {
@@ -191,57 +169,79 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
           totalCoverage: 0,
           networkDensity: 0
         },
-        error: 'Error processing cluster data: ' + error.message,
+        error: error.message,
         isValid: false
       };
     }
   }, [clusters, flowMaps, geometryData]);
 };
 
-/**
- * Calculate efficiency score for a cluster based on flow data
- * @param {Array} flows - Flow data for the cluster
- * @param {Array} markets - Markets in the cluster
- * @returns {number} Efficiency score between 0 and 1
- */
+const calculateFlowMetrics = (flows, markets) => {
+  if (!flows.length || !markets.length) {
+    return {
+      density: 0,
+      averageFlow: 0,
+      totalFlow: 0,
+      connectivity: 0
+    };
+  }
+
+  const totalFlow = flows.reduce((sum, flow) => sum + (flow.total_flow || 0), 0);
+  const maxPossibleConnections = (markets.length * (markets.length - 1)) / 2;
+  const actualConnections = flows.length;
+
+  return {
+    density: maxPossibleConnections > 0 ? actualConnections / maxPossibleConnections : 0,
+    averageFlow: flows.length > 0 ? totalFlow / flows.length : 0,
+    totalFlow,
+    connectivity: actualConnections / Math.max(1, maxPossibleConnections)
+  };
+};
+
 const calculateClusterEfficiency = (flows, markets) => {
   if (!flows.length || !markets.length) return 0;
 
-  // Calculate internal flow strength
-  const internalFlows = flows.filter(
-    flow => markets.includes(flow.source) && markets.includes(flow.target)
-  );
+  const flowMetrics = calculateFlowMetrics(flows, markets);
+  const marketCoverage = markets.length / Object.keys(YEMEN_COORDINATES).length;
 
-  // Calculate efficiency based on flow strength and market connectivity
-  const flowStrength = internalFlows.reduce((acc, flow) => acc + (flow.weight || 1), 0);
-  const maxPossibleConnections = (markets.length * (markets.length - 1)) / 2;
-  const actualConnections = internalFlows.length;
-
-  const connectivityRatio = maxPossibleConnections > 0 
-    ? actualConnections / maxPossibleConnections 
-    : 0;
-
-  // Normalize flow strength by number of markets
-  const normalizedStrength = flowStrength / (markets.length || 1);
-
-  // Combine connectivity and flow strength metrics
-  return Math.min(1, (connectivityRatio * 0.6 + normalizedStrength * 0.4));
+  return Math.min(1, (flowMetrics.connectivity * 0.4 + 
+                     flowMetrics.density * 0.3 + 
+                     marketCoverage * 0.3));
 };
 
-/**
- * Calculate network density across all clusters
- * @param {Array} flows - All flow data
- * @param {Array} clusters - All clusters
- * @returns {number} Network density score between 0 and 1
- */
 const calculateNetworkDensity = (flows, clusters) => {
   if (!flows.length || !clusters.length) return 0;
 
-  const totalMarkets = new Set(clusters.flatMap(c => c.connected_markets || [])).size;
-  const maxPossibleConnections = Math.max(1, (totalMarkets * (totalMarkets - 1)) / 2);
+  const uniqueMarkets = new Set(
+    flows.flatMap(f => [f.source, f.target].map(m => m.toLowerCase()))
+  );
+
+  const totalMarkets = uniqueMarkets.size;
+  const maxPossibleConnections = (totalMarkets * (totalMarkets - 1)) / 2;
   const actualConnections = flows.length;
 
-  return Math.min(1, actualConnections / maxPossibleConnections);
+  return Math.min(1, actualConnections / Math.max(1, maxPossibleConnections));
+};
+
+const calculateClusterBounds = (marketCoords) => {
+  if (!marketCoords.length) return null;
+
+  return marketCoords.reduce((bounds, { coords }) => ({
+    north: Math.max(bounds.north, coords[1]),
+    south: Math.min(bounds.south, coords[1]),
+    east: Math.max(bounds.east, coords[0]),
+    west: Math.min(bounds.west, coords[0])
+  }), {
+    north: -90,
+    south: 90,
+    east: -180,
+    west: 180
+  });
+};
+
+const calculateAverageMetric = (clusters, metricName) => {
+  if (!clusters.length) return 0;
+  return clusters.reduce((sum, cluster) => sum + (cluster.metrics[metricName] || 0), 0) / clusters.length;
 };
 
 export default useClusterAnalysis;

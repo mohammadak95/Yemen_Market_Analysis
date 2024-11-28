@@ -8,14 +8,14 @@ import {
   Box,
   Tooltip,
   IconButton,
-  Alert,
-  CircularProgress
+  Alert
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import chroma from 'chroma-js';
 import MetricCard from '../common/MetricCard';
 import useClusterAnalysis from '../../hooks/useClusterAnalysis';
+import ClusterComparisonTable from './ClusterComparisonTable';
 
 const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
   console.log('ClusterEfficiencyDashboard props:', {
@@ -138,9 +138,13 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
                   {processedClusters.map(cluster => (
                     <CircleMarker
                       key={cluster.cluster_id}
-                      center={[cluster.center_lat, cluster.center_lon]}
-                      radius={Math.sqrt(cluster.market_count) * 3}
-                      fillColor={colorScale(cluster.metrics.efficiency).hex()}
+                      center={[
+                        // Ensure coordinates are in correct format
+                        Number(cluster.center_lat) || 0,
+                        Number(cluster.center_lon) || 0
+                      ]}
+                      radius={Math.sqrt(cluster.market_count || 1) * 3}
+                      fillColor={colorScale(cluster.metrics?.efficiency || 0).hex()}
                       color="#fff"
                       weight={2}
                       opacity={0.8}
@@ -150,11 +154,13 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
                         <div>
                           <strong>Cluster {cluster.cluster_id}</strong>
                           <br />
+                          Main Market: {cluster.main_market}
+                          <br />
                           Markets: {cluster.market_count}
                           <br />
-                          Efficiency: {(cluster.metrics.efficiency * 100).toFixed(1)}%
+                          Efficiency: {((cluster.metrics?.efficiency || 0) * 100).toFixed(1)}%
                           <br />
-                          Coverage: {(cluster.metrics.coverage * 100).toFixed(1)}%
+                          Coverage: {((cluster.metrics?.coverage || 0) * 100).toFixed(1)}%
                         </div>
                       </Tooltip>
                     </CircleMarker>
@@ -189,10 +195,22 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
                     Main Market: {cluster.main_market}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Efficiency: {(cluster.metrics.efficiency * 100).toFixed(1)}%
+                    Efficiency: {(cluster.metrics?.efficiency * 100).toFixed(1)}%
                   </Typography>
                 </Box>
               ))}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Cluster Comparison Table */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" gutterBottom>
+                Cluster Comparison
+              </Typography>
+              <ClusterComparisonTable clusters={processedClusters} />
             </CardContent>
           </Card>
         </Grid>
@@ -204,12 +222,12 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
               <Typography variant="h6" gutterBottom>
                 About This Visualization
               </Typography>
-              <Typography variant="body2">
+              <Typography variant="body2" paragraph>
                 This analysis examines how Yemen's markets organize into functional clusters, revealing patterns 
                 of market integration and efficiency across different regions. It helps identify key market hubs 
                 and assess the effectiveness of market networks.
               </Typography>
-              <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+              <Typography variant="subtitle2" gutterBottom>
                 Key Features:
               </Typography>
               <Grid container spacing={2}>

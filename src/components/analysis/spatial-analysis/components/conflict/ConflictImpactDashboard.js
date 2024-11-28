@@ -1,5 +1,3 @@
-// src/components/analysis/spatial-analysis/components/conflict/ConflictImpactDashboard.js
-
 import React, { useMemo, useState } from 'react';
 import { 
   Paper, Box, Typography, Grid, Card, CardContent, 
@@ -254,6 +252,87 @@ const ConflictImpactDashboard = ({
 
         <Grid item xs={12}>
           <ConflictCorrelationMatrix regionalCorrelations={spatialClusters} />
+        </Grid>
+
+        {/* About This Visualization */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                About This Visualization
+              </Typography>
+              <Typography variant="body2" paragraph>
+                The Conflict Impact Analysis examines the relationship between conflict events and
+                market dynamics in Yemen, helping understand how conflict affects market stability
+                and price movements across different regions.
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Analysis Features:
+                    </Typography>
+                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                      <li>Price-conflict correlation tracking</li>
+                      <li>Regional impact assessment</li>
+                      <li>Temporal relationship analysis</li>
+                      <li>Market vulnerability indicators</li>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Visualization Tools:
+                    </Typography>
+                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                      <li>Time series relationship charts</li>
+                      <li>Regional correlation matrix</li>
+                      <li>Impact intensity mapping</li>
+                      <li>Volatility indicators</li>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Key Metrics:
+                    </Typography>
+                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                      <li>Price-conflict correlation</li>
+                      <li>Market volatility measures</li>
+                      <li>Regional impact scores</li>
+                      <li>Temporal response patterns</li>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', mt: 2, mb: 1 }}>
+                Interpretation Guide:
+              </Typography>
+              <Box>
+                <Typography variant="body2">
+                  The analysis provides multiple views of conflict impact on markets, from immediate
+                  price responses to longer-term market stability effects. The correlation matrix
+                  shows how different regions respond to conflict events.
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, mb: 1 }}>
+                  Key aspects to monitor:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                  <li>Immediate price responses to conflict</li>
+                  <li>Regional variation in impact</li>
+                  <li>Market recovery patterns</li>
+                  <li>Cross-regional effects</li>
+                </Box>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Understanding these patterns helps identify vulnerable markets and develop
+                  targeted interventions to maintain market stability during periods of conflict.
+                  It also aids in developing early warning systems and resilience strategies.
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Paper>

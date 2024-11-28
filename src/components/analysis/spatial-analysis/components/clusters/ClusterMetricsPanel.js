@@ -11,19 +11,27 @@ import {
   Tooltip,
   IconButton,
   Divider,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { useTheme } from '@mui/material/styles';
-import { useSelector } from 'react-redux';
-import { selectClusterMetrics } from '../../../../selectors/clusterSelectors';
+import { EfficiencyRadarChart } from './index';
 
 const MetricProgress = React.memo(({ value, label, description, threshold = { low: 0.4, high: 0.7 } }) => {
+  const theme = useTheme();
+  
   const color = useMemo(() => {
+    if (typeof value !== 'number' || isNaN(value)) return 'warning';
     return value >= threshold.high ? 'success' :
            value >= threshold.low ? 'warning' : 'error';
   }, [value, threshold]);
+
+  const safeValue = typeof value === 'number' && !isNaN(value) ? 
+    Math.min(Math.max(value, 0), 1) : 0;
 
   return (
     <Box sx={{ mb: 2 }}>
@@ -41,53 +49,137 @@ const MetricProgress = React.memo(({ value, label, description, threshold = { lo
         <Box sx={{ flex: 1, mr: 1 }}>
           <LinearProgress
             variant="determinate"
-            value={value * 100}
+            value={safeValue * 100}
             color={color}
-            sx={{ height: 8, borderRadius: 4 }}
+            sx={{ 
+              height: 8, 
+              borderRadius: 4,
+              bgcolor: theme.palette.grey[200]
+            }}
           />
         </Box>
         <Typography variant="body2" color={`${color}.main`}>
-          {(value * 100).toFixed(1)}%
+          {(safeValue * 100).toFixed(1)}%
         </Typography>
       </Box>
     </Box>
   );
 });
 
-const ClusterMetricsPanel = React.memo(() => {
+const ClusterMetricsList = React.memo(({ cluster }) => {
+  if (!cluster?.metrics) return null;
+
+  const metrics = [
+    {
+      key: 'internal_connectivity',
+      label: 'Internal Connectivity',
+      description: 'Measure of market connections within the cluster'
+    },
+    {
+      key: 'coverage',
+      label: 'Market Coverage',
+      description: 'Proportion of total markets in the cluster'
+    },
+    {
+      key: 'price_convergence',
+      label: 'Price Convergence',
+      description: 'Uniformity of prices across cluster markets'
+    },
+    {
+      key: 'flow_density',
+      label: 'Flow Density',
+      description: 'Intensity of trade flows within the cluster'
+    }
+  ];
+
+  return (
+    <List dense>
+      {metrics.map(({ key, label, description }) => (
+        <ListItem key={key} sx={{ px: 0 }}>
+          <ListItemText
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="body2">{label}</Typography>
+                <Tooltip title={description}>
+                  <IconButton size="small" sx={{ ml: 0.5 }}>
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            }
+            secondary={
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+              >
+                {((cluster.metrics[key] || 0) * 100).toFixed(1)}%
+              </Typography>
+            }
+          />
+        </ListItem>
+      ))}
+    </List>
+  );
+});
+
+const MarketList = React.memo(({ markets }) => {
+  if (!markets?.length) return null;
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="subtitle2" gutterBottom>
+        Connected Markets
+      </Typography>
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: 0.5 
+        }}
+      >
+        {markets.map(market => (
+          <Box
+            key={market}
+            sx={{
+              px: 1,
+              py: 0.5,
+              bgcolor: 'action.hover',
+              borderRadius: 1,
+              fontSize: '0.875rem'
+            }}
+          >
+            {market}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+});
+
+const ClusterMetricsPanel = ({ 
+  selectedCluster, 
+  comparisonCluster,
+  overallMetrics
+}) => {
   const theme = useTheme();
-  const metrics = useSelector(selectClusterMetrics);
 
   const aggregateStats = useMemo(() => {
-    if (!metrics?.length) return null;
-    const totalMarkets = metrics.reduce((sum, m) => sum + m.marketCount, 0);
-    const avgEfficiency = metrics.reduce((sum, m) => sum + m.efficiency, 0) / metrics.length;
-    const avgCorrelation = metrics.reduce((sum, m) => sum + m.avgPriceCorrelation, 0) / metrics.length;
-    const avgDispersion = metrics.reduce((sum, m) => sum + m.priceDispersion, 0) / metrics.length;
-    return { totalMarkets, avgEfficiency, avgCorrelation, avgDispersion };
-  }, [metrics]);
+    if (!overallMetrics) return null;
+    
+    return {
+      totalClusters: overallMetrics.totalClusters || 0,
+      avgEfficiency: overallMetrics.averageEfficiency || 0,
+      highPerforming: overallMetrics.clusterStats?.highPerforming || 0,
+      lowPerforming: overallMetrics.clusterStats?.lowPerforming || 0
+    };
+  }, [overallMetrics]);
 
-  const interpretClusterMetrics = useMemo(() => {
-    if (!metrics?.length) return '';
-    const highEfficiency = metrics.filter((m) => m.efficiency >= 0.7).length;
-    const lowEfficiency = metrics.filter((m) => m.efficiency < 0.4).length;
-    const { avgEfficiency, avgDispersion } = aggregateStats;
-
-    if (avgEfficiency >= 0.7) {
-      return `Strong market integration with ${highEfficiency} highly efficient clusters indicates effective price transmission and trade flows. Low price dispersion (${(avgDispersion * 100).toFixed(1)}%) suggests well-functioning markets.`;
-    } else if (avgEfficiency >= 0.4) {
-      return `Moderate market integration with mixed performance across clusters. ${highEfficiency} high-performing and ${lowEfficiency} low-performing clusters suggest regional variations in market efficiency.`;
-    } else {
-      return `Limited market integration with ${lowEfficiency} underperforming clusters indicates significant barriers to trade and price transmission. High price dispersion (${(avgDispersion * 100).toFixed(1)}%) suggests market fragmentation.`;
-    }
-  }, [metrics, aggregateStats]);
-
-  if (!metrics?.length) {
+  if (!selectedCluster) {
     return (
       <Card>
         <CardContent>
           <Typography color="text.secondary">
-            No cluster metrics available
+            Select a cluster to view detailed metrics
           </Typography>
         </CardContent>
       </Card>
@@ -98,135 +190,109 @@ const ClusterMetricsPanel = React.memo(() => {
     <Card>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Cluster Performance Metrics
-          <Tooltip title="Analysis of market cluster efficiency and integration patterns">
-            <IconButton size="small" sx={{ ml: 1 }}>
-              <InfoIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          Cluster Analysis: {selectedCluster.main_market}
+          {selectedCluster.metrics?.efficiency >= 0.7 && (
+            <TrendingUpIcon 
+              sx={{ 
+                ml: 1, 
+                color: theme.palette.success.main, 
+                verticalAlign: 'bottom' 
+              }} 
+            />
+          )}
         </Typography>
 
         {/* Overall Statistics */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={6}>
+          <Grid item xs={6} sm={3}>
             <Typography variant="subtitle2" color="text.secondary">
-              Total Clusters
+              Markets
             </Typography>
             <Typography variant="h4">
-              {metrics.length}
+              {selectedCluster.markets?.length || 0}
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid item xs={6} sm={3}>
             <Typography variant="subtitle2" color="text.secondary">
-              Total Markets
+              Efficiency
             </Typography>
             <Typography variant="h4">
-              {aggregateStats.totalMarkets}
+              {((selectedCluster.metrics?.efficiency || 0) * 100).toFixed(1)}%
+            </Typography>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Flow Strength
+            </Typography>
+            <Typography variant="h4">
+              {((selectedCluster.metrics?.total_flow || 0) / 1000).toFixed(1)}K
+            </Typography>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Price Stability
+            </Typography>
+            <Typography variant="h4">
+              {((1 - (selectedCluster.metrics?.price_volatility || 0)) * 100).toFixed(1)}%
             </Typography>
           </Grid>
         </Grid>
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Network-wide Metrics */}
-        <Typography variant="subtitle2" gutterBottom>
-          Network-wide Performance
+        {/* Efficiency Radar Chart */}
+        <Typography variant="subtitle1" gutterBottom>
+          Efficiency Metrics
         </Typography>
-
-        <MetricProgress
-          value={aggregateStats.avgEfficiency}
-          label="Average Cluster Efficiency"
-          description="Overall efficiency of market clusters in price transmission and trade flows"
-        />
-
-        <MetricProgress
-          value={aggregateStats.avgCorrelation}
-          label="Price Integration"
-          description="Average price correlation between markets within clusters"
-        />
-
-        <MetricProgress
-          value={1 - aggregateStats.avgDispersion}
-          label="Price Stability"
-          description="Inverse of price dispersion across clusters (higher is better)"
+        <EfficiencyRadarChart
+          cluster={selectedCluster}
+          compareCluster={comparisonCluster}
         />
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Individual Cluster Metrics */}
-        <Typography variant="subtitle2" gutterBottom>
-          Individual Cluster Performance
+        {/* Detailed Metrics */}
+        <Typography variant="subtitle1" gutterBottom>
+          Detailed Performance
         </Typography>
+        <ClusterMetricsList cluster={selectedCluster} />
 
-        {metrics
-          .slice()
-          .sort((a, b) => b.efficiency - a.efficiency)
-          .map((metric, index) => (
-            <Box key={index} sx={{ mb: 2 }}>
-              <Typography variant="subtitle2">
-                Cluster {metric.id} ({metric.mainMarket})
-                {metric.efficiency >= 0.7 && (
-                  <TrendingUpIcon
-                    sx={{ ml: 1, color: theme.palette.success.main, fontSize: 16 }}
-                  />
-                )}
-                {metric.efficiency < 0.4 && (
-                  <TrendingDownIcon
-                    sx={{ ml: 1, color: theme.palette.error.main, fontSize: 16 }}
-                  />
-                )}
-              </Typography>
-
-              <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    Markets: {metric.marketCount}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    Efficiency: {(metric.efficiency * 100).toFixed(1)}%
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    Integration: {(metric.avgPriceCorrelation * 100).toFixed(1)}%
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    Dispersion: {(metric.priceDispersion * 100).toFixed(1)}%
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              {metric.conflictImpact !== undefined && (
-                <Box sx={{ mt: 0.5 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Conflict Impact:{' '}
-                    {Math.abs(metric.conflictImpact) > 0.7
-                      ? 'High'
-                      : Math.abs(metric.conflictImpact) > 0.4
-                      ? 'Moderate'
-                      : 'Low'}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          ))}
+        {/* Connected Markets */}
+        <MarketList markets={selectedCluster.markets} />
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Economic Implications */}
-        <Typography variant="subtitle2" gutterBottom>
-          Economic Implications
+        {/* Analysis Summary */}
+        <Typography variant="subtitle1" gutterBottom>
+          Analysis Summary
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {interpretClusterMetrics}
+          {interpretClusterPerformance(selectedCluster, aggregateStats)}
         </Typography>
       </CardContent>
     </Card>
   );
-});
+};
 
-export default ClusterMetricsPanel;
+const interpretClusterPerformance = (cluster, stats) => {
+  if (!cluster?.metrics || !stats) return '';
+
+  const efficiency = cluster.metrics.efficiency;
+  const relativeSize = cluster.markets.length / (stats.totalClusters || 1);
+
+  if (efficiency >= 0.7) {
+    return `This is a high-performing cluster showing strong market integration and efficient price transmission. 
+    With ${cluster.markets.length} connected markets (${(relativeSize * 100).toFixed(1)}% of total), 
+    it demonstrates robust trade flows and price stability.`;
+  } else if (efficiency >= 0.4) {
+    return `This cluster shows moderate performance with some integration challenges. 
+    While maintaining connections between ${cluster.markets.length} markets, there is room for 
+    improving price transmission and trade flow efficiency.`;
+  } else {
+    return `This cluster shows significant integration challenges, indicating potential barriers 
+    to trade or market fragmentation. Targeted interventions may be needed to improve market 
+    connectivity and price transmission efficiency.`;
+  }
+};
+
+export default React.memo(ClusterMetricsPanel);

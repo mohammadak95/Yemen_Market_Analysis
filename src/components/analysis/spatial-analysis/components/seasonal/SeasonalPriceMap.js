@@ -9,7 +9,10 @@ import {
   ToggleButtonGroup, 
   ToggleButton, 
   Typography, 
-  Paper 
+  Paper,
+  Card,
+  CardContent,
+  Grid
 } from '@mui/material';
 import { scaleLinear } from 'd3-scale';
 import SpatialErrorBoundary from '../../SpatialErrorBoundary';
@@ -161,6 +164,85 @@ const SeasonalPriceMap = ({
             <Typography variant="caption">High</Typography>
           </Box>
         </Paper>
+
+        {/* About This Visualization */}
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              About This Visualization
+            </Typography>
+            <Typography variant="body2" paragraph>
+              The Seasonal Price Analysis visualizes how market prices fluctuate throughout the year,
+              revealing seasonal patterns and regional variations in price dynamics. This analysis is
+              crucial for understanding cyclical market behavior and planning interventions.
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Map Features:
+                  </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    <li>Color gradient shows price variations</li>
+                    <li>Monthly selection for temporal analysis</li>
+                    <li>Regional comparison capabilities</li>
+                    <li>Interactive tooltips with details</li>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Analysis Tools:
+                  </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    <li>Monthly trend tracking</li>
+                    <li>Regional pattern identification</li>
+                    <li>Seasonal effect quantification</li>
+                    <li>Cross-regional comparisons</li>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Key Metrics:
+                  </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    <li>Seasonal price variations</li>
+                    <li>Monthly price effects</li>
+                    <li>Regional seasonality patterns</li>
+                    <li>Temporal price trends</li>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+            <Typography variant="body2" sx={{ fontWeight: 'bold', mt: 2, mb: 1 }}>
+              Interpretation Guide:
+            </Typography>
+            <Box>
+              <Typography variant="body2">
+                The color scale indicates the strength and direction of seasonal price effects.
+                Red indicates price increases, blue shows decreases, and white represents neutral effects.
+                These patterns help identify seasonal vulnerabilities and opportunities.
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 1, mb: 1 }}>
+                Key patterns to observe:
+              </Typography>
+              <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                <li>Monthly price variation patterns</li>
+                <li>Regional seasonality differences</li>
+                <li>Peak price periods by region</li>
+                <li>Seasonal market vulnerabilities</li>
+              </Box>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Understanding these seasonal patterns is crucial for market planning, stock management,
+                and timing of interventions. It helps stakeholders anticipate price fluctuations and
+                plan accordingly to maintain market stability.
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
     </SpatialErrorBoundary>
   );

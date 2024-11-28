@@ -1,74 +1,119 @@
-// src/components/analysis/spatial-analysis/components/clusters/ClusterComparisonTable.js
-
 import React from 'react';
-import PropTypes from 'prop-types';
 import { DataGrid } from '@mui/x-data-grid';
 
-const ClusterComparisonTable = ({ clusters }) => {
-  const safeNumberFormat = (value) => {
-    if (value === null || value === undefined) return '';
-    return Number(value).toFixed(2);
-  };
+// Utility function to safely get nested object values
+const safeGet = (obj, path) => {
+  try {
+    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  } catch (e) {
+    return undefined;
+  }
+};
 
-  const safeGet = (obj, path, defaultValue = '') => {
-    try {
-      return path.split('.').reduce((acc, part) => acc?.[part], obj) ?? defaultValue;
-    } catch (e) {
-      return defaultValue;
-    }
-  };
-
+const ClusterComparisonTable = ({ clusters = [] }) => {
   const columns = [
-    { field: 'cluster_id', headerName: 'Cluster ID', width: 100 },
-    { field: 'main_market', headerName: 'Main Market', width: 150 },
+    { 
+      field: 'cluster_id', 
+      headerName: 'Cluster ID', 
+      width: 100,
+      valueGetter: (params) => {
+        if (!params?.row) return 'N/A';
+        return params.row.cluster_id || 'N/A';
+      }
+    },
+    { 
+      field: 'main_market', 
+      headerName: 'Main Market', 
+      width: 150,
+      valueGetter: (params) => {
+        if (!params?.row) return 'Unknown';
+        return params.row.main_market || 'Unknown';
+      }
+    },
     {
       field: 'efficiency_score',
       headerName: 'Efficiency Score',
       width: 150,
-      valueFormatter: (params) => safeNumberFormat(params.value),
+      valueFormatter: (params) => {
+        if (!params?.value && params?.value !== 0) return 'N/A';
+        return `${(params.value * 100).toFixed(1)}%`;
+      },
+      sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
     },
     {
       field: 'internal_connectivity',
-      headerName: 'Connectivity',
-      width: 130,
-      valueFormatter: (params) => safeNumberFormat(params.value),
+      headerName: 'Internal Connectivity',
+      width: 180,
+      valueFormatter: (params) => {
+        if (!params?.value && params?.value !== 0) return 'N/A';
+        return `${(params.value * 100).toFixed(1)}%`;
+      },
+      sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
     },
     {
       field: 'market_coverage',
-      headerName: 'Coverage',
-      width: 130,
-      valueFormatter: (params) => safeNumberFormat(params.value),
+      headerName: 'Market Coverage',
+      width: 150,
+      valueFormatter: (params) => {
+        if (!params?.value && params?.value !== 0) return 'N/A';
+        return `${(params.value * 100).toFixed(1)}%`;
+      },
+      sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
     },
     {
       field: 'price_convergence',
       headerName: 'Price Convergence',
-      width: 150,
-      valueFormatter: (params) => safeNumberFormat(params.value),
+      width: 160,
+      valueFormatter: (params) => {
+        if (!params?.value && params?.value !== 0) return 'N/A';
+        return `${(params.value * 100).toFixed(1)}%`;
+      },
+      sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
     },
     {
       field: 'stability',
       headerName: 'Stability',
-      width: 130,
-      valueFormatter: (params) => safeNumberFormat(params.value),
+      width: 120,
+      valueFormatter: (params) => {
+        if (!params?.value && params?.value !== 0) return 'N/A';
+        return `${(params.value * 100).toFixed(1)}%`;
+      },
+      sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
     },
     {
       field: 'market_count',
-      headerName: 'Number of Markets',
-      width: 150,
-    },
+      headerName: 'Markets',
+      width: 100,
+      type: 'number',
+      valueGetter: (params) => {
+        if (!params?.row) return 0;
+        return params.row.market_count || 0;
+      }
+    }
   ];
 
-  const rows = clusters.map((cluster) => ({
-    id: cluster.cluster_id || Math.random().toString(36).substr(2, 9),
-    cluster_id: cluster.cluster_id || '',
-    main_market: cluster.main_market || '',
-    efficiency_score: safeGet(cluster, 'efficiency_metrics.efficiency_score'),
-    internal_connectivity: safeGet(cluster, 'efficiency_metrics.internal_connectivity'),
-    market_coverage: safeGet(cluster, 'efficiency_metrics.market_coverage'),
-    price_convergence: safeGet(cluster, 'efficiency_metrics.price_convergence'),
-    stability: safeGet(cluster, 'efficiency_metrics.stability'),
-    market_count: cluster.connected_markets?.length || 0,
-  }));
+  const rows = React.useMemo(() => {
+    if (!Array.isArray(clusters)) return [];
+    
+    return clusters.map((cluster) => {
+      if (!cluster) return null;
+      
+      return {
+        id: cluster.cluster_id || Math.random().toString(36).substr(2, 9),
+        cluster_id: cluster.cluster_id,
+        main_market: cluster.main_market,
+        efficiency_score: safeGet(cluster, 'metrics.efficiency'),
+        internal_connectivity: safeGet(cluster, 'metrics.internal_connectivity'),
+        market_coverage: safeGet(cluster, 'metrics.coverage'),
+        price_convergence: safeGet(cluster, 'metrics.price_convergence'),
+        stability: safeGet(cluster, 'metrics.stability'),
+        market_count: Array.isArray(cluster.markets) ? 
+          cluster.markets.length : 
+          Array.isArray(cluster.connected_markets) ? 
+            cluster.connected_markets.length : 0
+      };
+    }).filter(Boolean);
+  }, [clusters]);
 
   return (
     <div style={{ height: 400, width: '100%' }}>
@@ -78,24 +123,22 @@ const ClusterComparisonTable = ({ clusters }) => {
         pageSize={5}
         rowsPerPageOptions={[5, 10, 20]}
         disableSelectionOnClick
+        loading={!clusters?.length}
+        components={{
+          NoRowsOverlay: () => (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              height: '100%' 
+            }}>
+              No cluster data available
+            </div>
+          )
+        }}
       />
     </div>
   );
-};
-
-ClusterComparisonTable.propTypes = {
-  clusters: PropTypes.arrayOf(PropTypes.shape({
-    cluster_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    main_market: PropTypes.string,
-    efficiency_metrics: PropTypes.shape({
-      efficiency_score: PropTypes.number,
-      internal_connectivity: PropTypes.number,
-      market_coverage: PropTypes.number,
-      price_convergence: PropTypes.number,
-      stability: PropTypes.number,
-    }),
-    connected_markets: PropTypes.array,
-  })).isRequired,
 };
 
 export default ClusterComparisonTable;
