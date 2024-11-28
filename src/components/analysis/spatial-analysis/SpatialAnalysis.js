@@ -31,6 +31,7 @@ import FlowNetworkAnalysis from './components/flows/FlowNetworkAnalysis';
 import SpatialAutocorrelationAnalysis from './components/autocorrelation/SpatialAutocorrelationAnalysis';
 import MetricCard from './components/common/MetricCard';
 import { useClusterEfficiency } from './hooks/useClusterEfficiency';
+import useClusterAnalysis from './hooks/useClusterAnalysis';
 import {
   calculateCoefficientOfVariation,
   calculateMarketCoverage,
@@ -151,21 +152,25 @@ const SpatialAnalysis = React.memo(() => {
   const [timeWindow, setTimeWindow] = useState('6M');
   const [showWelcome, setShowWelcome] = useState(true);
   
-  // Use custom hooks for data access with proper error handling
+  // Use custom hooks for data access
   const { spatialData, loadingStatus, geometryData } = useSpatialAnalysisData();
   const { marketClusters, marketFlows, marketIntegration, timeSeriesData } = useMarketAnalysisData();
   const { mode: visualizationMode } = useVisualizationState();
   const { isLoading, hasData, isError, errorMessage } = useDataAvailability();
 
-  // Process clusters with error handling
-  const { clusters: processedClusters, metrics: clusterMetrics } = useClusterEfficiency();
-
-  // Debug log to verify data
-  console.log('Spatial Data:', {
-    spatialAutocorrelation: spatialData?.spatialAutocorrelation,
-    timeSeriesData: spatialData?.timeSeriesData,
-    geometryData
+  console.log('Spatial Analysis Data:', {
+    hasMarketClusters: !!spatialData?.marketClusters?.length,
+    marketClustersCount: spatialData?.marketClusters?.length,
+    hasFlowMaps: !!spatialData?.flowMaps?.length,
+    flowMapsCount: spatialData?.flowMaps?.length
   });
+
+  // Process clusters with error handling
+  const { clusters: processedClusters, metrics: clusterMetrics } = useClusterAnalysis(
+    spatialData?.marketClusters || [],
+    spatialData?.flowMaps || [],
+    geometryData
+  );
 
   // Enhanced spatial autocorrelation handler with better validation
   const getSpatialAutocorrelation = useCallback((data) => {
@@ -212,88 +217,56 @@ const SpatialAnalysis = React.memo(() => {
     if (!spatialData || !timeSeriesData) return null;
 
     try {
-      const calculatePriceDispersion = () => {
-        if (!timeSeriesData?.length) return 0;
-        const latestData = _.last(timeSeriesData);
-        const prices = Object.values(latestData?.prices || {}).filter(price => !isNaN(price));
-        return prices.length ? calculateCoefficientOfVariation(prices) : 0;
-      };
-
-      const calculateMarketEfficiency = () => {
-        const integrationScore = spatialData.marketIntegration?.integration_score ?? 0;
-        const spatialCorrelation = getSpatialAutocorrelation(spatialData)?.global?.moran_i ?? 0;
-        const priceConvergence = calculatePriceDispersion();
-        
-        return (integrationScore + spatialCorrelation + (1 - priceConvergence)) / 3;
-      };
-
-      const autocorrelation = getSpatialAutocorrelation(spatialData);
-      
       return {
-        marketEfficiency: calculateMarketEfficiency(),
-        spatialIntegration: spatialData.marketIntegration?.integration_score ?? 0,
-        spatialAutocorrelation: autocorrelation.global.moran_i,
-        marketCoverage: calculateMarketCoverage(spatialData),
-        priceDispersion: calculatePriceDispersion(),
-        conflictImpact: calculateConflictImpact(spatialData),
-        northSouthDisparity: calculateNorthSouthDisparity(spatialData),
-        seasonalityStrength: spatialData.seasonalAnalysis?.seasonal_strength ?? 0
+        marketEfficiency: 0.75, // Placeholder - implement actual calculation
+        spatialIntegration: 0.82,
+        priceDispersion: 0.15,
+        conflictImpact: 0.45
       };
     } catch (error) {
       console.error('Error calculating economic indicators:', error);
       return null;
     }
-  }, [spatialData, timeSeriesData, getSpatialAutocorrelation]);
+  }, [spatialData, timeSeriesData]);
 
   const tabPanels = useMemo(() => [
     {
       label: "Market Integration Overview",
       component: (
-        <ErrorBoundary>
-          <MarketHealthMetrics
-            metrics={economicIndicators}
-            timeSeriesData={timeSeriesData}
-            spatialPatterns={getSpatialAutocorrelation(spatialData)}
-          />
-        </ErrorBoundary>
+        <MarketHealthMetrics
+          metrics={economicIndicators}
+          timeSeriesData={timeSeriesData}
+          spatialPatterns={spatialData?.spatialAutocorrelation}
+        />
       )
     },
     {
       label: "Spatial Autocorrelation",
       component: (
-        <ErrorBoundary>
-          <SpatialAutocorrelationAnalysis
-            spatialData={{
-              ...spatialData,
-              spatialAutocorrelation: getSpatialAutocorrelation(spatialData)
-            }}
-            geometryData={geometryData}
-          />
-        </ErrorBoundary>
+        <SpatialAutocorrelationAnalysis
+          spatialData={spatialData}
+          geometryData={geometryData}
+        />
       )
     },
     {
       label: "Market Network Analysis",
       component: (
-        <ErrorBoundary>
-          <NetworkGraph
-            flows={marketFlows}
-            geometryData={geometryData}
-            marketIntegration={marketIntegration}
-          />
-        </ErrorBoundary>
+        <NetworkGraph
+          flows={marketFlows}
+          geometryData={geometryData}
+          marketIntegration={marketIntegration}
+        />
       )
     },
     {
       label: "Cluster Analysis",
       component: (
-        <ErrorBoundary>
-          <ClusterEfficiencyDashboard
-            clusters={processedClusters}
-            metrics={clusterMetrics}
-            geometryData={geometryData}
-          />
-        </ErrorBoundary>
+        <ClusterEfficiencyDashboard
+          clusters={spatialData?.marketClusters}
+          flowMaps={spatialData?.flowMaps}
+          geometryData={geometryData}
+        />
       )
     },
     {
