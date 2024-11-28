@@ -1,5 +1,30 @@
 import { useMemo } from 'react';
 
+// Fixed coordinates for Yemen markets (same as used in useNetworkAnalysis)
+const YEMEN_COORDINATES = {
+  'abyan': [45.83, 13.58],
+  'aden': [45.03, 12.77],
+  'al bayda': [45.57, 14.17],
+  'al dhale\'e': [44.73, 13.70],
+  'al hudaydah': [42.95, 14.80],
+  'al jawf': [45.50, 16.60],
+  'al maharah': [51.83, 16.52],
+  'al mahwit': [43.55, 15.47],
+  'amanat al asimah': [44.21, 15.35],
+  'amran': [43.94, 15.66],
+  'dhamar': [44.24, 14.54],
+  'hadramaut': [48.78, 15.93],
+  'hajjah': [43.60, 15.63],
+  'ibb': [44.18, 13.97],
+  'lahj': [44.88, 13.03],
+  'marib': [45.32, 15.47],
+  'raymah': [43.71, 14.68],
+  'sana\'a': [44.21, 15.35],
+  'shabwah': [47.01, 14.53],
+  'taizz': [44.02, 13.58],
+  'socotra': [53.87, 12.47]
+};
+
 /**
  * Custom hook for analyzing market clusters and calculating efficiency metrics
  * @param {Array} clusters - Raw cluster data
@@ -15,9 +40,6 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
       clustersCount: clusters?.length,
       hasFlowMaps: Boolean(flowMaps?.length),
       flowMapsCount: flowMaps?.length,
-      hasGeometryData: Boolean(geometryData),
-      hasPoints: Boolean(geometryData?.points?.length),
-      pointsCount: geometryData?.points?.length,
       rawClusters: clusters
     });
 
@@ -39,27 +61,7 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
       };
     }
 
-    if (!geometryData?.points?.length) {
-      console.warn('Invalid or missing geometryData points:', {
-        hasGeometryData: Boolean(geometryData),
-        hasPoints: Boolean(geometryData?.points),
-        pointsCount: geometryData?.points?.length
-      });
-      return {
-        clusters: [],
-        metrics: {
-          averageEfficiency: 0,
-          totalCoverage: 0,
-          networkDensity: 0
-        },
-        error: 'Missing or invalid geometry data',
-        isValid: false
-      };
-    }
-
     try {
-      const points = geometryData.points;
-      
       // Process clusters and calculate metrics
       const processedClusters = clusters.map((cluster) => {
         // Debug cluster processing
@@ -79,38 +81,16 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
           return null;
         }
 
-        // Calculate cluster center coordinates
+        // Get coordinates for each market
         const marketCoords = markets.map(marketId => {
-          // Find market in points data
-          const point = points.find(p => {
-            const normalizedMarketId = marketId?.toLowerCase();
-            const normalizedName = p.properties?.normalizedName?.toLowerCase();
-            const match = normalizedMarketId === normalizedName;
-            if (match) {
-              console.log('Found market point:', {
-                marketId,
-                normalizedName,
-                coordinates: p.coordinates
-              });
-            }
-            return match;
-          });
-          
-          if (!point) {
-            console.warn(`Market not found in points data: ${marketId}`);
+          const coords = YEMEN_COORDINATES[marketId.toLowerCase()];
+          if (!coords) {
+            console.warn(`No coordinates found for market: ${marketId}`);
             return null;
           }
-
-          const coords = point.coordinates;
-          if (!coords || coords.length !== 2 || !isFinite(coords[0]) || !isFinite(coords[1])) {
-            console.warn(`Invalid coordinates for market point: ${marketId}`, coords);
-            return null;
-          }
-
-          // Return coordinates directly from point data
           return {
-            lat: coords[1],
-            lon: coords[0]
+            lon: coords[0], // longitude
+            lat: coords[1]  // latitude
           };
         }).filter(Boolean);
 
@@ -142,7 +122,7 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
         );
 
         const efficiency = calculateClusterEfficiency(clusterFlows, markets);
-        const coverage = markets.length / points.length;
+        const coverage = markets.length / Object.keys(YEMEN_COORDINATES).length;
 
         const processedCluster = {
           cluster_id: cluster.cluster_id,
@@ -171,7 +151,7 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
         ) / processedClusters.length : 
         0;
 
-      const totalCoverage = totalMarkets / points.length;
+      const totalCoverage = totalMarkets / Object.keys(YEMEN_COORDINATES).length;
       const networkDensity = calculateNetworkDensity(flowMaps, clusters);
 
       // Debug final results
@@ -202,9 +182,7 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
       console.error('Error in cluster analysis:', error, {
         errorStack: error.stack,
         clusters: clusters?.length,
-        flowMaps: flowMaps?.length,
-        hasPoints: Boolean(geometryData?.points),
-        pointsCount: geometryData?.points?.length
+        flowMaps: flowMaps?.length
       });
       return {
         clusters: [],
