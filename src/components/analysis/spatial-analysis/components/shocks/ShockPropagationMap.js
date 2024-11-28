@@ -158,17 +158,12 @@ const ShockPropagationMap = () => {
     }
   }, [baseGeometry, filteredShocks]);
 
-  // Color scale generation
+  // Color scale for shock magnitude
   const colorScale = useMemo(() => {
-    const maxMagnitude = Math.max(
-      shockStats.maxMagnitude || 0,
-      ...filteredShocks.map(s => s.magnitude)
-    );
-
     return scaleLinear()
-      .domain([0, maxMagnitude || 1])
+      .domain([0, Math.max(...filteredShocks.map(s => s.magnitude))])
       .range([theme.palette.warning.light, theme.palette.error.dark]);
-  }, [shockStats.maxMagnitude, filteredShocks, theme]);
+  }, [filteredShocks, theme]);
 
   // Feature style calculation
   const getFeatureStyleMemo = useCallback((feature) => {
@@ -423,7 +418,7 @@ const ShockPropagationMap = () => {
             <Typography variant="body2" sx={{ mt: 1 }}>
               Understanding these patterns helps identify vulnerable markets and regions that may need
               intervention or support mechanisms. It also helps in developing early warning systems for
-              future market shocks and planning mitigation strategies.
+                future market shocks and planning mitigation strategies.
             </Typography>
           </Box>
         </CardContent>
@@ -433,3 +428,4 @@ const ShockPropagationMap = () => {
 };
 
 export default React.memo(ShockPropagationMap);
+              

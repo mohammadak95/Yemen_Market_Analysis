@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, useTheme } from '@mui/material';
-import { calculateContrast } from '../../../../../utils/colorUtils';
 
 const ShockLegend = ({ maxMagnitude, colorScale, threshold }) => {
   const theme = useTheme();

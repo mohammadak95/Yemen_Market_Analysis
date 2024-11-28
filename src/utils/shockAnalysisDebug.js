@@ -1,129 +1,115 @@
 // src/utils/shockAnalysisDebug.js
 
-import { backgroundMonitor } from './backgroundMonitor';
-
 export const DEBUG_SHOCK_ANALYSIS = {
-  initializeDebugMonitor: (componentName) => {
-    return backgroundMonitor.startMetric(`shock-analysis-${componentName}`);
-  },
-
-  log: (message, data) => {
-    console.log('🔍 Shock Analysis Debug:', message, data);
-  },
-
-  monitorPropagationPatterns: (patterns, spatialCorrelation) => {
-    const metric = backgroundMonitor.startMetric('propagation-analysis');
-    
-    try {
-      const metrics = {
-        totalPatterns: patterns?.length || 0,
-        avgStrength: patterns?.reduce((sum, p) => sum + p.magnitude, 0) / (patterns?.length || 1),
-        avgPropagationTime: patterns?.reduce((sum, p) => sum + (p.propagationTime || 0), 0) / (patterns?.length || 1),
-        spatialCorrelation: spatialCorrelation || 0
-      };
-
-      console.log('Propagation Pattern Analysis');
-      console.table({
-        'Avg Pattern Strength': metrics.avgStrength.toFixed(3),
-        'Avg Propagation Time (days)': metrics.avgPropagationTime.toFixed(2),
-        'Avg Spatial Correlation': metrics.spatialCorrelation.toFixed(3),
-        'Total Patterns': metrics.totalPatterns
-      });
-
-      metric.finish({ status: 'success', metrics });
-    } catch (error) {
-      console.error('Error monitoring propagation patterns:', error);
-      metric.finish({ status: 'failed', error: error.message });
-    }
-  },
-
-  monitorTimeControl: (timeRange, selectedDate) => {
-    const metric = backgroundMonitor.startMetric('time-control-monitoring');
-    
-    try {
-      if (!Array.isArray(timeRange) || !timeRange.length) {
-        throw new Error('Invalid time range');
-      }
-
-      const state = {
-        totalDates: timeRange.length,
-        currentIndex: timeRange.indexOf(selectedDate),
-        selectedDate,
-        isValid: timeRange.includes(selectedDate),
-        timeRange: {
-          start: timeRange[0],
-          end: timeRange[timeRange.length - 1]
-        }
-      };
-
-      console.log('Time Control State:', state);
-      metric.finish({ status: 'success', state });
-      return state.isValid;
-    } catch (error) {
-      console.error('Error monitoring time control:', error);
-      metric.finish({ status: 'failed', error: error.message });
-      return false;
-    }
-  },
-
-  validateColorScale: (scale, maxMagnitude) => {
-    const metric = backgroundMonitor.startMetric('color-scale-validation');
-    
-    try {
-      const steps = 5;
-      const values = Array.from({ length: steps }, (_, i) => maxMagnitude * i / (steps - 1));
-      
-      console.log('Color Scale Validation');
-      const validationResults = values.map(value => ({
-        value,
-        color: scale(value),
-        isValid: true
-      }));
-
-      validationResults.forEach(result => {
-        console.log(`${result.value.toFixed(2)}: ${result.color}`, '✓');
-      });
-
-      metric.finish({ status: 'success', validationResults });
-    } catch (error) {
-      console.error('Error validating color scale:', error);
-      metric.finish({ status: 'failed', error: error.message });
-    }
-  }
-};
-
-export const debugShockAnalysis = (shocks, stats, patterns) => {
-  const metric = backgroundMonitor.startMetric('shock-analysis-debug');
+  enabled: process.env.NODE_ENV === 'development',
   
-  try {
-    console.log('Shock Analysis Hook Debug');
-    console.table({
-      totalPatterns: patterns?.propagationPatterns?.length || 0,
-      avgPropagationTime: patterns?.propagationMetrics?.averagePropagationTime || 0,
-      spatialCorrelation: patterns?.propagationMetrics?.spatialCorrelation || 0,
-      propagationMetrics: patterns?.propagationMetrics || {}
+  log: (message, data = {}) => {
+    if (!DEBUG_SHOCK_ANALYSIS.enabled) return;
+    
+    console.group(`🔍 Shock Analysis: ${message}`);
+    Object.entries(data).forEach(([key, value]) => {
+      console.log(`${key}:`, value);
     });
+    console.groupEnd();
+  },
 
-    if (shocks?.length) {
-      const magnitudes = shocks.map(s => s.magnitude);
-      console.log('Shock Magnitude Distribution:', {
-        min: Math.min(...magnitudes),
-        max: Math.max(...magnitudes),
-        avg: magnitudes.reduce((a, b) => a + b, 0) / magnitudes.length
-      });
-    }
+  error: (message, error) => {
+    if (!DEBUG_SHOCK_ANALYSIS.enabled) return;
+    
+    console.group(`❌ Shock Analysis Error: ${message}`);
+    console.error(error);
+    console.groupEnd();
+  },
 
-    metric.finish({ status: 'success', metrics: stats });
-  } catch (error) {
-    console.error('Error in shock analysis debug:', error);
-    metric.finish({ status: 'failed', error: error.message });
+  initializeDebugMonitor: (componentName) => {
+    if (!DEBUG_SHOCK_ANALYSIS.enabled) return { finish: () => {} };
+
+    const startTime = performance.now();
+    console.log(`🏁 ${componentName} render started`);
+
+    return {
+      finish: () => {
+        const duration = performance.now() - startTime;
+        console.log(`✅ ${componentName} render completed in ${duration.toFixed(2)}ms`);
+      }
+    };
   }
 };
 
-export const monitorMapPerformance = (component) => {
-  const startTime = performance.now();
-  return () => {
-    const duration = performance.now() - startTime;
-    console.log(`${component} render duration: ${duration.toFixed(2)}ms`);
+export const monitorMapPerformance = (componentName) => {
+  if (!DEBUG_SHOCK_ANALYSIS.enabled) return () => {};
+
+  const monitor = {
+    renders: 0,
+    startTime: performance.now(),
+    lastRenderTime: performance.now()
   };
+
+  console.log(`🗺️ ${componentName} monitoring started`);
+
+  return () => {
+    const totalDuration = performance.now() - monitor.startTime;
+    const avgRenderTime = totalDuration / (monitor.renders || 1);
+
+    console.group(`🗺️ ${componentName} Performance Summary`);
+    console.log('Total renders:', monitor.renders);
+    console.log('Average render time:', avgRenderTime.toFixed(2) + 'ms');
+    console.log('Total monitoring duration:', totalDuration.toFixed(2) + 'ms');
+    console.groupEnd();
+  };
+};
+
+export const validateShockData = (data) => {
+  if (!DEBUG_SHOCK_ANALYSIS.enabled) return true;
+
+  const issues = [];
+
+  if (!data) {
+    issues.push('Data object is null or undefined');
+    return { valid: false, issues };
+  }
+
+  // Validate required fields
+  const requiredFields = ['timeSeriesData', 'marketShocks', 'spatialAutocorrelation'];
+  requiredFields.forEach(field => {
+    if (!data[field]) {
+      issues.push(`Missing required field: ${field}`);
+    }
+  });
+
+  // Validate time series data
+  if (Array.isArray(data.timeSeriesData)) {
+    data.timeSeriesData.forEach((entry, index) => {
+      if (!entry.region || !entry.month || typeof entry.usdPrice !== 'number') {
+        issues.push(`Invalid time series entry at index ${index}`);
+      }
+    });
+  }
+
+  // Validate market shocks
+  if (Array.isArray(data.marketShocks)) {
+    data.marketShocks.forEach((shock, index) => {
+      if (!shock.region || !shock.date || typeof shock.magnitude !== 'number') {
+        issues.push(`Invalid shock entry at index ${index}`);
+      }
+    });
+  }
+
+  // Validate spatial autocorrelation
+  if (data.spatialAutocorrelation) {
+    if (!data.spatialAutocorrelation.global || !data.spatialAutocorrelation.local) {
+      issues.push('Invalid spatial autocorrelation structure');
+    }
+  }
+
+  return {
+    valid: issues.length === 0,
+    issues
+  };
+};
+
+export default {
+  DEBUG_SHOCK_ANALYSIS,
+  monitorMapPerformance,
+  validateShockData
 };

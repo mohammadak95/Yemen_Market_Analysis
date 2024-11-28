@@ -4,6 +4,124 @@ import { useMemo } from 'react';
 import { backgroundMonitor } from '../../../../utils/backgroundMonitor';
 import { DEBUG_SHOCK_ANALYSIS } from '../../../../utils/shockAnalysisDebug';
 
+
+const calculateShockStatistics = (shocks, spatialAutocorrelation) => {
+  if (!Array.isArray(shocks) || shocks.length === 0) {
+    return getDefaultShockStats();
+  }
+
+  try {
+    const magnitudes = shocks.map(s => s.magnitude);
+    const shockTypes = shocks.reduce((acc, shock) => {
+      acc[shock.shock_type] = (acc[shock.shock_type] || 0) + 1;
+      return acc;
+    }, {});
+
+    const uniqueRegions = new Set(shocks.map(s => s.region));
+    const temporalDistribution = shocks.reduce((acc, shock) => {
+      const month = shock.date.substring(0, 7); // YYYY-MM
+      acc[month] = (acc[month] || 0) + 1;
+      return acc;
+    }, {});
+
+    return {
+      totalShocks: shocks.length,
+      maxMagnitude: Math.max(...magnitudes),
+      avgMagnitude: magnitudes.reduce((a, b) => a + b, 0) / magnitudes.length,
+      shockTypes,
+      regionsAffected: uniqueRegions.size,
+      temporalDistribution,
+      spatialCorrelation: spatialAutocorrelation?.global?.I || 0
+    };
+  } catch (error) {
+    console.error('Error calculating shock statistics:', error);
+    return getDefaultShockStats();
+  }
+};
+
+const analyzeShockPropagation = (shocks, spatialAutocorrelation) => {
+  const metric = backgroundMonitor.startMetric('shock-propagation-analysis');
+
+  try {
+    if (!Array.isArray(shocks) || !spatialAutocorrelation) {
+      return getDefaultPropagationPatterns();
+    }
+
+    // Group shocks by month
+    const shocksByMonth = shocks.reduce((acc, shock) => {
+      const month = shock.date.substring(0, 7);
+      if (!acc[month]) acc[month] = [];
+      acc[month].push(shock);
+      return acc;
+    }, {});
+
+    const propagationPatterns = [];
+
+    // Analyze each month
+    Object.entries(shocksByMonth).forEach(([month, monthShocks]) => {
+      if (monthShocks.length > 1) {
+        // Find primary shock considering spatial correlation
+        const primaryShock = monthShocks.reduce((max, shock) => {
+          const spatialWeight = spatialAutocorrelation.local?.[shock.region]?.local_i || 1;
+          const weightedMagnitude = shock.magnitude * spatialWeight;
+          return weightedMagnitude > max.weightedMagnitude ? 
+            { ...shock, weightedMagnitude } : max;
+        }, { ...monthShocks[0], weightedMagnitude: monthShocks[0].magnitude });
+
+        // Add propagation pattern
+        propagationPatterns.push({
+          sourceRegion: primaryShock.region,
+          date: primaryShock.date,
+          magnitude: primaryShock.magnitude,
+          spatialCorrelation: spatialAutocorrelation.local?.[primaryShock.region]?.local_i || 0,
+          affectedRegions: monthShocks
+            .filter(s => s !== primaryShock)
+            .map(s => ({
+              region: s.region,
+              magnitude: s.magnitude,
+              spatialCorrelation: spatialAutocorrelation.local?.[s.region]?.local_i || 0
+            }))
+        });
+      }
+    });
+
+    metric.finish({ status: 'success', patternCount: propagationPatterns.length });
+
+    return {
+      propagationPatterns,
+      spatialClusters: [],
+      propagationMetrics: {
+        averagePropagationTime: 0,
+        spatialCorrelation: spatialAutocorrelation.global?.I || 0,
+        clusterCount: propagationPatterns.length
+      }
+    };
+  } catch (error) {
+    console.error('Error analyzing shock propagation:', error);
+    metric.finish({ status: 'failed', error: error.message });
+    return getDefaultPropagationPatterns();
+  }
+};
+
+const getDefaultShockStats = () => ({
+  totalShocks: 0,
+  maxMagnitude: 0,
+  avgMagnitude: 0,
+  shockTypes: {},
+  regionsAffected: 0,
+  temporalDistribution: {}
+});
+
+const getDefaultPropagationPatterns = () => ({
+  propagationPatterns: [],
+  spatialClusters: [],
+  propagationMetrics: {
+    averagePropagationTime: 0,
+    spatialCorrelation: 0,
+    clusterCount: 0
+  }
+});
+
 export const useShockAnalysis = (
   timeSeriesData,
   spatialAutocorrelation,
@@ -35,7 +153,7 @@ export const useShockAnalysis = (
           shock && 
           typeof shock.magnitude === 'number' && 
           !isNaN(shock.magnitude) &&
-          shock.magnitude >= threshold &&
+          shock.magnitude >= threshold * 100 &&
           shock.region &&
           shock.date &&
           shock.shock_type &&
@@ -195,124 +313,7 @@ const calculateStandardDeviation = (values) => {
   const squareDiffs = values.map(value => Math.pow(value - mean, 2));
   const variance = squareDiffs.reduce((a, b) => a + b, 0) / values.length;
   return Math.sqrt(variance);
-};
-
-const calculateShockStatistics = (shocks, spatialAutocorrelation) => {
-  if (!Array.isArray(shocks) || shocks.length === 0) {
-    return getDefaultShockStats();
-  }
-
-  try {
-    const magnitudes = shocks.map(s => s.magnitude);
-    const shockTypes = shocks.reduce((acc, shock) => {
-      acc[shock.shock_type] = (acc[shock.shock_type] || 0) + 1;
-      return acc;
-    }, {});
-
-    const uniqueRegions = new Set(shocks.map(s => s.region));
-    const temporalDistribution = shocks.reduce((acc, shock) => {
-      const month = shock.date.substring(0, 7); // YYYY-MM
-      acc[month] = (acc[month] || 0) + 1;
-      return acc;
-    }, {});
-
-    return {
-      totalShocks: shocks.length,
-      maxMagnitude: Math.max(...magnitudes),
-      avgMagnitude: magnitudes.reduce((a, b) => a + b, 0) / magnitudes.length,
-      shockTypes,
-      regionsAffected: uniqueRegions.size,
-      temporalDistribution,
-      spatialCorrelation: spatialAutocorrelation?.global?.I || 0
-    };
-  } catch (error) {
-    console.error('Error calculating shock statistics:', error);
-    return getDefaultShockStats();
-  }
-};
-
-const analyzeShockPropagation = (shocks, spatialAutocorrelation) => {
-  const metric = backgroundMonitor.startMetric('shock-propagation-analysis');
-
-  try {
-    if (!Array.isArray(shocks) || !spatialAutocorrelation) {
-      return getDefaultPropagationPatterns();
-    }
-
-    // Group shocks by month
-    const shocksByMonth = shocks.reduce((acc, shock) => {
-      const month = shock.date.substring(0, 7);
-      if (!acc[month]) acc[month] = [];
-      acc[month].push(shock);
-      return acc;
-    }, {});
-
-    const propagationPatterns = [];
-
-    // Analyze each month
-    Object.entries(shocksByMonth).forEach(([month, monthShocks]) => {
-      if (monthShocks.length > 1) {
-        // Find primary shock considering spatial correlation
-        const primaryShock = monthShocks.reduce((max, shock) => {
-          const spatialWeight = spatialAutocorrelation.local?.[shock.region]?.local_i || 1;
-          const weightedMagnitude = shock.magnitude * spatialWeight;
-          return weightedMagnitude > max.weightedMagnitude ? 
-            { ...shock, weightedMagnitude } : max;
-        }, { ...monthShocks[0], weightedMagnitude: monthShocks[0].magnitude });
-
-        // Add propagation pattern
-        propagationPatterns.push({
-          sourceRegion: primaryShock.region,
-          date: primaryShock.date,
-          magnitude: primaryShock.magnitude,
-          spatialCorrelation: spatialAutocorrelation.local?.[primaryShock.region]?.local_i || 0,
-          affectedRegions: monthShocks
-            .filter(s => s !== primaryShock)
-            .map(s => ({
-              region: s.region,
-              magnitude: s.magnitude,
-              spatialCorrelation: spatialAutocorrelation.local?.[s.region]?.local_i || 0
-            }))
-        });
-      }
-    });
-
-    metric.finish({ status: 'success', patternCount: propagationPatterns.length });
-
-    return {
-      propagationPatterns,
-      spatialClusters: [],
-      propagationMetrics: {
-        averagePropagationTime: 0,
-        spatialCorrelation: spatialAutocorrelation.global?.I || 0,
-        clusterCount: propagationPatterns.length
-      }
-    };
-  } catch (error) {
-    console.error('Error analyzing shock propagation:', error);
-    metric.finish({ status: 'failed', error: error.message });
-    return getDefaultPropagationPatterns();
-  }
-};
-
-const getDefaultShockStats = () => ({
-  totalShocks: 0,
-  maxMagnitude: 0,
-  avgMagnitude: 0,
-  shockTypes: {},
-  regionsAffected: 0,
-  temporalDistribution: {}
-});
-
-const getDefaultPropagationPatterns = () => ({
-  propagationPatterns: [],
-  spatialClusters: [],
-  propagationMetrics: {
-    averagePropagationTime: 0,
-    spatialCorrelation: 0,
-    clusterCount: 0
-  }
-});
+}
 
 // Export for testing
 export const __testing = {
