@@ -1,71 +1,78 @@
 import React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-
-// Utility function to safely get nested object values
-const safeGet = (obj, path) => {
-  try {
-    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
-  } catch (e) {
-    return undefined;
-  }
-};
+import { Box, Typography } from '@mui/material';
 
 const ClusterComparisonTable = ({ clusters = [] }) => {
+  // Memoize rows to prevent unnecessary recalculations
+  const rows = React.useMemo(() => {
+    if (!Array.isArray(clusters)) return [];
+    
+    return clusters.map((cluster) => {
+      if (!cluster) return null;
+      
+      const marketCount = cluster.market_count || 0;
+      const metrics = cluster.metrics || {};
+
+      return {
+        id: cluster.cluster_id || Math.random().toString(36).substr(2, 9),
+        cluster_id: cluster.cluster_id || 'N/A',
+        main_market: cluster.main_market || 'Unknown',
+        market_count: marketCount,
+        markets: (cluster.markets || []).map(m => m.name).join(', '),
+        efficiency_score: metrics.efficiency || 0,
+        internal_connectivity: metrics.internal_connectivity || 0,
+        price_convergence: metrics.price_convergence || 0,
+        stability: metrics.stability || 0,
+        coverage: metrics.coverage || 0
+      };
+    }).filter(Boolean);
+  }, [clusters]);
+
   const columns = [
     { 
       field: 'cluster_id', 
       headerName: 'Cluster ID', 
       width: 100,
-      valueGetter: (params) => {
-        if (!params?.row) return 'N/A';
-        return params.row.cluster_id || 'N/A';
-      }
+      valueGetter: (params) => params.row?.cluster_id || 'N/A'
     },
     { 
       field: 'main_market', 
       headerName: 'Main Market', 
       width: 150,
-      valueGetter: (params) => {
-        if (!params?.row) return 'Unknown';
-        return params.row.main_market || 'Unknown';
-      }
+      valueGetter: (params) => params.row?.main_market || 'Unknown'
+    },
+    {
+      field: 'market_count',
+      headerName: 'Markets',
+      width: 100,
+      type: 'number'
     },
     {
       field: 'efficiency_score',
-      headerName: 'Efficiency Score',
-      width: 150,
+      headerName: 'Efficiency',
+      width: 120,
       valueFormatter: (params) => {
-        if (!params?.value && params?.value !== 0) return 'N/A';
+        if (params.value === undefined || params.value === null) return 'N/A';
         return `${(params.value * 100).toFixed(1)}%`;
       },
       sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
     },
     {
       field: 'internal_connectivity',
-      headerName: 'Internal Connectivity',
-      width: 180,
+      headerName: 'Connectivity',
+      width: 120,
       valueFormatter: (params) => {
-        if (!params?.value && params?.value !== 0) return 'N/A';
-        return `${(params.value * 100).toFixed(1)}%`;
-      },
-      sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
-    },
-    {
-      field: 'market_coverage',
-      headerName: 'Market Coverage',
-      width: 150,
-      valueFormatter: (params) => {
-        if (!params?.value && params?.value !== 0) return 'N/A';
+        if (params.value === undefined || params.value === null) return 'N/A';
         return `${(params.value * 100).toFixed(1)}%`;
       },
       sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
     },
     {
       field: 'price_convergence',
-      headerName: 'Price Convergence',
-      width: 160,
+      headerName: 'Price Conv.',
+      width: 120,
       valueFormatter: (params) => {
-        if (!params?.value && params?.value !== 0) return 'N/A';
+        if (params.value === undefined || params.value === null) return 'N/A';
         return `${(params.value * 100).toFixed(1)}%`;
       },
       sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
@@ -75,69 +82,56 @@ const ClusterComparisonTable = ({ clusters = [] }) => {
       headerName: 'Stability',
       width: 120,
       valueFormatter: (params) => {
-        if (!params?.value && params?.value !== 0) return 'N/A';
+        if (params.value === undefined || params.value === null) return 'N/A';
         return `${(params.value * 100).toFixed(1)}%`;
       },
       sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
     },
     {
-      field: 'market_count',
-      headerName: 'Markets',
-      width: 100,
-      type: 'number',
-      valueGetter: (params) => {
-        if (!params?.row) return 0;
-        return params.row.market_count || 0;
-      }
+      field: 'coverage',
+      headerName: 'Coverage',
+      width: 120,
+      valueFormatter: (params) => {
+        if (params.value === undefined || params.value === null) return 'N/A';
+        return `${(params.value * 100).toFixed(1)}%`;
+      },
+      sortComparator: (v1, v2) => (v1 || 0) - (v2 || 0)
+    },
+    {
+      field: 'markets',
+      headerName: 'Connected Markets',
+      width: 300,
+      sortable: false
     }
   ];
 
-  const rows = React.useMemo(() => {
-    if (!Array.isArray(clusters)) return [];
-    
-    return clusters.map((cluster) => {
-      if (!cluster) return null;
-      
-      return {
-        id: cluster.cluster_id || Math.random().toString(36).substr(2, 9),
-        cluster_id: cluster.cluster_id,
-        main_market: cluster.main_market,
-        efficiency_score: safeGet(cluster, 'metrics.efficiency'),
-        internal_connectivity: safeGet(cluster, 'metrics.internal_connectivity'),
-        market_coverage: safeGet(cluster, 'metrics.coverage'),
-        price_convergence: safeGet(cluster, 'metrics.price_convergence'),
-        stability: safeGet(cluster, 'metrics.stability'),
-        market_count: Array.isArray(cluster.markets) ? 
-          cluster.markets.length : 
-          Array.isArray(cluster.connected_markets) ? 
-            cluster.connected_markets.length : 0
-      };
-    }).filter(Boolean);
-  }, [clusters]);
+  // Show empty state if no data
+  if (!rows.length) {
+    return (
+      <Box sx={{ p: 2, textAlign: 'center' }}>
+        <Typography color="text.secondary">
+          No cluster data available
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
-    <div style={{ height: 400, width: '100%' }}>
+    <Box sx={{ height: 400, width: '100%' }}>
       <DataGrid
-        columns={columns}
         rows={rows}
+        columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5, 10, 20]}
         disableSelectionOnClick
-        loading={!clusters?.length}
-        components={{
-          NoRowsOverlay: () => (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              height: '100%' 
-            }}>
-              No cluster data available
-            </div>
-          )
+        sx={{
+          '& .MuiDataGrid-cell': {
+            whiteSpace: 'normal',
+            wordWrap: 'break-word'
+          }
         }}
       />
-    </div>
+    </Box>
   );
 };
 

@@ -8,30 +8,48 @@ import {
   Box,
   Tooltip,
   IconButton,
-  Alert
+  Alert,
+  LinearProgress
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
-import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import chroma from 'chroma-js';
 import MetricCard from '../common/MetricCard';
 import useClusterAnalysis from '../../hooks/useClusterAnalysis';
+import useClusterEfficiency from '../../hooks/useClusterEfficiency';
 import ClusterComparisonTable from './ClusterComparisonTable';
 
 const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
+  // Debug input data
   console.log('ClusterEfficiencyDashboard props:', {
     hasClusters: !!clusters?.length,
     clusterCount: clusters?.length,
     hasFlowMaps: !!flowMaps?.length,
     flowCount: flowMaps?.length,
-    hasGeometry: !!geometryData
+    hasGeometry: !!geometryData,
+    sampleCluster: clusters?.[0],
+    sampleMarket: clusters?.[0]?.markets?.[0]
   });
 
-  // Process data using hook
-  const { clusters: processedClusters, metrics, error, isValid } = useClusterAnalysis(
+  // Process data using both hooks for comprehensive analysis
+  const { clusters: processedClusters, metrics: analysisMetrics } = useClusterAnalysis(
     clusters,
     flowMaps,
     geometryData
   );
+
+  const { clusters: efficiencyClusters, metrics: efficiencyMetrics } = useClusterEfficiency(
+    clusters,
+    flowMaps
+  );
+
+  // Combine metrics from both hooks
+  const combinedMetrics = useMemo(() => ({
+    averageEfficiency: (analysisMetrics.averageEfficiency + efficiencyMetrics.averageEfficiency) / 2,
+    totalCoverage: Math.max(analysisMetrics.totalCoverage, efficiencyMetrics.totalCoverage),
+    networkDensity: analysisMetrics.networkDensity,
+    clusterCount: processedClusters.length
+  }), [analysisMetrics, efficiencyMetrics, processedClusters]);
 
   // Color scale for efficiency scores
   const colorScale = useMemo(() => 
@@ -39,20 +57,11 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
     []
   );
 
-  // Show loading state only if we have no data and no error
+  // Show loading state only if we have no data
   if (!clusters || !flowMaps) {
     return (
       <Alert severity="warning" sx={{ m: 2 }}>
         No market clusters or flow data available for analysis.
-      </Alert>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ m: 2 }}>
-        {error}
       </Alert>
     );
   }
@@ -86,7 +95,7 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
             <Grid item xs={12} md={3}>
               <MetricCard
                 title="Total Clusters"
-                value={processedClusters.length}
+                value={combinedMetrics.clusterCount}
                 format="number"
                 description="Number of distinct market clusters"
               />
@@ -94,7 +103,7 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
             <Grid item xs={12} md={3}>
               <MetricCard
                 title="Average Efficiency"
-                value={metrics.averageEfficiency}
+                value={combinedMetrics.averageEfficiency}
                 format="percentage"
                 description="Mean efficiency score across clusters"
               />
@@ -102,7 +111,7 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
             <Grid item xs={12} md={3}>
               <MetricCard
                 title="Market Coverage"
-                value={metrics.totalCoverage}
+                value={combinedMetrics.totalCoverage}
                 format="percentage"
                 description="Percentage of markets in clusters"
               />
@@ -110,7 +119,7 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
             <Grid item xs={12} md={3}>
               <MetricCard
                 title="Network Density"
-                value={metrics.networkDensity}
+                value={combinedMetrics.networkDensity}
                 format="percentage"
                 description="Inter-cluster connection density"
               />
@@ -135,36 +144,72 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; OpenStreetMap contributors'
                   />
-                  {processedClusters.map(cluster => (
-                    <CircleMarker
-                      key={cluster.cluster_id}
-                      center={[
-                        // Ensure coordinates are in correct format
-                        Number(cluster.center_lat) || 0,
-                        Number(cluster.center_lon) || 0
-                      ]}
-                      radius={Math.sqrt(cluster.market_count || 1) * 3}
-                      fillColor={colorScale(cluster.metrics?.efficiency || 0).hex()}
-                      color="#fff"
-                      weight={2}
-                      opacity={0.8}
-                      fillOpacity={0.6}
-                    >
-                      <Tooltip>
-                        <div>
-                          <strong>Cluster {cluster.cluster_id}</strong>
-                          <br />
-                          Main Market: {cluster.main_market}
-                          <br />
-                          Markets: {cluster.market_count}
-                          <br />
-                          Efficiency: {((cluster.metrics?.efficiency || 0) * 100).toFixed(1)}%
-                          <br />
-                          Coverage: {((cluster.metrics?.coverage || 0) * 100).toFixed(1)}%
-                        </div>
-                      </Tooltip>
-                    </CircleMarker>
-                  ))}
+                  {processedClusters.map(cluster => {
+                    // Debug log for cluster coordinates
+                    console.log('Rendering cluster:', {
+                      id: cluster.cluster_id,
+                      center: [cluster.center_lat, cluster.center_lon],
+                      markets: cluster.markets?.map(m => ({
+                        name: m.name,
+                        coords: m.coordinates
+                      }))
+                    });
+
+                    return (
+                      <React.Fragment key={cluster.cluster_id}>
+                        {/* Render cluster center */}
+                        <CircleMarker
+                          center={[cluster.center_lat, cluster.center_lon]}
+                          radius={Math.sqrt(cluster.market_count || 1) * 5}
+                          fillColor={colorScale(cluster.metrics?.efficiency || 0).hex()}
+                          color="#fff"
+                          weight={2}
+                          opacity={0.8}
+                          fillOpacity={0.6}
+                        >
+                          <Popup>
+                            <div>
+                              <strong>Cluster {cluster.cluster_id}</strong>
+                              <br />
+                              Main Market: {cluster.main_market}
+                              <br />
+                              Markets: {cluster.market_count}
+                              <br />
+                              Efficiency: {((cluster.metrics?.efficiency || 0) * 100).toFixed(1)}%
+                              <br />
+                              Coverage: {((cluster.metrics?.coverage || 0) * 100).toFixed(1)}%
+                              <br />
+                              Connectivity: {((cluster.metrics?.internal_connectivity || 0) * 100).toFixed(1)}%
+                            </div>
+                          </Popup>
+                        </CircleMarker>
+
+                        {/* Render individual markets */}
+                        {cluster.markets?.map((market, idx) => (
+                          <CircleMarker
+                            key={`${cluster.cluster_id}-${idx}`}
+                            center={[market.coordinates[1], market.coordinates[0]]}
+                            radius={3}
+                            fillColor={colorScale(cluster.metrics?.efficiency || 0).hex()}
+                            color="#fff"
+                            weight={1}
+                            opacity={0.6}
+                            fillOpacity={0.4}
+                          >
+                            <Popup>
+                              <div>
+                                <strong>{market.name}</strong>
+                                <br />
+                                Cluster: {cluster.cluster_id}
+                                <br />
+                                Is Main Market: {market.name === cluster.main_market ? 'Yes' : 'No'}
+                              </div>
+                            </Popup>
+                          </CircleMarker>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
                 </MapContainer>
               </Box>
             </CardContent>
@@ -194,9 +239,31 @@ const ClusterEfficiencyDashboard = ({ clusters, flowMaps, geometryData }) => {
                   <Typography variant="body2" color="text.secondary">
                     Main Market: {cluster.main_market}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Efficiency: {(cluster.metrics?.efficiency * 100).toFixed(1)}%
-                  </Typography>
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Efficiency
+                    </Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={(cluster.metrics?.efficiency || 0) * 100}
+                      sx={{ mb: 1 }}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      Connectivity
+                    </Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={(cluster.metrics?.internal_connectivity || 0) * 100}
+                      sx={{ mb: 1 }}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      Price Convergence
+                    </Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={(cluster.metrics?.price_convergence || 0) * 100}
+                    />
+                  </Box>
                 </Box>
               ))}
             </CardContent>

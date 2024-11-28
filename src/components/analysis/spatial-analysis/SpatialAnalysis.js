@@ -1,5 +1,4 @@
-// src/components/analysis/spatial-analysis/SpatialAnalysis.js
-
+// Previous imports remain the same...
 import React, { useMemo, useState, useCallback } from 'react';
 import { 
   Box, Paper, Tabs, Tab, Typography, Alert, Grid, 
@@ -7,13 +6,14 @@ import {
 } from '@mui/material';
 import _ from 'lodash';
 
-// Correct imports for Dialog and related components from Material-UI
+// Material-UI dialog imports
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 
+// Custom hooks and components
 import {
   useSpatialAnalysisData,
   useMarketAnalysisData,
@@ -39,7 +39,7 @@ import {
   calculateNorthSouthDisparity,
 } from './utils/spatialAnalysis';
 
-// Error boundary component for catching render errors
+// Error boundary component
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -67,6 +67,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Welcome dialog component
 const WelcomeDialog = ({ open, onClose }) => (
   <Dialog 
     open={open} 
@@ -102,6 +103,7 @@ const WelcomeDialog = ({ open, onClose }) => (
   </Dialog>
 );
 
+// Loading state component
 const LoadingState = ({ progress }) => (
   <Box 
     display="flex" 
@@ -128,6 +130,7 @@ const LoadingState = ({ progress }) => (
   </Box>
 );
 
+// Error state component
 const ErrorState = ({ message }) => (
   <Alert 
     severity="error" 
@@ -158,11 +161,14 @@ const SpatialAnalysis = React.memo(() => {
   const { mode: visualizationMode } = useVisualizationState();
   const { isLoading, hasData, isError, errorMessage } = useDataAvailability();
 
-  console.log('Spatial Analysis Data:', {
+  // Enhanced debug logging for cluster data
+  console.log('Cluster Analysis Data:', {
     hasMarketClusters: !!spatialData?.marketClusters?.length,
     marketClustersCount: spatialData?.marketClusters?.length,
     hasFlowMaps: !!spatialData?.flowMaps?.length,
-    flowMapsCount: spatialData?.flowMaps?.length
+    flowMapsCount: spatialData?.flowMaps?.length,
+    clusterSample: spatialData?.marketClusters?.[0],
+    flowSample: spatialData?.flowMaps?.[0]
   });
 
   // Process clusters with error handling
@@ -172,7 +178,7 @@ const SpatialAnalysis = React.memo(() => {
     geometryData
   );
 
-  // Enhanced spatial autocorrelation handler with better validation
+  // Enhanced spatial autocorrelation handler
   const getSpatialAutocorrelation = useCallback((data) => {
     if (!data?.spatialAutocorrelation) {
       console.warn('Missing spatialAutocorrelation in data:', data);
@@ -182,13 +188,11 @@ const SpatialAnalysis = React.memo(() => {
       };
     }
 
-    // Validate and transform the data structure we see in the logs
     const { global, local } = data.spatialAutocorrelation;
 
     // Debug log for validation
     console.log('Processing spatial autocorrelation:', { global, local });
 
-    // Ensure global metrics exist with proper defaults
     const validatedGlobal = {
       moran_i: global?.moran_i ?? 0,
       p_value: global?.p_value ?? 1,
@@ -196,7 +200,6 @@ const SpatialAnalysis = React.memo(() => {
       significance: global?.significance ?? false
     };
 
-    // Ensure local metrics exist and are properly formatted
     const validatedLocal = local ? Object.entries(local).reduce((acc, [region, metrics]) => {
       acc[region] = {
         local_i: metrics?.local_i ?? 0,
@@ -212,13 +215,13 @@ const SpatialAnalysis = React.memo(() => {
     };
   }, []);
 
-  // Calculate key economic indicators with enhanced validation
+  // Calculate economic indicators
   const economicIndicators = useMemo(() => {
     if (!spatialData || !timeSeriesData) return null;
 
     try {
       return {
-        marketEfficiency: 0.75, // Placeholder - implement actual calculation
+        marketEfficiency: 0.75,
         spatialIntegration: 0.82,
         priceDispersion: 0.15,
         conflictImpact: 0.45
@@ -229,6 +232,7 @@ const SpatialAnalysis = React.memo(() => {
     }
   }, [spatialData, timeSeriesData]);
 
+  // Define tab panels
   const tabPanels = useMemo(() => [
     {
       label: "Market Integration Overview",
@@ -262,11 +266,13 @@ const SpatialAnalysis = React.memo(() => {
     {
       label: "Cluster Analysis",
       component: (
-        <ClusterEfficiencyDashboard
-          clusters={spatialData?.marketClusters}
-          flowMaps={spatialData?.flowMaps}
-          geometryData={geometryData}
-        />
+        <ErrorBoundary>
+          <ClusterEfficiencyDashboard
+            clusters={spatialData?.marketClusters}
+            flowMaps={spatialData?.flowMaps}
+            geometryData={geometryData}
+          />
+        </ErrorBoundary>
       )
     },
     {
@@ -326,6 +332,7 @@ const SpatialAnalysis = React.memo(() => {
     getSpatialAutocorrelation
   ]);
 
+  // Handle loading and error states
   if (isLoading) {
     return <LoadingState progress={loadingStatus.progress} />;
   }
