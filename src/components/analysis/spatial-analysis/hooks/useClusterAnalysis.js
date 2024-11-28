@@ -10,14 +10,15 @@ import { useMemo } from 'react';
 const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
   return useMemo(() => {
     // Debug input parameters
-    console.log('useClusterAnalysis input:', {
+    console.log('useClusterAnalysis detailed input:', {
       hasClusters: Boolean(clusters?.length),
       clustersCount: clusters?.length,
       hasFlowMaps: Boolean(flowMaps?.length),
       flowMapsCount: flowMaps?.length,
       hasGeometryData: Boolean(geometryData),
-      hasUnified: Boolean(geometryData?.unified),
-      features: geometryData?.unified?.features ? 'present' : 'missing'
+      hasPoints: Boolean(geometryData?.points?.length),
+      pointsCount: geometryData?.points?.length,
+      rawClusters: clusters
     });
 
     // Enhanced initial validation
@@ -38,11 +39,11 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
       };
     }
 
-    if (!geometryData?.unified?.features) {
-      console.warn('Invalid or missing geometryData:', {
+    if (!geometryData?.points?.length) {
+      console.warn('Invalid or missing geometryData points:', {
         hasGeometryData: Boolean(geometryData),
-        hasUnified: Boolean(geometryData?.unified),
-        features: geometryData?.unified?.features ? 'present' : 'missing'
+        hasPoints: Boolean(geometryData?.points),
+        pointsCount: geometryData?.points?.length
       });
       return {
         clusters: [],
@@ -57,53 +58,80 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
     }
 
     try {
-      const features = geometryData.unified.features;
+      const points = geometryData.points;
       
       // Process clusters and calculate metrics
-      const processedClusters = clusters.map((cluster, index) => {
+      const processedClusters = clusters.map((cluster) => {
         // Debug cluster processing
         console.log('Processing cluster:', {
-          clusterId: cluster.id || index,
-          marketCount: cluster.markets?.length,
-          hasMarkets: Boolean(cluster.markets),
+          clusterId: cluster.cluster_id,
+          marketCount: cluster.market_count,
+          hasConnectedMarkets: Boolean(cluster.connected_markets?.length),
+          connectedMarketsCount: cluster.connected_markets?.length,
+          mainMarket: cluster.main_market,
           rawCluster: cluster
         });
 
-        // Ensure markets array exists
-        const markets = Array.isArray(cluster.markets) ? cluster.markets :
-                       Array.isArray(cluster.nodes) ? cluster.nodes :
-                       [];
+        // Get markets from connected_markets array
+        const markets = cluster.connected_markets || [];
+        if (!markets.length) {
+          console.warn('No markets found in cluster:', cluster);
+          return null;
+        }
 
         // Calculate cluster center coordinates
         const marketCoords = markets.map(marketId => {
-          const market = features.find(f => 
-            f.properties.market_id === marketId || 
-            f.properties.id === marketId ||
-            f.properties.normalizedName === marketId
-          );
+          // Find market in points data
+          const point = points.find(p => {
+            const normalizedMarketId = marketId?.toLowerCase();
+            const normalizedName = p.properties?.normalizedName?.toLowerCase();
+            const match = normalizedMarketId === normalizedName;
+            if (match) {
+              console.log('Found market point:', {
+                marketId,
+                normalizedName,
+                coordinates: p.coordinates
+              });
+            }
+            return match;
+          });
           
-          if (!market) {
-            console.warn(`Market not found in geometry data: ${marketId}`);
+          if (!point) {
+            console.warn(`Market not found in points data: ${marketId}`);
             return null;
           }
-          
-          return market.geometry.coordinates ? 
-            [market.geometry.coordinates[1], market.geometry.coordinates[0]] : 
-            null;
+
+          const coords = point.coordinates;
+          if (!coords || coords.length !== 2 || !isFinite(coords[0]) || !isFinite(coords[1])) {
+            console.warn(`Invalid coordinates for market point: ${marketId}`, coords);
+            return null;
+          }
+
+          // Return coordinates directly from point data
+          return {
+            lat: coords[1],
+            lon: coords[0]
+          };
         }).filter(Boolean);
 
         // Debug market coordinates
         console.log('Market coordinates found:', {
           totalMarkets: markets.length,
           foundCoordinates: marketCoords.length,
-          marketIds: markets
+          marketIds: markets,
+          coordinates: marketCoords
         });
+
+        if (marketCoords.length === 0) {
+          console.warn('No valid coordinates found for cluster:', cluster.cluster_id);
+          return null;
+        }
 
         // Calculate average coordinates for cluster center
         const center = marketCoords.reduce(
           (acc, coord) => ({
-            lat: acc.lat + coord[0] / marketCoords.length,
-            lon: acc.lon + coord[1] / marketCoords.length
+            lat: acc.lat + coord.lat / marketCoords.length,
+            lon: acc.lon + coord.lon / marketCoords.length
           }),
           { lat: 0, lon: 0 }
         );
@@ -114,35 +142,36 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
         );
 
         const efficiency = calculateClusterEfficiency(clusterFlows, markets);
-        const coverage = markets.length / features.length;
+        const coverage = markets.length / points.length;
 
-        return {
-          cluster_id: cluster.id || `cluster_${index}`,
+        const processedCluster = {
+          cluster_id: cluster.cluster_id,
           market_count: markets.length,
           markets,
           center_lat: center.lat,
           center_lon: center.lon,
-          main_market: findMainMarket(markets, clusterFlows),
+          main_market: cluster.main_market,
           metrics: {
             efficiency,
             coverage
           }
         };
-      });
+
+        console.log('Processed cluster:', processedCluster);
+        return processedCluster;
+      }).filter(Boolean); // Remove any null clusters
 
       // Calculate overall metrics
-      const totalMarkets = new Set(clusters.flatMap(c => 
-        Array.isArray(c.markets) ? c.markets : 
-        Array.isArray(c.nodes) ? c.nodes : 
-        []
-      )).size;
+      const totalMarkets = new Set(clusters.flatMap(c => c.connected_markets || [])).size;
 
-      const averageEfficiency = processedClusters.reduce(
-        (acc, cluster) => acc + cluster.metrics.efficiency,
-        0
-      ) / processedClusters.length;
+      const averageEfficiency = processedClusters.length > 0 ? 
+        processedClusters.reduce(
+          (acc, cluster) => acc + cluster.metrics.efficiency,
+          0
+        ) / processedClusters.length : 
+        0;
 
-      const totalCoverage = totalMarkets / features.length;
+      const totalCoverage = totalMarkets / points.length;
       const networkDensity = calculateNetworkDensity(flowMaps, clusters);
 
       // Debug final results
@@ -151,7 +180,12 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
         totalMarkets,
         averageEfficiency,
         totalCoverage,
-        networkDensity
+        networkDensity,
+        clusterCenters: processedClusters.map(c => ({
+          id: c.cluster_id,
+          lat: c.center_lat,
+          lon: c.center_lon
+        }))
       });
 
       return {
@@ -169,8 +203,8 @@ const useClusterAnalysis = (clusters, flowMaps, geometryData) => {
         errorStack: error.stack,
         clusters: clusters?.length,
         flowMaps: flowMaps?.length,
-        hasUnified: Boolean(geometryData?.unified),
-        hasFeatures: Boolean(geometryData?.unified?.features)
+        hasPoints: Boolean(geometryData?.points),
+        pointsCount: geometryData?.points?.length
       });
       return {
         clusters: [],
@@ -225,40 +259,11 @@ const calculateClusterEfficiency = (flows, markets) => {
 const calculateNetworkDensity = (flows, clusters) => {
   if (!flows.length || !clusters.length) return 0;
 
-  const totalMarkets = new Set(clusters.flatMap(c => 
-    Array.isArray(c.markets) ? c.markets : 
-    Array.isArray(c.nodes) ? c.nodes : 
-    []
-  )).size;
-
+  const totalMarkets = new Set(clusters.flatMap(c => c.connected_markets || [])).size;
   const maxPossibleConnections = Math.max(1, (totalMarkets * (totalMarkets - 1)) / 2);
   const actualConnections = flows.length;
 
   return Math.min(1, actualConnections / maxPossibleConnections);
-};
-
-/**
- * Find the main market in a cluster based on flow centrality
- * @param {Array} markets - Markets in the cluster
- * @param {Array} flows - Flow data for the cluster
- * @returns {string} ID of the main market
- */
-const findMainMarket = (markets, flows) => {
-  if (!markets.length) return null;
-
-  // Calculate market centrality based on flow connections
-  const marketScores = markets.reduce((acc, marketId) => {
-    const marketFlows = flows.filter(
-      flow => flow.source === marketId || flow.target === marketId
-    );
-    
-    acc[marketId] = marketFlows.reduce((sum, flow) => sum + (flow.weight || 1), 0);
-    return acc;
-  }, {});
-
-  // Return market with highest centrality score
-  return Object.entries(marketScores)
-    .sort(([, a], [, b]) => b - a)[0]?.[0] || markets[0];
 };
 
 export default useClusterAnalysis;
