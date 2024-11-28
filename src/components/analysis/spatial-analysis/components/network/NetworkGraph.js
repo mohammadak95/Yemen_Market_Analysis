@@ -1,5 +1,3 @@
-// src/components/analysis/spatial-analysis/components/network/NetworkGraph.js
-
 import React, { useMemo, useCallback, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
@@ -56,14 +54,14 @@ const NetworkGraph = React.memo(() => {
     flowThreshold
   );
 
-  // Color scales
+  // Color scales with more distinct colors
   const colorScales = useMemo(() => ({
-    market_integration: chroma.scale(['#fdd49e', '#d7301f']).domain([0, 1]),
-    centrality: chroma.scale(['#fecc5c', '#31a354']).domain([
+    market_integration: chroma.scale(['#FFA07A', '#FF0000']).domain([0, 1]),
+    centrality: chroma.scale(['#98FB98', '#006400']).domain([
       0,
       metrics.centrality?.metrics?.maxCentrality || 1,
     ]),
-    flow_volume: chroma.scale(['#a6bddb', '#045a8d']).domain([
+    flow_volume: chroma.scale(['#87CEEB', '#00008B']).domain([
       metrics.minFlow || 0, 
       metrics.maxFlow || 1
     ]),
@@ -94,15 +92,22 @@ const NetworkGraph = React.memo(() => {
     }
   }, [analysisMetric, metrics, marketIntegration, colorScales, theme, links]);
 
-  // Link width calculation
+  // Link width calculation for more visible lines
   const getLinkWidth = useCallback((link) => {
-    if (!metrics.maxFlow) return 0.5;
-    return Math.max(0.5, Math.min(5, (link.value / metrics.maxFlow) * 5));
+    if (!metrics.maxFlow) return 2;
+    return Math.max(2, Math.min(8, (link.value / metrics.maxFlow) * 8));
   }, [metrics.maxFlow]);
 
   // Node tooltip content
   const getNodeTooltip = useCallback((node) => {
-    if (!metrics.centrality?.centrality[node.id]) return node.name;
+    if (!metrics.centrality?.centrality[node.id]) {
+      return (
+        <div style={{ padding: '8px' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{node.name}</div>
+          <div>No metrics available</div>
+        </div>
+      );
+    }
 
     try {
       const integration = calculateMarketIntegrationScore(node.id, marketIntegration);
@@ -110,29 +115,70 @@ const NetworkGraph = React.memo(() => {
       const keyMarket = metrics.keyMarkets?.find(m => m.market === node.id);
       const networkMetrics = metrics.networkAnalysis?.markets[node.id];
 
-      return `
-        <div style="padding: 8px;">
-          <div style="font-weight: bold; margin-bottom: 4px;">${node.name}</div>
-          <div>Role: ${keyMarket ? keyMarket.role : 'Secondary'}</div>
-          <div>Integration: ${((integration.integrationScore || 0) * 100).toFixed(1)}%</div>
-          <div>Centrality: ${(metrics.centrality.centrality[node.id] || 0).toFixed(3)}</div>
-          <div>Flow Share: ${((influence.volumeShare || 0) * 100).toFixed(1)}%</div>
-          <div>Connections: ${influence.connections || 0}</div>
-          ${networkMetrics ? `<div>Volume: ${(networkMetrics.flows.totalVolume || 0).toFixed(2)}</div>` : ''}
+      return (
+        <div style={{ padding: '8px' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>{node.name}</div>
+          <div>Role: {keyMarket ? keyMarket.role : 'Secondary'}</div>
+          <div>Integration: {((integration.integrationScore || 0) * 100).toFixed(1)}%</div>
+          <div>Centrality: {(metrics.centrality.centrality[node.id] || 0).toFixed(3)}</div>
+          <div>Flow Share: {((influence.volumeShare || 0) * 100).toFixed(1)}%</div>
+          <div>Connections: {influence.connections || 0}</div>
+          {networkMetrics && (
+            <div>Volume: {(networkMetrics.flows.totalVolume || 0).toFixed(2)}</div>
+          )}
         </div>
-      `;
+      );
     } catch (error) {
       console.error('Error generating tooltip:', error);
-      return node.name;
+      return (
+        <div style={{ padding: '8px' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{node.name}</div>
+          <div>Error loading metrics</div>
+        </div>
+      );
     }
   }, [metrics, marketIntegration, links]);
 
-  // Graph zoom handling
-  const handleEngineStop = useCallback(() => {
-    if (fgRef.current) {
-      fgRef.current.zoomToFit(400);
-    }
-  }, []);
+  // Legend component
+  const Legend = () => (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: 2,
+        borderRadius: 1,
+        zIndex: 1000,
+        boxShadow: 1,
+        maxWidth: 300
+      }}
+    >
+      <Typography variant="subtitle2" gutterBottom>
+        {analysisMetric === 'market_integration' && 'Market Integration'}
+        {analysisMetric === 'centrality' && 'Market Centrality'}
+        {analysisMetric === 'flow_volume' && 'Flow Volume'}
+      </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: colorScales[analysisMetric](1).hex() }} />
+          <Typography variant="caption">High</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: colorScales[analysisMetric](0.5).hex() }} />
+          <Typography variant="caption">Medium</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: colorScales[analysisMetric](0).hex() }} />
+          <Typography variant="caption">Low</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+          <Box sx={{ width: 30, height: 4, bgcolor: theme.palette.grey[600] }} />
+          <Typography variant="caption">Trade Flow</Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
 
   if (error) {
     return (
@@ -209,22 +255,55 @@ const NetworkGraph = React.memo(() => {
 
         <Grid item xs={12}>
           <Box sx={{ height: 600, position: 'relative' }}>
-            <ForceGraph2D
-              ref={fgRef}
-              graphData={{ nodes, links }}
-              nodeColor={getNodeColor}
-              linkColor={() => theme.palette.grey[400]}
-              nodeLabel={getNodeTooltip}
-              linkWidth={getLinkWidth}
-              nodeRelSize={6}
-              linkDirectionalParticles={2}
-              linkDirectionalParticleSpeed={(d) => d.value * 0.0001}
-              d3VelocityDecay={0.3}
-              cooldownTicks={100}
-              onEngineStop={handleEngineStop}
-              enableNodeDrag={true}
-              enableZoomPanInteraction={true}
-            />
+            <MapContainer
+              center={[15.3694, 44.191]}
+              zoom={6}
+              style={{ height: '100%', width: '100%' }}
+              ref={mapRef}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; OpenStreetMap contributors'
+              />
+              
+              {/* Draw links with increased visibility */}
+              {links.map((link, index) => {
+                const sourceNode = nodes.find(n => n.id === link.source);
+                const targetNode = nodes.find(n => n.id === link.target);
+                if (!sourceNode || !targetNode) return null;
+
+                return (
+                  <Polyline
+                    key={`link-${index}`}
+                    positions={[
+                      [sourceNode.y, sourceNode.x],
+                      [targetNode.y, targetNode.x]
+                    ]}
+                    color={theme.palette.grey[600]}
+                    weight={getLinkWidth(link)}
+                    opacity={0.8}
+                  />
+                );
+              })}
+
+              {/* Draw nodes with increased size */}
+              {nodes.map((node) => (
+                <CircleMarker
+                  key={node.id}
+                  center={[node.y, node.x]}
+                  radius={10}
+                  fillColor={getNodeColor(node)}
+                  color="#fff"
+                  weight={2}
+                  fillOpacity={0.9}
+                >
+                  <Popup>
+                    {getNodeTooltip(node)}
+                  </Popup>
+                </CircleMarker>
+              ))}
+            </MapContainer>
+            <Legend />
           </Box>
         </Grid>
 
@@ -260,6 +339,48 @@ const NetworkGraph = React.memo(() => {
                   </Typography>
                 </Grid>
               </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                About This Visualization
+              </Typography>
+              <Typography variant="body2" paragraph>
+                This tool visualizes the market network structure in Yemen, showing how different markets are connected through trade flows and their relative importance in the network.
+              </Typography>
+              <Typography variant="subtitle2" gutterBottom>
+                Key Features:
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" paragraph>
+                    <strong>Market Integration:</strong> Shows how well each market is integrated with others. 
+                    Redder colors indicate higher integration levels, meaning the market prices move more closely 
+                    with other markets.
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" paragraph>
+                    <strong>Market Centrality:</strong> Indicates how important each market is in the network. 
+                    Darker green colors show markets that are more central and influential in the trade network.
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" paragraph>
+                    <strong>Flow Volume:</strong> Represents the volume of trade flows. Line thickness shows 
+                    the strength of trade connections, while darker blue colors indicate markets with higher 
+                    total trade volumes.
+                  </Typography>
+                </Grid>
+              </Grid>
+              <Typography variant="body2" paragraph>
+                Use the controls above to switch between different metrics and adjust the flow threshold 
+                to focus on stronger trade connections. Click on any market for detailed statistics.
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
