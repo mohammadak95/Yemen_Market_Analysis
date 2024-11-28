@@ -2,6 +2,7 @@
 
 import { createSelector } from 'reselect';
 import _ from 'lodash';
+import { transformRegionName } from '../components/analysis/spatial-analysis/utils/spatialUtils';
 
 // Base selectors with proper memoization
 const selectSpatialSlice = (state) => state.spatial || {};
@@ -33,12 +34,12 @@ export const selectSpatialAutocorrelation = createSelector(
     try {
       const autocorrelation = data.spatialAutocorrelation || {};
       return {
-        global: autocorrelation.global || { moran_i: 0, p_value: 1 },
+        global: autocorrelation.global || { moran_i: 0, p_value: 1, z_score: null, significance: false },
         local: autocorrelation.local || {}
       };
     } catch (error) {
       console.error('Error selecting spatial autocorrelation:', error);
-      return { global: { moran_i: 0, p_value: 1 }, local: {} };
+      return { global: { moran_i: 0, p_value: 1, z_score: null, significance: false }, local: {} };
     }
   }
 );
@@ -97,8 +98,8 @@ export const selectUnifiedGeometry = createSelector(
             },
             properties: {
               ...polygon.properties,
-              id: polygon.properties?.shapeISO,
-              region_id: transformRegionName(polygon.properties?.normalizedName),
+              id: polygon.properties?.shapeISO || polygon.properties?.region_id || polygon.properties?.name,
+              region_id: transformRegionName(polygon.properties?.normalizedName || polygon.properties?.region_id || polygon.properties?.name),
               feature_type: 'polygon',
             },
           }))
@@ -117,8 +118,8 @@ export const selectUnifiedGeometry = createSelector(
             },
             properties: {
               ...point.properties,
-              id: transformRegionName(point.properties?.normalizedName),
-              region_id: transformRegionName(point.properties?.normalizedName),
+              id: transformRegionName(point.properties?.normalizedName || point.properties?.region_id || point.properties?.name),
+              region_id: transformRegionName(point.properties?.normalizedName || point.properties?.region_id || point.properties?.name),
               feature_type: 'point',
             },
           }))
@@ -423,5 +424,22 @@ export const selectSpatialDataOptimized = createSelector(
       console.error('Error creating optimized spatial data:', error);
       return null;
     }
+  }
+);
+
+export const selectAutocorrelationMetrics = createSelector(
+  [selectSpatialAutocorrelation],
+  (autocorrelation) => {
+    if (!autocorrelation?.local) return null;
+
+    const clusters = Object.values(autocorrelation.local);
+    return {
+      highHigh: clusters.filter(c => c.cluster_type === 'high-high').length,
+      lowLow: clusters.filter(c => c.cluster_type === 'low-low').length,
+      highLow: clusters.filter(c => c.cluster_type === 'high-low').length,
+      lowHigh: clusters.filter(c => c.cluster_type === 'low-high').length,
+      notSignificant: clusters.filter(c => c.cluster_type === 'not-significant').length,
+      totalClusters: clusters.length
+    };
   }
 );

@@ -1,6 +1,6 @@
 // src/components/analysis/spatial-analysis/components/flows/FlowNetworkAnalysis.js
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Paper,
   Box,
@@ -17,12 +17,11 @@ import FlowMap from './FlowMap';
 import FlowMetricsPanel from './FlowMetricsPanel';
 import { useFlowAnalysis } from '../../hooks/useFlowAnalysis';
 import { useSelector } from 'react-redux';
-import { selectFlowsWithCoordinates, selectMarketIntegration } from '../../../../../selectors/optimizedSelectors';
-import { selectGeometryData } from '../../../../../slices/spatialSlice';
+import { selectMarketFlows, selectMarketIntegration, selectGeometryData } from '../../../../../selectors/optimizedSelectors';
 
 const FlowNetworkAnalysis = () => {
   const theme = useTheme();
-  const flows = useSelector(selectFlowsWithCoordinates);
+  const flows = useSelector(selectMarketFlows);
   const marketIntegration = useSelector(selectMarketIntegration);
   const geometry = useSelector(selectGeometryData);
 
@@ -31,8 +30,8 @@ const FlowNetworkAnalysis = () => {
   const [timeAggregation, setTimeAggregation] = useState('monthly'); // 'daily', 'weekly', 'monthly'
 
   const { flowMetrics, networkStats, timeSeriesFlows, filteredFlows } = useFlowAnalysis(
-    flows, 
-    marketIntegration, 
+    flows,
+    marketIntegration,
     flowThreshold,
     metricType
   );
@@ -40,6 +39,11 @@ const FlowNetworkAnalysis = () => {
   const handleThresholdChange = (event, newValue) => {
     setFlowThreshold(newValue);
   };
+
+  // Calculate the maximum value for the slider based on the current metricType
+  const maxFlowValue = useMemo(() => {
+    return Math.max(...flows.map(flow => flow[metricType] || 0), 100);
+  }, [flows, metricType]);
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -82,7 +86,7 @@ const FlowNetworkAnalysis = () => {
               <Slider
                 value={flowThreshold}
                 min={0}
-                max={Math.max(...flows.map(flow => flow[metricType])) || 100}
+                max={maxFlowValue}
                 onChange={handleThresholdChange}
                 valueLabelDisplay="auto"
                 aria-label="Flow threshold"
@@ -93,13 +97,11 @@ const FlowNetworkAnalysis = () => {
 
         {/* Map */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2 }}>
-            <FlowMap
-              flows={filteredFlows}
-              metricType={metricType}
-              geometry={geometry}
-            />
-          </Paper>
+          <FlowMap
+            visualizationMode="flows"
+            metricType={metricType}
+            flowThreshold={flowThreshold}
+          />
         </Grid>
 
         {/* Metrics Panel */}
@@ -116,4 +118,4 @@ const FlowNetworkAnalysis = () => {
   );
 };
 
-export default FlowNetworkAnalysis;
+export default React.memo(FlowNetworkAnalysis);

@@ -1,6 +1,9 @@
+// src/components/analysis/spatial-analysis/components/autocorrelation/SpatialAutocorrelationMap.js
+
 import React, { useMemo } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { Box, Typography, Paper, Alert } from '@mui/material';
+import PropTypes from 'prop-types';
 import { scaleSequential } from 'd3-scale';
 import { interpolateRdYlBu } from 'd3-scale-chromatic';
 import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
@@ -42,9 +45,17 @@ const SpatialAutocorrelationMap = ({
   const colorScale = useMemo(() => {
     if (!autocorrelationData) return null;
 
-    const values = Object.values(autocorrelationData).map(d => d[selectedMetric]);
+    const values = Object.values(autocorrelationData).map(d => d[selectedMetric]).filter(v => v !== null && v !== undefined);
+    if (values.length === 0) return null;
+
     const max = Math.max(...values);
     const min = Math.min(...values);
+
+    // Avoid same min and max
+    if (min === max) {
+      return scaleSequential(interpolateRdYlBu)
+        .domain([min - 1, max + 1]);
+    }
 
     return scaleSequential(interpolateRdYlBu)
       .domain([min, max]);
@@ -69,13 +80,17 @@ const SpatialAutocorrelationMap = ({
     const normalizedName = feature.properties.normalizedName;
     const displayName = feature.properties.originalName || normalizedName;
     const data = autocorrelationData?.[normalizedName];
-    
+
     if (data) {
+      const moranI = data.moran_i !== undefined ? data.moran_i.toFixed(3) : 'N/A';
+      const pValue = data.p_value !== null && data.p_value !== undefined ? data.p_value.toFixed(3) : 'N/A';
+      const zScore = data.z_score !== undefined ? data.z_score.toFixed(3) : 'N/A';
+      
       layer.bindTooltip(`
         <strong>${displayName}</strong><br/>
-        Moran's I: ${data.moran_i?.toFixed(3) || 'N/A'}<br/>
-        P-value: ${data.p_value?.toFixed(3) || 'N/A'}<br/>
-        Z-score: ${data.z_score?.toFixed(3) || 'N/A'}
+        Moran's I: ${moranI}<br/>
+        P-value: ${pValue}<br/>
+        Z-score: ${zScore}
       `);
     }
   };
@@ -83,7 +98,7 @@ const SpatialAutocorrelationMap = ({
   if (!processedGeometry || !colorScale) {
     return (
       <Alert severity="warning" sx={{ m: 2 }}>
-        Unable to render spatial autocorrelation map due to invalid data.
+        Unable to render spatial autocorrelation map due to invalid or incomplete data.
       </Alert>
     );
   }
@@ -134,6 +149,12 @@ const SpatialAutocorrelationMap = ({
       </Paper>
     </Box>
   );
+};
+
+SpatialAutocorrelationMap.propTypes = {
+  geometry: PropTypes.object.isRequired,
+  autocorrelationData: PropTypes.object.isRequired,
+  selectedMetric: PropTypes.string
 };
 
 export default React.memo(SpatialAutocorrelationMap);

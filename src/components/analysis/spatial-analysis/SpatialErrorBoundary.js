@@ -1,3 +1,5 @@
+// src/components/analysis/spatial-analysis/SpatialErrorBoundary.js
+
 import React from 'react';
 import { 
   Typography, 

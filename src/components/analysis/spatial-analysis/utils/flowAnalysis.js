@@ -20,7 +20,7 @@ export const calculateFlowMetrics = (flows, threshold) => {
     maxFlow: _.maxBy(filteredFlows, 'total_flow')?.total_flow || 0,
     flowCount: filteredFlows.length,
     flowDensity: filteredFlows.length / (flows.length || 1),
-    uniqueMarkets: _.uniq(filteredFlows.flatMap(f => [f.source, f.target])).length,
+    uniqueMarkets: _.uniq(filteredFlows.flatMap(f => [f.sourceName, f.targetName])).length,
     topFlows
   };
 };
@@ -32,8 +32,8 @@ export const calculateFlowMetrics = (flows, threshold) => {
  * @returns {Object} Network statistics
  */
 export const computeNetworkStatistics = (flows, marketIntegration) => {
-  const markets = _.uniq(flows.flatMap(f => [f.source, f.target]));
-  const connections = flows.map(f => ({ source: f.source, target: f.target }));
+  const markets = _.uniq(flows.flatMap(f => [f.sourceName, f.targetName]));
+  const connections = flows.map(f => ({ source: f.sourceName, target: f.targetName }));
   const totalVolume = _.sumBy(flows, 'total_flow');
   
   return {
@@ -70,7 +70,8 @@ export const aggregateTimeSeriesFlows = (flows) => {
   const weeklyFlows = _.chain(dailyFlows)
     .groupBy(flow => {
       const date = new Date(flow.date);
-      return `${date.getFullYear()}-W${Math.ceil((date.getDate() + date.getDay()) / 7)}`;
+      const weekNumber = getWeekNumber(date);
+      return `${date.getFullYear()}-W${weekNumber}`;
     })
     .map((weekFlows, week) => ({
       date: week,
@@ -110,7 +111,7 @@ const calculateIntegrationScore = (flows, marketIntegration) => {
   if (!marketIntegration) return 0;
   
   const weightedScore = flows.reduce((score, flow) => {
-    const integration = marketIntegration[`${flow.source}-${flow.target}`] || 0;
+    const integration = marketIntegration[`${flow.sourceName}-${flow.targetName}`] || 0;
     return score + (flow.total_flow * integration);
   }, 0);
   
@@ -127,8 +128,8 @@ const calculateCentralityMetrics = (flows, markets) => {
   const metrics = {};
   
   markets.forEach(market => {
-    const outgoing = flows.filter(f => f.source === market);
-    const incoming = flows.filter(f => f.target === market);
+    const outgoing = flows.filter(f => f.sourceName === market);
+    const incoming = flows.filter(f => f.targetName === market);
     
     metrics[market] = {
       outDegree: outgoing.length,
@@ -167,7 +168,7 @@ const calculateBetweenness = (market, flows) => {
  */
 const findAllPaths = (flows) => {
   const paths = [];
-  const markets = _.uniq(flows.flatMap(f => [f.source, f.target]));
+  const markets = _.uniq(flows.flatMap(f => [f.sourceName, f.targetName]));
   
   markets.forEach(source => {
     markets.forEach(target => {
@@ -186,21 +187,33 @@ const findAllPaths = (flows) => {
  * @param {string} source - Source market
  * @param {string} target - Target market
  * @param {Array} flows - Array of flow data
+ * @param {Set} visited - Set of visited markets
  * @returns {Array|null} Path if found, null otherwise
  */
 const findPath = (source, target, flows, visited = new Set()) => {
   if (visited.has(source)) return null;
   visited.add(source);
   
-  const directFlow = flows.find(f => f.source === source && f.target === target);
+  const directFlow = flows.find(f => f.sourceName === source && f.targetName === target);
   if (directFlow) return [source, target];
   
   for (const flow of flows) {
-    if (flow.source === source) {
-      const path = findPath(flow.target, target, flows, visited);
+    if (flow.sourceName === source) {
+      const path = findPath(flow.targetName, target, flows, visited);
       if (path) return [source, ...path];
     }
   }
   
   return null;
+};
+
+/**
+ * Get week number for a given date
+ * @param {Date} date - Date object
+ * @returns {number} Week number
+ */
+const getWeekNumber = (date) => {
+  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+  const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 };

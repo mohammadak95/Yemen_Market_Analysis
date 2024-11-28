@@ -1,17 +1,21 @@
 // src/components/analysis/spatial-analysis/SpatialMap.js
+
 import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { getColorScale } from '../../../utils/colorScales';
 import { MAP_SETTINGS } from '../../../constants';
 import { safeGeoJSONProcessor } from '../../../utils/geoJSONProcessor';
 import { transformRegionName } from './utils/spatialUtils';
+import { useSelector } from 'react-redux';
+import { selectVisualizationData, selectVisualizationMode, selectGeometryData } from '../../../selectors/optimizedSelectors';
 
 const SpatialMap = ({ 
-  visualizationData, 
-  visualizationMode, 
-  onRegionClick,
-  mapSettings = MAP_SETTINGS 
+  onRegionClick
 }) => {
+  const visualizationData = useSelector(selectVisualizationData);
+  const visualizationMode = useSelector(selectVisualizationMode);
+  const geometry = useSelector(selectGeometryData);
+
   // Process geometry with standardized naming
   const processedData = useMemo(() => {
     if (!visualizationData?.geometry) return null;
@@ -54,13 +58,13 @@ const SpatialMap = ({
 
   return (
     <MapContainer
-      center={mapSettings.DEFAULT_CENTER}
-      zoom={mapSettings.DEFAULT_ZOOM}
+      center={MAP_SETTINGS.DEFAULT_CENTER}
+      zoom={MAP_SETTINGS.DEFAULT_ZOOM}
       style={{ height: '100%', width: '100%' }}
     >
       <TileLayer
-        url={mapSettings.TILE_LAYER}
-        attribution={mapSettings.ATTRIBUTION}
+        url={MAP_SETTINGS.TILE_LAYER}
+        attribution={MAP_SETTINGS.ATTRIBUTION}
       />
       <GeoJSON
         data={processedData.geometry}

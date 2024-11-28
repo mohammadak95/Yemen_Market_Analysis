@@ -66,7 +66,7 @@ const FlowMetricsPanel = ({ flowMetrics, networkStats, timeSeriesFlows, timeAggr
             <TableBody>
               {(flowMetrics?.topFlows || []).map((flow, index) => (
                 <TableRow key={index}>
-                  <TableCell>{flow.source} → {flow.target}</TableCell>
+                  <TableCell>{flow.sourceName} → {flow.targetName}</TableCell>
                   <TableCell align="right">{flow.total_flow.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
@@ -105,8 +105,8 @@ FlowMetricsPanel.propTypes = {
     flowDensity: PropTypes.number,
     uniqueMarkets: PropTypes.number,
     topFlows: PropTypes.arrayOf(PropTypes.shape({
-      source: PropTypes.string,
-      target: PropTypes.string,
+      sourceName: PropTypes.string,
+      targetName: PropTypes.string,
       total_flow: PropTypes.number
     }))
   }).isRequired,

@@ -1,261 +1,200 @@
 // src/components/analysis/spatial-analysis/components/autocorrelation/MoranScatterPlot.js
 
-import React, { useMemo, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useMemo } from 'react';
 import {
-  ResponsiveContainer,
   ScatterChart,
   Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  ResponsiveContainer,
   ReferenceLine,
-  Label,
+  Legend
 } from 'recharts';
-import { Paper, Typography, Box, useTheme } from '@mui/material';
-import chroma from 'chroma-js';
-import {
-  selectTimeSeriesData,
-  selectSpatialAutocorrelation,
-  selectGeometryData,
-} from '../../../../../selectors/optimizedSelectors';
-import { calculateSpatialLag } from '../../utils/spatialAnalysis';
-import { createWeightsMatrix } from '../../utils/spatialUtils';
-import { normalizeCoordinates } from '../../utils/coordinateHandler';
+import { Paper, Typography, Box } from '@mui/material';
+import PropTypes from 'prop-types';
 
-const MoranScatterPlot = React.memo(() => {
-  const theme = useTheme();
-  const timeSeriesData = useSelector(selectTimeSeriesData);
-  const moranResults = useSelector(selectSpatialAutocorrelation);
-  const geometryData = useSelector(selectGeometryData);
+// Consistent color scheme with LISAMap
+const CLUSTER_COLORS = {
+  'high-high': '#ff0000',
+  'low-low': '#0000ff',
+  'high-low': '#ff9900',
+  'low-high': '#00ff00',
+  'not-significant': '#999999'
+};
 
-  // Generate dynamic color scale using chroma.js
-  const clusterColors = useMemo(() => ({
-    'high-high': chroma.scale(['#fdd49e', '#d7301f'])(0.8).hex(),
-    'low-low': chroma.scale(['#a6bddb', '#045a8d'])(0.8).hex(),
-    'high-low': chroma.scale(['#fed976', '#fd8d3c'])(0.8).hex(),
-    'low-high': chroma.scale(['#c7e9b4', '#31a354'])(0.8).hex(),
-    'not-significant': '#dddddd',
-  }), []);
-
+const MoranScatterPlot = ({ data, timeSeriesData }) => {
   const scatterData = useMemo(() => {
-    if (!timeSeriesData?.length || !moranResults || !geometryData?.unified) return [];
+    if (!data?.local || !timeSeriesData?.length) return [];
+    
+    try {
+      const processedData = Object.entries(data.local).map(([region, metrics]) => {
+        // Find the corresponding time series data for this region
+        const regionData = timeSeriesData.find(d => d.region === region);
+        if (!regionData) return null;
 
-    const unifiedGeoJSON = geometryData.unified;
+        // Handle missing p-value
+        const hasClusterType = Boolean(metrics.cluster_type);
 
-    // Ensure consistent properties in GeoJSON features
-    const featuresWithDefaults = unifiedGeoJSON.features.map(feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        population: feature.properties.population || 0,
-        data: feature.properties.data || {},
-        // Use 'normalizedName' instead of 'region_id'
-        center: normalizeCoordinates(feature, feature.properties.normalizedName) || null,
-      }
-    }));
+        return {
+          name: region,
+          x: regionData.standardized_price || 0,
+          y: metrics.local_i || 0,
+          price: regionData.price || 0,
+          localI: metrics.local_i,
+          cluster: metrics.cluster_type || 'not-significant',
+          significance: hasClusterType, // Consider significant if it has a cluster type
+          color: CLUSTER_COLORS[metrics.cluster_type || 'not-significant']
+        };
+      }).filter(Boolean);
 
-    const updatedGeoJSON = { ...unifiedGeoJSON, features: featuresWithDefaults };
-
-    // Create weights matrix
-    const weights = createWeightsMatrix(updatedGeoJSON);
-
-    // Calculate standardized prices
-    const prices = timeSeriesData.map(d => d.usdPrice);
-    const meanPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const stdPrice = Math.sqrt(
-      prices.reduce((sum, p) => sum + Math.pow(p - meanPrice, 2), 0) / prices.length
-    );
-    const standardizedPrices = prices.map(p => (p - meanPrice) / stdPrice);
-
-    // Calculate spatial lags using the weights matrix
-    const spatialLags = calculateSpatialLag(timeSeriesData, weights);
-    const meanLag = spatialLags.reduce((a, b) => a + b, 0) / spatialLags.length;
-    const stdLag = Math.sqrt(
-      spatialLags.reduce((sum, l) => sum + Math.pow(l - meanLag, 2), 0) / spatialLags.length
-    );
-    const standardizedLags = spatialLags.map(l => (l - meanLag) / stdLag);
-
-    // Create scatter plot data
-    return timeSeriesData.map((d, i) => ({
-      name: d.region,
-      x: standardizedPrices[i],
-      y: standardizedLags[i],
-      // Use 'normalizedName' to match the keys in moranResults.local
-      cluster: moranResults.local[d.normalizedName]?.cluster_type || 'not-significant',
-      price: d.usdPrice,
-      spatialLag: spatialLags[i],
-      significance: moranResults.local[d.normalizedName]?.['p-value'] < 0.05,
-    }));
-  }, [timeSeriesData, moranResults, geometryData]);
-
-  const quadrantLabels = useMemo(() => ({
-    'high-high': 'Q1: High-High (Market Hotspots)',
-    'low-low': 'Q3: Low-Low (Market Cold Spots)',
-    'high-low': 'Q4: High-Low (Market Outliers)',
-    'low-high': 'Q2: Low-High (Market Outliers)',
-  }), []);
-
-  const CustomTooltip = useCallback(({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-
-    const point = payload[0].payload;
-    return (
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          p: 1.5,
-          border: '1px solid rgba(0,0,0,0.1)',
-          borderRadius: 1,
-          boxShadow: theme.shadows[2],
-        }}
-      >
-        <Typography variant="subtitle2" gutterBottom>
-          <strong>{point.name}</strong>
-        </Typography>
-        <Typography variant="body2">
-          Price: ${point.price.toFixed(2)}
-        </Typography>
-        <Typography variant="body2">
-          Spatial Lag: ${point.spatialLag.toFixed(2)}
-        </Typography>
-        <Typography variant="body2">
-          Pattern: {quadrantLabels[point.cluster] || 'Not Significant'}
-        </Typography>
-        {point.significance && (
-          <Typography variant="body2" color="primary">
-            Statistically Significant
-          </Typography>
-        )}
-      </Box>
-    );
-  }, [theme, quadrantLabels]);
-
-  const renderQuadrantLabels = useCallback(() => {
-    if (!scatterData.length) return null;
-
-    return (
-      <>
-        <text
-          x="75%"
-          y="10%"
-          textAnchor="middle"
-          fill={theme.palette.text.secondary}
-        >
-          {quadrantLabels['high-low']}
-        </text>
-        <text
-          x="25%"
-          y="10%"
-          textAnchor="middle"
-          fill={theme.palette.text.secondary}
-        >
-          {quadrantLabels['high-high']}
-        </text>
-        <text
-          x="25%"
-          y="90%"
-          textAnchor="middle"
-          fill={theme.palette.text.secondary}
-        >
-          {quadrantLabels['low-low']}
-        </text>
-        <text
-          x="75%"
-          y="90%"
-          textAnchor="middle"
-          fill={theme.palette.text.secondary}
-        >
-          {quadrantLabels['low-high']}
-        </text>
-      </>
-    );
-  }, [scatterData, quadrantLabels, theme.palette.text.secondary]);
-
-  const interpretMoranScatter = useCallback((moranI, dataPoints) => {
-    const significantPoints = dataPoints.filter(d => d.significance);
-    const hotspots = significantPoints.filter(d => d.cluster === 'high-high').length;
-    const coldspots = significantPoints.filter(d => d.cluster === 'low-low').length;
-    const outliers = significantPoints.filter(
-      d => d.cluster === 'high-low' || d.cluster === 'low-high'
-    ).length;
-
-    if (moranI > 0.3) {
-      return `Strong spatial clustering is observed with ${hotspots} price hotspots and ${coldspots} cold spots, indicating distinct market regions.`;
-    } else if (moranI > 0) {
-      return `Moderate spatial patterns show ${hotspots + coldspots} clustered markets and ${outliers} outliers, suggesting partial market integration.`;
-    } else if (moranI > -0.3) {
-      return `Weak spatial patterns with ${outliers} market outliers indicate limited price transmission between regions.`;
+      return processedData;
+    } catch (error) {
+      console.error('Error processing scatter data:', error);
+      return [];
     }
-    return `Strong negative spatial patterns suggest market fragmentation with ${outliers} distinct price outliers.`;
-  }, []);
+  }, [data, timeSeriesData]);
 
-  if (!scatterData.length || !moranResults) {
+  if (!scatterData.length) {
     return (
-      <Paper sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <Typography variant="body1" color="text.secondary">
-          Insufficient data for Moran's I analysis
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="body1" color="error">
+          No data available for Moran scatter plot
         </Typography>
       </Paper>
     );
   }
 
-  const moranI = moranResults.global?.moran_i || 0;
-  const interpretation = interpretMoranScatter(moranI, scatterData);
+  // Group data by cluster type for separate scatter plots
+  const groupedData = Object.keys(CLUSTER_COLORS).reduce((acc, clusterType) => {
+    acc[clusterType] = scatterData.filter(d => d.cluster === clusterType);
+    return acc;
+  }, {});
 
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
         Moran Scatter Plot
       </Typography>
-      <ResponsiveContainer width="100%" height={400}>
-        <ScatterChart
-          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-        >
-          <CartesianGrid />
-          <XAxis 
-            type="number" 
-            dataKey="x" 
-            name="Standardized Price" 
-            label={{ value: 'Standardized Price', position: 'insideBottomRight', offset: -10 }} 
-          />
-          <YAxis 
-            type="number" 
-            dataKey="y" 
-            name="Standardized Spatial Lag" 
-            label={{ value: 'Standardized Spatial Lag', angle: -90, position: 'insideLeft', offset: 10 }} 
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <ReferenceLine x={0} y={0} stroke={theme.palette.text.secondary} />
-          <Scatter 
-            name="Regions" 
-            data={scatterData} 
-            fill="#8884d8" 
-            shape="circle"
-          >
-            {scatterData.map((entry, index) => (
-              <circle
-                key={`circle-${index}`}
-                cx={0}
-                cy={0}
-                r={5}
-                fill={clusterColors[entry.cluster] || '#8884d8'}
-                stroke={entry.significance ? '#000' : 'none'}
-                strokeWidth={entry.significance ? 1 : 0}
-              />
+      
+      <Box sx={{ height: 400 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              type="number"
+              dataKey="x"
+              name="Standardized Price"
+              label={{ value: 'Standardized Price', position: 'bottom' }}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              name="Local Moran's I"
+              label={{ value: "Local Moran's I", angle: -90, position: 'left' }}
+            />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const point = payload[0].payload;
+                return (
+                  <Box sx={{ 
+                    bgcolor: 'background.paper', 
+                    p: 1, 
+                    border: 1,
+                    borderColor: 'grey.300',
+                    borderRadius: 1,
+                    boxShadow: 1
+                  }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                      {point.name}
+                    </Typography>
+                    <Typography variant="body2">
+                      Price: ${point.price.toFixed(2)}
+                    </Typography>
+                    <Typography variant="body2">
+                      Local Moran's I: {point.localI !== null ? point.localI.toFixed(3) : 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ 
+                      color: point.color,
+                      fontWeight: 'bold'
+                    }}>
+                      Pattern: {point.cluster.replace('-', ' ').toUpperCase()}
+                    </Typography>
+                  </Box>
+                );
+              }}
+            />
+            <ReferenceLine x={0} stroke="#666" strokeDasharray="3 3" />
+            <ReferenceLine y={0} stroke="#666" strokeDasharray="3 3" />
+            <Legend />
+            
+            {/* Render a separate scatter for each cluster type */}
+            {Object.entries(groupedData).map(([clusterType, clusterData]) => (
+              clusterData.length > 0 && (
+                <Scatter
+                  key={clusterType}
+                  name={clusterType.replace('-', ' ').toUpperCase()}
+                  data={clusterData}
+                  fill={CLUSTER_COLORS[clusterType]}
+                  shape="circle"
+                />
+              )
             ))}
-          </Scatter>
-          {renderQuadrantLabels()}
-        </ScatterChart>
-      </ResponsiveContainer>
+          </ScatterChart>
+        </ResponsiveContainer>
+      </Box>
+
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body1">
-          {interpretation}
+        <Typography variant="body2" color="text.secondary">
+          This plot shows the relationship between standardized prices (x-axis) and their spatial lag
+          (y-axis). Points are color-coded by their spatial pattern:
         </Typography>
+        <Box sx={{ mt: 1, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {Object.entries(CLUSTER_COLORS).map(([type, color]) => (
+            <Typography 
+              key={type} 
+              variant="body2" 
+              sx={{ 
+                color,
+                display: 'flex',
+                alignItems: 'center',
+                '&::before': {
+                  content: '""',
+                  display: 'inline-block',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: color,
+                  marginRight: 1
+                }
+              }}
+            >
+              {type.replace('-', ' ').toUpperCase()}
+            </Typography>
+          ))}
+        </Box>
       </Box>
     </Paper>
   );
-});
+};
+
+MoranScatterPlot.propTypes = {
+  data: PropTypes.shape({
+    global: PropTypes.shape({
+      moran_i: PropTypes.number,
+      p_value: PropTypes.number,
+      z_score: PropTypes.number,
+      significance: PropTypes.bool
+    }),
+    local: PropTypes.object
+  }),
+  timeSeriesData: PropTypes.arrayOf(PropTypes.shape({
+    region: PropTypes.string,
+    price: PropTypes.number,
+    standardized_price: PropTypes.number
+  }))
+};
 
 export default MoranScatterPlot;

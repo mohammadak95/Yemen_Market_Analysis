@@ -3,6 +3,62 @@ import { backgroundMonitor } from '../../../../utils/backgroundMonitor';
 
 const DEBUG = process.env.NODE_ENV === 'development';
 
+export const calculateLocalMorans = (data, geometry) => {
+  const metric = backgroundMonitor.startMetric('local-morans-calculation');
+
+  try {
+    // Create spatial weights matrix
+    const weights = createWeightsMatrix(geometry);
+
+    // Calculate global statistics
+    const prices = data.map(d => d.avgUsdPrice);
+    const meanPrice = _.mean(prices);
+    const variance = _.meanBy(prices, p => Math.pow(p - meanPrice, 2));
+
+    // Calculate local Moran's I for each region
+    const clusters = {};
+    let globalI = 0;
+    let globalN = 0;
+
+    data.forEach((region, i) => {
+      const localI = calculateLocalI(
+        region,
+        data,
+        weights,
+        meanPrice,
+        variance
+      );
+
+      if (localI) {
+        clusters[region.region] = {
+          local_i: localI.i,
+          z_score: localI.z,
+          p_value: localI.p,
+          cluster_type: determineClusterType(localI),
+          significance: localI.p < 0.05
+        };
+
+        globalI += localI.i;
+        globalN++;
+      }
+    });
+
+    const results = {
+      clusters,
+      globalI: globalI / globalN,
+      zScore: calculateGlobalZ(globalI / globalN, data.length),
+      pValue: calculatePValue(globalI / globalN, data.length)
+    };
+
+    metric.finish({ status: 'success' });
+    return results;
+
+  } catch (error) {
+    metric.finish({ status: 'error', error: error.message });
+    throw error;
+  }
+};
+
 /**
  * Calculate market coverage based on spatial data
  * @param {Object} spatialData - Spatial data object containing geometry and time series
@@ -91,70 +147,6 @@ export const calculateNorthSouthDisparity = (spatialData) => {
   } catch (error) {
     backgroundMonitor.logError('north-south-disparity-calculation', error);
     return 0;
-  }
-};
-
-/**
- * Calculate Local Indicators of Spatial Association (LISA)
- * @param {Array} data - Time series data array
- * @param {Object} geometry - GeoJSON geometry object
- * @returns {Object} LISA results by region
- */
-export const calculateLocalMorans = (data, geometry) => {
-  if (!data?.length || !geometry?.features) {
-    if (DEBUG) console.warn('Missing required data for LISA calculation');
-    return {};
-  }
-
-  try {
-    // Calculate robust statistics
-    const prices = data.map(d => d.avgUsdPrice).filter(p => p !== null && !isNaN(p));
-    const { mean, std } = calculateRobustStatistics(prices);
-    
-    // Standardize prices
-    const standardizedPrices = prices.map(p => (p - mean) / std);
-
-    // Create optimized weights matrix with distance decay
-    const weights = createWeightsMatrix(geometry, {
-      type: 'distance-decay',
-      bandwidth: calculateOptimalBandwidth(geometry)
-    });
-
-    // Calculate spatial lags with edge correction
-    const spatialLags = calculateSpatialLag(data, weights);
-    const results = {};
-
-    data.forEach((region, i) => {
-      if (!region.region || !weights[region.region]) return;
-
-      const { localI, expectedI, varianceI } = calculateLocalI(
-        standardizedPrices,
-        i,
-        weights[region.region],
-        weights
-      );
-
-      const zScore = (localI - expectedI) / Math.sqrt(varianceI);
-      const pValue = calculatePValue(zScore, localI, {
-        standardizedPrices,
-        weights,
-        iterations: 999
-      });
-
-      results[region.region] = {
-        local_i: localI,
-        z_score: zScore,
-        p_value: pValue,
-        ...determineClusterType(standardizedPrices[i], spatialLags[i], zScore, pValue),
-        variance: varianceI,
-        expected_i: expectedI
-      };
-    });
-
-    return results;
-  } catch (error) {
-    backgroundMonitor.logError('lisa-calculation', error);
-    return {};
   }
 };
 

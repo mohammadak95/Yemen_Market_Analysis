@@ -1,40 +1,47 @@
+// src/components/analysis/spatial-analysis/components/flows/FlowMap.js
+
 import React, { useMemo } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { useTheme } from '@mui/material/styles';
 import { safeGeoJSONProcessor } from '../../../../../utils/geoJSONProcessor';
 import { transformRegionName } from '../../utils/spatialUtils';
 import SpatialErrorBoundary from '../../SpatialErrorBoundary';
+import FlowLines from './FlowLines';
+import { useSelector } from 'react-redux';
+import { selectMarketFlows, selectMarketIntegration, selectGeometryData } from '../../../../../selectors/optimizedSelectors';
 
-const FlowMap = ({ 
-  geometry, 
-  flows, 
-  markets, 
-  metricType = 'totalFlow',
-  marketCoordinates 
+const FlowMap = ({
+  visualizationMode,
+  metricType = 'total_flow',
+  flowThreshold = 0
 }) => {
   const theme = useTheme();
+  const flows = useSelector(selectMarketFlows);
+  const marketIntegration = useSelector(selectMarketIntegration);
+  const geometry = useSelector(selectGeometryData);
 
   const regionStyle = {
     fillColor: theme.palette.background.default,
     weight: 1,
     opacity: 0.7,
     color: theme.palette.divider,
-    fillOpacity: 0.3
+    fillOpacity: 0.3,
   };
 
   // Process GeoJSON with safe preprocessing and name normalization
   const processedGeometry = useMemo(() => {
-    if (!geometry) return null;
-    
-    const processed = safeGeoJSONProcessor(geometry, 'flows');
+    if (!geometry?.unified) return null;
+
+    const processed = safeGeoJSONProcessor(geometry.unified, 'flows');
     if (!processed?.features) return null;
 
     return {
       ...processed,
-      features: processed.features.map(feature => {
-        const originalName = feature.properties.originalName || 
-                           feature.properties.region_id || 
-                           feature.properties.name;
+      features: processed.features.map((feature) => {
+        const originalName =
+          feature.properties.originalName ||
+          feature.properties.region_id ||
+          feature.properties.name;
         const normalizedName = transformRegionName(originalName);
 
         return {
@@ -42,24 +49,24 @@ const FlowMap = ({
           properties: {
             ...feature.properties,
             originalName,
-            normalizedName
-          }
+            normalizedName,
+          },
         };
-      })
+      }),
     };
   }, [geometry]);
 
-  // Calculate flow line properties with normalized names
-  const flowLines = useMemo(() => {
-    if (!flows || !marketCoordinates) return [];
+  // Filter and prepare flow lines based on the threshold
+  const filteredFlows = useMemo(() => {
+    if (!flows || !marketIntegration) return [];
 
     return flows
-      .filter(flow => flow[metricType] > 0)
-      .map(flow => {
-        const normalizedSource = transformRegionName(flow.source);
-        const normalizedTarget = transformRegionName(flow.target);
-        const sourceCoords = marketCoordinates[normalizedSource];
-        const targetCoords = marketCoordinates[normalizedTarget];
+      .filter((flow) => flow[metricType] >= flowThreshold)
+      .map((flow) => {
+        const normalizedSource = transformRegionName(flow.sourceName);
+        const normalizedTarget = transformRegionName(flow.targetName);
+        const sourceCoords = marketIntegration[normalizedSource]?.coordinates;
+        const targetCoords = marketIntegration[normalizedTarget]?.coordinates;
 
         if (!sourceCoords || !targetCoords) return null;
 
@@ -67,59 +74,14 @@ const FlowMap = ({
           ...flow,
           sourceCoords,
           targetCoords,
-          sourceName: markets?.[normalizedSource]?.originalName || flow.source,
-          targetName: markets?.[normalizedTarget]?.originalName || flow.target,
+          sourceName: flow.sourceName,
+          targetName: flow.targetName,
           normalizedSource,
-          normalizedTarget
+          normalizedTarget,
         };
       })
       .filter(Boolean);
-  }, [flows, marketCoordinates, metricType, markets]);
-
-  // Render flow lines with tooltips using original names
-  const renderFlowLines = () => {
-    return flowLines.map((flow, index) => {
-      const lineWidth = Math.log(flow[metricType] + 1) * 2;
-      
-      return (
-        <React.Fragment key={index}>
-          <CircleMarker
-            center={flow.sourceCoords}
-            radius={3}
-            color={theme.palette.primary.main}
-            fillColor={theme.palette.primary.light}
-            fillOpacity={0.7}
-          >
-            <Tooltip>
-              {flow.sourceName}
-            </Tooltip>
-          </CircleMarker>
-          <CircleMarker
-            center={flow.targetCoords}
-            radius={3}
-            color={theme.palette.secondary.main}
-            fillColor={theme.palette.secondary.light}
-            fillOpacity={0.7}
-          >
-            <Tooltip>
-              {flow.targetName}
-            </Tooltip>
-          </CircleMarker>
-          <svg>
-            <line
-              x1={flow.sourceCoords[0]}
-              y1={flow.sourceCoords[1]}
-              x2={flow.targetCoords[0]}
-              y2={flow.targetCoords[1]}
-              stroke={theme.palette.primary.main}
-              strokeWidth={lineWidth}
-              strokeOpacity={0.6}
-            />
-          </svg>
-        </React.Fragment>
-      );
-    });
-  };
+  }, [flows, marketIntegration, metricType, flowThreshold]);
 
   if (!processedGeometry) {
     return null;
@@ -128,7 +90,7 @@ const FlowMap = ({
   return (
     <SpatialErrorBoundary>
       <MapContainer
-        center={[15.5, 48]} // Yemen's approximate center
+        center={[15.5, 48]} // Adjust center based on your region
         zoom={6}
         style={{ height: '100%', width: '100%' }}
       >
@@ -136,17 +98,19 @@ const FlowMap = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
-        
-        <GeoJSON 
-          data={processedGeometry} 
+
+        <GeoJSON
+          data={processedGeometry}
           style={() => regionStyle}
           onEachFeature={(feature, layer) => {
-            const displayName = feature.properties.originalName || feature.properties.normalizedName;
+            const displayName =
+              feature.properties.originalName || feature.properties.normalizedName;
             layer.bindTooltip(displayName);
           }}
         />
-        
-        {renderFlowLines()}
+
+        {/* Render flow lines */}
+        <FlowLines flows={filteredFlows} metricType={metricType} />
       </MapContainer>
     </SpatialErrorBoundary>
   );

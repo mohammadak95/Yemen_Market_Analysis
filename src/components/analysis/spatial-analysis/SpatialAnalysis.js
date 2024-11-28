@@ -1,12 +1,18 @@
 // src/components/analysis/spatial-analysis/SpatialAnalysis.js
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { 
   Box, Paper, Tabs, Tab, Typography, Alert, Grid, 
-  Card, CardContent, CircularProgress, Dialog,
-  DialogTitle, DialogContent, DialogActions, Button
+  CircularProgress
 } from '@mui/material';
 import _ from 'lodash';
+
+// Correct imports for Dialog and related components from Material-UI
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 
 import {
   useSpatialAnalysisData,
@@ -31,6 +37,34 @@ import {
   calculateConflictImpact,
   calculateNorthSouthDisparity,
 } from './utils/spatialAnalysis';
+
+// Error boundary component for catching render errors
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Spatial Analysis Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Alert severity="error" sx={{ m: 2 }}>
+          <Typography variant="h6">Component Error</Typography>
+          <Typography>{this.state.error?.message || 'An unexpected error occurred'}</Typography>
+        </Alert>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const WelcomeDialog = ({ open, onClose }) => (
   <Dialog 
@@ -117,7 +151,7 @@ const SpatialAnalysis = React.memo(() => {
   const [timeWindow, setTimeWindow] = useState('6M');
   const [showWelcome, setShowWelcome] = useState(true);
   
-  // Use custom hooks for data access
+  // Use custom hooks for data access with proper error handling
   const { spatialData, loadingStatus, geometryData } = useSpatialAnalysisData();
   const { marketClusters, marketFlows, marketIntegration, timeSeriesData } = useMarketAnalysisData();
   const { mode: visualizationMode } = useVisualizationState();
@@ -126,7 +160,54 @@ const SpatialAnalysis = React.memo(() => {
   // Process clusters with error handling
   const { clusters: processedClusters, metrics: clusterMetrics } = useClusterEfficiency();
 
-  // Calculate key economic indicators with safety checks
+  // Debug log to verify data
+  console.log('Spatial Data:', {
+    spatialAutocorrelation: spatialData?.spatialAutocorrelation,
+    timeSeriesData: spatialData?.timeSeriesData,
+    geometryData
+  });
+
+  // Enhanced spatial autocorrelation handler with better validation
+  const getSpatialAutocorrelation = useCallback((data) => {
+    if (!data?.spatialAutocorrelation) {
+      console.warn('Missing spatialAutocorrelation in data:', data);
+      return {
+        global: { moran_i: 0, p_value: 1, z_score: null, significance: false },
+        local: {}
+      };
+    }
+
+    // Validate and transform the data structure we see in the logs
+    const { global, local } = data.spatialAutocorrelation;
+
+    // Debug log for validation
+    console.log('Processing spatial autocorrelation:', { global, local });
+
+    // Ensure global metrics exist with proper defaults
+    const validatedGlobal = {
+      moran_i: global?.moran_i ?? 0,
+      p_value: global?.p_value ?? 1,
+      z_score: global?.z_score ?? null,
+      significance: global?.significance ?? false
+    };
+
+    // Ensure local metrics exist and are properly formatted
+    const validatedLocal = local ? Object.entries(local).reduce((acc, [region, metrics]) => {
+      acc[region] = {
+        local_i: metrics?.local_i ?? 0,
+        p_value: metrics?.p_value ?? null,
+        cluster_type: metrics?.cluster_type ?? 'not-significant'
+      };
+      return acc;
+    }, {}) : {};
+
+    return {
+      global: validatedGlobal,
+      local: validatedLocal
+    };
+  }, []);
+
+  // Calculate key economic indicators with enhanced validation
   const economicIndicators = useMemo(() => {
     if (!spatialData || !timeSeriesData) return null;
 
@@ -139,115 +220,137 @@ const SpatialAnalysis = React.memo(() => {
       };
 
       const calculateMarketEfficiency = () => {
-        const integrationScore = spatialData.marketIntegration?.integration_score || 0;
-        const spatialCorrelation = spatialData.spatialAutocorrelation?.global?.moran_i || 0;
+        const integrationScore = spatialData.marketIntegration?.integration_score ?? 0;
+        const spatialCorrelation = getSpatialAutocorrelation(spatialData)?.global?.moran_i ?? 0;
         const priceConvergence = calculatePriceDispersion();
         
         return (integrationScore + spatialCorrelation + (1 - priceConvergence)) / 3;
       };
 
+      const autocorrelation = getSpatialAutocorrelation(spatialData);
+      
       return {
         marketEfficiency: calculateMarketEfficiency(),
-        spatialIntegration: spatialData.marketIntegration?.integration_score || 0,
-        spatialAutocorrelation: spatialData.spatialAutocorrelation?.global?.moran_i || 0,
+        spatialIntegration: spatialData.marketIntegration?.integration_score ?? 0,
+        spatialAutocorrelation: autocorrelation.global.moran_i,
         marketCoverage: calculateMarketCoverage(spatialData),
         priceDispersion: calculatePriceDispersion(),
         conflictImpact: calculateConflictImpact(spatialData),
         northSouthDisparity: calculateNorthSouthDisparity(spatialData),
-        seasonalityStrength: spatialData.seasonalAnalysis?.seasonal_strength || 0
+        seasonalityStrength: spatialData.seasonalAnalysis?.seasonal_strength ?? 0
       };
     } catch (error) {
       console.error('Error calculating economic indicators:', error);
       return null;
     }
-  }, [spatialData, timeSeriesData]);
+  }, [spatialData, timeSeriesData, getSpatialAutocorrelation]);
 
   const tabPanels = useMemo(() => [
     {
       label: "Market Integration Overview",
       component: (
-        <MarketHealthMetrics
-          metrics={economicIndicators}
-          timeSeriesData={timeSeriesData}
-          spatialPatterns={spatialData?.spatialAutocorrelation}
-        />
+        <ErrorBoundary>
+          <MarketHealthMetrics
+            metrics={economicIndicators}
+            timeSeriesData={timeSeriesData}
+            spatialPatterns={getSpatialAutocorrelation(spatialData)}
+          />
+        </ErrorBoundary>
       )
     },
     {
       label: "Spatial Autocorrelation",
       component: (
-        <SpatialAutocorrelationAnalysis
-          spatialData={spatialData}
-          geometryData={geometryData}
-        />
+        <ErrorBoundary>
+          <SpatialAutocorrelationAnalysis
+            spatialData={{
+              ...spatialData,
+              spatialAutocorrelation: getSpatialAutocorrelation(spatialData)
+            }}
+            geometryData={geometryData}
+          />
+        </ErrorBoundary>
       )
     },
     {
       label: "Market Network Analysis",
       component: (
-        <NetworkGraph
-          flows={marketFlows}
-          geometryData={geometryData}
-          marketIntegration={marketIntegration}
-        />
+        <ErrorBoundary>
+          <NetworkGraph
+            flows={marketFlows}
+            geometryData={geometryData}
+            marketIntegration={marketIntegration}
+          />
+        </ErrorBoundary>
       )
     },
     {
       label: "Cluster Analysis",
       component: (
-        <ClusterEfficiencyDashboard
-          clusters={processedClusters}
-          metrics={clusterMetrics}
-          geometryData={geometryData}
-        />
+        <ErrorBoundary>
+          <ClusterEfficiencyDashboard
+            clusters={processedClusters}
+            metrics={clusterMetrics}
+            geometryData={geometryData}
+          />
+        </ErrorBoundary>
       )
     },
     {
       label: "Price Shock Analysis",
       component: (
-        <ShockPropagationMap
-          shocks={spatialData?.marketShocks}
-          spatialAutocorrelation={spatialData?.spatialAutocorrelation?.local}
-          timeRange={spatialData?.uniqueMonths}
-          geometry={geometryData}
-        />
+        <ErrorBoundary>
+          <ShockPropagationMap
+            shocks={spatialData?.marketShocks}
+            spatialAutocorrelation={getSpatialAutocorrelation(spatialData)?.local}
+            timeRange={spatialData?.uniqueMonths}
+            geometry={geometryData}
+          />
+        </ErrorBoundary>
       )
     },
     {
       label: "Seasonal Patterns",
       component: (
-        <SeasonalPriceMap
-          seasonalAnalysis={spatialData?.seasonalAnalysis}
-          geometry={geometryData}
-          timeSeriesData={timeSeriesData}
-        />
+        <ErrorBoundary>
+          <SeasonalPriceMap
+            seasonalAnalysis={spatialData?.seasonalAnalysis}
+            geometry={geometryData}
+            timeSeriesData={timeSeriesData}
+          />
+        </ErrorBoundary>
       )
     },
     {
       label: "Conflict Impact",
       component: (
-        <ConflictImpactDashboard
-          timeSeriesData={timeSeriesData}
-          spatialClusters={spatialData?.spatialAutocorrelation?.local}
-          timeWindow={timeWindow}
-        />
+        <ErrorBoundary>
+          <ConflictImpactDashboard
+            timeSeriesData={timeSeriesData}
+            spatialClusters={getSpatialAutocorrelation(spatialData)?.local}
+            timeWindow={timeWindow}
+          />
+        </ErrorBoundary>
       )
     },
     {
       label: "Flow Network",
       component: (
-        <FlowNetworkAnalysis
-          flows={marketFlows}
-          spatialAutocorrelation={spatialData?.spatialAutocorrelation?.local}
-          marketIntegration={marketIntegration}
-          geometry={geometryData}
-          marketClusters={marketClusters}
-        />
+        <ErrorBoundary>
+          <FlowNetworkAnalysis
+            flows={marketFlows}
+            spatialAutocorrelation={getSpatialAutocorrelation(spatialData)?.local}
+            marketIntegration={marketIntegration}
+            geometry={geometryData}
+            marketClusters={marketClusters}
+          />
+        </ErrorBoundary>
       )
     }
   ], [
     economicIndicators, timeSeriesData, spatialData, geometryData, marketFlows,
-    marketIntegration, processedClusters, clusterMetrics, timeWindow, marketClusters
+    marketIntegration, processedClusters, clusterMetrics, timeWindow, marketClusters,
+    getSpatialAutocorrelation
   ]);
 
   if (isLoading) {
@@ -265,6 +368,13 @@ const SpatialAnalysis = React.memo(() => {
       </Alert>
     );
   }
+
+  // Debug log for render
+  console.log('Rendering SpatialAnalysis with data:', {
+    hasAutocorrelation: Boolean(spatialData?.spatialAutocorrelation),
+    hasGeometry: Boolean(geometryData),
+    activeTab
+  });
 
   return (
     <>
@@ -292,7 +402,7 @@ const SpatialAnalysis = React.memo(() => {
               <Grid item xs={12} md={3}>
                 <MetricCard
                   title="Market Efficiency Score"
-                  value={economicIndicators.marketEfficiency}
+                  value={economicIndicators.marketEfficiency.toFixed(2)}
                   format="percentage"
                   description="Overall market integration and efficiency"
                 />
@@ -300,7 +410,7 @@ const SpatialAnalysis = React.memo(() => {
               <Grid item xs={12} md={3}>
                 <MetricCard
                   title="Spatial Integration"
-                  value={economicIndicators.spatialIntegration}
+                  value={economicIndicators.spatialIntegration.toFixed(2)}
                   format="number"
                   description="Market integration strength"
                 />
@@ -308,7 +418,7 @@ const SpatialAnalysis = React.memo(() => {
               <Grid item xs={12} md={3}>
                 <MetricCard
                   title="Price Dispersion"
-                  value={economicIndicators.priceDispersion}
+                  value={economicIndicators.priceDispersion.toFixed(2)}
                   format="percentage"
                   description="Cross-regional price variation"
                 />
@@ -316,7 +426,7 @@ const SpatialAnalysis = React.memo(() => {
               <Grid item xs={12} md={3}>
                 <MetricCard
                   title="Conflict Impact"
-                  value={economicIndicators.conflictImpact}
+                  value={economicIndicators.conflictImpact.toFixed(2)}
                   format="number"
                   description="Conflict-price correlation"
                 />
