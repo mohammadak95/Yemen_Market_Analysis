@@ -49,33 +49,33 @@ class PolygonNormalizer {
 
   getNormalizedName(name) {
     if (!name) return null;
-
+  
     // Check cache first
     if (this.normalizedNameCache.has(name.toLowerCase())) {
       return this.normalizedNameCache.get(name.toLowerCase());
     }
-
+  
     // First try exact match with governorate
     let normalized = name.toLowerCase();
     const withGovernorate = normalized + (normalized.endsWith(' governorate') ? '' : ' governorate');
-    
+  
     // Check if there's an exact match in our fixes
     const exactMatch = this.applyYemenRegionFixes(withGovernorate);
     if (exactMatch !== withGovernorate) {
       this.normalizedNameCache.set(name.toLowerCase(), exactMatch);
       return exactMatch;
     }
-    
+  
     // If no exact match, try basic normalization
     normalized = normalized
       .replace(/\s+governorate$/i, '')
-      .replace(/ʿ/g, "'")
+      .replace(/[ʿʾ]/g, "'") // Replace both special characters with apostrophe
       .replace(/['']/g, "'")
       .trim();
-
+  
     // Apply specific Yemen region fixes
     normalized = this.applyYemenRegionFixes(normalized);
-
+  
     // Cache the result
     this.normalizedNameCache.set(name.toLowerCase(), normalized);
     return normalized;

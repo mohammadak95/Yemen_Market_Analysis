@@ -350,7 +350,6 @@ class SpatialDataHandler {
   // ===========================
 
   initializeGeometry = async () => {
-    // Add early return with cache check
     if (this.geometryCache && this.geometryCache.size > 0) {
       return this.geometryCache;
     }
@@ -358,33 +357,31 @@ class SpatialDataHandler {
     try {
       const geojsonPath = getChoroplethDataPath('geoBoundaries-YEM-ADM1.geojson');
       const response = await fetch(geojsonPath);
-      
+  
       if (!response.ok) {
         throw new Error(`Failed to load geometry: ${response.status}`);
       }
   
       const polygonData = await response.json();
-      
-      // Initialize cache only if it's null
+  
       if (!this.geometryCache) {
         this.geometryCache = new Map();
       }
   
-      // Process polygon features using polygonNormalizer
       const processedFeatures = new Map();
-      
+  
       polygonData.features.forEach(feature => {
         if (!feature?.properties?.shapeName) return;
   
-        // Get normalized name using polygonNormalizer
         const normalizedName = polygonNormalizer.getNormalizedName(feature.properties.shapeName);
-        
+  
+        console.log(`Original name: ${feature.properties.shapeName}, Normalized name: ${normalizedName}`);
+  
         if (!normalizedName) {
           console.warn('Unable to normalize region name:', feature.properties.shapeName);
           return;
         }
   
-        // Only process if we haven't seen this normalized name yet
         if (!processedFeatures.has(normalizedName)) {
           processedFeatures.set(normalizedName, {
             type: 'polygon',
@@ -392,13 +389,13 @@ class SpatialDataHandler {
             properties: {
               originalName: feature.properties.shapeName,
               normalizedName,
-              shapeISO: feature.properties.shapeISO
-            }
+              shapeISO: feature.properties.shapeISO,
+              region_id: normalizedName, // Ensure region_id is set to normalizedName
+            },
           });
         }
       });
   
-      // Update the geometry cache with processed features
       this.geometryCache = processedFeatures;
   
       // Update mapping cache
