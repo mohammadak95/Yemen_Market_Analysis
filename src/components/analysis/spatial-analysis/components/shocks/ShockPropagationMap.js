@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { 
   Paper, Box, Typography, FormControl, InputLabel, 
   Select, MenuItem, Slider, Alert, Tooltip, IconButton,
-  Button 
+  Button, Card, CardContent, Grid
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
@@ -349,6 +349,85 @@ const ShockPropagationMap = () => {
             `Average propagation time: ${propagationPatterns.propagationMetrics.averagePropagationTime.toFixed(1)} days.`}
         </Typography>
       </Box>
+
+      {/* About This Visualization */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            About This Visualization
+          </Typography>
+          <Typography variant="body2" paragraph>
+            The Price Shock Analysis visualizes how price changes propagate through Yemen's market system,
+            helping identify patterns of shock transmission and market vulnerabilities. This tool is crucial
+            for understanding market dynamics and planning interventions.
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Shock Visualization:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                  <li>Color intensity shows shock magnitude</li>
+                  <li>Time controls track shock evolution</li>
+                  <li>Filters for different shock types</li>
+                  <li>Adjustable magnitude thresholds</li>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Analysis Features:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                  <li>Price surge detection</li>
+                  <li>Shock propagation patterns</li>
+                  <li>Regional vulnerability assessment</li>
+                  <li>Temporal shock tracking</li>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Key Metrics:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                  <li>Shock magnitude and duration</li>
+                  <li>Propagation speed and reach</li>
+                  <li>Regional impact assessment</li>
+                  <li>Market resilience indicators</li>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+          <Typography variant="body2" sx={{ fontWeight: 'bold', mt: 2, mb: 1 }}>
+            Interpretation Guide:
+          </Typography>
+          <Box>
+            <Typography variant="body2">
+              Price shocks are analyzed across multiple dimensions to understand their impact and spread pattern.
+              Areas with darker colors indicate stronger price shocks, while the temporal view shows how these
+              shocks evolve and propagate through the market system.
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1, mb: 1 }}>
+              Key patterns to observe:
+            </Typography>
+            <Box component="ul" sx={{ pl: 2, m: 0 }}>
+              <li>Initial shock locations and magnitudes</li>
+              <li>Speed and direction of shock propagation</li>
+              <li>Regional differences in shock resilience</li>
+              <li>Temporal patterns in shock occurrence</li>
+            </Box>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Understanding these patterns helps identify vulnerable markets and regions that may need
+              intervention or support mechanisms. It also helps in developing early warning systems for
+              future market shocks and planning mitigation strategies.
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
     </Paper>
   );
 };
