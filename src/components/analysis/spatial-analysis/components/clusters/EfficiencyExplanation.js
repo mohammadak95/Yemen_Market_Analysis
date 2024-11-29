@@ -1,116 +1,181 @@
-// src/components/analysis/spatial-analysis/components/clusters/EfficiencyExplanation.js
+//src/components/analysis/spatial-analysis/components/clusters/EfficiencyExplanation.js
 
 import React from 'react';
 import { 
   Paper, 
   Typography, 
   Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
+  Grid,
+  Card,
+  CardContent,
   Divider,
+  LinearProgress,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 const efficiencyMetrics = [
   {
     name: 'Internal Connectivity',
     description: 'Measures actual connections between markets relative to potential connections.',
     interpretation: [
-      'High (>0.7): Strong network of trade relationships',
-      'Medium (0.4-0.7): Moderate market linkages',
-      'Low (<0.4): Limited market connections'
-    ]
+      { level: 'High', threshold: 0.7, description: 'Strong network of trade relationships' },
+      { level: 'Medium', threshold: 0.4, description: 'Moderate market linkages' },
+      { level: 'Low', threshold: 0, description: 'Limited market connections' }
+    ],
+    icon: '🔄'
   },
   {
     name: 'Market Coverage',
     description: 'The proportion of total markets included in the cluster.',
     interpretation: [
-      'High (>0.7): Broad regional influence',
-      'Medium (0.4-0.7): Moderate regional presence',
-      'Low (<0.4): Limited geographical reach'
-    ]
+      { level: 'High', threshold: 0.7, description: 'Broad regional influence' },
+      { level: 'Medium', threshold: 0.4, description: 'Moderate regional presence' },
+      { level: 'Low', threshold: 0, description: 'Limited geographical reach' }
+    ],
+    icon: '📍'
   },
   {
     name: 'Price Convergence',
     description: 'Uniformity of prices across markets within the cluster.',
     interpretation: [
-      'High (>0.7): Strong price integration',
-      'Medium (0.4-0.7): Some price variations',
-      'Low (<0.4): Significant price disparities'
-    ]
+      { level: 'High', threshold: 0.7, description: 'Strong price integration' },
+      { level: 'Medium', threshold: 0.4, description: 'Some price variations' },
+      { level: 'Low', threshold: 0, description: 'Significant price disparities' }
+    ],
+    icon: '💲'
   },
   {
-    name: 'Flow Density',
-    description: 'Intensity of trade flows between markets in the cluster.',
+    name: 'Market Stability',
+    description: 'Consistency of trade flows and price levels over time.',
     interpretation: [
-      'High (>0.7): Robust trade activity',
-      'Medium (0.4-0.7): Moderate trade flows',
-      'Low (<0.4): Weak trade connections'
-    ]
+      { level: 'High', threshold: 0.7, description: 'Robust trade activity' },
+      { level: 'Medium', threshold: 0.4, description: 'Moderate trade flows' },
+      { level: 'Low', threshold: 0, description: 'Weak trade connections' }
+    ],
+    icon: '📊'
   }
 ];
+
+const MetricCard = ({ metric }) => (
+  <Card variant="outlined" sx={{ height: '100%' }}>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" component="span" sx={{ mr: 1 }}>
+          {metric.icon}
+        </Typography>
+        <Typography variant="h6">
+          {metric.name}
+        </Typography>
+        <Tooltip title={metric.description}>
+          <IconButton size="small" sx={{ ml: 'auto' }}>
+            <HelpOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      <Typography variant="body2" color="text.secondary" paragraph>
+        {metric.description}
+      </Typography>
+
+      <Box sx={{ mt: 2 }}>
+        {metric.interpretation.map(({ level, threshold, description }) => (
+          <Box key={level} sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <Typography variant="body2" sx={{ mr: 1, minWidth: 60 }}>
+                {level}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={threshold * 100}
+                sx={{ 
+                  flex: 1,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: 'action.hover',
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 4,
+                    backgroundColor: 
+                      level === 'High' ? 'success.main' :
+                      level === 'Medium' ? 'warning.main' : 
+                      'error.main'
+                  }
+                }}
+              />
+              <Typography variant="body2" sx={{ ml: 1, minWidth: 45 }}>
+                {(threshold * 100).toFixed(0)}%
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              {description}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </CardContent>
+  </Card>
+);
 
 const EfficiencyExplanation = () => {
   return (
     <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Market Cluster Efficiency Analysis
       </Typography>
       
-      <Typography variant="body2" sx={{ mb: 3 }}>
+      <Typography variant="body1" paragraph sx={{ mb: 4 }}>
         This analysis evaluates market integration and efficiency through multiple complementary metrics, 
         helping identify patterns of market connectivity and price transmission across Yemen's regions.
       </Typography>
 
-      <Divider sx={{ my: 2 }} />
+      <Grid container spacing={3}>
+        {efficiencyMetrics.map((metric) => (
+          <Grid item xs={12} md={6} key={metric.name}>
+            <MetricCard metric={metric} />
+          </Grid>
+        ))}
+      </Grid>
 
-      <TableContainer>
-        <Table size="small">
-          <TableBody>
-            {efficiencyMetrics.map((metric, index) => (
-              <TableRow key={metric.name}>
-                <TableCell sx={{ border: 0, verticalAlign: 'top', width: '30%' }}>
-                  <Typography variant="subtitle2">
-                    {metric.name}
-                  </Typography>
-                </TableCell>
-                <TableCell sx={{ border: 0 }}>
-                  <Typography variant="body2" paragraph>
-                    {metric.description}
-                  </Typography>
-                  <Box component="ul" sx={{ m: 0, pl: 2 }}>
-                    {metric.interpretation.map((item, i) => (
-                      <Typography 
-                        key={i} 
-                        component="li" 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{ mb: 0.5 }}
-                      >
-                        {item}
-                      </Typography>
-                    ))}
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Divider sx={{ my: 4 }} />
 
-      <Divider sx={{ my: 2 }} />
-
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
+      <Box>
+        <Typography variant="h6" gutterBottom>
           Economic Implications
         </Typography>
-        <Typography variant="body2">
-          High efficiency scores indicate well-functioning markets with effective price transmission 
-          and trade flows. Low scores may suggest barriers to trade, market fragmentation, or 
-          conflict-related disruptions requiring targeted interventions.
+        <Typography variant="body1" paragraph>
+          Understanding market cluster efficiency is crucial for:
         </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <Typography variant="subtitle1" gutterBottom>
+              Market Integration
+            </Typography>
+            <Typography variant="body2">
+              High efficiency scores indicate well-functioning markets with effective price transmission 
+              and robust trade flows, suggesting strong economic integration.
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography variant="subtitle1" gutterBottom>
+              Trade Barriers
+            </Typography>
+            <Typography variant="body2">
+              Low scores may indicate barriers to trade, market fragmentation, or conflict-related 
+              disruptions that require targeted interventions.
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography variant="subtitle1" gutterBottom>
+              Policy Implications
+            </Typography>
+            <Typography variant="body2">
+              Metrics help identify areas needing support and guide the development of targeted 
+              interventions to improve market function and integration.
+            </Typography>
+          </Grid>
+        </Grid>
       </Box>
     </Paper>
   );

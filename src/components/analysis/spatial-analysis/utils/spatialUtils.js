@@ -1,4 +1,6 @@
-// Yemen coordinates mapping for fallback
+// src/utils/spatialUtils.js
+
+// Yemen coordinates mapping
 export const YEMEN_COORDINATES = {
   'abyan': [45.83, 13.58],
   'aden': [45.03, 12.77],
@@ -43,64 +45,25 @@ export const transformRegionName = (name) => {
     "sa'dah": "saada",
     "sadah": "saada",
     "sa'ada": "saada",
-    // Mahrah variations
     "al mahrah governorate": "al maharah",
     "al mahrah": "al maharah",
     "al mahra": "al maharah",
     "mahrah governorate": "al maharah",
-    // Marib variations
     "ma'rib governorate": "marib",
     "ma'rib": "marib",
     "mareb": "marib",
-    // Socotra variations
     "socotra governorate": "socotra",
     "soqatra": "socotra",
-    // Sanaa variations
     "sanʿaʾ governorate": "sana'a",
     "san'a'": "sana'a",
     "sana'a": "sana'a",
     "sanaa governorate": "sana'a",
-    // Taiz variations
     "ta'izz": "taizz",
     "ta'izz governorate": "taizz",
     "taiz": "taizz",
-    // Amran variations
     "'amran": "amran",
     "'amran governorate": "amran",
-    "ʿamran": "amran",
-    // Al Mahwit variations
-    "al mahwit": "al mahwit",
-    "al mawhit": "al mahwit",
-    // Raymah variations
-    "raymah": "raymah",
-    "raimah": "raymah",
-    // Al Hudaydah variations
-    "al hudaydah": "al hudaydah",
-    "hodeidah": "al hudaydah",
-    "al hodeidah": "al hudaydah",
-    // Other regions
-    "ib": "ibb",
-    "ibb": "ibb",
-    "lahej": "lahj",
-    "lahj": "lahj",
-    "shabwa": "shabwah",
-    "dhamar": "dhamar",
-    "hajjah": "hajjah",
-    "abyan": "abyan",
-    "al bayda'": "al bayda",
-    "al bayda": "al bayda",
-    "al jawf": "al jawf",
-    "al jawaf": "al jawf",
-    "hadramawt": "hadramaut",
-    "hadramaut": "hadramaut",
-    "taiz": "taizz",
-    "taizz": "taizz",
-    "amanat al asimah": "amanat al asimah",
-    "sana'a city": "amanat al asimah",
-    "al dhale'e": "al dhale'e",
-    "al dhale": "al dhale'e",
-    "al dhali'": "al dhale'e",
-    "al mahrah": "al maharah",
+    "ʿamran": "amran"
   };
 
   // Clean up the name
@@ -171,6 +134,48 @@ export const calculateCenter = (coordinates) => {
 };
 
 /**
+ * Create spatial weights matrix
+ */
+export const createWeightsMatrix = (points, threshold = 100) => {
+  const n = points.length;
+  const weights = Array(n).fill().map(() => Array(n).fill(0));
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i !== j) {
+        const dist = calculateDistance(points[i], points[j]);
+        weights[i][j] = dist <= threshold ? 1 : 0;
+      }
+    }
+  }
+
+  // Row standardize
+  for (let i = 0; i < n; i++) {
+    const rowSum = weights[i].reduce((a, b) => a + b, 0);
+    if (rowSum > 0) {
+      weights[i] = weights[i].map(w => w / rowSum);
+    }
+  }
+
+  return weights;
+};
+
+/**
+ * Calculate standard deviation of values
+ */
+export const calculateStandardDeviation = (values) => {
+  if (!Array.isArray(values) || values.length === 0) return 0;
+
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const squareDiffs = values.map(value => {
+    const diff = value - mean;
+    return diff * diff;
+  });
+  const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / squareDiffs.length;
+  return Math.sqrt(avgSquareDiff);
+};
+
+/**
  * Convert UTM coordinates to LatLng
  */
 export const convertUTMtoLatLng = (easting, northing) => {
@@ -209,55 +214,230 @@ export const convertUTMtoLatLng = (easting, northing) => {
   return [lon * (180 / Math.PI), lat * (180 / Math.PI)];
 };
 
-/**
- * Create spatial weights matrix
- */
-export const createWeightsMatrix = (points, threshold = 100) => {
-  const n = points.length;
-  const weights = Array(n).fill().map(() => Array(n).fill(0));
+// src/components/analysis/spatial-analysis/utils/spatialUtils.js
 
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n; j++) {
-      if (i !== j) {
-        const dist = calculateDistance(points[i], points[j]);
-        weights[i][j] = dist <= threshold ? 1 : 0;
-      }
-    }
-  }
-
-  // Row standardize
-  for (let i = 0; i < n; i++) {
-    const rowSum = weights[i].reduce((a, b) => a + b, 0);
-    if (rowSum > 0) {
-      weights[i] = weights[i].map(w => w / rowSum);
-    }
-  }
-
-  return weights;
-};
+// ... Keep existing imports and constants ...
 
 /**
- * Calculate standard deviation
+ * Calculate cluster geometric properties
  */
-export const calculateStandardDeviation = (values) => {
-  if (!Array.isArray(values) || values.length === 0) return 0;
+export const calculateClusterGeometry = (markets, coordinates) => {
+  if (!markets?.length || !coordinates) return null;
 
-  const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  const squareDiffs = values.map(value => {
-    const diff = value - mean;
-    return diff * diff;
+  const validMarkets = markets.filter(market => 
+    coordinates[transformRegionName(market)]
+  );
+
+  if (!validMarkets.length) return null;
+
+  const points = validMarkets.map(market => 
+    coordinates[transformRegionName(market)]
+  );
+
+  // Calculate centroid
+  const centroid = calculateCenter(points);
+
+  // Calculate bounding box
+  const bounds = points.reduce((acc, point) => ({
+    minLon: Math.min(acc.minLon, point[0]),
+    maxLon: Math.max(acc.maxLon, point[0]),
+    minLat: Math.min(acc.minLat, point[1]),
+    maxLat: Math.max(acc.maxLat, point[1])
+  }), {
+    minLon: Infinity,
+    maxLon: -Infinity,
+    minLat: Infinity,
+    maxLat: -Infinity
   });
-  const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / squareDiffs.length;
-  return Math.sqrt(avgSquareDiff);
+
+  // Calculate area and perimeter
+  const area = calculatePolygonArea(points);
+  const perimeter = calculatePolygonPerimeter(points);
+
+  return {
+    centroid,
+    bounds,
+    area,
+    perimeter,
+    density: points.length / area
+  };
 };
 
+/**
+ * Calculate cluster cohesion metrics
+ */
+export const calculateClusterCohesion = (cluster, flows, coordinates) => {
+  if (!cluster?.markets?.length) return null;
+
+  const markets = cluster.markets;
+  const internalFlows = flows?.filter(flow =>
+    markets.includes(flow.source) && markets.includes(flow.target)
+  ) || [];
+
+  // Calculate density
+  const maxPossibleConnections = (markets.length * (markets.length - 1)) / 2;
+  const actualConnections = internalFlows.length;
+  const density = maxPossibleConnections > 0 ? 
+    actualConnections / maxPossibleConnections : 0;
+
+  // Calculate average flow strength
+  const avgFlowStrength = internalFlows.length > 0 ?
+    internalFlows.reduce((sum, flow) => sum + (flow.total_flow || 0), 0) / internalFlows.length : 0;
+
+  // Calculate spatial dispersion
+  const marketCoords = markets
+    .map(market => coordinates[transformRegionName(market)])
+    .filter(Boolean);
+
+  const centroid = calculateCenter(marketCoords);
+  const distances = marketCoords.map(coord => calculateDistance(coord, centroid));
+  const dispersion = calculateStandardDeviation(distances);
+
+  return {
+    density,
+    avgFlowStrength,
+    dispersion,
+    connectionCount: actualConnections,
+    maxConnections: maxPossibleConnections,
+    cohesionScore: density * (1 - (dispersion / 500)) // Normalize dispersion
+  };
+};
+
+/**
+ * Calculate market centrality metrics
+ */
+export const calculateMarketCentrality = (markets, flows) => {
+  const centrality = {};
+  
+  markets.forEach(market => {
+    const marketFlows = flows?.filter(flow => 
+      flow.source === market || flow.target === market
+    ) || [];
+
+    const totalFlow = marketFlows.reduce((sum, flow) => 
+      sum + (flow.total_flow || 0), 0
+    );
+
+    const uniqueConnections = new Set(
+      marketFlows.flatMap(flow => [flow.source, flow.target])
+    ).size - 1; // Subtract 1 to exclude the market itself
+
+    centrality[market] = {
+      flowCentrality: totalFlow,
+      degreeCentrality: uniqueConnections,
+      weightedCentrality: totalFlow * uniqueConnections
+    };
+  });
+
+  return centrality;
+};
+
+/**
+ * Calculate inter-cluster flow metrics
+ */
+export const calculateInterClusterFlows = (cluster1, cluster2, flows) => {
+  if (!cluster1?.markets?.length || !cluster2?.markets?.length) return null;
+
+  const interFlows = flows?.filter(flow => 
+    (cluster1.markets.includes(flow.source) && cluster2.markets.includes(flow.target)) ||
+    (cluster1.markets.includes(flow.target) && cluster2.markets.includes(flow.source))
+  ) || [];
+
+  const totalFlow = interFlows.reduce((sum, flow) => sum + (flow.total_flow || 0), 0);
+  const avgFlow = interFlows.length > 0 ? totalFlow / interFlows.length : 0;
+  const connectionCount = interFlows.length;
+
+  const maxPossibleConnections = cluster1.markets.length * cluster2.markets.length;
+  const connectionDensity = maxPossibleConnections > 0 ?
+    connectionCount / maxPossibleConnections : 0;
+
+  return {
+    totalFlow,
+    avgFlow,
+    connectionCount,
+    connectionDensity,
+    flows: interFlows
+  };
+};
+
+/**
+ * Calculate market isolation metrics
+ */
+export const calculateMarketIsolation = (market, flows, coordinates) => {
+  const marketCoord = coordinates[transformRegionName(market)];
+  if (!marketCoord) return null;
+
+  const marketFlows = flows?.filter(flow => 
+    flow.source === market || flow.target === market
+  ) || [];
+
+  const connectedMarkets = new Set(
+    marketFlows.flatMap(flow => [flow.source, flow.target])
+  );
+  connectedMarkets.delete(market);
+
+  const avgDistance = Array.from(connectedMarkets)
+    .map(connectedMarket => {
+      const coord = coordinates[transformRegionName(connectedMarket)];
+      return coord ? calculateDistance(marketCoord, coord) : null;
+    })
+    .filter(Boolean)
+    .reduce((sum, dist, i, arr) => sum + dist / arr.length, 0);
+
+  return {
+    connectionCount: connectedMarkets.size,
+    totalFlow: marketFlows.reduce((sum, flow) => sum + (flow.total_flow || 0), 0),
+    avgDistance,
+    isolationScore: calculateIsolationScore(connectedMarkets.size, avgDistance)
+  };
+};
+
+// Helper functions
+const calculatePolygonArea = (points) => {
+  if (points.length < 3) return 0;
+
+  let area = 0;
+  for (let i = 0; i < points.length; i++) {
+    const j = (i + 1) % points.length;
+    area += points[i][0] * points[j][1];
+    area -= points[j][0] * points[i][1];
+  }
+
+  return Math.abs(area) / 2;
+};
+
+const calculatePolygonPerimeter = (points) => {
+  let perimeter = 0;
+  for (let i = 0; i < points.length; i++) {
+    const j = (i + 1) % points.length;
+    perimeter += calculateDistance(points[i], points[j]);
+  }
+  return perimeter;
+};
+
+const calculateIsolationScore = (connections, avgDistance) => {
+  const maxExpectedConnections = 20; // Based on total possible markets
+  const maxExpectedDistance = 500; // Maximum meaningful distance in km
+
+  const connectionScore = 1 - (connections / maxExpectedConnections);
+  const distanceScore = avgDistance / maxExpectedDistance;
+
+  return (connectionScore + distanceScore) / 2;
+};
+
+// Export all functions
 export default {
   YEMEN_COORDINATES,
   transformRegionName,
   getRegionCoordinates,
   calculateDistance,
   calculateCenter,
-  convertUTMtoLatLng,
   createWeightsMatrix,
-  calculateStandardDeviation
+  calculateStandardDeviation,
+  calculateClusterGeometry,
+  calculateClusterCohesion,
+  calculateMarketCentrality,
+  calculateInterClusterFlows,
+  calculateMarketIsolation,
+  convertUTMtoLatLng
 };

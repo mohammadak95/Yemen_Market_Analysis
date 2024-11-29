@@ -363,32 +363,25 @@ const calculateFlowStability = (flows) => {
  */
 const calculateEfficiencyScore = (metrics) => {
     const weights = {
-        internal_connectivity: 0.3,
-        market_coverage: 0.2,
-        price_convergence: 0.3,
-        stability: 0.2
+      internal_connectivity: 0.3,
+      market_coverage: 0.2,
+      price_convergence: 0.3,
+      stability: 0.2
     };
-
-    try {
-        let totalScore = 0;
-        let totalWeight = 0;
-
-        Object.entries(weights).forEach(([metric, weight]) => {
-            const value = validateNumber(metrics[metric]);
-            if (!isNaN(value)) {
-                totalScore += value * weight;
-                totalWeight += weight;
-            }
-        });
-
-        return totalWeight > 0 ? validateNumber(totalScore / totalWeight) : 0;
-
-    } catch (error) {
-        console.error('Error calculating efficiency score:', error);
-        backgroundMonitor.logError('efficiency-score-calculation', error);
-        return 0;
-    }
-};
+  
+    let totalScore = 0;
+    let totalWeight = 0;
+  
+    Object.entries(weights).forEach(([metric, weight]) => {
+      const value = metrics?.[metric];
+      if (typeof value === 'number' && !isNaN(value)) {
+        totalScore += value * weight;
+        totalWeight += weight;
+      }
+    });
+  
+    return totalWeight > 0 ? totalScore / totalWeight : 0;
+  };
 
 /**
  * Get default metrics object
@@ -404,5 +397,13 @@ const getDefaultMetrics = () => ({
     efficiency_score: 0,
     market_count: 0,
     total_flow: 0,
-    avg_flow: 0
+    avg_flow: 0,
+    averageEfficiency: 0,
+    totalCoverage: 0,
+    integrationScore: 0,
+    stabilityScore: 0,
+    flowConsistency: 0
+
+
+
 });

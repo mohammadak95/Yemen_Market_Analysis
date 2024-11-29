@@ -1,4 +1,4 @@
-// src/components/analysis/spatial-analysis/components/clusters/ClusterMetricsPanel.js
+//src/components/analysis/spatial-analysis/components/clusters/ClusterMetricsPanel.js
 
 import React, { useMemo } from 'react';
 import {
@@ -11,24 +11,43 @@ import {
   Tooltip,
   IconButton,
   Divider,
-  List,
-  ListItem,
-  ListItemText,
+  Chip,
+  Button
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import { useTheme } from '@mui/material/styles';
 import { EfficiencyRadarChart } from './index';
 
-const MetricProgress = React.memo(({ value, label, description, threshold = { low: 0.4, high: 0.7 } }) => {
+const MetricProgress = React.memo(({ 
+  value, 
+  label, 
+  description, 
+  threshold = { low: 0.4, high: 0.7 },
+  showTrend = true
+}) => {
   const theme = useTheme();
   
-  const color = useMemo(() => {
-    if (typeof value !== 'number' || isNaN(value)) return 'warning';
-    return value >= threshold.high ? 'success' :
-           value >= threshold.low ? 'warning' : 'error';
-  }, [value, threshold]);
+  const { color, icon } = useMemo(() => {
+    if (typeof value !== 'number' || isNaN(value)) {
+      return { color: 'warning', icon: null };
+    }
+    if (value >= threshold.high) {
+      return { 
+        color: 'success',
+        icon: showTrend && <TrendingUpIcon fontSize="small" sx={{ ml: 1, color: 'success.main' }} />
+      };
+    }
+    if (value >= threshold.low) {
+      return { color: 'warning', icon: null };
+    }
+    return { 
+      color: 'error',
+      icon: showTrend && <TrendingDownIcon fontSize="small" sx={{ ml: 1, color: 'error.main' }} />
+    };
+  }, [value, threshold, showTrend, theme]);
 
   const safeValue = typeof value === 'number' && !isNaN(value) ? 
     Math.min(Math.max(value, 0), 1) : 0;
@@ -39,6 +58,7 @@ const MetricProgress = React.memo(({ value, label, description, threshold = { lo
         <Typography variant="body2" color="text.secondary">
           {label}
         </Typography>
+        {icon}
         <Tooltip title={description}>
           <IconButton size="small" sx={{ ml: 0.5 }}>
             <InfoIcon fontSize="small" />
@@ -54,11 +74,14 @@ const MetricProgress = React.memo(({ value, label, description, threshold = { lo
             sx={{ 
               height: 8, 
               borderRadius: 4,
-              bgcolor: theme.palette.grey[200]
+              bgcolor: theme.palette.grey[200],
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 4
+              }
             }}
           />
         </Box>
-        <Typography variant="body2" color={`${color}.main`}>
+        <Typography variant="body2" color={`${color}.main`} sx={{ minWidth: 45 }}>
           {(safeValue * 100).toFixed(1)}%
         </Typography>
       </Box>
@@ -66,9 +89,77 @@ const MetricProgress = React.memo(({ value, label, description, threshold = { lo
   );
 });
 
-const ClusterMetricsList = React.memo(({ cluster }) => {
-  if (!cluster?.metrics) return null;
+const SummaryStatistics = React.memo(({ cluster }) => {
+  const stats = [
+    {
+      label: 'Markets',
+      value: cluster.markets?.length || 0,
+      format: 'number'
+    },
+    {
+      label: 'Efficiency',
+      value: (cluster.metrics?.efficiency || 0) * 100,
+      format: 'percentage'
+    },
+    {
+      label: 'Flow Strength',
+      value: ((cluster.metrics?.total_flow || 0) / 1000),
+      format: 'kilo'
+    },
+    {
+      label: 'Price Stability',
+      value: (1 - (cluster.metrics?.price_volatility || 0)) * 100,
+      format: 'percentage'
+    }
+  ];
 
+  return (
+    <Grid container spacing={2}>
+      {stats.map(({ label, value, format }) => (
+        <Grid item xs={6} md={3} key={label}>
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            {label}
+          </Typography>
+          <Typography variant="h4">
+            {format === 'percentage' ? `${value.toFixed(1)}%` :
+             format === 'kilo' ? `${value.toFixed(1)}K` :
+             value}
+          </Typography>
+        </Grid>
+      ))}
+    </Grid>
+  );
+});
+
+const MarketList = React.memo(({ markets, mainMarket, onMarketClick }) => {
+  if (!markets?.length) return null;
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="subtitle2" gutterBottom>
+        Connected Markets ({markets.length})
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        {markets.map(market => (
+          <Chip
+            key={market}
+            label={market}
+            size="small"
+            color={market === mainMarket ? "primary" : "default"}
+            variant={market === mainMarket ? "filled" : "outlined"}
+            onClick={() => onMarketClick?.(market)}
+            sx={{ 
+              fontWeight: market === mainMarket ? 500 : 400,
+              cursor: 'pointer'
+            }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+});
+
+const PerformanceMetrics = React.memo(({ cluster }) => {
   const metrics = [
     {
       key: 'internal_connectivity',
@@ -86,72 +177,22 @@ const ClusterMetricsList = React.memo(({ cluster }) => {
       description: 'Uniformity of prices across cluster markets'
     },
     {
-      key: 'flow_density',
-      label: 'Flow Density',
-      description: 'Intensity of trade flows within the cluster'
+      key: 'stability',
+      label: 'Market Stability',
+      description: 'Consistency of trade flows and prices'
     }
   ];
 
   return (
-    <List dense>
+    <Box>
       {metrics.map(({ key, label, description }) => (
-        <ListItem key={key} sx={{ px: 0 }}>
-          <ListItemText
-            primary={
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography variant="body2">{label}</Typography>
-                <Tooltip title={description}>
-                  <IconButton size="small" sx={{ ml: 0.5 }}>
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            }
-            secondary={
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-              >
-                {((cluster.metrics[key] || 0) * 100).toFixed(1)}%
-              </Typography>
-            }
-          />
-        </ListItem>
+        <MetricProgress
+          key={key}
+          label={label}
+          description={description}
+          value={cluster.metrics?.[key] || 0}
+        />
       ))}
-    </List>
-  );
-});
-
-const MarketList = React.memo(({ markets }) => {
-  if (!markets?.length) return null;
-
-  return (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="subtitle2" gutterBottom>
-        Connected Markets
-      </Typography>
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          gap: 0.5 
-        }}
-      >
-        {markets.map(market => (
-          <Box
-            key={market}
-            sx={{
-              px: 1,
-              py: 0.5,
-              bgcolor: 'action.hover',
-              borderRadius: 1,
-              fontSize: '0.875rem'
-            }}
-          >
-            {market}
-          </Box>
-        ))}
-      </Box>
     </Box>
   );
 });
@@ -159,20 +200,11 @@ const MarketList = React.memo(({ markets }) => {
 const ClusterMetricsPanel = ({ 
   selectedCluster, 
   comparisonCluster,
-  overallMetrics
+  overallMetrics,
+  onMarketClick,
+  onCompareClick
 }) => {
   const theme = useTheme();
-
-  const aggregateStats = useMemo(() => {
-    if (!overallMetrics) return null;
-    
-    return {
-      totalClusters: overallMetrics.totalClusters || 0,
-      avgEfficiency: overallMetrics.averageEfficiency || 0,
-      highPerforming: overallMetrics.clusterStats?.highPerforming || 0,
-      lowPerforming: overallMetrics.clusterStats?.lowPerforming || 0
-    };
-  }, [overallMetrics]);
 
   if (!selectedCluster) {
     return (
@@ -189,110 +221,116 @@ const ClusterMetricsPanel = ({
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Cluster Analysis: {selectedCluster.main_market}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h6">
+            {selectedCluster.main_market} Cluster
+          </Typography>
           {selectedCluster.metrics?.efficiency >= 0.7 && (
-            <TrendingUpIcon 
-              sx={{ 
-                ml: 1, 
-                color: theme.palette.success.main, 
-                verticalAlign: 'bottom' 
-              }} 
-            />
+            <TrendingUpIcon sx={{ ml: 1, color: theme.palette.success.main }} />
           )}
-        </Typography>
+          {!comparisonCluster && (
+            <Button
+              startIcon={<CompareArrowsIcon />}
+              onClick={onCompareClick}
+              sx={{ ml: 'auto' }}
+              size="small"
+            >
+              Compare
+            </Button>
+          )}
+        </Box>
 
-        {/* Overall Statistics */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={6} sm={3}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Markets
-            </Typography>
-            <Typography variant="h4">
-              {selectedCluster.markets?.length || 0}
-            </Typography>
-          </Grid>
-          <Grid item xs={6} sm={3}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Efficiency
-            </Typography>
-            <Typography variant="h4">
-              {((selectedCluster.metrics?.efficiency || 0) * 100).toFixed(1)}%
-            </Typography>
-          </Grid>
-          <Grid item xs={6} sm={3}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Flow Strength
-            </Typography>
-            <Typography variant="h4">
-              {((selectedCluster.metrics?.total_flow || 0) / 1000).toFixed(1)}K
-            </Typography>
-          </Grid>
-          <Grid item xs={6} sm={3}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Price Stability
-            </Typography>
-            <Typography variant="h4">
-              {((1 - (selectedCluster.metrics?.price_volatility || 0)) * 100).toFixed(1)}%
-            </Typography>
-          </Grid>
-        </Grid>
+        {/* Summary Statistics */}
+        <SummaryStatistics cluster={selectedCluster} />
+        
+        <Divider sx={{ my: 3 }} />
 
-        <Divider sx={{ my: 2 }} />
-
-        {/* Efficiency Radar Chart */}
+        {/* Performance Metrics */}
         <Typography variant="subtitle1" gutterBottom>
-          Efficiency Metrics
+          Performance Metrics
         </Typography>
-        <EfficiencyRadarChart
-          cluster={selectedCluster}
-          compareCluster={comparisonCluster}
+        <PerformanceMetrics cluster={selectedCluster} />
+
+        {/* Radar Chart - only show if we have comparison data */}
+        {comparisonCluster && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Typography variant="subtitle1" gutterBottom>
+              Cluster Comparison
+            </Typography>
+            <Box sx={{ height: 300, mt: 2 }}>
+              <EfficiencyRadarChart 
+                cluster={selectedCluster}
+                compareCluster={comparisonCluster}
+              />
+            </Box>
+          </>
+        )}
+
+        <Divider sx={{ my: 3 }} />
+
+        {/* Market List */}
+        <MarketList 
+          markets={selectedCluster.markets} 
+          mainMarket={selectedCluster.main_market}
+          onMarketClick={onMarketClick}
         />
 
-        <Divider sx={{ my: 2 }} />
-
-        {/* Detailed Metrics */}
-        <Typography variant="subtitle1" gutterBottom>
-          Detailed Performance
-        </Typography>
-        <ClusterMetricsList cluster={selectedCluster} />
-
-        {/* Connected Markets */}
-        <MarketList markets={selectedCluster.markets} />
-
-        <Divider sx={{ my: 2 }} />
-
         {/* Analysis Summary */}
+        <Divider sx={{ my: 3 }} />
         <Typography variant="subtitle1" gutterBottom>
           Analysis Summary
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {interpretClusterPerformance(selectedCluster, aggregateStats)}
-        </Typography>
+        <PerformanceSummary 
+          cluster={selectedCluster} 
+          stats={overallMetrics}
+        />
       </CardContent>
     </Card>
   );
 };
 
-const interpretClusterPerformance = (cluster, stats) => {
-  if (!cluster?.metrics || !stats) return '';
+const PerformanceSummary = React.memo(({ cluster, stats }) => {
+  const efficiency = cluster.metrics?.efficiency || 0;
+  const relativeSize = cluster.markets?.length / (stats?.totalClusters || 1);
 
-  const efficiency = cluster.metrics.efficiency;
-  const relativeSize = cluster.markets.length / (stats.totalClusters || 1);
+  let summary = '';
+  let color = '';
 
   if (efficiency >= 0.7) {
-    return `This is a high-performing cluster showing strong market integration and efficient price transmission. 
-    With ${cluster.markets.length} connected markets (${(relativeSize * 100).toFixed(1)}% of total), 
-    it demonstrates robust trade flows and price stability.`;
+    summary = `High-performing cluster with strong market integration and efficient price transmission. 
+      ${cluster.markets?.length} connected markets (${(relativeSize * 100).toFixed(1)}% of total) 
+      demonstrate robust trade flows and price stability.`;
+    color = 'success.main';
   } else if (efficiency >= 0.4) {
-    return `This cluster shows moderate performance with some integration challenges. 
-    While maintaining connections between ${cluster.markets.length} markets, there is room for 
-    improving price transmission and trade flow efficiency.`;
+    summary = `Moderate performance with some integration challenges. 
+      ${cluster.markets?.length} connected markets show potential for improved 
+      price transmission and trade flow efficiency.`;
+    color = 'warning.main';
   } else {
-    return `This cluster shows significant integration challenges, indicating potential barriers 
-    to trade or market fragmentation. Targeted interventions may be needed to improve market 
-    connectivity and price transmission efficiency.`;
+    summary = `Significant integration challenges present. Potential barriers to trade 
+      affecting market connectivity and price transmission efficiency. 
+      Consider targeted interventions for improvement.`;
+    color = 'error.main';
   }
-};
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Typography 
+        variant="body2" 
+        sx={{ 
+          color,
+          fontWeight: 500,
+          mb: 1
+        }}
+      >
+        Performance Rating: {efficiency >= 0.7 ? 'High' : efficiency >= 0.4 ? 'Moderate' : 'Low'}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {summary}
+      </Typography>
+    </Box>
+  );
+});
 
 export default React.memo(ClusterMetricsPanel);

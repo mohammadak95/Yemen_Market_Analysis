@@ -1,18 +1,18 @@
-// src/components/analysis/spatial-analysis/components/clusters/ClusterMap.js
+//src/components/analysis/spatial-analysis/components/clusters/ClusterMap.js
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { MapContainer, TileLayer, CircleMarker, GeoJSON, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, GeoJSON, Tooltip, useMap, Polyline } from 'react-leaflet';
 import { useTheme } from '@mui/material/styles';
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, Paper } from '@mui/material';
 import chroma from 'chroma-js';
-import _ from 'lodash';
+import { getRegionCoordinates, transformRegionName } from '../../utils/spatialUtils';
 
 const ClusterMap = ({ 
-  clusters, 
+  clusters = [], 
   selectedClusterId, 
-  onClusterSelect, 
-  geometry 
+  onClusterSelect,
+  geometry
 }) => {
   const theme = useTheme();
 
@@ -22,102 +22,79 @@ const ClusterMap = ({
     []
   );
 
-  // Process cluster data for visualization
+  // Process cluster data with coordinates
   const processedClusters = useMemo(() => {
     if (!clusters?.length) return [];
 
     return clusters.map(cluster => {
-      const markets = cluster.markets || cluster.connected_markets || [];
-      
-      // Calculate center if not provided
-      const center = cluster.center_coordinates || (() => {
-        const validMarkets = markets.filter(market => 
-          geometry?.features?.some(f => 
-            f.properties.normalizedName === market.toLowerCase()
-          )
-        );
+      const marketList = cluster.markets || cluster.connected_markets || [];
+      const marketCoords = marketList.map(market => {
+        const name = typeof market === 'string' ? market : market.name;
+        const coords = getRegionCoordinates(name);
+        return {
+          name: transformRegionName(name),
+          originalName: name,
+          coordinates: coords || [0, 0],
+          isMainMarket: name === cluster.main_market
+        };
+      });
 
-        if (!validMarkets.length) return null;
-
-        const coordinates = validMarkets.map(market => {
-          const feature = geometry.features.find(f => 
-            f.properties.normalizedName === market.toLowerCase()
-          );
-          return feature?.geometry?.coordinates;
-        }).filter(Boolean);
-
-        if (!coordinates.length) return null;
-
-        return [
-          coordinates.reduce((sum, [lon]) => sum + lon, 0) / coordinates.length,
-          coordinates.reduce((sum, [, lat]) => sum + lat, 0) / coordinates.length
-        ];
-      })();
+      // Calculate center
+      const validCoords = marketCoords.filter(m => m.coordinates[0] !== 0);
+      const center = validCoords.length ? [
+        validCoords.reduce((sum, m) => sum + m.coordinates[0], 0) / validCoords.length,
+        validCoords.reduce((sum, m) => sum + m.coordinates[1], 0) / validCoords.length
+      ] : [44.191, 15.3694];
 
       return {
         ...cluster,
+        marketCoords,
         center,
-        markets: markets.map(market => market.toLowerCase()),
-        efficiency: cluster.metrics?.efficiency || 0
-      };
-    }).filter(c => c.center);
-  }, [clusters, geometry]);
-
-  // Create GeoJSON features for cluster regions
-  const clusterFeatures = useMemo(() => {
-    if (!geometry?.features || !processedClusters.length) return null;
-
-    const features = geometry.features.map(feature => {
-      const normalizedName = feature.properties.normalizedName.toLowerCase();
-      const cluster = processedClusters.find(c => 
-        c.markets.includes(normalizedName)
-      );
-
-      return {
-        ...feature,
-        properties: {
-          ...feature.properties,
-          cluster: cluster ? {
-            id: cluster.cluster_id,
-            efficiency: cluster.efficiency,
-            mainMarket: cluster.main_market,
-            marketCount: cluster.markets.length
-          } : null
-        }
+        color: colorScale(cluster.metrics?.efficiency || 0).hex()
       };
     });
+  }, [clusters, colorScale]);
+
+  // Create GeoJSON with cluster information
+  const clusterGeoJSON = useMemo(() => {
+    if (!geometry?.features) return null;
 
     return {
       type: 'FeatureCollection',
-      features
+      features: geometry.features.map(feature => {
+        const normalizedName = transformRegionName(feature.properties.region_id);
+        const cluster = processedClusters.find(c => 
+          c.marketCoords.some(m => m.name === normalizedName)
+        );
+
+        return {
+          ...feature,
+          properties: {
+            ...feature.properties,
+            cluster_id: cluster?.cluster_id,
+            efficiency: cluster?.metrics?.efficiency || 0,
+            color: cluster?.color,
+            mainMarket: cluster?.main_market
+          }
+        };
+      })
     };
   }, [geometry, processedClusters]);
 
-  const getFeatureStyle = (feature) => {
-    const cluster = feature.properties.cluster;
-
-    if (!cluster) {
-      return {
-        fillColor: theme.palette.grey[300],
-        weight: 1,
-        opacity: 1,
-        color: 'white',
-        fillOpacity: 0.4
-      };
-    }
-
-    const isSelected = selectedClusterId === cluster.id;
+  // Style function for regions
+  const getFeatureStyle = useCallback((feature) => {
+    const isSelected = feature.properties.cluster_id === selectedClusterId;
     
     return {
-      fillColor: colorScale(cluster.efficiency).hex(),
+      fillColor: feature.properties.color || theme.palette.grey[300],
       weight: isSelected ? 2 : 1,
       opacity: 1,
       color: isSelected ? theme.palette.secondary.main : 'white',
       fillOpacity: isSelected ? 0.8 : 0.6
     };
-  };
+  }, [selectedClusterId, theme]);
 
-  // Custom map bounds control component
+  // Map bounds control
   const MapBoundsControl = () => {
     const map = useMap();
 
@@ -126,16 +103,16 @@ const ClusterMap = ({
         const bounds = L.geoJSON(geometry).getBounds();
         map.fitBounds(bounds);
       }
-    }, [map, geometry]);
+    }, [map]);
 
     return null;
   };
 
-  if (!processedClusters.length || !clusterFeatures) {
+  if (!processedClusters.length || !clusterGeoJSON) {
     return (
       <Box 
         sx={{ 
-          height: 400, 
+          height: '100%', 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
@@ -154,7 +131,7 @@ const ClusterMap = ({
     <MapContainer
       center={[15.3694, 44.191]}
       zoom={6}
-      style={{ height: '100%', width: '100%', minHeight: '400px' }}
+      style={{ height: '100%', width: '100%' }}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -163,63 +140,83 @@ const ClusterMap = ({
       
       <MapBoundsControl />
 
-      {/* Render region polygons */}
-      {clusterFeatures && (
-        <GeoJSON
-          data={clusterFeatures}
-          style={getFeatureStyle}
-          onEachFeature={(feature, layer) => {
-            const cluster = feature.properties.cluster;
-            if (cluster) {
-              layer.on({
-                click: () => onClusterSelect(cluster.id)
-              });
+      {/* Region polygons */}
+      <GeoJSON
+        data={clusterGeoJSON}
+        style={getFeatureStyle}
+        onEachFeature={(feature, layer) => {
+          if (feature.properties.cluster_id) {
+            layer.on({
+              click: () => onClusterSelect(feature.properties.cluster_id)
+            });
 
-              layer.bindTooltip(() => `
-                <div style="min-width: 150px;">
-                  <strong>${feature.properties.originalName}</strong><br/>
-                  Cluster: ${cluster.mainMarket}<br/>
-                  Efficiency: ${(cluster.efficiency * 100).toFixed(1)}%<br/>
-                  Markets: ${cluster.marketCount}
-                </div>
-              `, {
-                sticky: true,
-                direction: 'top'
-              });
-            }
-          }}
-        />
-      )}
+            layer.bindTooltip(() => `
+              <div style="min-width: 150px;">
+                <strong>${feature.properties.originalName}</strong><br/>
+                Cluster: ${feature.properties.mainMarket}<br/>
+                Efficiency: ${(feature.properties.efficiency * 100).toFixed(1)}%
+              </div>
+            `, {
+              sticky: true,
+              direction: 'top'
+            });
+          }
+        }}
+      />
 
-      {/* Render cluster centers */}
+      {/* Market points and connections */}
       {processedClusters.map(cluster => (
-        <CircleMarker
-          key={cluster.cluster_id}
-          center={[cluster.center[1], cluster.center[0]]}
-          radius={Math.sqrt(cluster.markets.length) * 3}
-          pathOptions={{
-            fillColor: colorScale(cluster.efficiency).hex(),
-            color: selectedClusterId === cluster.cluster_id ? 
-              theme.palette.secondary.main : 'white',
-            weight: 2,
-            opacity: 0.8,
-            fillOpacity: 0.6
-          }}
-          eventHandlers={{
-            click: () => onClusterSelect(cluster.cluster_id)
-          }}
-        >
-          <Tooltip>
-            <Typography variant="subtitle2">
-              Cluster {cluster.cluster_id}
-            </Typography>
-            <Typography variant="body2">
-              Main Market: {cluster.main_market}<br/>
-              Efficiency: {(cluster.efficiency * 100).toFixed(1)}%<br/>
-              Markets: {cluster.markets.length}
-            </Typography>
-          </Tooltip>
-        </CircleMarker>
+        <React.Fragment key={cluster.cluster_id}>
+          {/* Market points */}
+          {cluster.marketCoords.map((market, idx) => (
+            <CircleMarker
+              key={`${cluster.cluster_id}-${idx}`}
+              center={[market.coordinates[1], market.coordinates[0]]}
+              radius={market.isMainMarket ? 8 : 5}
+              pathOptions={{
+                fillColor: cluster.color,
+                color: selectedClusterId === cluster.cluster_id ? 
+                  theme.palette.secondary.main : 'white',
+                weight: market.isMainMarket ? 2 : 1,
+                opacity: 0.8,
+                fillOpacity: 0.6
+              }}
+              eventHandlers={{
+                click: () => onClusterSelect(cluster.cluster_id)
+              }}
+            >
+              <Tooltip>
+                <Typography variant="subtitle2">
+                  {market.originalName}
+                </Typography>
+                <Typography variant="body2">
+                  {market.isMainMarket ? 'Main Market' : 'Connected Market'}<br/>
+                  Cluster: {cluster.main_market}<br/>
+                  Efficiency: {(cluster.metrics?.efficiency * 100).toFixed(1)}%
+                </Typography>
+              </Tooltip>
+            </CircleMarker>
+          ))}
+
+          {/* Flow lines */}
+          {cluster.marketCoords.map((source, idx) => 
+            cluster.marketCoords.slice(idx + 1).map((target, tidx) => (
+              <Polyline
+                key={`${cluster.cluster_id}-${idx}-${tidx}`}
+                positions={[
+                  [source.coordinates[1], source.coordinates[0]],
+                  [target.coordinates[1], target.coordinates[0]]
+                ]}
+                pathOptions={{
+                  color: cluster.color,
+                  weight: 1,
+                  opacity: selectedClusterId === cluster.cluster_id ? 0.6 : 0.3,
+                  dashArray: source.isMainMarket || target.isMainMarket ? '' : '5, 5'
+                }}
+              />
+            ))
+          )}
+        </React.Fragment>
       ))}
     </MapContainer>
   );
@@ -229,9 +226,13 @@ ClusterMap.propTypes = {
   clusters: PropTypes.arrayOf(PropTypes.shape({
     cluster_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     main_market: PropTypes.string.isRequired,
-    markets: PropTypes.arrayOf(PropTypes.string),
+    markets: PropTypes.arrayOf(PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        name: PropTypes.string.isRequired
+      })
+    ])),
     connected_markets: PropTypes.arrayOf(PropTypes.string),
-    center_coordinates: PropTypes.arrayOf(PropTypes.number),
     metrics: PropTypes.shape({
       efficiency: PropTypes.number
     })
