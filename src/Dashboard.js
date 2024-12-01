@@ -6,7 +6,7 @@ import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import AnalysisWrapper from './components/common/AnalysisWrapper';
-import SpatialAnalysis from './components/analysis/spatial-analysis/SpatialAnalysis';
+import { SpatialAnalysis } from './components/spatialAnalysis';
 import _ from 'lodash';
 
 import {
@@ -75,7 +75,7 @@ const Dashboard = React.memo(({
   const analysisComponents = useMemo(() => ({
     ecm: ECMAnalysisLazy,
     priceDiff: PriceDifferentialAnalysisLazy,
-    spatial: SpatialAnalysis,
+    spatial: SpatialAnalysis, // Use our new SpatialAnalysis component
     tvmii: TVMIIAnalysisLazy
   }), []);
 
@@ -116,12 +116,17 @@ const Dashboard = React.memo(({
       return <ErrorMessage message="Selected analysis type is not available." />;
     }
 
-    const analysisProps = {
-      data,
+    // Special props for spatial analysis
+    const analysisProps = selectedAnalysis === 'spatial' ? {
+      timeSeriesData: data,
       selectedCommodity,
       windowWidth,
       spatialViewConfig,
       onSpatialViewChange
+    } : {
+      data,
+      selectedCommodity,
+      windowWidth
     };
 
     return (
