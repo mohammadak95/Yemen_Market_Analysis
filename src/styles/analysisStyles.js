@@ -4,12 +4,12 @@ import { alpha } from '@mui/material/styles';
 
 export const analysisStyles = (theme) => ({
   root: {
-    marginTop: { xs: 2, sm: 4 },
-    padding: { xs: 2, sm: 3 },
+    marginTop: theme.spacing(4),
+    padding: theme.spacing(3),
     width: '100%',
     backgroundColor: theme.palette.background.paper,
-    borderRadius: '16px',
-    boxShadow: '0 4px 20px 0 rgba(0,0,0,0.1)',
+    borderRadius: theme.shape.borderRadius,
+    boxShadow: theme.shadows[3],
     position: 'relative',
     '&::before': {
       content: '""',
@@ -19,61 +19,61 @@ export const analysisStyles = (theme) => ({
       right: 0,
       height: '4px',
       background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-    }
+    },
   },
   header: {
     display: 'flex',
-    alignItems: { xs: 'flex-start', sm: 'center' },
+    alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: { xs: 'column', sm: 'row' },
-    padding: 2,
+    padding: theme.spacing(2),
     backgroundColor: alpha(theme.palette.primary.main, 0.03),
-    borderRadius: '8px',
+    borderRadius: theme.shape.borderRadius,
   },
   title: {
     fontWeight: 700,
-    fontSize: { xs: '1.5rem', sm: '2rem' },
+    fontSize: '1.5rem',
     color: theme.palette.text.primary,
     display: 'flex',
     alignItems: 'center',
-    gap: 1,
+    gap: theme.spacing(1),
   },
   infoIcon: {
     color: theme.palette.primary.main,
     '&:hover': {
       color: theme.palette.primary.dark,
-    }
+    },
   },
   controlsContainer: {
     display: 'flex',
     flexDirection: { xs: 'column', sm: 'row' },
-    gap: 2,
-    alignItems: { xs: 'stretch', sm: 'center' },
-    marginTop: { xs: 2, sm: 0 },
+    gap: theme.spacing(2),
+    alignItems: 'center',
+    marginTop: { xs: theme.spacing(2), sm: 0 },
   },
   contentSection: {
-    padding: 2,
+    padding: theme.spacing(2),
     backgroundColor: theme.palette.background.default,
-    borderRadius: '8px',
+    borderRadius: theme.shape.borderRadius,
     border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
   },
   toggleGroup: {
     backgroundColor: theme.palette.background.paper,
-    borderRadius: '8px',
+    borderRadius: theme.shape.borderRadius,
     '& .MuiToggleButton-root': {
       border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
       '&.Mui-selected': {
         backgroundColor: alpha(theme.palette.primary.main, 0.1),
         color: theme.palette.primary.main,
         fontWeight: 600,
-      }
-    }
+      },
+    },
   },
   chartContainer: {
-    marginTop: 3,
-    padding: 2,
+    marginTop: theme.spacing(3),
+    padding: theme.spacing(2),
     backgroundColor: alpha(theme.palette.background.paper, 0.5),
-    borderRadius: '8px',
+    borderRadius: theme.shape.borderRadius,
     boxShadow: `inset 0 0 8px ${alpha(theme.palette.primary.main, 0.1)}`,
   },
   downloadButton: {
@@ -81,7 +81,7 @@ export const analysisStyles = (theme) => ({
     color: theme.palette.common.white,
     '&:hover': {
       backgroundColor: theme.palette.success.dark,
-    }
+    },
   },
   loadingContainer: {
     display: 'flex',
@@ -89,29 +89,44 @@ export const analysisStyles = (theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '300px',
-    gap: 2,
+    gap: theme.spacing(2),
   },
   errorContainer: {
-    padding: 3,
-    borderRadius: '8px',
+    padding: theme.spacing(3),
+    borderRadius: theme.shape.borderRadius,
     backgroundColor: alpha(theme.palette.error.main, 0.05),
     border: `1px solid ${alpha(theme.palette.error.main, 0.1)}`,
   },
   interpretationCard: {
-    marginTop: 3,
-    padding: 3,
+    marginTop: theme.spacing(3),
+    padding: theme.spacing(3),
     backgroundColor: alpha(theme.palette.info.main, 0.03),
-    borderRadius: '8px',
+    borderRadius: theme.shape.borderRadius,
     border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
-  }
+  },
+  resultsContainer: {
+    marginTop: theme.spacing(2),
+  },
+  insightCard: {
+    padding: theme.spacing(2),
+    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+    borderRadius: theme.shape.borderRadius,
+  },
+  chartPaper: {
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+    backgroundColor: alpha(theme.palette.background.paper, 0.5),
+    borderRadius: theme.shape.borderRadius,
+  },
 });
 
-export const chartStyles = {
-  tooltip: {
-    backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.95),
-    border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-    borderRadius: '6px',
-    padding: '12px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-  }
-};
+// Export chartStyles separately if needed
+export const chartStyles = (theme) => ({
+  chartContainer: {
+    marginTop: theme.spacing(3),
+    padding: theme.spacing(2),
+    backgroundColor: alpha(theme.palette.background.paper, 0.5),
+    borderRadius: theme.shape.borderRadius,
+    boxShadow: `inset 0 0 8px ${alpha(theme.palette.primary.main, 0.1)}`,
+  },
+});

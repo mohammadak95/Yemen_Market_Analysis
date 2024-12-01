@@ -12,6 +12,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Divider,
+  useTheme,
 } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import {
@@ -29,27 +30,19 @@ import {
   Bar,
   Cell,
 } from 'recharts';
-import { useTechnicalHelp } from '@/hooks';;
+import { useTechnicalHelp } from '../../../hooks';
+import { analysisStyles } from '../../../styles/analysisStyles';
 
-/**
- * ECMResults Component
- * Displays results from the ECM analysis.
- * 
- * @param {Object} props - Component props
- * @param {Object} props.selectedData - ECM analysis data for a specific commodity/regime
- * @param {boolean} props.isMobile - Flag to determine if the view is mobile
- * @param {string} props.analysisType - Type of analysis ('unified' or 'directional')
- * @param {string} props.direction - Direction of analysis ('northToSouth' or 'southToNorth')
- */
 const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('ecm');
+  const theme = useTheme();
+  const styles = analysisStyles(theme);
 
-  // Access regression results directly since alpha, beta, gamma are top-level properties
   const regressionResults = selectedData || {};
 
   // Prepare data for charts
   const residualsData =
-    selectedData.residuals && selectedData.fittedValues
+    selectedData?.residuals && selectedData?.fittedValues
       ? selectedData.residuals.map((residual, index) => ({
           index,
           residual,
@@ -57,7 +50,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
         }))
       : [];
 
-  const irfData = selectedData.irf
+  const irfData = selectedData?.irf
     ? selectedData.irf.map((point, index) => ({
         period: index,
         usd_price: point[0][0],
@@ -66,7 +59,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
     : [];
 
   const grangerData =
-    selectedData.granger_causality && selectedData.granger_causality.conflict_intensity
+    selectedData?.granger_causality?.conflict_intensity
       ? Object.entries(selectedData.granger_causality.conflict_intensity).map(
           ([lag, data]) => ({
             lag: parseInt(lag),
@@ -76,7 +69,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
         )
       : [];
 
-  const spatialData = selectedData.spatial_autocorrelation
+  const spatialData = selectedData?.spatial_autocorrelation
     ? [
         {
           variable: 'Variable 1',
@@ -137,16 +130,11 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
   ];
 
   // Access diagnostics for Variable_1 and Variable_2
-  const diagnosticsVar1 = selectedData.diagnostics
-    ? selectedData.diagnostics.Variable_1
-    : null;
-
-  const diagnosticsVar2 = selectedData.diagnostics
-    ? selectedData.diagnostics.Variable_2
-    : null;
+  const diagnosticsVar1 = selectedData?.diagnostics?.Variable_1 || null;
+  const diagnosticsVar2 = selectedData?.diagnostics?.Variable_2 || null;
 
   return (
-    <Box>
+    <Box sx={styles.resultsContainer}>
       {/* Key Insights */}
       <Typography variant="h6" gutterBottom>
         Key Insights
@@ -154,7 +142,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {keyInsights.map((insight, index) => (
           <Grid item xs={12} md={4} key={index}>
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={styles.insightCard}>
               <Typography variant="subtitle1" gutterBottom>
                 {insight.title}
               </Typography>
@@ -171,11 +159,11 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
       <Typography variant="h6" gutterBottom>
         Residuals Analysis
       </Typography>
-      <Paper sx={{ p: 2, mb: 3 }}>
+      <Paper sx={styles.chartPaper}>
         {residualsData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <ScatterChart data={residualsData}>
-              <CartesianGrid />
+              <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="fitted"
                 name="Fitted Values"
@@ -204,7 +192,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
       <Typography variant="h6" gutterBottom>
         Impulse Response Function (IRF)
       </Typography>
-      <Paper sx={{ p: 2, mb: 3 }}>
+      <Paper sx={styles.chartPaper}>
         {irfData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={irfData}>
@@ -244,7 +232,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
       <Typography variant="h6" gutterBottom>
         Granger Causality Test Results
       </Typography>
-      <Paper sx={{ p: 2, mb: 3 }}>
+      <Paper sx={styles.chartPaper}>
         {grangerData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={grangerData}>
@@ -280,7 +268,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
           <Typography variant="h6" gutterBottom>
             Spatial Autocorrelation (Moran's I)
           </Typography>
-          <Paper sx={{ p: 2, mb: 3 }}>
+          <Paper sx={styles.chartPaper}>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={spatialData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -311,7 +299,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
       <Typography variant="h6" gutterBottom>
         Model Diagnostics
       </Typography>
-      <Paper sx={{ p: 2, mb: 3 }}>
+      <Paper sx={styles.chartPaper}>
         {diagnosticsVar1 && diagnosticsVar2 ? (
           <>
             {/* Diagnostics for Variable 1 */}
@@ -401,8 +389,8 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
             </li>
             <li>
               <Typography variant="body2">
-                <strong>Impulse Response Function (IRF):</strong> Shows how variables respond
-                over time to a shock in one of the variables.
+                <strong>Impulse Response Function (IRF):</strong> Shows how variables respond over
+                time to a shock in one of the variables.
               </Typography>
             </li>
             <li>

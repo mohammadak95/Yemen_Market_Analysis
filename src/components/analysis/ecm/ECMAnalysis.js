@@ -46,7 +46,11 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
         (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase()
       );
       setSelectedData(foundData || null);
-    } else if (analysisType === 'directional' && directionalStatus === 'succeeded' && directionalData) {
+    } else if (
+      analysisType === 'directional' &&
+      directionalStatus === 'succeeded' &&
+      directionalData
+    ) {
       const directionKey = direction === 'northToSouth' ? 'northToSouth' : 'southToNorth';
       const directionData = directionalData[directionKey];
       if (directionData) {
@@ -87,16 +91,18 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
   const handleDownloadCsv = () => {
     if (!selectedData) return;
 
-    const csvData = [{
-      commodity: selectedData.commodity,
-      regime: selectedData.regime,
-      aic: selectedData.aic,
-      bic: selectedData.bic,
-      hqic: selectedData.hqic,
-      alpha: selectedData.alpha,
-      beta: selectedData.beta,
-      gamma: selectedData.gamma,
-    }];
+    const csvData = [
+      {
+        commodity: selectedData.commodity,
+        regime: selectedData.regime,
+        aic: selectedData.aic,
+        bic: selectedData.bic,
+        hqic: selectedData.hqic,
+        alpha: selectedData.alpha,
+        beta: selectedData.beta,
+        gamma: selectedData.gamma,
+      },
+    ];
 
     const csv = jsonToCsv(csvData);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -105,7 +111,7 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   // Analysis controls component
   const analysisControls = (
-    <>
+    <Box sx={styles.controlsContainer}>
       <ToggleButtonGroup
         value={analysisType}
         exclusive
@@ -139,7 +145,7 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
       >
         Download CSV
       </Button>
-    </>
+    </Box>
   );
 
   return (

@@ -14,27 +14,6 @@ const baseTheme = {
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontSize: '2rem',
-      fontWeight: 500,
-      '@media (min-width:600px)': {
-        fontSize: '2.5rem',
-      },
-      '@media (min-width:960px)': {
-        fontSize: '3rem',
-      },
-    },
-    h2: {
-      fontSize: '1.75rem',
-      fontWeight: 500,
-      '@media (min-width:600px)': {
-        fontSize: '2rem',
-      },
-      '@media (min-width:960px)': {
-        fontSize: '2.5rem',
-      },
-    },
-    // Add responsive sizes for other variants as needed
   },
   shape: {
     borderRadius: 8,
@@ -50,61 +29,69 @@ const lightTheme = createTheme({
     primary: {
       main: '#1976d2',
       light: '#90caf9',
-      dark: '#42a5f5',
+      dark: '#115293',
       contrastText: '#ffffff',
     },
     secondary: {
       main: '#dc004e',
-      light: '#f48fb1',
-      dark: '#f06292',
+      light: '#ff5c8d',
+      dark: '#9a0036',
       contrastText: '#ffffff',
     },
     background: {
-      default: '#ffffff',
-      paper: '#f5f5f5',
+      default: '#f5f5f5',
+      paper: '#ffffff',
     },
     text: {
-      primary: 'rgba(0, 0, 0, 0.87)',
-      secondary: 'rgba(0, 0, 0, 0.54)',
+      primary: '#000000',
+      secondary: '#4f4f4f',
     },
   },
 });
 
-// Dark Theme Configuration with Improved Palette
+// Dark Theme Configuration
 const darkTheme = createTheme({
   ...baseTheme,
   palette: {
     mode: 'dark',
     primary: {
       main: '#90caf9',
-      light: '#64b5f6',
+      light: '#e3f2fd',
       dark: '#42a5f5',
       contrastText: '#000000',
     },
     secondary: {
       main: '#f48fb1',
-      light: '#fce4ec',
-      dark: '#f06292',
+      light: '#f8bbd0',
+      dark: '#ad1457',
       contrastText: '#000000',
     },
     background: {
       default: '#121212',
-      paper: '#1E1E1E',
+      paper: '#1e1e1e',
     },
     text: {
-      primary: '#FFFFFF',
-      secondary: '#B3B3B3',
+      primary: '#ffffff',
+      secondary: '#b3b3b3',
     },
   },
 });
 
-// Theme Overrides for Consistency
+// Theme Overrides
 const themeOverrides = {
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: 'none',
+          borderRadius: 8,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
         },
       },
     },
@@ -118,16 +105,8 @@ const themeOverrides = {
   },
 };
 
-// Combine Light Theme with Overrides
-export const lightThemeWithOverrides = createTheme(
-  lightTheme,
-  themeOverrides
-);
-
-// Combine Dark Theme with Overrides
-export const darkThemeWithOverrides = createTheme(
-  darkTheme,
-  themeOverrides
-);
+// Export Themes
+export const lightThemeWithOverrides = createTheme(lightTheme, themeOverrides);
+export const darkThemeWithOverrides = createTheme(darkTheme, themeOverrides);
 
 export default lightThemeWithOverrides;

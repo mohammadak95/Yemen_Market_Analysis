@@ -1,7 +1,6 @@
 // src/utils/dataUtils.js
 import { pathResolver } from './pathResolver';
 
-
 // Constants
 const ENV = process.env.NODE_ENV;
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
@@ -53,10 +52,14 @@ const cleanPath = (path) => {
 };
 
 const getBasePath = () => {
-  if (isOffline) return '/results';
-  if (isGitHubPages) return `${PUBLIC_URL}/results`;
-  if (ENV === 'production') return '/Yemen_Market_Analysis/results';
-  return '/results';
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  const isProd = process.env.NODE_ENV === 'production';
+  const repoBase = '/Yemen_Market_Analysis';
+
+  if (isOffline) return '/data';
+  if (isGitHubPages) return `${repoBase}/data`;
+  if (isProd) return '/data';
+  return '/data';
 };
 
 export const getDataPath = (fileName = '') => {
@@ -64,14 +67,24 @@ export const getDataPath = (fileName = '') => {
   const isProd = process.env.NODE_ENV === 'production';
   const repoBase = '/Yemen_Market_Analysis';
   
-  // Set base path based on environment
+  // Set base path based on environment and file type
   let basePath;
-  if (isGitHubPages) {
-    basePath = `${repoBase}/results`;
-  } else if (isProd) {
-    basePath = '/results';
+  if (fileName.includes('preprocessed_')) {
+    // Handle preprocessed data files
+    if (isGitHubPages) {
+      basePath = `${repoBase}/data/preprocessed_by_commodity`;
+    } else {
+      basePath = '/data/preprocessed_by_commodity';
+    }
   } else {
-    basePath = '/results';
+    // Handle other data files
+    if (isGitHubPages) {
+      basePath = `${repoBase}/data`;
+    } else if (isProd) {
+      basePath = '/data';
+    } else {
+      basePath = '/data';
+    }
   }
 
   // Clean up the path
@@ -89,7 +102,6 @@ export const getDataPath = (fileName = '') => {
   return cleanPath;
 };
 
-
 export const fetchWithRetry = async (url, options = {}, retries = 2) => {
   try {
     const response = await fetch(url, options);
@@ -100,7 +112,7 @@ export const fetchWithRetry = async (url, options = {}, retries = 2) => {
   } catch (error) {
     if (retries > 0) {
       // Try alternative path if first attempt fails
-      const altPath = url.replace('/results/', '/data/');
+      const altPath = url.replace('/data/', '/results/');
       try {
         const altResponse = await fetch(altPath, options);
         if (altResponse.ok) {
@@ -126,7 +138,6 @@ export const getPrecomputedDataPath = (commodity) => {
   return pathResolver.getCommodityFilePath(commodity);
 };
 
-
 export const enhancedFetchJson = async (url, options = {}) => {
   try {
     const response = await pathResolver.readAndParseFile(url);
@@ -143,7 +154,6 @@ export const enhancedFetchJson = async (url, options = {}) => {
 export const getRegressionDataPath = () => {
   return getDataPath('spatial_analysis_results.json');
 };
-
 
 export const getChoroplethDataPath = (fileName) => {
   if (!fileName) throw new Error('Filename parameter is required');

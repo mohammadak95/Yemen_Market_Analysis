@@ -108,7 +108,9 @@
     "test:spatial": "jest --config jest.config.js spatialPreprocessor.test.js --verbose",
     "test:build": "jest --config jest.config.js build.test.js --verbose",
     "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
-    "test:perf": "jest --config jest.config.js --testNamePattern='Performance|Full Processing' --verbose"
+    "test:perf": "jest --config jest.config.js --testNamePattern='Performance|Full Processing' --verbose",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -117,10 +119,8 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/plugin-transform-modules-commonjs": "^7.25.9",
     "@babel/plugin-transform-react-jsx": "^7.25.9",
-    "@babel/plugin-transform-runtime": "^7.25.9",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
-    "@babel/runtime": "^7.26.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.0.0",

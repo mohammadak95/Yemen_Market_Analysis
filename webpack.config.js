@@ -40,8 +40,6 @@ module.exports = (env, argv) => {
       publicPath,
       clean: true,
     },
-
-    // Resolve settings for path aliases and compatibility
     resolve: {
       extensions: ['.js', '.jsx', '.json'],
       alias: {
@@ -54,8 +52,6 @@ module.exports = (env, argv) => {
         'crypto': false
       }
     },
-
-    // Optimization settings, including SplitChunks and minimizers
     optimization: {
       minimizer: [
         new TerserPlugin({
@@ -97,8 +93,6 @@ module.exports = (env, argv) => {
       minimize: !isDevelopment,
       runtimeChunk: isDevelopment ? false : 'single',
     },
-
-    // Module rules for handling different file types
     module: {
       rules: [
         {
@@ -170,11 +164,8 @@ module.exports = (env, argv) => {
         }
       ],
     },
-
-    // Plugins for enhanced functionality
     plugins: [
       new CleanWebpackPlugin(),
-
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'public/index.html'),
         inject: true,
@@ -194,7 +185,6 @@ module.exports = (env, argv) => {
           PUBLIC_URL: publicPath.slice(0, -1)
         }
       }),
-
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -215,17 +205,25 @@ module.exports = (env, argv) => {
           },
           {
             from: 'data/preprocessed_by_commodity',
-            to: 'data/preprocessed_by_commodity'
+            to: 'data/preprocessed_by_commodity',
+            noErrorOnMissing: true
+          },
+          {
+            from: 'data',
+            to: 'data',
+            globOptions: {
+              ignore: ['**/preprocessed_by_commodity/**'],
+            },
+            noErrorOnMissing: true
           },
           {
             from: 'node_modules/leaflet/dist/images',
-            to: 'static/media'
+            to: 'static/media',
+            noErrorOnMissing: true
           },
         ],
       }),
-
       new DefinePlugin(processedEnv),
-
       new WebpackManifestPlugin({
         fileName: 'asset-manifest.json',
         publicPath,
@@ -237,7 +235,6 @@ module.exports = (env, argv) => {
           entrypoints: entrypoints.main || [],
         }),
       }),
-
       ...(!isDevelopment ? [
         new CompressionPlugin({
           test: /\.(js|css|html|svg)$/,
@@ -251,8 +248,6 @@ module.exports = (env, argv) => {
         }),
       ] : []),
     ].filter(Boolean),
-
-    // Dev server configuration for local development
     devServer: {
       static: {
         directory: path.join(__dirname, 'public'),
@@ -270,10 +265,10 @@ module.exports = (env, argv) => {
       },
       proxy: {
         '/api': {
-          target: 'http://localhost:5001', // Replace with your backend server's address
+          target: 'http://localhost:5001',
           secure: false,
           changeOrigin: true,
-          logLevel: 'debug', // Optional: Useful for debugging proxy issues
+          logLevel: 'debug',
         },
         '/data': {
           target: 'http://localhost:5001',
@@ -285,27 +280,20 @@ module.exports = (env, argv) => {
           }
         },
         '/results': {
-          target: 'http://localhost:5001', // If your results are served by the backend
+          target: 'http://localhost:5001',
           secure: false,
           changeOrigin: true,
           logLevel: 'debug',
         },
       },
     },
-
-    // Performance settings to manage asset sizes
     performance: {
       maxAssetSize: 512000,
       maxEntrypointSize: 512000,
       hints: isDevelopment ? false : 'warning',
     },
-
-    // Source maps for better debugging in development
     devtool: isDevelopment ? 'eval-cheap-module-source-map' : 'source-map',
-
     mode: isDevelopment ? 'development' : 'production',
-
-    // Cache configuration to improve build speed
     cache: isDevelopment ? {
       type: 'filesystem',
       name: 'development-cache',
@@ -316,8 +304,6 @@ module.exports = (env, argv) => {
       cacheLocation: path.resolve(__dirname, 'node_modules/.cache/webpack'),
       store: 'pack',
     } : false,
-
-    // Minimal stats in development for cleaner console output
     stats: isDevelopment ? 'minimal' : 'normal',
   };
 };
