@@ -101,14 +101,14 @@
     "clean": "rimraf build dist .cache node_modules/.cache",
     "clean:all": "rimraf build dist .cache node_modules/.cache coverage",
     "analyze": "webpack-bundle-analyzer stats.json",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --maxWorkers=2",
-    "test:spatial": "jest spatialPreprocessor.test.js --verbose",
-    "test:build": "jest build.test.js --verbose",
+    "test": "jest --config jest.config.js",
+    "test:watch": "jest --config jest.config.js --watch",
+    "test:coverage": "jest --config jest.config.js --coverage",
+    "test:ci": "jest --config jest.config.js --ci --coverage --maxWorkers=2",
+    "test:spatial": "jest --config jest.config.js spatialPreprocessor.test.js --verbose",
+    "test:build": "jest --config jest.config.js build.test.js --verbose",
     "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
-    "test:perf": "jest --testNamePattern='Performance|Full Processing' --verbose"
+    "test:perf": "jest --config jest.config.js --testNamePattern='Performance|Full Processing' --verbose"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -117,8 +117,10 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/plugin-transform-modules-commonjs": "^7.25.9",
     "@babel/plugin-transform-react-jsx": "^7.25.9",
+    "@babel/plugin-transform-runtime": "^7.25.9",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
+    "@babel/runtime": "^7.26.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.0.0",
@@ -205,21 +207,6 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
-    ]
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.(js|jsx)$": "babel-jest"
-    },
-    "moduleNameMapper": {
-      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
-    },
-    "testEnvironment": "jsdom",
-    "setupFiles": [
-      "<rootDir>/src/setupPolyfills.js"
-    ],
-    "setupFilesAfterEnv": [
-      "<rootDir>/src/setupTests.js"
     ]
   },
   "lint-staged": {
