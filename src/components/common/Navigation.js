@@ -11,13 +11,10 @@ import {
   FormHelperText
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import SchoolIcon from '@mui/icons-material/School';
 import _ from 'lodash';
 import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { fetchAllSpatialData } from '../../slices/spatialSlice';
-
 
 const capitalizeWords = (str) => {
   return str
@@ -76,7 +73,6 @@ const useSpatialDataMemo = () => useSelector(
  * - selectedCommodity: Currently selected commodity.
  * - onSelectCommodity: Function to handle commodity selection.
  */
-
 export const CommoditySelector = React.memo(({ 
   commodities = [], 
   selectedCommodity = '', 
@@ -210,33 +206,6 @@ RegimeSelector.propTypes = {
 };
 
 /**
- * DiscoveryMenu Component
- *
- * A menu item for discovery-related actions.
- *
- * Props:
- * - onTutorialsClick: Function to handle tutorials click event.
- */
-export const DiscoveryMenu = ({ onTutorialsClick }) => {
-  return (
-    <List>
-      <NavigationItem onClick={onTutorialsClick}>
-        <ListItemIcon>
-          <SchoolIcon />
-        </ListItemIcon>
-        <ListItemText primary="Tutorials" />
-      </NavigationItem>
-      <Divider />
-      {/* Other menu items can be added here using <NavigationItem> */}
-    </List>
-  );
-};
-
-DiscoveryMenu.propTypes = {
-  onTutorialsClick: PropTypes.func.isRequired,
-};
-
-/**
  * Sidebar Component
  *
  * The main navigation sidebar component.
@@ -251,7 +220,6 @@ DiscoveryMenu.propTypes = {
  * - sidebarOpen: Boolean indicating if the sidebar is open.
  * - setSidebarOpen: Function to update sidebar open state.
  * - onMethodologyClick: Function to handle methodology button click.
- * - onTutorialsClick: Function to handle tutorials button click.
  * - selectedRegimes: Array of currently selected regimes.
  * - setSelectedRegimes: Function to update selected regimes.
  * - onOpenWelcomeModal: Function to open the welcome modal.
@@ -267,7 +235,6 @@ export const Sidebar = ({
   sidebarOpen,
   setSidebarOpen,
   onMethodologyClick,
-  onTutorialsClick,
   selectedRegimes,
   setSelectedRegimes,
   onOpenWelcomeModal,
@@ -360,7 +327,7 @@ export const Sidebar = ({
               fullWidth
               onClick={() => handleAnalysisChange('ecm')}
             >
-              ECM Analysis
+              ECM Model
             </Button>
             <Button
               variant={selectedAnalysis === 'priceDiff' ? 'contained' : 'outlined'}
@@ -368,7 +335,7 @@ export const Sidebar = ({
               fullWidth
               onClick={() => handleAnalysisChange('priceDiff')}
             >
-              Price Differential Analysis
+              Price Differential Model
             </Button>
             <Button
               variant={selectedAnalysis === 'tvmii' ? 'contained' : 'outlined'}
@@ -376,11 +343,10 @@ export const Sidebar = ({
               fullWidth
               onClick={() => handleAnalysisChange('tvmii')}
             >
-              TV-MII Analysis
+              TV-MII Index
             </Button>
           </Stack>
 
-          {/* Rest of the buttons remain the same */}
           <Button
             variant="contained"
             sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }}
@@ -389,16 +355,6 @@ export const Sidebar = ({
             startIcon={<InfoIcon />}
           >
             Methodology
-          </Button>
-
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' } }}
-            fullWidth
-            onClick={onTutorialsClick}
-            startIcon={<MenuBookIcon />}
-          >
-            Tutorials
           </Button>
 
           <Button
@@ -423,11 +379,9 @@ export const Sidebar = ({
       selectedAnalysis,
       handleAnalysisChange,
       onMethodologyClick,
-      onTutorialsClick,
       onOpenWelcomeModal,
     ]
   );
-
 
   return (
     <Drawer
@@ -465,7 +419,6 @@ Sidebar.propTypes = {
   sidebarOpen: PropTypes.bool.isRequired,
   setSidebarOpen: PropTypes.func.isRequired,
   onMethodologyClick: PropTypes.func.isRequired,
-  onTutorialsClick: PropTypes.func.isRequired,
   selectedRegimes: PropTypes.arrayOf(PropTypes.string).isRequired,
   setSelectedRegimes: PropTypes.func.isRequired,
   onOpenWelcomeModal: PropTypes.func.isRequired,

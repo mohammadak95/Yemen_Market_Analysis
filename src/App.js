@@ -21,7 +21,6 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorDisplay from './components/common/ErrorDisplay';
 import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
 import MethodologyModal from './components/methodology/MethodologyModal';
-import { TutorialsModal } from './components/discovery/Tutorials';
 import { WelcomeModal } from './components/common/WelcomeModal';
 import StateExporter from './components/utils/StateExporter';
 import { selectHasSeenWelcome, setHasSeenWelcome } from './store/welcomeModalSlice';
@@ -109,8 +108,7 @@ const App = () => {
     zoom: 6,
   });
   const [modalStates, setModalStates] = useState({
-    methodology: false,
-    tutorials: false,
+    methodology: false
   });
 
   // Initial data loading
@@ -195,7 +193,6 @@ const App = () => {
               <Header
                 isDarkMode={isDarkMode}
                 toggleDarkMode={handleToggleDarkMode}
-                onTutorialsClick={() => handleModalToggle('tutorials', true)}
               />
             </Toolbar>
           </StyledAppBar>
@@ -213,7 +210,6 @@ const App = () => {
             setSidebarOpen={setSidebarOpen}
             isSmUp={isSmUp}
             onMethodologyClick={() => handleModalToggle('methodology', true)}
-            onTutorialsClick={() => handleModalToggle('tutorials', true)}
             selectedRegimes={selectedGraphRegimes}
             setSelectedRegimes={setSelectedGraphRegimes}
             onOpenWelcomeModal={() => handleModalToggle('welcome', true)}
@@ -247,10 +243,6 @@ const App = () => {
           <MethodologyModal
             open={modalStates.methodology}
             onClose={() => handleModalToggle('methodology', false)}
-          />
-          <TutorialsModal
-            open={modalStates.tutorials}
-            onClose={() => handleModalToggle('tutorials', false)}
           />
           <WelcomeModal
             open={!hasSeenWelcome}

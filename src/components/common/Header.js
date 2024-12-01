@@ -6,7 +6,6 @@ import { IconButton, Typography, Box } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { styled } from '@mui/material/styles';
-import { DiscoveryMenu } from './Navigation';
 
 const TitleTypography = styled(Typography)(({ theme }) => ({
   flexGrow: 1,
@@ -15,14 +14,12 @@ const TitleTypography = styled(Typography)(({ theme }) => ({
   },
 }));
 
-const Header = ({ isDarkMode, toggleDarkMode, onTutorialsClick }) => {
+const Header = ({ isDarkMode, toggleDarkMode }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
       <TitleTypography variant="h6" noWrap component="div">
         Yemen Market Analysis Dashboard
       </TitleTypography>
-      
-      <DiscoveryMenu onTutorialsClick={onTutorialsClick} />
       
       <IconButton
         onClick={toggleDarkMode}
@@ -38,7 +35,6 @@ const Header = ({ isDarkMode, toggleDarkMode, onTutorialsClick }) => {
 Header.propTypes = {
   isDarkMode: PropTypes.bool.isRequired,
   toggleDarkMode: PropTypes.func.isRequired,
-  onTutorialsClick: PropTypes.func.isRequired,
 };
 
 export default Header;

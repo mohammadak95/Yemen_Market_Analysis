@@ -7,21 +7,13 @@ import {
 } from './dataHooks';
 
 import {
-  useDiscoveryData,
-  useDiscoveryIntegration,
-  useLaunchDiscovery,
-  useMethodologyAccess
-} from './discoveryHooks';
-
-import {
   useWindowSize,
   useBodyScrollLock,
   useTechnicalHelp,
   useWorkerProcessor
 } from './uiHooks';
 
-
-// Export all other hooks
+// Export all hooks
 export {
   // Data Analysis
   useData,
@@ -29,12 +21,6 @@ export {
   usePriceDifferentialData,
   useTVMIIData,
   useRegressionAnalysis,
-
-  // Discovery & Methodology
-  useDiscoveryData,
-  useDiscoveryIntegration,
-  useLaunchDiscovery,
-  useMethodologyAccess,
 
   // UI & Utility
   useWindowSize,
