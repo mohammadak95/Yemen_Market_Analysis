@@ -5,7 +5,7 @@ import {
   selectTimeSeriesData,
   selectMarketClusters,
   selectGeometryData,
-  selectSpatialAutocorrelation,
+  selectSpatialAutocorrelation as optimizedSelectSpatialAutocorrelation,
   selectMarketShocks,
   selectMarketFlows,
   selectMarketIntegration,
@@ -13,9 +13,98 @@ import {
 } from './optimizedSelectors';
 import { DEFAULT_METRICS, DEFAULT_OVERALL_METRICS } from '../components/spatialAnalysis/types';
 
+// Base selectors with memoization
+const selectSpatialState = createSelector(
+  state => state.spatialAnalysis,
+  spatialAnalysis => spatialAnalysis || {}
+);
+
+// Time series data selector
+export const selectTimeSeriesDataSelector = createSelector(
+  [selectSpatialState],
+  spatialState => spatialState.timeSeriesData || []
+);
+
+// Spatial autocorrelation selectors
+export const selectSpatialAutocorrelationSelector = createSelector(
+  [selectSpatialState],
+  spatialState => spatialState.spatialAutocorrelation || {
+    global: null,
+    local: null
+  }
+);
+
+// Global Autocorrelation Selector
+export const selectGlobalAutocorrelation = createSelector(
+  [selectSpatialAutocorrelationSelector],
+  autocorrelation => autocorrelation.global || {
+    moran_i: 0,
+    p_value: null,
+    z_score: null,
+    significance: false
+  }
+);
+
+// Local Autocorrelation Selector
+export const selectLocalAutocorrelation = createSelector(
+  [selectSpatialAutocorrelationSelector],
+  autocorrelation => autocorrelation.local || {}
+);
+
+// Significant Clusters Selector
+export const selectSignificantClusters = createSelector(
+  [selectLocalAutocorrelation],
+  local => {
+    const clusters = {
+      'high-high': [],
+      'low-low': [],
+      'high-low': [],
+      'low-high': [],
+      'not_significant': []
+    };
+
+    if (!local) return clusters;
+
+    Object.entries(local).forEach(([region, stats]) => {
+      const type = stats.cluster_type || 'not_significant';
+      clusters[type].push({
+        region,
+        ...stats
+      });
+    });
+
+    return clusters;
+  }
+);
+
+// Autocorrelation Summary Selector
+export const selectAutocorrelationSummary = createSelector(
+  [selectGlobalAutocorrelation, selectLocalAutocorrelation],
+  (global, local) => {
+    const localCount = Object.keys(local).length;
+    const significantCount = Object.values(local).filter(
+      stats => stats.p_value && stats.p_value < 0.05
+    ).length;
+
+    return {
+      globalMoranI: global.moran_i,
+      globalSignificance: global.significance,
+      totalRegions: localCount,
+      significantRegions: significantCount,
+      significanceRate: localCount ? (significantCount / localCount) * 100 : 0
+    };
+  }
+);
+
+// Autocorrelation By Region Selector
+export const selectAutocorrelationByRegion = createSelector(
+  [selectLocalAutocorrelation, (_, regionId) => regionId],
+  (local, regionId) => local[regionId] || null
+);
+
 // Cluster Analysis Selectors
 export const selectEnhancedClusters = createSelector(
-  [selectMarketClusters, selectTimeSeriesData],
+  [selectMarketClusters, selectTimeSeriesDataSelector],
   (clusters, timeSeriesData) => {
     if (!clusters?.length || !timeSeriesData?.length) return [];
 
@@ -43,93 +132,6 @@ export const selectEnhancedClusters = createSelector(
         }
       };
     });
-  }
-);
-
-// Spatial Autocorrelation Selectors
-export const selectGlobalAutocorrelation = createSelector(
-  [selectSpatialAutocorrelation],
-  (autocorrelation) => {
-    if (!autocorrelation?.global) {
-      return {
-        moran_i: 0,
-        p_value: null,
-        z_score: null,
-        significance: false
-      };
-    }
-
-    return {
-      moran_i: autocorrelation.global.moran_i || 0,
-      p_value: autocorrelation.global.p_value,
-      z_score: autocorrelation.global.z_score,
-      significance: autocorrelation.global.significance || false
-    };
-  }
-);
-
-export const selectLocalAutocorrelation = createSelector(
-  [selectSpatialAutocorrelation],
-  (autocorrelation) => {
-    if (!autocorrelation?.local) {
-      return {};
-    }
-
-    return Object.entries(autocorrelation.local).reduce((acc, [region, stats]) => {
-      acc[region] = {
-        local_i: stats.local_i || 0,
-        p_value: stats.p_value,
-        cluster_type: stats.cluster_type || 'not_significant',
-        z_score: stats.z_score
-      };
-      return acc;
-    }, {});
-  }
-);
-
-export const selectAutocorrelationByRegion = createSelector(
-  [selectLocalAutocorrelation, (_, regionId) => regionId],
-  (localStats, regionId) => localStats[regionId] || null
-);
-
-export const selectSignificantClusters = createSelector(
-  [selectLocalAutocorrelation],
-  (localStats) => {
-    const clusters = {
-      'high-high': [],
-      'low-low': [],
-      'high-low': [],
-      'low-high': [],
-      'not_significant': []
-    };
-
-    Object.entries(localStats).forEach(([region, stats]) => {
-      const type = stats.cluster_type || 'not_significant';
-      clusters[type].push({
-        region,
-        ...stats
-      });
-    });
-
-    return clusters;
-  }
-);
-
-export const selectAutocorrelationSummary = createSelector(
-  [selectGlobalAutocorrelation, selectLocalAutocorrelation],
-  (global, local) => {
-    const localCount = Object.keys(local).length;
-    const significantCount = Object.values(local).filter(
-      stats => stats.p_value && stats.p_value < 0.05
-    ).length;
-
-    return {
-      globalMoranI: global.moran_i,
-      globalSignificance: global.significance,
-      totalRegions: localCount,
-      significantRegions: significantCount,
-      significanceRate: localCount ? (significantCount / localCount) * 100 : 0
-    };
   }
 );
 
@@ -217,7 +219,7 @@ export const selectShockAnalysisData = createSelector(
 
 // Conflict Analysis Selector
 export const selectConflictAnalysisData = createSelector(
-  [selectTimeSeriesData, selectGeometryData],
+  [selectTimeSeriesDataSelector, selectGeometryData],
   (timeSeriesData, geometry) => {
     if (!timeSeriesData?.length) return null;
 
@@ -253,7 +255,7 @@ export const selectConflictAnalysisData = createSelector(
 
 // Seasonal Analysis Selector
 export const selectSeasonalAnalysisData = createSelector(
-  [selectTimeSeriesData],
+  [selectTimeSeriesDataSelector],
   (timeSeriesData) => {
     if (!timeSeriesData?.length) return null;
 
@@ -268,8 +270,8 @@ export const selectSeasonalAnalysisData = createSelector(
       month,
       averagePrice: prices.reduce((sum, p) => sum + p, 0) / prices.length,
       volatility: Math.sqrt(
-        prices.reduce((sum, p) => sum + Math.pow(p - prices[0], 2), 0) / prices.length
-      ) / prices[0]
+        prices.reduce((sum, p) => sum + Math.pow(p - (prices.reduce((a, b) => a + b, 0) / prices.length), 2), 0) / prices.length
+      ) / (prices.reduce((a, b) => a + b, 0) / prices.length)
     }));
 
     return {
@@ -311,7 +313,7 @@ export const selectNetworkAnalysisData = createSelector(
       summary: {
         nodes: nodes.length,
         edges: edges.length,
-        density: (2 * edges.length) / (nodes.length * (nodes.length - 1))
+        density: nodes.length > 1 ? (2 * edges.length) / (nodes.length * (nodes.length - 1)) : 0
       }
     };
   }
@@ -319,12 +321,12 @@ export const selectNetworkAnalysisData = createSelector(
 
 // Market Health Selector
 export const selectMarketHealthData = createSelector(
-  [selectTimeSeriesData, selectMarketShocks, selectMarketFlows],
+  [selectTimeSeriesDataSelector, selectMarketShocks, selectMarketFlows],
   (timeSeriesData, shocks, flows) => {
     if (!timeSeriesData?.length) return null;
 
     const marketHealth = {};
-    
+
     timeSeriesData.forEach(entry => {
       if (!marketHealth[entry.region]) {
         marketHealth[entry.region] = {
@@ -351,26 +353,28 @@ export const selectMarketHealthData = createSelector(
 
     Object.keys(marketHealth).forEach(region => {
       const health = marketHealth[region];
-      const priceStability = 1 - (Math.sqrt(
-        health.prices.reduce((sum, p) => sum + Math.pow(p - health.prices[0], 2), 0) / 
-        health.prices.lengthselectEnhancedClusters
-      ) / health.prices[0]);
+      const averagePrice = health.prices.reduce((sum, p) => sum + p, 0) / health.prices.length;
+      const variance = health.prices.reduce((sum, p) => sum + Math.pow(p - averagePrice, 2), 0) / health.prices.length;
+      const priceStability = 1 - (Math.sqrt(variance) / averagePrice);
 
       marketHealth[region].healthScore = (
-        priceStability * 0.4 +
-        (1 - health.shocks / 10) * 0.3 +
-        (health.flows / 10) * 0.2 +
-        (1 - health.conflictIntensity / 10) * 0.1
+        (priceStability * 0.4) +
+        ((health.shocks < 10 ? (1 - health.shocks / 10) : 0) * 0.3) +
+        ((health.flows / 10) * 0.2) +
+        ((1 - (health.conflictIntensity / 10)) * 0.1)
       );
     });
+
+    const totalRegions = Object.keys(marketHealth).length;
+    const totalHealth = Object.values(marketHealth).reduce((sum, m) => sum + m.healthScore, 0);
+    const averageHealth = totalRegions ? totalHealth / totalRegions : 0;
+    const healthyMarkets = Object.values(marketHealth).filter(m => m.healthScore > 0.7).length;
 
     return {
       marketHealth,
       summary: {
-        averageHealth: Object.values(marketHealth)
-          .reduce((sum, m) => sum + m.healthScore, 0) / Object.keys(marketHealth).length,
-        healthyMarkets: Object.values(marketHealth)
-          .filter(m => m.healthScore > 0.7).length
+        averageHealth,
+        healthyMarkets
       }
     };
   }
@@ -378,26 +382,43 @@ export const selectMarketHealthData = createSelector(
 
 // Export default object with all selectors
 export default {
+  // Base Selectors
+  selectSpatialState,
+  selectTimeSeriesData: selectTimeSeriesDataSelector,
+  selectSpatialAutocorrelation: selectSpatialAutocorrelationSelector,
+
   // Cluster Analysis
   selectEnhancedClusters,
   selectOverallMetrics,
   selectClusterAnalysisData,
+
   // Spatial Autocorrelation
   selectGlobalAutocorrelation,
   selectLocalAutocorrelation,
   selectAutocorrelationByRegion,
   selectSignificantClusters,
   selectAutocorrelationSummary,
+
   // Flow Analysis
   selectFlowAnalysisData,
+
   // Shock Analysis
   selectShockAnalysisData,
+
   // Conflict Analysis
   selectConflictAnalysisData,
+
   // Seasonal Analysis
   selectSeasonalAnalysisData,
+
   // Network Analysis
   selectNetworkAnalysisData,
+
   // Market Health
-  selectMarketHealthData
+  selectMarketHealthData,
+
+  // Re-exported Selectors from analysisSelectors (ensure no duplicates)
+  // Add them here only if they are NOT defined above
+  // Example:
+  // someOtherSelector: analysisSelectSomeOtherSelector,
 };

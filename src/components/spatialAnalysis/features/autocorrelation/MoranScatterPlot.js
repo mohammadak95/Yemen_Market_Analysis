@@ -1,189 +1,204 @@
-// src/components/spatialAnalysis/features/autocorrelation/MoranScatterPlot.js
-
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { useTheme } from '@mui/material/styles';
-import {
-  ScatterChart,
-  Scatter,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine
-} from 'recharts';
+import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { scaleLinear } from 'd3-scale';
+import { extent } from 'd3-array';
 
-const MoranScatterPlot = ({ data, globalMoranI }) => {
+const MoranScatterPlot = ({
+  data,
+  globalMoranI,
+  selectedRegion,
+  onPointSelect
+}) => {
   const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Color mapping for LISA clusters
-  const clusterColors = {
-    'high-high': theme.palette.error.main,
-    'low-low': theme.palette.primary.main,
-    'high-low': theme.palette.warning.main,
-    'low-high': theme.palette.info.main,
-    'not_significant': theme.palette.grey[300]
-  };
+  // Calculate dimensions based on screen size
+  const margin = isSmallScreen ? 
+    { top: 20, right: 20, bottom: 40, left: 40 } : 
+    { top: 30, right: 30, bottom: 50, left: 50 };
+  
+  const width = isSmallScreen ? 300 : 500;
+  const height = isSmallScreen ? 300 : 500;
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
 
-  // Transform data for scatter plot
-  const scatterData = useMemo(() => {
-    if (!data?.length) return [];
+  // Transform data for plotting
+  const plotData = useMemo(() => {
+    if (!data) return [];
 
-    // Calculate z-scores for values and spatial lags
-    const values = data.map(d => d.localI);
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const std = Math.sqrt(
-      values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
-    );
-
-    return data.map(d => ({
-      region: d.region,
-      value: (d.localI - mean) / std,
-      spatialLag: d.zScore || 0,
-      clusterType: d.clusterType,
-      significance: d.pValue < 0.05
+    return Object.entries(data).map(([region, stats]) => ({
+      region,
+      x: stats.local_i || 0,
+      y: stats.spatial_lag || 0,
+      cluster_type: stats.cluster_type || 'not_significant',
+      isSelected: region === selectedRegion
     }));
-  }, [data]);
+  }, [data, selectedRegion]);
 
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
+  // Calculate scales
+  const xScale = useMemo(() => {
+    const [min, max] = extent(plotData, d => d.x);
+    const padding = Math.abs(max - min) * 0.1;
+    return scaleLinear()
+      .domain([min - padding, max + padding])
+      .range([0, innerWidth]);
+  }, [plotData, innerWidth]);
 
-    const data = payload[0].payload;
-    return (
-      <div style={{
-        backgroundColor: theme.palette.background.paper,
-        padding: theme.spacing(1),
-        border: `1px solid ${theme.palette.divider}`,
-        borderRadius: theme.shape.borderRadius
-      }}>
-        <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>{data.region}</p>
-        <p style={{ margin: '4px 0' }}>Value: {data.value.toFixed(3)}</p>
-        <p style={{ margin: '4px 0' }}>Spatial Lag: {data.spatialLag.toFixed(3)}</p>
-        <p style={{ margin: '4px 0' }}>
-          Cluster Type: {data.clusterType.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join('-')}
-        </p>
-      </div>
-    );
+  const yScale = useMemo(() => {
+    const [min, max] = extent(plotData, d => d.y);
+    const padding = Math.abs(max - min) * 0.1;
+    return scaleLinear()
+      .domain([min - padding, max + padding])
+      .range([innerHeight, 0]);
+  }, [plotData, innerHeight]);
+
+  // Get cluster colors from theme
+  const getClusterColor = (type) => {
+    switch (type) {
+      case 'high-high': return theme.palette.error.main;
+      case 'low-low': return theme.palette.primary.main;
+      case 'high-low': return theme.palette.warning.main;
+      case 'low-high': return theme.palette.info.main;
+      default: return theme.palette.grey[400];
+    }
   };
+
+  if (!data || Object.keys(data).length === 0) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100%"
+      >
+        <Typography color="textSecondary">
+          No data available for scatter plot
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <ResponsiveContainer>
-        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            type="number"
-            dataKey="value"
-            name="Value"
-            label={{ value: 'Standardized Value', position: 'bottom' }}
+    <Box
+      sx={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        p: 2
+      }}
+    >
+      <Typography variant="h6" gutterBottom align="center">
+        Moran&apos;s I Scatter Plot
+      </Typography>
+      <Typography variant="body2" color="textSecondary" gutterBottom align="center">
+        Global Moran&apos;s I: {globalMoranI.toFixed(3)}
+      </Typography>
+
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ maxWidth: width, maxHeight: height }}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <g transform={`translate(${margin.left},${margin.top})`}>
+          {/* Axes */}
+          <line
+            x1={0}
+            y1={innerHeight / 2}
+            x2={innerWidth}
+            y2={innerHeight / 2}
+            stroke={theme.palette.text.secondary}
+            strokeWidth={1}
+            strokeDasharray="4"
           />
-          <YAxis
-            type="number"
-            dataKey="spatialLag"
-            name="Spatial Lag"
-            label={{ value: 'Spatial Lag', angle: -90, position: 'left' }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          
-          {/* Reference lines at x=0 and y=0 */}
-          <ReferenceLine x={0} stroke={theme.palette.text.secondary} />
-          <ReferenceLine y={0} stroke={theme.palette.text.secondary} />
-          
-          {/* Regression line based on global Moran's I */}
-          <ReferenceLine
-            segment={[
-              { x: -2, y: -2 * globalMoranI },
-              { x: 2, y: 2 * globalMoranI }
-            ]}
-            stroke={theme.palette.secondary.main}
-            strokeDasharray="3 3"
+          <line
+            x1={innerWidth / 2}
+            y1={0}
+            x2={innerWidth / 2}
+            y2={innerHeight}
+            stroke={theme.palette.text.secondary}
+            strokeWidth={1}
+            strokeDasharray="4"
           />
 
-          {/* Plot points by cluster type */}
-          {Object.entries(clusterColors).map(([type, color]) => (
-            <Scatter
-              key={type}
-              name={type}
-              data={scatterData.filter(d => d.clusterType === type)}
-              fill={color}
-              shape="circle"
-              strokeWidth={d => d.significance ? 2 : 0}
-              stroke={theme.palette.common.white}
+          {/* Points */}
+          {plotData.map((point, i) => (
+            <circle
+              key={i}
+              cx={xScale(point.x)}
+              cy={yScale(point.y)}
+              r={point.isSelected ? 8 : 6}
+              fill={getClusterColor(point.cluster_type)}
+              stroke={point.isSelected ? theme.palette.primary.main : 'none'}
+              strokeWidth={2}
+              opacity={point.isSelected ? 1 : 0.7}
+              style={{ cursor: 'pointer' }}
+              onClick={() => onPointSelect(point.region)}
             />
           ))}
-        </ScatterChart>
-      </ResponsiveContainer>
+
+          {/* Axes labels */}
+          <text
+            x={innerWidth / 2}
+            y={innerHeight + margin.bottom - 10}
+            textAnchor="middle"
+            fill={theme.palette.text.primary}
+            fontSize={isSmallScreen ? "0.8rem" : "1rem"}
+          >
+            Local Moran&apos;s I
+          </text>
+          <text
+            x={-innerHeight / 2}
+            y={-margin.left + 15}
+            transform="rotate(-90)"
+            textAnchor="middle"
+            fill={theme.palette.text.primary}
+            fontSize={isSmallScreen ? "0.8rem" : "1rem"}
+          >
+            Spatial Lag
+          </text>
+        </g>
+      </svg>
 
       {/* Legend */}
-      <div style={{
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        backgroundColor: 'white',
-        padding: theme.spacing(1),
-        borderRadius: theme.shape.borderRadius,
-        boxShadow: theme.shadows[2]
-      }}>
-        <div style={{ marginBottom: theme.spacing(1) }}>
-          <strong>Cluster Types</strong>
-        </div>
-        {Object.entries(clusterColors).map(([type, color]) => (
-          <div key={type} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-            <div style={{
-              width: 16,
-              height: 16,
-              backgroundColor: color,
-              marginRight: 8,
-              borderRadius: '50%',
-              border: '2px solid white',
-              boxShadow: theme.shadows[1]
-            }} />
-            <span style={{ fontSize: 12 }}>
-              {type.split('-').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-              ).join('-')}
-            </span>
-          </div>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: 2,
+          mt: 2
+        }}
+      >
+        {['high-high', 'low-low', 'high-low', 'low-high', 'not_significant'].map(type => (
+          <Box
+            key={type}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5
+            }}
+          >
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                bgcolor: getClusterColor(type),
+                opacity: 0.7
+              }}
+            />
+            <Typography variant="caption">
+              {type.replace('-', ' ')}
+            </Typography>
+          </Box>
         ))}
-        <div style={{ 
-          marginTop: theme.spacing(1),
-          paddingTop: theme.spacing(1),
-          borderTop: `1px solid ${theme.palette.divider}`,
-          fontSize: 12
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-            <div style={{
-              width: 20,
-              borderTop: `2px dashed ${theme.palette.secondary.main}`,
-              marginRight: 8
-            }} />
-            <span>Moran's I Slope</span>
-          </div>
-        </div>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
-};
-
-MoranScatterPlot.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    region: PropTypes.string.isRequired,
-    localI: PropTypes.number.isRequired,
-    zScore: PropTypes.number,
-    pValue: PropTypes.number,
-    clusterType: PropTypes.oneOf([
-      'high-high',
-      'low-low',
-      'high-low',
-      'low-high',
-      'not_significant'
-    ]).isRequired
-  })).isRequired,
-  globalMoranI: PropTypes.number.isRequired
 };
 
 export default React.memo(MoranScatterPlot);

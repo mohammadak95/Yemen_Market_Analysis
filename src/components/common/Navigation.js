@@ -262,7 +262,7 @@ export const Sidebar = ({
   regimes = [],
   selectedCommodity = '',
   setSelectedCommodity,
-  selectedAnalysis = '',
+  selectedAnalysis = 'spatial',
   setSelectedAnalysis,
   sidebarOpen,
   setSidebarOpen,
@@ -335,7 +335,7 @@ export const Sidebar = ({
           <CommoditySelector
             commodities={commodities}
             selectedCommodity={selectedCommodity}
-            onSelectCommodity={handleCommodityChange} // Ensure this receives the lowercase value
+            onSelectCommodity={handleCommodityChange}
           />
 
           <RegimeSelector
@@ -345,6 +345,15 @@ export const Sidebar = ({
           />
 
           <Stack spacing={2}>
+            {/* Reordered buttons to match Dashboard order */}
+            <Button
+              variant={selectedAnalysis === 'spatial' ? 'contained' : 'outlined'}
+              color="primary"
+              fullWidth
+              onClick={() => handleAnalysisChange('spatial')}
+            >
+              Spatial Analysis
+            </Button>
             <Button
               variant={selectedAnalysis === 'ecm' ? 'contained' : 'outlined'}
               color="primary"
@@ -362,14 +371,6 @@ export const Sidebar = ({
               Price Differential Analysis
             </Button>
             <Button
-              variant={selectedAnalysis === 'spatial' ? 'contained' : 'outlined'}
-              color="primary"
-              fullWidth
-              onClick={() => handleAnalysisChange('spatial')}
-            >
-              Spatial Analysis
-            </Button>
-            <Button
               variant={selectedAnalysis === 'tvmii' ? 'contained' : 'outlined'}
               color="primary"
               fullWidth
@@ -379,6 +380,7 @@ export const Sidebar = ({
             </Button>
           </Stack>
 
+          {/* Rest of the buttons remain the same */}
           <Button
             variant="contained"
             sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }}
@@ -425,6 +427,7 @@ export const Sidebar = ({
       onOpenWelcomeModal,
     ]
   );
+
 
   return (
     <Drawer

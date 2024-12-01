@@ -102,7 +102,7 @@ const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedDate, setSelectedDate] = useState(DEFAULT_DATE);
-  const [selectedAnalysis, setSelectedAnalysis] = useState('');
+  const [selectedAnalysis, setSelectedAnalysis] = useState('spatial');
   const [selectedGraphRegimes, setSelectedGraphRegimes] = useState(['unified']);
   const [spatialViewConfig, setSpatialViewConfig] = useState({
     center: [15.3694, 44.191],

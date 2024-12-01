@@ -1,139 +1,276 @@
-// src/components/spatialAnalysis/features/autocorrelation/SpatialAutocorrelationAnalysis.js
-
-import React from 'react';
+import React, { useState, Suspense } from 'react';
 import {
   Grid,
   Paper,
   Typography,
-  Box
+  Box,
+  ToggleButtonGroup,
+  ToggleButton,
+  CircularProgress,
+  Alert,
+  Stack
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import MapIcon from '@mui/icons-material/Map';
+import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
+import TableChartIcon from '@mui/icons-material/TableChart';
 
-import MetricCard from '../../atoms/MetricCard';
-import MetricProgress from '../../molecules/MetricProgress';
 import LISAMap from './LISAMap';
 import MoranScatterPlot from './MoranScatterPlot';
+import MetricCard from '../../atoms/MetricCard';
+import MetricProgress from '../../molecules/MetricProgress';
+import SpatialAnalysisPanel from './SpatialAnalysisPanel';
+import ClusterMatrix from './ClusterMatrix';
+import SpatialAnalysisErrorBoundary from './components/SpatialAnalysisErrorBoundary';
+import { withSpatialOptimization } from './components/SpatialAnalysisOptimizer';
+import { useSpatialAutocorrelation } from './hooks/useSpatialAutocorrelation';
 
-import { useSpatialAutocorrelation } from '../../hooks/useSpatialAutocorrelation';
+// Optimize visualization components
+const OptimizedLISAMap = withSpatialOptimization(
+  LISAMap,
+  { transformData: true, cacheKey: 'lisa-map' }
+);
+
+const OptimizedMoranScatterPlot = withSpatialOptimization(
+  MoranScatterPlot,
+  { transformData: true, cacheKey: 'moran-scatter' }
+);
+
+const OptimizedClusterMatrix = withSpatialOptimization(
+  ClusterMatrix,
+  { transformData: true, cacheKey: 'cluster-matrix' }
+);
+
+// Loading component
+const LoadingView = () => (
+  <Box 
+    display="flex" 
+    flexDirection="column"
+    justifyContent="center" 
+    alignItems="center" 
+    height="100%" 
+    minHeight={400}
+    gap={2}
+  >
+    <CircularProgress />
+    <Typography variant="h6" color="textSecondary">
+      Loading spatial analysis data...
+    </Typography>
+  </Box>
+);
+
+// Error fallback component
+const ErrorFallback = () => (
+  <Box p={3}>
+    <Alert severity="error">
+      <Typography variant="body1">
+        Unable to load spatial analysis visualization.
+        Please check your data and try again.
+      </Typography>
+    </Alert>
+  </Box>
+);
 
 const SpatialAutocorrelationAnalysis = () => {
   const theme = useTheme();
-  const { data, loading, error } = useSpatialAutocorrelation();
+  const [viewMode, setViewMode] = useState('map');
+  const [selectedRegion, setSelectedRegion] = useState(null);
 
-  // Show loading state
-  if (loading) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <MetricProgress message="Loading spatial autocorrelation analysis..." />
-      </Box>
-    );
+  const {
+    global,
+    local,
+    clusters,
+    geometry,
+    clusterAnalysis,
+    spatialMetrics,
+    getRegionMetrics,
+    isLoading,
+    hasError
+  } = useSpatialAutocorrelation();
+
+  // Handle loading state
+  if (isLoading) {
+    return <LoadingView />;
   }
 
-  // Show error state
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">{error}</Typography>
-      </Box>
-    );
+  // Handle error state
+  if (hasError) {
+    return <ErrorFallback />;
   }
 
-  // Show empty state
-  if (!data) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography>No spatial autocorrelation data available</Typography>
-      </Box>
-    );
-  }
+  // Get selected region metrics
+  const selectedRegionMetrics = selectedRegion ? getRegionMetrics(selectedRegion) : null;
 
-  const { global, summary, clusters } = data;
+  // Format values safely
+  const formatValue = (value) => {
+    if (value == null) return 'N/A';
+    return typeof value === 'number' ? value.toFixed(3) : value.toString();
+  };
 
-  return (
+  // Format percentage safely
+  const formatPercentage = (value) => {
+    if (value == null || isNaN(value)) return '0%';
+    const formatted = Math.min(Math.max(value, 0), 100); // Clamp between 0 and 100
+    return `${formatted.toFixed(1)}%`;
+  };
+
+  const renderContent = () => (
     <Grid container spacing={2}>
-      {/* Global Statistics */}
-      <Grid item xs={12}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Global Moran's I"
-              value={global.moranI}
-              format="decimal"
-              description="Spatial autocorrelation measure"
-              significance={global.isSignificant}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Significant Regions"
-              value={summary.significanceRate}
-              format="percentage"
-              description={`${summary.significantRegions} out of ${summary.totalRegions} regions`}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="High-High Clusters"
-              value={clusters.highHigh.length}
-              format="number"
-              description="Regions with high values surrounded by high values"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Low-Low Clusters"
-              value={clusters.lowLow.length}
-              format="number"
-              description="Regions with low values surrounded by low values"
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-
-      {/* Map and Scatter Plot */}
-      <Grid item xs={12} md={8}>
-        <Paper sx={{ height: 600, p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            LISA Cluster Map
-          </Typography>
-          <LISAMap
-            data={data.local}
-            geometry={data.geometry}
-          />
-        </Paper>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Paper sx={{ height: 600, p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Moran Scatter Plot
-          </Typography>
-          <MoranScatterPlot
-            data={data.local}
-            globalMoranI={global.moranI}
-          />
-        </Paper>
-      </Grid>
-
-      {/* Summary */}
+      {/* Overview Metrics */}
       <Grid item xs={12}>
         <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Spatial Analysis Summary
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            {global.isSignificant ? (
-              `The analysis shows significant spatial autocorrelation (Moran's I: ${global.moranI.toFixed(3)}, p-value: ${global.pValue.toFixed(3)}). 
-              ${summary.significantRegions} out of ${summary.totalRegions} regions show significant local spatial patterns, 
-              with ${clusters.highHigh.length} high-high clusters and ${clusters.lowLow.length} low-low clusters.`
-            ) : (
-              `The analysis shows no significant global spatial autocorrelation (Moran's I: ${global.moranI.toFixed(3)}, p-value: ${global.pValue.toFixed(3)}). 
-              However, ${summary.significantRegions} regions show significant local spatial patterns.`
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={3}>
+              <MetricProgress
+                title="Spatial Association"
+                value={spatialMetrics?.spatialAssociation || 0}
+                description="Global spatial autocorrelation strength"
+                tooltip="Based on Moran's I and statistical significance"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Significant Clusters"
+                value={clusterAnalysis?.significanceRate || 0}
+                format="percentage"
+                description="Proportion of significant spatial patterns"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Hotspot Coverage"
+                value={clusterAnalysis?.hotspotRate || 0}
+                format="percentage"
+                description="High-high cluster coverage"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Pattern Outliers"
+                value={clusterAnalysis?.outlierRate || 0}
+                format="percentage"
+                description="Spatial pattern outliers"
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+      </Grid>
+
+      {/* View Controls */}
+      <Grid item xs={12}>
+        <Box display="flex" justifyContent="center">
+          <Paper sx={{ p: 2, display: 'inline-flex' }}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(e, value) => value && setViewMode(value)}
+              size="small"
+            >
+              <ToggleButton value="map">
+                <MapIcon sx={{ mr: 1 }} />
+                LISA Map
+              </ToggleButton>
+              <ToggleButton value="scatter">
+                <ScatterPlotIcon sx={{ mr: 1 }} />
+                Moran Scatter
+              </ToggleButton>
+              <ToggleButton value="table">
+                <TableChartIcon sx={{ mr: 1 }} />
+                Cluster Matrix
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Paper>
+        </Box>
+      </Grid>
+
+      {/* Main Visualization */}
+      <Grid item xs={12}>
+        <Paper sx={{ height: 600 }}>
+          <Suspense fallback={<LoadingView />}>
+            {viewMode === 'map' && (
+              <OptimizedLISAMap
+                localStats={local}
+                geometry={geometry}
+                selectedRegion={selectedRegion}
+                onRegionSelect={setSelectedRegion}
+              />
             )}
-          </Typography>
+            {viewMode === 'scatter' && (
+              <OptimizedMoranScatterPlot
+                data={local}
+                globalMoranI={global?.moran_i || 0}
+                selectedRegion={selectedRegion}
+                onPointSelect={setSelectedRegion}
+              />
+            )}
+            {viewMode === 'table' && (
+              <OptimizedClusterMatrix
+                clusters={clusters}
+                local={local}
+                selectedRegion={selectedRegion}
+                onRegionSelect={setSelectedRegion}
+              />
+            )}
+          </Suspense>
+        </Paper>
+      </Grid>
+
+      {/* Analysis Panel */}
+      <Grid item xs={12}>
+        <Paper 
+          sx={{ 
+            p: 3,
+            bgcolor: theme.palette.background.default,
+            borderRadius: 2,
+            boxShadow: theme.shadows[2]
+          }}
+        >
+          <Stack spacing={3}>
+            <Box>
+              <Typography variant="h6" gutterBottom color="primary">
+                Spatial Pattern Analysis
+              </Typography>
+              <Typography variant="body1">
+                {`Analysis reveals ${spatialMetrics?.globalMoranI > 0 ? 'positive' : 'negative'} 
+                spatial autocorrelation (Moran's I: ${formatValue(spatialMetrics?.globalMoranI)}) 
+                ${spatialMetrics?.pValue < 0.05 ? 'with' : 'without'} statistical significance 
+                (p-value: ${formatValue(spatialMetrics?.pValue)}). 
+                ${clusterAnalysis?.significantCount || 0} regions show significant spatial patterns, 
+                including ${clusters?.['high-high']?.length || 0} hot spots and 
+                ${clusters?.['low-low']?.length || 0} cold spots.`}
+              </Typography>
+            </Box>
+
+            {selectedRegionMetrics && (
+              <Box>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Selected Region Analysis
+                </Typography>
+                <Typography variant="body1">
+                  {`${selectedRegion} shows ${selectedRegionMetrics.cluster_type?.replace('-', ' ') || 'no'} 
+                  pattern with local Moran's I of ${formatValue(selectedRegionMetrics.local_i)} 
+                  (${selectedRegionMetrics.significanceLevel || 'Not Significant'}, p-value: ${formatValue(selectedRegionMetrics.p_value)})`}
+                </Typography>
+              </Box>
+            )}
+
+            <SpatialAnalysisPanel
+              global={global}
+              local={local}
+              selectedRegion={selectedRegion}
+              clusters={clusters}
+              spatialMetrics={spatialMetrics}
+            />
+          </Stack>
         </Paper>
       </Grid>
     </Grid>
+  );
+
+  return (
+    <SpatialAnalysisErrorBoundary fallback={<ErrorFallback />}>
+      {renderContent()}
+    </SpatialAnalysisErrorBoundary>
   );
 };
 

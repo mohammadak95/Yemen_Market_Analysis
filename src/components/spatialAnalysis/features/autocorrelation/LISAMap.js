@@ -1,128 +1,221 @@
-// src/components/spatialAnalysis/features/autocorrelation/LISAMap.js
+import React, { useMemo } from 'react';
+import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { MapContainer, TileLayer, GeoJSON, Tooltip as MapTooltip } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { CLUSTER_COLORS, SIGNIFICANCE_LEVELS } from './types';
 
-import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
-import { useTheme } from '@mui/material/styles';
-import { MapContainer, TileLayer, GeoJSON, Tooltip, Legend } from 'react-leaflet';
+// Yemen bounds and center coordinates
+const YEMEN_BOUNDS = [
+  [12.5, 42.5], // Southwest corner
+  [19.0, 54.5]  // Northeast corner
+];
+const YEMEN_CENTER = [15.5527, 48.5164];
+const YEMEN_ZOOM = 6.5;
 
-const LISAMap = ({ data, geometry }) => {
+const LISAMap = ({
+  localStats,
+  geometry,
+  selectedRegion,
+  onRegionSelect
+}) => {
   const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Color mapping for LISA clusters
-  const clusterColors = {
-    'high-high': theme.palette.error.main,
-    'low-low': theme.palette.primary.main,
-    'high-low': theme.palette.warning.main,
-    'low-high': theme.palette.info.main,
-    'not_significant': theme.palette.grey[300]
-  };
-
-  // Style function for regions
-  const styleRegion = useCallback((feature) => {
-    const region = feature.properties.region_id;
-    const stats = data.find(d => d.region === region);
-    const clusterType = stats?.clusterType || 'not_significant';
-    const isSignificant = stats?.pValue < 0.05;
-
-    return {
-      fillColor: clusterColors[clusterType],
-      weight: isSignificant ? 2 : 1,
-      opacity: 1,
-      color: isSignificant ? theme.palette.common.white : theme.palette.grey[400],
-      fillOpacity: isSignificant ? 0.8 : 0.5
-    };
-  }, [data, theme, clusterColors]);
-
-  // Tooltip content
-  const createTooltipContent = useCallback((feature) => {
-    const region = feature.properties.region_id;
-    const stats = data.find(d => d.region === region);
-
-    if (!stats) {
-      return region;
+  // Transform data for mapping
+  const mapData = useMemo(() => {
+    if (!localStats || !geometry || !geometry.features || !Array.isArray(geometry.features)) {
+      console.warn('Invalid or missing data for LISA map:', {
+        hasLocalStats: !!localStats,
+        hasGeometry: !!geometry,
+        hasFeatures: geometry?.features != null,
+        featuresIsArray: Array.isArray(geometry?.features)
+      });
+      return null;
     }
 
-    return `
-      ${region}
-      Local Moran's I: ${stats.localI.toFixed(3)}
-      p-value: ${stats.pValue.toFixed(3)}
-      Cluster Type: ${stats.clusterType}
-    `;
-  }, [data]);
+    try {
+      // Merge geometry with statistics
+      const features = geometry.features.map(feature => {
+        const region = feature.properties?.name || feature.properties?.region_id || '';
+        const stats = localStats[region];
 
-  if (!geometry?.unified?.features) {
-    return null;
+        if (!region) {
+          console.warn('Feature missing name/region_id:', feature);
+        }
+
+        return {
+          ...feature,
+          properties: {
+            ...feature.properties,
+            stats: stats || null,
+            isSelected: region === selectedRegion
+          }
+        };
+      });
+
+      return {
+        type: 'FeatureCollection',
+        features
+      };
+    } catch (error) {
+      console.error('Error processing map data:', error);
+      return null;
+    }
+  }, [localStats, geometry, selectedRegion]);
+
+  // Style functions
+  const getRegionStyle = (feature) => {
+    const stats = feature.properties.stats;
+    const isSelected = feature.properties.isSelected;
+
+    if (!stats) {
+      return {
+        fillColor: theme.palette.grey[300],
+        weight: isSelected ? 2 : 1,
+        opacity: 1,
+        color: isSelected ? theme.palette.primary.main : theme.palette.grey[500],
+        fillOpacity: 0.7
+      };
+    }
+
+    return {
+      fillColor: CLUSTER_COLORS[stats.cluster_type] || theme.palette.grey[300],
+      weight: isSelected ? 2 : 1,
+      opacity: 1,
+      color: isSelected ? theme.palette.primary.main : theme.palette.grey[500],
+      fillOpacity: stats.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? 0.8 : 0.4
+    };
+  };
+
+  // Format values for tooltip
+  const formatValue = (value, precision = 3) => {
+    if (value == null) return 'N/A';
+    return typeof value === 'number' ? value.toFixed(precision) : value.toString();
+  };
+
+  // Event handlers
+  const onEachFeature = (feature, layer) => {
+    const stats = feature.properties.stats;
+    const region = feature.properties.name || feature.properties.region_id || '';
+
+    // Add tooltip
+    layer.bindTooltip(() => {
+      return `
+        <div style="min-width: ${isSmallScreen ? '150px' : '200px'};">
+          <strong>${region}</strong><br/>
+          ${stats ? `
+            Local Moran's I: ${formatValue(stats.local_i)}<br/>
+            P-value: ${formatValue(stats.p_value)}<br/>
+            Cluster Type: ${stats.cluster_type.replace('-', ' ')}<br/>
+            Z-score: ${formatValue(stats.z_score)}
+          ` : 'No data available'}
+        </div>
+      `;
+    }, {
+      sticky: true,
+      direction: 'auto'
+    });
+
+    // Add click handler
+    layer.on({
+      click: () => onRegionSelect(region)
+    });
+  };
+
+  if (!mapData) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        height="100%"
+        p={2}
+        gap={2}
+      >
+        <Typography color="textSecondary" align="center">
+          No map data available
+        </Typography>
+      </Box>
+    );
   }
 
   return (
-    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+    <Box sx={{ height: '100%', position: 'relative' }}>
       <MapContainer
-        center={[15.3694, 44.191]}
-        zoom={6}
+        center={YEMEN_CENTER}
+        zoom={YEMEN_ZOOM}
         style={{ height: '100%', width: '100%' }}
-        zoomControl={true}
+        maxBounds={YEMEN_BOUNDS}
+        minZoom={YEMEN_ZOOM - 0.5}
+        maxZoom={YEMEN_ZOOM + 1}
+        zoomControl={false}
+        dragging={false}
+        touchZoom={false}
+        doubleClickZoom={false}
+        scrollWheelZoom={false}
+        boxZoom={false}
+        keyboard={false}
+        bounceAtZoomLimits={false}
       >
+        {/* Base map */}
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          bounds={YEMEN_BOUNDS}
         />
+
+        {/* Region polygons */}
         <GeoJSON
-          data={geometry.unified}
-          style={styleRegion}
-          onEachFeature={(feature, layer) => {
-            layer.bindTooltip(createTooltipContent(feature), {
-              permanent: false,
-              direction: 'center'
-            });
-          }}
+          data={mapData}
+          style={getRegionStyle}
+          onEachFeature={onEachFeature}
         />
       </MapContainer>
 
       {/* Legend */}
-      <div style={{
-        position: 'absolute',
-        bottom: 20,
-        right: 20,
-        backgroundColor: 'white',
-        padding: theme.spacing(1),
-        borderRadius: theme.shape.borderRadius,
-        boxShadow: theme.shadows[2],
-        zIndex: 1000
-      }}>
-        <div style={{ marginBottom: theme.spacing(1) }}>
-          <strong>LISA Clusters</strong>
-        </div>
-        {Object.entries(clusterColors).map(([type, color]) => (
-          <div key={type} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-            <div style={{
-              width: 16,
-              height: 16,
-              backgroundColor: color,
-              marginRight: 8,
-              borderRadius: 2
-            }} />
-            <span style={{ fontSize: 12 }}>
-              {type.split('-').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-              ).join('-')}
-            </span>
-          </div>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: isSmallScreen ? 10 : 20,
+          right: isSmallScreen ? 10 : 20,
+          bgcolor: 'background.paper',
+          p: isSmallScreen ? 0.5 : 1,
+          borderRadius: 1,
+          boxShadow: 1,
+          zIndex: 1000,
+          maxWidth: isSmallScreen ? '120px' : 'auto'
+        }}
+      >
+        <Typography variant="caption" display="block" gutterBottom>
+          Cluster Types
+        </Typography>
+        {Object.entries(CLUSTER_COLORS).map(([type, color]) => (
+          <Box key={type} display="flex" alignItems="center" gap={0.5} mb={0.5}>
+            <Box
+              sx={{
+                width: isSmallScreen ? 8 : 12,
+                height: isSmallScreen ? 8 : 12,
+                bgcolor: color,
+                opacity: type === 'not_significant' ? 0.4 : 0.8
+              }}
+            />
+            <Typography variant="caption" sx={{ fontSize: isSmallScreen ? '0.65rem' : '0.75rem' }}>
+              {type.replace('-', ' ')}
+            </Typography>
+          </Box>
         ))}
-      </div>
-    </div>
+        <Typography 
+          variant="caption" 
+          display="block" 
+          mt={1} 
+          sx={{ fontSize: isSmallScreen ? '0.65rem' : '0.75rem' }}
+        >
+          Opacity indicates significance
+        </Typography>
+      </Box>
+    </Box>
   );
-};
-
-LISAMap.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    region: PropTypes.string.isRequired,
-    localI: PropTypes.number.isRequired,
-    pValue: PropTypes.number,
-    clusterType: PropTypes.string.isRequired
-  })).isRequired,
-  geometry: PropTypes.shape({
-    unified: PropTypes.object.isRequired
-  }).isRequired
 };
 
 export default React.memo(LISAMap);

@@ -3,6 +3,14 @@ import PropTypes from 'prop-types';
 import { useTheme } from '@mui/material/styles';
 import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
 
+// Yemen bounds and center coordinates
+const YEMEN_BOUNDS = [
+  [11.5, 41.5], // Southwest corner - adjusted to show full extent
+  [20.0, 55.5]  // Northeast corner - adjusted to show full extent
+];
+const YEMEN_CENTER = [15.5527, 48.5164];
+const YEMEN_ZOOM = 6; // Slightly zoomed out to show full country
+
 const ClusterMap = ({
   clusters,
   selectedClusterId,
@@ -75,14 +83,25 @@ const ClusterMap = ({
 
   return (
     <MapContainer
-      center={[15.3694, 44.191]}
-      zoom={6}
+      center={YEMEN_CENTER}
+      zoom={YEMEN_ZOOM}
       style={{ height: '100%', width: '100%' }}
-      zoomControl={true}
+      maxBounds={YEMEN_BOUNDS}
+      minZoom={YEMEN_ZOOM - 0.5}
+      maxZoom={YEMEN_ZOOM + 1}
+      zoomControl={false}
+      dragging={false}
+      touchZoom={false}
+      doubleClickZoom={false}
+      scrollWheelZoom={false}
+      boxZoom={false}
+      keyboard={false}
+      bounceAtZoomLimits={false}
     >
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        bounds={YEMEN_BOUNDS}
       />
       <GeoJSON
         data={geometry.unified}

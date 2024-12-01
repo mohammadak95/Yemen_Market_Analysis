@@ -59,7 +59,7 @@ const TVMIIAnalysisLazy = React.lazy(() =>
 );
 
 const Dashboard = React.memo(({
-  selectedAnalysis,
+  selectedAnalysis = 'spatial', // Set spatial as default analysis
   selectedCommodity,
   selectedRegimes,
   windowWidth,
@@ -71,11 +71,11 @@ const Dashboard = React.memo(({
     return getFilteredData(selectedCommodity, selectedRegimes);
   }, [getFilteredData, selectedCommodity, selectedRegimes]);
 
-  // Memoize analysis component mapping
+  // Reordered analysis components with spatial first
   const analysisComponents = useMemo(() => ({
+    spatial: SpatialAnalysis, // Moved to first position
     ecm: ECMAnalysisLazy,
     priceDiff: PriceDifferentialAnalysisLazy,
-    spatial: SpatialAnalysis, // Use our new SpatialAnalysis component
     tvmii: TVMIIAnalysisLazy
   }), []);
 
