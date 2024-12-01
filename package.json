@@ -91,7 +91,6 @@
     "winston": "^3.17.0"
   },
   "scripts": {
-    "prestart": "node scripts/setup.js",
     "start": "cross-env NODE_ENV=development webpack serve --config webpack.config.js --mode development",
     "start:fast": "cross-env NODE_ENV=development FAST_REFRESH=true GENERATE_SOURCEMAP=false webpack serve --config webpack.config.js --mode development",
     "start:prod": "cross-env NODE_ENV=production webpack serve --config webpack.config.js --mode production",
@@ -102,9 +101,6 @@
     "clean": "rimraf build dist .cache node_modules/.cache",
     "clean:all": "rimraf build dist .cache node_modules/.cache coverage",
     "analyze": "webpack-bundle-analyzer stats.json",
-    "prepare-data": "node scripts/prepareData.js",
-    "optimize-data": "node scripts/optimizeData.js",
-    "optimize:assets": "node scripts/optimizeAssets.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
