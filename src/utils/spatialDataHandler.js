@@ -551,36 +551,42 @@ class SpatialDataHandler {
   // Data Loading Methods
   // ===========================
 
-  loadPreprocessedData = async (commodity) => {
-    try {
-      const normalizedCommodity = this.normalizeCommodityName(commodity);
-      const filePath = `/data/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedCommodity}.json`;
-      
-      const response = await fetch(filePath);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const text = await response.text();
-      
-      // Use the new sanitizeJsonText method
-      const sanitizedText = this.sanitizeJsonText(text);
-      
-      try {
-        const data = JSON.parse(sanitizedText);
-        
-        if (!this.validatePreprocessedData(data)) {
-          throw new Error('Invalid data structure');
-  }
+loadPreprocessedData = async (commodity) => {
+  try {
+    const normalizedCommodity = this.normalizeCommodityName(commodity);
+    const fileName = `preprocessed_yemen_market_data_${normalizedCommodity}.json`;
+    const filePath = getDataPath(fileName);
+    
+    console.debug('Loading preprocessed data from:', {
+      normalizedCommodity,
+      filePath,
+      environment: process.env.NODE_ENV
+    });
 
-  return this.enhanceWithRealtimeMetrics(data);
-} catch (parseError) {
-  console.error('JSON parse error:', parseError);
-  throw new Error('Failed to parse data: ' + parseError.message);
-}
-} catch (error) {
-console.error('Preprocessed data load failed:', error);
-throw error;
-}
+    const response = await fetch(filePath);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const text = await response.text();
+    
+    const sanitizedText = this.sanitizeJsonText(text);
+    
+    try {
+      const data = JSON.parse(sanitizedText);
+      
+      if (!this.validatePreprocessedData(data)) {
+        throw new Error('Invalid data structure');
+      }
+
+      return this.enhanceWithRealtimeMetrics(data);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      throw new Error('Failed to parse data: ' + parseError.message);
+    }
+  } catch (error) {
+    console.error('Preprocessed data load failed:', error);
+    throw error;
+  }
 };
 
 loadFlowDataWithRecovery = async (commodity) => {
@@ -641,19 +647,21 @@ throw error;
 };
 
 loadBackupFlowData = async (commodity) => {
-try {
-// Define backup data path or logic here
-const backupPath = `/data/backup_flow_data_${this.normalizeCommodityName(commodity)}.json`;
-const response = await fetch(backupPath);
-if (!response.ok) {
-  throw new Error(`Backup HTTP error! status: ${response.status}`);
-}
-const data = await response.json();
-return this.processFlowAnalysis(data.flow_analysis);
-} catch (error) {
-console.error('[SpatialHandler] Failed to load backup flow data:', error);
-throw error;
-}
+  try {
+    const normalizedCommodity = this.normalizeCommodityName(commodity);
+    const fileName = `backup_flow_data_${normalizedCommodity}.json`;
+    const backupPath = getDataPath(fileName);
+    
+    const response = await fetch(backupPath);
+    if (!response.ok) {
+      throw new Error(`Backup HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return this.processFlowAnalysis(data.flow_analysis);
+  } catch (error) {
+    console.error('[SpatialHandler] Failed to load backup flow data:', error);
+    throw error;
+  }
 };
 
 loadRegressionAnalysis = async (selectedCommodity) => {

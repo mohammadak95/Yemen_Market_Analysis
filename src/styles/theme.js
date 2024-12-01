@@ -13,12 +13,83 @@ const baseTheme = {
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
+    h1: {
+      fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
+      fontWeight: 700,
+    },
+    h2: {
+      fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
+      fontWeight: 700,
+    },
+    h3: {
+      fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
+      fontWeight: 700,
+    },
+    h4: {
+      fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
+      fontWeight: 700,
+    },
+    h5: {
+      fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
+      fontWeight: 700,
+    },
+    h6: {
+      fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
+      fontWeight: 700,
+    },
+    subtitle1: {
+      fontWeight: 600,
+    },
+    body1: {
+      fontSize: '1rem',
+      lineHeight: 1.7,
+    },
+    body2: {
+      fontSize: '0.875rem',
+      lineHeight: 1.7,
+    },
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 4,
   },
   spacing: 8,
+};
+
+// World Bank style color palette
+const worldBankColors = {
+  primary: {
+    main: '#002244', // World Bank Blue
+    light: '#003366',
+    dark: '#001a33',
+    contrastText: '#ffffff',
+  },
+  secondary: {
+    main: '#009FDA', // World Bank Light Blue
+    light: '#33b1e1',
+    dark: '#006e98',
+    contrastText: '#ffffff',
+  },
+  success: {
+    main: '#4C9F38', // World Bank Green
+    light: '#6ab553',
+    dark: '#357027',
+  },
+  warning: {
+    main: '#F0AB00', // World Bank Yellow
+    light: '#ffbe2f',
+    dark: '#b88000',
+  },
+  error: {
+    main: '#E73F3F', // World Bank Red
+    light: '#eb6565',
+    dark: '#c62828',
+  },
+  info: {
+    main: '#0077BB', // World Bank Info Blue
+    light: '#3391c9',
+    dark: '#005282',
+  },
 };
 
 // Light Theme Configuration
@@ -26,26 +97,16 @@ const lightTheme = createTheme({
   ...baseTheme,
   palette: {
     mode: 'light',
-    primary: {
-      main: '#1976d2',
-      light: '#90caf9',
-      dark: '#115293',
-      contrastText: '#ffffff',
-    },
-    secondary: {
-      main: '#dc004e',
-      light: '#ff5c8d',
-      dark: '#9a0036',
-      contrastText: '#ffffff',
-    },
+    ...worldBankColors,
     background: {
-      default: '#f5f5f5',
+      default: '#f8f9fa',
       paper: '#ffffff',
     },
     text: {
-      primary: '#000000',
+      primary: '#1a1a1a',
       secondary: '#4f4f4f',
     },
+    divider: 'rgba(0, 0, 0, 0.12)',
   },
 });
 
@@ -54,26 +115,16 @@ const darkTheme = createTheme({
   ...baseTheme,
   palette: {
     mode: 'dark',
-    primary: {
-      main: '#90caf9',
-      light: '#e3f2fd',
-      dark: '#42a5f5',
-      contrastText: '#000000',
-    },
-    secondary: {
-      main: '#f48fb1',
-      light: '#f8bbd0',
-      dark: '#ad1457',
-      contrastText: '#000000',
-    },
+    ...worldBankColors,
     background: {
-      default: '#121212',
-      paper: '#1e1e1e',
+      default: '#1a1a1a',
+      paper: '#262626',
     },
     text: {
       primary: '#ffffff',
       secondary: '#b3b3b3',
     },
+    divider: 'rgba(255, 255, 255, 0.12)',
   },
 });
 
@@ -84,21 +135,58 @@ const themeOverrides = {
       styleOverrides: {
         root: {
           textTransform: 'none',
-          borderRadius: 8,
+          borderRadius: 4,
+          fontWeight: 600,
+          padding: '8px 24px',
+        },
+        contained: {
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+          },
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 4,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+        },
+        elevation1: {
+          boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 4,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
         },
       },
     },
     MuiTypography: {
       styleOverrides: {
         root: {
-          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+          '&.MuiTypography-h1, &.MuiTypography-h2, &.MuiTypography-h3, &.MuiTypography-h4, &.MuiTypography-h5, &.MuiTypography-h6': {
+            fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
+            marginBottom: '0.5em',
+          },
+        },
+      },
+    },
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          fontWeight: 600,
+          '&.Mui-selected': {
+            backgroundColor: worldBankColors.primary.main,
+            color: '#ffffff',
+            '&:hover': {
+              backgroundColor: worldBankColors.primary.dark,
+            },
+          },
         },
       },
     },

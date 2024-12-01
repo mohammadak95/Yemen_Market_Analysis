@@ -1,0 +1,13 @@
+{
+  "cache": {
+    "enabled": true,
+    "directory": ".cache",
+    "maxAge": 3600000
+  },
+  "optimization": {},
+  "monitoring": {
+    "enabled": true,
+    "logLevel": "debug",
+    "performanceMetrics": true
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "timestamp": "2024-11-26T16:49:08.311Z",
+  "error": {
+    "message": "Preprocessing failed: Error processing base data: Error loading GeoJSON data: ENOENT: no such file or directory, open '/Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis2/results/choropleth_data/geoBoundaries-YEM-ADM1.geojson'",
+    "stack": "Error: Preprocessing failed: Error processing base data: Error loading GeoJSON data: ENOENT: no such file or directory, open '/Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis2/results/choropleth_data/geoBoundaries-YEM-ADM1.geojson'\n    at EnhancedSpatialPreprocessor.processAll (/Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis2/scripts/preprocessing/enhancedSpatialPreprocessor.js:76:13)\n    at async buildSpatialData (/Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis2/scripts/build.js:184:27)\n    at async runBuild (/Users/mohammmadalakkaoui/Documents/GitHub/Yemen_Market_Analysis2/scripts/runBuild.js:171:20)"
+  },
+  "system": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "nodeVersion": "v20.17.0",
+    "memory": {
+      "rss": 51970048,
+      "heapTotal": 16826368,
+      "heapUsed": 7901128,
+      "external": 1836482,
+      "arrayBuffers": 10515
+    }
+  }
+}

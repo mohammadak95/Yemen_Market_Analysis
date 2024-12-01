@@ -51,20 +51,9 @@ const cleanPath = (path) => {
     .trim();
 };
 
-const getBasePath = () => {
-  const isGitHubPages = window.location.hostname.includes('github.io');
-  const isProd = process.env.NODE_ENV === 'production';
-  const repoBase = '/Yemen_Market_Analysis';
-
-  if (isOffline) return '/data';
-  if (isGitHubPages) return `${repoBase}/data`;
-  if (isProd) return '/data';
-  return '/data';
-};
-
 export const getDataPath = (fileName = '') => {
   const isGitHubPages = window.location.hostname.includes('github.io');
-  const isProd = process.env.NODE_ENV === 'production';
+  const isDev = process.env.NODE_ENV === 'development';
   const repoBase = '/Yemen_Market_Analysis';
   
   // Set base path based on environment and file type
@@ -73,6 +62,8 @@ export const getDataPath = (fileName = '') => {
     // Handle preprocessed data files
     if (isGitHubPages) {
       basePath = `${repoBase}/data/preprocessed_by_commodity`;
+    } else if (isDev) {
+      basePath = '/results/preprocessed_by_commodity';
     } else {
       basePath = '/data/preprocessed_by_commodity';
     }
@@ -80,54 +71,68 @@ export const getDataPath = (fileName = '') => {
     // Handle other data files
     if (isGitHubPages) {
       basePath = `${repoBase}/data`;
-    } else if (isProd) {
-      basePath = '/data';
+    } else if (isDev) {
+      basePath = '/results';
     } else {
       basePath = '/data';
     }
   }
 
   // Clean up the path
-  const cleanPath = `${basePath}/${fileName}`
-    .replace(/\/+/g, '/') // Replace multiple slashes
-    .replace(/\/$/, '');  // Remove trailing slash
+  const cleanedPath = cleanPath(`${basePath}/${fileName}`);
 
   console.debug('Resolved data path:', {
     isGitHubPages,
-    isProd, 
+    isDev, 
     fileName,
-    cleanPath
+    cleanedPath,
+    basePath
   });
 
-  return cleanPath;
+  return cleanedPath;
 };
 
-export const fetchWithRetry = async (url, options = {}, retries = 2) => {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response;
-  } catch (error) {
-    if (retries > 0) {
-      // Try alternative path if first attempt fails
-      const altPath = url.replace('/data/', '/results/');
+export const fetchWithRetry = async (url, options = {}, retries = RETRY_ATTEMPTS) => {
+  const tryPaths = async (paths) => {
+    for (const path of paths) {
       try {
-        const altResponse = await fetch(altPath, options);
-        if (altResponse.ok) {
-          return altResponse;
+        const response = await fetch(path, options);
+        if (response.ok) {
+          return response;
         }
-      } catch (altError) {
-        console.warn('Alternative path failed:', altError);
+      } catch (error) {
+        console.warn(`Failed to fetch from ${path}:`, error);
       }
-      
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return fetchWithRetry(url, options, retries - 1);
     }
-    throw error;
+    return null;
+  };
+
+  // Generate all possible paths to try
+  const paths = [url];
+  const isDev = process.env.NODE_ENV === 'development';
+
+  if (isDev) {
+    // In development, try both /data and /results paths
+    if (url.includes('/data/')) {
+      paths.push(url.replace('/data/', '/results/'));
+    } else if (url.includes('/results/')) {
+      paths.push(url.replace('/results/', '/data/'));
+    }
   }
+
+  // Try all paths with retries
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const response = await tryPaths(paths);
+    if (response) return response;
+
+    // Wait before retrying
+    if (attempt < retries - 1) {
+      const delay = Math.min(RETRY_INITIAL_DELAY * Math.pow(2, attempt), RETRY_MAX_DELAY);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw new Error(`Failed to fetch from all paths after ${retries} attempts: ${paths.join(', ')}`);
 };
 
 export const getNetworkDataPath = (fileName) => {
@@ -140,8 +145,15 @@ export const getPrecomputedDataPath = (commodity) => {
 
 export const enhancedFetchJson = async (url, options = {}) => {
   try {
-    const response = await pathResolver.readAndParseFile(url);
-    return response;
+    const response = await fetchWithRetry(url, {
+      ...options,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    });
+    return await response.json();
   } catch (error) {
     console.error('[DataUtils] Failed to fetch:', {
       url,

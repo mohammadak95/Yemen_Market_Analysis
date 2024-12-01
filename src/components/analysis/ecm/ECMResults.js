@@ -32,6 +32,9 @@ import {
 } from 'recharts';
 import { useTechnicalHelp } from '../../../hooks';
 import { analysisStyles } from '../../../styles/analysisStyles';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import SpeedIcon from '@mui/icons-material/Speed';
+import TimelineIcon from '@mui/icons-material/Timeline';
 
 const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('ecm');
@@ -94,7 +97,7 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
       title: 'Adjustment Speed (Alpha)',
       value:
         regressionResults.alpha !== undefined && regressionResults.alpha !== null
-          ? regressionResults.alpha.toFixed(4)
+          ? regressionResults.alpha.toFixed(2)
           : 'N/A',
       interpretation:
         regressionResults.alpha !== undefined && regressionResults.alpha !== null
@@ -102,12 +105,13 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
             ? 'Negative alpha indicates convergence towards equilibrium.'
             : 'Positive alpha suggests divergence from equilibrium.'
           : 'Alpha value is not available.',
+      icon: <SpeedIcon fontSize="large" color="primary" />,
     },
     {
       title: 'Long-run Relationship (Beta)',
       value:
         regressionResults.beta !== undefined && regressionResults.beta !== null
-          ? regressionResults.beta.toFixed(4)
+          ? regressionResults.beta.toFixed(2)
           : 'N/A',
       interpretation:
         regressionResults.beta !== undefined && regressionResults.beta !== null
@@ -115,17 +119,19 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
             ? 'Positive long-term relationship between variables.'
             : 'Negative long-term relationship between variables.'
           : 'Beta value is not available.',
+      icon: <TrendingUpIcon fontSize="large" color="secondary" />,
     },
     {
       title: 'Short-term Dynamics (Gamma)',
       value:
         regressionResults.gamma !== undefined && regressionResults.gamma !== null
-          ? regressionResults.gamma.toFixed(4)
+          ? regressionResults.gamma.toFixed(2)
           : 'N/A',
       interpretation:
         regressionResults.gamma !== undefined && regressionResults.gamma !== null
           ? 'Represents immediate impact of changes in independent variable.'
           : 'Gamma value is not available.',
+      icon: <TimelineIcon fontSize="large" color="action" />,
     },
   ];
 
@@ -143,10 +149,13 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
         {keyInsights.map((insight, index) => (
           <Grid item xs={12} md={4} key={index}>
             <Paper sx={styles.insightCard}>
-              <Typography variant="subtitle1" gutterBottom>
-                {insight.title}
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+              <Box sx={styles.insightHeader}>
+                {insight.icon}
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                  {insight.title}
+                </Typography>
+              </Box>
+              <Typography variant="h4" sx={styles.insightValue}>
                 {insight.value}
               </Typography>
               <Typography variant="body2">{insight.interpretation}</Typography>
@@ -174,9 +183,12 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
                 name="Residuals"
                 label={{ value: 'Residuals', angle: -90, position: 'insideLeft' }}
               />
-              <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-              <Scatter name="Residuals" data={residualsData} fill="#8884d8" />
-              <ReferenceLine y={0} stroke="red" strokeDasharray="3 3" />
+              <Tooltip
+                formatter={(value, name) => [`${value.toFixed(2)}`, name]}
+                labelFormatter={(label) => `Index: ${label}`}
+              />
+              <Scatter name="Residuals" data={residualsData} fill={theme.palette.primary.main} />
+              <ReferenceLine y={0} stroke={theme.palette.error.main} strokeDasharray="3 3" />
             </ScatterChart>
           </ResponsiveContainer>
         ) : (
@@ -202,22 +214,25 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
                 label={{ value: 'Period', position: 'insideBottom', offset: -5 }}
               />
               <YAxis label={{ value: 'Response', angle: -90, position: 'insideLeft' }} />
-              <Tooltip />
+              <Tooltip
+                formatter={(value, name) => [`${value.toFixed(2)}`, name]}
+                labelFormatter={(label) => `Period: ${label}`}
+              />
               <Line
                 type="monotone"
                 dataKey="usd_price"
-                stroke="#8884d8"
+                stroke={theme.palette.primary.main}
                 name="USD Price Response"
                 dot={false}
               />
               <Line
                 type="monotone"
                 dataKey="conflict_intensity"
-                stroke="#82ca9d"
+                stroke={theme.palette.secondary.main}
                 name="Conflict Intensity Response"
                 dot={false}
               />
-              <ReferenceLine y={0} stroke="red" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke={theme.palette.error.main} strokeDasharray="3 3" />
             </LineChart>
           </ResponsiveContainer>
         ) : (
@@ -241,16 +256,20 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
                 dataKey="lag"
                 label={{ value: 'Lag', position: 'insideBottom', offset: -5 }}
               />
-              <YAxis label={{ value: 'P-Value', angle: -90, position: 'insideLeft' }} />
-              <Tooltip />
-              <Bar dataKey="pValue" fill="#8884d8" name="P-Value">
+              <YAxis label={{ value: 'P-Value', angle: -90, position: 'insideLeft' }} domain={[0, 1]} />
+              <Tooltip
+                formatter={(value, name) => [`${value.toFixed(3)}`, name]}
+                labelFormatter={(label) => `Lag: ${label}`}
+              />
+              <Bar dataKey="pValue" name="P-Value">
                 {grangerData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={entry.significant ? '#ff4d4f' : '#8884d8'}
+                    fill={entry.significant ? theme.palette.error.main : theme.palette.primary.main}
                   />
                 ))}
               </Bar>
+              <ReferenceLine y={0.05} stroke={theme.palette.warning.main} strokeDasharray="3 3" />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -276,15 +295,20 @@ const ECMResults = ({ selectedData, isMobile, analysisType, direction }) => {
                 <YAxis
                   yAxisId="left"
                   label={{ value: "Moran's I", angle: -90, position: 'insideLeft' }}
+                  domain={['dataMin', 'dataMax']}
                 />
                 <YAxis
                   yAxisId="right"
                   orientation="right"
                   label={{ value: 'P-Value', angle: 90, position: 'insideRight' }}
+                  domain={[0, 1]}
                 />
-                <Tooltip />
-                <Bar yAxisId="left" dataKey="moranI" fill="#8884d8" name="Moran's I" />
-                <Bar yAxisId="right" dataKey="pValue" fill="#82ca9d" name="P-Value" />
+                <Tooltip
+                  formatter={(value, name) => [`${value.toFixed(3)}`, name]}
+                  labelFormatter={(label) => `Variable: ${label}`}
+                />
+                <Bar yAxisId="left" dataKey="moranI" fill={theme.palette.primary.main} name="Moran's I" />
+                <Bar yAxisId="right" dataKey="pValue" fill={theme.palette.secondary.main} name="P-Value" />
               </BarChart>
             </ResponsiveContainer>
             <Typography variant="body2" sx={{ mt: 2 }}>
