@@ -1,119 +1,173 @@
-import React, { useState, useCallback } from 'react';
-import { 
-  Grid, 
-  Paper, 
+import React, { useState, useMemo } from 'react';
+import {
+  Grid,
+  Paper,
   Typography,
-  Box
+  Box,
+  Divider
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useSelector } from 'react-redux';
 
 import ClusterMap from '../../organisms/ClusterMap';
 import MetricCard from '../../atoms/MetricCard';
 import MetricProgress from '../../molecules/MetricProgress';
-import ClusterMetricsPanel from './ClusterMetricsPanel';
 
-import { useClusterAnalysis } from '../../hooks/useClusterAnalysis';
-import { useSelector } from 'react-redux';
-import { selectGeometryData } from '../../../../selectors/optimizedSelectors';
+import { calculateClusterMetrics } from './utils/clusterCalculations';
+
+import {
+  selectTimeSeriesData,
+  selectGeometryData,
+  selectMarketClusters
+} from '../../../../selectors/optimizedSelectors';
 
 const ClusterAnalysis = () => {
   const theme = useTheme();
   const [selectedClusterId, setSelectedClusterId] = useState(null);
 
-  // Get data using the hook
-  const { clusters, metrics, loading, error } = useClusterAnalysis();
+  // Get data from selectors
+  const timeSeriesData = useSelector(selectTimeSeriesData);
   const geometry = useSelector(selectGeometryData);
+  const rawClusters = useSelector(selectMarketClusters);
 
-  // Handle cluster selection
-  const handleClusterSelect = useCallback((clusterId) => {
-    setSelectedClusterId(clusterId === selectedClusterId ? null : clusterId);
-  }, [selectedClusterId]);
+  // Calculate enhanced metrics
+  const { clusters: enhancedClusters, metrics: overallMetrics } = useMemo(() => 
+    calculateClusterMetrics(rawClusters, timeSeriesData),
+    [rawClusters, timeSeriesData]
+  );
 
   // Get selected cluster
-  const selectedCluster = clusters?.find(c => c.cluster_id === selectedClusterId);
-
-  // Show loading state
-  if (loading) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <MetricProgress message="Loading cluster analysis..." />
-      </Box>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">{error}</Typography>
-      </Box>
-    );
-  }
+  const selectedCluster = useMemo(() => 
+    enhancedClusters?.find(c => c.cluster_id === selectedClusterId),
+    [enhancedClusters, selectedClusterId]
+  );
 
   return (
     <Grid container spacing={2}>
-      {/* Overview Metrics */}
+      {/* Map View */}
       <Grid item xs={12}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <MetricCard
-              title="Total Markets"
-              value={metrics?.totalMarkets || 0}
-              format="number"
-              description="Total number of markets"
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <MetricCard
-              title="Average Price"
-              value={metrics?.avgPrice || 0}
-              format="currency"
-              description="Average price across all markets"
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <MetricCard
-              title="Average Conflict"
-              value={metrics?.avgConflict || 0}
-              format="number"
-              description="Average conflict intensity"
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-
-      {/* Map and Analysis */}
-      <Grid item xs={12} md={8}>
-        <Paper sx={{ height: 600, p: 2 }}>
+        <Paper sx={{ height: 500 }}>
           <ClusterMap
-            clusters={clusters}
+            clusters={enhancedClusters}
             selectedClusterId={selectedClusterId}
-            onClusterSelect={handleClusterSelect}
+            onClusterSelect={setSelectedClusterId}
             geometry={geometry}
+            defaultCenter={[15.3694, 44.1910]} // Yemen coordinates
+            defaultZoom={6.5}
+            disablePanning={true}
           />
         </Paper>
       </Grid>
 
-      {/* Metrics Panel */}
-      <Grid item xs={12} md={4}>
-        <ClusterMetricsPanel
-          selectedCluster={selectedCluster}
-        />
-      </Grid>
-
-      {/* Cluster Summary */}
+      {/* Metrics Overview */}
       <Grid item xs={12}>
         <Paper sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
-            Cluster Summary
+            Market Integration Overview
           </Typography>
-          <Typography variant="body2" color="textSecondary">
-            The analysis shows {clusters?.length || 0} distinct market clusters in Yemen. 
-            {selectedCluster ? (
-              ` The selected ${selectedCluster.main_market} cluster contains ${selectedCluster.connected_markets.length} markets 
-              with an average price of ${selectedCluster.metrics.avgPrice.toFixed(2)} USD and conflict intensity of 
-              ${selectedCluster.metrics.avgConflict.toFixed(2)}.`
-            ) : ' Select a cluster on the map to view detailed metrics.'}
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={3}>
+              <MetricProgress
+                title="System Integration"
+                value={overallMetrics?.systemIntegration || 0}
+                description="Overall market integration level"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricProgress
+                title="System Stability"
+                value={overallMetrics?.systemStability || 0}
+                description="Overall price stability"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricProgress
+                title="System Resilience"
+                value={overallMetrics?.systemResilience || 0}
+                description="Overall market resilience"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <MetricCard
+                title="Total Markets"
+                value={overallMetrics?.totalMarkets || 0}
+                format="integer"
+                description="Number of markets analyzed"
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+      </Grid>
+
+      {/* Selected Cluster Details */}
+      {selectedCluster && (
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              {selectedCluster.main_market} Market Cluster
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={3}>
+                <MetricCard
+                  title="Markets in Cluster"
+                  value={selectedCluster.metrics.marketCount}
+                  format="integer"
+                  description="Number of connected markets"
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <MetricCard
+                  title="Integration Score"
+                  value={selectedCluster.metrics.integrationScore}
+                  format="percentage"
+                  description="Market integration level"
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <MetricCard
+                  title="Stability Score"
+                  value={selectedCluster.metrics.stabilityScore}
+                  format="percentage"
+                  description="Price stability level"
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <MetricCard
+                  title="Price Volatility"
+                  value={selectedCluster.metrics.priceVolatility}
+                  format="percentage"
+                  description="Price variation level"
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+      )}
+
+      {/* About Section */}
+      <Grid item xs={12}>
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            About Market Integration Analysis
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Market integration analysis examines the interconnectedness and efficiency of Yemen's market system. 
+            This analysis identifies market clusters based on price co-movement patterns and trade relationships, 
+            helping to understand how well different markets are connected and how effectively price signals 
+            propagate through the system.
+          </Typography>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            Integration Metrics Explained
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • Integration Score: Measures how well a market is connected to other markets in the system
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • Stability Score: Indicates the consistency of prices within a market cluster
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • System Resilience: Combines integration and stability to assess overall market health
           </Typography>
         </Paper>
       </Grid>

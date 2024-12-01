@@ -39,9 +39,6 @@ export { default as geoJSONProcessor } from './utils/geoJSONProcessor';
 export { default as networkAnalysis } from './utils/networkAnalysis';
 export { default as clusterUtils } from './utils/clusterUtils';
 
-// Types
-export * from './types';
-
 /**
  * Yemen Market Analysis Spatial Analysis Module
  * 
