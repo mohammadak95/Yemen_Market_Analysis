@@ -1,11 +1,12 @@
 //src/components/analysis/spatial/SpatialAnalysis.js
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { selectSpatialDataOptimized } from '../../../selectors/optimizedSelectors';
+import { fetchRegressionAnalysis } from '../../../slices/spatialSlice';
 import SpatialRegressionResults from './SpatialRegressionResults';
 import SpatialMap from './SpatialMap';
 import { analysisStyles } from '../../../styles/analysisStyles';
@@ -14,17 +15,49 @@ import AnalysisContainer from '../../common/AnalysisContainer';
 const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) => {
   const theme = useTheme();
   const styles = analysisStyles(theme);
+  const dispatch = useDispatch();
 
   // Get spatial analysis results from Redux store
   const spatialData = useSelector(selectSpatialDataOptimized);
 
-  // Find results for selected commodity
+  // Fetch regression data when commodity changes
+  useEffect(() => {
+    if (selectedCommodity) {
+      dispatch(fetchRegressionAnalysis({ selectedCommodity }));
+    }
+  }, [selectedCommodity, dispatch]);
+
+  // Find results for selected commodity with proper null checking
   const spatialResults = useMemo(() => {
-    if (!spatialData?.spatial_analysis_results) return null;
-    
-    return spatialData.spatial_analysis_results.find(
-      result => result.commodity.toLowerCase() === selectedCommodity.toLowerCase()
-    );
+    // Get regression analysis data
+    const regressionData = spatialData?.regressionAnalysis;
+    if (!regressionData || regressionData.metadata?.commodity !== selectedCommodity) {
+      return null;
+    }
+
+    return {
+      coefficients: regressionData.model.coefficients,
+      residual: regressionData.residuals.raw,
+      moran_i: regressionData.spatial.moran_i,
+      r_squared: regressionData.model.r_squared,
+      adj_r_squared: regressionData.model.adj_r_squared,
+      observations: regressionData.model.observations,
+      mse: regressionData.model.mse,
+      // Group residuals by region for efficient access
+      residualsByRegion: regressionData.residuals.byRegion || {},
+      // Calculate summary statistics
+      summary: {
+        totalObservations: regressionData.model.observations,
+        rSquared: regressionData.model.r_squared,
+        adjustedRSquared: regressionData.model.adj_r_squared,
+        spatialDependence: {
+          moranI: regressionData.spatial.moran_i.I,
+          pValue: regressionData.spatial.moran_i['p-value']
+        },
+        coefficients: regressionData.model.coefficients,
+        interceptValue: regressionData.model.intercept
+      }
+    };
   }, [spatialData, selectedCommodity]);
 
   // Determine title based on mode
@@ -53,12 +86,14 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) 
               Spatial Model Parameters
             </Typography>
             <Typography variant="body2" paragraph>
-              Spatial Weight Matrix Type: Queen Contiguity
+              Spatial Lag Coefficient: {spatialResults.coefficients.spatial_lag_price?.toFixed(4)}
             </Typography>
             <Typography variant="body2" paragraph>
-              Model Type: Spatial Durbin Model (SDM)
+              R-squared: {spatialResults.summary.rSquared?.toFixed(4)}
             </Typography>
-            {/* Add more model parameters as needed */}
+            <Typography variant="body2">
+              Total Observations: {spatialResults.summary.totalObservations}
+            </Typography>
           </Box>
         </Grid>
 
@@ -71,7 +106,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) 
           />
         </Grid>
 
-        {/* Enhanced Map Visualization Panel */}
+        {/* Map Visualization Panel */}
         <Grid item xs={12} md={6}>
           <SpatialMap
             results={spatialResults}
@@ -87,13 +122,13 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) 
               Model Diagnostics
             </Typography>
             <Typography variant="body2" paragraph>
-              Moran's I: {spatialResults.morans_i?.toFixed(4) || 'N/A'}
+              Moran's I: {spatialResults.summary.spatialDependence.moranI?.toFixed(4) || 'N/A'}
             </Typography>
             <Typography variant="body2" paragraph>
-              Geary's C: {spatialResults.gearys_c?.toFixed(4) || 'N/A'}
+              P-value: {spatialResults.summary.spatialDependence.pValue?.toFixed(4) || 'N/A'}
             </Typography>
             <Typography variant="body2">
-              Log Likelihood: {spatialResults.log_likelihood?.toFixed(4) || 'N/A'}
+              MSE: {spatialResults.mse?.toFixed(4) || 'N/A'}
             </Typography>
           </Box>
         </Grid>

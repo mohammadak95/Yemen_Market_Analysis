@@ -2,7 +2,11 @@
 
 import { createSelector } from 'reselect';
 import _ from 'lodash';
-import { transformRegionName, getRegionCoordinates, calculateCenter } from '../components/spatialAnalysis/utils/spatialUtils';
+import { 
+  transformRegionName, 
+  getRegionCoordinates, 
+  calculateCenter 
+} from '../components/spatialAnalysis/utils/spatialUtils';
 
 // Yemen coordinates mapping for fallback - preserve existing coordinates
 const YEMEN_COORDINATES = {
@@ -65,506 +69,6 @@ const convertUTMtoLatLng = (easting, northing) => {
 
   return [lon, lat];
 };
-
-// Base selectors with enhanced error handling and validation
-const selectSpatialSlice = (state) => state.spatial || {};
-
-const selectSpatialState = createSelector(
-  [selectSpatialSlice],
-  (spatial) => spatial
-);
-
-const selectSpatialData = createSelector(
-  [selectSpatialState],
-  (spatial) => {
-    try {
-      return spatial.data || {};
-    } catch (error) {
-      console.error('Error accessing spatial data:', error);
-      return {};
-    }
-  }
-);
-
-const selectUiState = createSelector(
-  [selectSpatialState],
-  (spatial) => {
-    try {
-      return spatial.ui || {};
-    } catch (error) {
-      console.error('Error accessing UI state:', error);
-      return {};
-    }
-  }
-);
-
-export const selectStatus = createSelector(
-  [selectSpatialState],
-  (spatial) => {
-    try {
-      return {
-        loading: spatial.status?.loading || false,
-        error: spatial.status?.error || null,
-        progress: spatial.status?.progress || 0,
-        stage: spatial.status?.stage || 'idle',
-        geometryLoading: spatial.status?.geometryLoading || false,
-        regressionLoading: spatial.status?.regressionLoading || false
-      };
-    } catch (error) {
-      console.error('Error accessing status:', error);
-      return {
-        loading: false,
-        error: null,
-        progress: 0,
-        stage: 'idle',
-        geometryLoading: false,
-        regressionLoading: false
-      };
-    }
-  }
-);
-
-// Core data selectors with enhanced validation
-export const selectGeometryData = createSelector(
-  [selectSpatialData],
-  (data) => {
-    try {
-      const geometry = data.geometry;
-      if (!geometry) return null;
-
-      return {
-        points: Array.isArray(geometry.points) ? geometry.points : [],
-        polygons: Array.isArray(geometry.polygons) ? geometry.polygons : [],
-        unified: geometry.unified || null,
-        type: geometry.type || 'unified',
-      };
-    } catch (error) {
-      console.error('Error selecting geometry data:', error);
-      return null;
-    }
-  }
-);
-
-export const selectUnifiedGeometry = createSelector(
-  [selectGeometryData],
-  (geometry) => {
-    try {
-      if (!geometry?.unified) return null;
-
-      return {
-        type: 'FeatureCollection',
-        features: Array.isArray(geometry.unified) ? geometry.unified : [],
-        properties: {
-          type: 'unified',
-          timestamp: Date.now()
-        }
-      };
-    } catch (error) {
-      console.error('Error selecting unified geometry:', error);
-      return null;
-    }
-  }
-);
-
-// Export convertUTMtoLatLng for backward compatibility
-export { convertUTMtoLatLng, YEMEN_COORDINATES };
-
-// Market Data Selectors with enhanced validation
-export const selectMarketClusters = createSelector(
-  [selectSpatialData],
-  data => {
-    try {
-      if (!Array.isArray(data.marketClusters)) {
-        return [];
-      }
-      
-      return data.marketClusters.map(cluster => ({
-        ...cluster,
-        cluster_id: cluster.cluster_id || `cluster-${Math.random().toString(36).substr(2, 9)}`,
-        main_market: cluster.main_market || '',
-        connected_markets: Array.isArray(cluster.connected_markets) ? cluster.connected_markets : [],
-        metrics: {
-          efficiency: typeof cluster.metrics?.efficiency === 'number' ? cluster.metrics.efficiency : 0,
-          internal_connectivity: typeof cluster.metrics?.internal_connectivity === 'number' ? 
-            cluster.metrics.internal_connectivity : 0,
-          market_coverage: typeof cluster.metrics?.market_coverage === 'number' ? 
-            cluster.metrics.market_coverage : 0,
-          price_convergence: typeof cluster.metrics?.price_convergence === 'number' ? 
-            cluster.metrics.price_convergence : 0,
-          stability: typeof cluster.metrics?.stability === 'number' ? cluster.metrics.stability : 0,
-          ...cluster.metrics
-        }
-      }));
-    } catch (error) {
-      console.error('Error selecting market clusters:', error);
-      return [];
-    }
-  }
-);
-
-export const selectMarketFlows = createSelector(
-  [selectSpatialData],
-  data => {
-    try {
-      if (!Array.isArray(data.flowMaps)) {
-        return [];
-      }
-
-      return data.flowMaps.map(flow => ({
-        ...flow,
-        source: flow.source || '',
-        target: flow.target || '',
-        total_flow: typeof flow.total_flow === 'number' ? flow.total_flow : 0,
-        avg_flow: typeof flow.avg_flow === 'number' ? flow.avg_flow : 0,
-        flow_count: typeof flow.flow_count === 'number' ? flow.flow_count : 0,
-        avg_price_differential: typeof flow.avg_price_differential === 'number' ? 
-          flow.avg_price_differential : 0
-      }));
-    } catch (error) {
-      console.error('Error selecting market flows:', error);
-      return [];
-    }
-  }
-);
-
-export const selectTimeSeriesData = createSelector(
-  [selectSpatialData],
-  data => {
-    try {
-      if (!Array.isArray(data.timeSeriesData)) {
-        return [];
-      }
-
-      return data.timeSeriesData.map(ts => ({
-        ...ts,
-        month: ts.month || '',
-        region: ts.region || '',
-        usdPrice: typeof ts.usdPrice === 'number' ? ts.usdPrice : 0,
-        conflictIntensity: typeof ts.conflictIntensity === 'number' ? ts.conflictIntensity : 0,
-        additionalProperties: {
-          ...(ts.additionalProperties || {}),
-          date: ts.additionalProperties?.date || null,
-          residual: typeof ts.additionalProperties?.residual === 'number' ? 
-            ts.additionalProperties.residual : 0
-        }
-      }));
-    } catch (error) {
-      console.error('Error selecting time series data:', error);
-      return [];
-    }
-  }
-);
-
-// Spatial Analysis Selectors with enhanced validation
-export const selectSpatialAutocorrelation = createSelector(
-  [selectSpatialData],
-  (data) => {
-    try {
-      const autocorrelation = data.spatialAutocorrelation || {};
-      return {
-        global: {
-          moran_i: typeof autocorrelation.global?.moran_i === 'number' ? 
-            autocorrelation.global.moran_i : 0,
-          p_value: typeof autocorrelation.global?.p_value === 'number' ? 
-            autocorrelation.global.p_value : 1,
-          z_score: autocorrelation.global?.z_score || null,
-          significance: Boolean(autocorrelation.global?.significance)
-        },
-        local: Object.entries(autocorrelation.local || {}).reduce((acc, [key, value]) => {
-          acc[key] = {
-            local_i: typeof value.local_i === 'number' ? value.local_i : 0,
-            p_value: typeof value.p_value === 'number' ? value.p_value : 1,
-            cluster_type: value.cluster_type || 'not-significant',
-            z_score: typeof value.z_score === 'number' ? value.z_score : 0
-          };
-          return acc;
-        }, {})
-      };
-    } catch (error) {
-      console.error('Error selecting spatial autocorrelation:', error);
-      return {
-        global: { moran_i: 0, p_value: 1, z_score: null, significance: false },
-        local: {}
-      };
-    }
-  }
-);
-
-// Regression Analysis Selector
-export const selectRegressionAnalysis = createSelector(
-  [selectSpatialData],
-  data => {
-    try {
-      const regression = data.regressionAnalysis || {};
-      return {
-        model: regression.model || {},
-        spatial: {
-          moran_i: regression.spatial?.moran_i || { I: 0, 'p-value': 1 },
-          vif: regression.spatial?.vif || []
-        },
-        residuals: {
-          raw: Array.isArray(regression.residuals?.raw) ? regression.residuals.raw : [],
-          byRegion: regression.residuals?.byRegion || {},
-          stats: {
-            mean: regression.residuals?.stats?.mean || 0,
-            variance: regression.residuals?.stats?.variance || 0,
-            maxAbsolute: regression.residuals?.stats?.maxAbsolute || 0
-          }
-        }
-      };
-    } catch (error) {
-      console.error('Error selecting regression analysis:', error);
-      return {
-        model: {},
-        spatial: { moran_i: { I: 0, 'p-value': 1 }, vif: [] },
-        residuals: { raw: [], byRegion: {}, stats: { mean: 0, variance: 0, maxAbsolute: 0 } }
-      };
-    }
-  }
-);
-
-// Seasonal Analysis Selector
-export const selectSeasonalAnalysis = createSelector(
-  [selectSpatialData],
-  data => {
-    try {
-      const seasonal = data.seasonalAnalysis || {};
-      return {
-        seasonal_strength: typeof seasonal.seasonal_strength === 'number' ? 
-          seasonal.seasonal_strength : 0,
-        trend_strength: typeof seasonal.trend_strength === 'number' ? 
-          seasonal.trend_strength : 0,
-        peak_month: seasonal.peak_month || 0,
-        trough_month: seasonal.trough_month || 0,
-        seasonal_pattern: Array.isArray(seasonal.seasonal_pattern) ? 
-          seasonal.seasonal_pattern : []
-      };
-    } catch (error) {
-      console.error('Error selecting seasonal analysis:', error);
-      return {
-        seasonal_strength: 0,
-        trend_strength: 0,
-        peak_month: 0,
-        trough_month: 0,
-        seasonal_pattern: []
-      };
-    }
-  }
-);
-
-export const selectMarketShocks = createSelector(
-  [selectSpatialData],
-  data => {
-    try {
-      if (!Array.isArray(data.marketShocks)) {
-        return [];
-      }
-
-      return data.marketShocks.map(shock => ({
-        ...shock,
-        region: shock.region || '',
-        date: shock.date || '',
-        shock_type: shock.shock_type || '',
-        magnitude: typeof shock.magnitude === 'number' ? shock.magnitude : 0,
-        current_price: typeof shock.current_price === 'number' ? shock.current_price : 0,
-        previous_price: typeof shock.previous_price === 'number' ? shock.previous_price : 0
-      }));
-    } catch (error) {
-      console.error('Error selecting market shocks:', error);
-      return [];
-    }
-  }
-);
-
-// Enhanced Market Integration selector with detailed validation
-export const selectMarketIntegration = createSelector(
-  [selectSpatialData],
-  data => {
-    try {
-      const integration = data.marketIntegration || {};
-      
-      // Validate and process price correlation matrix
-      const price_correlation = {};
-      Object.entries(integration.price_correlation || {}).forEach(([region, correlations]) => {
-        price_correlation[region] = Object.entries(correlations || {}).reduce((acc, [target, value]) => {
-          acc[target] = typeof value === 'number' && !isNaN(value) ? value : 0;
-          return acc;
-        }, {});
-      });
-
-      return {
-        price_correlation,
-        flow_density: typeof integration.flow_density === 'number' ? integration.flow_density : 0,
-        accessibility: Object.entries(integration.accessibility || {}).reduce((acc, [region, value]) => {
-          acc[region] = typeof value === 'number' ? value : 0;
-          return acc;
-        }, {}),
-        integration_score: typeof integration.integration_score === 'number' ? 
-          integration.integration_score : 0
-      };
-    } catch (error) {
-      console.error('Error selecting market integration:', error);
-      return {
-        price_correlation: {},
-        flow_density: 0,
-        accessibility: {},
-        integration_score: 0
-      };
-    }
-  }
-);
-
-// UI State Selectors with validation
-export const selectVisualizationMode = createSelector(
-  [selectUiState],
-  ui => ui.visualizationMode || 'prices'
-);
-
-export const selectSelectedCommodity = createSelector(
-  [selectUiState],
-  ui => ui.selectedCommodity || ''
-);
-
-export const selectSelectedDate = createSelector(
-  [selectUiState],
-  ui => ui.selectedDate || ''
-);
-
-export const selectLoadingStatus = createSelector(
-  [selectStatus],
-  status => ({
-    loading: Boolean(status.loading),
-    error: status.error || null,
-    progress: typeof status.progress === 'number' ? status.progress : 0,
-    stage: status.stage || 'idle',
-    geometryLoading: Boolean(status.geometryLoading),
-    regressionLoading: Boolean(status.regressionLoading)
-  })
-);
-
-// Continue from Part 2...
-
-// Feature data selector with enhanced validation and processing
-export const selectFeatureDataWithMetrics = createSelector(
-  [selectGeometryData, selectTimeSeriesData],
-  (geometry, timeSeriesData) => {
-    if (!geometry?.points || !Array.isArray(timeSeriesData)) {
-      return null;
-    }
-
-    try {
-      const timeSeriesByRegion = _.groupBy(timeSeriesData, 'region');
-
-      // Calculate region metrics
-      const regionalMetrics = Object.entries(timeSeriesByRegion).reduce((acc, [region, data]) => {
-        const prices = data.map(d => d.usdPrice).filter(p => typeof p === 'number');
-        const conflicts = data.map(d => d.conflictIntensity).filter(c => typeof c === 'number');
-        
-        acc[region] = {
-          averagePrice: prices.length ? _.mean(prices) : 0,
-          priceVolatility: prices.length > 1 ? calculateVolatility(prices) : 0,
-          conflictIntensity: conflicts.length ? _.mean(conflicts) : 0,
-          dataPoints: data.length,
-          lastUpdate: data.reduce((latest, point) => {
-            const date = point.additionalProperties?.date;
-            return date && (!latest || date > latest) ? date : latest;
-          }, null)
-        };
-        return acc;
-      }, {});
-
-      // Process geometry points
-      const processedPoints = geometry.points.map(point => {
-        const regionId = transformRegionName(
-          point.properties?.normalizedName || 
-          point.properties?.region_id || 
-          point.properties?.name
-        );
-
-        return {
-          ...point,
-          properties: {
-            ...point.properties,
-            metrics: regionalMetrics[regionId] || {
-              averagePrice: 0,
-              priceVolatility: 0,
-              conflictIntensity: 0,
-              dataPoints: 0,
-              lastUpdate: null
-            },
-            region_id: regionId,
-            coordinates: validateCoordinates(point.coordinates)
-          }
-        };
-      });
-
-      return {
-        points: processedPoints,
-        metrics: regionalMetrics,
-        timestamp: Date.now()
-      };
-    } catch (error) {
-      console.error('Error processing feature data with metrics:', error);
-      return null;
-    }
-  }
-);
-
-// Enhanced cluster coordinate processing
-export const selectClustersWithCoordinates = createSelector(
-  [selectMarketClusters, selectGeometryData],
-  (clusters, geometry) => {
-    try {
-      if (!clusters?.length || !geometry?.points) {
-        return [];
-      }
-
-      // Create normalized coordinate mapping
-      const coordMap = new Map();
-      geometry.points.forEach(point => {
-        const normalizedName = transformRegionName(
-          point.properties?.normalizedName || 
-          point.properties?.region_id || 
-          point.properties?.name
-        );
-        if (normalizedName && point.coordinates?.length === 2) {
-          coordMap.set(normalizedName, validateCoordinates(point.coordinates));
-        }
-      });
-
-      return clusters.map(cluster => {
-        const markets = cluster.connected_markets || [];
-        const marketCoords = markets
-          .map(market => {
-            const normalizedName = transformRegionName(market);
-            return {
-              name: market,
-              normalizedName,
-              coordinates: coordMap.get(normalizedName) || getRegionCoordinates(normalizedName)
-            };
-          })
-          .filter(m => m.coordinates);
-
-        const center = calculateCenter(marketCoords.map(m => m.coordinates));
-
-        return {
-          ...cluster,
-          markets: marketCoords,
-          center: center || [0, 0],
-          coverage: marketCoords.length / markets.length,
-          metrics: {
-            ...cluster.metrics,
-            spatial_coverage: marketCoords.length / markets.length,
-            avg_distance: calculateAverageDistance(marketCoords.map(m => m.coordinates))
-          }
-        };
-      });
-    } catch (error) {
-      console.error('Error processing clusters with coordinates:', error);
-      return [];
-    }
-  }
-);
 
 // Helper functions
 const validateCoordinates = (coords) => {
@@ -652,126 +156,549 @@ const calculateDistance = (coord1, coord2) => {
   return R * c;
 };
 
-// Enhanced visualization data selector
-export const selectVisualizationData = createSelector(
-  [selectFeatureDataWithMetrics, selectMarketFlows, selectMarketClusters],
-  (featureData, flows, clusters) => {
+// Base selectors with enhanced error handling and validation
+const selectSpatialData = (state) => state.spatial?.data;
+const selectSpatialStatus = (state) => state.spatial?.status;
+const selectSpatialUI = (state) => state.spatial?.ui;
+
+const selectSpatialState = createSelector(
+  [selectSpatialData, selectSpatialStatus, selectSpatialUI],
+  (data, status, ui) => ({
+    data,
+    status,
+    ui
+  })
+);
+
+// UI State Selectors with validation
+const selectUiState = createSelector(
+  [selectSpatialState],
+  (spatial) => {
     try {
-      const processedFlows = (flows || []).map(flow => ({
-        ...flow,
-        coordinates: {
-          source: getRegionCoordinates(flow.source),
-          target: getRegionCoordinates(flow.target)
-        },
-        normalized: {
-          source: transformRegionName(flow.source),
-          target: transformRegionName(flow.target)
-        }
-      }));
+      return spatial?.ui || {};
+    } catch (error) {
+      console.error('Error accessing UI state:', error);
+      return {};
+    }
+  }
+);
 
-      const processedClusters = (clusters || []).map(cluster => {
-        const marketCoords = (cluster.connected_markets || [])
-          .map(market => ({
-            name: market,
-            coordinates: getRegionCoordinates(market)
-          }))
-          .filter(m => m.coordinates);
+export const selectVisualizationMode = createSelector(
+  [selectSpatialUI],
+  (ui) => ui?.visualizationMode || 'prices'
+);
 
-        return {
-          ...cluster,
-          markets: marketCoords,
-          center: calculateCenter(marketCoords.map(m => m.coordinates)) || [0, 0]
-        };
-      });
+export const selectSelectedCommodity = createSelector(
+  [selectSpatialUI],
+  (ui) => ui?.selectedCommodity || ''
+);
 
+export const selectSelectedDate = createSelector(
+  [selectSpatialUI],
+  (ui) => ui?.selectedDate || ''
+);
+
+// Status Selector
+export const selectStatus = createSelector(
+  [selectSpatialStatus],
+  (status) => {
+    try {
       return {
-        features: featureData?.points || [],
-        flows: processedFlows,
-        clusters: processedClusters,
-        timestamp: Date.now()
+        loading: status?.loading || false,
+        error: status?.error || null,
+        progress: status?.progress || 0,
+        stage: status?.stage || 'idle',
+        geometryLoading: status?.geometryLoading || false,
+        regressionLoading: status?.regressionLoading || false
       };
     } catch (error) {
-      console.error('Error selecting visualization data:', error);
+      console.error('Error accessing status:', error);
       return {
-        features: [],
-        flows: [],
-        clusters: [],
-        timestamp: Date.now()
+        loading: false,
+        error: null,
+        progress: 0,
+        stage: 'idle',
+        geometryLoading: false,
+        regressionLoading: false
       };
     }
   }
 );
 
-// Complete Spatial Data Selector with optimization
-export const selectSpatialDataOptimized = createSelector(
-  [
-    selectUnifiedGeometry,
-    selectMarketClusters,
-    selectMarketFlows,
-    selectTimeSeriesData,
-    selectMarketShocks,
-    selectMarketIntegration,
-    selectSpatialAutocorrelation,
-    selectRegressionAnalysis,
-    selectSeasonalAnalysis,
-  ],
-  (
-    geometry,
-    clusters,
-    flows,
-    timeSeriesData,
-    shocks,
-    integration,
-    autocorrelation,
-    regression,
-    seasonal
-  ) => {
+// Core data selectors with enhanced validation
+export const selectGeometryData = createSelector(
+  [selectSpatialData],
+  (data) => {
     try {
-      // Process and validate unique months
-      const uniqueMonths = timeSeriesData
-        ? _.uniq(timeSeriesData.map(d => d.month))
-            .filter(Boolean)
-            .sort((a, b) => new Date(a) - new Date(b))
-        : [];
+      if (!data) return null;
 
-      // Enhanced metrics calculation
-      const metrics = calculateEnhancedMetrics(
-        clusters,
-        flows,
-        integration,
-        autocorrelation
-      );
+      const geometry = data.geometry;
+      if (!geometry) return null;
 
       return {
-        geometry,
-        marketClusters: clusters,
-        flowMaps: flows,
-        timeSeriesData,
-        marketShocks: shocks,
-        marketIntegration: integration,
-        spatialAutocorrelation: autocorrelation,
-        regressionAnalysis: regression,
-        seasonalAnalysis: seasonal,
-        uniqueMonths,
-        metrics,
+        points: Array.isArray(geometry.points) ? geometry.points : [],
+        polygons: Array.isArray(geometry.polygons) ? geometry.polygons : [],
+        unified: geometry.unified || null,
+        type: geometry.type || 'unified',
+      };
+    } catch (error) {
+      console.error('Error selecting geometry data:', error);
+      return null;
+    }
+  }
+);
+
+export const selectUnifiedGeometry = createSelector(
+  [selectGeometryData],
+  (geometry) => {
+    try {
+      if (!geometry?.unified) return null;
+
+      return {
+        type: 'FeatureCollection',
+        features: Array.isArray(geometry.unified) ? geometry.unified : [],
+        properties: {
+          type: 'unified',
+          timestamp: Date.now()
+        }
+      };
+    } catch (error) {
+      console.error('Error selecting unified geometry:', error);
+      return null;
+    }
+  }
+);
+
+// Market Data Selectors with enhanced validation
+export const selectMarketClusters = createSelector(
+  [selectSpatialData],
+  (data) => {
+    try {
+      if (!data || !Array.isArray(data.marketClusters)) {
+        return [];
+      }
+      
+      return data.marketClusters.map(cluster => ({
+        ...cluster,
+        cluster_id: cluster.cluster_id || `cluster-${Math.random().toString(36).substr(2, 9)}`,
+        main_market: cluster.main_market || '',
+        connected_markets: Array.isArray(cluster.connected_markets) ? cluster.connected_markets : [],
+        metrics: {
+          efficiency: typeof cluster.metrics?.efficiency === 'number' ? cluster.metrics.efficiency : 0,
+          internal_connectivity: typeof cluster.metrics?.internal_connectivity === 'number' ? 
+            cluster.metrics.internal_connectivity : 0,
+          market_coverage: typeof cluster.metrics?.market_coverage === 'number' ? 
+            cluster.metrics.market_coverage : 0,
+          price_convergence: typeof cluster.metrics?.price_convergence === 'number' ? 
+            cluster.metrics.price_convergence : 0,
+          stability: typeof cluster.metrics?.stability === 'number' ? cluster.metrics.stability : 0,
+          ...cluster.metrics
+        }
+      }));
+    } catch (error) {
+      console.error('Error selecting market clusters:', error);
+      return [];
+    }
+  }
+);
+
+export const selectMarketFlows = createSelector(
+  [selectSpatialData],
+  (data) => {
+    try {
+      if (!data || !Array.isArray(data.flowMaps)) {
+        return [];
+      }
+
+      return data.flowMaps.map(flow => ({
+        ...flow,
+        source: flow.source || '',
+        target: flow.target || '',
+        total_flow: typeof flow.total_flow === 'number' ? flow.total_flow : 0,
+        avg_flow: typeof flow.avg_flow === 'number' ? flow.avg_flow : 0,
+        flow_count: typeof flow.flow_count === 'number' ? flow.flow_count : 0,
+        avg_price_differential: typeof flow.avg_price_differential === 'number' ? 
+          flow.avg_price_differential : 0
+      }));
+    } catch (error) {
+      console.error('Error selecting market flows:', error);
+      return [];
+    }
+  }
+);
+
+export const selectTimeSeriesData = createSelector(
+  [selectSpatialData],
+  (data) => {
+    try {
+      if (!data || !Array.isArray(data.timeSeriesData)) {
+        return [];
+      }
+
+      return data.timeSeriesData.map(ts => ({
+        ...ts,
+        month: ts.month || '',
+        region: ts.region || '',
+        usdPrice: typeof ts.usdPrice === 'number' ? ts.usdPrice : 0,
+        conflictIntensity: typeof ts.conflictIntensity === 'number' ? ts.conflictIntensity : 0,
+        additionalProperties: {
+          ...(ts.additionalProperties || {}),
+          date: ts.additionalProperties?.date || null,
+          residual: typeof ts.additionalProperties?.residual === 'number' ? 
+            ts.additionalProperties.residual : 0
+        }
+      }));
+    } catch (error) {
+      console.error('Error selecting time series data:', error);
+      return [];
+    }
+  }
+);
+
+// Spatial Analysis Selectors with enhanced validation
+export const selectSpatialAutocorrelation = createSelector(
+  [selectSpatialData],
+  (data) => {
+    try {
+      if (!data || !data.spatialAutocorrelation) {
+        return {
+          global: { moran_i: 0, p_value: 1, z_score: null, significance: false },
+          local: {}
+        };
+      }
+
+      const autocorrelation = data.spatialAutocorrelation;
+      return {
+        global: {
+          moran_i: typeof autocorrelation.global?.moran_i === 'number' ? 
+            autocorrelation.global.moran_i : 0,
+          p_value: typeof autocorrelation.global?.p_value === 'number' ? 
+            autocorrelation.global.p_value : 1,
+          z_score: autocorrelation.global?.z_score || null,
+          significance: Boolean(autocorrelation.global?.significance)
+        },
+        local: Object.entries(autocorrelation.local || {}).reduce((acc, [key, value]) => {
+          acc[key] = {
+            local_i: typeof value.local_i === 'number' ? value.local_i : 0,
+            p_value: typeof value.p_value === 'number' ? value.p_value : 1,
+            cluster_type: value.cluster_type || 'not-significant',
+            z_score: typeof value.z_score === 'number' ? value.z_score : 0
+          };
+          return acc;
+        }, {})
+      };
+    } catch (error) {
+      console.error('Error selecting spatial autocorrelation:', error);
+      return {
+        global: { moran_i: 0, p_value: 1, z_score: null, significance: false },
+        local: {}
+      };
+    }
+  }
+);
+
+// Regression Analysis Selector
+export const selectRegressionAnalysis = createSelector(
+  [selectSpatialData, selectSelectedCommodity],
+  (data, selectedCommodity) => {
+    try {
+      if (!data || !data.regressionAnalysis) return null;
+
+      const regression = data.regressionAnalysis;
+      const metadata = regression.metadata || {};
+      
+      // Return null if no regression data or commodity doesn't match
+      if (metadata.commodity !== selectedCommodity) {
+        console.debug('Regression data filtered out:', { 
+          hasData: !!regression, 
+          dataCommodity: metadata.commodity, 
+          selectedCommodity 
+        });
+        return null;
+      }
+
+      return {
+        model: regression.model || {},
+        spatial: {
+          moran_i: regression.spatial?.moran_i || { I: 0, 'p-value': 1 },
+          vif: Array.isArray(regression.spatial?.vif) ? regression.spatial.vif : []
+        },
+        residuals: {
+          raw: Array.isArray(regression.residuals?.raw) ? regression.residuals.raw : [],
+          byRegion: regression.residuals?.byRegion || {},
+          stats: {
+            mean: typeof regression.residuals?.stats?.mean === 'number' ? regression.residuals.stats.mean : 0,
+            variance: typeof regression.residuals?.stats?.variance === 'number' ? regression.residuals.stats.variance : 0,
+            maxAbsolute: typeof regression.residuals?.stats?.maxAbsolute === 'number' ? regression.residuals.stats.maxAbsolute : 0
+          }
+        },
+        metadata: {
+          ...metadata,
+          commodity: selectedCommodity,
+          timestamp: metadata.timestamp || new Date().toISOString(),
+          version: metadata.version || "1.0"
+        }
+      };
+    } catch (error) {
+      console.error('Error selecting regression analysis:', error);
+      return {
+        model: {},
+        spatial: { moran_i: { I: 0, 'p-value': 1 }, vif: [] },
+        residuals: { raw: [], byRegion: {}, stats: { mean: 0, variance: 0, maxAbsolute: 0 } },
+        metadata: {
+          commodity: '',
+          timestamp: new Date().toISOString(),
+          version: "1.0"
+        }
+      };
+    }
+  }
+);
+
+// Seasonal Analysis Selector
+export const selectSeasonalAnalysis = createSelector(
+  [selectSpatialData],
+  (data) => {
+    try {
+      if (!data || !data.seasonalAnalysis) {
+        return {
+          seasonal_strength: 0,
+          trend_strength: 0,
+          peak_month: 0,
+          trough_month: 0,
+          seasonal_pattern: []
+        };
+      }
+
+      const seasonal = data.seasonalAnalysis;
+      return {
+        seasonal_strength: typeof seasonal.seasonal_strength === 'number' ? 
+          seasonal.seasonal_strength : 0,
+        trend_strength: typeof seasonal.trend_strength === 'number' ? 
+          seasonal.trend_strength : 0,
+        peak_month: seasonal.peak_month || 0,
+        trough_month: seasonal.trough_month || 0,
+        seasonal_pattern: Array.isArray(seasonal.seasonal_pattern) ? 
+          seasonal.seasonal_pattern : []
+      };
+    } catch (error) {
+      console.error('Error selecting seasonal analysis:', error);
+      return {
+        seasonal_strength: 0,
+        trend_strength: 0,
+        peak_month: 0,
+        trough_month: 0,
+        seasonal_pattern: []
+      };
+    }
+  }
+);
+
+export const selectMarketShocks = createSelector(
+  [selectSpatialData],
+  (data) => {
+    try {
+      if (!data || !Array.isArray(data.marketShocks)) {
+        return [];
+      }
+
+      return data.marketShocks.map(shock => ({
+        ...shock,
+        region: shock.region || '',
+        date: shock.date || '',
+        shock_type: shock.shock_type || '',
+        magnitude: typeof shock.magnitude === 'number' ? shock.magnitude : 0,
+        current_price: typeof shock.current_price === 'number' ? shock.current_price : 0,
+        previous_price: typeof shock.previous_price === 'number' ? shock.previous_price : 0
+      }));
+    } catch (error) {
+      console.error('Error selecting market shocks:', error);
+      return [];
+    }
+  }
+);
+
+// Enhanced Market Integration selector with detailed validation
+export const selectMarketIntegration = createSelector(
+  [selectSpatialData],
+  (data) => {
+    try {
+      if (!data || !data.marketIntegration) {
+        return {
+          price_correlation: {},
+          flow_density: 0,
+          accessibility: {},
+          integration_score: 0
+        };
+      }
+
+      const integration = data.marketIntegration || {};
+      
+      // Validate and process price correlation matrix
+      const price_correlation = {};
+      Object.entries(integration.price_correlation || {}).forEach(([region, correlations]) => {
+        price_correlation[region] = Object.entries(correlations || {}).reduce((acc, [target, value]) => {
+          acc[target] = typeof value === 'number' && !isNaN(value) ? value : 0;
+          return acc;
+        }, {});
+      });
+
+      return {
+        price_correlation,
+        flow_density: typeof integration.flow_density === 'number' ? integration.flow_density : 0,
+        accessibility: Object.entries(integration.accessibility || {}).reduce((acc, [region, value]) => {
+          acc[region] = typeof value === 'number' ? value : 0;
+          return acc;
+        }, {}),
+        integration_score: typeof integration.integration_score === 'number' ? 
+          integration.integration_score : 0
+      };
+    } catch (error) {
+      console.error('Error selecting market integration:', error);
+      return {
+        price_correlation: {},
+        flow_density: 0,
+        accessibility: {},
+        integration_score: 0
+      };
+    }
+  }
+);
+
+// Export convertUTMtoLatLng for backward compatibility
+export { convertUTMtoLatLng, YEMEN_COORDINATES };
+
+// Selector to get loading status
+export const selectLoadingStatus = createSelector(
+  [selectStatus],
+  status => ({
+    loading: Boolean(status.loading),
+    error: status.error || null,
+    progress: typeof status.progress === 'number' ? status.progress : 0,
+    stage: status.stage || 'idle',
+    geometryLoading: Boolean(status.geometryLoading),
+    regressionLoading: Boolean(status.regressionLoading)
+  })
+);
+
+// Enhanced cluster coordinate processing
+export const selectClustersWithCoordinates = createSelector(
+  [selectMarketClusters, selectGeometryData],
+  (clusters, geometry) => {
+    try {
+      if (!clusters?.length || !geometry?.points) {
+        return [];
+      }
+
+      // Create normalized coordinate mapping
+      const coordMap = new Map();
+      geometry.points.forEach(point => {
+        const normalizedName = transformRegionName(
+          point.properties?.normalizedName || 
+          point.properties?.region_id || 
+          point.properties?.name
+        );
+        if (normalizedName && Array.isArray(point.coordinates) && point.coordinates.length === 2) {
+          coordMap.set(normalizedName, validateCoordinates(point.coordinates));
+        }
+      });
+
+      return clusters.map(cluster => {
+        const markets = cluster.connected_markets || [];
+        const marketCoords = markets
+          .map(market => {
+            const normalizedName = transformRegionName(market);
+            return {
+              name: market,
+              normalizedName,
+              coordinates: coordMap.get(normalizedName) || getRegionCoordinates(normalizedName)
+            };
+          })
+          .filter(m => m.coordinates);
+
+        const center = calculateCenter(marketCoords.map(m => m.coordinates));
+
+        return {
+          ...cluster,
+          markets: marketCoords,
+          center: center || [0, 0],
+          coverage: markets.length ? marketCoords.length / markets.length : 0,
+          metrics: {
+            ...cluster.metrics,
+            spatial_coverage: markets.length ? marketCoords.length / markets.length : 0,
+            avg_distance: calculateAverageDistance(marketCoords.map(m => m.coordinates))
+          }
+        };
+      });
+    } catch (error) {
+      console.error('Error processing clusters with coordinates:', error);
+      return [];
+    }
+  }
+);
+
+// Feature data selector with enhanced validation and processing
+export const selectFeatureDataWithMetrics = createSelector(
+  [selectGeometryData, selectTimeSeriesData],
+  (geometry, timeSeriesData) => {
+    if (!geometry?.points || !Array.isArray(timeSeriesData)) {
+      return null;
+    }
+
+    try {
+      const timeSeriesByRegion = _.groupBy(timeSeriesData, 'region');
+
+      // Calculate region metrics
+      const regionalMetrics = Object.entries(timeSeriesByRegion).reduce((acc, [region, data]) => {
+        const prices = data.map(d => d.usdPrice).filter(p => typeof p === 'number');
+        const conflicts = data.map(d => d.conflictIntensity).filter(c => typeof c === 'number');
+        
+        acc[region] = {
+          averagePrice: prices.length ? _.mean(prices) : 0,
+          priceVolatility: prices.length > 1 ? calculateVolatility(prices) : 0,
+          conflictIntensity: conflicts.length ? _.mean(conflicts) : 0,
+          dataPoints: data.length,
+          lastUpdate: data.reduce((latest, point) => {
+            const date = point.additionalProperties?.date;
+            return date && (!latest || new Date(date) > new Date(latest)) ? date : latest;
+          }, null)
+        };
+        return acc;
+      }, {});
+
+      // Process geometry points
+      const processedPoints = geometry.points.map(point => {
+        const regionId = transformRegionName(
+          point.properties?.normalizedName || 
+          point.properties?.region_id || 
+          point.properties?.name
+        );
+
+        return {
+          ...point,
+          properties: {
+            ...point.properties,
+            metrics: regionalMetrics[regionId] || {
+              averagePrice: 0,
+              priceVolatility: 0,
+              conflictIntensity: 0,
+              dataPoints: 0,
+              lastUpdate: null
+            },
+            region_id: regionId,
+            coordinates: validateCoordinates(point.coordinates)
+          }
+        };
+      });
+
+      return {
+        points: processedPoints,
+        metrics: regionalMetrics,
         timestamp: Date.now()
       };
     } catch (error) {
-      console.error('Error creating optimized spatial data:', error);
-      return {
-        geometry: null,
-        marketClusters: [],
-        flowMaps: [],
-        timeSeriesData: [],
-        marketShocks: [],
-        marketIntegration: { price_correlation: {}, flow_density: 0 },
-        spatialAutocorrelation: { global: { moran_i: 0 }, local: {} },
-        regressionAnalysis: { model: {}, residuals: [] },
-        seasonalAnalysis: { seasonal_pattern: [] },
-        uniqueMonths: [],
-        metrics: getDefaultMetrics(),
-        timestamp: Date.now()
-      };
+      console.error('Error processing feature data with metrics:', error);
+      return null;
     }
   }
 );
@@ -856,6 +783,142 @@ const getDefaultMetrics = () => ({
   coverage: { totalMarkets: 0, averageCoverage: 0 }
 });
 
+// Enhanced visualization data selector
+export const selectVisualizationData = createSelector(
+  [selectFeatureDataWithMetrics, selectMarketFlows, selectMarketClusters],
+  (featureData, flows, clusters) => {
+    try {
+      const processedFlows = (flows || []).map(flow => ({
+        ...flow,
+        coordinates: {
+          source: getRegionCoordinates(flow.source),
+          target: getRegionCoordinates(flow.target)
+        },
+        normalized: {
+          source: transformRegionName(flow.source),
+          target: transformRegionName(flow.target)
+        }
+      }));
+
+      const processedClusters = (clusters || []).map(cluster => {
+        const marketCoords = (cluster.connected_markets || [])
+          .map(market => ({
+            name: market,
+            coordinates: getRegionCoordinates(market)
+          }))
+          .filter(m => m.coordinates);
+
+        return {
+          ...cluster,
+          markets: marketCoords,
+          center: calculateCenter(marketCoords.map(m => m.coordinates)) || [0, 0]
+        };
+      });
+
+      return {
+        features: featureData?.points || [],
+        flows: processedFlows,
+        clusters: processedClusters,
+        timestamp: Date.now()
+      };
+    } catch (error) {
+      console.error('Error selecting visualization data:', error);
+      return {
+        features: [],
+        flows: [],
+        clusters: [],
+        timestamp: Date.now()
+      };
+    }
+  }
+);
+
+// Complete Spatial Data Selector with optimization
+export const selectSpatialDataOptimized = createSelector(
+  [
+    selectUnifiedGeometry,
+    selectMarketClusters,
+    selectMarketFlows,
+    selectTimeSeriesData,
+    selectMarketShocks,
+    selectMarketIntegration,
+    selectSpatialAutocorrelation,
+    selectRegressionAnalysis,
+    selectSeasonalAnalysis,
+  ],
+  (
+    geometry,
+    clusters,
+    flows,
+    timeSeriesData,
+    shocks,
+    integration,
+    autocorrelation,
+    regression,
+    seasonal
+  ) => {
+    try {
+      // Ensure spatial_analysis_results exists and is an array within regression
+      const spatial_analysis_results = Array.isArray(regression?.spatial_analysis_results)
+        ? regression.spatial_analysis_results.map(result => ({
+            ...result,
+            residual: Array.isArray(result.residual) ? result.residual : [],
+            coefficients: result.coefficients || {},
+            moran_i: result.moran_i || { I: null, 'p-value': null },
+          }))
+        : [];
+
+      // Process and validate unique months
+      const uniqueMonths = timeSeriesData
+        ? _.uniq(timeSeriesData.map(d => d.month))
+            .filter(Boolean)
+            .sort((a, b) => new Date(a) - new Date(b))
+        : [];
+
+      // Enhanced metrics calculation
+      const metrics = calculateEnhancedMetrics(
+        clusters,
+        flows,
+        integration,
+        autocorrelation
+      );
+
+      return {
+        geometry,
+        marketClusters: clusters,
+        flowMaps: flows,
+        timeSeriesData,
+        marketShocks: shocks,
+        marketIntegration: integration,
+        spatialAutocorrelation: autocorrelation,
+        regressionAnalysis: {
+          ...regression,
+          spatial_analysis_results, // Updated with validated spatial_analysis_results
+        },
+        seasonalAnalysis: seasonal,
+        uniqueMonths,
+        metrics,
+        timestamp: Date.now()
+      };
+    } catch (error) {
+      console.error('Error creating optimized spatial data:', error);
+      return {
+        geometry: null,
+        marketClusters: [],
+        flowMaps: [],
+        timeSeriesData: [],
+        marketShocks: [],
+        marketIntegration: { price_correlation: {}, flow_density: 0 },
+        spatialAutocorrelation: { global: { moran_i: 0 }, local: {} },
+        regressionAnalysis: { model: {}, residuals: [], spatial_analysis_results: [] },
+        seasonalAnalysis: { seasonal_pattern: [] },
+        uniqueMonths: [],
+        metrics: getDefaultMetrics(),
+        timestamp: Date.now()
+      };
+    }
+  }
+);
 
 // Flows With Coordinates Selector
 export const selectFlowsWithCoordinates = createSelector(
@@ -875,13 +938,13 @@ export const selectFlowsWithCoordinates = createSelector(
           point.properties?.region_id
         ].filter(Boolean).map(name => transformRegionName(name));
 
-        const coords = point.coordinates?.length === 2
+        const coords = Array.isArray(point.coordinates) && point.coordinates.length === 2
           ? point.coordinates
           : getRegionCoordinates(names[0]);
 
         names.forEach(name => {
           if (name && !pointsMap.has(name)) {
-            pointsMap.set(name, coords);
+            pointsMap.set(name, coords ? validateCoordinates(coords) : null);
           }
         });
       });

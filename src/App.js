@@ -1,3 +1,5 @@
+// src/App.js
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { ThemeProvider } from '@mui/material/styles';
@@ -29,12 +31,10 @@ import {
   lightThemeWithOverrides,
   darkThemeWithOverrides,
 } from './styles/theme';
-import { 
+import {
   fetchAllSpatialData,
-  selectSpatialData,
-  selectLoadingStatus,
+  selectCommodityInfo,
   selectError,
-  selectCommodityInfo
 } from './slices/spatialSlice';
 
 const DRAWER_WIDTH = 240;
@@ -63,8 +63,8 @@ const useAppState = () => {
   const { commodities } = useSelector(selectCommodityInfo);
 
   // Theme setup
-  const theme = useMemo(() => 
-    isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides,
+  const theme = useMemo(
+    () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
     [isDarkMode]
   );
 
@@ -76,7 +76,7 @@ const useAppState = () => {
     hasSeenWelcome,
     isDarkMode,
     commodities,
-    theme
+    theme,
   };
 };
 
@@ -90,7 +90,7 @@ const App = () => {
     hasSeenWelcome,
     isDarkMode,
     commodities,
-    theme
+    theme,
   } = useAppState();
 
   // Media query hooks
@@ -108,16 +108,18 @@ const App = () => {
     zoom: 6,
   });
   const [modalStates, setModalStates] = useState({
-    methodology: false
+    methodology: false,
   });
 
   // Initial data loading
   useEffect(() => {
     if (!commodities.length && !loading) {
-      dispatch(fetchAllSpatialData({ 
-        commodity: '', 
-        date: DEFAULT_DATE 
-      }));
+      dispatch(
+        fetchAllSpatialData({
+          commodity: '',
+          date: DEFAULT_DATE,
+        })
+      );
     }
   }, [dispatch, commodities.length, loading]);
 
@@ -127,41 +129,51 @@ const App = () => {
       const defaultCommodity = commodities[0]?.toLowerCase();
       if (defaultCommodity) {
         setSelectedCommodity(defaultCommodity);
-        dispatch(fetchAllSpatialData({
-          commodity: defaultCommodity,
-          date: DEFAULT_DATE
-        }));
+        dispatch(
+          fetchAllSpatialData({
+            commodity: defaultCommodity,
+            date: DEFAULT_DATE,
+          })
+        );
       }
     }
   }, [commodities, selectedCommodity, dispatch]);
 
   // Callback handlers
-  const handleCommodityChange = useCallback((newCommodity) => {
-    if (newCommodity && newCommodity !== selectedCommodity) {
-      setSelectedCommodity(newCommodity);
-      dispatch(fetchAllSpatialData({
-        commodity: newCommodity,
-        date: selectedDate || DEFAULT_DATE
-      }));
-    }
-  }, [dispatch, selectedCommodity, selectedDate]);
+  const handleCommodityChange = useCallback(
+    (newCommodity) => {
+      if (newCommodity && newCommodity !== selectedCommodity) {
+        setSelectedCommodity(newCommodity);
+        dispatch(
+          fetchAllSpatialData({
+            commodity: newCommodity,
+            date: selectedDate || DEFAULT_DATE,
+          })
+        );
+      }
+    },
+    [dispatch, selectedCommodity, selectedDate]
+  );
 
   const handleToggleDarkMode = useCallback(() => {
     dispatch(toggleDarkMode());
   }, [dispatch]);
 
   const handleDrawerToggle = useCallback(() => {
-    setSidebarOpen(prev => !prev);
+    setSidebarOpen((prev) => !prev);
   }, []);
 
   const handleModalToggle = useCallback((modalName, isOpen) => {
     if (modalName === 'welcome') return;
-    setModalStates(prev => ({ ...prev, [modalName]: isOpen }));
+    setModalStates((prev) => ({ ...prev, [modalName]: isOpen }));
   }, []);
 
-  const handleWelcomeModalClose = useCallback((dontShowAgain) => {
-    dispatch(setHasSeenWelcome(dontShowAgain));
-  }, [dispatch]);
+  const handleWelcomeModalClose = useCallback(
+    (dontShowAgain) => {
+      dispatch(setHasSeenWelcome(dontShowAgain));
+    },
+    [dispatch]
+  );
 
   if (error) {
     return (
@@ -198,7 +210,7 @@ const App = () => {
           </StyledAppBar>
 
           <Sidebar
-            commodities={commodities.map(c => c.toLowerCase())}
+            commodities={commodities.map((c) => c.toLowerCase())}
             regimes={data?.regimes || ['unified', 'north', 'south']}
             selectedCommodity={selectedCommodity.toLowerCase()}
             setSelectedCommodity={handleCommodityChange}

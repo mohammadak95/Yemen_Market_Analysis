@@ -163,24 +163,30 @@ export const fetchAndValidateData = async (url, selectedCommodity) => {
     if (cachedData) return cachedData;
 
     const data = await enhancedFetchJson(url);
-    if (!data) return null;
+    if (!data || !Array.isArray(data)) {
+      console.warn('Invalid spatial analysis data format');
+      return null;
+    }
 
-    // Validate and filter features
-    if (data.features) {
-      data.features = data.features.filter(feature => {
-        if (!feature?.properties?.commodity) return false;
-        if (selectedCommodity) {
-          return feature.properties.commodity.toLowerCase().trim() === 
-                 selectedCommodity.toLowerCase().trim();
-        }
-        return true;
-      });
+    // Filter for selected commodity if provided
+    if (selectedCommodity) {
+      const filteredData = data.filter(result => 
+        result.commodity?.toLowerCase() === selectedCommodity.toLowerCase()
+      );
+      
+      if (filteredData.length === 0) {
+        console.warn(`No data found for commodity: ${selectedCommodity}`);
+        return null;
+      }
+      
+      cache.set(cacheKey, filteredData);
+      return filteredData;
     }
 
     cache.set(cacheKey, data);
     return data;
   } catch (error) {
-    console.error('Error fetching and validating data:', error);
+    console.error('Error fetching and validating spatial analysis data:', error);
     throw error;
   }
 };

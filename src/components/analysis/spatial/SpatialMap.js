@@ -1,3 +1,5 @@
+//src/components/analysis/spatial/SpatialMap.js
+
 import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Paper, Typography, Slider, FormControl, InputLabel, Select, MenuItem, Grid } from '@mui/material';

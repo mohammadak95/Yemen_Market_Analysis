@@ -1,3 +1,5 @@
+//src/components/common/AnalysisWrapper.js
+
 import React, { Suspense } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress } from '@mui/material';

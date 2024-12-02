@@ -1,3 +1,5 @@
+//src/components/analysis/spatial/utils/mapUtils.js
+
 import chroma from 'chroma-js';
 
 export const getResidualStats = (residuals) => {

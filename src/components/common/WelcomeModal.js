@@ -1,8 +1,7 @@
 // src/components/WelcomeModal.js
+
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useSelector, useDispatch } from 'react-redux';
-import { setHasSeenWelcome, selectHasSeenWelcome } from '../../store/welcomeModalSlice';
 import {
   Dialog,
   DialogTitle,
@@ -21,8 +20,6 @@ import {
 import { useTheme } from '@mui/material/styles';
 
 export const WelcomeModal = React.memo(({ open, onClose }) => {
-  const dispatch = useDispatch();
-  const hasSeenWelcome = useSelector(selectHasSeenWelcome);
   const [dontShowAgain, setDontShowAgain] = React.useState(false);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -32,16 +29,8 @@ export const WelcomeModal = React.memo(({ open, onClose }) => {
   };
 
   const handleGetStarted = () => {
-    if (dontShowAgain) {
-      dispatch(setHasSeenWelcome(true));
-    }
     onClose(dontShowAgain);
   };
-
-  // Don't render if user has seen welcome
-  if (hasSeenWelcome) {
-    return null;
-  }
 
   return (
     <Dialog
@@ -69,7 +58,7 @@ export const WelcomeModal = React.memo(({ open, onClose }) => {
               <ListItemText
                 primary={
                   <>
-                    <strong>Select a Commodity:</strong> Use the dropdown menu in the sidebar to choose a commodity you&apos;re interested in analyzing.
+                    <strong>Select a Commodity:</strong> Use the dropdown menu in the sidebar to choose a commodity you're interested in analyzing.
                   </>
                 }
               />
@@ -96,7 +85,7 @@ export const WelcomeModal = React.memo(({ open, onClose }) => {
               <ListItemText
                 primary={
                   <>
-                    <strong>Access Tutorials:</strong> Click on the &quot;Tutorials&quot; button in the sidebar to learn more about the methods used.
+                    <strong>Access Tutorials:</strong> Click on the "Tutorials" button in the sidebar to learn more about the methods used.
                   </>
                 }
               />
@@ -116,7 +105,7 @@ export const WelcomeModal = React.memo(({ open, onClose }) => {
               color="primary"
             />
           }
-          label="Don&apos;t show this again"
+          label="Don't show this again"
         />
         <Button onClick={handleGetStarted} variant="contained" color="primary" aria-label="Close Welcome Modal">
           Get Started

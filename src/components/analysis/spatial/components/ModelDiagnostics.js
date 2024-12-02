@@ -1,3 +1,5 @@
+//src/components/analysis/spatial/components/ModelDiagnostics.js
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import {

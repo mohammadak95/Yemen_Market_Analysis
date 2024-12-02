@@ -806,7 +806,7 @@ const spatialSlice = createSlice({
           cacheKey,
           cacheTimestamp
         } = action.payload;
-        const { regressionOnly, visualizationOnly } = action.meta.arg;
+        const { regressionOnly, visualizationOnly, commodity } = action.meta.arg;
       
         // Update commodities from spatialData
         if (spatialData?.commodities?.length > 0) {
@@ -816,73 +816,84 @@ const spatialSlice = createSlice({
           ])].sort();
         }
 
-    // Always update regression data if it's available
-    if (regressionData) {
-      state.data.regressionAnalysis = regressionData;
-    }
+        // Always update regression data if it's available, ensuring metadata is set
+        if (regressionData) {
+          const currentCommodity = commodity || state.ui.selectedCommodity;
+          state.data.regressionAnalysis = {
+            ...regressionData,
+            model: regressionData.model || {},
+            spatial: regressionData.spatial || { moran_i: { I: 0, 'p-value': 1 }, vif: [] },
+            residuals: regressionData.residuals || { raw: [], byRegion: {}, stats: {} },
+            metadata: {
+              commodity: currentCommodity,
+              timestamp: new Date().toISOString(),
+              version: "1.0"
+            }
+          };
+        }
 
-    if (regressionOnly) {
-      state.status.regressionLoading = false;
-      state.status.dataFetching = false;
-      return;
-    }
+        if (regressionOnly) {
+          state.status.regressionLoading = false;
+          state.status.dataFetching = false;
+          return;
+        }
 
-    if (visualizationOnly) {
-      if (visualizationData) {
-        state.data.visualizationData[visualizationData.mode] = visualizationData.data;
-      }
-      state.status.visualizationLoading = false;
-      state.status.dataFetching = false;
-      return;
-    }
+        if (visualizationOnly) {
+          if (visualizationData) {
+            state.data.visualizationData[visualizationData.mode] = visualizationData.data;
+          }
+          state.status.visualizationLoading = false;
+          state.status.dataFetching = false;
+          return;
+        }
 
-    if (geometry) {
-      state.data.geometry = geometry;
-    }
+        if (geometry) {
+          state.data.geometry = geometry;
+        }
 
-    if (spatialData) {
-      state.data = {
-        ...state.data,
-        timeSeriesData: spatialData.timeSeriesData || [],
-        flowMaps: spatialData.flowMaps || [],
-        marketClusters: spatialData.marketClusters || [],
-        marketShocks: spatialData.marketShocks || [],
-        spatialAutocorrelation: spatialData.spatialAutocorrelation || {
-          global: {},
-          local: {}
-        },
-        seasonalAnalysis: spatialData.seasonalAnalysis || {},
-        marketIntegration: spatialData.marketIntegration || {},
-        uniqueMonths: spatialData.uniqueMonths || []
-      };
-    }
+        if (spatialData) {
+          state.data = {
+            ...state.data,
+            timeSeriesData: spatialData.timeSeriesData || [],
+            flowMaps: spatialData.flowMaps || [],
+            marketClusters: spatialData.marketClusters || [],
+            marketShocks: spatialData.marketShocks || [],
+            spatialAutocorrelation: spatialData.spatialAutocorrelation || {
+              global: {},
+              local: {}
+            },
+            seasonalAnalysis: spatialData.seasonalAnalysis || {},
+            marketIntegration: spatialData.marketIntegration || {},
+            uniqueMonths: spatialData.uniqueMonths || []
+          };
+        }
 
-    if (metadata) {
-      state.data.metadata = metadata;
-      state.ui.selectedCommodity = metadata.commodity;
-      state.ui.selectedDate = metadata.date;
-    }
+        if (metadata) {
+          state.data.metadata = metadata;
+          state.ui.selectedCommodity = metadata.commodity;
+          state.ui.selectedDate = metadata.date;
+        }
 
-    if (cacheKey) {
-      state.data.cache[cacheKey] = {
-        geometry: state.data.geometry,
-        spatialData: {
-          timeSeriesData: state.data.timeSeriesData,
-          flowMaps: state.data.flowMaps,
-          marketClusters: state.data.marketClusters,
-          marketShocks: state.data.marketShocks,
-          spatialAutocorrelation: state.data.spatialAutocorrelation,
-          seasonalAnalysis: state.data.seasonalAnalysis,
-          marketIntegration: state.data.marketIntegration,
-          uniqueMonths: state.data.uniqueMonths
-        },
-        regressionData,
-        visualizationData,
-        metadata,
-        cacheTimestamp
-      };
-      state.status.lastUpdated = cacheTimestamp;
-    }
+        if (cacheKey) {
+          state.data.cache[cacheKey] = {
+            geometry: state.data.geometry,
+            spatialData: {
+              timeSeriesData: state.data.timeSeriesData,
+              flowMaps: state.data.flowMaps,
+              marketClusters: state.data.marketClusters,
+              marketShocks: state.data.marketShocks,
+              spatialAutocorrelation: state.data.spatialAutocorrelation,
+              seasonalAnalysis: state.data.seasonalAnalysis,
+              marketIntegration: state.data.marketIntegration,
+              uniqueMonths: state.data.uniqueMonths
+            },
+            regressionData: state.data.regressionAnalysis,
+            visualizationData,
+            metadata,
+            cacheTimestamp
+          };
+          state.status.lastUpdated = cacheTimestamp;
+        }
 
         state.status = {
           ...state.status,
