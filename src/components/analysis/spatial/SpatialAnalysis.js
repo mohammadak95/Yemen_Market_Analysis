@@ -1,4 +1,4 @@
-//src/components/analysis/spatial/SpatialAnalysis.js
+// src/components/analysis/spatial/SpatialAnalysis.js
 
 import React, { useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
@@ -12,7 +12,11 @@ import SpatialMap from './SpatialMap';
 import { analysisStyles } from '../../../styles/analysisStyles';
 import AnalysisContainer from '../../common/AnalysisContainer';
 
-const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) => {
+const SpatialAnalysis = ({ 
+  selectedCommodity, 
+  windowWidth, 
+  mode = 'analysis'
+}) => {
   const theme = useTheme();
   const styles = analysisStyles(theme);
   const dispatch = useDispatch();
@@ -20,47 +24,64 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) 
   // Get spatial analysis results from Redux store
   const spatialData = useSelector(selectSpatialDataOptimized);
 
-  // Fetch regression data when commodity changes
   useEffect(() => {
     if (selectedCommodity) {
       dispatch(fetchRegressionAnalysis({ selectedCommodity }));
     }
   }, [selectedCommodity, dispatch]);
 
-  // Find results for selected commodity with proper null checking
+  // Process regression data for the selected commodity
   const spatialResults = useMemo(() => {
-    // Get regression analysis data
     const regressionData = spatialData?.regressionAnalysis;
     if (!regressionData || regressionData.metadata?.commodity !== selectedCommodity) {
       return null;
     }
 
     return {
-      coefficients: regressionData.model.coefficients,
-      residual: regressionData.residuals.raw,
-      moran_i: regressionData.spatial.moran_i,
-      r_squared: regressionData.model.r_squared,
-      adj_r_squared: regressionData.model.adj_r_squared,
-      observations: regressionData.model.observations,
-      mse: regressionData.model.mse,
-      // Group residuals by region for efficient access
-      residualsByRegion: regressionData.residuals.byRegion || {},
-      // Calculate summary statistics
+      // Model coefficients and statistics
+      coefficients: regressionData.model.coefficients || {},
+      intercept: regressionData.model.intercept || 0,
+      p_values: regressionData.model.p_values || {},
+      r_squared: regressionData.model.r_squared || 0,
+      adj_r_squared: regressionData.model.adj_r_squared || 0,
+      mse: regressionData.model.mse || 0,
+      observations: regressionData.model.observations || 0,
+
+      // Spatial statistics
+      moran_i: regressionData.spatial.moran_i || { I: 0, 'p-value': 1 },
+      vif: regressionData.spatial.vif || [],
+
+      // Residuals data
+      residual: regressionData.residuals.raw || [],
+      residualStats: {
+        mean: regressionData.residuals.stats?.mean || 0,
+        variance: regressionData.residuals.stats?.variance || 0,
+        maxAbsolute: regressionData.residuals.stats?.maxAbsolute || 0
+      },
+
+      // Metadata
+      regime: regressionData.metadata?.regime || 'unified',
+      timestamp: regressionData.metadata?.timestamp,
+
+      // Additional model statistics
+      f_statistic: regressionData.model.f_statistic,
+      spillover_effects: regressionData.model.spillover_effects || {},
+
+      // Summary statistics for UI
       summary: {
-        totalObservations: regressionData.model.observations,
-        rSquared: regressionData.model.r_squared,
-        adjustedRSquared: regressionData.model.adj_r_squared,
+        totalObservations: regressionData.model.observations || 0,
+        rSquared: regressionData.model.r_squared || 0,
+        adjustedRSquared: regressionData.model.adj_r_squared || 0,
         spatialDependence: {
-          moranI: regressionData.spatial.moran_i.I,
-          pValue: regressionData.spatial.moran_i['p-value']
+          moranI: regressionData.spatial.moran_i?.I || 0,
+          pValue: regressionData.spatial.moran_i?.['p-value'] || 1
         },
-        coefficients: regressionData.model.coefficients,
-        interceptValue: regressionData.model.intercept
+        coefficients: regressionData.model.coefficients || {},
+        interceptValue: regressionData.model.intercept || 0
       }
     };
   }, [spatialData, selectedCommodity]);
 
-  // Determine title based on mode
   const title = mode === 'model' 
     ? `Spatial Model: ${selectedCommodity}`
     : `Spatial Analysis: ${selectedCommodity}`;
@@ -75,15 +96,14 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) 
     );
   }
 
-  // Render model-specific content
   const renderModelContent = () => (
     <Box sx={styles.root}>
       <Grid container spacing={3}>
-        {/* Model Parameters and Diagnostics */}
+        {/* Model Overview */}
         <Grid item xs={12}>
           <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
             <Typography variant="h6" gutterBottom>
-              Spatial Model Parameters
+              Spatial Model Parameters ({spatialResults.regime})
             </Typography>
             <Typography variant="body2" paragraph>
               Spatial Lag Coefficient: {spatialResults.coefficients.spatial_lag_price?.toFixed(4)}
@@ -98,7 +118,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) 
         </Grid>
 
         {/* Statistical Results Panel */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <SpatialRegressionResults 
             results={spatialResults}
             windowWidth={windowWidth}
@@ -107,41 +127,22 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) 
         </Grid>
 
         {/* Map Visualization Panel */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <SpatialMap
             results={spatialResults}
             windowWidth={windowWidth}
             mode="model"
           />
         </Grid>
-
-        {/* Additional Model Diagnostics */}
-        <Grid item xs={12}>
-          <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-            <Typography variant="h6" gutterBottom>
-              Model Diagnostics
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Moran's I: {spatialResults.summary.spatialDependence.moranI?.toFixed(4) || 'N/A'}
-            </Typography>
-            <Typography variant="body2" paragraph>
-              P-value: {spatialResults.summary.spatialDependence.pValue?.toFixed(4) || 'N/A'}
-            </Typography>
-            <Typography variant="body2">
-              MSE: {spatialResults.mse?.toFixed(4) || 'N/A'}
-            </Typography>
-          </Box>
-        </Grid>
       </Grid>
     </Box>
   );
 
-  // Render analysis-specific content
   const renderAnalysisContent = () => (
     <Box sx={styles.root}>
       <Grid container spacing={3}>
         {/* Statistical Results Panel */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <SpatialRegressionResults 
             results={spatialResults}
             windowWidth={windowWidth}
@@ -149,7 +150,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth, mode = 'analysis' }) 
         </Grid>
 
         {/* Map Visualization Panel */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <SpatialMap
             results={spatialResults}
             windowWidth={windowWidth}

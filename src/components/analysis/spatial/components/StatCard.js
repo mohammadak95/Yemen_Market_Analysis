@@ -1,59 +1,111 @@
-//src/components/analysis/spatial/components/StatCard.js
+// src/components/analysis/spatial/components/StatCard.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Paper, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Paper, Typography, Box, useTheme, useMediaQuery } from '@mui/material';
+import { formatNumber, formatPValue } from '../utils/mapUtils';
 
-const StatCard = ({ title, value, subvalue, precision = 2, format = 'decimal' }) => {
+const StatCard = ({ title, value, subvalue, format = 'decimal', mini = false }) => {
   const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const formatValue = (val) => {
-    if (typeof val !== 'number') return val;
+    if (val === null || val === undefined) return 'N/A';
     
     switch (format) {
       case 'percentage':
-        return `${(val * 100).toFixed(precision)}%`;
+        return `${formatNumber(val * 100)}%`;
+      case 'pvalue':
+        return formatPValue(val);
       case 'number':
         return val.toLocaleString();
       default:
-        return val.toFixed(precision);
+        return formatNumber(val);
     }
   };
 
   return (
     <Paper
       sx={{
-        p: 2,
+        p: mini ? 1.5 : { xs: 1.5, sm: 2 },
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         bgcolor: theme.palette.background.paper,
         borderRadius: 2,
-        boxShadow: theme.shadows[2]
+        boxShadow: theme.shadows[2],
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+          boxShadow: theme.shadows[4],
+          transform: 'translateY(-2px)'
+        }
       }}
     >
-      <Typography variant="subtitle1" gutterBottom color="textSecondary">
+      <Typography 
+        variant={mini || isSmallScreen ? "body2" : "subtitle1"} 
+        component="div"
+        color="textSecondary"
+        gutterBottom
+        sx={{
+          fontSize: mini ? '0.875rem' : { xs: '0.875rem', sm: '1rem' },
+          fontWeight: 500
+        }}
+      >
         {title}
       </Typography>
-      <Typography variant="h4" sx={{ fontWeight: 'bold', my: 1 }}>
-        {formatValue(value)}
-      </Typography>
-      {subvalue && (
-        <Typography variant="body2" color="textSecondary">
-          {subvalue}
+      
+      <Box sx={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center' 
+      }}>
+        <Typography 
+          variant={mini || isSmallScreen ? "h6" : "h4"} 
+          component="div"
+          sx={{ 
+            fontWeight: 'bold', 
+            my: 1,
+            fontSize: mini ? '1.25rem' : { 
+              xs: '1.5rem', 
+              sm: '2rem' 
+            }
+          }}
+        >
+          {formatValue(value)}
         </Typography>
-      )}
+        
+        {subvalue && (
+          <Typography 
+            variant="body2" 
+            color="textSecondary"
+            sx={{
+              fontSize: mini ? '0.75rem' : {
+                xs: '0.75rem',
+                sm: '0.875rem'
+              },
+              mt: 'auto',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical'
+            }}
+          >
+            {subvalue}
+          </Typography>
+        )}
+      </Box>
     </Paper>
   );
 };
 
 StatCard.propTypes = {
   title: PropTypes.string.isRequired,
-  value: PropTypes.number.isRequired,
+  value: PropTypes.number,
   subvalue: PropTypes.string,
-  precision: PropTypes.number,
-  format: PropTypes.oneOf(['decimal', 'percentage', 'number'])
+  format: PropTypes.oneOf(['decimal', 'percentage', 'number', 'pvalue']),
+  mini: PropTypes.bool
 };
 
 export default StatCard;
