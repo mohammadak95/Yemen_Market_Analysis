@@ -1,3 +1,5 @@
+// src/components/methodology/MethodologyModal.js
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -7,11 +9,12 @@ import {
   IconButton,
   Typography,
   useMediaQuery,
+  Box,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MethodologyContentWrapper from './MethodologyContentWrapper';
 import { useTheme } from '@mui/material/styles';
-import { useBodyScrollLock } from '@/hooks';; // Import the custom hook
+import { useBodyScrollLock } from '@/hooks'; // Import the custom hook
 
 const MethodologyModal = ({ open, onClose }) => {
   const theme = useTheme();
@@ -26,12 +29,13 @@ const MethodologyModal = ({ open, onClose }) => {
       fullScreen={!isSmUp}
       fullWidth
       maxWidth="lg"
-      scroll="paper" // Ensure scrolling within the dialog
+      scroll="paper"
       PaperProps={{
         sx: {
           borderRadius: { xs: 0, sm: 2 },
-          boxShadow: 3,
-          maxHeight: '90vh', // Control the dialog's max height
+          boxShadow: theme.shadows[5],
+          maxHeight: '90vh',
+          bgcolor: theme.palette.background.paper,
         },
       }}
     >
@@ -39,26 +43,33 @@ const MethodologyModal = ({ open, onClose }) => {
         sx={{
           m: 0,
           p: 2,
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
+          bgcolor: theme.palette.primary.main,
+          color: theme.palette.primary.contrastText,
           position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
-        <Typography variant="h6">Methodology</Typography>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          Methodology
+        </Typography>
         <IconButton
           aria-label="close"
           onClick={onClose}
           sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: 'inherit',
+            color: theme.palette.primary.contrastText,
           }}
         >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers sx={{ padding: 2 }}>
+      <DialogContent
+        dividers
+        sx={{
+          padding: theme.spacing(3),
+          bgcolor: theme.palette.background.default,
+        }}
+      >
         <MethodologyContentWrapper />
       </DialogContent>
     </Dialog>

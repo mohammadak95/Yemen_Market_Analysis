@@ -204,16 +204,21 @@ module.exports = (env, argv) => {
             },
           },
           {
+            from: 'data',
+            to: 'data',
+            noErrorOnMissing: true,
+            globOptions: {
+              ignore: ['**/preprocessed_by_commodity/**'],
+            }
+          },
+          {
             from: 'data/preprocessed_by_commodity',
             to: 'data/preprocessed_by_commodity',
             noErrorOnMissing: true
           },
           {
-            from: 'data',
+            from: 'results',
             to: 'data',
-            globOptions: {
-              ignore: ['**/preprocessed_by_commodity/**'],
-            },
             noErrorOnMissing: true
           },
           {

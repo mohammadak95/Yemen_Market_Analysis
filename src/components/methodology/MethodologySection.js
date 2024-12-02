@@ -1,11 +1,28 @@
+// src/components/methodology/MethodologySection.js
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Typography, Box } from '@mui/material';
 import CodeBlock from './CodeBlock';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
+import { useTheme } from '@mui/material/styles';
 
 const MethodologySection = ({ section, level }) => {
+  const theme = useTheme();
+
+  // Map levels to desired heading variants with smaller font sizes
+  const headingVariants = {
+    1: 'h4',
+    2: 'h5',
+    3: 'h6',
+    4: 'subtitle1',
+    5: 'subtitle2',
+    6: 'body1',
+  };
+
+  const headingVariant = headingVariants[level] || 'body1';
+
   const renderContent = (content) => {
     if (typeof content === 'string') {
       return content.split(/(\$.*?\$)/).map((part, index) => {
@@ -18,16 +35,24 @@ const MethodologySection = ({ section, level }) => {
     return content;
   };
 
-  // Adjust heading variants to control font size
-  const headingVariant = `h${Math.min(level, 6)}`;
-
   return (
     <Box sx={{ mb: 4 }}>
-      <Typography component={headingVariant} variant={headingVariant} sx={{ mb: 2, fontWeight: 'bold' }}>
+      <Typography
+        component="div"
+        variant={headingVariant}
+        sx={{
+          mb: 2,
+          fontWeight: theme.typography.fontWeightBold,
+          color: theme.palette.primary.main,
+        }}
+      >
         {section.title}
       </Typography>
       {section.content && (
-        <Typography variant="body2" sx={{ mb: 2, textAlign: 'justify' }}>
+        <Typography
+          variant="body1"
+          sx={{ mb: 2, textAlign: 'justify', color: theme.palette.text.primary }}
+        >
           {renderContent(section.content)}
         </Typography>
       )}

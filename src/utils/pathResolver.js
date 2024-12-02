@@ -4,23 +4,28 @@ import Papa from 'papaparse';
 
 class PathResolver {
     constructor() {
+      // Get the public URL from environment or default to GitHub Pages path
+      const publicUrl = process.env.PUBLIC_URL || '/Yemen_Market_Analysis';
+      
       this.basePaths = [
-        '/results',
-        '/public/results'
+        `${publicUrl}/data`,
+        `${publicUrl}/results`
       ];
     }
   
     async resolveDataFile(category, filename) {
       // Try exact paths first
       const exactPaths = this.basePaths.map(base => `${base}/${category}/${filename}`);
+      const fallbackPaths = this.basePaths.map(base => `${base}/${filename}`);
+      const allPaths = [...exactPaths, ...fallbackPaths];
       
       // Log attempt paths in dev mode
       if (process.env.NODE_ENV === 'development') {
-        console.log('[PathResolver] Trying paths:', exactPaths);
+        console.log('[PathResolver] Trying paths:', allPaths);
       }
   
       // Try each path
-      for (const path of exactPaths) {
+      for (const path of allPaths) {
         try {
           const response = await fetch(path);
           if (response.ok) {

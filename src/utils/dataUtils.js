@@ -4,7 +4,7 @@ import { pathResolver } from './pathResolver';
 // Constants
 const ENV = process.env.NODE_ENV;
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
-const isGitHubPages = PUBLIC_URL.includes('github.io');
+const isGitHubPages = PUBLIC_URL.includes('github.io') || window.location.hostname.includes('github.io');
 const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 const CACHE_DURATION = parseInt(process.env.REACT_APP_CACHE_DURATION, 10) || 3600000;
 const RETRY_ATTEMPTS = 3;
@@ -52,29 +52,24 @@ const cleanPath = (path) => {
 };
 
 export const getDataPath = (fileName = '') => {
-  const isGitHubPages = window.location.hostname.includes('github.io');
+  const baseUrl = process.env.PUBLIC_URL || '';
   const isDev = process.env.NODE_ENV === 'development';
-  const repoBase = '/Yemen_Market_Analysis';
   
   // Set base path based on environment and file type
   let basePath;
   if (fileName.includes('preprocessed_')) {
     // Handle preprocessed data files
-    if (isGitHubPages) {
-      basePath = `${repoBase}/data/preprocessed_by_commodity`;
-    } else if (isDev) {
+    if (isDev) {
       basePath = '/results/preprocessed_by_commodity';
     } else {
-      basePath = '/data/preprocessed_by_commodity';
+      basePath = `${baseUrl}/data/preprocessed_by_commodity`;
     }
   } else {
     // Handle other data files
-    if (isGitHubPages) {
-      basePath = `${repoBase}/data`;
-    } else if (isDev) {
+    if (isDev) {
       basePath = '/results';
     } else {
-      basePath = '/data';
+      basePath = `${baseUrl}/data`;
     }
   }
 
@@ -82,8 +77,8 @@ export const getDataPath = (fileName = '') => {
   const cleanedPath = cleanPath(`${basePath}/${fileName}`);
 
   console.debug('Resolved data path:', {
-    isGitHubPages,
-    isDev, 
+    isDev,
+    baseUrl,
     fileName,
     cleanedPath,
     basePath

@@ -1,4 +1,4 @@
-//src/components/methodology/MethodologyModal.js
+// src/components/methodology/CodeBlock.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -20,23 +20,24 @@ const CodeBlock = ({ language, code }) => {
       sx={{
         position: 'relative',
         my: 2,
-        borderRadius: 1,
+        borderRadius: theme.shape.borderRadius,
         overflow: 'hidden',
-        bgcolor: theme.palette.background.paper,
-        boxShadow: 1,
+        bgcolor: theme.palette.background.default,
+        boxShadow: theme.shadows[1],
       }}
     >
-      <Tooltip title="Copy Code">
+      <Tooltip title="Copy Code" placement="top">
         <IconButton
           onClick={handleCopy}
           size="small"
           sx={{
             position: 'absolute',
-            top: 8,
-            right: 8,
-            bgcolor: 'background.default',
+            top: theme.spacing(1),
+            right: theme.spacing(1),
+            bgcolor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
             '&:hover': {
-              bgcolor: 'action.hover',
+              bgcolor: theme.palette.action.hover,
             },
           }}
         >
@@ -51,7 +52,8 @@ const CodeBlock = ({ language, code }) => {
           padding: theme.spacing(2),
           fontSize: '0.9rem',
           backgroundColor: 'transparent',
-          overflowX: 'auto', // Added to handle horizontal overflow
+          overflowX: 'auto',
+          fontFamily: theme.typography.fontFamilyMono || 'Monaco, monospace',
         }}
       >
         {code}
