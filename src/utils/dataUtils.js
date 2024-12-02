@@ -148,7 +148,8 @@ export const enhancedFetchJson = async (url, options = {}) => {
 };
 
 export const getRegressionDataPath = () => {
-  return getDataPath('spatial_analysis_results.json');
+  const basePath = isDev ? '/data' : `${BASE_URL}/data`;
+  return `${basePath}/spatial_analysis_results.json`;
 };
 
 export const getChoroplethDataPath = (fileName) => {

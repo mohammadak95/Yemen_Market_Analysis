@@ -1,5 +1,3 @@
-// src/utils/spatialDataHandler.js
-
 import Papa from 'papaparse';
 import _ from 'lodash';
 import { excludedRegions } from './appUtils';
@@ -12,17 +10,18 @@ import {
   getRegressionDataPath
 } from './dataUtils';
 import { pathResolver } from './pathResolver';
-import { pathValidator } from '../utils/pathValidator';
+import { pathValidator } from './pathValidator';
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { VISUALIZATION_MODES } from '../constants/index';
 import { workerManager } from './workerManager';
+import { backgroundMonitor } from './backgroundMonitor';  // Add this import
 import PolygonNormalizer, { polygonNormalizer } from './polygonNormalizer';
 
 // ===========================
 // Environment and Path Constants
 // ===========================
 
-// Environment and path constants should be added at the top
+// Environment and Path Constants
 const isDev = process.env.NODE_ENV === 'development';
 const BASE_URL = isDev ? '' : (process.env.PUBLIC_URL || '/Yemen_Market_Analysis');
 const DATA_PATH = isDev ? '/results' : `${BASE_URL}/data`;
@@ -715,49 +714,39 @@ class SpatialDataHandler {
   };
 
   async loadRegressionAnalysis(selectedCommodity) {
-    if (!selectedCommodity) {
-      console.warn('No commodity selected for regression analysis');
-      return {
-        ...DEFAULT_REGRESSION_DATA,
-        metadata: {
-          commodity: "",
-          timestamp: new Date().toISOString(),
-          version: "1.0"
-        }
-      };
-    }
-    
-    const metric = backgroundMonitor.startMetric('regression-data-fetch');
-    
+    let metric;
     try {
+      if (!selectedCommodity) {
+        console.warn('No commodity selected for regression analysis');
+        return DEFAULT_REGRESSION_DATA;
+      }
+      
+      metric = backgroundMonitor.startMetric('regression-data-fetch', {
+        commodity: selectedCommodity,
+        timestamp: new Date().toISOString()
+      });
+      
       // Get the cache key
       const cacheKey = `regression_${selectedCommodity}`;
       const cached = this.cache.get(cacheKey);
       
       if (cached?.data) {
         console.debug('Using cached regression data for:', selectedCommodity);
+        metric?.finish({ status: 'cache-hit' });
         return cached.data;
       }
       
-      // Changed to use spatial_analysis_results.json instead
+      // Define the path to spatial_analysis_results.json
       const analysisPath = isDev
-        ? '/results/spatial_analysis_results.json'
+        ? '/data/spatial_analysis_results.json'
         : `${BASE_URL}/data/spatial_analysis_results.json`;
       
       console.debug('Loading regression data from:', analysisPath);
       
-      // Fetch the data with fallback
-      let response = await fetch(analysisPath);
+      // Fetch the data
+      const response = await fetch(analysisPath);
       if (!response.ok) {
-        // Fallback path
-        const fallbackPath = isDev
-          ? '/data/spatial_analysis_results.json'
-          : `${BASE_URL}/results/spatial_analysis_results.json`;
-        
-        response = await fetch(fallbackPath);
-        if (!response.ok) {
-          throw new Error(`Failed to load spatial analysis data from both paths: ${analysisPath} and ${fallbackPath}`);
-        }
+        throw new Error(`Failed to load spatial analysis data: ${response.statusText}`);
       }
       
       const text = await response.text();
@@ -767,48 +756,25 @@ class SpatialDataHandler {
       try {
         parsedData = JSON.parse(text);
         if (!Array.isArray(parsedData)) {
-          console.error('Invalid data format: expected array');
-          return {
-            ...DEFAULT_REGRESSION_DATA,
-            metadata: {
-              commodity: selectedCommodity,
-              timestamp: new Date().toISOString(),
-              version: "1.0"
-            }
-          };
+          throw new Error('Invalid data format: expected array');
         }
       } catch (parseError) {
         console.error('JSON parse error:', parseError);
-        return {
-          ...DEFAULT_REGRESSION_DATA,
-          metadata: {
-            commodity: selectedCommodity,
-            timestamp: new Date().toISOString(),
-            version: "1.0"
-          }
-        };
+        backgroundMonitor.logError('regression-parse-error', {
+          error: parseError.message,
+          commodity: selectedCommodity,
+          path: analysisPath
+        });
+        throw parseError;
       }
       
-      // Normalize commodity name for comparison
-      const normalizedSearchCommodity = this.normalizeCommodityName(selectedCommodity);
-      console.debug('Normalized commodity name:', normalizedSearchCommodity);
-      
       // Find matching commodity data
-      const commodityAnalysis = parsedData.find(item => {
-        const normalizedItemCommodity = this.normalizeCommodityName(item.commodity);
-        return normalizedItemCommodity === normalizedSearchCommodity;
-      });
+      const commodityAnalysis = parsedData.find(item => 
+        this.normalizeCommodityName(item.commodity) === this.normalizeCommodityName(selectedCommodity)
+      );
       
       if (!commodityAnalysis) {
-        console.warn(`No analysis found for commodity: ${selectedCommodity}`);
-        return {
-          ...DEFAULT_REGRESSION_DATA,
-          metadata: {
-            commodity: selectedCommodity,
-            timestamp: new Date().toISOString(),
-            version: "1.0"
-          }
-        };
+        throw new Error(`No analysis found for commodity: ${selectedCommodity}`);
       }
       
       // Transform the data to match our expected format
@@ -826,25 +792,22 @@ class SpatialDataHandler {
           moran_i: commodityAnalysis.moran_i || { I: 0, 'p-value': 1 },
           vif: Array.isArray(commodityAnalysis.vif) ? commodityAnalysis.vif : []
         },
-        residuals: this.processResiduals(commodityAnalysis.residual || []),
+        residuals: {
+          raw: commodityAnalysis.residual || [],
+          byRegion: this.processResidualsByRegion(commodityAnalysis.residual || []),
+          stats: this.calculateResidualStats(commodityAnalysis.residual || [])
+        },
         metadata: {
           commodity: selectedCommodity,
+          regime: commodityAnalysis.regime || 'unified',
           timestamp: new Date().toISOString(),
           version: "1.0"
         }
       };
       
-      // Validate the processed data
+      // Validate before caching
       if (!this.validateRegressionData(processedAnalysis)) {
-        console.warn('Invalid regression data structure:', processedAnalysis);
-        return {
-          ...DEFAULT_REGRESSION_DATA,
-          metadata: {
-            commodity: selectedCommodity,
-            timestamp: new Date().toISOString(),
-            version: "1.0"
-          }
-        };
+        throw new Error('Invalid regression data structure after processing');
       }
       
       // Cache the valid results
@@ -853,14 +816,61 @@ class SpatialDataHandler {
         timestamp: Date.now()
       });
       
-      metric.finish({ status: 'success' });
+      metric?.finish({ 
+        status: 'success',
+        dataPoints: processedAnalysis.model.observations,
+        hasResiduals: processedAnalysis.residuals.raw.length > 0
+      });
+      
       return processedAnalysis;
       
     } catch (error) {
       console.error('Failed to load regression analysis:', error);
-      metric.finish({ status: 'error', error: error.message });
+      backgroundMonitor.logError('regression-load-error', {
+        error: error.message,
+        commodity: selectedCommodity,
+        stack: error.stack
+      });
+      metric?.finish({ 
+        status: 'error', 
+        error: error.message,
+        commodity: selectedCommodity
+      });
       return DEFAULT_REGRESSION_DATA;
     }
+  }
+  
+  // Helper function to process residuals by region
+  processResidualsByRegion(residuals) {
+    return residuals.reduce((acc, residual) => {
+      const region = residual.region_id;
+      if (!acc[region]) {
+        acc[region] = [];
+      }
+      acc[region].push({
+        date: residual.date,
+        residual: residual.residual
+      });
+      return acc;
+    }, {});
+  }
+  
+  // Helper function to calculate residual statistics
+  calculateResidualStats(residuals) {
+    if (!residuals.length) {
+      return { mean: 0, variance: 0, maxAbsolute: 0 };
+    }
+  
+    const values = residuals.map(r => r.residual);
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+    const maxAbsolute = Math.max(...values.map(Math.abs));
+  
+    return {
+      mean,
+      variance,
+      maxAbsolute
+    };
   }
 
   // ===========================
