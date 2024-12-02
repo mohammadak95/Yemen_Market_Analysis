@@ -62,34 +62,53 @@ module.exports = (env, argv) => {
           terserOptions: {
             compress: {
               drop_console: !isDevelopment,
+              drop_debugger: true,
+              pure_funcs: ['console.log', 'console.info', 'console.debug'],
             },
             format: {
               comments: false,
             },
+            mangle: true,
           },
           extractComments: false,
         }),
-        ...(isDevelopment ? [] : [new CssMinimizerPlugin()]),
+        ...(isDevelopment ? [] : [new CssMinimizerPlugin({
+          minimizerOptions: {
+            preset: ['default', {
+              discardComments: { removeAll: true },
+              minifyFontValues: { removeQuotes: false }
+            }]
+          }
+        })]),
       ],
       splitChunks: isDevelopment ? false : {
         chunks: 'all',
         maxInitialRequests: 25,
-        minSize: 20000,
+        minSize: 15000,
+        maxSize: 244000,
         cacheGroups: {
           reactVendor: {
             test: /[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/,
             name: 'reactVendor',
             priority: 40,
+            enforce: true,
           },
           mui: {
             test: /[\\/]node_modules[\\/]@mui[\\/]/,
             name: 'mui',
             priority: 30,
+            enforce: true,
           },
           vendors: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             priority: 20,
+            enforce: true,
+          },
+          common: {
+            minChunks: 2,
+            priority: 10,
+            reuseExistingChunk: true,
           }
         }
       },
@@ -114,6 +133,10 @@ module.exports = (env, argv) => {
               options: {
                 cacheDirectory: true,
                 cacheCompression: false,
+                plugins: [
+                  '@babel/plugin-syntax-dynamic-import',
+                  ['@babel/plugin-transform-runtime', { regenerator: true }]
+                ]
               },
             },
           ],
@@ -127,16 +150,32 @@ module.exports = (env, argv) => {
               options: {
                 sourceMap: isDevelopment,
                 importLoaders: 1,
+                modules: {
+                  auto: true,
+                  localIdentName: isDevelopment ? '[name]__[local]' : '[hash:base64:5]'
+                }
               },
             },
+            'postcss-loader'
           ],
         },
         {
           test: /\.(png|jpg|jpeg|gif)$/i,
-          type: 'asset/resource',
-          generator: {
-            filename: 'static/media/[name].[hash:8][ext]'
-          }
+          use: [
+            {
+              loader: 'responsive-loader',
+              options: {
+                adapter: require('responsive-loader/sharp'),
+                sizes: [320, 640, 960, 1200, 1800, 2400],
+                placeholder: true,
+                placeholderSize: 20,
+                quality: 85,
+                format: 'webp',
+                name: 'static/media/[name]-[width]w.[ext]'
+              },
+            },
+          ],
+          type: 'javascript/auto'
         },
         {
           test: /\.svg$/,
@@ -254,9 +293,11 @@ module.exports = (env, argv) => {
       ...(!isDevelopment ? [
         new CompressionPlugin({
           test: /\.(js|css|html|svg)$/,
-          threshold: 10240,
+          threshold: 8192,
+          minRatio: 0.8,
           algorithm: 'gzip',
           compressionOptions: { level: 9 },
+          deleteOriginalAssets: false,
         }),
         new MiniCssExtractPlugin({
           filename: 'static/css/[name].[contenthash:8].css',
@@ -310,11 +351,11 @@ module.exports = (env, argv) => {
       },
     },
     performance: {
-      maxAssetSize: 512000,
-      maxEntrypointSize: 512000,
+      maxAssetSize: 244000,
+      maxEntrypointSize: 244000,
       hints: isDevelopment ? false : 'warning',
     },
-    devtool: isDevelopment ? 'eval-cheap-module-source-map' : 'source-map',
+    devtool: isDevelopment ? 'eval-cheap-module-source-map' : false,
     mode: isDevelopment ? 'development' : 'production',
     cache: isDevelopment ? {
       type: 'filesystem',
