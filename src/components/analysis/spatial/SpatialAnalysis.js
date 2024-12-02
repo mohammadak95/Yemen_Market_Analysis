@@ -2,7 +2,7 @@
 
 import React, { useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Grid, Typography } from '@mui/material';
+import { Box, Grid, Typography, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectSpatialDataOptimized } from '../../../selectors/optimizedSelectors';
@@ -24,6 +24,7 @@ const SpatialAnalysis = ({
   // Get spatial analysis results from Redux store
   const spatialData = useSelector(selectSpatialDataOptimized);
 
+  // Fetch regression analysis when component mounts or commodity changes
   useEffect(() => {
     if (selectedCommodity) {
       dispatch(fetchRegressionAnalysis({ selectedCommodity }));
@@ -33,7 +34,12 @@ const SpatialAnalysis = ({
   // Process regression data for the selected commodity
   const spatialResults = useMemo(() => {
     const regressionData = spatialData?.regressionAnalysis;
-    if (!regressionData || regressionData.metadata?.commodity !== selectedCommodity) {
+    
+    // Check if we have valid regression data and residuals
+    if (!regressionData || 
+        !selectedCommodity || 
+        regressionData.metadata?.commodity !== selectedCommodity ||
+        !regressionData.residuals?.raw?.length) {
       return null;
     }
 
@@ -52,7 +58,7 @@ const SpatialAnalysis = ({
       vif: regressionData.spatial.vif || [],
 
       // Residuals data
-      residual: regressionData.residuals.raw || [],
+      residual: regressionData.residuals.raw,
       residualStats: {
         mean: regressionData.residuals.stats?.mean || 0,
         variance: regressionData.residuals.stats?.variance || 0,
@@ -90,9 +96,12 @@ const SpatialAnalysis = ({
     return (
       <AnalysisContainer
         title={title}
-        error="No spatial analysis results available for this commodity"
         selectedCommodity={selectedCommodity}
-      />
+      >
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+          <CircularProgress />
+        </Box>
+      </AnalysisContainer>
     );
   }
 

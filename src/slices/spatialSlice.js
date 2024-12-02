@@ -58,7 +58,29 @@ export const initialState = {
     spatialAutocorrelation: {},
     seasonalAnalysis: null,
     marketIntegration: null,
-    regressionAnalysis: DEFAULT_REGRESSION_DATA,
+    regressionAnalysis: {
+      ...DEFAULT_REGRESSION_DATA,
+      metadata: {
+        ...DEFAULT_REGRESSION_DATA.metadata,
+        commodity: "beans (kidney red)", // Set default commodity
+        timestamp: new Date().toISOString(),
+        version: "1.0"
+      },
+      model: {
+        ...DEFAULT_REGRESSION_DATA.model,
+        coefficients: { spatial_lag_price: 0 },
+        p_values: { spatial_lag_price: 1 }
+      },
+      residuals: {
+        raw: [],
+        byRegion: {},
+        stats: { mean: 0, variance: 0, maxAbsolute: 0 }
+      },
+      spatial: {
+        moran_i: { I: 0, 'p-value': 1 },
+        vif: []
+      }
+    },
     uniqueMonths: [],
     visualizationData: {
       prices: null,
@@ -98,7 +120,7 @@ export const initialState = {
     lastError: null
   },
   ui: {
-    selectedCommodity: '',
+    selectedCommodity: 'beans (kidney red)', // Set default commodity
     selectedDate: '',
     selectedRegimes: ['unified'],
     selectedRegion: null,
