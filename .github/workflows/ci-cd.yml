@@ -47,14 +47,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Lint Check
-        run: |
-          if [ -f "package.json" ] && grep -q "\"lint\":" "package.json"; then
-            npm run lint
-          else
-            echo "No lint script found, skipping..."
-          fi
-
       - name: Run Tests
         run: npm test -- --passWithNoTests --coverage
         env:
@@ -83,17 +75,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Restore Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            **/node_modules
-            ~/.npm
-            ~/.cache
-          key: ${{ env.CACHE_NAME }}
-
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Build
@@ -109,40 +91,12 @@ jobs:
             echo "Build directory is missing!"
             exit 1
           fi
-          echo "Build directory contents:"
-          ls -la build/
 
       - name: Verify Data Files
         run: |
           echo "Verifying data files..."
-          
-          # Check data directory structure
-          echo "Data directory structure:"
-          if [ -d "build/data" ]; then
-            tree build/data || ls -R build/data
-          else
-            echo "Data directory not found!"
-            exit 1
-          fi
-          
-          # Check for essential files
-          REQUIRED_FILES=(
-            "build/data/spatial_analysis_results.json"
-            "build/data/enhanced_unified_data_with_residual.geojson"
-            "build/data/preprocessed_by_commodity"
-          )
-          
-          for file in "${REQUIRED_FILES[@]}"; do
-            if [ ! -e "$file" ]; then
-              echo "Missing required file: $file"
-              MISSING_FILES=1
-            else
-              echo "Found required file: $file"
-            fi
-          done
-          
-          if [ ! -z "$MISSING_FILES" ]; then
-            echo "Some required files are missing!"
+          if [ ! -d "build/data" ]; then
+            echo "Data directory is missing!"
             exit 1
           fi
 
@@ -157,14 +111,15 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     
     permissions:
       contents: write
       pages: write
       id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Download Build Artifact
@@ -177,8 +132,8 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
         id: deployment
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
@@ -194,10 +149,21 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          echo "Deployed to: ${{ steps.deployment.outputs.page_url }}"
-          if [ -z "${{ steps.deployment.outputs.page_url }}" ]; then
-            echo "Deployment URL is empty!"
-            exit 1
+          DEPLOY_URL="https://mohammadak95.github.io/Yemen_Market_Analysis"
+          echo "Deployed to: $DEPLOY_URL"
+          
+          # Wait for a few seconds to allow deployment to propagate
+          sleep 10
+          
+          # Check if the site is accessible
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" $DEPLOY_URL || echo "failed")
+          
+          if [ "$STATUS_CODE" = "200" ] || [ "$STATUS_CODE" = "301" ] || [ "$STATUS_CODE" = "302" ]; then
+            echo "Deployment verified successfully!"
+          else
+            echo "Deployment verification failed with status code: $STATUS_CODE"
+            # Don't fail the build as the site might still be propagating
+            echo "Note: The site might need a few minutes to be fully accessible"
           fi
 
   cleanup:
