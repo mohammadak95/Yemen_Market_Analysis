@@ -15,16 +15,19 @@ module.exports = (env, argv) => {
   const envFile = isDevelopment ? '.env.development' : '.env.production';
   const envConfig = dotenv.config({ path: path.resolve(__dirname, envFile) }).parsed || {};
   const publicPath = isDevelopment ? '/' : '/Yemen_Market_Analysis/';
+  const dataPath = isDevelopment ? '/results' : '/data';
 
-  // Process environment variables
   const processedEnv = {
     'process.env': {
       NODE_ENV: JSON.stringify(isDevelopment ? 'development' : 'production'),
       PUBLIC_URL: JSON.stringify(publicPath.slice(0, -1)),
+      REACT_APP_DATA_PATH: JSON.stringify(dataPath),
+      ...(isDevelopment && {
+        REACT_APP_API_URL: JSON.stringify(process.env.REACT_APP_API_URL || 'http://localhost:5001')
+      })
     }
   };
 
-  // Add all REACT_APP_ prefixed variables from .env
   Object.keys(envConfig).forEach(key => {
     if (key.startsWith('REACT_APP_')) {
       processedEnv['process.env'][key] = JSON.stringify(envConfig[key]);
@@ -203,24 +206,32 @@ module.exports = (env, argv) => {
               return content;
             },
           },
-          {
-            from: 'data',
-            to: 'data',
-            noErrorOnMissing: true,
-            globOptions: {
-              ignore: ['**/preprocessed_by_commodity/**'],
+          ...(isDevelopment ? [
+            {
+              from: 'results',
+              to: 'results',
+              noErrorOnMissing: true
             }
-          },
-          {
-            from: 'data/preprocessed_by_commodity',
-            to: 'data/preprocessed_by_commodity',
-            noErrorOnMissing: true
-          },
-          {
-            from: 'results',
-            to: 'data',
-            noErrorOnMissing: true
-          },
+          ] : [
+            {
+              from: 'data',
+              to: 'data',
+              noErrorOnMissing: true,
+              globOptions: {
+                ignore: ['**/preprocessed_by_commodity/**'],
+              }
+            },
+            {
+              from: 'data/preprocessed_by_commodity',
+              to: 'data/preprocessed_by_commodity',
+              noErrorOnMissing: true
+            },
+            {
+              from: 'results',
+              to: 'data',
+              noErrorOnMissing: true
+            }
+          ]),
           {
             from: 'node_modules/leaflet/dist/images',
             to: 'static/media',
@@ -254,12 +265,18 @@ module.exports = (env, argv) => {
       ] : []),
     ].filter(Boolean),
     devServer: {
-      static: {
-        directory: path.join(__dirname, 'public'),
-        publicPath: '/',
-      },
+      static: [
+        {
+          directory: path.join(__dirname, 'public'),
+          publicPath: '/'
+        },
+        {
+          directory: path.join(__dirname, 'results'),
+          publicPath: '/results'
+        }
+      ],
       compress: true,
-      port: 3000,
+      port: parseInt(process.env.CLIENT_PORT || '3000', 10),
       hot: true,
       historyApiFallback: true,
       headers: {
@@ -270,13 +287,13 @@ module.exports = (env, argv) => {
       },
       proxy: {
         '/api': {
-          target: 'http://localhost:5001',
+          target: `http://localhost:${process.env.SERVER_PORT || '5001'}`,
           secure: false,
           changeOrigin: true,
           logLevel: 'debug',
         },
         '/data': {
-          target: 'http://localhost:5001',
+          target: `http://localhost:${process.env.SERVER_PORT || '5001'}`,
           secure: false,
           changeOrigin: true,
           logLevel: 'debug',
@@ -285,7 +302,7 @@ module.exports = (env, argv) => {
           }
         },
         '/results': {
-          target: 'http://localhost:5001',
+          target: `http://localhost:${process.env.SERVER_PORT || '5001'}`,
           secure: false,
           changeOrigin: true,
           logLevel: 'debug',

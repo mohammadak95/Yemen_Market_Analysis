@@ -1,11 +1,9 @@
-// src/utils/dataUtils.js
 import { pathResolver } from './pathResolver';
 
-// Constants
+// Environment Constants
 const ENV = process.env.NODE_ENV;
-const PUBLIC_URL = process.env.PUBLIC_URL || '';
-const isGitHubPages = PUBLIC_URL.includes('github.io') || window.location.hostname.includes('github.io');
-const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
+const BASE_URL = process.env.PUBLIC_URL || '';
+const isDev = ENV === 'development';
 const CACHE_DURATION = parseInt(process.env.REACT_APP_CACHE_DURATION, 10) || 3600000;
 const RETRY_ATTEMPTS = 3;
 const RETRY_INITIAL_DELAY = 1000;
@@ -45,53 +43,41 @@ const cache = new DataFetchCache();
 const cleanPath = (path) => {
   if (!path) return '';
   return path
-    .replace(/\/+/g, '/') // Replace multiple slashes
-    .replace(/\/$/, '')   // Remove trailing slash
-    .replace(/^\/+/, '/') // Ensure single leading slash
+    .replace(/\/+/g, '/')
+    .replace(/\/$/, '')
+    .replace(/^\/+/, '/')
     .trim();
 };
 
 export const getDataPath = (fileName = '') => {
-  const baseUrl = process.env.PUBLIC_URL || '';
-  const isDev = process.env.NODE_ENV === 'development';
-  
-  // Set base path based on environment and file type
-  let basePath;
+  // Determine base path based on environment and file type
+  const basePath = isDev 
+    ? '/results' 
+    : `${BASE_URL}/data`;
+
+  // Handle preprocessed data files
   if (fileName.includes('preprocessed_')) {
-    // Handle preprocessed data files
-    if (isDev) {
-      basePath = '/results/preprocessed_by_commodity';
-    } else {
-      basePath = `${baseUrl}/data/preprocessed_by_commodity`;
-    }
-  } else {
-    // Handle other data files
-    if (isDev) {
-      basePath = '/results';
-    } else {
-      basePath = `${baseUrl}/data`;
-    }
+    const subDir = 'preprocessed_by_commodity';
+    return cleanPath(`${isDev ? `/results/${subDir}` : `${BASE_URL}/data/${subDir}`}/${fileName}`);
   }
 
-  // Clean up the path
-  const cleanedPath = cleanPath(`${basePath}/${fileName}`);
-
-  console.debug('Resolved data path:', {
-    isDev,
-    baseUrl,
-    fileName,
-    cleanedPath,
-    basePath
-  });
-
-  return cleanedPath;
+  // Handle standard data files
+  return cleanPath(`${basePath}/${fileName}`);
 };
 
 export const fetchWithRetry = async (url, options = {}, retries = RETRY_ATTEMPTS) => {
   const tryPaths = async (paths) => {
     for (const path of paths) {
       try {
-        const response = await fetch(path, options);
+        const response = await fetch(path, {
+          ...options,
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': isDev ? 'no-cache' : 'max-age=3600',
+            ...options.headers
+          }
+        });
+        
         if (response.ok) {
           return response;
         }
@@ -102,12 +88,9 @@ export const fetchWithRetry = async (url, options = {}, retries = RETRY_ATTEMPTS
     return null;
   };
 
-  // Generate all possible paths to try
+  // Generate fallback paths
   const paths = [url];
-  const isDev = process.env.NODE_ENV === 'development';
-
   if (isDev) {
-    // In development, try both /data and /results paths
     if (url.includes('/data/')) {
       paths.push(url.replace('/data/', '/results/'));
     } else if (url.includes('/results/')) {
@@ -115,19 +98,18 @@ export const fetchWithRetry = async (url, options = {}, retries = RETRY_ATTEMPTS
     }
   }
 
-  // Try all paths with retries
+  // Implement retry logic with exponential backoff
   for (let attempt = 0; attempt < retries; attempt++) {
     const response = await tryPaths(paths);
     if (response) return response;
 
-    // Wait before retrying
     if (attempt < retries - 1) {
       const delay = Math.min(RETRY_INITIAL_DELAY * Math.pow(2, attempt), RETRY_MAX_DELAY);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 
-  throw new Error(`Failed to fetch from all paths after ${retries} attempts: ${paths.join(', ')}`);
+  throw new Error(`Failed to fetch from paths after ${retries} attempts: ${paths.join(', ')}`);
 };
 
 export const getNetworkDataPath = (fileName) => {
@@ -148,12 +130,19 @@ export const enhancedFetchJson = async (url, options = {}) => {
         ...options.headers
       }
     });
-    return await response.json();
+
+    const text = await response.text();
+    // Handle empty responses
+    if (!text) return null;
+
+    try {
+      return JSON.parse(text);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      throw new Error(`Invalid JSON response from ${url}`);
+    }
   } catch (error) {
-    console.error('[DataUtils] Failed to fetch:', {
-      url,
-      error: error.message
-    });
+    console.error('[DataUtils] Failed to fetch:', { url, error: error.message });
     throw error;
   }
 };
@@ -167,15 +156,18 @@ export const getChoroplethDataPath = (fileName) => {
   return cleanPath(`${getDataPath('choropleth_data')}/${fileName}`);
 };
 
-/**
- * Data validation utilities
- */
 export const fetchAndValidateData = async (url, selectedCommodity) => {
   try {
-    const data = await enhancedFetchJson(url);
+    const cacheKey = `${url}_${selectedCommodity || ''}`;
+    const cachedData = cache.get(cacheKey);
+    if (cachedData) return cachedData;
 
-    if (data?.features) {
-      data.features = data.features.filter((feature) => {
+    const data = await enhancedFetchJson(url);
+    if (!data) return null;
+
+    // Validate and filter features
+    if (data.features) {
+      data.features = data.features.filter(feature => {
         if (!feature?.properties?.commodity) return false;
         if (selectedCommodity) {
           return feature.properties.commodity.toLowerCase().trim() === 
@@ -185,6 +177,7 @@ export const fetchAndValidateData = async (url, selectedCommodity) => {
       });
     }
 
+    cache.set(cacheKey, data);
     return data;
   } catch (error) {
     console.error('Error fetching and validating data:', error);
@@ -192,18 +185,16 @@ export const fetchAndValidateData = async (url, selectedCommodity) => {
   }
 };
 
-/**
- * Retry utility with exponential backoff
- */
 export const retryWithBackoff = async (fn, options = {}) => {
   const { 
     maxRetries = RETRY_ATTEMPTS, 
     initialDelay = RETRY_INITIAL_DELAY, 
-    maxDelay = RETRY_MAX_DELAY 
+    maxDelay = RETRY_MAX_DELAY,
+    onRetry = null
   } = options;
 
   let lastError;
-
+  
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn();
@@ -212,6 +203,7 @@ export const retryWithBackoff = async (fn, options = {}) => {
       if (attempt === maxRetries - 1) throw error;
 
       const delay = Math.min(initialDelay * Math.pow(2, attempt), maxDelay);
+      if (onRetry) onRetry(attempt, delay, error);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -219,9 +211,15 @@ export const retryWithBackoff = async (fn, options = {}) => {
   throw lastError;
 };
 
-/**
- * Cache management
- */
 export const clearDataCache = () => {
   cache.clear();
+};
+
+export const validateDataResponse = (data, schema = null) => {
+  if (!data) return false;
+  if (schema) {
+    // Add schema validation if needed
+    return true;
+  }
+  return true;
 };

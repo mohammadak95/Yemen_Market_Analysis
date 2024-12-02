@@ -1,128 +1,184 @@
-import { pathResolver } from './pathResolver';
-
 class PathValidatorUtility {
   constructor() {
-    // Standard path mappings
+    const isDev = process.env.NODE_ENV === 'development';
+    const publicUrl = process.env.PUBLIC_URL || '/Yemen_Market_Analysis';
+
     this.pathMappings = {
       development: {
-        base: '/public/data',
-        api: '/api',
-        static: '/static'
+        base: '/results',
+        api: 'http://localhost:5001/api',
+        static: '/static',
+        data: {
+          preprocessed: '/results/preprocessed_by_commodity',
+          raw: '/results'
+        }
       },
       production: {
-        base: '/Yemen_Market_Analysis/data',
-        api: '/Yemen_Market_Analysis/api',
-        static: '/Yemen_Market_Analysis/static'
+        base: publicUrl,
+        static: `${publicUrl}/static`,
+        data: {
+          preprocessed: `${publicUrl}/data/preprocessed_by_commodity`,
+          raw: `${publicUrl}/data`
+        }
       }
     };
 
-    // Commodity name normalizer
-    this.normalizeCommodityName = (name) => {
-      if (!name) return '';
-      return name
-        .toLowerCase()
-        .replace(/[()]/g, '')
-        .replace(/\s+/g, '_')
-        .replace(/[^a-z0-9_]/g, '')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '');
-    };
+    this.cache = new Map();
+    this.validPaths = new Set();
   }
 
-  // Get correct commodity file path based on environment
+  normalizeCommodityName(name) {
+    if (!name) return '';
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[()]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+  }
+
   getCommodityFilePath(commodity, env = process.env.NODE_ENV) {
     const normalizedName = this.normalizeCommodityName(commodity);
-    const basePath = this.pathMappings[env]?.base || '/data';
-    return `${basePath}/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedName}.json`;
+    const environment = this.detectEnvironment(env);
+    const basePath = this.pathMappings[environment].data.preprocessed;
+    
+    const filePath = `${basePath}/preprocessed_yemen_market_data_${normalizedName}.json`;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('Generated commodity file path:', {
+        environment,
+        normalizedName,
+        filePath
+      });
+    }
+    
+    return filePath;
   }
 
-  // Get API endpoint for preprocessed data
-  getPreprocessedDataEndpoint(commodity) {
-    const normalizedName = this.normalizeCommodityName(commodity);
-    return `/api/preprocessed-data?commodity=${encodeURIComponent(normalizedName)}`;
+  async validatePath(path) {
+    if (this.validPaths.has(path)) return true;
+    
+    try {
+      const response = await fetch(path, { method: 'HEAD' });
+      const isValid = response.ok;
+      if (isValid) this.validPaths.add(path);
+      return isValid;
+    } catch (error) {
+      console.warn(`Path validation failed for: ${path}`, error);
+      return false;
+    }
   }
 
-  // Detect environment and get correct path
-  detectEnvironment() {
+  detectEnvironment(env = process.env.NODE_ENV) {
     if (window.location.hostname.includes('github.io')) return 'production';
-    if (process.env.NODE_ENV === 'production') return 'production';
+    if (env === 'production') return 'production';
     return 'development';
   }
 
-  // Validate and fix paths
-  validatePaths() {
+  async validatePaths() {
     const env = this.detectEnvironment();
+    const config = this.pathMappings[env];
+    
     const results = {
       environment: env,
-      baseUrl: this.pathMappings[env].base,
-      apiEndpoint: this.pathMappings[env].api,
+      baseUrl: config.base,
       pathMappings: {},
+      validPaths: [],
+      invalidPaths: [],
       suggestions: []
     };
 
-    // Test paths and collect results
     const testCommodities = ['beans (kidney red)', 'wheat_flour', 'rice_imported'];
-    testCommodities.forEach(commodity => {
+    
+    for (const commodity of testCommodities) {
       const filePath = this.getCommodityFilePath(commodity, env);
-      const apiEndpoint = this.getPreprocessedDataEndpoint(commodity);
+      const isValid = await this.validatePath(filePath);
+      
       results.pathMappings[commodity] = {
         normalized: this.normalizeCommodityName(commodity),
         filePath,
-        apiEndpoint
+        valid: isValid
       };
-    });
+
+      if (isValid) {
+        results.validPaths.push(filePath);
+      } else {
+        results.invalidPaths.push(filePath);
+        
+        // Generate alternative paths
+        const altPaths = this.generateAlternativePaths(commodity, env);
+        for (const altPath of altPaths) {
+          if (await this.validatePath(altPath)) {
+            results.suggestions.push({
+              original: filePath,
+              alternative: altPath,
+              commodity
+            });
+          }
+        }
+      }
+    }
 
     return results;
   }
 
-  // Fix file path issues
-  applyPathFixes(app) {
-    const existingStaticHandler = app._router.stack.find(
-      layer => layer.name === 'serveStatic' && layer.regexp.test('/public/data')
-    );
+  generateAlternativePaths(commodity, env) {
+    const normalizedName = this.normalizeCommodityName(commodity);
+    const environment = this.detectEnvironment(env);
+    const altPaths = [];
 
-    if (!existingStaticHandler) {
-      // Add correct static file serving
-      app.use('/data', express.static(path.join(__dirname, '..', 'public', 'data')));
-      
-      // Add API endpoint that checks both locations
-      app.get('/api/preprocessed-data', async (req, res) => {
-        try {
-          const { commodity } = req.query;
-          if (!commodity) {
-            return res.status(400).json({ error: 'Commodity parameter is required' });
-          }
-
-          const normalizedName = this.normalizeCommodityName(commodity);
-          const possiblePaths = [
-            path.join(__dirname, '..', 'public', 'data', 'preprocessed_by_commodity', 
-                     `preprocessed_yemen_market_data_${normalizedName}.json`),
-            path.join(__dirname, '..', 'results', 'preprocessed_by_commodity',
-                     `preprocessed_yemen_market_data_${normalizedName}.json`)
-          ];
-
-          let data;
-          for (const filePath of possiblePaths) {
-            if (fs.existsSync(filePath)) {
-              data = await fs.readJson(filePath);
-              break;
-            }
-          }
-
-          if (!data) {
-            return res.status(404).json({ 
-              error: 'Data not found',
-              checkedPaths: possiblePaths
-            });
-          }
-
-          res.json(data);
-        } catch (error) {
-          console.error('Error fetching preprocessed data:', error);
-          res.status(500).json({ error: 'Internal server error' });
-        }
-      });
+    // Try different base paths
+    if (environment === 'development') {
+      altPaths.push(
+        `/data/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedName}.json`,
+        `/results/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedName}.json`
+      );
+    } else {
+      const publicUrl = process.env.PUBLIC_URL || '/Yemen_Market_Analysis';
+      altPaths.push(
+        `${publicUrl}/data/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedName}.json`,
+        `${publicUrl}/results/preprocessed_by_commodity/preprocessed_yemen_market_data_${normalizedName}.json`
+      );
     }
+
+    return altPaths;
+  }
+
+  async validateDataAccess(app) {
+    const results = await this.validatePaths();
+    if (results.invalidPaths.length > 0) {
+      console.warn('Invalid paths detected:', results.invalidPaths);
+      
+      if (results.suggestions.length > 0) {
+        console.info('Path suggestions available:', results.suggestions);
+        this.applyPathSuggestions(app, results.suggestions);
+      }
+    }
+    
+    return results;
+  }
+
+  applyPathSuggestions(app, suggestions) {
+    suggestions.forEach(suggestion => {
+      const { original, alternative } = suggestion;
+      
+      // Add redirect for the original path to the alternative
+      app.get(original, (req, res) => {
+        res.redirect(alternative);
+      });
+    });
+  }
+
+  getStaticPath(filename, env = process.env.NODE_ENV) {
+    const environment = this.detectEnvironment(env);
+    return `${this.pathMappings[environment].static}/${filename}`;
+  }
+
+  clearCache() {
+    this.cache.clear();
+    this.validPaths.clear();
   }
 }
 

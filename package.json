@@ -102,6 +102,8 @@
     "clean": "rimraf build dist .cache node_modules/.cache",
     "clean:all": "rimraf build dist .cache node_modules/.cache coverage",
     "analyze": "webpack-bundle-analyzer stats.json",
+    "predeploy": "cross-env PUBLIC_URL=/Yemen_Market_Analysis npm run build",
+    "deploy": "gh-pages -d build",
     "test": "jest --config jest.config.js",
     "test:watch": "jest --config jest.config.js --watch",
     "test:coverage": "jest --config jest.config.js --coverage",
@@ -110,8 +112,8 @@
     "test:build": "jest --config jest.config.js build.test.js --verbose",
     "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
     "test:perf": "jest --config jest.config.js --testNamePattern='Performance|Full Processing' --verbose",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "serve": "serve -s build",
+    "serve:preview": "cross-env PUBLIC_URL=/Yemen_Market_Analysis serve -s build"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -154,7 +156,6 @@
     "file-loader": "^6.2.0",
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "fs-extra": "^11.2.0",
-    "genaiscript": "^1.71.2",
     "gh-pages": "^6.0.0",
     "glob": "^10.0.0",
     "html-webpack-plugin": "^5.6.3",
