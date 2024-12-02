@@ -4,6 +4,7 @@ import {
   Box,
   Grid,
   Typography,
+  Divider,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { analysisStyles } from '../../../styles/analysisStyles';
@@ -11,7 +12,7 @@ import StatCard from './components/StatCard';
 import ResidualsChart from './components/ResidualsChart';
 import ModelDiagnostics from './components/ModelDiagnostics';
 
-const SpatialRegressionResults = ({ results, windowWidth }) => {
+const SpatialRegressionResults = ({ results, windowWidth, mode = 'analysis' }) => {
   const theme = useTheme();
   const styles = analysisStyles(theme);
   const isMobile = windowWidth < theme.breakpoints.values.sm;
@@ -27,6 +28,72 @@ const SpatialRegressionResults = ({ results, windowWidth }) => {
     observations,
     residual
   } = results;
+
+  // Additional model-specific statistics
+  const renderModelStats = () => (
+    <>
+      <Divider sx={{ my: 3 }} />
+      <Typography variant="h6" gutterBottom>
+        Advanced Model Statistics
+      </Typography>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6}>
+          <StatCard
+            title="Direct Effects"
+            value={coefficients.direct_effects || 0}
+            precision={4}
+            subvalue="Immediate Impact"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <StatCard
+            title="Indirect Effects"
+            value={coefficients.indirect_effects || 0}
+            precision={4}
+            subvalue="Spillover Effects"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <StatCard
+            title="Total Effects"
+            value={coefficients.total_effects || 0}
+            precision={4}
+            subvalue="Combined Impact"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <StatCard
+            title="Model Selection"
+            value={coefficients.aic || 0}
+            precision={2}
+            subvalue="AIC Score"
+          />
+        </Grid>
+      </Grid>
+
+      <Typography variant="h6" gutterBottom>
+        Spatial Dependence Tests
+      </Typography>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6}>
+          <StatCard
+            title="LM (lag)"
+            value={coefficients.lm_lag || 0}
+            precision={4}
+            subvalue={`p-value: ${(p_values.lm_lag || 0).toExponential(2)}`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <StatCard
+            title="LM (error)"
+            value={coefficients.lm_error || 0}
+            precision={4}
+            subvalue={`p-value: ${(p_values.lm_error || 0).toExponential(2)}`}
+          />
+        </Grid>
+      </Grid>
+    </>
+  );
 
   return (
     <Box>
@@ -67,6 +134,9 @@ const SpatialRegressionResults = ({ results, windowWidth }) => {
         </Grid>
       </Grid>
 
+      {/* Model-specific statistics */}
+      {mode === 'model' && renderModelStats()}
+
       {/* Residuals Time Series Chart */}
       <Box sx={styles.chartContainer}>
         <Typography variant="h6" gutterBottom>
@@ -85,6 +155,7 @@ const SpatialRegressionResults = ({ results, windowWidth }) => {
         moranI={moran_i}
         rSquared={r_squared}
         observations={observations}
+        mode={mode}
       />
     </Box>
   );
@@ -93,11 +164,19 @@ const SpatialRegressionResults = ({ results, windowWidth }) => {
 SpatialRegressionResults.propTypes = {
   results: PropTypes.shape({
     coefficients: PropTypes.shape({
-      spatial_lag_price: PropTypes.number.isRequired
+      spatial_lag_price: PropTypes.number.isRequired,
+      direct_effects: PropTypes.number,
+      indirect_effects: PropTypes.number,
+      total_effects: PropTypes.number,
+      aic: PropTypes.number,
+      lm_lag: PropTypes.number,
+      lm_error: PropTypes.number
     }).isRequired,
     intercept: PropTypes.number.isRequired,
     p_values: PropTypes.shape({
-      spatial_lag_price: PropTypes.number.isRequired
+      spatial_lag_price: PropTypes.number.isRequired,
+      lm_lag: PropTypes.number,
+      lm_error: PropTypes.number
     }).isRequired,
     r_squared: PropTypes.number.isRequired,
     adj_r_squared: PropTypes.number.isRequired,
@@ -113,7 +192,8 @@ SpatialRegressionResults.propTypes = {
       residual: PropTypes.number.isRequired
     })).isRequired
   }).isRequired,
-  windowWidth: PropTypes.number.isRequired
+  windowWidth: PropTypes.number.isRequired,
+  mode: PropTypes.oneOf(['analysis', 'model'])
 };
 
 export default SpatialRegressionResults;

@@ -58,6 +58,14 @@ const TVMIIAnalysisLazy = React.lazy(() =>
   })
 );
 
+// Import existing spatial analysis for spatial model
+const SpatialModelAnalysis = React.lazy(() =>
+  import('./components/analysis/spatial/SpatialAnalysis').then((module) => {
+    if (!module.default) throw new Error('SpatialAnalysis component not found');
+    return module;
+  })
+);
+
 const Dashboard = React.memo(({
   selectedAnalysis = 'spatial', // Set spatial as default analysis
   selectedCommodity,
@@ -73,9 +81,10 @@ const Dashboard = React.memo(({
 
   // Reordered analysis components with spatial first
   const analysisComponents = useMemo(() => ({
-    spatial: SpatialAnalysis, // Moved to first position
+    spatial: SpatialAnalysis,
     ecm: ECMAnalysisLazy,
     priceDiff: PriceDifferentialAnalysisLazy,
+    spatial_model: SpatialModelAnalysis, // Use existing spatial analysis
     tvmii: TVMIIAnalysisLazy
   }), []);
 
@@ -116,13 +125,15 @@ const Dashboard = React.memo(({
       return <ErrorMessage message="Selected analysis type is not available." />;
     }
 
-    // Special props for spatial analysis
-    const analysisProps = selectedAnalysis === 'spatial' ? {
+    // Special props for spatial analysis and spatial model
+    const analysisProps = (selectedAnalysis === 'spatial' || selectedAnalysis === 'spatial_model') ? {
       timeSeriesData: data,
       selectedCommodity,
       windowWidth,
       spatialViewConfig,
-      onSpatialViewChange
+      onSpatialViewChange,
+      // Add mode prop to differentiate between spatial analysis and spatial model
+      mode: selectedAnalysis === 'spatial_model' ? 'model' : 'analysis'
     } : {
       data,
       selectedCommodity,

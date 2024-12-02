@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Paper, Typography, Slider, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, Paper, Typography, Slider, FormControl, InputLabel, Select, MenuItem, Grid } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
 import { useSelector } from 'react-redux';
@@ -17,10 +17,11 @@ const YEMEN_BOUNDS = [
 const YEMEN_CENTER = [15.5527, 48.5164];
 const YEMEN_ZOOM = 6;
 
-const SpatialMap = ({ results, windowWidth }) => {
+const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
   const theme = useTheme();
   const styles = analysisStyles(theme);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [visualizationType, setVisualizationType] = useState('residuals');
   
   // Get geometry data from Redux store
   const geometryData = useSelector(selectGeometryData);
@@ -63,16 +64,40 @@ const SpatialMap = ({ results, windowWidth }) => {
   // Style function for GeoJSON
   const getRegionStyle = (feature) => {
     const regionId = feature.properties?.region_id;
-    const residual = selectedDate && residualsByDate[selectedDate]?.[regionId];
+    let value;
+
+    if (mode === 'model' && visualizationType === 'spillover') {
+      // Use spillover effects for model mode
+      value = results.spillover_effects?.[regionId] || 0;
+    } else {
+      // Use residuals for analysis mode or residual view
+      value = selectedDate && residualsByDate[selectedDate]?.[regionId];
+    }
 
     return {
-      fillColor: residual != null ? colorScale(residual) : theme.palette.grey[300],
+      fillColor: value != null ? colorScale(value) : theme.palette.grey[300],
       weight: 1,
       opacity: 1,
       color: theme.palette.grey[500],
-      fillOpacity: residual != null ? 0.7 : 0.3
+      fillOpacity: value != null ? 0.7 : 0.3
     };
   };
+
+  // Model-specific visualization selector
+  const renderModelControls = () => (
+    <FormControl fullWidth sx={{ mb: 2 }}>
+      <InputLabel>Visualization Type</InputLabel>
+      <Select
+        value={visualizationType}
+        onChange={(e) => setVisualizationType(e.target.value)}
+        label="Visualization Type"
+      >
+        <MenuItem value="residuals">Residuals</MenuItem>
+        <MenuItem value="spillover">Spillover Effects</MenuItem>
+        <MenuItem value="clusters">Spatial Clusters</MenuItem>
+      </Select>
+    </FormControl>
+  );
 
   if (!geometryData || !results) {
     return (
@@ -85,66 +110,91 @@ const SpatialMap = ({ results, windowWidth }) => {
   return (
     <Paper sx={{ p: 2, height: '100%' }}>
       <Typography variant="h6" gutterBottom>
-        Spatial Distribution of Residuals
+        {mode === 'model' ? 'Spatial Model Visualization' : 'Spatial Distribution of Residuals'}
       </Typography>
 
-      {/* Date selector */}
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Select Date</InputLabel>
-        <Select
-          value={selectedDate || ''}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          label="Select Date"
-        >
-          {dates.map(date => (
-            <MenuItem key={date} value={date}>
-              {new Date(date).toLocaleDateString()}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <Grid container spacing={2}>
+        {/* Controls */}
+        <Grid item xs={12}>
+          {mode === 'model' && renderModelControls()}
+          
+          {/* Date selector - only show for residuals view */}
+          {(mode === 'analysis' || visualizationType === 'residuals') && (
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Select Date</InputLabel>
+              <Select
+                value={selectedDate || ''}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                label="Select Date"
+              >
+                {dates.map(date => (
+                  <MenuItem key={date} value={date}>
+                    {new Date(date).toLocaleDateString()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </Grid>
 
-      {/* Map container */}
-      <Box sx={{ height: 400, position: 'relative' }}>
-        <MapContainer
-          center={YEMEN_CENTER}
-          zoom={YEMEN_ZOOM}
-          bounds={YEMEN_BOUNDS}
-          style={{ height: '100%', width: '100%' }}
-          zoomControl={false}
-        >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          />
-          <GeoJSON
-            data={geometryData}
-            style={getRegionStyle}
-            onEachFeature={(feature, layer) => {
-              const regionId = feature.properties?.region_id;
-              const residual = selectedDate && residualsByDate[selectedDate]?.[regionId];
-              
-              layer.bindTooltip(() => `
-                <div>
-                  <strong>${regionId}</strong><br/>
-                  Residual: ${residual != null ? residual.toFixed(4) : 'N/A'}
-                </div>
-              `, {
-                sticky: true,
-                direction: 'auto'
-              });
-            }}
-          />
-        </MapContainer>
+        {/* Map container */}
+        <Grid item xs={12}>
+          <Box sx={{ height: 400, position: 'relative' }}>
+            <MapContainer
+              center={YEMEN_CENTER}
+              zoom={YEMEN_ZOOM}
+              bounds={YEMEN_BOUNDS}
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={false}
+            >
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              />
+              <GeoJSON
+                data={geometryData}
+                style={getRegionStyle}
+                onEachFeature={(feature, layer) => {
+                  const regionId = feature.properties?.region_id;
+                  let tooltipContent;
 
-        {/* Legend */}
-        <Legend
-          min={residualStats?.min}
-          max={residualStats?.max}
-          colorScale={colorScale}
-          position="bottomright"
-        />
-      </Box>
+                  if (mode === 'model' && visualizationType === 'spillover') {
+                    const spillover = results.spillover_effects?.[regionId] || 0;
+                    tooltipContent = `
+                      <div>
+                        <strong>${regionId}</strong><br/>
+                        Spillover Effect: ${spillover.toFixed(4)}
+                      </div>
+                    `;
+                  } else {
+                    const residual = selectedDate && residualsByDate[selectedDate]?.[regionId];
+                    tooltipContent = `
+                      <div>
+                        <strong>${regionId}</strong><br/>
+                        Residual: ${residual != null ? residual.toFixed(4) : 'N/A'}
+                      </div>
+                    `;
+                  }
+                  
+                  layer.bindTooltip(() => tooltipContent, {
+                    sticky: true,
+                    direction: 'auto'
+                  });
+                }}
+              />
+            </MapContainer>
+
+            {/* Legend */}
+            <Legend
+              min={residualStats?.min}
+              max={residualStats?.max}
+              colorScale={colorScale}
+              position="bottomright"
+              title={mode === 'model' && visualizationType === 'spillover' ? 'Spillover Effects' : 'Residuals'}
+            />
+          </Box>
+        </Grid>
+      </Grid>
     </Paper>
   );
 };
@@ -155,9 +205,11 @@ SpatialMap.propTypes = {
       region_id: PropTypes.string.isRequired,
       date: PropTypes.string.isRequired,
       residual: PropTypes.number.isRequired
-    })).isRequired
+    })).isRequired,
+    spillover_effects: PropTypes.object // Optional for model mode
   }).isRequired,
-  windowWidth: PropTypes.number.isRequired
+  windowWidth: PropTypes.number.isRequired,
+  mode: PropTypes.oneOf(['analysis', 'model'])
 };
 
 export default SpatialMap;

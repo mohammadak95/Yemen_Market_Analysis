@@ -1,4 +1,4 @@
-//src/components/interactive_graph/InteractiveChart.js
+// src/components/interactive_graph/InteractiveChart.js
 
 import React, { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
@@ -16,7 +16,7 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import PropTypes from 'prop-types';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 import {
   Box,
   Paper,
@@ -46,15 +46,6 @@ ChartJS.register(
   TimeScale,
   Filler
 );
-
-const COLORS = [
-  'rgba(75, 192, 192, 1)',
-  'rgba(255, 99, 132, 1)',
-  'rgba(54, 162, 235, 1)',
-  'rgba(255, 206, 86, 1)',
-  'rgba(153, 102, 255, 1)',
-  'rgba(255, 159, 64, 1)',
-];
 
 const InteractiveChart = ({
   data,
@@ -91,8 +82,17 @@ const InteractiveChart = ({
     const datasets = [];
 
     validDataByRegime.forEach((regimeData, index) => {
-      const color = COLORS[index % COLORS.length];
-      const conflictColor = color.replace('1)', '0.2)');
+      // Define primary colors from the theme palette
+      const primaryColors = [
+        theme.palette.primary.main,
+        theme.palette.secondary.main,
+        theme.palette.success.main,
+        theme.palette.warning.main,
+        theme.palette.error.main,
+        theme.palette.info.main,
+      ];
+
+      const color = primaryColors[index % primaryColors.length];
 
       let processedData = regimeData.data;
 
@@ -114,6 +114,7 @@ const InteractiveChart = ({
         );
       }
 
+      // Price Dataset
       datasets.push({
         label: `${capitalizeWords(regimeData.regime)} Price`,
         data: processedData.map((d) => ({
@@ -127,19 +128,24 @@ const InteractiveChart = ({
         tension: 0.3,
       });
 
+      // Conflict Intensity Dataset (Transparent)
       if (showConflictIntensity) {
+        const conflictColor = theme.palette.info.main; // Choose an appropriate color
+        const conflictColorTransparent = alpha(conflictColor, 0.2); // 20% opacity
+
         datasets.push({
           label: `${capitalizeWords(regimeData.regime)} Conflict Intensity`,
           data: processedData.map((d) => ({
             x: new Date(d.date),
             y: d.conflict_intensity,
           })),
-          borderColor: conflictColor,
-          backgroundColor: conflictColor,
+          borderColor: conflictColorTransparent,
+          backgroundColor: conflictColorTransparent,
           yAxisID: 'y1',
           fill: 'origin',
           tension: 0.3,
           pointRadius: 0,
+          borderWidth: 0,
         });
       }
     });
@@ -155,6 +161,7 @@ const InteractiveChart = ({
     showConflictIntensity,
     applySeasonalAdj,
     applySmooth,
+    theme.palette, // Include theme.palette in dependencies
   ]);
 
   const options = useMemo(
@@ -178,6 +185,7 @@ const InteractiveChart = ({
             font: {
               size: isMobile ? 12 : 14,
               weight: 'bold',
+              family: theme.typography.fontFamily,
             },
           },
           ticks: {
@@ -185,6 +193,7 @@ const InteractiveChart = ({
             color: theme.palette.text.primary,
             font: {
               size: isMobile ? 10 : 12,
+              family: theme.typography.fontFamily,
             },
           },
           grid: {
@@ -197,18 +206,19 @@ const InteractiveChart = ({
           position: 'left',
           title: {
             display: true,
-            text:
-              priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
+            text: priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
             color: theme.palette.text.primary,
             font: {
               size: isMobile ? 12 : 14,
               weight: 'bold',
+              family: theme.typography.fontFamily,
             },
           },
           ticks: {
             color: theme.palette.text.primary,
             font: {
               size: isMobile ? 10 : 12,
+              family: theme.typography.fontFamily,
             },
             callback: (value) => {
               return value.toLocaleString();
@@ -229,6 +239,7 @@ const InteractiveChart = ({
             font: {
               size: isMobile ? 12 : 14,
               weight: 'bold',
+              family: theme.typography.fontFamily,
             },
           },
           ticks: {
@@ -236,6 +247,7 @@ const InteractiveChart = ({
             color: theme.palette.text.primary,
             font: {
               size: isMobile ? 10 : 12,
+              family: theme.typography.fontFamily,
             },
             callback: (value) => {
               return value.toLocaleString();
@@ -277,6 +289,7 @@ const InteractiveChart = ({
             color: theme.palette.text.primary,
             font: {
               size: isMobile ? 10 : 12,
+              family: theme.typography.fontFamily,
             },
           },
         },
@@ -285,7 +298,12 @@ const InteractiveChart = ({
         },
       },
     }),
-    [showConflictIntensity, priceType, theme.palette, isMobile]
+    [
+      showConflictIntensity,
+      priceType,
+      theme,
+      isMobile,
+    ]
   );
 
   if (!chartData)
@@ -302,8 +320,9 @@ const InteractiveChart = ({
         sx={{
           p: 2,
           mb: 2,
-          borderRadius: 2,
+          borderRadius: theme.shape.borderRadius,
           backgroundColor: theme.palette.background.paper,
+          boxShadow: theme.shadows[1],
         }}
       >
         <Grid
@@ -323,26 +342,28 @@ const InteractiveChart = ({
               size="small"
               sx={{
                 minWidth: 'auto',
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: theme.shape.borderRadius,
+                '& .MuiToggleButton-root': {
+                  fontWeight: 600,
+                  fontSize: isMobile ? '0.8rem' : '0.9rem',
+                  padding: isMobile ? '4px 8px' : '6px 12px',
+                  border: `1px solid ${theme.palette.divider}`,
+                  color: theme.palette.text.primary,
+                  '&.Mui-selected': {
+                    backgroundColor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.dark,
+                    },
+                  },
+                },
               }}
             >
-              <ToggleButton
-                value="lcu"
-                aria-label="Price in LCU"
-                sx={{
-                  fontSize: isMobile ? '0.8rem' : '0.9rem',
-                  padding: isMobile ? '4px 8px' : '6px 12px',
-                }}
-              >
+              <ToggleButton value="lcu" aria-label="Price in LCU">
                 LCU
               </ToggleButton>
-              <ToggleButton
-                value="usd"
-                aria-label="Price in US$"
-                sx={{
-                  fontSize: isMobile ? '0.8rem' : '0.9rem',
-                  padding: isMobile ? '4px 8px' : '6px 12px',
-                }}
-              >
+              <ToggleButton value="usd" aria-label="Price in US$">
                 US$
               </ToggleButton>
             </ToggleButtonGroup>
@@ -357,16 +378,25 @@ const InteractiveChart = ({
               size="small"
               sx={{
                 minWidth: 'auto',
-              }}
-            >
-              <ToggleButton
-                value={true}
-                selected={applySeasonalAdj}
-                sx={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: theme.shape.borderRadius,
+                '& .MuiToggleButton-root': {
+                  fontWeight: 600,
                   fontSize: isMobile ? '0.8rem' : '0.9rem',
                   padding: isMobile ? '4px 8px' : '6px 12px',
-                }}
-              >
+                  border: `1px solid ${theme.palette.divider}`,
+                  color: theme.palette.text.primary,
+                  '&.Mui-selected': {
+                    backgroundColor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.dark,
+                    },
+                  },
+                },
+              }}
+            >
+              <ToggleButton value={true} selected={applySeasonalAdj}>
                 Seasonal Adjustment
               </ToggleButton>
             </ToggleButtonGroup>
@@ -381,16 +411,25 @@ const InteractiveChart = ({
               size="small"
               sx={{
                 minWidth: 'auto',
-              }}
-            >
-              <ToggleButton
-                value={true}
-                selected={applySmooth}
-                sx={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: theme.shape.borderRadius,
+                '& .MuiToggleButton-root': {
+                  fontWeight: 600,
                   fontSize: isMobile ? '0.8rem' : '0.9rem',
                   padding: isMobile ? '4px 8px' : '6px 12px',
-                }}
-              >
+                  border: `1px solid ${theme.palette.divider}`,
+                  color: theme.palette.text.primary,
+                  '&.Mui-selected': {
+                    backgroundColor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.dark,
+                    },
+                  },
+                },
+              }}
+            >
+              <ToggleButton value={true} selected={applySmooth}>
                 Smoothing
               </ToggleButton>
             </ToggleButtonGroup>
@@ -400,21 +439,32 @@ const InteractiveChart = ({
             <ToggleButtonGroup
               value={showConflictIntensity}
               exclusive
-              onChange={() => setShowConflictIntensity(!showConflictIntensity)}
+              onChange={() =>
+                setShowConflictIntensity(!showConflictIntensity)
+              }
               aria-label="Conflict Intensity"
               size="small"
               sx={{
                 minWidth: 'auto',
-              }}
-            >
-              <ToggleButton
-                value={true}
-                selected={showConflictIntensity}
-                sx={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: theme.shape.borderRadius,
+                '& .MuiToggleButton-root': {
+                  fontWeight: 600,
                   fontSize: isMobile ? '0.8rem' : '0.9rem',
                   padding: isMobile ? '4px 8px' : '6px 12px',
-                }}
-              >
+                  border: `1px solid ${theme.palette.divider}`,
+                  color: theme.palette.text.primary,
+                  '&.Mui-selected': {
+                    backgroundColor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.dark,
+                    },
+                  },
+                },
+              }}
+            >
+              <ToggleButton value={true} selected={showConflictIntensity}>
                 Conflict Intensity
               </ToggleButton>
             </ToggleButtonGroup>
@@ -422,12 +472,18 @@ const InteractiveChart = ({
         </Grid>
       </Paper>
 
-      <Box sx={{
-        width: '100%',
-        height: { xs: '250px', sm: '300px', md: '400px' }, // Reduced height for mobile
-        position: 'relative',
-        mb: 2 // Add bottom margin
-      }}>
+      <Box
+        sx={{
+          width: '100%',
+          height: { xs: '250px', sm: '300px', md: '400px' },
+          position: 'relative',
+          mb: 2,
+          backgroundColor: theme.palette.background.paper,
+          borderRadius: theme.shape.borderRadius,
+          boxShadow: theme.shadows[1],
+          p: 2,
+        }}
+      >
         <Line options={options} data={chartData} />
       </Box>
     </Box>

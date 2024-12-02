@@ -312,7 +312,7 @@ export const Sidebar = ({
           />
 
           <Stack spacing={2}>
-            {/* Reordered buttons to match Dashboard order */}
+            {/* Reordered buttons to include spatial model */}
             <Button
               variant={selectedAnalysis === 'spatial' ? 'contained' : 'outlined'}
               color="primary"
@@ -336,6 +336,14 @@ export const Sidebar = ({
               onClick={() => handleAnalysisChange('priceDiff')}
             >
               Price Differential Model
+            </Button>
+            <Button
+              variant={selectedAnalysis === 'spatial_model' ? 'contained' : 'outlined'}
+              color="primary"
+              fullWidth
+              onClick={() => handleAnalysisChange('spatial_model')}
+            >
+              Spatial Model
             </Button>
             <Button
               variant={selectedAnalysis === 'tvmii' ? 'contained' : 'outlined'}
