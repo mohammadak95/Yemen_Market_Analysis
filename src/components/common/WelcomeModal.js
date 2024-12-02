@@ -31,7 +31,10 @@ export const WelcomeModal = React.memo(({ open, onClose }) => {
     setDontShowAgain(event.target.checked);
   };
 
-  const handleClose = () => {
+  const handleGetStarted = () => {
+    if (dontShowAgain) {
+      dispatch(setHasSeenWelcome(true));
+    }
     onClose(dontShowAgain);
   };
 
@@ -43,7 +46,7 @@ export const WelcomeModal = React.memo(({ open, onClose }) => {
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={handleGetStarted}
       fullWidth
       maxWidth="md"
       fullScreen={fullScreen}
@@ -115,7 +118,7 @@ export const WelcomeModal = React.memo(({ open, onClose }) => {
           }
           label="Don&apos;t show this again"
         />
-        <Button onClick={handleClose} variant="contained" color="primary" aria-label="Close Welcome Modal">
+        <Button onClick={handleGetStarted} variant="contained" color="primary" aria-label="Close Welcome Modal">
           Get Started
         </Button>
       </DialogActions>

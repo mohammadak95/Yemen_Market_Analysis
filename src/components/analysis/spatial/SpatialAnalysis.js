@@ -1,3 +1,5 @@
+//src/components/analysis/spatial/SpatialAnalysis.js
+
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid, Typography } from '@mui/material';
