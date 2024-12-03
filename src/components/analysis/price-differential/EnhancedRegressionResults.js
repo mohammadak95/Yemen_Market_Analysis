@@ -1,21 +1,79 @@
-// src/components/analysis/price-differential/EnhancedRegressionResults.js
+//src/components/analysis/price-differential/EnhancedRegressionResults.js
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Paper,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  Alert,
   Box,
+  Grid,
+  Tooltip,
+  IconButton,
+  useTheme,
+  Chip,
+  Alert,
 } from '@mui/material';
-import { useTechnicalHelp } from '@/hooks';;
+import {
+  Info as InfoIcon,
+  Warning as WarningIcon,
+} from '@mui/icons-material';
+import { useTechnicalHelp } from '@/hooks';
 
 const EnhancedRegressionResults = ({ regressionData }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');
+  const theme = useTheme();
+
+  const styles = {
+    container: {
+      p: 3,
+      height: '100%',
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      mb: 4,
+    },
+    title: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      '& .MuiIconButton-root': {
+        ml: 1,
+      },
+    },
+    sectionTitle: {
+      fontSize: '1.25rem',
+      fontWeight: 600,
+      mb: 3,
+    },
+    metricContainer: {
+      p: 3,
+      bgcolor: theme.palette.grey[50],
+      borderRadius: 1,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    metricHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      mb: 2,
+      color: theme.palette.text.secondary,
+    },
+    metricValue: {
+      fontSize: '1.5rem',
+      fontWeight: 500,
+    },
+    alertContainer: {
+      mt: 3,
+      p: 2,
+      border: `1px solid ${theme.palette.warning.light}`,
+      borderRadius: 1,
+      bgcolor: theme.palette.warning.lighter,
+    },
+  };
 
   if (!regressionData) {
     return (
@@ -32,88 +90,93 @@ const EnhancedRegressionResults = ({ regressionData }) => {
     adjusted_r_squared,
     p_value,
     durbin_watson,
-    breusch_pagan_pvalue,
-    aic,
-    bic,
   } = regressionData;
 
+  const metrics = useMemo(() => [
+    {
+      section: 'Model Fit',
+      metrics: [
+        { label: 'R-Squared', value: r_squared, tooltip: 'r_squared' },
+        { label: 'Adjusted R-Squared', value: adjusted_r_squared, tooltip: 'adjusted_r_squared' },
+      ]
+    },
+    {
+      section: 'Coefficients',
+      metrics: [
+        { label: 'Intercept', value: intercept, tooltip: 'intercept' },
+        { label: 'Slope', value: slope, tooltip: 'slope' },
+      ]
+    },
+    {
+      section: 'Diagnostics',
+      metrics: [
+        { label: 'P-Value', value: p_value, tooltip: 'p_value' },
+        { label: 'Durbin-Watson', value: durbin_watson, tooltip: 'durbin_watson' },
+      ]
+    }
+  ], [regressionData]);
+
+  const formatValue = (value) => {
+    if (value === undefined || value === null) return 'N/A';
+    return value.toFixed(4);
+  };
+
   return (
-    <Paper sx={{ p: 2, mt: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Regression Analysis and Diagnostics
-      </Typography>
-      <Table>
-        <TableBody>
-          <TableRow>
-            <TableCell>Intercept</TableCell>
-            <TableCell>{intercept !== undefined ? intercept.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Slope</TableCell>
-            <TableCell>{slope !== undefined ? slope.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>R-Squared</TableCell>
-            <TableCell>{r_squared !== undefined ? r_squared.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Adjusted R-Squared</TableCell>
-            <TableCell>{adjusted_r_squared !== undefined ? adjusted_r_squared.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>P-Value</TableCell>
-            <TableCell>{p_value !== undefined ? p_value.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>AIC</TableCell>
-            <TableCell>{aic !== undefined ? aic.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>BIC</TableCell>
-            <TableCell>{bic !== undefined ? bic.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Durbin-Watson Statistic</TableCell>
-            <TableCell>{durbin_watson !== undefined ? durbin_watson.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Breusch-Pagan P-Value</TableCell>
-            <TableCell>{breusch_pagan_pvalue !== undefined ? breusch_pagan_pvalue.toFixed(4) : 'N/A'}</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-      <Box sx={{ mt: 2 }}>
-        {p_value !== undefined ? (
-          p_value < 0.05 ? (
-            <Alert severity="success">
-              The regression model is statistically significant (p-value &lt; 0.05).
-            </Alert>
-          ) : (
-            <Alert severity="warning">
-              The regression model is not statistically significant (p-value ≥ 0.05).
-            </Alert>
-          )
-        ) : (
-          <Alert severity="info">
-            P-Value is not available.
-          </Alert>
-        )}
-        {breusch_pagan_pvalue !== undefined ? (
-          breusch_pagan_pvalue < 0.05 ? (
-            <Alert severity="warning" sx={{ mt: 1 }}>
-              Evidence of heteroscedasticity detected (Breusch-Pagan p-value &lt; 0.05).
-            </Alert>
-          ) : (
-            <Alert severity="success" sx={{ mt: 1 }}>
-              No evidence of heteroscedasticity detected (Breusch-Pagan p-value ≥ 0.05).
-            </Alert>
-          )
-        ) : (
-          <Alert severity="info" sx={{ mt: 1 }}>
-            Breusch-Pagan P-Value is not available.
-          </Alert>
-        )}
+    <Paper sx={styles.container}>
+      <Box sx={styles.header}>
+        <Box sx={styles.title}>
+          <Typography variant="h5">Regression Analysis</Typography>
+          <Tooltip title={getTechnicalTooltip('regression_analysis')}>
+            <IconButton size="small">
+              <InfoIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+        <Chip
+          icon={<WarningIcon />}
+          label="Model Not Significant"
+          color="warning"
+          variant="outlined"
+          sx={{ px: 2 }}
+        />
       </Box>
+
+      {metrics.map((section) => (
+        <Box key={section.section} sx={{ mb: 4 }}>
+          <Typography variant="h6" sx={styles.sectionTitle}>
+            {section.section}
+          </Typography>
+          <Grid container spacing={3}>
+            {section.metrics.map((metric) => (
+              <Grid item xs={12} sm={6} key={metric.label}>
+                <Box sx={styles.metricContainer}>
+                  <Box sx={styles.metricHeader}>
+                    {metric.label}
+                    <Tooltip title={getTechnicalTooltip(metric.tooltip)}>
+                      <IconButton size="small">
+                        <InfoIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Typography sx={styles.metricValue}>
+                    {formatValue(metric.value)}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      ))}
+
+      {p_value >= 0.05 && (
+        <Alert 
+          severity="warning"
+          icon={<WarningIcon />}
+          sx={styles.alertContainer}
+        >
+          The regression model is not statistically significant (p-value ≥ 0.05).
+        </Alert>
+      )}
     </Paper>
   );
 };
@@ -126,10 +189,7 @@ EnhancedRegressionResults.propTypes = {
     adjusted_r_squared: PropTypes.number,
     p_value: PropTypes.number,
     durbin_watson: PropTypes.number,
-    breusch_pagan_pvalue: PropTypes.number,
-    aic: PropTypes.number,
-    bic: PropTypes.number,
   }).isRequired,
 };
 
-export default EnhancedRegressionResults;
+export default React.memo(EnhancedRegressionResults);

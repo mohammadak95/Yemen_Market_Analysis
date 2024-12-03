@@ -1,31 +1,83 @@
-// src/components/analysis/price-differential/DiagnosticsTable.js
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Paper,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
+  Box,
+  Grid,
   Tooltip,
   IconButton,
   Alert,
-  Box,
+  useTheme,
   Chip,
 } from '@mui/material';
 import {
   Info as InfoIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
-  Error as ErrorIcon,
 } from '@mui/icons-material';
-import { useTechnicalHelp } from '@/hooks';;
+import { useTechnicalHelp } from '@/hooks';
 
-const DiagnosticsTable = ({ data }) => {
+const DiagnosticsTable = ({ data, isMobile }) => {
   const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');
+  const theme = useTheme();
+
+  const styles = {
+    container: {
+      p: 3,
+      height: '100%',
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      mb: 4,
+    },
+    title: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      '& .MuiIconButton-root': {
+        ml: 1,
+      },
+    },
+    sectionTitle: {
+      fontSize: '1.25rem',
+      fontWeight: 600,
+      mb: 3,
+    },
+    metricContainer: {
+      p: 3,
+      bgcolor: theme.palette.grey[50],
+      borderRadius: 1,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    metricHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      mb: 2,
+      color: theme.palette.text.secondary,
+    },
+    metricValue: {
+      fontSize: '1.5rem',
+      fontWeight: 500,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2,
+    },
+    statusChip: {
+      height: 28,
+      fontSize: '0.875rem',
+    },
+    alertContainer: {
+      mt: 4,
+      p: 2,
+      borderRadius: 1,
+    },
+  };
 
   if (!data) {
     return (
@@ -42,119 +94,139 @@ const DiagnosticsTable = ({ data }) => {
     p_value,
   } = data;
 
-  // Evaluate p_value for overall diagnostics
+  const actualDistance = useMemo(() => 
+    distance_km !== undefined ? distance_km * 250 : undefined
+  , [distance_km]);
+
+  const metrics = useMemo(() => [
+    {
+      section: 'Market Statistics',
+      metrics: [
+        { 
+          label: 'Common Dates',
+          value: common_dates,
+          tooltip: 'common_dates',
+          format: 'number'
+        },
+        {
+          label: 'Distance',
+          value: actualDistance,
+          tooltip: 'distance_km',
+          format: 'distance',
+          unit: 'km'
+        },
+      ]
+    },
+    {
+      section: 'Correlation Analysis',
+      metrics: [
+        {
+          label: 'Conflict Correlation',
+          value: conflict_correlation,
+          tooltip: 'conflict_correlation',
+          format: 'decimal'
+        },
+        {
+          label: 'P-Value',
+          value: p_value,
+          tooltip: 'p_value',
+          format: 'decimal',
+          showStatus: true
+        },
+      ]
+    }
+  ], [common_dates, actualDistance, conflict_correlation, p_value]);
+
+  const formatValue = (metric) => {
+    if (metric.value === undefined) return 'N/A';
+    
+    switch (metric.format) {
+      case 'decimal':
+        return metric.value.toFixed(4);
+      case 'distance':
+        return `${metric.value.toFixed(1)} ${metric.unit}`;
+      case 'number':
+        return metric.value.toString();
+      default:
+        return metric.value;
+    }
+  };
+
   const overallStatus = p_value < 0.05 ? 'warning' : 'success';
+  const statusMessage = p_value < 0.05 
+    ? 'Model needs review'
+    : 'Model validated';
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        Diagnostic Information
-        <Tooltip title={getTechnicalTooltip('diagnostics_overview')}>
-          <IconButton size="small">
-            <InfoIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Typography>
-
-      <Table size="small" sx={{ mb: 3 }}>
-        <TableHead>
-          <TableRow>
-            <TableCell>Diagnostic</TableCell>
-            <TableCell>Value</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          <TableRow>
-            <TableCell>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Common Dates
-                <Tooltip title={getTechnicalTooltip('common_dates')}>
-                  <IconButton size="small">
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </TableCell>
-            <TableCell>{common_dates !== undefined ? common_dates : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Conflict Correlation
-                <Tooltip title={getTechnicalTooltip('conflict_correlation')}>
-                  <IconButton size="small">
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </TableCell>
-            <TableCell>{conflict_correlation !== undefined ? conflict_correlation.toFixed(3) : 'N/A'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Distance (km)
-                <Tooltip title={getTechnicalTooltip('distance_km')}>
-                  <IconButton size="small">
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </TableCell>
-            <TableCell>{distance_km !== undefined ? distance_km.toFixed(1) : 'N/A'} km</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                P-Value
-                <Tooltip title={getTechnicalTooltip('p_value')}>
-                  <IconButton size="small">
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </TableCell>
-            <TableCell>
-              {p_value !== undefined ? p_value.toFixed(4) : 'N/A'}
-              {p_value !== undefined && (
-                <Chip
-                  icon={getStatusIcon(overallStatus)}
-                  label={overallStatus.toUpperCase()}
-                  color={overallStatus}
-                  size="small"
-                  sx={{ ml: 1 }}
-                />
-              )}
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-
-      {/* Overall Interpretation */}
-      <Box sx={{ mt: 3 }}>
-        <Alert severity={overallStatus}>
-          <Typography variant="body2">
-            {overallStatus === 'warning'
-              ? 'The p-value indicates potential issues with the model assumptions. Consider reviewing the analysis.'
-              : 'The model assumptions appear to be satisfied.'}
-          </Typography>
-        </Alert>
+    <Paper sx={styles.container}>
+      <Box sx={styles.header}>
+        <Box sx={styles.title}>
+          <Typography variant="h5">Diagnostic Results</Typography>
+          <Tooltip title={getTechnicalTooltip('diagnostics_overview')}>
+            <IconButton size="small">
+              <InfoIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+        <Chip
+          icon={overallStatus === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
+          label={statusMessage}
+          color={overallStatus}
+          variant="outlined"
+          sx={{ px: 2 }}
+        />
       </Box>
+
+      {metrics.map((section) => (
+        <Box key={section.section} sx={{ mb: 4 }}>
+          <Typography variant="h6" sx={styles.sectionTitle}>
+            {section.section}
+          </Typography>
+          <Grid container spacing={3}>
+            {section.metrics.map((metric) => (
+              <Grid item xs={12} sm={6} key={metric.label}>
+                <Box sx={styles.metricContainer}>
+                  <Box sx={styles.metricHeader}>
+                    {metric.label}
+                    <Tooltip title={getTechnicalTooltip(metric.tooltip)}>
+                      <IconButton size="small">
+                        <InfoIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Box sx={styles.metricValue}>
+                    {formatValue(metric)}
+                    {metric.showStatus && (
+                      <Chip
+                        size="small"
+                        icon={overallStatus === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
+                        label={overallStatus.toUpperCase()}
+                        color={overallStatus}
+                        sx={styles.statusChip}
+                      />
+                    )}
+                  </Box>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      ))}
+
+      <Alert 
+        severity={overallStatus}
+        variant="outlined"
+        icon={overallStatus === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
+        sx={styles.alertContainer}
+      >
+        <Typography variant="body1">
+          {p_value < 0.05
+            ? 'Statistical analysis indicates potential model assumption violations. Consider reviewing the analysis parameters and data quality.'
+            : 'Model diagnostics indicate valid statistical assumptions. The analysis results can be interpreted with confidence.'}
+        </Typography>
+      </Alert>
     </Paper>
   );
-};
-
-const getStatusIcon = (severity) => {
-  switch (severity) {
-    case 'success':
-      return <CheckCircleIcon fontSize="small" color="success" />;
-    case 'warning':
-      return <WarningIcon fontSize="small" color="warning" />;
-    case 'error':
-      return <ErrorIcon fontSize="small" color="error" />;
-    default:
-      return <InfoIcon fontSize="small" />;
-  }
 };
 
 DiagnosticsTable.propTypes = {
@@ -167,4 +239,4 @@ DiagnosticsTable.propTypes = {
   isMobile: PropTypes.bool.isRequired,
 };
 
-export default DiagnosticsTable;
+export default React.memo(DiagnosticsTable);
