@@ -18,7 +18,7 @@ from statsmodels.stats.diagnostic import het_arch, het_white
 from statsmodels.stats.stattools import durbin_watson, jarque_bera
 from arch.unitroot import engle_granger
 from esda.moran import Moran
-from pysal.lib import weights
+from libpysal import weights
 from scipy.stats import shapiro
 from statsmodels.tsa.seasonal import seasonal_decompose
 
@@ -668,18 +668,26 @@ def validate_analysis_result(analysis_result):
 # Save Results
 def save_results(ecm_results, residuals_storage):
     try:
+        # Convert results to serializable format
         flattened = convert_keys_to_str(ecm_results)
         residuals_converted = {k: v.tolist() for k, v in residuals_storage.items()}
-        combined_results = {
-            'ecm_analysis': flattened,
-            'residuals': residuals_converted
-        }
         
-        files['ecm_results'].parent.mkdir(parents=True, exist_ok=True)
+        # Define file paths
+        results_dir = dirs['results_dir'] / "ecm"
+        results_dir.mkdir(parents=True, exist_ok=True)
         
-        with open(files['ecm_results'], 'w') as f:
-            json.dump(combined_results, f, indent=4, cls=NumpyEncoder)
-        logger.info(f"Results saved to {files['ecm_results']}")
+        # Save ECM analysis results
+        ecm_file = results_dir / "ecm_analysis_results.json"
+        with open(ecm_file, 'w') as f:
+            json.dump(flattened, f, indent=4, cls=NumpyEncoder)
+        logger.info(f"ECM results saved to {ecm_file}")
+        
+        # Save residuals separately using same naming convention as directional script
+        residuals_file = results_dir / "ecm_residuals.json"
+        with open(residuals_file, 'w') as f:
+            json.dump(residuals_converted, f, indent=4, cls=NumpyEncoder)
+        logger.info(f"Residuals saved to {residuals_file}")
+        
     except Exception as e:
         logger.error(f"Saving results failed: {e}")
         logger.debug(traceback.format_exc())

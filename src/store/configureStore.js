@@ -3,12 +3,12 @@ import { configureStore } from '@reduxjs/toolkit';
 import spatialReducer from '../slices/spatialSlice';
 import themeReducer from '../slices/themeSlice';
 import welcomeModalReducer from './welcomeModalSlice';
+import ecmReducer from '../slices/ecmSlice';  // Add ECM reducer import
 import { createBatchMiddleware } from '../middleware/batchMiddleware';
 import { createSpatialMiddleware } from '../middleware/spatialMiddleware';
 import { spatialHandler } from '../utils/spatialDataHandler';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 
-// Create store with enhanced configuration
 const configureAppStore = () => {
   const spatialMiddleware = createSpatialMiddleware();
 
@@ -16,7 +16,8 @@ const configureAppStore = () => {
     reducer: {
       spatial: spatialReducer,
       theme: themeReducer,
-      welcomeModal: welcomeModalReducer
+      welcomeModal: welcomeModalReducer,
+      ecm: ecmReducer  // Add ECM reducer to store
     },
     middleware: (getDefaultMiddleware) => {
       const defaultMiddleware = getDefaultMiddleware({
@@ -36,7 +37,12 @@ const configureAppStore = () => {
             'spatial.data.spatialAutocorrelation',
             'spatial.data.seasonalAnalysis',
             'spatial.data.marketIntegration',
-            'spatial.data.uniqueMonths'
+            'spatial.data.uniqueMonths',
+            // Add ECM ignored paths
+            'ecm.data.unified',
+            'ecm.data.directional',
+            'ecm.data.residuals',
+            'ecm.data.cache'
           ],
           ignoredActions: [
             'spatial/fetchAllSpatialData/fulfilled',
@@ -44,7 +50,11 @@ const configureAppStore = () => {
             'spatial/batchUpdate',
             'spatial/updateGeometry',
             'spatial/updateData',
-            'spatial/updateUI'
+            'spatial/updateUI',
+            // Add ECM ignored actions
+            'ecm/fetchECMData/fulfilled',
+            'ecm/fetchECMData/pending',
+            'ecm/setSelectedCommodity'
           ]
         },
         immutableCheck: {
@@ -54,7 +64,11 @@ const configureAppStore = () => {
             'spatial.status',
             'spatial.ui.view',
             'spatial.data.cache',
-            'spatial.data.geometry'
+            'spatial.data.geometry',
+            // Add ECM ignored paths
+            'ecm.data',
+            'ecm.status',
+            'ecm.data.cache'
           ]
         },
         thunk: {
@@ -90,7 +104,8 @@ const configureAppStore = () => {
               'spatial/setProgress',
               'spatial/setLoadingStage',
               'spatial/updateCache',
-              'spatial/updateProgress'
+              'spatial/updateProgress',
+              'ecm/updateCache'
             ];
             return !skippedActions.includes(action.type);
           },
@@ -109,6 +124,19 @@ const configureAppStore = () => {
                 }
               };
             }
+            if (action.type === 'ecm/fetchECMData/fulfilled') {
+              return {
+                ...action,
+                payload: {
+                  type: 'ECM_DATA',
+                  unifiedCount: action.payload?.unified?.length || 0,
+                  directionalCount: {
+                    northToSouth: action.payload?.directional?.northToSouth?.length || 0,
+                    southToNorth: action.payload?.directional?.southToNorth?.length || 0
+                  }
+                }
+              };
+            }
             return action;
           }
         });
@@ -123,7 +151,8 @@ const configureAppStore = () => {
       traceLimit: 25,
       actionsBlacklist: [
         'spatial/setProgress',
-        'spatial/setLoadingStage'
+        'spatial/setLoadingStage',
+        'ecm/updateCache'
       ]
     }
   });
@@ -144,6 +173,19 @@ const configureAppStore = () => {
             hasUnified: Boolean(geometry?.unified),
             pointCount: geometry?.points?.length || 0,
             polygonCount: geometry?.polygons?.length || 0
+          };
+        }
+      },
+      ecmData: {  // Add ECM debugging tools
+        getState: () => store.getState().ecm,
+        validateData: () => {
+          const ecmState = store.getState().ecm;
+          return {
+            hasUnifiedData: Array.isArray(ecmState?.data?.unified),
+            hasDirectionalData: Boolean(ecmState?.data?.directional),
+            commodityCount: ecmState?.data?.commodities?.length || 0,
+            loadingStatus: ecmState?.status?.loading,
+            error: ecmState?.status?.error
           };
         }
       },

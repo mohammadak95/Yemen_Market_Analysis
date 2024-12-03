@@ -1,31 +1,37 @@
 // Merged dataHooks.js
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
   fetchAllSpatialData, 
   fetchFlowData,
   selectSpatialData,
   selectFlowData,
-  selectLoadingStatus,
-  selectError,  // Now properly exported
-  selectRegressionAnalysis, // Add this for useRegressionAnalysis
+  selectLoadingStatus as selectSpatialLoadingStatus,
+  selectError as selectSpatialError,
+  selectRegressionAnalysis,
   selectModelStats,
   selectSpatialStats
 } from '../slices/spatialSlice';
+import {
+  fetchECMData,
+  selectUnifiedData,
+  selectDirectionalData,
+  selectLoadingStatus,
+  selectError,
+  selectECMMetrics,
+  setSelectedCommodity
+} from '../slices/ecmSlice';
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
-import { getDataPath } from '../utils/dataUtils';
-import { useRef } from 'react';
-
-
+import { getDataPath, enhancedFetchJson } from '../utils/dataUtils';
 
 export const useSpatialData = () => {
   const dispatch = useDispatch();
   const data = useSelector(selectSpatialData);
   const flowData = useSelector(selectFlowData);
-  const loading = useSelector(selectLoadingStatus);
-  const error = useSelector(selectError);
+  const loading = useSelector(selectSpatialLoadingStatus);
+  const error = useSelector(selectSpatialError);
  
   const fetchData = useCallback(async (commodity, date) => {
     const metric = backgroundMonitor.startMetric('spatial-data-fetch');
@@ -42,13 +48,13 @@ export const useSpatialData = () => {
   }, [dispatch]);
  
   return { data, flowData, loading, error, fetchData };
- };
+};
  
- export const usePrecomputedData = (commodity, date) => {
+export const usePrecomputedData = (commodity, date) => {
   const dispatch = useDispatch();
   const data = useSelector(selectSpatialData);
-  const loading = useSelector(selectLoadingStatus);
-  const error = useSelector(selectError);
+  const loading = useSelector(selectSpatialLoadingStatus);
+  const error = useSelector(selectSpatialError);
   
   useEffect(() => {
     if (commodity) {
@@ -57,17 +63,14 @@ export const useSpatialData = () => {
   }, [commodity, date, dispatch]);
  
   return { data, loading, error };
- };
+};
 
 export const useTVMIIData = () => {
   const [tvmiiData, setTvmiiData] = useState(null);
   const [marketPairsData, setMarketPairsData] = useState(null);
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'succeeded' | 'failed'
+  const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
 
-  /**
-   * Fetches and processes TV-MII data.
-   */
   useEffect(() => {
     const fetchData = async () => {
       setStatus('loading');
@@ -89,7 +92,6 @@ export const useTVMIIData = () => {
         const fetchedTvmiiData = await tvmiiResponse.json();
         const fetchedMarketPairsData = await marketPairsResponse.json();
 
-        // Process and normalize data
         const processedTvmiiData = fetchedTvmiiData.map((item) => ({
           ...item,
           date: new Date(item.date),
@@ -102,7 +104,6 @@ export const useTVMIIData = () => {
           tvmii: item.tv_mii || item.tvmii || item.value,
         }));
 
-        // Update state with fetched data
         setTvmiiData(processedTvmiiData);
         setMarketPairsData(processedMarketPairsData);
         setStatus('succeeded');
@@ -122,21 +123,13 @@ export const usePriceDifferentialData = (selectedCommodity) => {
   const [data, setData] = useState(null);
   const [markets, setMarkets] = useState([]);
   const [commodities, setCommodities] = useState([]);
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'succeeded' | 'failed'
+  const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
 
-  /**
-   * Processes and filters price differential data based on the selected commodity.
-   *
-   * @param {Object} jsonData - The raw JSON data fetched from the API.
-   * @param {string} commodity - The selected commodity to filter data.
-   * @returns {Object} - Contains filtered data and list of markets.
-   */
   const processPriceDifferentialData = useCallback((jsonData, commodity) => {
     const marketsData = jsonData.markets || {};
     const marketsList = Object.keys(marketsData);
 
-    // Filter data for the selected commodity
     const filteredData = {};
     marketsList.forEach((market) => {
       const commodityResults = marketsData[market].commodity_results[commodity];
@@ -153,9 +146,6 @@ export const usePriceDifferentialData = (selectedCommodity) => {
     return { data: filteredData, markets: Object.keys(filteredData) };
   }, []);
 
-  /**
-   * Fetches and processes Price Differential data.
-   */
   useEffect(() => {
     const fetchData = async () => {
       setStatus('loading');
@@ -166,7 +156,6 @@ export const usePriceDifferentialData = (selectedCommodity) => {
 
         const jsonData = await response.json();
 
-        // Extract commodities
         const commoditiesSet = new Set();
         Object.values(jsonData.markets || {}).forEach((marketData) => {
           const commodityResults = marketData.commodity_results || {};
@@ -177,7 +166,6 @@ export const usePriceDifferentialData = (selectedCommodity) => {
 
         setCommodities(Array.from(commoditiesSet));
 
-        // Process and filter data based on the selected commodity
         const filteredData = processPriceDifferentialData(jsonData, selectedCommodity);
 
         setData(filteredData.data);
@@ -195,163 +183,83 @@ export const usePriceDifferentialData = (selectedCommodity) => {
   return { data, markets, commodities, status, error };
 };
 
-export const useECMData = () => {
-  const [unifiedData, setUnifiedData] = useState(null);
-  const [unifiedStatus, setUnifiedStatus] = useState('idle'); // 'idle' | 'loading' | 'succeeded' | 'failed'
-  const [unifiedError, setUnifiedError] = useState(null);
-
-  const [directionalData, setDirectionalData] = useState(null);
-  const [directionalStatus, setDirectionalStatus] = useState('idle'); // 'idle' | 'loading' | 'succeeded' | 'failed'
-  const [directionalError, setDirectionalError] = useState(null);
+export const useECMData = (selectedCommodity) => {
+  const dispatch = useDispatch();
+  const unifiedData = useSelector(selectUnifiedData);
+  const directionalData = useSelector(selectDirectionalData);
+  const loading = useSelector(selectLoadingStatus);
+  const error = useSelector(selectError);
+  const metrics = useSelector(selectECMMetrics);
 
   const fetchInProgress = useRef(false);
+  const initialFetch = useRef(false);
 
-  /**
-   * Fetches JSON data from a given URL.
-   * Replaces 'NaN' strings with null to ensure JSON validity.
-   *
-   * @param {string} url - The URL to fetch data from.
-   * @returns {Promise<Object>} - The parsed JSON data.
-   */
-  const fetchData = useCallback(async (url) => {
-    const response = await fetch(url, {
-      headers: { Accept: 'application/json' },
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const text = await response.text();
-    return JSON.parse(text.replace(/NaN/g, 'null'));
-  }, []);
-
-  /**
-   * Processes unified ECM data by extracting necessary fields,
-   * including alpha, beta, and gamma coefficients.
-   *
-   * @param {Object} data - The raw ECM analysis data.
-   * @returns {Array<Object>} - The processed unified ECM data.
-   */
-  const processUnifiedData = useCallback((data) => {
-    return data.ecm_analysis.map((item) => ({
-      ...item,
-      diagnostics: {
-        Variable_1: item.diagnostics?.Variable_1 || 'N/A',
-        Variable_2: item.diagnostics?.Variable_2 || 'N/A',
-      },
-      irf: Array.isArray(item.irf?.impulse_response?.irf) ? item.irf.impulse_response.irf : [],
-      granger_causality: item.granger_causality || 'N/A',
-      spatial_autocorrelation: item.spatial_autocorrelation
-        ? {
-            Variable_1: {
-              Moran_I: item.spatial_autocorrelation.Variable_1?.Moran_I || null,
-              Moran_p_value: item.spatial_autocorrelation.Variable_1?.Moran_p_value || null,
-            },
-            Variable_2: {
-              Moran_I: item.spatial_autocorrelation.Variable_2?.Moran_I || null,
-              Moran_p_value: item.spatial_autocorrelation.Variable_2?.Moran_p_value || null,
-            },
-          }
-        : null,
-      residuals: Array.isArray(item.residuals) ? item.residuals : [],
-      fittedValues: Array.isArray(item.fittedValues) ? item.fittedValues : [],
-      alpha: item.alpha !== undefined ? item.alpha : null,
-      beta: item.beta !== undefined ? item.beta : null,
-      gamma: item.gamma !== undefined ? item.gamma : null,
-    }));
-  }, []);
-
-  /**
-   * Processes directional ECM data by extracting necessary fields,
-   * including alpha, beta, and gamma coefficients.
-   *
-   * @param {Array<Object>} data - The raw directional ECM data.
-   * @returns {Array<Object>} - The processed directional ECM data.
-   */
-  const processDirectionalData = useCallback((data) => {
-    return data.map((item) => ({
-      ...item,
-      diagnostics: {
-        Variable_1: item.diagnostics?.Variable_1 || 'N/A',
-        Variable_2: item.diagnostics?.Variable_2 || 'N/A',
-      },
-      irf: Array.isArray(item.irf?.impulse_response?.irf) ? item.irf.impulse_response.irf : [],
-      granger_causality: item.granger_causality || 'N/A',
-      spatial_autocorrelation: item.spatial_autocorrelation
-        ? {
-            Variable_1: {
-              Moran_I: item.spatial_autocorrelation.Variable_1?.Moran_I || null,
-              Moran_p_value: item.spatial_autocorrelation.Variable_1?.Moran_p_value || null,
-            },
-            Variable_2: {
-              Moran_I: item.spatial_autocorrelation.Variable_2?.Moran_I || null,
-              Moran_p_value: item.spatial_autocorrelation.Variable_2?.Moran_p_value || null,
-            },
-          }
-        : null,
-      residuals: Array.isArray(item.residuals) ? item.residuals : [],
-      fittedValues: Array.isArray(item.fittedValues) ? item.fittedValues : [],
-      alpha: item.alpha !== undefined ? item.alpha : null,
-      beta: item.beta !== undefined ? item.beta : null,
-      gamma: item.gamma !== undefined ? item.gamma : null,
-    }));
-  }, []);
-
-  /**
-   * useEffect to fetch ECM data on component mount.
-   * Ensures that data fetching happens only once at a time.
-   */
+  // Set selected commodity in Redux state
   useEffect(() => {
-    if (fetchInProgress.current) return;
+    if (selectedCommodity) {
+      dispatch(setSelectedCommodity(selectedCommodity));
+    }
+  }, [selectedCommodity, dispatch]);
+
+  // Handle initial data fetch
+  useEffect(() => {
+    if (fetchInProgress.current || initialFetch.current || !selectedCommodity) return;
 
     const fetchAllData = async () => {
       fetchInProgress.current = true;
-      setUnifiedStatus('loading');
-      setDirectionalStatus('loading');
-
       try {
-        const unifiedPath = getDataPath('ecm/ecm_analysis_results.json');
-        const northToSouthPath = getDataPath('ecm/ecm_results_north_to_south.json');
-        const southToNorthPath = getDataPath('ecm/ecm_results_south_to_north.json');
-
-        const [unifiedJsonData, northToSouthData, southToNorthData] = await Promise.all([
-          fetchData(unifiedPath),
-          fetchData(northToSouthPath),
-          fetchData(southToNorthPath),
-        ]);
-
-        // Process unified data to include alpha, beta, gamma
-        const processedUnifiedData = processUnifiedData(unifiedJsonData);
-        setUnifiedData(processedUnifiedData);
-        setUnifiedStatus('succeeded');
-
-        // Process directional data to include alpha, beta, gamma
-        const processedDirectionalData = {
-          northToSouth: processDirectionalData(northToSouthData),
-          southToNorth: processDirectionalData(southToNorthData),
-        };
-        setDirectionalData(processedDirectionalData);
-        setDirectionalStatus('succeeded');
+        await dispatch(fetchECMData({ commodity: selectedCommodity })).unwrap();
+        initialFetch.current = true;
       } catch (err) {
         console.error('Error fetching ECM data:', err);
-        setUnifiedError(err.message);
-        setDirectionalError(err.message);
-        setUnifiedStatus('failed');
-        setDirectionalStatus('failed');
       } finally {
         fetchInProgress.current = false;
       }
     };
 
     fetchAllData();
-  }, [fetchData, processUnifiedData, processDirectionalData]);
+  }, [dispatch, selectedCommodity]);
+
+  // Filter and process data
+  const filteredData = useMemo(() => {
+    if (!selectedCommodity) return null;
+
+    const commodityLower = selectedCommodity.toLowerCase();
+
+    const unifiedFiltered = unifiedData.filter(item => 
+      item.commodity?.toLowerCase() === commodityLower
+    );
+
+    const northToSouthFiltered = directionalData.northToSouth.filter(item => 
+      item.commodity?.toLowerCase() === commodityLower
+    );
+
+    const southToNorthFiltered = directionalData.southToNorth.filter(item => 
+      item.commodity?.toLowerCase() === commodityLower
+    );
+
+    return {
+      unified: unifiedFiltered[0] || null,
+      directional: {
+        northToSouth: northToSouthFiltered[0] || null,
+        southToNorth: southToNorthFiltered[0] || null
+      }
+    };
+  }, [selectedCommodity, unifiedData, directionalData]);
+
+  const loadingStatus = !initialFetch.current ? 'idle' : loading ? 'loading' : error ? 'failed' : 'succeeded';
 
   return {
-    unifiedData,
-    unifiedStatus,
-    unifiedError,
-    directionalData,
-    directionalStatus,
-    directionalError,
+    // Return single matching records instead of arrays
+    unifiedData: filteredData?.unified || null,
+    unifiedStatus: loadingStatus,
+    unifiedError: error,
+    directionalData: filteredData?.directional || { northToSouth: null, southToNorth: null },
+    directionalStatus: loadingStatus,
+    directionalError: error,
+    metrics: selectedCommodity ? metrics : null,
+    isLoading: loading,
+    isInitialized: initialFetch.current
   };
 };
 
@@ -381,9 +289,9 @@ export const useData = () => {
     loading: loading || spatialData.loading, 
     error: error || spatialData.error 
   };
- };
+};
 
- export const useRegressionAnalysis = (selectedCommodity) => {
+export const useRegressionAnalysis = (selectedCommodity) => {
   const dispatch = useDispatch();
   const regressionData = useSelector(state => state.spatial.data.regressionAnalysis) || DEFAULT_REGRESSION_DATA;
   const isLoading = useSelector(state => state.spatial.status.regressionLoading);
@@ -425,5 +333,4 @@ export const useData = () => {
       getSpatialStatistics
     }
   };
- };
-
+};

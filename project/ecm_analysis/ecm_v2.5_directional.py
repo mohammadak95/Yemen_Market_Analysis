@@ -590,11 +590,11 @@ def save_results(ecm_results, residuals_storage, direction):
         residuals_converted = {commodity: v.tolist() for commodity, v in residuals_storage.items()}
         
         # Define file paths
-        ecm_file = dirs['results_dir'] / f"ecm_results_{direction.replace('-', '_')}.json"
-        residuals_file = dirs['results_dir'] / f"residuals_{direction.replace('-', '_')}.json"
+        results_dir = dirs['results_dir'] / "ecm"
+        results_dir.mkdir(parents=True, exist_ok=True)
         
-        # Ensure the results directory exists
-        ecm_file.parent.mkdir(parents=True, exist_ok=True)
+        ecm_file = results_dir / f"ecm_results_{direction.replace('-', '_')}.json"
+        residuals_file = results_dir / f"ecm_residuals_{direction.replace('-', '_')}.json"
         
         # Save ECM results
         with open(ecm_file, 'w') as f:
