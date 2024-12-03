@@ -1,8 +1,7 @@
 // src/components/analysis/ecm/ECMAnalysis.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { useSelector, useDispatch } from 'react-redux';
 import {
   Box,
   Button,
@@ -13,31 +12,30 @@ import {
   Alert,
   AlertTitle,
   Typography,
-  Chip,
+  Snackbar
 } from '@mui/material';
-import { Download as DownloadIcon } from '@mui/icons-material';
+import { Download, Info } from '@mui/icons-material';
 import { saveAs } from 'file-saver';
 import { jsonToCsv } from '../../../utils/appUtils';
 import { useTechnicalHelp } from '@/hooks';
-import {useECMData} from '../../../hooks';
-import { selectGeoJSON, fetchAllSpatialData } from '../../../slices/spatialSlice';
+import { useECMData } from '../../../hooks/dataHooks';
 import AnalysisContainer from '../../common/AnalysisContainer';
-import ECMResultsEnhanced from './ECMResultsEnhanced';
 import { analysisStyles } from '../../../styles/analysisStyles';
+
+// Lazy load enhanced results component
+const ECMResultsEnhanced = React.lazy(() => import('./ECMResultsEnhanced'));
 
 const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
   const styles = analysisStyles(theme);
   const isMobile = windowWidth < theme.breakpoints.values.sm;
-  const dispatch = useDispatch();
 
   // State management
   const [analysisType, setAnalysisType] = useState('unified');
   const [direction, setDirection] = useState('northToSouth');
   const [selectedData, setSelectedData] = useState(null);
-
-  // Redux selectors
-  const geoJSON = useSelector(selectGeoJSON);
+  const [error, setError] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Custom hooks
   const {
@@ -53,88 +51,65 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   // Determine loading and error states
   const loading = unifiedStatus === 'loading' || directionalStatus === 'loading';
-  const error = unifiedError || directionalError;
+  const errorMessage = unifiedError || directionalError;
 
-  // Initialize spatial data when component mounts
-  useEffect(() => {
-    dispatch(fetchAllSpatialData({ commodity: selectedCommodity }));
-  }, [dispatch, selectedCommodity]);
+  // Memoized data processing
+  const processedData = useMemo(() => {
+    if (loading || !selectedCommodity) return null;
 
-  // Update selected data when analysis type, direction, or selected commodity changes
-  useEffect(() => {
-    if (loading || !geoJSON) return;
-
-    setSelectedData(null);
     try {
       if (analysisType === 'unified' && unifiedStatus === 'succeeded' && unifiedData) {
-        const foundData = unifiedData.find(
+        return unifiedData.find(
           (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase()
         );
-        if (foundData) {
-          // Merge GeoJSON with the found data
-          setSelectedData({
-            ...foundData,
-            geoJson: geoJSON // Add GeoJSON from Redux store
-          });
-        } else {
-          setSelectedData(null);
-        }
-      } else if (
-        analysisType === 'directional' &&
-        directionalStatus === 'succeeded' &&
-        directionalData
-      ) {
+      } else if (analysisType === 'directional' && directionalStatus === 'succeeded' && directionalData) {
         const directionKey = direction === 'northToSouth' ? 'northToSouth' : 'southToNorth';
         const directionData = directionalData[directionKey];
-        if (directionData) {
-          const foundData = directionData.find(
-            (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase()
-          );
-          if (foundData) {
-            // Merge GeoJSON with the found data
-            setSelectedData({
-              ...foundData,
-              geoJson: geoJSON // Add GeoJSON from Redux store
-            });
-          } else {
-            setSelectedData(null);
-          }
-        } else {
-          setSelectedData(null);
-        }
+        return directionData?.find(
+          (item) => item.commodity.toLowerCase() === selectedCommodity.toLowerCase()
+        );
       }
     } catch (err) {
-      console.error('Error updating selected data:', err);
+      console.error('Error processing data:', err);
+      setError(`Error processing ECM data: ${err.message}`);
     }
-  }, [
-    analysisType,
-    direction,
-    selectedCommodity,
-    unifiedData,
-    unifiedStatus,
-    directionalData,
-    directionalStatus,
-    loading,
-    geoJSON, // Add geoJSON as dependency
-  ]);
+    return null;
+  }, [analysisType, direction, selectedCommodity, unifiedData, directionalData, unifiedStatus, directionalStatus, loading]);
+
+  // Update selected data when processed data changes
+  useEffect(() => {
+    setSelectedData(processedData);
+  }, [processedData]);
+
+  // Handle API errors
+  useEffect(() => {
+    if (errorMessage) {
+      setError(errorMessage);
+      setSnackbar({
+        open: true,
+        message: `Error: ${errorMessage}`,
+        severity: 'error'
+      });
+    }
+  }, [errorMessage]);
 
   // Handlers
-  const handleAnalysisTypeChange = (event, newAnalysisType) => {
+  const handleAnalysisTypeChange = useCallback((event, newAnalysisType) => {
     if (newAnalysisType) {
       setAnalysisType(newAnalysisType);
       if (newAnalysisType === 'unified') {
         setDirection('northToSouth');
       }
     }
-  };
+  }, []);
 
-  const handleDirectionChange = (event, newDirection) => {
+  const handleDirectionChange = useCallback((event, newDirection) => {
     if (newDirection) {
       setDirection(newDirection);
     }
-  };
+  }, []);
 
-  const handleDownloadCsv = () => {
+  const handleDownloadCsv = useCallback(() => {
     if (!selectedData) return;
 
     try {
@@ -148,8 +123,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
           alpha: selectedData.alpha,
           beta: selectedData.beta,
           gamma: selectedData.gamma,
-          moranI: selectedData.spatial_autocorrelation?.Variable_1?.Moran_I,
-          moranPValue: selectedData.spatial_autocorrelation?.Variable_1?.Moran_p_value,
           marketIntegrationIndex: Math.abs(selectedData.beta * selectedData.alpha),
           jarqueBeraPValue: selectedData.diagnostics?.Variable_1?.jarque_bera_pvalue,
           durbinWatsonStat: selectedData.diagnostics?.Variable_1?.durbin_watson_stat,
@@ -162,10 +135,25 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
         analysisType === 'directional' ? direction : ''
       }_${new Date().toISOString().split('T')[0]}.csv`;
       saveAs(blob, filename);
+      
+      setSnackbar({
+        open: true,
+        message: 'Data downloaded successfully',
+        severity: 'success'
+      });
     } catch (err) {
       console.error('Error downloading CSV:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to download data',
+        severity: 'error'
+      });
     }
-  };
+  }, [selectedData, selectedCommodity, analysisType, direction]);
+
+  const handleSnackbarClose = useCallback(() => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  }, []);
 
   // Analysis controls component
   const analysisControls = (
@@ -177,8 +165,12 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
         aria-label="Analysis Type"
         sx={styles.toggleGroup}
       >
-        <ToggleButton value="unified">{'Unified ECM'}</ToggleButton>
-        <ToggleButton value="directional">{'Directional ECM'}</ToggleButton>
+        <ToggleButton value="unified" aria-label="Unified ECM">
+          Unified ECM
+        </ToggleButton>
+        <ToggleButton value="directional" aria-label="Directional ECM">
+          Directional ECM
+        </ToggleButton>
       </ToggleButtonGroup>
 
       {analysisType === 'directional' && (
@@ -189,35 +181,32 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
           aria-label="Direction"
           sx={styles.toggleGroup}
         >
-          <ToggleButton value="northToSouth">{'North to South'}</ToggleButton>
-          <ToggleButton value="southToNorth">{'South to North'}</ToggleButton>
+          <ToggleButton value="northToSouth" aria-label="North to South">
+            North to South
+          </ToggleButton>
+          <ToggleButton value="southToNorth" aria-label="South to North">
+            South to North
+          </ToggleButton>
         </ToggleButtonGroup>
       )}
 
       <Button
         variant="contained"
         onClick={handleDownloadCsv}
-        startIcon={<DownloadIcon />}
+        startIcon={<Download />}
         sx={styles.downloadButton}
         disabled={!selectedData || loading}
+        aria-label="Download CSV"
       >
-        {'Download CSV'}
+        Download CSV
       </Button>
     </Box>
   );
 
-  // Key model quality indicator
-  const modelQualityChip =
-    selectedData?.diagnostics?.Variable_1?.jarque_bera_pvalue > 0.05
-      ? { label: 'Model Quality: Good', color: 'success' }
-      : { label: 'Model Quality: Check Residuals', color: 'warning' };
-
   return (
     <AnalysisContainer
       title={`ECM Analysis: ${selectedCommodity}`}
-      subtitle={`${
-        analysisType === 'unified' ? 'Unified' : 'Directional'
-      } Error Correction Model Analysis`}
+      subtitle={`${analysisType === 'unified' ? 'Unified' : 'Directional'} Error Correction Model Analysis`}
       infoTooltip={getTechnicalTooltip('main')}
       loading={loading}
       error={error}
@@ -231,52 +220,31 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
         </Box>
       ) : error ? (
         <Alert severity="error">
-          <AlertTitle>{'Error'}</AlertTitle>
+          <AlertTitle>Error</AlertTitle>
           {error}
         </Alert>
       ) : selectedData ? (
-        <>
-          <Box sx={styles.executiveSummary}>
-            <Typography variant="h5" gutterBottom>
-              {' '}
-            </Typography>
-            <Typography variant="body1">
-              {`The ECM analysis for ${selectedCommodity} indicates that there is ${
-                selectedData.beta > 0.8
-                  ? 'a strong'
-                  : selectedData.beta > 0.3
-                  ? 'a moderate'
-                  : 'a weak'
-              } long-run relationship between markets, with an adjustment speed of ${
-                Math.abs(selectedData.alpha) > 0.5
-                  ? 'rapid convergence to equilibrium.'
-                  : 'slow convergence to equilibrium.'
-              }`}
-            </Typography>
-            <Chip 
-              label={modelQualityChip.label} 
-              color={modelQualityChip.color} 
-              sx={{ mt: 2 }} 
-            />
-          </Box>
-
+        <React.Suspense fallback={<CircularProgress />}>
           <ECMResultsEnhanced
             selectedData={selectedData}
             isMobile={isMobile}
             analysisType={analysisType}
             direction={direction}
           />
-        </>
+        </React.Suspense>
       ) : (
         <Alert severity="info">
-          <AlertTitle>{'No Data Available'}</AlertTitle>
-          {`No ECM data available for ${selectedCommodity} in ${
-            analysisType === 'unified'
-              ? 'Unified Analysis'
-              : `Directional Analysis (${direction})`
-          }.`}
+          <AlertTitle>No Data Available</AlertTitle>
+          Select a commodity and analysis type to view ECM results
         </Alert>
       )}
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        message={snackbar.message}
+      />
     </AnalysisContainer>
   );
 };
@@ -286,4 +254,4 @@ ECMAnalysis.propTypes = {
   windowWidth: PropTypes.number.isRequired,
 };
 
-export default ECMAnalysis;
+export default React.memo(ECMAnalysis);
