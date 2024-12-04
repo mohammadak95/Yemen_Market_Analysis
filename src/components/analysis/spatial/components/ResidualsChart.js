@@ -3,206 +3,204 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
-  LineChart,
+  Box,
+  Typography,
+  Tooltip,
+  IconButton,
+  useTheme
+} from '@mui/material';
+import { Info as InfoIcon } from '@mui/icons-material';
+import {
+  ResponsiveContainer,
+  ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
-  ResponsiveContainer,
-  ReferenceLine,
-  Label
+  Brush
 } from 'recharts';
-import { useTheme, useMediaQuery } from '@mui/material';
-import _ from 'lodash';
-import { formatNumber } from '../utils/mapUtils';
 
 const ResidualsChart = ({ residuals, isMobile }) => {
   const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Process and format residuals data
-  const { chartData, yAxisDomain, stats } = useMemo(() => {
-    // Group residuals by region
-    const groupedData = _.groupBy(residuals, 'region_id');
+  // Process residuals data for visualization
+  const chartData = useMemo(() => {
+    if (!residuals?.length) return [];
 
-    // Get unique dates across all regions
-    const dates = _.uniq(residuals.map(r => r.date)).sort();
-
-    // Create data points for each date with all regions' residuals
-    const formattedData = dates.map(date => {
-      const dataPoint = { date: new Date(date) };
-      Object.keys(groupedData).forEach(region => {
-        const residual = groupedData[region].find(r => r.date === date);
-        if (residual) {
-          dataPoint[region] = residual.residual;
-          dataPoint[`${region}_raw`] = residual.residual;
-        }
-      });
-      return dataPoint;
-    });
-
-    // Calculate statistics and domain
-    const allResiduals = residuals.map(r => r.residual);
-    const mean = _.mean(allResiduals);
-    const stdDev = Math.sqrt(_.sum(allResiduals.map(r => Math.pow(r - mean, 2))) / allResiduals.length);
-    const maxAbs = Math.max(Math.abs(_.min(allResiduals)), Math.abs(_.max(allResiduals)));
-    const domainPadding = maxAbs * 0.1; // Add 10% padding
-
-    // Ensure domain is symmetric around zero for better visualization
-    const domain = [-maxAbs - domainPadding, maxAbs + domainPadding];
-
-    return {
-      chartData: formattedData,
-      yAxisDomain: domain,
-      stats: {
-        mean,
-        stdDev,
-        upperBound: mean + 2 * stdDev,
-        lowerBound: mean - 2 * stdDev
+    // Group residuals by date
+    const groupedData = residuals.reduce((acc, curr) => {
+      const date = curr.date.split('T')[0];
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          residuals: [],
+          mean: 0,
+          upper: 0,
+          lower: 0
+        };
       }
-    };
+      acc[date].residuals.push(curr.residual);
+      return acc;
+    }, {});
+
+    // Calculate statistics for each date
+    return Object.values(groupedData).map(day => {
+      const sorted = [...day.residuals].sort((a, b) => a - b);
+      const mean = day.residuals.reduce((a, b) => a + b, 0) / day.residuals.length;
+      const q1 = sorted[Math.floor(sorted.length * 0.25)];
+      const q3 = sorted[Math.floor(sorted.length * 0.75)];
+      
+      return {
+        date: new Date(day.date).toLocaleDateString(),
+        mean,
+        upper: q3,
+        lower: q1,
+        range: q3 - q1
+      };
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
   }, [residuals]);
 
-  // Generate colors for regions
-  const getRegionColor = (index) => {
-    const colors = [
-      theme.palette.primary.main,
-      theme.palette.secondary.main,
-      theme.palette.error.main,
-      theme.palette.warning.main,
-      theme.palette.info.main,
-      theme.palette.success.main,
-      theme.palette.primary.light,
-      theme.palette.secondary.light
-    ];
-    return colors[index % colors.length];
+  // Calculate overall statistics for interpretation
+  const statistics = useMemo(() => {
+    if (!chartData.length) return null;
+
+    const ranges = chartData.map(d => d.range);
+    const meanRange = ranges.reduce((a, b) => a + b, 0) / ranges.length;
+    const maxRange = Math.max(...ranges);
+    
+    return {
+      meanRange,
+      maxRange,
+      volatility: meanRange > 2 ? 'high' : meanRange > 1 ? 'moderate' : 'low',
+      trend: chartData[chartData.length - 1].mean > chartData[0].mean ? 'increasing' : 'decreasing'
+    };
+  }, [chartData]);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+
+    return (
+      <Box sx={{
+        bgcolor: 'background.paper',
+        p: 1.5,
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 1,
+        boxShadow: theme.shadows[1],
+      }}>
+        <Typography variant="subtitle2" gutterBottom>
+          {label}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Mean Deviation: {payload[0].value.toFixed(4)}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Range: {payload[3].value.toFixed(4)}
+        </Typography>
+        <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
+          {payload[3].value > 2 ? 'High price dispersion' :
+           payload[3].value > 1 ? 'Moderate price dispersion' :
+           'Low price dispersion'}
+        </Typography>
+      </Box>
+    );
   };
 
-  // Get unique regions
-  const regions = useMemo(() => 
-    _.uniq(residuals.map(r => r.region_id)),
-    [residuals]
-  );
-
   if (!chartData.length) {
-    return null;
+    return (
+      <Typography variant="body2" color="text.secondary">
+        No residuals data available for visualization.
+      </Typography>
+    );
   }
 
-  const fontSize = isSmallScreen ? 10 : 12;
-
   return (
-    <ResponsiveContainer width="100%" height={400}>
-      <LineChart
-        data={chartData}
-        margin={{
-          top: 10,
-          right: isSmallScreen ? 10 : 30,
-          left: isSmallScreen ? 0 : 10,
-          bottom: 5,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis
-          dataKey="date"
-          type="number"
-          scale="time"
-          domain={['auto', 'auto']}
-          tickFormatter={(date) => new Date(date).toLocaleDateString()}
-          tick={{ fontSize }}
-          dy={5}
-        />
-        <YAxis
-          domain={yAxisDomain}
-          tickFormatter={(value) => formatNumber(value)}
-          tick={{ fontSize }}
-          dx={-5}
-        >
-          <Label
-            value="Residual"
-            angle={-90}
-            position="insideLeft"
-            offset={0}
-            style={{ fontSize, textAnchor: 'middle' }}
+    <Box sx={{ width: '100%', height: '100%' }}>
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Price Deviation Patterns
+          <Tooltip title="Analysis of systematic price variations across markets">
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Typography>
+        {statistics && (
+          <Typography variant="body2" color="text.secondary">
+            {`Markets show ${statistics.volatility} price dispersion with ${statistics.trend} deviation trend`}
+          </Typography>
+        )}
+      </Box>
+
+      <ResponsiveContainer width="100%" height={isMobile ? "80%" : "85%"}>
+        <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+          <XAxis 
+            dataKey="date"
+            tick={{ fill: theme.palette.text.primary }}
+            label={{ 
+              value: 'Date',
+              position: 'insideBottom',
+              offset: -10,
+              fill: theme.palette.text.primary
+            }}
           />
-        </YAxis>
-        
-        <Tooltip
-          labelFormatter={(date) => new Date(date).toLocaleDateString()}
-          formatter={(value, name) => [
-            formatNumber(value),
-            name.replace('_raw', '')
-          ]}
-          contentStyle={{
-            backgroundColor: theme.palette.background.paper,
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 4,
-            fontSize
-          }}
-        />
-        
-        <Legend 
-          verticalAlign="bottom"
-          height={36}
-          wrapperStyle={{
-            fontSize,
-            paddingTop: '10px'
-          }}
-        />
+          <YAxis
+            tick={{ fill: theme.palette.text.primary }}
+            label={{ 
+              value: 'Price Deviation',
+              angle: -90,
+              position: 'insideLeft',
+              offset: 10,
+              fill: theme.palette.text.primary
+            }}
+          />
+          <RechartsTooltip content={<CustomTooltip />} />
+          <Legend verticalAlign="top" height={36} />
 
-        {/* Reference Lines */}
-        <ReferenceLine 
-          y={0} 
-          stroke={theme.palette.text.secondary} 
-          strokeDasharray="3 3" 
-        />
-        <ReferenceLine 
-          y={stats.mean} 
-          stroke={theme.palette.info.main} 
-          strokeDasharray="3 3"
-          label={{ 
-            value: 'Mean',
-            position: 'insideTopLeft',
-            fontSize
-          }} 
-        />
-        <ReferenceLine 
-          y={stats.upperBound} 
-          stroke={theme.palette.warning.main} 
-          strokeDasharray="3 3"
-          label={{ 
-            value: '+2σ',
-            position: 'insideTopLeft',
-            fontSize
-          }} 
-        />
-        <ReferenceLine 
-          y={stats.lowerBound} 
-          stroke={theme.palette.warning.main} 
-          strokeDasharray="3 3"
-          label={{ 
-            value: '-2σ',
-            position: 'insideBottomLeft',
-            fontSize
-          }} 
-        />
-
-        {regions.map((region, index) => (
-          <Line
-            key={region}
+          <Area
             type="monotone"
-            dataKey={region}
-            name={region}
-            stroke={getRegionColor(index)}
-            dot={false}
-            strokeWidth={1.5}
-            connectNulls
-            activeDot={{ r: 4 }}
+            dataKey="upper"
+            stroke="none"
+            fill={theme.palette.primary.light}
+            fillOpacity={0.2}
+            name="Upper Quartile"
           />
-        ))}
-      </LineChart>
-    </ResponsiveContainer>
+          <Area
+            type="monotone"
+            dataKey="lower"
+            stroke="none"
+            fill={theme.palette.primary.light}
+            fillOpacity={0.2}
+            name="Lower Quartile"
+          />
+          <Line
+            type="monotone"
+            dataKey="mean"
+            stroke={theme.palette.primary.main}
+            strokeWidth={2}
+            dot={false}
+            name="Mean Deviation"
+          />
+          <Line
+            type="monotone"
+            dataKey="range"
+            stroke={theme.palette.secondary.main}
+            strokeWidth={2}
+            dot={false}
+            name="Price Dispersion"
+          />
+          <Brush 
+            dataKey="date"
+            height={30}
+            stroke={theme.palette.primary.main}
+            fill={theme.palette.background.paper}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </Box>
   );
 };
 
