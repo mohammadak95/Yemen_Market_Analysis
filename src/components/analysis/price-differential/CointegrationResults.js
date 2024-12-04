@@ -1,4 +1,4 @@
-// src/components/analysis/price-differential/CointegrationAnalysis.js
+// src/components/analysis/price-differential/CointegrationResults.js
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -22,27 +22,32 @@ import {
   Warning as WarningIcon
 } from '@mui/icons-material';
 
-const CointegrationAnalysis = ({ cointegrationData }) => {
+const CointegrationResults = ({ data }) => {
   const theme = useTheme();
 
-  if (!cointegrationData) return null;
+  if (!data) return null;
 
-  const isSignificant = cointegrationData.p_value < 0.05;
+  const isSignificant = data.p_value < 0.05;
 
   return (
     <Paper sx={{ p: 2, height: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        mb: 2 
+      }}>
         <Typography variant="h6">
-          Market Integration Analysis
-          <Tooltip title="Long-run equilibrium relationship">
-            <IconButton size="small">
+          Market Cointegration
+          <Tooltip title="Long-run equilibrium relationship analysis">
+            <IconButton size="small" sx={{ ml: 1 }}>
               <InfoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Typography>
         <Chip
           icon={isSignificant ? <CheckCircleIcon /> : <WarningIcon />}
-          label={isSignificant ? 'Integrated' : 'Not Integrated'}
+          label={isSignificant ? 'Cointegrated' : 'Not Cointegrated'}
           color={isSignificant ? 'success' : 'warning'}
           variant="outlined"
         />
@@ -62,11 +67,11 @@ const CointegrationAnalysis = ({ cointegrationData }) => {
               <TableBody>
                 <TableRow>
                   <TableCell>Test Statistic</TableCell>
-                  <TableCell align="right">{cointegrationData.test_statistic.toFixed(4)}</TableCell>
+                  <TableCell align="right">{data.test_statistic.toFixed(4)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>P-Value</TableCell>
-                  <TableCell align="right">{cointegrationData.p_value.toFixed(4)}</TableCell>
+                  <TableCell align="right">{data.p_value.toFixed(4)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -82,14 +87,14 @@ const CointegrationAnalysis = ({ cointegrationData }) => {
             <Typography variant="subtitle2" gutterBottom>
               Critical Values
               <Tooltip title="Threshold values for significance testing">
-                <IconButton size="small">
+                <IconButton size="small" sx={{ ml: 0.5 }}>
                   <InfoIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             </Typography>
             <Table size="small">
               <TableBody>
-                {Object.entries(cointegrationData.critical_values).map(([level, value]) => (
+                {Object.entries(data.critical_values).map(([level, value]) => (
                   <TableRow key={level}>
                     <TableCell>{level}% Level</TableCell>
                     <TableCell align="right">{value.toFixed(4)}</TableCell>
@@ -104,12 +109,12 @@ const CointegrationAnalysis = ({ cointegrationData }) => {
   );
 };
 
-CointegrationAnalysis.propTypes = {
-  cointegrationData: PropTypes.shape({
+CointegrationResults.propTypes = {
+  data: PropTypes.shape({
     test_statistic: PropTypes.number.isRequired,
     p_value: PropTypes.number.isRequired,
     critical_values: PropTypes.objectOf(PropTypes.number).isRequired
   })
 };
 
-export default React.memo(CointegrationAnalysis);
+export default React.memo(CointegrationResults);

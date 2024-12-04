@@ -1,6 +1,6 @@
-//src/components/analysis/price-differential/PriceDifferentialFramework.js
+// src/components/analysis/price-differential/PriceDifferentialFramework.js
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
@@ -10,19 +10,24 @@ import {
   AccordionSummary,
   AccordionDetails,
   Tooltip,
-  IconButton
+  IconButton,
 } from '@mui/material';
 import { ExpandMore, Info } from '@mui/icons-material';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
-const PriceDifferentialFramework = ({ baseMarket, comparisonMarket, regressionResults, diagnostics }) => {
-  const [frameworkExpanded, setFrameworkExpanded] = useState(false);
-
+const PriceDifferentialFramework = ({ 
+  baseMarket, 
+  comparisonMarket, 
+  regressionResults, 
+  diagnostics,
+  expanded,
+  onExpandedChange 
+}) => {
   return (
     <Accordion 
-      expanded={frameworkExpanded} 
-      onChange={() => setFrameworkExpanded(!frameworkExpanded)}
+      expanded={expanded} 
+      onChange={onExpandedChange}
       sx={{ mb: 3 }}
     >
       <AccordionSummary expandIcon={<ExpandMore />}>
@@ -35,20 +40,20 @@ const PriceDifferentialFramework = ({ baseMarket, comparisonMarket, regressionRe
       </AccordionSummary>
       <AccordionDetails>
         <Box sx={{ '& .katex': { fontSize: '1.3em' } }}>
-          {/* Logarithmic Price Differential */}
+          {/* Price Differential Equation */}
           <Typography variant="h6" color="primary" gutterBottom>
-            Logarithmic Price Differential:
+            Price Differential Formula:
           </Typography>
           <Box sx={{ my: 3 }}>
             <BlockMath math={`PD_{ij,t} = \ln(P_{i,t}) - \ln(P_{j,t})`} />
           </Box>
 
-          {/* Time Series Regression */}
+          {/* Regression Model */}
           <Typography variant="h6" color="primary" gutterBottom sx={{ mt: 4 }}>
-            Time Series Regression Model:
+            Regression Model:
           </Typography>
           <Box sx={{ my: 3 }}>
-            <BlockMath math={`PD_{ij,t} = \alpha + \beta t + \gamma CI_{t} + \epsilon_t`} />
+            <BlockMath math={`PD_{ij,t} = \alpha + \beta_1 Distance_{ij} + \beta_2 Conflict_t + \gamma T_t + \epsilon_t`} />
           </Box>
 
           <Grid container spacing={4} sx={{ mt: 2 }}>
@@ -58,7 +63,7 @@ const PriceDifferentialFramework = ({ baseMarket, comparisonMarket, regressionRe
                   α (Alpha) = {regressionResults?.intercept?.toFixed(4) || 'N/A'}
                 </Typography>
                 <Typography variant="body2">
-                  Base price differential between markets, representing structural differences
+                  Base price differential between markets
                 </Typography>
               </Paper>
             </Grid>
@@ -66,10 +71,10 @@ const PriceDifferentialFramework = ({ baseMarket, comparisonMarket, regressionRe
             <Grid item xs={12} md={4}>
               <Paper elevation={2} sx={{ p: 2, height: '100%', backgroundColor: 'background.default' }}>
                 <Typography variant="subtitle1" color="primary" gutterBottom>
-                  β (Beta) = {regressionResults?.slope?.toFixed(4) || 'N/A'}
+                  β₁ (Distance Effect) = {regressionResults?.beta_distance?.toFixed(4) || 'N/A'}
                 </Typography>
                 <Typography variant="body2">
-                  Time trend coefficient, indicating systematic changes in market integration
+                  Impact of geographical distance on price differences
                 </Typography>
               </Paper>
             </Grid>
@@ -77,10 +82,10 @@ const PriceDifferentialFramework = ({ baseMarket, comparisonMarket, regressionRe
             <Grid item xs={12} md={4}>
               <Paper elevation={2} sx={{ p: 2, height: '100%', backgroundColor: 'background.default' }}>
                 <Typography variant="subtitle1" color="primary" gutterBottom>
-                  Distance Effect
+                  β₂ (Conflict Effect) = {regressionResults?.beta_conflict?.toFixed(4) || 'N/A'}
                 </Typography>
                 <Typography variant="body2">
-                  {`${diagnostics?.distance_km?.toFixed(1) || 'N/A'} km between markets`}
+                  Impact of conflict on market integration
                 </Typography>
               </Paper>
             </Grid>
@@ -95,13 +100,13 @@ const PriceDifferentialFramework = ({ baseMarket, comparisonMarket, regressionRe
                 <Typography variant="body2">
                   • <InlineMath math="PD_{ij,t}" />: Price differential between markets i and j at time t<br />
                   • <InlineMath math="P_{i,t}, P_{j,t}" />: Prices in markets i and j at time t<br />
-                  • <InlineMath math="\alpha" />: Base price differential (intercept)
+                  • <InlineMath math="Distance_{ij}" />: Physical distance between markets
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2">
-                  • <InlineMath math="\beta" />: Time trend coefficient<br />
-                  • <InlineMath math="CI_{t}" />: Conflict intensity at time t<br />
+                  • <InlineMath math="Conflict_t" />: Conflict intensity at time t<br />
+                  • <InlineMath math="T_t" />: Time trend<br />
                   • <InlineMath math="\epsilon_t" />: Random error term
                 </Typography>
               </Grid>
@@ -117,14 +122,14 @@ const PriceDifferentialFramework = ({ baseMarket, comparisonMarket, regressionRe
                 <Typography variant="body2">
                   • R-squared: {(regressionResults?.r_squared * 100).toFixed(1)}%<br />
                   • AIC: {regressionResults?.aic?.toFixed(2) || 'N/A'}<br />
-                  • BIC: {regressionResults?.bic?.toFixed(2) || 'N/A'}
+                  • Distance: {diagnostics?.distance_km?.toFixed(1)} km
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2">
-                  • Conflict Correlation: {(diagnostics?.conflict_correlation * 100).toFixed(1)}%<br />
+                  • Conflict Impact: {(diagnostics?.conflict_correlation * 100).toFixed(1)}%<br />
                   • Time Periods: {diagnostics?.common_dates || 'N/A'}<br />
-                  • Statistical Significance: {regressionResults?.p_value < 0.05 ? 'Significant' : 'Not Significant'}
+                  • Significance: {regressionResults?.p_value < 0.05 ? 'Significant' : 'Not Significant'}
                 </Typography>
               </Grid>
             </Grid>
@@ -135,4 +140,4 @@ const PriceDifferentialFramework = ({ baseMarket, comparisonMarket, regressionRe
   );
 };
 
-export default PriceDifferentialFramework;
+export default React.memo(PriceDifferentialFramework);

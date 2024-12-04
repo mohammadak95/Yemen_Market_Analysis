@@ -1,4 +1,4 @@
-// src/components/analysis/price-differential/MarketPairInfo.js
+// src/components/analysis/price-differential/MarketPairMetrics.js
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
@@ -14,22 +14,22 @@ import {
 } from '@mui/material';
 import {
   Info as InfoIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  SwapHoriz as SwapHorizIcon
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 
-const MarketPairInfo = ({ data, baseMarket, comparisonMarket, isMobile }) => {
+const MarketPairMetrics = ({ data, baseMarket, comparisonMarket }) => {
   const theme = useTheme();
-  
+
   const metrics = useMemo(() => {
     const distance = data.diagnostics?.distance_km || 0;
     const conflictCorr = data.diagnostics?.conflict_correlation || 0;
+    const isCointegrated = data.cointegration_results?.p_value < 0.05;
     
     return {
       distance: {
-        value: (distance * 250).toFixed(1), // Converting to actual distance
-        label: 'Market Distance (km)',
+        value: distance.toFixed(1),
+        label: 'Distance (km)',
         status: distance > 500 ? 'warning' : 'success',
         tooltip: 'Physical distance between markets'
       },
@@ -37,24 +37,29 @@ const MarketPairInfo = ({ data, baseMarket, comparisonMarket, isMobile }) => {
         value: (conflictCorr * 100).toFixed(1) + '%',
         label: 'Conflict Correlation',
         status: conflictCorr > 0.5 ? 'warning' : 'success',
-        tooltip: 'Correlation of conflict impacts'
+        tooltip: 'Correlation of conflict impacts between markets'
       },
       integration: {
-        value: data.cointegration_results?.p_value < 0.05 ? 'Strong' : 'Weak',
+        value: isCointegrated ? 'Integrated' : 'Segmented',
         label: 'Market Integration',
-        status: data.cointegration_results?.p_value < 0.05 ? 'success' : 'warning',
-        tooltip: 'Long-term market integration level'
+        status: isCointegrated ? 'success' : 'warning',
+        tooltip: 'Long-term market integration status'
       }
     };
   }, [data]);
 
   return (
-    <Paper sx={{ p: 3, mb: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+    <Paper sx={{ p: 2, mb: 3 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        mb: 2 
+      }}>
         <Typography variant="h6">
           Market Pair Analysis
-          <Tooltip title="Key metrics for market relationship">
-            <IconButton size="small">
+          <Tooltip title="Key metrics for market pair relationship">
+            <IconButton size="small" sx={{ ml: 1 }}>
               <InfoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -79,12 +84,12 @@ const MarketPairInfo = ({ data, baseMarket, comparisonMarket, isMobile }) => {
                 </Tooltip>
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h6">
+                <Typography variant="h6" sx={{ fontWeight: 500 }}>
                   {metric.value}
                 </Typography>
                 <Chip
                   size="small"
-                  icon={metric.status === 'success' ? <TrendingUpIcon /> : <TrendingDownIcon />}
+                  icon={metric.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
                   label={metric.status === 'success' ? 'Good' : 'Warning'}
                   color={metric.status}
                   variant="outlined"
@@ -98,7 +103,7 @@ const MarketPairInfo = ({ data, baseMarket, comparisonMarket, isMobile }) => {
   );
 };
 
-MarketPairInfo.propTypes = {
+MarketPairMetrics.propTypes = {
   data: PropTypes.shape({
     diagnostics: PropTypes.shape({
       distance_km: PropTypes.number,
@@ -109,8 +114,7 @@ MarketPairInfo.propTypes = {
     })
   }).isRequired,
   baseMarket: PropTypes.string.isRequired,
-  comparisonMarket: PropTypes.string.isRequired,
-  isMobile: PropTypes.bool.isRequired
+  comparisonMarket: PropTypes.string.isRequired
 };
 
-export default React.memo(MarketPairInfo);
+export default React.memo(MarketPairMetrics);

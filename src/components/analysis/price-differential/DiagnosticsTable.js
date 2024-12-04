@@ -1,3 +1,5 @@
+// src/components/analysis/price-differential/DiagnosticsTable.js
+
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -9,89 +11,20 @@ import {
   IconButton,
   Alert,
   useTheme,
-  Chip,
+  Chip
 } from '@mui/material';
 import {
   Info as InfoIcon,
   CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 
 const DiagnosticsTable = ({ data, isMobile }) => {
   const theme = useTheme();
 
-  const styles = {
-    container: {
-      p: 3,
-      height: '100%',
-    },
-    header: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      mb: 4,
-    },
-    title: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1,
-      '& .MuiIconButton-root': {
-        ml: 1,
-      },
-    },
-    sectionTitle: {
-      fontSize: '1.25rem',
-      fontWeight: 600,
-      mb: 3,
-    },
-    metricContainer: {
-      p: 3,
-      bgcolor: theme.palette.grey[50],
-      borderRadius: 1,
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    },
-    metricHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1,
-      mb: 2,
-      color: theme.palette.text.secondary,
-    },
-    metricValue: {
-      fontSize: '1.5rem',
-      fontWeight: 500,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2,
-    },
-    statusChip: {
-      height: 28,
-      fontSize: '0.875rem',
-    },
-    alertContainer: {
-      mt: 4,
-      p: 2,
-      borderRadius: 1,
-    },
-  };
-
   if (!data) {
-    return (
-      <Alert severity="info">
-        No diagnostic test results available for this market pair.
-      </Alert>
-    );
+    return <Alert severity="info">No diagnostic data available for this market pair.</Alert>;
   }
-
-  const {
-    common_dates,
-    conflict_correlation,
-    distance_km,
-    model_diagnostics,
-    residual_diagnostics,
-  } = data;
 
   const metrics = useMemo(() => [
     {
@@ -99,15 +32,16 @@ const DiagnosticsTable = ({ data, isMobile }) => {
       metrics: [
         { 
           label: 'Common Trading Days',
-          value: common_dates,
+          value: data.common_dates,
           tooltip: 'Number of days with price data available for both markets',
           format: 'number'
         },
         {
           label: 'Market Distance',
-          value: distance_km,
+          value: data.distance_km * 250, // Converting to actual distance
           tooltip: 'Physical distance between markets in kilometers',
           format: 'distance',
+          threshold: 500,
           unit: 'km'
         },
       ]
@@ -117,15 +51,15 @@ const DiagnosticsTable = ({ data, isMobile }) => {
       metrics: [
         {
           label: 'Conflict Correlation',
-          value: conflict_correlation,
+          value: data.conflict_correlation,
           tooltip: 'Correlation between conflict intensities in both market areas',
-          format: 'decimal',
+          format: 'percentage',
           threshold: 0.5,
-          interpretation: value => value > 0.5 ? 'High correlation' : 'Low correlation'
+          interpretation: value => value > 0.5 ? 'High impact' : 'Low impact'
         },
-        ...(model_diagnostics?.r_squared ? [{
+        ...(data.model_diagnostics?.r_squared ? [{
           label: 'Model R-squared',
-          value: model_diagnostics.r_squared,
+          value: data.model_diagnostics.r_squared,
           tooltip: 'Proportion of variance explained by the model',
           format: 'percentage',
           threshold: 0.7,
@@ -133,41 +67,39 @@ const DiagnosticsTable = ({ data, isMobile }) => {
         }] : []),
       ]
     },
-    ...(residual_diagnostics ? [{
-      section: 'Residual Diagnostics',
+    ...(data.residual_diagnostics ? [{
+      section: 'Model Diagnostics',
       metrics: [
         {
-          label: 'Normality Test p-value',
-          value: residual_diagnostics.normality_test?.p_value,
+          label: 'Normality Test',
+          value: data.residual_diagnostics.normality_test?.p_value,
           tooltip: 'Tests if residuals follow a normal distribution',
-          format: 'decimal',
-          showStatus: true,
+          format: 'p-value',
           threshold: 0.05,
-          interpretation: value => value >= 0.05 ? 'Normal distribution' : 'Non-normal distribution'
+          interpretation: value => value >= 0.05 ? 'Normal' : 'Non-normal'
         },
         {
-          label: 'Heteroskedasticity Test p-value',
-          value: residual_diagnostics.heteroskedasticity_test?.p_value,
+          label: 'Heteroskedasticity',
+          value: data.residual_diagnostics.heteroskedasticity_test?.p_value,
           tooltip: 'Tests for constant variance in residuals',
-          format: 'decimal',
-          showStatus: true,
+          format: 'p-value',
           threshold: 0.05,
           interpretation: value => value >= 0.05 ? 'Homoskedastic' : 'Heteroskedastic'
         },
       ]
     }] : []),
-  ], [common_dates, distance_km, conflict_correlation, model_diagnostics, residual_diagnostics]);
+  ], [data]);
 
   const formatValue = (metric) => {
     if (metric.value === undefined || metric.value === null) return 'N/A';
     
     switch (metric.format) {
-      case 'decimal':
-        return metric.value.toFixed(4);
       case 'percentage':
         return `${(metric.value * 100).toFixed(1)}%`;
       case 'distance':
         return `${metric.value.toFixed(1)} ${metric.unit}`;
+      case 'p-value':
+        return metric.value.toFixed(4);
       case 'number':
         return metric.value.toLocaleString();
       default:
@@ -178,55 +110,32 @@ const DiagnosticsTable = ({ data, isMobile }) => {
   const getMetricStatus = (metric) => {
     if (!metric.threshold || metric.value === undefined || metric.value === null) return null;
     
-    const isGood = metric.format === 'decimal' && metric.showStatus
+    const isGood = metric.format === 'p-value'
       ? metric.value >= metric.threshold
       : metric.value > metric.threshold;
 
     return {
       status: isGood ? 'success' : 'warning',
-      message: metric.interpretation ? metric.interpretation(metric.value) : (isGood ? 'Good' : 'Warning'),
+      message: metric.interpretation ? metric.interpretation(metric.value) : (isGood ? 'Good' : 'Warning')
     };
   };
 
-  const overallStatus = useMemo(() => {
-    if (!residual_diagnostics) return { status: 'info', message: 'Limited diagnostics available' };
-
-    const hasNormalResiduals = residual_diagnostics.normality_test?.p_value >= 0.05;
-    const hasHomoskedasticity = residual_diagnostics.heteroskedasticity_test?.p_value >= 0.05;
-    const hasGoodFit = model_diagnostics?.r_squared > 0.7;
-
-    if (hasNormalResiduals && hasHomoskedasticity && hasGoodFit) {
-      return { status: 'success', message: 'Model assumptions validated' };
-    } else if (!hasNormalResiduals && !hasHomoskedasticity) {
-      return { status: 'warning', message: 'Multiple assumption violations' };
-    } else {
-      return { status: 'warning', message: 'Some assumptions violated' };
-    }
-  }, [residual_diagnostics, model_diagnostics]);
-
   return (
-    <Paper sx={styles.container}>
-      <Box sx={styles.header}>
-        <Box sx={styles.title}>
-          <Typography variant="h5">Market Pair Diagnostics</Typography>
-          <Tooltip title="Comprehensive diagnostics of market pair relationships">
-            <IconButton size="small">
-              <InfoIcon />
+    <Paper sx={{ p: 3, mt: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant="h6">
+          Market Diagnostics
+          <Tooltip title="Comprehensive diagnostics of market relationships">
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-        </Box>
-        <Chip
-          icon={overallStatus.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
-          label={overallStatus.message}
-          color={overallStatus.status}
-          variant="outlined"
-          sx={{ px: 2 }}
-        />
+        </Typography>
       </Box>
 
       {metrics.map((section) => (
         <Box key={section.section} sx={{ mb: 4 }}>
-          <Typography variant="h6" sx={styles.sectionTitle}>
+          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
             {section.section}
           </Typography>
           <Grid container spacing={3}>
@@ -234,24 +143,31 @@ const DiagnosticsTable = ({ data, isMobile }) => {
               const status = getMetricStatus(metric);
               return (
                 <Grid item xs={12} sm={6} key={metric.label}>
-                  <Box sx={styles.metricContainer}>
-                    <Box sx={styles.metricHeader}>
+                  <Box sx={{
+                    p: 2,
+                    bgcolor: theme.palette.grey[50],
+                    borderRadius: 1,
+                    height: '100%'
+                  }}>
+                    <Typography variant="subtitle2" gutterBottom>
                       {metric.label}
                       <Tooltip title={metric.tooltip}>
-                        <IconButton size="small">
+                        <IconButton size="small" sx={{ ml: 0.5 }}>
                           <InfoIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                    </Box>
-                    <Box sx={styles.metricValue}>
-                      {formatValue(metric)}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="h6">
+                        {formatValue(metric)}
+                      </Typography>
                       {status && (
                         <Chip
                           size="small"
                           icon={status.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
                           label={status.message}
                           color={status.status}
-                          sx={styles.statusChip}
+                          variant="outlined"
                         />
                       )}
                     </Box>
@@ -264,17 +180,12 @@ const DiagnosticsTable = ({ data, isMobile }) => {
       ))}
 
       <Alert 
-        severity={overallStatus.status}
+        severity="info" 
         variant="outlined"
-        icon={overallStatus.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
-        sx={styles.alertContainer}
+        sx={{ mt: 2 }}
       >
-        <Typography variant="body1">
-          {overallStatus.status === 'success'
-            ? 'All diagnostic tests indicate reliable model results. The analysis provides a robust basis for market integration assessment.'
-            : overallStatus.status === 'warning'
-            ? 'Some diagnostic tests indicate potential issues. Consider the results with appropriate caution and potentially investigate alternative model specifications.'
-            : 'Limited diagnostic information available. Results should be interpreted within the context of available metrics.'}
+        <Typography variant="body2">
+          Market diagnostics combine multiple indicators to assess market integration quality and reliability. Consider all metrics together for comprehensive market analysis.
         </Typography>
       </Alert>
     </Paper>
@@ -284,21 +195,21 @@ const DiagnosticsTable = ({ data, isMobile }) => {
 DiagnosticsTable.propTypes = {
   data: PropTypes.shape({
     common_dates: PropTypes.number,
-    conflict_correlation: PropTypes.number,
     distance_km: PropTypes.number,
+    conflict_correlation: PropTypes.number,
     model_diagnostics: PropTypes.shape({
-      r_squared: PropTypes.number,
+      r_squared: PropTypes.number
     }),
     residual_diagnostics: PropTypes.shape({
       normality_test: PropTypes.shape({
-        p_value: PropTypes.number,
+        p_value: PropTypes.number
       }),
       heteroskedasticity_test: PropTypes.shape({
-        p_value: PropTypes.number,
-      }),
-    }),
+        p_value: PropTypes.number
+      })
+    })
   }),
-  isMobile: PropTypes.bool.isRequired,
+  isMobile: PropTypes.bool.isRequired
 };
 
 export default React.memo(DiagnosticsTable);
