@@ -29,53 +29,89 @@ const InterpretationSection = ({ data, baseMarket, comparisonMarket }) => {
       title: 'Market Integration Analysis',
       content: () => {
         const isIntegrated = data.cointegration_results?.p_value < 0.05;
+        const integrationStrength = data.regression_results?.r_squared || 0;
         return {
           summary: isIntegrated 
-            ? 'Markets show significant integration patterns'
-            : 'Limited evidence of market integration',
+            ? 'Markets exhibit significant price co-movement patterns'
+            : 'Markets show limited price relationship',
           details: [
-            `Integration Level: ${isIntegrated ? 'Strong' : 'Weak'}`,
-            `Confidence: ${(1 - data.cointegration_results?.p_value) * 100}%`,
-            `Long-run Relationship: ${isIntegrated ? 'Stable' : 'Unstable'}`
+            `Integration: ${isIntegrated ? 'Present' : 'Absent'}`,
+            `Strength: ${(integrationStrength * 100).toFixed(1)}%`,
+            `Confidence: ${((1 - (data.cointegration_results?.p_value || 1)) * 100).toFixed(1)}%`
           ],
+          interpretation: isIntegrated
+            ? 'Price changes in one market are systematically reflected in the other, suggesting effective arbitrage'
+            : 'Markets appear to operate independently, indicating potential trade barriers',
           status: isIntegrated ? 'success' : 'warning'
         };
       }
     },
     {
-      title: 'Price Dynamics',
+      title: 'Price Stability Analysis',
       content: () => {
-        const hasStablePrice = data.stationarity_results?.adf_test?.p_value < 0.05;
+        const isStationaryADF = data.stationarity_results?.ADF?.['p-value'] < 0.05;
+        const isStationaryKPSS = data.stationarity_results?.KPSS?.['p-value'] >= 0.05;
+        const isStable = isStationaryADF && isStationaryKPSS;
+        
         return {
-          summary: hasStablePrice
-            ? 'Price differentials show stability over time'
-            : 'Price differentials exhibit volatile behavior',
+          summary: isStable
+            ? 'Price differentials show mean-reverting behavior'
+            : 'Price differentials exhibit persistent deviations',
           details: [
-            `Stability: ${hasStablePrice ? 'Confirmed' : 'Not Confirmed'}`,
-            `Mean Reversion: ${hasStablePrice ? 'Present' : 'Absent'}`,
-            `Trend Behavior: ${hasStablePrice ? 'Stationary' : 'Non-stationary'}`
+            `Mean Reversion: ${isStationaryADF ? 'Confirmed' : 'Not Confirmed'}`,
+            `Trend Stability: ${isStationaryKPSS ? 'Stable' : 'Unstable'}`,
+            `Overall: ${isStable ? 'Stable' : 'Volatile'}`
           ],
-          status: hasStablePrice ? 'success' : 'warning'
+          interpretation: isStable
+            ? 'Price differences tend to correct over time, indicating effective market mechanisms'
+            : 'Price gaps persist, suggesting structural market inefficiencies',
+          status: isStable ? 'success' : 'warning'
         };
       }
     },
     {
-      title: 'Market Barriers',
+      title: 'Market Friction Analysis',
       content: () => {
-        const distanceImpact = data.diagnostics?.distance_km * 250;
-        const conflictImpact = data.diagnostics?.conflict_correlation;
-        const hasSignificantBarriers = distanceImpact > 500 || conflictImpact > 0.5;
+        const distance = data.diagnostics?.distance_km || 0;
+        const conflict = data.diagnostics?.conflict_correlation || 0;
+        const hasSignificantFrictions = distance > 2 || Math.abs(conflict) > 0.3;
         
         return {
-          summary: hasSignificantBarriers
-            ? 'Significant market barriers detected'
-            : 'Limited market barriers present',
+          summary: hasSignificantFrictions
+            ? 'Significant market frictions detected'
+            : 'Limited market frictions observed',
           details: [
-            `Distance Impact: ${distanceImpact > 500 ? 'High' : 'Moderate'}`,
-            `Conflict Impact: ${conflictImpact > 0.5 ? 'Significant' : 'Limited'}`,
-            `Market Access: ${hasSignificantBarriers ? 'Restricted' : 'Open'}`
+            `Distance: ${distance.toFixed(1)} km`,
+            `Conflict Impact: ${(conflict * 100).toFixed(1)}%`,
+            `Friction Level: ${hasSignificantFrictions ? 'High' : 'Low'}`
           ],
-          status: hasSignificantBarriers ? 'warning' : 'success'
+          interpretation: hasSignificantFrictions
+            ? 'Physical and conflict-related barriers may impede market efficiency'
+            : 'Market conditions support relatively smooth trade flows',
+          status: hasSignificantFrictions ? 'warning' : 'success'
+        };
+      }
+    },
+    {
+      title: 'Policy Implications',
+      content: () => {
+        const needsIntervention = 
+          data.cointegration_results?.p_value >= 0.05 ||
+          Math.abs(data.diagnostics?.conflict_correlation || 0) > 0.3;
+        
+        return {
+          summary: needsIntervention
+            ? 'Market intervention may be warranted'
+            : 'Markets functioning relatively efficiently',
+          details: [
+            `Integration Support: ${needsIntervention ? 'Needed' : 'Limited Need'}`,
+            `Trade Barriers: ${needsIntervention ? 'Address' : 'Monitor'}`,
+            `Policy Focus: ${needsIntervention ? 'Intervention' : 'Maintenance'}`
+          ],
+          interpretation: needsIntervention
+            ? 'Consider policies to reduce trade barriers and enhance market integration'
+            : 'Focus on maintaining current market conditions and monitoring changes',
+          status: needsIntervention ? 'warning' : 'success'
         };
       }
     }
@@ -88,19 +124,27 @@ const InterpretationSection = ({ data, baseMarket, comparisonMarket }) => {
           const interpretation = section.content();
           return (
             <Grid item xs={12} key={section.title}>
-              <Paper sx={{ p: 2, bgcolor: theme.palette.background.paper }}>
+              <Paper 
+                sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  '&:hover .interpretation-info': {
+                    opacity: 1
+                  }
+                }}
+              >
                 <Box sx={{ 
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center',
                   mb: 2 
                 }}>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" color="primary">
                     {section.title}
                   </Typography>
                   <Chip
                     icon={interpretation.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
-                    label={interpretation.status === 'success' ? 'Positive' : 'Attention Needed'}
+                    label={interpretation.status === 'success' ? 'Favorable' : 'Attention Needed'}
                     color={interpretation.status}
                     variant="outlined"
                   />
@@ -108,7 +152,7 @@ const InterpretationSection = ({ data, baseMarket, comparisonMarket }) => {
                 <Typography variant="body1" paragraph>
                   {interpretation.summary}
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                   {interpretation.details.map((detail, index) => (
                     <Chip
                       key={index}
@@ -119,18 +163,54 @@ const InterpretationSection = ({ data, baseMarket, comparisonMarket }) => {
                     />
                   ))}
                 </Box>
+                <Typography 
+                  className="interpretation-info"
+                  variant="body2" 
+                  sx={{ 
+                    opacity: 0,
+                    transition: 'opacity 0.2s',
+                    color: theme.palette.text.secondary
+                  }}
+                >
+                  {interpretation.interpretation}
+                </Typography>
               </Paper>
             </Grid>
-          )
+          );
         })}
       </Grid>
 
-      <Alert severity="info" variant="outlined" sx={{ mt: 3 }}>
-        <Typography variant="body2">
-          Market interpretation between {baseMarket} and {comparisonMarket} is based on multiple statistical indicators 
-          and should be considered alongside local market conditions and temporal factors.
+      <Box sx={{ 
+        mt: 3, 
+        p: 2, 
+        bgcolor: theme.palette.grey[50], 
+        borderRadius: 1,
+        '&:hover .methodology-info': {
+          opacity: 1
+        }
+      }}>
+        <Typography variant="subtitle1" color="primary" gutterBottom>
+          Methodology Note
         </Typography>
-      </Alert>
+        <Typography variant="body2">
+          Analysis of market relationship between {baseMarket} and {comparisonMarket} combines multiple 
+          statistical indicators with economic theory.
+        </Typography>
+        <Typography 
+          className="methodology-info"
+          variant="caption" 
+          sx={{ 
+            display: 'block',
+            mt: 1,
+            opacity: 0,
+            transition: 'opacity 0.2s',
+            color: theme.palette.text.secondary
+          }}
+        >
+          Interpretations should be considered alongside local market conditions, temporal factors, 
+          and broader economic context.
+        </Typography>
+      </Box>
     </Box>
   );
 };
@@ -140,9 +220,15 @@ InterpretationSection.propTypes = {
     cointegration_results: PropTypes.shape({
       p_value: PropTypes.number,
     }),
+    regression_results: PropTypes.shape({
+      r_squared: PropTypes.number,
+    }),
     stationarity_results: PropTypes.shape({
-      adf_test: PropTypes.shape({
-        p_value: PropTypes.number,
+      ADF: PropTypes.shape({
+        'p-value': PropTypes.number,
+      }),
+      KPSS: PropTypes.shape({
+        'p-value': PropTypes.number,
       })
     }),
     diagnostics: PropTypes.shape({

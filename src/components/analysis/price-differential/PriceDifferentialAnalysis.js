@@ -20,7 +20,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Divider
 } from '@mui/material';
 import { Download, ExpandMore, Info } from '@mui/icons-material';
 import { saveAs } from 'file-saver';
@@ -32,9 +33,6 @@ import CointegrationAnalysis from './CointegrationAnalysis';
 import StationarityTest from './StationarityTest';
 import PriceDifferentialFramework from './PriceDifferentialFramework';
 import InterpretationSection from './InterpretationSection';
-import EnhancedRegressionResults from './EnhancedRegressionResults';
-import DiagnosticsTable from './DiagnosticsTable';
-import DynamicInterpretation from './DynamicInterpretation';
 
 const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
@@ -185,33 +183,290 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
 
       {selectedPairData && (
         <>
-          <MarketPairInfo 
-            data={{
-              diagnostics: selectedPairData.diagnostics,
-              cointegration_results: selectedPairData.cointegration_results,
-              stationarity_results: selectedPairData.stationarity_results
-            }}
-            baseMarket={baseMarket}
-            comparisonMarket={otherMarket}
-            isMobile={isMobile}
-          />
+          <Paper sx={{ p: 1.5, mb: 3 }}>
+            <MarketPairInfo 
+              data={selectedPairData}
+              baseMarket={baseMarket}
+              comparisonMarket={otherMarket}
+              isMobile={isMobile}
+            />
+          </Paper>
 
-          <PriceDifferentialFramework 
-            baseMarket={baseMarket}
-            comparisonMarket={otherMarket}
-            regressionResults={selectedPairData.regression_results}
-            diagnostics={selectedPairData.diagnostics}
-            expanded={frameworkExpanded}
-            onExpandedChange={() => setFrameworkExpanded(!frameworkExpanded)}
-          />
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+              Model Parameters
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={3}>
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                  '&:hover .parameter-info': {
+                    opacity: 1
+                  }
+                }}>
+                  <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                    β = {selectedPairData.regression_results?.slope?.toFixed(4)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Market Integration Speed
+                  </Typography>
+                  <Typography 
+                    className="parameter-info"
+                    variant="caption" 
+                    sx={{ 
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    Rate of price convergence between markets
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                  '&:hover .parameter-info': {
+                    opacity: 1
+                  }
+                }}>
+                  <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                    α = {selectedPairData.regression_results?.intercept?.toFixed(4)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Long-run Differential
+                  </Typography>
+                  <Typography 
+                    className="parameter-info"
+                    variant="caption" 
+                    sx={{ 
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    Equilibrium price difference between markets
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                  '&:hover .parameter-info': {
+                    opacity: 1
+                  }
+                }}>
+                  <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                    d = {selectedPairData.diagnostics?.distance_km?.toFixed(2)} km
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Market Distance
+                  </Typography>
+                  <Typography 
+                    className="parameter-info"
+                    variant="caption" 
+                    sx={{ 
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    Geographical separation between markets
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                  '&:hover .parameter-info': {
+                    opacity: 1
+                  }
+                }}>
+                  <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                    ρ = {selectedPairData.diagnostics?.conflict_correlation?.toFixed(2)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Conflict Impact
+                  </Typography>
+                  <Typography 
+                    className="parameter-info"
+                    variant="caption" 
+                    sx={{ 
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    Correlation of conflict intensities
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6" gutterBottom>Model Diagnostics</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                  '&:hover .diagnostic-info': {
+                    opacity: 1
+                  }
+                }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Model Fit
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedPairData.regression_results?.r_squared
+                      ? `${(selectedPairData.regression_results.r_squared * 100).toFixed(1)}%`
+                      : 'N/A'}
+                  </Typography>
+                  <Typography 
+                    className="diagnostic-info"
+                    variant="caption" 
+                    sx={{ 
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    R² - Explained variation in price differentials
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                  '&:hover .diagnostic-info': {
+                    opacity: 1
+                  }
+                }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    AIC Score
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedPairData.regression_results?.aic?.toFixed(2) || 'N/A'}
+                  </Typography>
+                  <Typography 
+                    className="diagnostic-info"
+                    variant="caption" 
+                    sx={{ 
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    Akaike Information Criterion
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                  '&:hover .diagnostic-info': {
+                    opacity: 1
+                  }
+                }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    BIC Score
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedPairData.regression_results?.bic?.toFixed(2) || 'N/A'}
+                  </Typography>
+                  <Typography 
+                    className="diagnostic-info"
+                    variant="caption" 
+                    sx={{ 
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    Bayesian Information Criterion
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                  '&:hover .diagnostic-info': {
+                    opacity: 1
+                  }
+                }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Significance
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedPairData.regression_results?.p_value < 0.05 ? 'Significant' : 'Not Significant'}
+                  </Typography>
+                  <Typography 
+                    className="diagnostic-info"
+                    variant="caption" 
+                    sx={{ 
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: theme.palette.text.secondary
+                    }}
+                  >
+                    p = {selectedPairData.regression_results?.p_value?.toExponential(2) || 'N/A'}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {/* Model Framework Section */}
+          <Accordion 
+            expanded={frameworkExpanded} 
+            onChange={() => setFrameworkExpanded(!frameworkExpanded)}
+            sx={{ mb: 3 }}
+          >
+            <AccordionSummary 
+              expandIcon={<ExpandMore />}
+              sx={{
+                backgroundColor: theme.palette.grey[50],
+                '&:hover': {
+                  backgroundColor: theme.palette.grey[100],
+                }
+              }}
+            >
+              <Typography variant="h6">
+                Price Differential Model Framework
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 3 }}>
+              <PriceDifferentialFramework 
+                baseMarket={baseMarket}
+                comparisonMarket={otherMarket}
+                regressionResults={selectedPairData.regression_results}
+                diagnostics={selectedPairData.diagnostics}
+              />
+            </AccordionDetails>
+          </Accordion>
 
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <PriceDifferentialChart 
                 data={{
                   dates: selectedPairData.price_differential.dates,
-                  values: selectedPairData.price_differential.values,
-                  confidence_bounds: selectedPairData.price_differential.confidence_bounds
+                  values: selectedPairData.price_differential.values
                 }}
                 baseMarket={baseMarket}
                 comparisonMarket={otherMarket}
@@ -233,23 +488,20 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
             </Grid>
           </Grid>
 
-          <EnhancedRegressionResults 
-            regressionData={selectedPairData.regression_results}
-          />
-
-          <DiagnosticsTable 
-            data={selectedPairData.diagnostics}
-            isMobile={isMobile}
-          />
-
-          <DynamicInterpretation data={selectedPairData} />
-
           <Accordion
             expanded={interpretationExpanded}
             onChange={() => setInterpretationExpanded(!interpretationExpanded)}
             sx={{ mt: 3 }}
           >
-            <AccordionSummary expandIcon={<ExpandMore />}>
+            <AccordionSummary 
+              expandIcon={<ExpandMore />}
+              sx={{
+                backgroundColor: theme.palette.grey[50],
+                '&:hover': {
+                  backgroundColor: theme.palette.grey[100],
+                }
+              }}
+            >
               <Typography variant="h6">
                 Detailed Market Analysis Interpretation
               </Typography>
