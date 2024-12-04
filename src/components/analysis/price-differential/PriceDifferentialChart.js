@@ -36,23 +36,35 @@ const PriceDifferentialChart = ({
   const theme = useTheme();
 
   const chartData = useMemo(() => {
-    if (
-      !data?.dates ||
-      !data?.values ||
-      data.dates.length !== data.values.length
-    ) {
+    // Handle both new and old data structures
+    const seriesData = Array.isArray(data) ? data : data?.values
+      ? { dates: data.dates, values: data.values, upper_bounds: data.upper_bounds, lower_bounds: data.lower_bounds }
+      : null;
+
+    if (!seriesData) return [];
+
+    // Handle array format (new structure)
+    if (Array.isArray(seriesData)) {
+      return seriesData.map(point => ({
+        date: new Date(point.date).toLocaleDateString(),
+        differential: point.value,
+        upperBound: point.confidence_interval?.upper || null,
+        lowerBound: point.confidence_interval?.lower || null,
+      }));
+    }
+
+    // Handle object format (old structure)
+    const { dates, values, upper_bounds, lower_bounds } = seriesData;
+    if (!dates || !values || dates.length !== values.length) {
       return [];
     }
 
-    return data.dates.map((dateStr, index) => {
-      const date = new Date(dateStr);
-      return {
-        date: date.getTime(),
-        differential: data.values[index],
-        upperBound: data.upper_bounds ? data.upper_bounds[index] : null,
-        lowerBound: data.lower_bounds ? data.lower_bounds[index] : null,
-      };
-    });
+    return dates.map((dateStr, index) => ({
+      date: new Date(dateStr).toLocaleDateString(),
+      differential: values[index],
+      upperBound: upper_bounds ? upper_bounds[index] : null,
+      lowerBound: lower_bounds ? lower_bounds[index] : null,
+    }));
   }, [data]);
 
   const hasConfidenceIntervals = useMemo(() => {
@@ -90,12 +102,7 @@ const PriceDifferentialChart = ({
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
 
-    const date = new Date(label);
-    const formattedDate = date.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    const formattedDate = label;
 
     return (
       <Box
@@ -104,43 +111,40 @@ const PriceDifferentialChart = ({
           p: 1,
           border: `1px solid ${theme.palette.divider}`,
           borderRadius: 1,
+          boxShadow: 1,
         }}
       >
-        <Typography variant="body2">{formattedDate}</Typography>
+        <Typography variant="body2" fontWeight="bold" gutterBottom>
+          {formattedDate}
+        </Typography>
         {payload.map((entry) => (
           <Typography
             key={entry.name}
             variant="body2"
             color={entry.color}
+            sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}
           >
-            {`${entry.name}: ${entry.value.toFixed(4)}`}
+            <span>{entry.name}:</span>
+            <span>{entry.value.toFixed(4)}</span>
           </Typography>
         ))}
+        {hasConfidenceIntervals && payload[0]?.payload?.upperBound !== null && (
+          <Box sx={{ mt: 1, pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+            <Typography variant="caption" color="text.secondary">
+              Confidence Intervals: {payload[0].payload.lowerBound.toFixed(4)} - {payload[0].payload.upperBound.toFixed(4)}
+            </Typography>
+          </Box>
+        )}
       </Box>
     );
   };
 
-  CustomTooltip.propTypes = {
-    active: PropTypes.bool,
-    payload: PropTypes.arrayOf(PropTypes.object),
-    label: PropTypes.number,
-  };
-
   return (
-    <Paper sx={{ p: 2 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 2,
-          mb: 2,
-        }}
-      >
+    <Paper sx={{ p: 3, mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h6">
           Price Differential Chart
-          <Tooltip title="This chart visualizes the price differences between the selected markets over time.">
+          <Tooltip title="Visualization of price differentials over time">
             <IconButton size="small">
               <InfoIcon fontSize="small" />
             </IconButton>
@@ -148,91 +152,68 @@ const PriceDifferentialChart = ({
         </Typography>
       </Box>
 
-      {chartData.length > 0 ? (
-        <Box sx={{ height: isMobile ? 300 : 400, width: '100%' }}>
-          <ResponsiveContainer>
-            <ComposedChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="date"
-                type="number"
-                domain={['dataMin', 'dataMax']}
-                scale="time"
-                tickFormatter={formatDate}
-                tick={{ fontSize: isMobile ? 10 : 12 }}
-                label={{
-                  value: 'Date',
-                  position: 'insideBottom',
-                  offset: -5,
-                  fontSize: isMobile ? 12 : 14,
-                }}
-              />
-              <YAxis
-                domain={yAxisDomain}
-                tick={{ fontSize: isMobile ? 10 : 12 }}
-                label={{
-                  value: 'Price Differential',
-                  angle: -90,
-                  position: 'insideLeft',
-                  offset: 10,
-                  fontSize: isMobile ? 12 : 14,
-                }}
-              />
-              <RechartsTooltip content={<CustomTooltip />} />
-              <Legend />
-              <ReferenceLine y={0} stroke={theme.palette.grey[500]} />
-              {hasConfidenceIntervals && (
+      {chartData.length === 0 ? (
+        <Alert severity="warning">No chart data available.</Alert>
+      ) : (
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 500}>
+          <ComposedChart data={chartData}>
+            <CartesianGrid stroke={theme.palette.divider} />
+            <XAxis dataKey="date" />
+            <YAxis domain={yAxisDomain} />
+            <RechartsTooltip content={<CustomTooltip />} />
+            <Legend />
+            <Line type="monotone" dataKey="differential" stroke={theme.palette.primary.main} name="Price Differential" />
+            {hasConfidenceIntervals && (
+              <>
                 <Area
                   type="monotone"
-                  dataKey="differential"
-                  stroke={theme.palette.primary.main}
+                  dataKey="upperBound"
+                  stroke="none"
                   fill={theme.palette.primary.light}
-                  fillOpacity={0.2}
-                  baseLine={(data) => data.lowerBound}
-                  isAnimationActive={false}
+                  fillOpacity={0.3}
+                  name="Upper Confidence"
                 />
-              )}
-              <Line
-                type="monotone"
-                dataKey="differential"
-                stroke={theme.palette.primary.main}
-                dot={false}
-                name="Price Differential"
-              />
-              <Brush dataKey="date" height={30} stroke={theme.palette.primary.main} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </Box>
-      ) : (
-        <Alert severity="info">
-          No price differential data available for the selected market pair.
-        </Alert>
+                <Area
+                  type="monotone"
+                  dataKey="lowerBound"
+                  stroke="none"
+                  fill={theme.palette.primary.light}
+                  fillOpacity={0.3}
+                  name="Lower Confidence"
+                />
+              </>
+            )}
+            <Brush dataKey="date" height={30} stroke={theme.palette.primary.main} />
+          </ComposedChart>
+        </ResponsiveContainer>
       )}
-
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          Price differential between <strong>{baseMarket}</strong> and{' '}
-          <strong>{comparisonMarket}</strong> for <strong>{commodity}</strong>.
-          Positive values indicate higher prices in <strong>{baseMarket}</strong>,
-          while negative values indicate higher prices in{' '}
-          <strong>{comparisonMarket}</strong>.
-        </Typography>
-      </Box>
     </Paper>
   );
 };
 
 PriceDifferentialChart.propTypes = {
-  data: PropTypes.shape({
-    dates: PropTypes.arrayOf(PropTypes.string).isRequired,
-    values: PropTypes.arrayOf(PropTypes.number).isRequired,
-    upper_bounds: PropTypes.arrayOf(PropTypes.number),
-    lower_bounds: PropTypes.arrayOf(PropTypes.number),
-  }).isRequired,
+  data: PropTypes.oneOfType([
+    PropTypes.arrayOf(
+      PropTypes.shape({
+        date: PropTypes.string.isRequired,
+        value: PropTypes.number.isRequired,
+        confidence_interval: PropTypes.shape({
+          upper: PropTypes.number,
+          lower: PropTypes.number,
+        }),
+      })
+    ),
+    PropTypes.shape({
+      dates: PropTypes.arrayOf(PropTypes.string).isRequired,
+      values: PropTypes.arrayOf(PropTypes.number).isRequired,
+      upper_bounds: PropTypes.arrayOf(PropTypes.number),
+      lower_bounds: PropTypes.arrayOf(PropTypes.number),
+    }),
+  ]).isRequired,
   baseMarket: PropTypes.string.isRequired,
   comparisonMarket: PropTypes.string.isRequired,
   commodity: PropTypes.string.isRequired,
   isMobile: PropTypes.bool.isRequired,
 };
 
-export default PriceDifferentialChart;
+export default React.memo(PriceDifferentialChart);

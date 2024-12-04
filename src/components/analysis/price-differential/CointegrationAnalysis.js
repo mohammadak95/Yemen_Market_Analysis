@@ -1,4 +1,4 @@
-//src/components/analysis/price-differential/CointegrationAnalysis.js
+// src/components/analysis/price-differential/CointegrationAnalysis.js
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
@@ -50,14 +50,6 @@ const CointegrationAnalysis = ({ cointegrationData }) => {
     },
   };
 
-  const testResults = useMemo(() => ({
-    isSignificant: cointegrationData?.p_value < 0.05,
-    significance: cointegrationData?.p_value < 0.05 ? 'success' : 'warning',
-    message: cointegrationData?.p_value < 0.05 
-      ? 'Markets show significant cointegration'
-      : 'No significant cointegration detected',
-  }), [cointegrationData]);
-
   if (!cointegrationData) {
     return (
       <Alert severity="info">
@@ -66,12 +58,28 @@ const CointegrationAnalysis = ({ cointegrationData }) => {
     );
   }
 
+  const testResults = useMemo(() => {
+    const results = cointegrationData;
+
+    if (!results) return null;
+
+    const isSignificant = results.p_value < 0.05;
+
+    return {
+      isSignificant,
+      significance: isSignificant ? 'success' : 'warning',
+      message: isSignificant
+        ? 'Markets show significant cointegration'
+        : 'No significant cointegration detected',
+    };
+  }, [cointegrationData]);
+
   return (
     <Paper sx={styles.container}>
       <Box sx={styles.header}>
         <Typography variant="h6">
           Market Cointegration Analysis
-          <Tooltip title="Johansen Test for market price relationship">
+          <Tooltip title="Engle-Granger Cointegration Test for market price relationship">
             <IconButton size="small">
               <InfoIcon fontSize="small" />
             </IconButton>
@@ -101,10 +109,6 @@ const CointegrationAnalysis = ({ cointegrationData }) => {
                   <TableCell>P-Value</TableCell>
                   <TableCell align="right">{cointegrationData.p_value.toFixed(4)}</TableCell>
                 </TableRow>
-                <TableRow>
-                  <TableCell>Cointegrating Equations</TableCell>
-                  <TableCell align="right">{cointegrationData.num_of_cointegrating_eq}</TableCell>
-                </TableRow>
               </TableBody>
             </Table>
           </Box>
@@ -129,15 +133,15 @@ const CointegrationAnalysis = ({ cointegrationData }) => {
         </Grid>
       </Grid>
 
-      <Alert 
+      <Alert
         severity={testResults.significance}
         variant="outlined"
         sx={{ mt: 2 }}
       >
         <Typography variant="body2">
           {testResults.isSignificant
-            ? "The markets show evidence of long-term price equilibrium relationship (p-value < 0.05)."
-            : "The markets do not show strong evidence of a long-term price relationship (p-value ≥ 0.05)."}
+            ? 'The markets show evidence of a long-term equilibrium relationship (cointegration).'
+            : 'No significant cointegration detected between the markets.'}
         </Typography>
       </Alert>
     </Paper>
@@ -147,9 +151,8 @@ const CointegrationAnalysis = ({ cointegrationData }) => {
 CointegrationAnalysis.propTypes = {
   cointegrationData: PropTypes.shape({
     test_statistic: PropTypes.number.isRequired,
-    critical_values: PropTypes.objectOf(PropTypes.number).isRequired,
     p_value: PropTypes.number.isRequired,
-    num_of_cointegrating_eq: PropTypes.number.isRequired,
+    critical_values: PropTypes.objectOf(PropTypes.number).isRequired,
   }).isRequired,
 };
 

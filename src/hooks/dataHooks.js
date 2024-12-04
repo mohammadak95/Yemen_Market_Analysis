@@ -120,7 +120,7 @@ export const useTVMIIData = () => {
 };
 
 export const usePriceDifferentialData = (selectedCommodity) => {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState([]);
   const [markets, setMarkets] = useState([]);
   const [commodities, setCommodities] = useState([]);
   const [status, setStatus] = useState('idle');
@@ -128,22 +128,21 @@ export const usePriceDifferentialData = (selectedCommodity) => {
 
   const processPriceDifferentialData = useCallback((jsonData, commodity) => {
     const marketsData = jsonData.markets || {};
-    const marketsList = Object.keys(marketsData);
+    const results = [];
 
-    const filteredData = {};
-    marketsList.forEach((market) => {
-      const commodityResults = marketsData[market].commodity_results[commodity];
-      if (commodityResults) {
-        filteredData[market] = {
-          ...marketsData[market],
-          commodity_results: {
-            [commodity]: commodityResults,
-          },
-        };
+    for (const baseMarket in marketsData) {
+      const commodityResults = marketsData[baseMarket].commodity_results || {};
+      const marketCommodityResults = commodityResults[commodity];
+
+      if (marketCommodityResults) {
+        marketCommodityResults.forEach((result) => {
+          // Include only necessary fields or all fields as needed
+          results.push(result);
+        });
       }
-    });
+    }
 
-    return { data: filteredData, markets: Object.keys(filteredData) };
+    return results;
   }, []);
 
   useEffect(() => {
@@ -156,6 +155,7 @@ export const usePriceDifferentialData = (selectedCommodity) => {
 
         const jsonData = await response.json();
 
+        // Collect commodities
         const commoditiesSet = new Set();
         Object.values(jsonData.markets || {}).forEach((marketData) => {
           const commodityResults = marketData.commodity_results || {};
@@ -163,13 +163,25 @@ export const usePriceDifferentialData = (selectedCommodity) => {
             commoditiesSet.add(commodity);
           });
         });
-
         setCommodities(Array.from(commoditiesSet));
 
-        const filteredData = processPriceDifferentialData(jsonData, selectedCommodity);
+        // Process data for selected commodity
+        if (selectedCommodity) {
+          const results = processPriceDifferentialData(jsonData, selectedCommodity);
+          setData(results);
 
-        setData(filteredData.data);
-        setMarkets(filteredData.markets);
+          // Collect markets involved
+          const marketsSet = new Set();
+          results.forEach((result) => {
+            marketsSet.add(result.base_market);
+            marketsSet.add(result.other_market);
+          });
+          setMarkets(Array.from(marketsSet));
+        } else {
+          setData([]);
+          setMarkets([]);
+        }
+
         setStatus('succeeded');
       } catch (err) {
         setError(err.message);

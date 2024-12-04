@@ -47,14 +47,6 @@ const StationarityTest = ({ stationarityData }) => {
     },
   };
 
-  const testResults = useMemo(() => ({
-    isStationary: stationarityData?.p_value < 0.05,
-    significance: stationarityData?.p_value < 0.05 ? 'success' : 'warning',
-    message: stationarityData?.p_value < 0.05 
-      ? 'Stationary Series'
-      : 'Non-stationary Series',
-  }), [stationarityData]);
-
   if (!stationarityData) {
     return (
       <Alert severity="info">
@@ -63,74 +55,149 @@ const StationarityTest = ({ stationarityData }) => {
     );
   }
 
+  const testResults = useMemo(() => {
+    const adfTest = stationarityData.ADF;
+    const kpssTest = stationarityData.KPSS;
+
+    if (!adfTest) return null;
+
+    const isStationaryADF = adfTest['p-value'] < 0.05;
+    const isStationaryKPSS = kpssTest ? kpssTest['p-value'] >= 0.05 : null;
+
+    return {
+      adf: {
+        isStationary: isStationaryADF,
+        significance: isStationaryADF ? 'success' : 'warning',
+        message: isStationaryADF ? 'Stationary (ADF)' : 'Non-stationary (ADF)',
+      },
+      kpss: kpssTest
+        ? {
+            isStationary: isStationaryKPSS,
+            significance: isStationaryKPSS ? 'success' : 'warning',
+            message: isStationaryKPSS ? 'Stationary (KPSS)' : 'Non-stationary (KPSS)',
+          }
+        : null,
+      overall: {
+        isStationary: kpssTest ? isStationaryADF && isStationaryKPSS : isStationaryADF,
+        significance: kpssTest
+          ? isStationaryADF && isStationaryKPSS
+            ? 'success'
+            : 'warning'
+          : isStationaryADF
+          ? 'success'
+          : 'warning',
+      },
+    };
+  }, [stationarityData]);
+
+  if (!testResults) {
+    return (
+      <Alert severity="error">
+        Invalid stationarity test data structure.
+      </Alert>
+    );
+  }
+
   return (
     <Paper sx={styles.container}>
       <Box sx={styles.header}>
         <Typography variant="h6">
-          {`Stationarity Analysis: ${stationarityData.market_name}`}
-          <Tooltip title="Augmented Dickey-Fuller Test Results">
+          Price Differential Stationarity Analysis
+          <Tooltip title="Analysis of price differential stability over time">
             <IconButton size="small">
               <InfoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Typography>
-        <Chip
-          icon={testResults.isStationary ? <CheckCircleIcon /> : <WarningIcon />}
-          label={testResults.message}
-          color={testResults.significance}
-          variant="outlined"
-        />
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {testResults.adf && (
+            <Chip
+              icon={testResults.adf.isStationary ? <CheckCircleIcon /> : <WarningIcon />}
+              label={testResults.adf.message}
+              color={testResults.adf.significance}
+              variant="outlined"
+            />
+          )}
+          {testResults.kpss && (
+            <Chip
+              icon={testResults.kpss.isStationary ? <CheckCircleIcon /> : <WarningIcon />}
+              label={testResults.kpss.message}
+              color={testResults.kpss.significance}
+              variant="outlined"
+            />
+          )}
+        </Box>
       </Box>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        {/* ADF Test Results */}
+        <Grid item xs={12} md={testResults.kpss ? 6 : 12}>
           <Box sx={styles.contentBox}>
             <Typography variant="subtitle2" gutterBottom>
-              Test Statistics
+              ADF Test Statistics
             </Typography>
             <Table size="small" sx={styles.table}>
               <TableBody>
                 <TableRow>
-                  <TableCell>ADF Statistic</TableCell>
-                  <TableCell align="right">{stationarityData.adf_statistic.toFixed(4)}</TableCell>
+                  <TableCell>Test Statistic</TableCell>
+                  <TableCell align="right">
+                    {stationarityData.ADF.statistic.toFixed(4)}
+                  </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>P-Value</TableCell>
-                  <TableCell align="right">{stationarityData.p_value.toFixed(4)}</TableCell>
+                  <TableCell align="right">
+                    {stationarityData.ADF['p-value'].toFixed(4)}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </Box>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Box sx={styles.contentBox}>
-            <Typography variant="subtitle2" gutterBottom>
-              Critical Values
-            </Typography>
-            <Table size="small" sx={styles.table}>
-              <TableBody>
-                {Object.entries(stationarityData.critical_values).map(([level, value]) => (
-                  <TableRow key={level}>
-                    <TableCell>{level}% Level</TableCell>
-                    <TableCell align="right">{value.toFixed(4)}</TableCell>
+        {/* KPSS Test Results */}
+        {testResults.kpss && (
+          <Grid item xs={12} md={6}>
+            <Box sx={styles.contentBox}>
+              <Typography variant="subtitle2" gutterBottom>
+                KPSS Test Statistics
+              </Typography>
+              <Table size="small" sx={styles.table}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Test Statistic</TableCell>
+                    <TableCell align="right">
+                      {stationarityData.KPSS.statistic.toFixed(4)}
+                    </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </Grid>
+                  <TableRow>
+                    <TableCell>P-Value</TableCell>
+                    <TableCell align="right">
+                      {stationarityData.KPSS['p-value'].toFixed(4)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+          </Grid>
+        )}
       </Grid>
 
-      <Alert 
-        severity={testResults.significance} 
+      <Alert
+        severity={testResults.overall.significance}
         variant="outlined"
         sx={{ mt: 2 }}
       >
         <Typography variant="body2">
-          {testResults.isStationary
-            ? "The price series shows mean-reverting behavior (stationary series)."
-            : "The price series shows trending behavior (non-stationary series)."}
+          {testResults.kpss ? (
+            testResults.overall.isStationary
+              ? 'Both ADF and KPSS tests confirm that the price differential series is stationary.'
+              : 'The price differential series is non-stationary according to the tests.'
+          ) : testResults.overall.isStationary ? (
+            'The ADF test confirms that the price differential series is stationary.'
+          ) : (
+            'The ADF test indicates that the price differential series is non-stationary.'
+          )}
         </Typography>
       </Alert>
     </Paper>
@@ -139,11 +206,15 @@ const StationarityTest = ({ stationarityData }) => {
 
 StationarityTest.propTypes = {
   stationarityData: PropTypes.shape({
-    adf_statistic: PropTypes.number.isRequired,
-    p_value: PropTypes.number.isRequired,
-    critical_values: PropTypes.objectOf(PropTypes.number).isRequired,
-    market_name: PropTypes.string.isRequired,
-  }).isRequired,
+    ADF: PropTypes.shape({
+      statistic: PropTypes.number.isRequired,
+      'p-value': PropTypes.number.isRequired,
+    }).isRequired,
+    KPSS: PropTypes.shape({
+      statistic: PropTypes.number.isRequired,
+      'p-value': PropTypes.number.isRequired,
+    }),
+  }),
 };
 
 export default React.memo(StationarityTest);

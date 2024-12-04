@@ -52,60 +52,101 @@ const DynamicInterpretation = ({ data }) => {
     alert: {
       mb: 2,
     },
+    chipContainer: {
+      display: 'flex',
+      gap: 1,
+      flexWrap: 'wrap',
+      mb: 2,
+    },
   };
 
   const interpretations = useMemo(() => {
     const results = [];
 
-    // Regression Interpretation
+    // Regression Analysis
     if (data.regression_results) {
+      const {
+        p_value,
+        r_squared,
+        beta_distance,
+        beta_conflict_corr,
+      } = data.regression_results;
+
       results.push({
         type: 'regression',
         title: 'Regression Analysis',
-        severity: data.regression_results.p_value < 0.05 ? 'success' : 'warning',
-        content: data.regression_results.p_value < 0.05
-          ? 'Statistically significant relationship found between price differentials.'
-          : 'No significant relationship detected in price differentials.',
-        details: `P-value: ${data.regression_results.p_value.toFixed(4)}`,
+        severity: p_value < 0.05 && r_squared > 0.7 ? 'success' : 'warning',
+        content: p_value < 0.05
+          ? `Strong statistical relationship found (R² = ${(r_squared * 100).toFixed(1)}%)`
+          : 'No significant statistical relationship detected.',
+        details: [
+          `Model fit: ${r_squared > 0.7 ? 'Strong' : r_squared > 0.5 ? 'Moderate' : 'Weak'}`,
+          `Distance effect: ${Math.abs(beta_distance || 0).toFixed(4)}`,
+          `Conflict effect: ${Math.abs(beta_conflict_corr || 0).toFixed(4)}`,
+        ],
       });
     }
 
-    // Cointegration Interpretation
-    if (data.cointegration_test) {
+    // Cointegration Analysis
+    const cointegrationResults = data.cointegration_results || data.cointegration_test;
+    if (cointegrationResults) {
+      const { p_value, test_statistic } = cointegrationResults;
       results.push({
         type: 'cointegration',
         title: 'Market Integration',
-        severity: data.cointegration_test.p_value < 0.05 ? 'success' : 'warning',
-        content: data.cointegration_test.p_value < 0.05
-          ? 'Markets share a long-term equilibrium relationship.'
-          : 'No evidence of long-term market integration.',
-        details: `P-value: ${data.cointegration_test.p_value.toFixed(4)}`,
+        severity: p_value < 0.05 ? 'success' : 'warning',
+        content: p_value < 0.05
+          ? 'Strong evidence of long-term market integration'
+          : 'Limited evidence of market integration',
+        details: [
+          `Test statistic: ${test_statistic.toFixed(4)}`,
+          `P-value: ${p_value.toFixed(4)}`,
+          `Interpretation: ${p_value < 0.01 ? 'Very strong' : p_value < 0.05 ? 'Strong' : 'Weak'} evidence`,
+        ],
       });
     }
 
-    // Stationarity Interpretation
-    if (data.stationarity_test) {
+    // Stationarity Analysis
+    const stationarityResults = data.stationarity_results || data.stationarity_test;
+    if (stationarityResults) {
+      const adfTest = stationarityResults.adf_test || stationarityResults;
+      const kpssTest = stationarityResults.kpss_test;
+
+      const isStationaryADF = adfTest.p_value < 0.05;
+      const isStationaryKPSS = kpssTest ? kpssTest.p_value >= 0.05 : null;
+      const overallStationarity = kpssTest
+        ? isStationaryADF && isStationaryKPSS
+        : isStationaryADF;
+
       results.push({
         type: 'stationarity',
         title: 'Price Behavior',
-        severity: data.stationarity_test.p_value < 0.05 ? 'success' : 'info',
-        content: data.stationarity_test.p_value < 0.05
-          ? `${data.stationarity_test.market_name} shows mean-reverting behavior.`
-          : `${data.stationarity_test.market_name} shows trending behavior.`,
-        details: `P-value: ${data.stationarity_test.p_value.toFixed(4)}`,
+        severity: overallStationarity ? 'success' : 'warning',
+        content: overallStationarity
+          ? 'Price differential series shows stable behavior'
+          : 'Price differential series shows unstable behavior',
+        details: [
+          `ADF test: ${isStationaryADF ? 'Stationary' : 'Non-stationary'} (p=${adfTest.p_value.toFixed(4)})`,
+          ...(kpssTest ? [`KPSS test: ${isStationaryKPSS ? 'Stationary' : 'Non-stationary'} (p=${kpssTest.p_value.toFixed(4)})`] : []),
+          `Overall: ${overallStationarity ? 'Strong' : 'Weak'} evidence of stationarity`,
+        ],
       });
     }
 
-    // Conflict Impact
-    if (data.diagnostics?.conflict_correlation !== undefined) {
+    // Market Conditions
+    if (data.diagnostics) {
+      const { conflict_correlation, distance_km } = data.diagnostics;
+      const actualDistance = distance_km * 250;
+
       results.push({
-        type: 'conflict',
-        title: 'Conflict Impact',
-        severity: Math.abs(data.diagnostics.conflict_correlation) > 0.5 ? 'warning' : 'info',
-        content: data.diagnostics.conflict_correlation > 0.5
-          ? 'Strong impact of conflict on market integration.'
-          : 'Limited impact of conflict on market integration.',
-        details: `Correlation: ${data.diagnostics.conflict_correlation.toFixed(3)}`,
+        type: 'conditions',
+        title: 'Market Conditions',
+        severity: conflict_correlation > 0.5 || actualDistance > 500 ? 'warning' : 'info',
+        content: `Market conditions ${conflict_correlation > 0.5 || actualDistance > 500 ? 'may hinder' : 'support'} integration`,
+        details: [
+          `Distance: ${actualDistance.toFixed(1)} km (${actualDistance > 500 ? 'High' : actualDistance > 300 ? 'Moderate' : 'Low'} impact)`,
+          `Conflict correlation: ${conflict_correlation.toFixed(3)} (${conflict_correlation > 0.7 ? 'High' : conflict_correlation > 0.4 ? 'Moderate' : 'Low'} impact)`,
+        ],
       });
     }
 
@@ -121,7 +162,7 @@ const DynamicInterpretation = ({ data }) => {
       <Box sx={styles.header}>
         <Typography variant="h6">
           Dynamic Market Analysis
-          <Tooltip title="Comprehensive interpretation of market dynamics">
+          <Tooltip title="Comprehensive interpretation of market dynamics and relationships">
             <IconButton size="small">
               <InfoIcon fontSize="small" />
             </IconButton>
@@ -130,7 +171,7 @@ const DynamicInterpretation = ({ data }) => {
       </Box>
 
       <Grid container spacing={3}>
-        {interpretations.map((interpretation, index) => (
+        {interpretations.map((interpretation) => (
           <Grid item xs={12} md={6} key={interpretation.type}>
             <Box sx={styles.interpretationBox}>
               <Box sx={styles.sectionTitle}>
@@ -147,9 +188,16 @@ const DynamicInterpretation = ({ data }) => {
               <Typography variant="body1" gutterBottom>
                 {interpretation.content}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {interpretation.details}
-              </Typography>
+              <Box sx={styles.chipContainer}>
+                {interpretation.details.map((detail, index) => (
+                  <Chip
+                    key={index}
+                    size="small"
+                    variant="outlined"
+                    label={detail}
+                  />
+                ))}
+              </Box>
             </Box>
           </Grid>
         ))}
@@ -159,7 +207,8 @@ const DynamicInterpretation = ({ data }) => {
 
       <Alert severity="info" variant="outlined">
         <Typography variant="body2">
-          Note: These interpretations are based on statistical analysis and should be considered alongside market-specific context and conditions.
+          This analysis combines multiple statistical tests and market conditions to provide a comprehensive view of market relationships. 
+          Interpretations should be considered alongside local market context and temporal factors.
         </Typography>
       </Alert>
     </Paper>
@@ -170,16 +219,35 @@ DynamicInterpretation.propTypes = {
   data: PropTypes.shape({
     regression_results: PropTypes.shape({
       p_value: PropTypes.number,
+      r_squared: PropTypes.number,
+      beta_distance: PropTypes.number,
+      beta_conflict_corr: PropTypes.number,
+    }),
+    cointegration_results: PropTypes.shape({
+      test_statistic: PropTypes.number,
+      p_value: PropTypes.number,
     }),
     cointegration_test: PropTypes.shape({
+      test_statistic: PropTypes.number,
       p_value: PropTypes.number,
     }),
+    stationarity_results: PropTypes.shape({
+      adf_test: PropTypes.shape({
+        test_statistic: PropTypes.number,
+        p_value: PropTypes.number,
+      }),
+      kpss_test: PropTypes.shape({
+        test_statistic: PropTypes.number,
+        p_value: PropTypes.number,
+      }),
+    }),
     stationarity_test: PropTypes.shape({
+      test_statistic: PropTypes.number,
       p_value: PropTypes.number,
-      market_name: PropTypes.string,
     }),
     diagnostics: PropTypes.shape({
       conflict_correlation: PropTypes.number,
+      distance_km: PropTypes.number,
     }),
   }).isRequired,
 };

@@ -2,139 +2,135 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, Alert } from '@mui/material';
 
 const InterpretationSection = ({ data, baseMarket, comparisonMarket }) => {
   if (!data) {
     return (
-      <Typography variant="body2" color="text.secondary">
-        No interpretation data available.
-      </Typography>
+      <Alert severity="info">
+        No data available for interpretation.
+      </Alert>
     );
   }
 
-  const {
-    regression_results,
-    cointegration_test,
-    stationarity_test,
-    diagnostics,
-  } = data;
+  const { regression_results, cointegration_results, stationarity_results, diagnostics } = data;
+
+  const getStationarityInterpretation = () => {
+    if (!stationarity_results) return null;
+
+    const isStationaryADF = stationarity_results.ADF['p-value'] < 0.05;
+    const isStationaryKPSS = stationarity_results.KPSS
+      ? stationarity_results.KPSS['p-value'] >= 0.05
+      : null;
+
+    if (isStationaryADF && isStationaryKPSS !== null && isStationaryKPSS) {
+      return 'Both ADF and KPSS tests confirm that the price differential series is stationary, indicating stable price relationships.';
+    } else if (!isStationaryADF && isStationaryKPSS !== null && !isStationaryKPSS) {
+      return 'Both tests indicate non-stationarity, suggesting persistent trends or unit roots in the price differential.';
+    } else {
+      return 'Mixed results from the stationarity tests suggest potential complexities in the price behavior.';
+    }
+  };
+
+  const getCointegrationInterpretation = () => {
+    if (!cointegration_results) return null;
+
+    const pValue = cointegration_results.p_value;
+
+    if (pValue < 0.01) {
+      return 'There is very strong evidence of cointegration between the markets, indicating a robust long-term price relationship.';
+    } else if (pValue < 0.05) {
+      return 'There is significant evidence of cointegration, suggesting the markets share a long-term equilibrium relationship.';
+    } else {
+      return 'There is no significant evidence of cointegration, indicating the markets may operate independently.';
+    }
+  };
+
+  const getRegressionInterpretation = () => {
+    if (!regression_results) return null;
+
+    const { slope, p_value, r_squared } = regression_results;
+    const trendDirection = slope > 0 ? 'increasing' : 'decreasing';
+    const significance = p_value < 0.05 ? 'significant' : 'not significant';
+    const fitQuality = r_squared > 0.7 ? 'strong' : r_squared > 0.5 ? 'moderate' : 'weak';
+
+    return `The regression analysis indicates a ${trendDirection} trend in the price differential over time with a ${significance} slope. The model has a ${fitQuality} fit (R² = ${(r_squared * 100).toFixed(1)}%).`;
+  };
+
+  const getDiagnosticsInterpretation = () => {
+    if (!diagnostics) return null;
+
+    const { conflict_correlation, distance_km } = diagnostics;
+
+    const conflictImpact = conflict_correlation > 0.5 ? 'high' : conflict_correlation > 0.3 ? 'moderate' : 'low';
+    const distanceImpact = distance_km > 500 ? 'high' : distance_km > 300 ? 'moderate' : 'low';
+
+    return `The conflict intensity correlation between the markets is ${conflict_correlation.toFixed(2)}, indicating a ${conflictImpact} impact of conflict on market relationships. The distance between the markets is ${distance_km.toFixed(2)} km, resulting in a ${distanceImpact} impact on market integration.`;
+  };
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Interpretation of Price Differential Analysis Results
+    <Paper sx={{ p: 3, mt: 3 }}>
+      <Typography variant="h6" gutterBottom>
+        Interpretation of Analysis Results
       </Typography>
 
       {/* 1. Key Findings */}
       <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="subtitle1" gutterBottom>
           1. Key Findings
         </Typography>
-        {/* Regression Analysis */}
-        {regression_results && regression_results.beta_distance != null && regression_results.beta_conflict_corr != null && (
+
+        {/* Stationarity Interpretation */}
+        {getStationarityInterpretation() && (
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant="subtitle2" gutterBottom>
+              Stationarity Analysis
+            </Typography>
+            <Typography variant="body2">{getStationarityInterpretation()}</Typography>
+          </Box>
+        )}
+
+        {/* Cointegration Interpretation */}
+        {getCointegrationInterpretation() && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Cointegration Analysis
+            </Typography>
+            <Typography variant="body2">{getCointegrationInterpretation()}</Typography>
+          </Box>
+        )}
+
+        {/* Regression Interpretation */}
+        {getRegressionInterpretation() && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
               Regression Analysis
             </Typography>
-            <Typography variant="body2" paragraph>
-              The regression analysis indicates a relationship between price differentials and factors such as distance and conflict intensity.
-            </Typography>
-            <Typography variant="body2" paragraph>
-              The coefficient for distance (\\( \\beta_1 \\)) is <strong>{Number(regression_results.beta_distance).toFixed(4)}</strong>, suggesting that for every unit increase in distance, the price differential changes by this amount.
-            </Typography>
-            <Typography variant="body2" paragraph>
-              The coefficient for conflict correlation (\\( \\beta_2 \\)) is <strong>{Number(regression_results.beta_conflict_corr).toFixed(4)}</strong>, indicating the impact of conflict correlation on price differentials.
-            </Typography>
+            <Typography variant="body2">{getRegressionInterpretation()}</Typography>
           </Box>
         )}
-        {/* Cointegration Test */}
-        {cointegration_test && typeof cointegration_test.p_value === 'number' && (
+
+        {/* Diagnostics Interpretation */}
+        {getDiagnosticsInterpretation() && (
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Cointegration Test
+            <Typography variant="subtitle2" gutterBottom>
+              Diagnostics
             </Typography>
-            <Typography variant="body2" paragraph>
-              The cointegration test results suggest that the markets {cointegration_test.p_value < 0.05 ? 'share' : 'do not share'} a long-term equilibrium relationship.
-            </Typography>
-          </Box>
-        )}
-        {/* Stationarity Test */}
-        {stationarity_test && typeof stationarity_test.p_value === 'number' && stationarity_test.market_name && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Stationarity Test
-            </Typography>
-            <Typography variant="body2" paragraph>
-              The stationarity test indicates that the price series for {stationarity_test.market_name} is {stationarity_test.p_value < 0.05 ? 'stationary' : 'non-stationary'}.
-            </Typography>
+            <Typography variant="body2">{getDiagnosticsInterpretation()}</Typography>
           </Box>
         )}
       </Box>
 
-      {/* 2. Market Integration */}
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          2. Market Integration
-        </Typography>
-        <Typography variant="body2" paragraph>
-          Analysis of price differentials and statistical tests provide insights into the level of integration between {baseMarket} and {comparisonMarket}.
-        </Typography>
-        {diagnostics && typeof diagnostics.distance_km === 'number' && (
-          <Typography variant="body2" paragraph>
-            The distance between the markets is <strong>{diagnostics.distance_km.toFixed(1)} km</strong>, which {diagnostics.distance_km > 200 ? 'may contribute to higher' : 'suggests lower'} price differentials due to transportation costs.
-          </Typography>
-        )}
-      </Box>
-
-      {/* 3. Impact of Conflict Intensity */}
-      {diagnostics && typeof diagnostics.conflict_correlation === 'number' && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            3. Impact of Conflict Intensity
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Conflict intensity plays a role in market dynamics. The conflict correlation between the markets is <strong>{diagnostics.conflict_correlation.toFixed(3)}</strong>, indicating {diagnostics.conflict_correlation > 0.5 ? 'a strong' : 'a weak'} relationship in conflict patterns.
-          </Typography>
-          <Typography variant="body2" paragraph>
-            Higher conflict correlation may lead to synchronized market disruptions, affecting price differentials.
-          </Typography>
-        </Box>
-      )}
-
-      {/* Conclusions */}
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Conclusions
-        </Typography>
-        <Typography variant="body2" paragraph>
-          The analysis reveals that factors such as distance and conflict intensity influence the price differentials between {baseMarket} and {comparisonMarket}. Understanding these factors can inform policy decisions aimed at improving market integration and stability.
-        </Typography>
-      </Box>
+      {/* Additional Insights */}
+      {/* You can add more sections here if needed */}
     </Paper>
   );
 };
 
 InterpretationSection.propTypes = {
-  data: PropTypes.shape({
-    regression_results: PropTypes.shape({
-      beta_distance: PropTypes.number,
-      beta_conflict_corr: PropTypes.number,
-    }),
-    cointegration_test: PropTypes.shape({
-      p_value: PropTypes.number,
-    }),
-    stationarity_test: PropTypes.shape({
-      p_value: PropTypes.number,
-      market_name: PropTypes.string,
-    }),
-    diagnostics: PropTypes.shape({
-      distance_km: PropTypes.number,
-      conflict_correlation: PropTypes.number,
-    }),
-  }).isRequired,
+  data: PropTypes.object.isRequired,
   baseMarket: PropTypes.string.isRequired,
   comparisonMarket: PropTypes.string.isRequired,
 };
 
-export default InterpretationSection;
+export default React.memo(InterpretationSection);

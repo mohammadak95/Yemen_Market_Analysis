@@ -1,3 +1,5 @@
+// src/components/analysis/price-differential/MarketPairInfo.js
+
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -19,11 +21,21 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   SwapHoriz as SwapHorizIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
-import { useTechnicalHelp } from '@/hooks';
+
+const tooltips = {
+  market_pair: 'Detailed analysis of the relationship between two markets',
+  market_details: 'Basic information about the market pair',
+  integration_metrics: 'Metrics indicating the degree of market integration',
+  distance_impact: 'Effect of geographical distance on market integration',
+  conflict_impact: 'Impact of conflict on market relationships',
+  cointegration: 'Long-term equilibrium relationship between markets',
+  stationarity: 'Stability of price differential series',
+};
 
 const MarketPairInfo = ({ data, baseMarket, comparisonMarket, isMobile }) => {
-  const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');
   const theme = useTheme();
 
   const styles = {
@@ -57,8 +69,17 @@ const MarketPairInfo = ({ data, baseMarket, comparisonMarket, isMobile }) => {
         width: '100%',
       },
     },
+    chipContainer: {
+      display: 'flex',
+      gap: 1,
+    },
     footnote: {
       mt: 3,
+    },
+    metricValue: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
     },
   };
 
@@ -67,170 +88,168 @@ const MarketPairInfo = ({ data, baseMarket, comparisonMarket, isMobile }) => {
     return data.distance_km !== undefined ? data.distance_km * 250 : undefined;
   }, [data.distance_km]);
 
-  const getTradeRelationshipStatus = () => {
+  const marketAnalysis = useMemo(() => {
+    if (!data) return null;
+
+    const cointegrationResults = data.cointegration_results || data.cointegration_test;
+    const stationarityResults = data.stationarity_results || data.stationarity_test;
     const conflictCorrelation = data.conflict_correlation || 0;
     const distance = actualDistance || 0;
 
-    if (conflictCorrelation > 0.5 && distance < 250) {
-      return {
+    // Cointegration status
+    const isCointegrated = cointegrationResults?.p_value < 0.05;
+
+    // Stationarity status
+    const isStationary = stationarityResults?.ADF
+      ? stationarityResults.ADF['p-value'] < 0.05 && (stationarityResults.KPSS?.['p-value'] >= 0.05 || stationarityResults.KPSS === undefined)
+      : stationarityResults?.['p-value'] < 0.05;
+
+    // Integration level based on multiple factors
+    let integrationLevel;
+    if (isCointegrated && isStationary && conflictCorrelation < 0.3 && distance < 300) {
+      integrationLevel = {
         label: 'Strong',
         color: 'success',
         icon: TrendingUpIcon,
-        description: 'High level of market integration',
+        description: 'High level of market integration with stable price relationships',
       };
-    } else if (conflictCorrelation > 0.3 && distance < 500) {
-      return {
+    } else if ((isCointegrated || isStationary) && conflictCorrelation < 0.5 && distance < 500) {
+      integrationLevel = {
         label: 'Moderate',
         color: 'warning',
         icon: SwapHorizIcon,
-        description: 'Moderate market integration',
+        description: 'Moderate market integration with some barriers',
+      };
+    } else {
+      integrationLevel = {
+        label: 'Weak',
+        color: 'error',
+        icon: TrendingDownIcon,
+        description: 'Limited market integration with significant barriers',
       };
     }
-    return {
-      label: 'Weak',
-      color: 'error',
-      icon: TrendingDownIcon,
-      description: 'Limited market integration',
-    };
-  };
 
-  const marketStatus = getTradeRelationshipStatus();
-  const formatDistance = (distance) => distance !== undefined ? `${distance.toFixed(1)} km` : 'N/A';
-  const formatCorrelation = (correlation) => correlation !== undefined ? correlation.toFixed(3) : 'N/A';
+    return {
+      integrationLevel,
+      isCointegrated,
+      isStationary,
+      conflictImpact: conflictCorrelation > 0.5 ? 'High' : conflictCorrelation > 0.3 ? 'Moderate' : 'Low',
+      distanceImpact: distance > 500 ? 'High' : distance > 300 ? 'Moderate' : 'Low',
+    };
+  }, [data, actualDistance]);
+
+  if (!marketAnalysis) {
+    return (
+      <Alert severity="info">
+        No market pair information available.
+      </Alert>
+    );
+  }
 
   return (
     <Paper sx={styles.container}>
       <Box sx={styles.header}>
-        <Typography variant="h6" component="div">
+        <Typography variant="h6">
           Market Pair Information
-          <Tooltip title={getTechnicalTooltip('market_pair')}>
+          <Tooltip title="Basic and advanced details about the selected market pair">
             <IconButton size="small">
               <InfoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Typography>
         <Chip
-          icon={<marketStatus.icon />}
-          label={`${marketStatus.label} Integration`}
-          color={marketStatus.color}
+          icon={marketAnalysis.integrationLevel.icon ? React.createElement(marketAnalysis.integrationLevel.icon) : null}
+          label={marketAnalysis.integrationLevel.label}
+          color={marketAnalysis.integrationLevel.color}
           variant="outlined"
         />
       </Box>
 
       <Grid container spacing={3}>
-        {/* Market Details */}
+        {/* Integration Level */}
         <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={styles.card}>
-            <CardContent sx={styles.cardContent}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Market Details
-                </Typography>
-                <Tooltip title={getTechnicalTooltip('market_details')}>
-                  <IconButton size="small">
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-
-              <Grid container spacing={2} sx={styles.metricsGrid}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">Base Market</Typography>
-                  <Typography variant="body1">{baseMarket}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">Comparison Market</Typography>
-                  <Typography variant="body1">{comparisonMarket}</Typography>
-                </Grid>
-              </Grid>
-
-              <Divider sx={styles.divider} />
-
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">Distance</Typography>
-                  <Typography variant="body1">{formatDistance(actualDistance)}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">Conflict Correlation</Typography>
-                  <Typography variant="body1">{formatCorrelation(data.conflict_correlation)}</Typography>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+          <Box sx={styles.contentBox}>
+            <Typography variant="subtitle2" gutterBottom>
+              Integration Level
+            </Typography>
+            <Chip
+              icon={React.createElement(marketAnalysis.integrationLevel.icon)}
+              label={marketAnalysis.integrationLevel.label}
+              color={marketAnalysis.integrationLevel.color}
+              variant="outlined"
+            />
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              {marketAnalysis.integrationLevel.description}
+            </Typography>
+          </Box>
         </Grid>
 
-        {/* Integration Analysis */}
-        <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={styles.card}>
-            <CardContent sx={styles.cardContent}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Integration Analysis
-                </Typography>
-                <Tooltip title={getTechnicalTooltip('integration_metrics')}>
-                  <IconButton size="small">
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+        {/* Conflict Impact */}
+        <Grid item xs={12} md={3}>
+          <Box sx={styles.contentBox}>
+            <Typography variant="subtitle2" gutterBottom>
+              Conflict Impact
+            </Typography>
+            <Chip
+              label={marketAnalysis.conflictImpact}
+              color={
+                marketAnalysis.conflictImpact === 'High'
+                  ? 'error'
+                  : marketAnalysis.conflictImpact === 'Moderate'
+                  ? 'warning'
+                  : 'success'
+              }
+              variant="outlined"
+            />
+          </Box>
+        </Grid>
 
-              <Alert 
-                severity={marketStatus.color} 
-                sx={styles.alert}
-                variant="outlined"
-              >
-                <Typography variant="body2" component="div">
-                  <strong>Integration Level:</strong> {marketStatus.description}
-                  <Box sx={{ mt: 1 }}>
-                    Key factors:
-                    <Box component="ul" sx={{ mt: 1, mb: 0 }}>
-                      <li>Distance Impact: {formatDistance(actualDistance)}</li>
-                      <li>Market Correlation: {formatCorrelation(data.conflict_correlation)}</li>
-                    </Box>
-                  </Box>
-                </Typography>
-              </Alert>
-
-              <Alert 
-                severity={data.p_value < 0.05 ? "warning" : "info"}
-                sx={{ mt: 2, ...styles.alert }}
-                variant="outlined"
-              >
-                <Typography variant="body2" component="div">
-                  <strong>Conflict Impact Analysis:</strong>
-                  <Box sx={{ mt: 1 }}>
-                    {data.p_value < 0.05 
-                      ? "Significant conflict-related correlations observed."
-                      : "Limited conflict-related impacts observed."}
-                    <Box component="ul" sx={{ mt: 1, mb: 0 }}>
-                      <li>P-Value: {data.p_value !== undefined ? data.p_value.toFixed(4) : 'N/A'}</li>
-                    </Box>
-                  </Box>
-                </Typography>
-              </Alert>
-            </CardContent>
-          </Card>
+        {/* Distance Impact */}
+        <Grid item xs={12} md={3}>
+          <Box sx={styles.contentBox}>
+            <Typography variant="subtitle2" gutterBottom>
+              Distance Impact
+            </Typography>
+            <Chip
+              label={marketAnalysis.distanceImpact}
+              color={
+                marketAnalysis.distanceImpact === 'High'
+                  ? 'error'
+                  : marketAnalysis.distanceImpact === 'Moderate'
+                  ? 'warning'
+                  : 'success'
+              }
+              variant="outlined"
+            />
+          </Box>
         </Grid>
       </Grid>
-
-      {!isMobile && (
-        <Box sx={styles.footnote}>
-          <Typography variant="body2" color="text.secondary">
-            Note: Integration metrics are based on conflict correlation and geographic distance between markets.
-          </Typography>
-        </Box>
-      )}
     </Paper>
   );
 };
 
 MarketPairInfo.propTypes = {
   data: PropTypes.shape({
-    conflict_correlation: PropTypes.number,
-    distance_km: PropTypes.number,
-    p_value: PropTypes.number,
-  }).isRequired,
+    distance_km: PropTypes.number.isRequired,
+    conflict_correlation: PropTypes.number.isRequired,
+    cointegration_results: PropTypes.shape({
+      p_value: PropTypes.number.isRequired,
+    }),
+    cointegration_test: PropTypes.shape({
+      p_value: PropTypes.number.isRequired,
+    }),
+    stationarity_results: PropTypes.shape({
+      ADF: PropTypes.shape({
+        'p-value': PropTypes.number.isRequired,
+      }),
+      KPSS: PropTypes.shape({
+        'p-value': PropTypes.number.isRequired,
+      }),
+    }),
+    stationarity_test: PropTypes.shape({
+      'p-value': PropTypes.number.isRequired,
+    }),
+  }),
   baseMarket: PropTypes.string.isRequired,
   comparisonMarket: PropTypes.string.isRequired,
   isMobile: PropTypes.bool.isRequired,

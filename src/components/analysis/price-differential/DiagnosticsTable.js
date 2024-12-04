@@ -16,10 +16,8 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
-import { useTechnicalHelp } from '@/hooks';
 
 const DiagnosticsTable = ({ data, isMobile }) => {
-  const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');
   const theme = useTheme();
 
   const styles = {
@@ -91,87 +89,136 @@ const DiagnosticsTable = ({ data, isMobile }) => {
     common_dates,
     conflict_correlation,
     distance_km,
-    p_value,
+    model_diagnostics,
+    residual_diagnostics,
   } = data;
-
-  const actualDistance = useMemo(() => 
-    distance_km !== undefined ? distance_km * 250 : undefined
-  , [distance_km]);
 
   const metrics = useMemo(() => [
     {
-      section: 'Market Statistics',
+      section: 'Market Characteristics',
       metrics: [
         { 
-          label: 'Common Dates',
+          label: 'Common Trading Days',
           value: common_dates,
-          tooltip: 'common_dates',
+          tooltip: 'Number of days with price data available for both markets',
           format: 'number'
         },
         {
-          label: 'Distance',
-          value: actualDistance,
-          tooltip: 'distance_km',
+          label: 'Market Distance',
+          value: distance_km,
+          tooltip: 'Physical distance between markets in kilometers',
           format: 'distance',
           unit: 'km'
         },
       ]
     },
     {
-      section: 'Correlation Analysis',
+      section: 'Market Integration Metrics',
       metrics: [
         {
           label: 'Conflict Correlation',
           value: conflict_correlation,
-          tooltip: 'conflict_correlation',
-          format: 'decimal'
+          tooltip: 'Correlation between conflict intensities in both market areas',
+          format: 'decimal',
+          threshold: 0.5,
+          interpretation: value => value > 0.5 ? 'High correlation' : 'Low correlation'
+        },
+        ...(model_diagnostics?.r_squared ? [{
+          label: 'Model R-squared',
+          value: model_diagnostics.r_squared,
+          tooltip: 'Proportion of variance explained by the model',
+          format: 'percentage',
+          threshold: 0.7,
+          interpretation: value => value > 0.7 ? 'Strong fit' : 'Moderate fit'
+        }] : []),
+      ]
+    },
+    ...(residual_diagnostics ? [{
+      section: 'Residual Diagnostics',
+      metrics: [
+        {
+          label: 'Normality Test p-value',
+          value: residual_diagnostics.normality_test?.p_value,
+          tooltip: 'Tests if residuals follow a normal distribution',
+          format: 'decimal',
+          showStatus: true,
+          threshold: 0.05,
+          interpretation: value => value >= 0.05 ? 'Normal distribution' : 'Non-normal distribution'
         },
         {
-          label: 'P-Value',
-          value: p_value,
-          tooltip: 'p_value',
+          label: 'Heteroskedasticity Test p-value',
+          value: residual_diagnostics.heteroskedasticity_test?.p_value,
+          tooltip: 'Tests for constant variance in residuals',
           format: 'decimal',
-          showStatus: true
+          showStatus: true,
+          threshold: 0.05,
+          interpretation: value => value >= 0.05 ? 'Homoskedastic' : 'Heteroskedastic'
         },
       ]
-    }
-  ], [common_dates, actualDistance, conflict_correlation, p_value]);
+    }] : []),
+  ], [common_dates, distance_km, conflict_correlation, model_diagnostics, residual_diagnostics]);
 
   const formatValue = (metric) => {
-    if (metric.value === undefined) return 'N/A';
+    if (metric.value === undefined || metric.value === null) return 'N/A';
     
     switch (metric.format) {
       case 'decimal':
         return metric.value.toFixed(4);
+      case 'percentage':
+        return `${(metric.value * 100).toFixed(1)}%`;
       case 'distance':
         return `${metric.value.toFixed(1)} ${metric.unit}`;
       case 'number':
-        return metric.value.toString();
+        return metric.value.toLocaleString();
       default:
-        return metric.value;
+        return metric.value.toString();
     }
   };
 
-  const overallStatus = p_value < 0.05 ? 'warning' : 'success';
-  const statusMessage = p_value < 0.05 
-    ? 'Model needs review'
-    : 'Model validated';
+  const getMetricStatus = (metric) => {
+    if (!metric.threshold || metric.value === undefined || metric.value === null) return null;
+    
+    const isGood = metric.format === 'decimal' && metric.showStatus
+      ? metric.value >= metric.threshold
+      : metric.value > metric.threshold;
+
+    return {
+      status: isGood ? 'success' : 'warning',
+      message: metric.interpretation ? metric.interpretation(metric.value) : (isGood ? 'Good' : 'Warning'),
+    };
+  };
+
+  const overallStatus = useMemo(() => {
+    if (!residual_diagnostics) return { status: 'info', message: 'Limited diagnostics available' };
+
+    const hasNormalResiduals = residual_diagnostics.normality_test?.p_value >= 0.05;
+    const hasHomoskedasticity = residual_diagnostics.heteroskedasticity_test?.p_value >= 0.05;
+    const hasGoodFit = model_diagnostics?.r_squared > 0.7;
+
+    if (hasNormalResiduals && hasHomoskedasticity && hasGoodFit) {
+      return { status: 'success', message: 'Model assumptions validated' };
+    } else if (!hasNormalResiduals && !hasHomoskedasticity) {
+      return { status: 'warning', message: 'Multiple assumption violations' };
+    } else {
+      return { status: 'warning', message: 'Some assumptions violated' };
+    }
+  }, [residual_diagnostics, model_diagnostics]);
 
   return (
     <Paper sx={styles.container}>
       <Box sx={styles.header}>
         <Box sx={styles.title}>
-          <Typography variant="h5">Diagnostic Results</Typography>
-          <Tooltip title={getTechnicalTooltip('diagnostics_overview')}>
+          <Typography variant="h5">Market Pair Diagnostics</Typography>
+          <Tooltip title="Comprehensive diagnostics of market pair relationships">
             <IconButton size="small">
               <InfoIcon />
             </IconButton>
           </Tooltip>
         </Box>
         <Chip
-          icon={overallStatus === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
-          label={statusMessage}
-          color={overallStatus}
+          icon={overallStatus.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
+          label={overallStatus.message}
+          color={overallStatus.status}
           variant="outlined"
           sx={{ px: 2 }}
         />
@@ -183,46 +230,51 @@ const DiagnosticsTable = ({ data, isMobile }) => {
             {section.section}
           </Typography>
           <Grid container spacing={3}>
-            {section.metrics.map((metric) => (
-              <Grid item xs={12} sm={6} key={metric.label}>
-                <Box sx={styles.metricContainer}>
-                  <Box sx={styles.metricHeader}>
-                    {metric.label}
-                    <Tooltip title={getTechnicalTooltip(metric.tooltip)}>
-                      <IconButton size="small">
-                        <InfoIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+            {section.metrics.map((metric) => {
+              const status = getMetricStatus(metric);
+              return (
+                <Grid item xs={12} sm={6} key={metric.label}>
+                  <Box sx={styles.metricContainer}>
+                    <Box sx={styles.metricHeader}>
+                      {metric.label}
+                      <Tooltip title={metric.tooltip}>
+                        <IconButton size="small">
+                          <InfoIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                    <Box sx={styles.metricValue}>
+                      {formatValue(metric)}
+                      {status && (
+                        <Chip
+                          size="small"
+                          icon={status.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
+                          label={status.message}
+                          color={status.status}
+                          sx={styles.statusChip}
+                        />
+                      )}
+                    </Box>
                   </Box>
-                  <Box sx={styles.metricValue}>
-                    {formatValue(metric)}
-                    {metric.showStatus && (
-                      <Chip
-                        size="small"
-                        icon={overallStatus === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
-                        label={overallStatus.toUpperCase()}
-                        color={overallStatus}
-                        sx={styles.statusChip}
-                      />
-                    )}
-                  </Box>
-                </Box>
-              </Grid>
-            ))}
+                </Grid>
+              );
+            })}
           </Grid>
         </Box>
       ))}
 
       <Alert 
-        severity={overallStatus}
+        severity={overallStatus.status}
         variant="outlined"
-        icon={overallStatus === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
+        icon={overallStatus.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
         sx={styles.alertContainer}
       >
         <Typography variant="body1">
-          {p_value < 0.05
-            ? 'Statistical analysis indicates potential model assumption violations. Consider reviewing the analysis parameters and data quality.'
-            : 'Model diagnostics indicate valid statistical assumptions. The analysis results can be interpreted with confidence.'}
+          {overallStatus.status === 'success'
+            ? 'All diagnostic tests indicate reliable model results. The analysis provides a robust basis for market integration assessment.'
+            : overallStatus.status === 'warning'
+            ? 'Some diagnostic tests indicate potential issues. Consider the results with appropriate caution and potentially investigate alternative model specifications.'
+            : 'Limited diagnostic information available. Results should be interpreted within the context of available metrics.'}
         </Typography>
       </Alert>
     </Paper>
@@ -234,8 +286,18 @@ DiagnosticsTable.propTypes = {
     common_dates: PropTypes.number,
     conflict_correlation: PropTypes.number,
     distance_km: PropTypes.number,
-    p_value: PropTypes.number,
-  }).isRequired,
+    model_diagnostics: PropTypes.shape({
+      r_squared: PropTypes.number,
+    }),
+    residual_diagnostics: PropTypes.shape({
+      normality_test: PropTypes.shape({
+        p_value: PropTypes.number,
+      }),
+      heteroskedasticity_test: PropTypes.shape({
+        p_value: PropTypes.number,
+      }),
+    }),
+  }),
   isMobile: PropTypes.bool.isRequired,
 };
 

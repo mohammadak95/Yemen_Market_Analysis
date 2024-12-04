@@ -16,6 +16,7 @@ import {
   useTheme,
   IconButton,
   Tooltip,
+  Paper,
 } from '@mui/material';
 import { School as SchoolIcon, Info as InfoIcon } from '@mui/icons-material';
 
@@ -23,36 +24,109 @@ const steps = [
   {
     label: 'Understanding Price Differentials',
     content: `Price Differential Analysis examines commodity price variations between markets,
-      revealing patterns in market integration and efficiency. This analysis helps identify
-      barriers to trade and opportunities for market improvement.`,
+      helping understand market integration and efficiency. Key concepts include:
+      
+      • Price spread between markets
+      • Temporal price relationships
+      • Market integration patterns
+      • Trade barrier identification
+      
+      This analysis provides insights into market efficiency and potential areas for improvement.`,
     tooltip: 'Learn the basics of price differential analysis',
   },
   {
-    label: 'Statistical Methodology',
-    content: `We employ robust statistical methods including:
-      • Stationarity tests to check price stability
-      • Cointegration analysis for long-term relationships
-      • Regression analysis with conflict and distance factors
-      • Diagnostic tests for result validation`,
-    tooltip: 'Explore the statistical methods used',
+    label: 'Enhanced Statistical Methods',
+    content: `Our comprehensive statistical approach includes:
+
+      Stationarity Analysis:
+      • Augmented Dickey-Fuller (ADF) Test: Checks for unit roots
+      • KPSS Test: Confirms trend stationarity
+      • Combined interpretation for robust results
+      
+      Cointegration Analysis:
+      • Tests long-term price relationships
+      • Evaluates market integration strength
+      • Identifies equilibrium patterns
+      
+      Regression Analysis:
+      • Distance effects on price spread
+      • Conflict impact assessment
+      • Market efficiency metrics
+      
+      Advanced Diagnostics:
+      • Residual analysis
+      • Model validation tests
+      • Confidence interval estimation`,
+    tooltip: 'Explore our enhanced statistical methodology',
   },
   {
-    label: 'Interpretation Guide',
-    content: `Learn to interpret results through:
-      • Statistical significance indicators
-      • Long-term relationship assessment
-      • Market integration metrics
-      • Impact of conflict and distance`,
-    tooltip: 'Understanding what the results mean',
+    label: 'Interpreting Results',
+    content: `Learn to interpret comprehensive analysis results:
+
+      Market Integration Assessment:
+      • Strong: Both ADF and KPSS confirm stationarity
+      • Moderate: Mixed test results
+      • Weak: Non-stationary price relationships
+      
+      Cointegration Interpretation:
+      • p-value < 0.01: Very strong evidence
+      • p-value < 0.05: Strong evidence
+      • p-value ≥ 0.05: Limited evidence
+      
+      Impact Factors:
+      • Geographic distance effects
+      • Conflict intensity influence
+      • Seasonal patterns
+      • Market-specific characteristics`,
+    tooltip: 'Understanding the enhanced analysis results',
   },
   {
-    label: 'Applied Examples',
-    content: `Examine real-world cases showing:
-      • How conflict affects market integration
-      • Distance impacts on price relationships
-      • Seasonal price pattern analysis
-      • Market efficiency assessment`,
-    tooltip: 'See real-world applications',
+    label: 'Visual Analysis Tools',
+    content: `Our interactive visualization tools include:
+
+      Price Differential Charts:
+      • Time series visualization
+      • Confidence intervals
+      • Trend identification
+      • Seasonal patterns
+      
+      Statistical Displays:
+      • Test result summaries
+      • Integration metrics
+      • Diagnostic indicators
+      • Market condition indicators
+      
+      Interactive Features:
+      • Dynamic date selection
+      • Market pair comparison
+      • Customizable views
+      • Detailed tooltips`,
+    tooltip: 'Learn about visualization features',
+  },
+  {
+    label: 'Practical Applications',
+    content: `Real-world applications and insights:
+
+      Market Integration:
+      • Identifying trade barriers
+      • Assessing price transmission
+      • Evaluating market efficiency
+      
+      Policy Implications:
+      • Infrastructure development needs
+      • Trade policy recommendations
+      • Market intervention strategies
+      
+      Risk Assessment:
+      • Market vulnerability analysis
+      • Conflict impact evaluation
+      • Geographic barrier effects
+      
+      Development Planning:
+      • Market development priorities
+      • Infrastructure investment needs
+      • Policy intervention points`,
+    tooltip: 'See practical applications and implications',
   },
 ];
 
@@ -71,6 +145,13 @@ const PriceDifferentialTutorial = () => {
       pb: 2,
       pr: 2,
     },
+    contentBox: {
+      p: 2,
+      bgcolor: theme.palette.background.default,
+      borderRadius: 1,
+      my: 2,
+      whiteSpace: 'pre-line',
+    },
     actions: {
       px: 2,
       py: 1,
@@ -78,6 +159,12 @@ const PriceDifferentialTutorial = () => {
     navigation: {
       mt: 2,
       display: 'flex',
+      gap: 1,
+    },
+    dialogTitle: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       gap: 1,
     },
   };
@@ -104,11 +191,11 @@ const PriceDifferentialTutorial = () => {
         fullWidth
       >
         <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={styles.dialogTitle}>
             <Typography variant="h6">
-              Price Differential Analysis Guide
+              Enhanced Price Differential Analysis Guide
             </Typography>
-            <Tooltip title="Interactive tutorial guide">
+            <Tooltip title="Comprehensive tutorial on market analysis methods">
               <IconButton size="small">
                 <InfoIcon fontSize="small" />
               </IconButton>
@@ -137,9 +224,11 @@ const PriceDifferentialTutorial = () => {
                 </StepLabel>
                 <StepContent TransitionProps={{ unmountOnExit: false }}>
                   <Box sx={styles.stepContent}>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-                      {step.content}
-                    </Typography>
+                    <Paper variant="outlined" sx={styles.contentBox}>
+                      <Typography variant="body2">
+                        {step.content}
+                      </Typography>
+                    </Paper>
                     <Box sx={styles.navigation}>
                       <Button
                         disabled={index === 0}

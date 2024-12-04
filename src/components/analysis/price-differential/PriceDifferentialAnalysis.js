@@ -1,5 +1,6 @@
 // src/components/analysis/price-differential/PriceDifferentialAnalysis.js
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -11,22 +12,13 @@ import {
   useTheme,
   Paper,
   Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  IconButton,
-  Tooltip,
-  Grid,
-  Button,
   Stack,
+  Button,
 } from '@mui/material';
-import { ExpandMore, Info, Download } from '@mui/icons-material';
+import { Download } from '@mui/icons-material';
 import { saveAs } from 'file-saver';
-import { BlockMath, InlineMath } from 'react-katex';
-import 'katex/dist/katex.min.css';
-import { usePriceDifferentialData } from '../../../hooks';
+import { usePriceDifferentialData } from '../../../hooks/dataHooks'; // Ensure correct import path
 import AnalysisContainer from '../../common/AnalysisContainer';
-import { analysisStyles } from '../../../styles/analysisStyles';
 
 import PriceDifferentialChart from './PriceDifferentialChart';
 import EnhancedRegressionResults from './EnhancedRegressionResults';
@@ -34,14 +26,14 @@ import CointegrationAnalysis from './CointegrationAnalysis';
 import StationarityTest from './StationarityTest';
 import DiagnosticsTable from './DiagnosticsTable';
 import MarketPairInfo from './MarketPairInfo';
-import DynamicInterpretation from './DynamicInterpretation';
 import PriceDifferentialTutorial from './PriceDifferentialTutorial';
 import InterpretationSection from './InterpretationSection';
+import PriceDifferentialFramework from './PriceDifferentialFramework';
 
 const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
   const isMobile = windowWidth < theme.breakpoints.values.sm;
-  
+
   const styles = {
     container: {
       width: '100%',
@@ -57,280 +49,174 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
       minWidth: isMobile ? '100%' : 200,
       flexShrink: 0,
     },
-    contentSection: {
-      p: 3,
-      height: '100%',
-      '& > :first-of-type': { mt: 0 },
-    },
-    chartPaper: {
-      p: 3,
-      height: 'auto',
-      minHeight: 500,
-      display: 'flex',
-      flexDirection: 'column',
-    },
-    chartContainer: {
-      flex: 1,
-      minHeight: 400,
-      mt: 3,
-      '& .recharts-wrapper': {
-        margin: '0 auto',
-      },
-    },
-    sectionHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1,
-      mb: 2,
-      '& .MuiIconButton-root': {
-        ml: 1,
-      },
-    },
-    equation: {
-      p: 3,
-      '& .katex': { fontSize: '1.3em' },
-    },
-    accordionDetails: {
-      p: 3,
-      bgcolor: theme.palette.background.default,
-    },
-    footer: {
-      mt: 2,
-      pt: 2,
-      borderTop: `1px solid ${theme.palette.divider}`,
-    },
   };
 
   // State management
   const [baseMarket, setBaseMarket] = useState('');
-  const [marketPairs, setMarketPairs] = useState([]);
-  const [selectedMarketPair, setSelectedMarketPair] = useState('');
+  const [otherMarket, setOtherMarket] = useState('');
   const [selectedData, setSelectedData] = useState(null);
-  const [equationExpanded, setEquationExpanded] = useState(false);
-  const [interpretationExpanded, setInterpretationExpanded] = useState(false);
 
   // Custom hooks
-  const { data, markets, status, error } = usePriceDifferentialData(selectedCommodity);
+  const { data, markets, commodities, status, error } = usePriceDifferentialData(selectedCommodity);
 
-  // Effects
+  // Effects to set initial markets
   useEffect(() => {
-    if (data && markets.length > 0) {
-      setBaseMarket(prevBaseMarket => markets.includes(prevBaseMarket) ? prevBaseMarket : markets[0]);
+    if (markets.length > 0) {
+      setBaseMarket((prev) => (markets.includes(prev) ? prev : markets[0]));
     }
-  }, [data, markets]);
+  }, [markets]);
 
   useEffect(() => {
-    if (data && baseMarket) {
-      const commodityResults = data[baseMarket]?.commodity_results[selectedCommodity];
-      if (commodityResults) {
-        const pairs = commodityResults.map(item => item.other_market);
-        setMarketPairs(pairs);
-        setSelectedMarketPair(prevPair => pairs.includes(prevPair) ? prevPair : pairs[0]);
-      } else {
-        setMarketPairs([]);
-        setSelectedMarketPair('');
-      }
+    if (baseMarket && data.length > 0) {
+      const availableMarkets = data
+        .filter((item) => item.base_market === baseMarket)
+        .map((item) => item.other_market);
+
+      setOtherMarket((prev) => (availableMarkets.includes(prev) ? prev : availableMarkets[0]));
     }
-  }, [baseMarket, data, selectedCommodity]);
+  }, [baseMarket, data]);
 
   useEffect(() => {
-    if (data?.[baseMarket]?.commodity_results?.[selectedCommodity]) {
-      const foundData = data[baseMarket].commodity_results[selectedCommodity]
-        .find(item => item.other_market === selectedMarketPair);
-      setSelectedData(foundData || null);
+    if (baseMarket && otherMarket && data.length > 0) {
+      const marketPairData = data.find(
+        (item) => item.base_market === baseMarket && item.other_market === otherMarket
+      );
+      setSelectedData(marketPairData || null);
     } else {
       setSelectedData(null);
     }
-  }, [data, baseMarket, selectedCommodity, selectedMarketPair]);
+  }, [data, baseMarket, otherMarket]);
 
-  const handleDownloadData = () => {
+  // Memoized data validation to handle new data structure
+  const validatedData = useMemo(() => {
+    if (!selectedData) return null;
+
+    return {
+      price_differential: selectedData.price_differential || selectedData.price_differential_series,
+      regression_results: selectedData.regression_results,
+      cointegration_results: selectedData.cointegration_results || selectedData.cointegration_test,
+      stationarity_results: selectedData.stationarity_results || selectedData.stationarity_test,
+      diagnostics: selectedData.diagnostics,
+    };
+  }, [selectedData]);
+
+  const handleDownloadData = useCallback(() => {
     if (!selectedData) return;
     try {
       const blob = new Blob([JSON.stringify(selectedData, null, 2)], { type: 'application/json' });
-      saveAs(blob, `price_differential_${baseMarket}_${selectedMarketPair}_${selectedCommodity}.json`);
-    } catch (error) {
-      console.error('Failed to download data:', error);
+      saveAs(blob, `price_differential_${baseMarket}_${otherMarket}_${selectedCommodity}.json`);
+    } catch (downloadError) {
+      console.error('Failed to download data:', downloadError);
     }
-  };
+  }, [selectedData, baseMarket, otherMarket, selectedCommodity]);
 
-  const MarketControls = () => (
-    <Paper sx={styles.controls}>
-      <Stack
-        direction={isMobile ? 'column' : 'row'}
-        spacing={2}
-        alignItems={isMobile ? 'stretch' : 'center'}
-        width="100%"
-      >
-        <FormControl size="small" sx={styles.formControl}>
-          <InputLabel>Base Market</InputLabel>
-          <Select
-            value={baseMarket}
-            onChange={(e) => setBaseMarket(e.target.value)}
-            label="Base Market"
-          >
-            {markets.map((market) => (
-              <MenuItem key={market} value={market}>{market}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+  if (status === 'loading') {
+    return <Alert severity="info">Loading data...</Alert>;
+  }
 
-        <FormControl size="small" sx={styles.formControl}>
-          <InputLabel>Comparison Market</InputLabel>
-          <Select
-            value={selectedMarketPair}
-            onChange={(e) => setSelectedMarketPair(e.target.value)}
-            label="Comparison Market"
-          >
-            {marketPairs.map((market) => (
-              <MenuItem key={market} value={market}>{market}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+  if (status === 'failed') {
+    return <Alert severity="error">Error loading data: {error}</Alert>;
+  }
 
+  if (!selectedData) {
+    return <Alert severity="info">No data available for the selected market pair.</Alert>;
+  }
+
+  return (
+    <Box sx={styles.container}>
+      <Paper sx={styles.controls}>
         <Stack
           direction={isMobile ? 'column' : 'row'}
           spacing={2}
-          sx={{ flexGrow: isMobile ? 0 : 1, justifyContent: 'flex-end' }}
+          alignItems={isMobile ? 'stretch' : 'center'}
+          width="100%"
         >
-          <Button
-            variant="contained"
-            startIcon={<Download />}
-            onClick={handleDownloadData}
-            disabled={!selectedData}
-            fullWidth={isMobile}
+          {/* Base Market Selector */}
+          <FormControl size="small" sx={styles.formControl}>
+            <InputLabel>Base Market</InputLabel>
+            <Select
+              value={baseMarket}
+              onChange={(e) => setBaseMarket(e.target.value)}
+              label="Base Market"
+            >
+              {markets.map((market) => (
+                <MenuItem key={market} value={market}>
+                  {market}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Comparison Market Selector */}
+          <FormControl size="small" sx={styles.formControl}>
+            <InputLabel>Comparison Market</InputLabel>
+            <Select
+              value={otherMarket}
+              onChange={(e) => setOtherMarket(e.target.value)}
+              label="Comparison Market"
+            >
+              {data
+                .filter((item) => item.base_market === baseMarket)
+                .map((item) => (
+                  <MenuItem key={item.other_market} value={item.other_market}>
+                    {item.other_market}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+
+          {/* Action Buttons */}
+          <Stack
+            direction={isMobile ? 'column' : 'row'}
+            spacing={2}
+            sx={{ flexGrow: isMobile ? 0 : 1, justifyContent: 'flex-end' }}
           >
-            Download Results
-          </Button>
-          <PriceDifferentialTutorial />
+            <Button
+              variant="contained"
+              startIcon={<Download />}
+              onClick={handleDownloadData}
+              disabled={!selectedData}
+              fullWidth={isMobile}
+            >
+              Download Results
+            </Button>
+            <PriceDifferentialTutorial />
+          </Stack>
         </Stack>
-      </Stack>
-    </Paper>
-  );
+      </Paper>
 
-  const ModelEquation = () => (
-    <Accordion expanded={equationExpanded} onChange={() => setEquationExpanded(!equationExpanded)}>
-      <AccordionSummary expandIcon={<ExpandMore />}>
-        <Box sx={styles.sectionHeader}>
-          <Typography variant="h6">Price Differential Model Equation</Typography>
-          <Tooltip title="Mathematical formulation of the price differential model">
-            <IconButton size="small">
-              <Info fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails sx={styles.accordionDetails}>
-        {/* Your equation content */}
-      </AccordionDetails>
-    </Accordion>
-  );
+      {/* Analysis Components */}
+      <AnalysisContainer>
+        <MarketPairInfo
+          data={validatedData.diagnostics}
+          baseMarket={baseMarket}
+          comparisonMarket={otherMarket}
+          isMobile={isMobile}
+        />
 
-  return (
-    <AnalysisContainer
-      title={`Price Differential Analysis: ${selectedCommodity}`}
-      infoTooltip="Analysis of price differences between markets"
-      loading={status === 'loading'}
-      error={error}
-      controls={<MarketControls />}
-      hasData={!!selectedData}
-      selectedCommodity={selectedCommodity}
-    >
-      <Stack spacing={3}>
-        <ModelEquation />
+        <PriceDifferentialChart
+          data={validatedData.price_differential}
+          baseMarket={baseMarket}
+          comparisonMarket={otherMarket}
+          commodity={selectedCommodity}
+          isMobile={isMobile}
+        />
 
-        {/* Chart Section */}
-        <Paper sx={styles.chartPaper}>
-          <Box sx={styles.sectionHeader}>
-            <Typography variant="h6">Price Differential Chart</Typography>
-            <Tooltip title="Visualization of price differences over time">
-              <IconButton size="small">
-                <Info fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-          
-          {selectedData?.price_differential ? (
-            <Box sx={styles.chartContainer}>
-              <PriceDifferentialChart
-                data={selectedData.price_differential}
-                baseMarket={baseMarket}
-                comparisonMarket={selectedMarketPair}
-                commodity={selectedCommodity}
-                isMobile={isMobile}
-              />
-            </Box>
-          ) : (
-            <Alert severity="info">No price differential data available.</Alert>
-          )}
-        </Paper>
+        <StationarityTest stationarityData={validatedData.stationarity_results} />
 
-        {/* Analysis Grid */}
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Paper sx={styles.contentSection}>
-              <MarketPairInfo
-                data={selectedData?.diagnostics}
-                baseMarket={baseMarket}
-                comparisonMarket={selectedMarketPair}
-                isMobile={isMobile}
-              />
-            </Paper>
-          </Grid>
+        <CointegrationAnalysis cointegrationData={validatedData.cointegration_results} />
 
-          <Grid item xs={12} md={6}>
-            <Paper sx={styles.contentSection}>
-              <EnhancedRegressionResults 
-                regressionData={selectedData?.regression_results}
-              />
-            </Paper>
-          </Grid>
+        <EnhancedRegressionResults regressionData={validatedData.regression_results} />
 
-          <Grid item xs={12} md={6}>
-            <Paper sx={styles.contentSection}>
-              <CointegrationAnalysis 
-                cointegrationData={selectedData?.cointegration_test}
-              />
-            </Paper>
-          </Grid>
+        <DiagnosticsTable diagnosticsData={validatedData.diagnostics} isMobile={isMobile} />
 
-          <Grid item xs={12} md={6}>
-            <Paper sx={styles.contentSection}>
-              <StationarityTest 
-                stationarityData={selectedData?.stationarity_test}
-              />
-            </Paper>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Paper sx={styles.contentSection}>
-              <DiagnosticsTable 
-                data={selectedData?.diagnostics}
-                isMobile={isMobile}
-              />
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* Interpretation Section */}
-        <Accordion
-          expanded={interpretationExpanded}
-          onChange={() => setInterpretationExpanded(!interpretationExpanded)}
-        >
-          <AccordionSummary expandIcon={<ExpandMore />}>
-            <Box sx={styles.sectionHeader}>
-              <Typography variant="h6">Analysis Interpretation</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails sx={styles.accordionDetails}>
-            <InterpretationSection
-              data={selectedData}
-              baseMarket={baseMarket}
-              comparisonMarket={selectedMarketPair}
-            />
-          </AccordionDetails>
-        </Accordion>
-      </Stack>
-    </AnalysisContainer>
+        <InterpretationSection
+          data={validatedData}
+          baseMarket={baseMarket}
+          comparisonMarket={otherMarket}
+        />
+      </AnalysisContainer>
+    </Box>
   );
 };
 
@@ -339,4 +225,4 @@ PriceDifferentialAnalysis.propTypes = {
   windowWidth: PropTypes.number.isRequired,
 };
 
-export default React.memo(PriceDifferentialAnalysis);
+export default PriceDifferentialAnalysis;

@@ -4,7 +4,7 @@ import json
 import pandas as pd
 import numpy as np
 import geopandas as gpd
-from statsmodels.tsa.stattools import adfuller, kpss
+from statsmodels.tsa.stattools import adfuller, kpss, coint
 import statsmodels.api as sm
 import logging
 from pathlib import Path
@@ -412,6 +412,23 @@ def analyze_market_pair(args):
             logger.warning(f"Mismatched price array lengths for {base_market} and {other_market} on {commodity}: {len(price_i)} vs {len(price_j)}. Skipping.")
             return None
 
+        # Perform Cointegration Test between price_i and price_j
+        try:
+            coint_t, p_value_coint, critical_values = coint(price_i, price_j)
+            cointegration_results = {
+                'test_statistic': float(coint_t),
+                'p_value': float(p_value_coint),
+                'critical_values': {
+                    '1%': critical_values[0],
+                    '5%': critical_values[1],
+                    '10%': critical_values[2]
+                }
+            }
+            logger.debug(f"Cointegration test results: {cointegration_results}")
+        except Exception as e:
+            logger.error(f"Error performing cointegration test for {base_market} and {other_market} on {commodity}: {e}")
+            cointegration_results = None
+
         price_diff, valid_mask = calculate_price_differential(price_i, price_j)
 
         if len(price_diff) == 0:
@@ -455,7 +472,7 @@ def analyze_market_pair(args):
             return None
 
         # Extract p-value from ADF test for significance
-        p_value = stationarity_results['ADF']['p-value']
+        p_value_stationarity = stationarity_results['ADF']['p-value']
 
         # Prepare data for regression
         # Since the price differential is over time, we can perform a simple linear regression over time
@@ -487,11 +504,12 @@ def analyze_market_pair(args):
                 'values': price_diff.tolist()
             },
             'regression_results': regression_results,
+            'stationarity_results': stationarity_results,
+            'cointegration_results': cointegration_results,
             'diagnostics': {
                 'conflict_correlation': float(correlation),
                 'common_dates': int(len(common_dates_prices)),
-                'distance_km': float(distance),
-                'p_value': float(p_value)
+                'distance_km': float(distance)
             }
         }
     except Exception as e:
@@ -570,7 +588,7 @@ def main(file_path):
             commodity_results[commodity].append(result)
 
         # Indicate which model was used as selected
-        selected_model = 'Simple Time Regression'  # Indicate the model used
+        selected_model = 'Simple Time Regression with Cointegration Analysis'  # Updated model description
 
         all_results[base_market] = {
             "commodity_results": commodity_results,
@@ -599,7 +617,8 @@ def main(file_path):
         elif isinstance(o, datetime):
             return o.isoformat()
         else:
-            raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
+            return str(o)
+            # raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
 
     # Save all results in a plain JSON file with indentation and sorted keys
     output_file = price_diff_results_dir / "price_differential_results.json"

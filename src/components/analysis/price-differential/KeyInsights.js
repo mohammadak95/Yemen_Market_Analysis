@@ -19,11 +19,20 @@ import {
   TrendingDown,
   CompareArrows,
   Info as InfoIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
-import { useTechnicalHelp } from '@/hooks';
+
+const tooltips = {
+  trend: 'Analysis of price differential trends over time',
+  integration: 'Assessment of market integration based on multiple indicators',
+  distance: 'Impact of geographical distance on market relationships',
+  cointegration: 'Long-term equilibrium relationship between markets',
+  stationarity: 'Stability of price differential series',
+  conflict: 'Impact of conflict on market relationships',
+};
 
 const KeyInsights = ({ data, baseMarket, comparisonMarket, commodity }) => {
-  const { getTechnicalTooltip } = useTechnicalHelp('priceDiff');
   const theme = useTheme();
 
   const styles = {
@@ -58,6 +67,12 @@ const KeyInsights = ({ data, baseMarket, comparisonMarket, commodity }) => {
       alignItems: 'center',
       gap: 1,
     },
+    chipContainer: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 1,
+      mb: 2,
+    },
     footer: {
       mt: 3,
       pt: 2,
@@ -66,67 +81,83 @@ const KeyInsights = ({ data, baseMarket, comparisonMarket, commodity }) => {
   };
 
   const insights = useMemo(() => {
-    const slope = data.regression_results?.slope || 0;
-    const pValue = data.regression_results?.p_value || 1;
-    const meanDiff = data.summary?.mean_differential || 0;
-    const volatility = data.summary?.volatility || 0;
-    const distance = (data.diagnostics?.distance_km || 0) * 250; // Multiply distance by 250
+    const cointegrationResults = data.cointegration_results || data.cointegration_test;
+    const stationarityResults = data.stationarity_results || data.stationarity_test;
+    const regressionResults = data.regression_results;
+    const diagnostics = data.diagnostics;
+
+    // Market Integration Analysis
+    const isCointegrated = cointegrationResults?.p_value < 0.05;
+    const isStationary = stationarityResults?.adf_test
+      ? stationarityResults.adf_test.p_value < 0.05 && stationarityResults.kpss_test.p_value >= 0.05
+      : stationarityResults?.p_value < 0.05;
+    const hasGoodRegression = regressionResults?.r_squared > 0.7;
+
+    const integration = {
+      level: isCointegrated && isStationary && hasGoodRegression
+        ? 'High'
+        : (isCointegrated || isStationary) && hasGoodRegression
+        ? 'Moderate'
+        : 'Low',
+      color: isCointegrated && isStationary && hasGoodRegression
+        ? 'success'
+        : (isCointegrated || isStationary) && hasGoodRegression
+        ? 'warning'
+        : 'error',
+      explanation: isCointegrated && isStationary
+        ? 'Strong evidence of market integration'
+        : isCointegrated || isStationary
+        ? 'Partial market integration detected'
+        : 'Limited market integration observed',
+      details: [
+        {
+          label: 'Cointegration',
+          status: isCointegrated ? 'success' : 'warning',
+          value: isCointegrated ? 'Present' : 'Absent',
+        },
+        {
+          label: 'Stationarity',
+          status: isStationary ? 'success' : 'warning',
+          value: isStationary ? 'Confirmed' : 'Not confirmed',
+        },
+      ],
+    };
 
     // Price Trend Analysis
-    const trend = pValue > 0.05 ? {
-      icon: CompareArrows,
-      color: 'info',
-      text: 'No significant trend',
-      explanation: 'Price differences show no consistent pattern',
-      severity: 'info',
-    } : slope > 0 ? {
-      icon: TrendingUp,
-      color: 'error',
-      text: 'Widening gap',
-      explanation: 'Price differences are increasing',
-      severity: 'warning',
-    } : {
-      icon: TrendingDown,
-      color: 'success',
-      text: 'Converging',
-      explanation: 'Markets are becoming more integrated',
-      severity: 'success',
+    const trend = {
+      direction: regressionResults?.slope > 0 ? 'Increasing' : 'Decreasing',
+      significance: regressionResults?.p_value < 0.05,
+      color: regressionResults?.p_value < 0.05
+        ? regressionResults.slope > 0 ? 'error' : 'success'
+        : 'info',
+      icon: regressionResults?.p_value < 0.05
+        ? regressionResults.slope > 0 ? TrendingUp : TrendingDown
+        : CompareArrows,
+      explanation: regressionResults?.p_value < 0.05
+        ? `Price differential is ${regressionResults.slope > 0 ? 'widening' : 'narrowing'}`
+        : 'No significant trend detected',
     };
 
-    // Integration Analysis
-    const integration = Math.abs(meanDiff) < 0.1 && volatility < 0.2 ? {
-      level: 'High',
-      color: 'success',
-      explanation: 'Strong market integration observed',
-    } : Math.abs(meanDiff) < 0.2 && volatility < 0.3 ? {
-      level: 'Moderate',
-      color: 'warning',
-      explanation: 'Partial market integration present',
-    } : {
-      level: 'Low',
-      color: 'error',
-      explanation: 'Limited market integration detected',
+    // Market Conditions
+    const conditions = {
+      distance: diagnostics?.distance_km || 0,
+      conflict_correlation: diagnostics?.conflict_correlation || 0,
+      color: diagnostics?.conflict_correlation > 0.7
+        ? 'error'
+        : diagnostics?.conflict_correlation > 0.4
+        ? 'warning'
+        : 'success',
+      explanation: diagnostics?.conflict_correlation > 0.7
+        ? 'High conflict synchronization'
+        : diagnostics?.conflict_correlation > 0.4
+        ? 'Moderate conflict impact'
+        : 'Low conflict impact',
     };
 
-    // Distance Impact
-    const distanceImpact = distance < 250 ? {
-      effect: 'Minor',
-      color: 'success',
-      explanation: 'Short distance suggests minimal impact',
-    } : distance < 500 ? {
-      effect: 'Moderate',
-      color: 'warning',
-      explanation: 'Medium distance may affect integration',
-    } : {
-      effect: 'Significant',
-      color: 'error',
-      explanation: 'Long distance likely impacts integration',
-    };
-
-    return { trend, integration, distanceImpact };
+    return { integration, trend, conditions };
   }, [data]);
 
-  const InsightCard = ({ title, chip, content, explanation, tooltipKey, icon: Icon, iconColor }) => (
+  const InsightCard = ({ title, chips, content, explanation, tooltipKey, icon: Icon, iconColor }) => (
     <Card sx={styles.card} variant="outlined">
       <CardContent sx={styles.cardContent}>
         <Box sx={styles.cardHeader}>
@@ -134,14 +165,22 @@ const KeyInsights = ({ data, baseMarket, comparisonMarket, commodity }) => {
             {Icon && <Icon sx={{ color: `${iconColor}.main` }} />}
             <Typography variant="subtitle1">{title}</Typography>
           </Box>
-          <Tooltip title={getTechnicalTooltip(tooltipKey)}>
+          <Tooltip title={tooltips[tooltipKey]}>
             <IconButton size="small">
               <InfoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          {chip}
+        <Box sx={styles.chipContainer}>
+          {Array.isArray(chips) ? chips.map((chip, index) => (
+            <Chip
+              key={index}
+              label={`${chip.label}: ${chip.value}`}
+              color={chip.status}
+              size="small"
+              icon={chip.status === 'success' ? <CheckCircleIcon /> : <WarningIcon />}
+            />
+          )) : chips}
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 'auto' }}>
           {explanation}
@@ -154,8 +193,8 @@ const KeyInsights = ({ data, baseMarket, comparisonMarket, commodity }) => {
     <Paper sx={styles.container}>
       <Box sx={styles.header}>
         <Typography variant="h6">
-          Key Market Insights
-          <Tooltip title="Overview of key market analysis findings">
+          Market Integration Analysis
+          <Tooltip title="Comprehensive analysis of market relationships">
             <IconButton size="small">
               <InfoIcon fontSize="small" />
             </IconButton>
@@ -166,15 +205,25 @@ const KeyInsights = ({ data, baseMarket, comparisonMarket, commodity }) => {
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <InsightCard
+            title="Integration Status"
+            chips={insights.integration.details}
+            explanation={insights.integration.explanation}
+            tooltipKey="integration"
+            iconColor={insights.integration.color}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <InsightCard
             title="Price Trend"
-            chip={
+            chips={
               <Chip
-                label={insights.trend.text}
+                label={insights.trend.significance ? insights.trend.direction : 'No Clear Trend'}
                 color={insights.trend.color}
                 size="small"
+                icon={<insights.trend.icon />}
               />
             }
-            content={insights.trend.text}
             explanation={insights.trend.explanation}
             tooltipKey="trend"
             icon={insights.trend.icon}
@@ -184,42 +233,36 @@ const KeyInsights = ({ data, baseMarket, comparisonMarket, commodity }) => {
 
         <Grid item xs={12} md={4}>
           <InsightCard
-            title="Market Integration"
-            chip={
-              <Chip
-                label={insights.integration.level}
-                color={insights.integration.color}
-                size="small"
-              />
-            }
-            content={insights.integration.level}
-            explanation={insights.integration.explanation}
-            tooltipKey="integration"
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <InsightCard
-            title="Distance Impact"
-            chip={
-              <Chip
-                label={insights.distanceImpact.effect}
-                color={insights.distanceImpact.color}
-                size="small"
-              />
-            }
-            content={insights.distanceImpact.effect}
-            explanation={insights.distanceImpact.explanation}
-            tooltipKey="distance"
+            title="Market Conditions"
+            chips={[
+              {
+                label: 'Distance',
+                value: `${insights.conditions.distance.toFixed(1)} km`,
+                status: insights.conditions.distance > 500 ? 'warning' : 'success',
+              },
+              {
+                label: 'Conflict Impact',
+                value: insights.conditions.conflict_correlation > 0.7 ? 'High' : 
+                       insights.conditions.conflict_correlation > 0.4 ? 'Moderate' : 'Low',
+                status: insights.conditions.color,
+              },
+            ]}
+            explanation={insights.conditions.explanation}
+            tooltipKey="conflict"
+            iconColor={insights.conditions.color}
           />
         </Grid>
       </Grid>
 
       <Box sx={styles.footer}>
         <Typography variant="body2" color="text.secondary">
-          Analysis based on <strong>{data.summary?.observations || 0}</strong> observations between{' '}
-          <strong>{baseMarket}</strong> and <strong>{comparisonMarket}</strong> for{' '}
-          <strong>{commodity}</strong>.
+          Analysis of market relationship between <strong>{baseMarket}</strong> and{' '}
+          <strong>{comparisonMarket}</strong> for <strong>{commodity}</strong>.
+          {insights.integration.level === 'High' 
+            ? ' Markets show strong integration patterns.'
+            : insights.integration.level === 'Moderate'
+            ? ' Markets show partial integration with some barriers.'
+            : ' Markets show limited integration with significant barriers.'}
         </Typography>
       </Box>
     </Paper>
@@ -231,15 +274,35 @@ KeyInsights.propTypes = {
     regression_results: PropTypes.shape({
       slope: PropTypes.number,
       p_value: PropTypes.number,
+      r_squared: PropTypes.number,
     }),
-    summary: PropTypes.shape({
-      mean_differential: PropTypes.number,
-      volatility: PropTypes.number,
-      observations: PropTypes.number,
+    cointegration_results: PropTypes.shape({
+      test_statistic: PropTypes.number,
+      p_value: PropTypes.number,
+      critical_values: PropTypes.object,
+    }),
+    cointegration_test: PropTypes.shape({
+      test_statistic: PropTypes.number,
+      p_value: PropTypes.number,
+      critical_values: PropTypes.object,
+    }),
+    stationarity_results: PropTypes.shape({
+      adf_test: PropTypes.shape({
+        test_statistic: PropTypes.number,
+        p_value: PropTypes.number,
+      }),
+      kpss_test: PropTypes.shape({
+        test_statistic: PropTypes.number,
+        p_value: PropTypes.number,
+      }),
+    }),
+    stationarity_test: PropTypes.shape({
+      test_statistic: PropTypes.number,
+      p_value: PropTypes.number,
     }),
     diagnostics: PropTypes.shape({
       distance_km: PropTypes.number,
-      distance_effect: PropTypes.string,
+      conflict_correlation: PropTypes.number,
     }),
   }).isRequired,
   baseMarket: PropTypes.string.isRequired,
