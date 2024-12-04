@@ -18,7 +18,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   IconButton,
-  Tooltip
+  Tooltip,
+  Divider
 } from '@mui/material';
 import { Download, ExpandMore, Info } from '@mui/icons-material';
 import { saveAs } from 'file-saver';
@@ -28,7 +29,7 @@ import { useECMData } from '../../../hooks/dataHooks';
 import IRFChart from './IRFChart';
 import ACFPlot from './ACFPlot';
 import PACFPlot from './PACFPlot';
-import InterpretationSection from './InterpretationSection'; // Import the new component
+import InterpretationSection from './InterpretationSection';
 
 const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
@@ -38,7 +39,7 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
   const [direction, setDirection] = useState('northToSouth');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [equationExpanded, setEquationExpanded] = useState(false);
-  const [interpretationExpanded, setInterpretationExpanded] = useState(false); // New state for interpretation section
+  const [interpretationExpanded, setInterpretationExpanded] = useState(false);
 
   const {
     unifiedData,
@@ -82,16 +83,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     }
   }, [selectedData, selectedCommodity, analysisType]);
 
-  // Memoize coefficient interpretations
-  const coefficientInterpretations = useMemo(() => {
-    if (!selectedData) return {};
-    return {
-      alpha: getAlphaInterpretation(selectedData.alpha),
-      beta: getBetaInterpretation(selectedData.beta),
-      gamma: getGammaInterpretation(selectedData.gamma)
-    };
-  }, [selectedData]);
-
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -111,7 +102,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   return (
     <Box sx={{ width: '100%', mb: 4 }}>
-      {/* Controls */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
           <ToggleButtonGroup
@@ -149,8 +139,10 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
 
       {selectedData && (
         <>
-          {/* Coefficients Summary */}
           <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+              Model Parameters
+            </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} md={4}>
                 <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
@@ -179,26 +171,69 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
             </Grid>
           </Paper>
 
-          {/* Collapsible ECM Framework */}
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6" gutterBottom>Model Diagnostics</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  AIC Score
+                </Typography>
+                <Typography variant="body1">
+                  {selectedData.aic.toFixed(2)}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  BIC Score
+                </Typography>
+                <Typography variant="body1">
+                  {selectedData.bic.toFixed(2)}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Durbin-Watson
+                </Typography>
+                <Typography variant="body1">
+                  {selectedData.diagnostics?.Variable_1?.durbin_watson_stat.toFixed(3)}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Jarque-Bera p-value
+                </Typography>
+                <Typography variant="body1">
+                  {selectedData.diagnostics?.Variable_1?.jarque_bera_pvalue.toExponential(2)}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+
           <Accordion 
             expanded={equationExpanded} 
             onChange={() => setEquationExpanded(!equationExpanded)}
             sx={{ mb: 3 }}
           >
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ mr: 1 }}>Error Correction Model Framework</Typography>
+            <AccordionSummary 
+              expandIcon={<ExpandMore />}
+              sx={{
+                backgroundColor: theme.palette.grey[50],
+                '&:hover': {
+                  backgroundColor: theme.palette.grey[100],
+                }
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                  Error Correction Model Framework
+                </Typography>
                 <Tooltip title="Click to expand for detailed model explanation">
-                  <Info fontSize="small" color="action" />
+                  <Info fontSize="small" color="action" sx={{ mr: 1 }} />
                 </Tooltip>
               </Box>
             </AccordionSummary>
             <AccordionDetails>
-              <Box sx={{ 
-                '& .katex': { 
-                  fontSize: '1.3em' 
-                }
-              }}>
+              <Box sx={{ '& .katex': { fontSize: '1.3em' }}}>
                 <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main }}>
                   Long-run Equilibrium Relationship:
                 </Typography>
@@ -283,9 +318,7 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
             </AccordionDetails>
           </Accordion>
 
-          {/* Analysis Plots */}
           <Grid container spacing={3}>
-            {/* IRF Plot */}
             <Grid item xs={12}>
               <Paper sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>
@@ -306,7 +339,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
               </Paper>
             </Grid>
 
-            {/* ACF Plot */}
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>
@@ -326,7 +358,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
               </Paper>
             </Grid>
 
-            {/* PACF Plot */}
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>
@@ -345,50 +376,8 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
                 </Box>
               </Paper>
             </Grid>
-
-            {/* Model Diagnostics */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Model Diagnostics</Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      AIC Score
-                    </Typography>
-                    <Typography variant="h6">
-                      {selectedData.aic.toFixed(2)}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      BIC Score
-                    </Typography>
-                    <Typography variant="h6">
-                      {selectedData.bic.toFixed(2)}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Durbin-Watson
-                    </Typography>
-                    <Typography variant="h6">
-                      {selectedData.diagnostics?.Variable_1?.durbin_watson_stat.toFixed(3)}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Jarque-Bera p-value
-                    </Typography>
-                    <Typography variant="h6">
-                      {selectedData.diagnostics?.Variable_1?.jarque_bera_pvalue.toExponential(2)}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
           </Grid>
 
-          {/* Interpretation Section */}
           <Accordion
             expanded={interpretationExpanded}
             onChange={() => setInterpretationExpanded(!interpretationExpanded)}
@@ -420,7 +409,6 @@ ECMAnalysis.propTypes = {
   windowWidth: PropTypes.number.isRequired
 };
 
-// Helper functions for coefficient interpretations
 const getAlphaInterpretation = (alpha) => {
   if (alpha === null || alpha === undefined) {
     return { severity: 'info', message: 'No adjustment speed data available' };
