@@ -9,6 +9,7 @@ import { selectSpatialDataOptimized } from '../../../selectors/optimizedSelector
 import { fetchRegressionAnalysis } from '../../../slices/spatialSlice';
 import SpatialRegressionResults from './SpatialRegressionResults';
 import SpatialMap from './SpatialMap';
+import SpatialFramework from './SpatialFramework';
 import { analysisStyles } from '../../../styles/analysisStyles';
 import AnalysisContainer from '../../common/AnalysisContainer';
 
@@ -108,6 +109,11 @@ const SpatialAnalysis = ({
   const renderModelContent = () => (
     <Box sx={styles.root}>
       <Grid container spacing={3}>
+        {/* Spatial Framework */}
+        <Grid item xs={12}>
+          <SpatialFramework selectedData={spatialResults} />
+        </Grid>
+
         {/* Model Overview */}
         <Grid item xs={12}>
           <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
@@ -150,6 +156,11 @@ const SpatialAnalysis = ({
   const renderAnalysisContent = () => (
     <Box sx={styles.root}>
       <Grid container spacing={3}>
+        {/* Spatial Framework */}
+        <Grid item xs={12}>
+          <SpatialFramework selectedData={spatialResults} />
+        </Grid>
+
         {/* Statistical Results Panel */}
         <Grid item xs={12}>
           <SpatialRegressionResults 

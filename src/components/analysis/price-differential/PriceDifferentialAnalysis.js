@@ -194,6 +194,14 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
           isMobile={isMobile}
         />
 
+        {/* Price Differential Framework */}
+        <PriceDifferentialFramework
+          baseMarket={baseMarket}
+          comparisonMarket={otherMarket}
+          regressionResults={validatedData.regression_results}
+          diagnostics={validatedData.diagnostics}
+        />
+
         <PriceDifferentialChart
           data={validatedData.price_differential}
           baseMarket={baseMarket}
