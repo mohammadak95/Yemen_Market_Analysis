@@ -1,4 +1,4 @@
-//src/components/analysis/ecm/IRFChart.js
+// src/components/analysis/ecm/IRFChart.js
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
@@ -10,39 +10,88 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend
+  Legend,
+  ReferenceLine
 } from 'recharts';
-import { useTheme, Typography, Box } from '@mui/material';
+import { useTheme, Typography, Box, Paper } from '@mui/material';
 
 const IRFChart = ({ data, analysisType, direction }) => {
   const theme = useTheme();
 
-  const getLabels = () => {
+  const getResponseDetails = () => {
     if (analysisType === 'unified') {
       return {
-        response1: 'Northern Market Response to Own Shock',
-        response2: 'Southern Market Response to Northern Shock',
-        response3: 'Northern Market Response to Southern Shock',
-        response4: 'Southern Market Response to Own Shock'
+        response1: {
+          label: 'Northern Market Response to Own Shock',
+          interpretation: 'Shows how northern market prices respond to local shocks',
+          economic: 'Measures market resilience to internal disruptions'
+        },
+        response2: {
+          label: 'Southern Market Response to Northern Shock',
+          interpretation: 'Shows price transmission from north to south',
+          economic: 'Indicates north-to-south market integration strength'
+        },
+        response3: {
+          label: 'Northern Market Response to Southern Shock',
+          interpretation: 'Shows price transmission from south to north',
+          economic: 'Indicates south-to-north market integration strength'
+        },
+        response4: {
+          label: 'Southern Market Response to Own Shock',
+          interpretation: 'Shows how southern market prices respond to local shocks',
+          economic: 'Measures market resilience to internal disruptions'
+        }
       };
     } else if (direction === 'northToSouth') {
       return {
-        response1: 'Source Market Response to Own Shock',
-        response2: 'Destination Market Response to Source Shock',
-        response3: 'Source Market Response to Destination Shock',
-        response4: 'Destination Market Response to Own Shock'
+        response1: {
+          label: 'Source Market Response to Own Shock',
+          interpretation: 'Shows how source market absorbs local shocks',
+          economic: 'Indicates source market stability'
+        },
+        response2: {
+          label: 'Destination Market Response to Source Shock',
+          interpretation: 'Shows price transmission to destination',
+          economic: 'Measures market integration effectiveness'
+        },
+        response3: {
+          label: 'Source Market Response to Destination Shock',
+          interpretation: 'Shows feedback effects from destination',
+          economic: 'Indicates bidirectional market linkages'
+        },
+        response4: {
+          label: 'Destination Market Response to Own Shock',
+          interpretation: 'Shows destination market resilience',
+          economic: 'Measures local market stability'
+        }
       };
     } else {
       return {
-        response1: 'Southern Market Response to Own Shock',
-        response2: 'Northern Market Response to Southern Shock',
-        response3: 'Southern Market Response to Northern Shock',
-        response4: 'Northern Market Response to Own Shock'
+        response1: {
+          label: 'Southern Market Response to Own Shock',
+          interpretation: 'Shows southern market stability',
+          economic: 'Measures local market resilience'
+        },
+        response2: {
+          label: 'Northern Market Response to Southern Shock',
+          interpretation: 'Shows south-to-north transmission',
+          economic: 'Indicates upward price transmission'
+        },
+        response3: {
+          label: 'Southern Market Response to Northern Shock',
+          interpretation: 'Shows north-to-south transmission',
+          economic: 'Indicates downward price transmission'
+        },
+        response4: {
+          label: 'Northern Market Response to Own Shock',
+          interpretation: 'Shows northern market stability',
+          economic: 'Measures local market resilience'
+        }
       };
     }
   };
 
-  const labels = getLabels();
+  const responseDetails = getResponseDetails();
   
   const colors = {
     response1: theme.palette.primary.main,
@@ -61,6 +110,43 @@ const IRFChart = ({ data, analysisType, direction }) => {
       response4: period[1][1]
     }));
   }, [data]);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+
+    const response = payload[0];
+    const responseKey = response.dataKey;
+    const details = responseDetails[responseKey];
+
+    return (
+      <Paper 
+        sx={{ 
+          p: 2, 
+          bgcolor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+          boxShadow: theme.shadows[2]
+        }}
+      >
+        <Typography variant="subtitle2" color="primary" gutterBottom>
+          Period {label}
+        </Typography>
+        <Typography variant="body2" gutterBottom>
+          {details.label}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Response: {response.value.toFixed(4)}
+        </Typography>
+        <Box sx={{ mt: 1, pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+          <Typography variant="caption" display="block" color="text.secondary">
+            {details.interpretation}
+          </Typography>
+          <Typography variant="caption" display="block" color="text.secondary">
+            {details.economic}
+          </Typography>
+        </Box>
+      </Paper>
+    );
+  };
 
   if (formattedData.length === 0) {
     return (
@@ -107,20 +193,12 @@ const IRFChart = ({ data, analysisType, direction }) => {
               fontWeight: 500
             }}
           />
-          <Tooltip 
-            formatter={(value, name) => [
-              `${value.toFixed(4)}`,
-              labels[name]
-            ]}
-            labelFormatter={(label) => `Period ${label}`}
-            contentStyle={{
-              backgroundColor: theme.palette.background.paper,
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 4,
-              padding: '8px 12px',
-              boxShadow: theme.shadows[2]
-            }}
+          <ReferenceLine 
+            y={0} 
+            stroke={theme.palette.divider}
+            strokeDasharray="3 3"
           />
+          <Tooltip content={<CustomTooltip />} />
           <Legend 
             verticalAlign="bottom"
             height={72}
@@ -130,12 +208,12 @@ const IRFChart = ({ data, analysisType, direction }) => {
               fontWeight: 500
             }}
           />
-          {Object.entries(labels).map(([key, label]) => (
+          {Object.entries(responseDetails).map(([key, details]) => (
             <Line
               key={key}
               type="monotone"
               dataKey={key}
-              name={label}
+              name={details.label}
               stroke={colors[key]}
               dot={{ r: 4, strokeWidth: 2 }}
               activeDot={{ r: 6, strokeWidth: 2 }}

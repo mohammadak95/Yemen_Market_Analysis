@@ -100,6 +100,39 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
     );
   }
 
+  const getParameterInterpretation = (param, value) => {
+    switch(param) {
+      case 'alpha':
+        return {
+          label: 'Adjustment Speed',
+          interpretation: value < 0 
+            ? `Markets correct ${Math.abs(value * 100).toFixed(1)}% of price gaps per period`
+            : 'Markets show divergent behavior',
+          detail: value < -0.5 
+            ? 'Rapid equilibrium restoration'
+            : value < 0 
+            ? 'Gradual price convergence'
+            : 'No price convergence'
+        };
+      case 'beta':
+        return {
+          label: 'Market Integration',
+          interpretation: `${Math.abs(value - 1) < 0.1 ? 'Perfect' : Math.abs(value) > 0.8 ? 'Strong' : Math.abs(value) > 0.5 ? 'Moderate' : 'Weak'} price transmission`,
+          detail: Math.abs(value - 1) < 0.1 
+            ? 'Complete price pass-through'
+            : `${(Math.abs(value) * 100).toFixed(1)}% long-run price transmission`
+        };
+      case 'gamma':
+        return {
+          label: 'Short-run Dynamics',
+          interpretation: `${Math.abs(value) > 0.5 ? 'Strong' : Math.abs(value) > 0.2 ? 'Moderate' : 'Weak'} immediate response`,
+          detail: `${(Math.abs(value) * 100).toFixed(1)}% immediate price transmission`
+        };
+      default:
+        return { label: '', interpretation: '', detail: '' };
+    }
+  };
+
   return (
     <Box sx={{ width: '100%', mb: 4 }}>
       <Paper sx={{ p: 2, mb: 3 }}>
@@ -141,74 +174,117 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
         <>
           <Paper sx={{ p: 2, mb: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-              Model Parameters
+              Market Integration Parameters
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
-                <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                  α = {selectedData.alpha.toFixed(4)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Speed of Adjustment
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                  β = {selectedData.beta.toFixed(4)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Long-run Relationship
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                  γ = {selectedData.gamma.toFixed(4)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Short-run Dynamics
-                </Typography>
-              </Grid>
+              {['alpha', 'beta', 'gamma'].map(param => {
+                const value = selectedData[param];
+                const interpretation = getParameterInterpretation(param, value);
+                return (
+                  <Grid item xs={12} md={4} key={param}>
+                    <Box sx={{ 
+                      p: 2, 
+                      bgcolor: theme.palette.background.default,
+                      borderRadius: 1,
+                      height: '100%',
+                      '&:hover .parameter-info': {
+                        opacity: 1
+                      }
+                    }}>
+                      <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                        {param === 'alpha' ? 'α' : param === 'beta' ? 'β' : 'γ'} = {value.toFixed(4)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {interpretation.label}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        {interpretation.interpretation}
+                      </Typography>
+                      <Typography 
+                        className="parameter-info"
+                        variant="caption" 
+                        sx={{ 
+                          display: 'block',
+                          mt: 1,
+                          opacity: 0,
+                          transition: 'opacity 0.2s',
+                          color: theme.palette.text.secondary
+                        }}
+                      >
+                        {interpretation.detail}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                );
+              })}
             </Grid>
           </Paper>
 
           <Paper sx={{ p: 2, mb: 3 }}>
             <Typography variant="h6" gutterBottom>Model Diagnostics</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  AIC Score
-                </Typography>
-                <Typography variant="body1">
-                  {selectedData.aic.toFixed(2)}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  BIC Score
-                </Typography>
-                <Typography variant="body1">
-                  {selectedData.bic.toFixed(2)}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Durbin-Watson
-                </Typography>
-                <Typography variant="body1">
-                  {selectedData.diagnostics?.Variable_1?.durbin_watson_stat.toFixed(3)}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Jarque-Bera p-value
-                </Typography>
-                <Typography variant="body1">
-                  {selectedData.diagnostics?.Variable_1?.jarque_bera_pvalue.toExponential(2)}
-                </Typography>
-              </Grid>
+              {[
+                {
+                  label: 'Model Fit',
+                  value: selectedData.aic,
+                  format: (v) => v.toFixed(2),
+                  info: 'Akaike Information Criterion - Lower is better'
+                },
+                {
+                  label: 'Serial Correlation',
+                  value: selectedData.diagnostics?.Variable_1?.durbin_watson_stat,
+                  format: (v) => v.toFixed(3),
+                  info: 'Durbin-Watson statistic - Close to 2 indicates no autocorrelation'
+                },
+                {
+                  label: 'Normality',
+                  value: selectedData.diagnostics?.Variable_1?.jarque_bera_pvalue,
+                  format: (v) => v.toExponential(2),
+                  info: 'Jarque-Bera test p-value - Higher indicates normal distribution'
+                },
+                {
+                  label: 'Granger Causality',
+                  value: selectedData.granger_causality?.usdprice_north?.[1]?.ssr_ftest_pvalue,
+                  format: (v) => v.toExponential(2),
+                  info: 'Tests for price leadership - Lower p-value indicates causality'
+                }
+              ].map((metric, index) => (
+                <Grid item xs={12} sm={6} md={3} key={index}>
+                  <Box sx={{ 
+                    p: 2, 
+                    bgcolor: theme.palette.background.default,
+                    borderRadius: 1,
+                    height: '100%',
+                    '&:hover .diagnostic-info': {
+                      opacity: 1
+                    }
+                  }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      {metric.label}
+                    </Typography>
+                    <Typography variant="body1">
+                      {metric.value ? metric.format(metric.value) : 'N/A'}
+                    </Typography>
+                    <Typography 
+                      className="diagnostic-info"
+                      variant="caption" 
+                      sx={{ 
+                        display: 'block',
+                        mt: 1,
+                        opacity: 0,
+                        transition: 'opacity 0.2s',
+                        color: theme.palette.text.secondary
+                      }}
+                    >
+                      {metric.info}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
             </Grid>
           </Paper>
 
+          {/* Model Framework Section */}
           <Accordion 
             expanded={equationExpanded} 
             onChange={() => setEquationExpanded(!equationExpanded)}
@@ -223,97 +299,54 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
                 }
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                  Error Correction Model Framework
-                </Typography>
-                <Tooltip title="Click to expand for detailed model explanation">
-                  <Info fontSize="small" color="action" sx={{ mr: 1 }} />
-                </Tooltip>
-              </Box>
+              <Typography variant="h6">
+                Error Correction Model Framework
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Box sx={{ '& .katex': { fontSize: '1.3em' }}}>
                 <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main }}>
-                  Long-run Equilibrium Relationship:
+                  Long-run Market Integration:
                 </Typography>
                 <Box sx={{ my: 3 }}>
-                  <BlockMath math={`y_{t} = \\beta x_{t} + u_{t}`} />
+                  <BlockMath math={`P_{1,t} = \\beta P_{2,t} + u_t`} />
                 </Box>
+                <Typography variant="body2" paragraph>
+                  Where <InlineMath math="P_{1,t}, P_{2,t}" /> are market prices and <InlineMath math="\beta" /> measures price transmission
+                </Typography>
 
                 <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, mt: 4 }}>
-                  Error Correction Equation:
+                  Error Correction Mechanism:
                 </Typography>
                 <Box sx={{ my: 3 }}>
-                  <BlockMath math={`\\Delta y_t = \\alpha(y_{t-1} - \\beta x_{t-1}) + \\gamma \\Delta x_t + \\epsilon_t`} />
+                  <BlockMath math={`\\Delta P_{1,t} = \\alpha(P_{1,t-1} - \\beta P_{2,t-1}) + \\gamma \\Delta P_{2,t} + \\epsilon_t`} />
                 </Box>
 
                 <Grid container spacing={4} sx={{ mt: 2 }}>
-                  <Grid item xs={12} md={4}>
-                    <Paper elevation={2} sx={{ p: 2, height: '100%', backgroundColor: theme.palette.background.default }}>
-                      <Typography variant="subtitle1" color="primary" gutterBottom>
-                        α (Alpha) = {selectedData.alpha.toFixed(4)}
-                      </Typography>
-                      <Typography variant="body2">
-                        {selectedData.alpha < 0 
-                          ? `Markets adjust ${Math.abs(selectedData.alpha * 100).toFixed(2)}% of price discrepancies per period`
-                          : "Markets show no convergence to equilibrium"}
-                      </Typography>
-                    </Paper>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle1" color="primary" gutterBottom>
+                      Parameter Interpretations:
+                    </Typography>
+                    <Typography variant="body2">
+                      • <InlineMath math="\alpha" />: Speed of price convergence<br />
+                      • <InlineMath math="\beta" />: Long-run price relationship<br />
+                      • <InlineMath math="\gamma" />: Immediate price transmission<br />
+                      • <InlineMath math="\Delta P" />: Price changes<br />
+                      • <InlineMath math="\epsilon_t" />: Random shocks
+                    </Typography>
                   </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <Paper elevation={2} sx={{ p: 2, height: '100%', backgroundColor: theme.palette.background.default }}>
-                      <Typography variant="subtitle1" color="primary" gutterBottom>
-                        β (Beta) = {selectedData.beta.toFixed(4)}
-                      </Typography>
-                      <Typography variant="body2">
-                        {Math.abs(selectedData.beta) > 0.8 
-                          ? "Strong market integration"
-                          : Math.abs(selectedData.beta) > 0.5 
-                          ? "Moderate market integration"
-                          : "Weak market integration"}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <Paper elevation={2} sx={{ p: 2, height: '100%', backgroundColor: theme.palette.background.default }}>
-                      <Typography variant="subtitle1" color="primary" gutterBottom>
-                        γ (Gamma) = {selectedData.gamma.toFixed(4)}
-                      </Typography>
-                      <Typography variant="body2">
-                        {Math.abs(selectedData.gamma) > 0.5 
-                          ? "Strong immediate price transmission"
-                          : Math.abs(selectedData.gamma) > 0.2 
-                          ? "Moderate short-term adjustment"
-                          : "Weak immediate response"}
-                      </Typography>
-                    </Paper>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle1" color="primary" gutterBottom>
+                      Economic Implications:
+                    </Typography>
+                    <Typography variant="body2">
+                      • Negative α indicates market correction<br />
+                      • β ≈ 1 suggests perfect integration<br />
+                      • γ measures short-term responses<br />
+                      • Error term captures market frictions
+                    </Typography>
                   </Grid>
                 </Grid>
-
-                <Box sx={{ mt: 4, p: 2, backgroundColor: theme.palette.grey[50], borderRadius: 1 }}>
-                  <Typography variant="subtitle1" color="primary" gutterBottom>
-                    Variable Definitions:
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2">
-                        • <InlineMath math="y_t, x_t" />: Market prices at time t<br />
-                        • <InlineMath math="\Delta y_t, \Delta x_t" />: Price changes<br />
-                        • <InlineMath math="\alpha" />: Adjustment speed coefficient
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2">
-                        • <InlineMath math="\beta" />: Long-run price relationship<br />
-                        • <InlineMath math="\gamma" />: Short-run price transmission<br />
-                        • <InlineMath math="\epsilon_t" />: Random error term
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Box>
               </Box>
             </AccordionDetails>
           </Accordion>
