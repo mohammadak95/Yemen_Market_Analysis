@@ -1,41 +1,41 @@
 // src/components/analysis/spatial/SpatialAnalysis.js
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Grid, Typography, CircularProgress, Paper, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import {
+  Box,
+  Button,
+  Grid,
+  Typography,
+  CircularProgress,
+  Paper,
+  Snackbar,
+  Alert
+} from '@mui/material';
+import { Download } from '@mui/icons-material';
+import { saveAs } from 'file-saver';
 import { useTheme } from '@mui/material/styles';
 import { useSelector, useDispatch } from 'react-redux';
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { selectSpatialDataOptimized } from '../../../selectors/optimizedSelectors';
 import { fetchRegressionAnalysis } from '../../../slices/spatialSlice';
 import SpatialRegressionResults from './SpatialRegressionResults';
 import SpatialMap from './SpatialMap';
 import SpatialFramework from './SpatialFramework';
-import { analysisStyles } from '../../../styles/analysisStyles';
 import AnalysisContainer from '../../common/AnalysisContainer';
 
-const SpatialAnalysis = ({ 
-  selectedCommodity, 
-  windowWidth, 
-  mode = 'analysis'
-}) => {
+const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
-  const styles = analysisStyles(theme);
   const dispatch = useDispatch();
-  const isMobile = windowWidth < theme.breakpoints.values.sm;
-
-  // Get spatial analysis results from Redux store
   const spatialData = useSelector(selectSpatialDataOptimized);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
-  // Fetch regression analysis when component mounts or commodity changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (selectedCommodity) {
       dispatch(fetchRegressionAnalysis({ selectedCommodity }));
     }
   }, [selectedCommodity, dispatch]);
 
-  // Process regression data for the selected commodity
-  const spatialResults = useMemo(() => {
+  const spatialResults = React.useMemo(() => {
     const regressionData = spatialData?.regressionAnalysis;
     
     if (!regressionData || 
@@ -46,45 +46,52 @@ const SpatialAnalysis = ({
     }
 
     return {
-      // Model parameters
+      // Market Integration Parameters
       coefficients: regressionData.model.coefficients || {},
       intercept: regressionData.model.intercept || 0,
       p_values: regressionData.model.p_values || {},
       
-      // Model fit statistics
+      // Spatial Patterns
+      moran_i: regressionData.spatial.moran_i || { I: 0, 'p-value': 1 },
+      residual: regressionData.residuals.raw,
+      
+      // Model Performance
       r_squared: regressionData.model.r_squared || 0,
       adj_r_squared: regressionData.model.adj_r_squared || 0,
       mse: regressionData.model.mse || 0,
       observations: regressionData.model.observations || 0,
-
-      // Spatial statistics
-      moran_i: regressionData.spatial.moran_i || { I: 0, 'p-value': 1 },
-      vif: regressionData.spatial.vif || [],
-
-      // Residuals analysis
-      residual: regressionData.residuals.raw,
-      residualStats: {
-        mean: regressionData.residuals.stats?.mean || 0,
-        variance: regressionData.residuals.stats?.variance || 0,
-        maxAbsolute: regressionData.residuals.stats?.maxAbsolute || 0
-      },
-
-      // Market integration metrics
-      marketIntegration: {
-        globalIndex: regressionData.spatial.moran_i?.I || 0,
-        localClusters: regressionData.spatialAnalysis?.clusters || [],
-        spilloverEffects: regressionData.model.spillover_effects || {}
-      },
-
+      
       // Metadata
       regime: regressionData.metadata?.regime || 'unified',
       timestamp: regressionData.metadata?.timestamp
     };
   }, [spatialData, selectedCommodity]);
 
+  const handleDownloadData = useCallback(() => {
+    if (!spatialResults) return;
+    try {
+      const blob = new Blob(
+        [JSON.stringify(spatialResults, null, 2)], 
+        { type: 'application/json' }
+      );
+      saveAs(blob, `spatial_analysis_${selectedCommodity}.json`);
+      setSnackbar({
+        open: true,
+        message: 'Data downloaded successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: 'Failed to download data',
+        severity: 'error'
+      });
+    }
+  }, [spatialResults, selectedCommodity]);
+
   if (!spatialResults) {
     return (
-      <AnalysisContainer title={`Spatial Analysis: ${selectedCommodity}`}>
+      <AnalysisContainer title={`Spatial Market Analysis: ${selectedCommodity}`}>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
           <CircularProgress />
         </Box>
@@ -92,189 +99,76 @@ const SpatialAnalysis = ({
     );
   }
 
+  if (spatialData?.error) {
+    return (
+      <AnalysisContainer title={`Spatial Market Analysis: ${selectedCommodity}`}>
+        <Alert severity="error">
+          <Typography variant="subtitle1" gutterBottom>Error Loading Data</Typography>
+          {spatialData.error}
+        </Alert>
+      </AnalysisContainer>
+    );
+  }
+
   return (
-    <AnalysisContainer title={`Spatial Analysis: ${selectedCommodity}`}>
-      <Box sx={styles.root}>
-        <Grid container spacing={3}>
-          {/* Key Parameters Panel */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Market Integration Parameters
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ 
-                    p: 2, 
-                    bgcolor: theme.palette.background.default,
-                    borderRadius: 1,
-                    height: '100%',
-                    '&:hover .parameter-info': {
-                      opacity: 1
-                    }
-                  }}>
-                    <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                      ρ = {spatialResults.coefficients.spatial_lag_price?.toFixed(4)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Spatial Price Transmission
-                    </Typography>
-                    <Typography 
-                      className="parameter-info"
-                      variant="caption" 
-                      sx={{ 
-                        display: 'block',
-                        mt: 1,
-                        opacity: 0,
-                        transition: 'opacity 0.2s',
-                        color: theme.palette.text.secondary
-                      }}
-                    >
-                      Measures strength of price co-movement across regions
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ 
-                    p: 2, 
-                    bgcolor: theme.palette.background.default,
-                    borderRadius: 1,
-                    height: '100%',
-                    '&:hover .parameter-info': {
-                      opacity: 1
-                    }
-                  }}>
-                    <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                      I = {spatialResults.moran_i.I.toFixed(4)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Global Market Integration
-                    </Typography>
-                    <Typography 
-                      className="parameter-info"
-                      variant="caption" 
-                      sx={{ 
-                        display: 'block',
-                        mt: 1,
-                        opacity: 0,
-                        transition: 'opacity 0.2s',
-                        color: theme.palette.text.secondary
-                      }}
-                    >
-                      Moran's I index of spatial autocorrelation
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ 
-                    p: 2, 
-                    bgcolor: theme.palette.background.default,
-                    borderRadius: 1,
-                    height: '100%',
-                    '&:hover .parameter-info': {
-                      opacity: 1
-                    }
-                  }}>
-                    <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                      R² = {(spatialResults.r_squared * 100).toFixed(1)}%
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Model Explanatory Power
-                    </Typography>
-                    <Typography 
-                      className="parameter-info"
-                      variant="caption" 
-                      sx={{ 
-                        display: 'block',
-                        mt: 1,
-                        opacity: 0,
-                        transition: 'opacity 0.2s',
-                        color: theme.palette.text.secondary
-                      }}
-                    >
-                      Percentage of price variation explained by spatial factors
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ 
-                    p: 2, 
-                    bgcolor: theme.palette.background.default,
-                    borderRadius: 1,
-                    height: '100%',
-                    '&:hover .parameter-info': {
-                      opacity: 1
-                    }
-                  }}>
-                    <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                      n = {spatialResults.observations}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Sample Coverage
-                    </Typography>
-                    <Typography 
-                      className="parameter-info"
-                      variant="caption" 
-                      sx={{ 
-                        display: 'block',
-                        mt: 1,
-                        opacity: 0,
-                        transition: 'opacity 0.2s',
-                        color: theme.palette.text.secondary
-                      }}
-                    >
-                      Total market-month observations
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Paper>
+    <AnalysisContainer title={`Spatial Market Analysis: ${selectedCommodity}`}>
+      <Box sx={{ width: '100%', mb: 4 }}>
+        {/* Controls */}
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Grid container spacing={2} alignItems="center" justifyContent="flex-end">
+            <Grid item xs={12} md={3}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<Download />}
+                onClick={handleDownloadData}
+              >
+                Download Results
+              </Button>
+            </Grid>
           </Grid>
+        </Paper>
 
-          {/* Spatial Framework */}
-          <Grid item xs={12}>
-            <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">Spatial Analysis Framework</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <SpatialFramework selectedData={spatialResults} />
-              </AccordionDetails>
-            </Accordion>
-          </Grid>
+        {/* Framework Section */}
+        <SpatialFramework selectedData={spatialResults} />
 
-          {/* Statistical Results Panel */}
-          <Grid item xs={12}>
-            <SpatialRegressionResults 
-              results={spatialResults}
-              windowWidth={windowWidth}
-            />
-          </Grid>
+        {/* Market Integration Parameters */}
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            Market Integration Analysis
+          </Typography>
+          <SpatialRegressionResults 
+            results={spatialResults}
+            windowWidth={windowWidth}
+          />
+        </Paper>
 
-          {/* Map Visualization Panel */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Spatial Market Integration Map
-              </Typography>
-              <Box sx={{ height: isMobile ? 400 : 600 }}>
-                <SpatialMap
-                  results={spatialResults}
-                  windowWidth={windowWidth}
-                />
-              </Box>
-            </Paper>
-          </Grid>
-        </Grid>
+        {/* Spatial Visualization */}
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Regional Price Patterns
+          </Typography>
+          <SpatialMap
+            results={spatialResults}
+            windowWidth={windowWidth}
+          />
+        </Paper>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        message={snackbar.message}
+        severity={snackbar.severity}
+      />
     </AnalysisContainer>
   );
 };
 
 SpatialAnalysis.propTypes = {
   selectedCommodity: PropTypes.string.isRequired,
-  windowWidth: PropTypes.number.isRequired,
-  mode: PropTypes.oneOf(['analysis', 'model'])
+  windowWidth: PropTypes.number.isRequired
 };
 
 export default SpatialAnalysis;
