@@ -60,7 +60,7 @@ const SpatialFramework = ({ selectedData }) => {
         }}
       >
         <Typography variant="h6">
-          Spatial Market Integration Framework
+          Spatial Market Integration Model Framework
         </Typography>
       </AccordionSummary>
       <AccordionDetails sx={{ p: 3 }}>

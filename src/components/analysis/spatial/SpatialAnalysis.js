@@ -116,17 +116,17 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         </Grid>
       </Paper>
 
+      {/* Framework Section - Moved to be right after download button */}
+      <Box sx={{ mb: 3 }}>
+        <SpatialFramework selectedData={spatialResults} />
+      </Box>
+
       {/* Market Integration Analysis */}
       <Box sx={{ mb: 3 }}>
         <SpatialRegressionResults 
           results={spatialResults}
           windowWidth={windowWidth}
         />
-      </Box>
-
-      {/* Framework Section */}
-      <Box sx={{ mb: 3 }}>
-        <SpatialFramework selectedData={spatialResults} />
       </Box>
 
       {/* Spatial Visualization */}

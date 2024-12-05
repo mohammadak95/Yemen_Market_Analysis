@@ -134,6 +134,7 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   return (
     <Box sx={{ width: '100%', mb: 4 }}>
+      {/* Controls with Market Selection and Download Button */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
@@ -183,6 +184,35 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
 
       {selectedPairData && (
         <>
+          {/* Model Framework Section - Moved up to be right after controls */}
+          <Accordion 
+            expanded={frameworkExpanded} 
+            onChange={() => setFrameworkExpanded(!frameworkExpanded)}
+            sx={{ mb: 3 }}
+          >
+            <AccordionSummary 
+              expandIcon={<ExpandMore />}
+              sx={{
+                backgroundColor: theme.palette.grey[50],
+                '&:hover': {
+                  backgroundColor: theme.palette.grey[100],
+                }
+              }}
+            >
+              <Typography variant="h6">
+                Price Differential Model Framework
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 3 }}>
+              <PriceDifferentialFramework 
+                baseMarket={baseMarket}
+                comparisonMarket={otherMarket}
+                regressionResults={selectedPairData.regression_results}
+                diagnostics={selectedPairData.diagnostics}
+              />
+            </AccordionDetails>
+          </Accordion>
+
           <Paper sx={{ p: 1.5, mb: 3 }}>
             <MarketPairInfo 
               data={selectedPairData}
@@ -431,35 +461,6 @@ const PriceDifferentialAnalysis = ({ selectedCommodity, windowWidth }) => {
               </Grid>
             </Grid>
           </Paper>
-
-          {/* Model Framework Section */}
-          <Accordion 
-            expanded={frameworkExpanded} 
-            onChange={() => setFrameworkExpanded(!frameworkExpanded)}
-            sx={{ mb: 3 }}
-          >
-            <AccordionSummary 
-              expandIcon={<ExpandMore />}
-              sx={{
-                backgroundColor: theme.palette.grey[50],
-                '&:hover': {
-                  backgroundColor: theme.palette.grey[100],
-                }
-              }}
-            >
-              <Typography variant="h6">
-                Price Differential Model Framework
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ p: 3 }}>
-              <PriceDifferentialFramework 
-                baseMarket={baseMarket}
-                comparisonMarket={otherMarket}
-                regressionResults={selectedPairData.regression_results}
-                diagnostics={selectedPairData.diagnostics}
-              />
-            </AccordionDetails>
-          </Accordion>
 
           <Grid container spacing={3}>
             <Grid item xs={12}>

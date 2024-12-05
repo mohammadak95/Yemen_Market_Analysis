@@ -172,6 +172,73 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
 
       {selectedData && (
         <>
+          {/* Model Framework Section - Moved up */}
+          <Accordion 
+            expanded={equationExpanded} 
+            onChange={() => setEquationExpanded(!equationExpanded)}
+            sx={{ mb: 3 }}
+          >
+            <AccordionSummary 
+              expandIcon={<ExpandMore />}
+              sx={{
+                backgroundColor: theme.palette.grey[50],
+                '&:hover': {
+                  backgroundColor: theme.palette.grey[100],
+                }
+              }}
+            >
+              <Typography variant="h6">
+                Error Correction Model Framework
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Box sx={{ '& .katex': { fontSize: '1.3em' }}}>
+                <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main }}>
+                  Long-run Market Integration:
+                </Typography>
+                <Box sx={{ my: 3 }}>
+                  <BlockMath math={`P_{1,t} = \\beta P_{2,t} + u_t`} />
+                </Box>
+                <Typography variant="body2" paragraph>
+                  Where <InlineMath math="P_{1,t}, P_{2,t}" /> are market prices and <InlineMath math="\beta" /> measures price transmission
+                </Typography>
+
+                <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, mt: 4 }}>
+                  Error Correction Mechanism:
+                </Typography>
+                <Box sx={{ my: 3 }}>
+                  <BlockMath math={`\\Delta P_{1,t} = \\alpha(P_{1,t-1} - \\beta P_{2,t-1}) + \\gamma \\Delta P_{2,t} + \\epsilon_t`} />
+                </Box>
+
+                <Grid container spacing={4} sx={{ mt: 2 }}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle1" color="primary" gutterBottom>
+                      Parameter Interpretations:
+                    </Typography>
+                    <Typography variant="body2">
+                      • <InlineMath math="\alpha" />: Speed of price convergence<br />
+                      • <InlineMath math="\beta" />: Long-run price relationship<br />
+                      • <InlineMath math="\gamma" />: Immediate price transmission<br />
+                      • <InlineMath math="\Delta P" />: Price changes<br />
+                      • <InlineMath math="\epsilon_t" />: Random shocks
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle1" color="primary" gutterBottom>
+                      Economic Implications:
+                    </Typography>
+                    <Typography variant="body2">
+                      • Negative α indicates market correction<br />
+                      • β ≈ 1 suggests perfect integration<br />
+                      • γ measures short-term responses<br />
+                      • Error term captures market frictions
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+
           <Paper sx={{ p: 2, mb: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
               Market Integration Parameters
@@ -283,73 +350,6 @@ const ECMAnalysis = ({ selectedCommodity, windowWidth }) => {
               ))}
             </Grid>
           </Paper>
-
-          {/* Model Framework Section */}
-          <Accordion 
-            expanded={equationExpanded} 
-            onChange={() => setEquationExpanded(!equationExpanded)}
-            sx={{ mb: 3 }}
-          >
-            <AccordionSummary 
-              expandIcon={<ExpandMore />}
-              sx={{
-                backgroundColor: theme.palette.grey[50],
-                '&:hover': {
-                  backgroundColor: theme.palette.grey[100],
-                }
-              }}
-            >
-              <Typography variant="h6">
-                Error Correction Model Framework
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box sx={{ '& .katex': { fontSize: '1.3em' }}}>
-                <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main }}>
-                  Long-run Market Integration:
-                </Typography>
-                <Box sx={{ my: 3 }}>
-                  <BlockMath math={`P_{1,t} = \\beta P_{2,t} + u_t`} />
-                </Box>
-                <Typography variant="body2" paragraph>
-                  Where <InlineMath math="P_{1,t}, P_{2,t}" /> are market prices and <InlineMath math="\beta" /> measures price transmission
-                </Typography>
-
-                <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, mt: 4 }}>
-                  Error Correction Mechanism:
-                </Typography>
-                <Box sx={{ my: 3 }}>
-                  <BlockMath math={`\\Delta P_{1,t} = \\alpha(P_{1,t-1} - \\beta P_{2,t-1}) + \\gamma \\Delta P_{2,t} + \\epsilon_t`} />
-                </Box>
-
-                <Grid container spacing={4} sx={{ mt: 2 }}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" color="primary" gutterBottom>
-                      Parameter Interpretations:
-                    </Typography>
-                    <Typography variant="body2">
-                      • <InlineMath math="\alpha" />: Speed of price convergence<br />
-                      • <InlineMath math="\beta" />: Long-run price relationship<br />
-                      • <InlineMath math="\gamma" />: Immediate price transmission<br />
-                      • <InlineMath math="\Delta P" />: Price changes<br />
-                      • <InlineMath math="\epsilon_t" />: Random shocks
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" color="primary" gutterBottom>
-                      Economic Implications:
-                    </Typography>
-                    <Typography variant="body2">
-                      • Negative α indicates market correction<br />
-                      • β ≈ 1 suggests perfect integration<br />
-                      • γ measures short-term responses<br />
-                      • Error term captures market frictions
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
 
           <Grid container spacing={3}>
             <Grid item xs={12}>
