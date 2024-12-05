@@ -25,10 +25,11 @@ import {
   Alert,
 } from '@mui/material';
 import { Info as InfoIcon } from '@mui/icons-material';
-import { useTechnicalHelp } from '@/hooks';;
+import { useTechnicalHelp } from '../../../hooks';
 
 const TVMIIMarketPairsChart = ({ data, selectedCommodity, isMobile }) => {
   const [selectedMarketPair, setSelectedMarketPair] = useState('');
+  const [animationKey, setAnimationKey] = useState(0); // Key for forcing smooth re-renders
   const { getTechnicalTooltip } = useTechnicalHelp('tvmii');
 
   // Extract unique market pairs
@@ -61,6 +62,14 @@ const TVMIIMarketPairsChart = ({ data, selectedCommodity, isMobile }) => {
 
   const handleMarketPairChange = (event) => {
     setSelectedMarketPair(event.target.value);
+    setAnimationKey(prev => prev + 1); // Trigger smooth re-render
+  };
+
+  // Custom animation configuration
+  const animationConfig = {
+    initial: { duration: 0 },
+    enter: { duration: 800, easing: 'ease-out' },
+    leave: { duration: 300, easing: 'ease-in' }
   };
 
   return (
@@ -105,8 +114,14 @@ const TVMIIMarketPairsChart = ({ data, selectedCommodity, isMobile }) => {
           No TV-MII data available for the selected market pair.
         </Alert>
       ) : (
-        <Box sx={{ height: isMobile ? 300 : 400, width: '100%' }}>
-          <ResponsiveContainer>
+        <Box 
+          sx={{ 
+            height: isMobile ? 300 : 400, 
+            width: '100%',
+            transition: 'all 0.3s ease-in-out' // Smooth container transitions
+          }}
+        >
+          <ResponsiveContainer key={animationKey}>
             <LineChart
               data={chartData}
               margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
@@ -146,6 +161,8 @@ const TVMIIMarketPairsChart = ({ data, selectedCommodity, isMobile }) => {
                         border: 1,
                         borderColor: 'divider',
                         borderRadius: 1,
+                        boxShadow: 1,
+                        transition: 'all 0.2s ease' // Smooth tooltip transitions
                       }}
                     >
                       <Typography variant="body2">
@@ -163,6 +180,8 @@ const TVMIIMarketPairsChart = ({ data, selectedCommodity, isMobile }) => {
                     </Box>
                   );
                 }}
+                animationDuration={300}
+                animationEasing="ease-out"
               />
               <Legend />
 
@@ -172,13 +191,23 @@ const TVMIIMarketPairsChart = ({ data, selectedCommodity, isMobile }) => {
                 stroke="#8884d8"
                 dot={false}
                 name="TV-MII"
+                strokeWidth={2}
+                animationBegin={0}
+                animationDuration={1500}
+                animationEasing="ease-in-out"
+                isAnimationActive={true}
               />
             </LineChart>
           </ResponsiveContainer>
         </Box>
       )}
 
-      <Box sx={{ mt: 2 }}>
+      <Box 
+        sx={{ 
+          mt: 2,
+          transition: 'opacity 0.3s ease-in-out' // Smooth text transitions
+        }}
+      >
         <Typography variant="body2" color="text.secondary">
           Time-Varying Market Integration Index for market pair{' '}
           <strong>{selectedMarketPair}</strong>. Values closer to 1 indicate
