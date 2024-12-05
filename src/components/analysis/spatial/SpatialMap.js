@@ -4,18 +4,15 @@ import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { 
   Box, 
-  Paper, 
   Typography, 
   FormControl, 
   InputLabel, 
   Select, 
   MenuItem, 
   Grid,
-  Tooltip,
-  IconButton
+  Paper,
+  useTheme
 } from '@mui/material';
-import { Info } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { useSelector } from 'react-redux';
 import { selectGeometryData } from '../../../selectors/optimizedSelectors';
@@ -51,7 +48,7 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
 
       const dates = Object.keys(residualsByDate).sort();
       if (!selectedDate && dates.length > 0) {
-        setSelectedDate(dates[dates.length - 1]); // Set to most recent date
+        setSelectedDate(dates[dates.length - 1]);
       }
 
       const currentResiduals = selectedDate ? residualsByDate[selectedDate] : {};
@@ -77,9 +74,9 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
   }, [geometryData, results, selectedDate, selectedRegion]);
 
   // Calculate statistics and color scale
-  const { residualStats, colorScale, minResidual, maxResidual } = useMemo(() => {
+  const { colorScale, minResidual, maxResidual } = useMemo(() => {
     if (!results?.residual) {
-      return { residualStats: null, colorScale: null, minResidual: null, maxResidual: null };
+      return { colorScale: null, minResidual: null, maxResidual: null };
     }
 
     const relevantResiduals = selectedDate
@@ -87,12 +84,10 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
       : results.residual;
 
     const stats = getResidualStats(relevantResiduals);
-    if (!stats) return { residualStats: null, colorScale: null, minResidual: null, maxResidual: null };
+    if (!stats) return { colorScale: null, minResidual: null, maxResidual: null };
 
-    const colorScaleFn = getColorScale(stats.min, stats.max, theme);
     return {
-      residualStats: stats,
-      colorScale: colorScaleFn,
+      colorScale: getColorScale(stats.min, stats.max, theme),
       minResidual: stats.min,
       maxResidual: stats.max
     };
@@ -122,18 +117,13 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
   }, [mapData, dynamicColorScale, theme]);
 
   // Style function for GeoJSON features
-  const getRegionStyle = (feature) => {
-    const value = mode === 'model' && visualizationType === 'spillover'
-      ? feature.properties.spillover
-      : feature.properties.residual;
-
-    return getFeatureStyle(
-      value,
-      dynamicColorScale,
-      theme,
-      feature.properties.isSelected
-    );
-  };
+  const getRegionStyle = (feature) => ({
+    fillColor: feature.properties.fillColor || theme.palette.grey[300],
+    weight: feature.properties.isSelected ? 2 : 1,
+    opacity: 1,
+    color: feature.properties.isSelected ? theme.palette.primary.main : theme.palette.divider,
+    fillOpacity: 0.7
+  });
 
   // Handle region interactions
   const onEachFeature = (feature, layer) => {
@@ -181,13 +171,10 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
     );
   };
 
-  if (!mapData || !colorScale) {
+  if (!styledMapData || !dynamicColorScale) {
     return (
-      <Paper sx={{ p: 2, height: '100%' }}>
-        <Typography variant="h6" gutterBottom>
-          Spatial Price Analysis
-        </Typography>
-        <Typography color="text.secondary">
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="body1" color="text.secondary">
           Loading map data...
         </Typography>
       </Paper>
@@ -195,20 +182,9 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
   }
 
   return (
-    <Paper sx={{ p: 2, height: '100%' }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Regional Price Patterns
-          <Tooltip title="Visualizes spatial distribution of price deviations and market spillover effects">
-            <IconButton size="small" sx={{ ml: 1 }}>
-              <Info fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Typography>
-      </Box>
-
-      <Grid container spacing={2}>
-        {/* Controls */}
+    <Paper sx={{ p: 2 }}>
+      {/* Controls */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={mode === 'model' ? 6 : 12}>
           <FormControl fullWidth size="small">
             <InputLabel>Analysis Date</InputLabel>
@@ -246,56 +222,55 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
             </FormControl>
           </Grid>
         )}
-
-        {/* Map container */}
-        <Grid item xs={12}>
-          <Box 
-            sx={{ 
-              height: 500, 
-              position: 'relative',
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 1,
-              overflow: 'hidden'
-            }}
-          >
-            <MapContainer
-              center={DEFAULT_CENTER}
-              zoom={DEFAULT_ZOOM}
-              bounds={DEFAULT_BOUNDS}
-              style={{ height: '100%', width: '100%' }}
-              maxBounds={DEFAULT_BOUNDS}
-              minZoom={DEFAULT_ZOOM - 0.5}
-              maxZoom={DEFAULT_ZOOM + 1}
-              zoomControl={true}
-              dragging={true}
-              touchZoom={true}
-              doubleClickZoom={true}
-              scrollWheelZoom={true}
-              boxZoom={true}
-              keyboard={true}
-              bounceAtZoomLimits={true}
-            >
-              <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              />
-              <GeoJSON
-                data={styledMapData}
-                style={getRegionStyle}
-                onEachFeature={onEachFeature}
-              />
-            </MapContainer>
-
-            <Legend
-              min={minResidual}
-              max={maxResidual}
-              colorScale={dynamicColorScale}
-              position="bottomright"
-              title={visualizationType === 'spillover' ? 'Market Spillovers' : 'Price Deviations'}
-            />
-          </Box>
-        </Grid>
       </Grid>
+
+      {/* Map container */}
+      <Box 
+        sx={{ 
+          height: 500, 
+          position: 'relative',
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 1,
+          overflow: 'hidden',
+          bgcolor: theme.palette.background.default
+        }}
+      >
+        <MapContainer
+          center={DEFAULT_CENTER}
+          zoom={DEFAULT_ZOOM}
+          bounds={DEFAULT_BOUNDS}
+          style={{ height: '100%', width: '100%' }}
+          maxBounds={DEFAULT_BOUNDS}
+          minZoom={DEFAULT_ZOOM - 0.5}
+          maxZoom={DEFAULT_ZOOM + 1}
+          zoomControl={true}
+          dragging={true}
+          touchZoom={true}
+          doubleClickZoom={true}
+          scrollWheelZoom={true}
+          boxZoom={true}
+          keyboard={true}
+          bounceAtZoomLimits={true}
+        >
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          />
+          <GeoJSON
+            data={styledMapData}
+            style={getRegionStyle}
+            onEachFeature={onEachFeature}
+          />
+        </MapContainer>
+
+        <Legend
+          min={minResidual}
+          max={maxResidual}
+          colorScale={dynamicColorScale}
+          position="bottomright"
+          title={visualizationType === 'spillover' ? 'Market Spillovers' : 'Price Deviations'}
+        />
+      </Box>
     </Paper>
   );
 };

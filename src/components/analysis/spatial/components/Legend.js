@@ -7,8 +7,8 @@ import {
   Typography, 
   useTheme, 
   useMediaQuery,
-  Tooltip,
-  Paper
+  Paper,
+  Tooltip
 } from '@mui/material';
 import { formatNumber } from '../utils/mapUtils';
 

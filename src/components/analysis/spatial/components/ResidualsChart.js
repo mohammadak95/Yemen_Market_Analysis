@@ -5,12 +5,9 @@ import PropTypes from 'prop-types';
 import {
   Box,
   Typography,
-  Tooltip,
-  IconButton,
   useTheme,
   Paper
 } from '@mui/material';
-import { Info as InfoIcon } from '@mui/icons-material';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -74,16 +71,13 @@ const ResidualsChart = ({ residuals, isMobile }) => {
 
     const ranges = chartData.map(d => d.range);
     const meanRange = ranges.reduce((a, b) => a + b, 0) / ranges.length;
-    const maxRange = Math.max(...ranges);
     const volatilities = chartData.map(d => d.volatility);
     const meanVolatility = volatilities.reduce((a, b) => a + b, 0) / volatilities.length;
     
     return {
       meanRange,
-      maxRange,
       meanVolatility,
       volatility: meanRange > 2 ? 'high' : meanRange > 1 ? 'moderate' : 'low',
-      trend: chartData[chartData.length - 1].mean > chartData[0].mean ? 'increasing' : 'decreasing',
       stability: meanVolatility < 0.5 ? 'stable' : meanVolatility < 1 ? 'moderately stable' : 'volatile'
     };
   }, [chartData]);
@@ -91,9 +85,12 @@ const ResidualsChart = ({ residuals, isMobile }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
 
-    const mean = payload[0].value;
-    const range = payload[3].value;
-    const volatility = payload[4].value;
+    // Safely extract values
+    const meanValue = payload.find(p => p.dataKey === 'mean')?.value;
+    const rangeValue = payload.find(p => p.dataKey === 'range')?.value;
+    const volatilityValue = payload.find(p => p.dataKey === 'volatility')?.value;
+
+    if (meanValue === undefined) return null;
 
     return (
       <Paper elevation={3} sx={{ p: 2, maxWidth: 250 }}>
@@ -103,32 +100,38 @@ const ResidualsChart = ({ residuals, isMobile }) => {
         
         <Box sx={{ mt: 1 }}>
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Mean Deviation: {mean.toFixed(4)}
+            Mean Deviation: {meanValue.toFixed(4)}
           </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Price Dispersion: {range.toFixed(4)}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Volatility: {volatility.toFixed(4)}
-          </Typography>
+          {rangeValue !== undefined && (
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Price Dispersion: {rangeValue.toFixed(4)}
+            </Typography>
+          )}
+          {volatilityValue !== undefined && (
+            <Typography variant="body2" color="text.secondary">
+              Volatility: {volatilityValue.toFixed(4)}
+            </Typography>
+          )}
         </Box>
 
-        <Typography 
-          variant="caption" 
-          sx={{ 
-            display: 'block', 
-            mt: 1.5,
-            pt: 1,
-            borderTop: `1px solid ${theme.palette.divider}`,
-            color: theme.palette.text.secondary
-          }}
-        >
-          {range > 2 
-            ? 'High market fragmentation' 
-            : range > 1 
-            ? 'Moderate price differences' 
-            : 'Well-integrated markets'}
-        </Typography>
+        {rangeValue !== undefined && (
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              display: 'block', 
+              mt: 1.5,
+              pt: 1,
+              borderTop: `1px solid ${theme.palette.divider}`,
+              color: theme.palette.text.secondary
+            }}
+          >
+            {rangeValue > 2 
+              ? 'High market fragmentation' 
+              : rangeValue > 1 
+              ? 'Moderate price differences' 
+              : 'Well-integrated markets'}
+          </Typography>
+        )}
       </Paper>
     );
   };
@@ -144,108 +147,105 @@ const ResidualsChart = ({ residuals, isMobile }) => {
   }
 
   return (
-    <Box sx={{ width: '100%', height: '100%' }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Market Integration Dynamics
-          <Tooltip title="Analysis of price deviations and market integration patterns over time">
-            <IconButton size="small" sx={{ ml: 1 }}>
-              <InfoIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Typography>
-        {statistics && (
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              {`Markets show ${statistics.volatility} price dispersion with ${statistics.trend} deviation patterns`}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {`Price dynamics are ${statistics.stability} across regions`}
-            </Typography>
-          </Box>
-        )}
+    <Paper sx={{ p: 2, height: '100%' }}>
+      {statistics && (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            {`Markets show ${statistics.volatility} price dispersion with ${statistics.stability} dynamics`}
+          </Typography>
+        </Box>
+      )}
+
+      <Box sx={{ height: isMobile ? '80%' : '85%' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart 
+            data={chartData} 
+            margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke={theme.palette.divider} 
+            />
+            <XAxis 
+              dataKey="date"
+              tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+              label={{ 
+                value: 'Analysis Period',
+                position: 'insideBottom',
+                offset: -10,
+                fill: theme.palette.text.secondary
+              }}
+            />
+            <YAxis
+              tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+              label={{ 
+                value: 'Price Deviation (YER)',
+                angle: -90,
+                position: 'insideLeft',
+                offset: 15,
+                fill: theme.palette.text.secondary
+              }}
+            />
+            <RechartsTooltip content={<CustomTooltip />} />
+            <Legend 
+              verticalAlign="top" 
+              height={36}
+              wrapperStyle={{
+                paddingBottom: '20px'
+              }}
+            />
+
+            <Area
+              type="monotone"
+              dataKey="upper"
+              stroke="none"
+              fill={theme.palette.primary.light}
+              fillOpacity={0.2}
+              name="Price Range"
+            />
+            <Area
+              type="monotone"
+              dataKey="lower"
+              stroke="none"
+              fill={theme.palette.primary.light}
+              fillOpacity={0.2}
+              name="Price Range"
+            />
+            <Line
+              type="monotone"
+              dataKey="mean"
+              stroke={theme.palette.primary.main}
+              strokeWidth={2}
+              dot={false}
+              name="Mean Deviation"
+            />
+            <Line
+              type="monotone"
+              dataKey="range"
+              stroke={theme.palette.secondary.main}
+              strokeWidth={2}
+              dot={false}
+              name="Market Dispersion"
+            />
+            <Line
+              type="monotone"
+              dataKey="volatility"
+              stroke={theme.palette.error.main}
+              strokeWidth={2}
+              dot={false}
+              name="Price Volatility"
+            />
+            <Brush 
+              dataKey="date"
+              height={30}
+              stroke={theme.palette.primary.main}
+              fill={theme.palette.background.paper}
+              travellerWidth={10}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
       </Box>
-
-      <ResponsiveContainer width="100%" height={isMobile ? "80%" : "85%"}>
-        <ComposedChart 
-          data={chartData} 
-          margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
-        >
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke={theme.palette.divider} 
-          />
-          <XAxis 
-            dataKey="date"
-            tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-            label={{ 
-              value: 'Analysis Period',
-              position: 'insideBottom',
-              offset: -10,
-              fill: theme.palette.text.secondary
-            }}
-          />
-          <YAxis
-            tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-            label={{ 
-              value: 'Price Deviation (YER)',
-              angle: -90,
-              position: 'insideLeft',
-              offset: 15,
-              fill: theme.palette.text.secondary
-            }}
-          />
-          <RechartsTooltip content={<CustomTooltip />} />
-          <Legend 
-            verticalAlign="top" 
-            height={36}
-            wrapperStyle={{
-              paddingBottom: '20px'
-            }}
-          />
-
-          <Area
-            type="monotone"
-            dataKey="upper"
-            stroke="none"
-            fill={theme.palette.primary.light}
-            fillOpacity={0.2}
-            name="Price Range"
-          />
-          <Area
-            type="monotone"
-            dataKey="lower"
-            stroke="none"
-            fill={theme.palette.primary.light}
-            fillOpacity={0.2}
-            name="Price Range"
-          />
-          <Line
-            type="monotone"
-            dataKey="mean"
-            stroke={theme.palette.primary.main}
-            strokeWidth={2}
-            dot={false}
-            name="Mean Deviation"
-          />
-          <Line
-            type="monotone"
-            dataKey="range"
-            stroke={theme.palette.secondary.main}
-            strokeWidth={2}
-            dot={false}
-            name="Market Dispersion"
-          />
-          <Brush 
-            dataKey="date"
-            height={30}
-            stroke={theme.palette.primary.main}
-            fill={theme.palette.background.paper}
-            travellerWidth={10}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
-    </Box>
+    </Paper>
   );
 };
 

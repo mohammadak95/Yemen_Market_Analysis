@@ -21,7 +21,6 @@ import { fetchRegressionAnalysis } from '../../../slices/spatialSlice';
 import SpatialRegressionResults from './SpatialRegressionResults';
 import SpatialMap from './SpatialMap';
 import SpatialFramework from './SpatialFramework';
-import AnalysisContainer from '../../common/AnalysisContainer';
 
 const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const theme = useTheme();
@@ -46,22 +45,15 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
     }
 
     return {
-      // Market Integration Parameters
       coefficients: regressionData.model.coefficients || {},
       intercept: regressionData.model.intercept || 0,
       p_values: regressionData.model.p_values || {},
-      
-      // Spatial Patterns
       moran_i: regressionData.spatial.moran_i || { I: 0, 'p-value': 1 },
       residual: regressionData.residuals.raw,
-      
-      // Model Performance
       r_squared: regressionData.model.r_squared || 0,
       adj_r_squared: regressionData.model.adj_r_squared || 0,
       mse: regressionData.model.mse || 0,
       observations: regressionData.model.observations || 0,
-      
-      // Metadata
       regime: regressionData.metadata?.regime || 'unified',
       timestamp: regressionData.metadata?.timestamp
     };
@@ -91,68 +83,61 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
 
   if (!spatialResults) {
     return (
-      <AnalysisContainer title={`Spatial Market Analysis: ${selectedCommodity}`}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <CircularProgress />
-        </Box>
-      </AnalysisContainer>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (spatialData?.error) {
     return (
-      <AnalysisContainer title={`Spatial Market Analysis: ${selectedCommodity}`}>
-        <Alert severity="error">
-          <Typography variant="subtitle1" gutterBottom>Error Loading Data</Typography>
-          {spatialData.error}
-        </Alert>
-      </AnalysisContainer>
+      <Alert severity="error" sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" gutterBottom>Error Loading Data</Typography>
+        {spatialData.error}
+      </Alert>
     );
   }
 
   return (
-    <AnalysisContainer title={`Spatial Market Analysis: ${selectedCommodity}`}>
-      <Box sx={{ width: '100%', mb: 4 }}>
-        {/* Controls */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Grid container spacing={2} alignItems="center" justifyContent="flex-end">
-            <Grid item xs={12} md={3}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<Download />}
-                onClick={handleDownloadData}
-              >
-                Download Results
-              </Button>
-            </Grid>
+    <Box sx={{ width: '100%', mb: 4, bgcolor: 'background.paper' }}>
+      {/* Controls */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Grid container spacing={2} alignItems="center" justifyContent="flex-end">
+          <Grid item xs={12} md={3}>
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<Download />}
+              onClick={handleDownloadData}
+            >
+              Download Results
+            </Button>
           </Grid>
-        </Paper>
+        </Grid>
+      </Paper>
 
-        {/* Framework Section */}
+      {/* Market Integration Analysis */}
+      <Box sx={{ mb: 3 }}>
+        <SpatialRegressionResults 
+          results={spatialResults}
+          windowWidth={windowWidth}
+        />
+      </Box>
+
+      {/* Framework Section */}
+      <Box sx={{ mb: 3 }}>
         <SpatialFramework selectedData={spatialResults} />
+      </Box>
 
-        {/* Market Integration Parameters */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-            Market Integration Analysis
-          </Typography>
-          <SpatialRegressionResults 
-            results={spatialResults}
-            windowWidth={windowWidth}
-          />
-        </Paper>
-
-        {/* Spatial Visualization */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Regional Price Patterns
-          </Typography>
-          <SpatialMap
-            results={spatialResults}
-            windowWidth={windowWidth}
-          />
-        </Paper>
+      {/* Spatial Visualization */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+          Regional Price Patterns
+        </Typography>
+        <SpatialMap
+          results={spatialResults}
+          windowWidth={windowWidth}
+        />
       </Box>
 
       <Snackbar
@@ -162,7 +147,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         message={snackbar.message}
         severity={snackbar.severity}
       />
-    </AnalysisContainer>
+    </Box>
   );
 };
 

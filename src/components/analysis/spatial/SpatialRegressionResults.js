@@ -6,7 +6,8 @@ import {
   Box,
   Grid,
   Typography,
-  useTheme
+  useTheme,
+  Paper
 } from '@mui/material';
 import ResidualsChart from './components/ResidualsChart';
 
@@ -114,8 +115,11 @@ const SpatialRegressionResults = ({ results, windowWidth }) => {
   );
 
   return (
-    <Box>
+    <Paper sx={{ p: 2 }}>
       {/* Key Parameters */}
+      <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+        Model Parameters
+      </Typography>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={3}>
           {renderParameterCard('spatial_lag', results.coefficients.spatial_lag_price)}
@@ -132,12 +136,7 @@ const SpatialRegressionResults = ({ results, windowWidth }) => {
       </Grid>
 
       {/* Price Deviations */}
-      <Box sx={{ 
-        mt: 4,
-        '&:hover .residuals-info': {
-          opacity: 1
-        }
-      }}>
+      <Box sx={{ mt: 4 }}>
         <Typography variant="h6" gutterBottom>
           Regional Price Patterns
         </Typography>
@@ -148,7 +147,7 @@ const SpatialRegressionResults = ({ results, windowWidth }) => {
           />
         </Box>
       </Box>
-    </Box>
+    </Paper>
   );
 };
 
