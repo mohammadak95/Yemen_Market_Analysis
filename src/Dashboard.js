@@ -190,7 +190,7 @@ const Dashboard = React.memo(({
           <Box
             sx={{
               width: '100%',
-              height: { xs: '300px', sm: '400px', md: '500px' },
+              height: { xs: '300px', sm: '400px', md: '400px' },
               position: 'relative',
               mb: 2,
             }}
