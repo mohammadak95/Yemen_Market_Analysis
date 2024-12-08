@@ -1,86 +1,80 @@
-// src/components/spatialAnalysis/hooks/useClusterAnalysis.js
+// src/hooks/useClusterAnalysis.js
 
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { backgroundMonitor } from '../../../utils/backgroundMonitor';
-import {
-  selectTimeSeriesData,
-  selectMarketClusters,
-  selectGeometryData
-} from '../../../selectors/optimizedSelectors';
+import { calculateClusterMetrics } from '../features/clusters/utils/clusterCalculations';
 
-/**
- * Custom hook for analyzing market clusters
- * @returns {Object} Cluster analysis results
- */
-export const useClusterAnalysis = () => {
-  // Get data from Redux store
-  const timeSeriesData = useSelector(selectTimeSeriesData);
-  const clusters = useSelector(selectMarketClusters);
-  const geometry = useSelector(selectGeometryData);
+export const useClusterAnalysis = (selectedClusterId = null) => {
+  const clusters = useSelector(state => state.spatial.data.marketClusters);
+  const flows = useSelector(state => state.spatial.data.flowMaps);
+  const timeSeriesData = useSelector(state => state.spatial.data.timeSeriesData);
 
   return useMemo(() => {
-    const metric = backgroundMonitor.startMetric('cluster-analysis-hook');
+    const metric = backgroundMonitor.startMetric('cluster-analysis');
 
     try {
       if (!clusters?.length) {
-        return {
-          clusters: [],
-          metrics: null,
-          loading: false,
-          error: 'No cluster data available'
-        };
+        console.debug('No clusters available for analysis');
+        return { clusters: [], selectedCluster: null };
       }
 
-      // Calculate basic metrics for each cluster
-      const enhancedClusters = clusters.map(cluster => {
-        // Get time series data for cluster markets
-        const clusterData = timeSeriesData.filter(d => 
-          cluster.connected_markets.includes(d.region)
-        );
-
-        // Calculate average price and conflict intensity
-        const avgPrice = clusterData.reduce((sum, d) => sum + (d.usdPrice || 0), 0) / clusterData.length;
-        const avgConflict = clusterData.reduce((sum, d) => sum + (d.conflictIntensity || 0), 0) / clusterData.length;
-
-        return {
-          ...cluster,
-          metrics: {
-            avgPrice,
-            avgConflict,
-            marketCount: cluster.connected_markets.length
-          }
-        };
+      // Debug data before calculation
+      console.debug('Cluster Analysis Input:', {
+        clustersCount: clusters.length,
+        flowsCount: flows?.length,
+        timeSeriesCount: timeSeriesData?.length,
+        sampleCluster: clusters[0],
+        sampleFlow: flows?.[0],
+        sampleTimeSeries: timeSeriesData?.[0]
       });
 
-      // Calculate overall metrics
-      const overallMetrics = {
-        totalMarkets: enhancedClusters.reduce((sum, c) => sum + c.metrics.marketCount, 0),
-        avgPrice: enhancedClusters.reduce((sum, c) => sum + c.metrics.avgPrice, 0) / enhancedClusters.length,
-        avgConflict: enhancedClusters.reduce((sum, c) => sum + c.metrics.avgConflict, 0) / enhancedClusters.length
-      };
+      // Validate input data
+      if (!Array.isArray(flows) || !flows.length) {
+        console.warn('No flow data available for cluster analysis');
+      }
+      if (!Array.isArray(timeSeriesData) || !timeSeriesData.length) {
+        console.warn('No time series data available for cluster analysis');
+      }
+
+      // Calculate metrics using centralized function
+      const { clusters: processedClusters, metrics: overallMetrics } = 
+        calculateClusterMetrics(clusters, timeSeriesData, flows);
+
+      // Debug processed results
+      console.debug('Processed Clusters:', {
+        count: processedClusters.length,
+        sampleMetrics: processedClusters[0]?.metrics,
+        overallMetrics
+      });
+
+      // Find selected cluster if ID provided
+      const selectedCluster = selectedClusterId ? 
+        processedClusters.find(c => c.cluster_id === selectedClusterId) : 
+        null;
+
+      if (selectedCluster) {
+        console.debug('Selected Cluster Metrics:', {
+          clusterId: selectedCluster.cluster_id,
+          metrics: selectedCluster.metrics,
+          marketCount: selectedCluster.connected_markets?.length
+        });
+      }
 
       metric.finish({ status: 'success' });
 
       return {
-        clusters: enhancedClusters,
-        metrics: overallMetrics,
-        loading: false,
-        error: null
+        clusters: processedClusters,
+        selectedCluster,
+        metrics: overallMetrics
       };
 
     } catch (error) {
-      console.error('Error in useClusterAnalysis:', error);
+      console.error('Error in cluster analysis:', error);
       metric.finish({ status: 'error', error: error.message });
-
-      return {
-        clusters: [],
-        metrics: null,
-        loading: false,
-        error: error.message
-      };
+      return { clusters: [], selectedCluster: null, metrics: null };
     }
-  }, [timeSeriesData, clusters, geometry]);
+  }, [clusters, flows, timeSeriesData, selectedClusterId]);
 };
 
 export default useClusterAnalysis;

@@ -1,15 +1,49 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@mui/material/styles';
-import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Tooltip, useMap } from 'react-leaflet';
+import './ClusterMap.css';
 
-// Yemen bounds and center coordinates
-const YEMEN_BOUNDS = [
-  [11.5, 41.5], // Southwest corner - adjusted to show full extent
-  [20.0, 55.5]  // Northeast corner - adjusted to show full extent
+// Yemen's center with expanded bounds and buffer zone
+const DEFAULT_CENTER = [15.3694, 44.1910];
+const DEFAULT_ZOOM = 6;
+const BUFFER = 2;  // Degrees of buffer around Yemen
+const DEFAULT_BOUNDS = [
+  [12.1110 - BUFFER, 41.8140 - BUFFER],  // Southwest corner with buffer
+  [19.0025 + BUFFER, 54.5305 + BUFFER]   // Northeast corner with buffer
 ];
-const YEMEN_CENTER = [15.5527, 48.5164];
-const YEMEN_ZOOM = 6; // Slightly zoomed out to show full country
+
+// Map reset component
+const MapReset = () => {
+  const map = useMap();
+  
+  useEffect(() => {
+    const resetTimeout = setTimeout(() => {
+      map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+      map.fitBounds(DEFAULT_BOUNDS);
+    }, 100);
+
+    const resetView = () => {
+      map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+      map.fitBounds(DEFAULT_BOUNDS);
+    };
+
+    map.on('mouseout', resetView);
+    map.on('dragend', () => {
+      if (!map.getBounds().intersects(DEFAULT_BOUNDS)) {
+        resetView();
+      }
+    });
+
+    return () => {
+      clearTimeout(resetTimeout);
+      map.off('mouseout', resetView);
+      map.off('dragend');
+    };
+  }, [map]);
+
+  return null;
+};
 
 const ClusterMap = ({
   clusters,
@@ -34,15 +68,15 @@ const ClusterMap = ({
     
     if (!cluster) {
       return {
-        fillColor: theme.palette.grey[300],
-        weight: 1,
-        opacity: 1,
-        color: theme.palette.grey[400],
-        fillOpacity: 0.5
+        fillColor: theme.palette.background.paper,
+        weight: 0.5,
+        opacity: 0.3,
+        color: theme.palette.divider,
+        fillOpacity: 0.1,
+        cursor: 'default'
       };
     }
 
-    // Use primary color for first cluster, secondary for second
     const baseColor = cluster.cluster_id === 1 ? 
       theme.palette.primary.main : 
       theme.palette.secondary.main;
@@ -52,7 +86,8 @@ const ClusterMap = ({
       weight: isSelected ? 2 : 1,
       opacity: 1,
       color: isSelected ? theme.palette.common.white : theme.palette.grey[400],
-      fillOpacity: isSelected ? 0.8 : 0.5
+      fillOpacity: isSelected ? 0.8 : 0.5,
+      cursor: 'pointer'
     };
   }, [theme, selectedClusterId, getClusterByRegion]);
 
@@ -71,11 +106,29 @@ const ClusterMap = ({
     const cluster = getClusterByRegion(region);
     
     if (!cluster) {
-      return region;
+      return `
+        <div style="text-align: center;">
+          <strong>${region}</strong>
+          <br />
+          <small style="color: ${theme.palette.text.secondary};">
+            Not part of any cluster
+          </small>
+        </div>
+      `;
     }
 
-    return `${region} (${cluster.main_market} cluster)`;
-  }, [getClusterByRegion]);
+    return `
+      <div style="text-align: center;">
+        <strong>${region}</strong>
+        <br />
+        ${cluster.main_market} cluster
+        <br />
+        <small style="color: ${theme.palette.text.secondary};">
+          Click to view details
+        </small>
+      </div>
+    `;
+  }, [getClusterByRegion, theme.palette.text.secondary]);
 
   if (!geometry?.unified?.features) {
     return null;
@@ -83,36 +136,70 @@ const ClusterMap = ({
 
   return (
     <MapContainer
-      center={YEMEN_CENTER}
-      zoom={YEMEN_ZOOM}
+      center={DEFAULT_CENTER}
+      zoom={DEFAULT_ZOOM}
+      bounds={DEFAULT_BOUNDS}
       style={{ height: '100%', width: '100%' }}
-      maxBounds={YEMEN_BOUNDS}
-      minZoom={YEMEN_ZOOM - 0.5}
-      maxZoom={YEMEN_ZOOM + 1}
-      zoomControl={false}
-      dragging={false}
-      touchZoom={false}
-      doubleClickZoom={false}
-      scrollWheelZoom={false}
-      boxZoom={false}
-      keyboard={false}
-      bounceAtZoomLimits={false}
+      maxBounds={DEFAULT_BOUNDS}
+      minZoom={5}  // Allow slightly more zoom out
+      maxZoom={8}  // Limit max zoom to maintain performance
+      zoomControl={true}
+      dragging={true}
+      touchZoom={true}
+      doubleClickZoom={true}
+      scrollWheelZoom={true}
+      boxZoom={true}
+      keyboard={true}
+      bounceAtZoomLimits={true}
+      worldCopyJump={false}
+      preferCanvas={true}
     >
+      <MapReset />
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        bounds={YEMEN_BOUNDS}
+        bounds={DEFAULT_BOUNDS}
+        noWrap={true}
+        maxNativeZoom={8}  // Match maxZoom for better performance
+        maxZoom={8}
+        tileSize={256}
+        zoomOffset={0}
+        keepBuffer={8}
       />
       <GeoJSON
         data={geometry.unified}
         style={styleRegion}
         onEachFeature={(feature, layer) => {
           layer.on({
-            click: () => onRegionClick(feature)
+            click: () => onRegionClick(feature),
+            mouseover: (e) => {
+              const cluster = getClusterByRegion(feature.properties.region_id);
+              if (cluster) {
+                e.target.setStyle({
+                  fillOpacity: 0.8,
+                  weight: 2
+                });
+              }
+            },
+            mouseout: (e) => {
+              const cluster = getClusterByRegion(feature.properties.region_id);
+              if (cluster && cluster.cluster_id !== selectedClusterId) {
+                e.target.setStyle({
+                  fillOpacity: 0.5,
+                  weight: 1
+                });
+              } else if (!cluster) {
+                e.target.setStyle({
+                  fillOpacity: 0.1,
+                  weight: 0.5
+                });
+              }
+            }
           });
           layer.bindTooltip(createTooltipContent(feature), {
             permanent: false,
-            direction: 'center'
+            direction: 'center',
+            className: 'custom-tooltip'
           });
         }}
       />

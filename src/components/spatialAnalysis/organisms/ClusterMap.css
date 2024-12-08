@@ -1,0 +1,76 @@
+.leaflet-container {
+  background: #fff !important;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Base panes */
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Tile container */
+.leaflet-tile-container {
+  pointer-events: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Individual tiles */
+.leaflet-tile {
+  filter: brightness(1.05);
+}
+
+/* Layer ordering */
+.leaflet-map-pane { z-index: 2; }
+.leaflet-tile-pane { z-index: 1; }
+.leaflet-objects-pane { z-index: 3; }
+.leaflet-overlay-pane { z-index: 4; }
+.leaflet-shadow-pane { z-index: 5; }
+.leaflet-marker-pane { z-index: 6; }
+.leaflet-tooltip-pane { z-index: 7; }
+.leaflet-popup-pane { z-index: 8; }
+
+/* Custom tooltip */
+.custom-tooltip {
+  background: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.custom-tooltip::before {
+  border-top-color: white;
+}
+
+/* Attribution styling */
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.8) !important;
+  color: #666 !important;
+  font-size: 10px !important;
+  padding: 0 4px !important;
+  border-radius: 2px !important;
+}
+
+/* Ensure tiles are properly contained */
+.leaflet-tile-container {
+  will-change: transform;
+  transform-origin: 0 0;
+}

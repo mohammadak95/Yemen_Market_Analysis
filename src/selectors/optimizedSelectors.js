@@ -275,26 +275,56 @@ export const selectMarketClusters = createSelector(
   (data) => {
     try {
       if (!data || !Array.isArray(data.marketClusters)) {
+        console.debug('No market clusters found in data');
         return [];
       }
       
-      return data.marketClusters.map(cluster => ({
-        ...cluster,
-        cluster_id: cluster.cluster_id || `cluster-${Math.random().toString(36).substr(2, 9)}`,
-        main_market: cluster.main_market || '',
-        connected_markets: Array.isArray(cluster.connected_markets) ? cluster.connected_markets : [],
-        metrics: {
-          efficiency: typeof cluster.metrics?.efficiency === 'number' ? cluster.metrics.efficiency : 0,
-          internal_connectivity: typeof cluster.metrics?.internal_connectivity === 'number' ? 
-            cluster.metrics.internal_connectivity : 0,
-          market_coverage: typeof cluster.metrics?.market_coverage === 'number' ? 
-            cluster.metrics.market_coverage : 0,
-          price_convergence: typeof cluster.metrics?.price_convergence === 'number' ? 
-            cluster.metrics.price_convergence : 0,
-          stability: typeof cluster.metrics?.stability === 'number' ? cluster.metrics.stability : 0,
-          ...cluster.metrics
-        }
-      }));
+      return data.marketClusters.map(cluster => {
+        // Debug cluster processing
+        console.debug(`Processing cluster ${cluster.main_market}:`, {
+          marketCount: cluster.connected_markets?.length,
+          hasMetrics: !!cluster.metrics,
+          rawMetrics: cluster.metrics
+        });
+
+        // Ensure metrics object exists
+        const metrics = cluster.metrics || {};
+        
+        // Process cluster metrics with proper validation
+        return {
+          ...cluster,
+          metrics: {
+            // Basic market metrics
+            marketCount: cluster.connected_markets?.length || 0,
+            avgPrice: typeof metrics.avgPrice === 'number' ? 
+              metrics.avgPrice : 0,
+            avgConflict: typeof metrics.avgConflict === 'number' ? 
+              metrics.avgConflict : 0,
+            
+            // Efficiency score and components
+            efficiency: typeof metrics.efficiency === 'number' ? 
+              metrics.efficiency : 0,
+            efficiencyComponents: {
+              connectivity: typeof metrics.efficiencyComponents?.connectivity === 'number' ?
+                metrics.efficiencyComponents.connectivity : 0,
+              priceIntegration: typeof metrics.efficiencyComponents?.priceIntegration === 'number' ?
+                metrics.efficiencyComponents.priceIntegration : 0,
+              stability: typeof metrics.efficiencyComponents?.stability === 'number' ?
+                metrics.efficiencyComponents.stability : 0,
+              conflictResilience: typeof metrics.efficiencyComponents?.conflictResilience === 'number' ?
+                metrics.efficiencyComponents.conflictResilience : 0
+            },
+
+            // Market integration metrics
+            internal_connectivity: typeof metrics.internal_connectivity === 'number' ? 
+              metrics.internal_connectivity : 0,
+            market_coverage: typeof metrics.market_coverage === 'number' ? 
+              metrics.market_coverage : 0,
+            price_convergence: typeof metrics.price_convergence === 'number' ? 
+              metrics.price_convergence : 0
+          }
+        };
+      });
     } catch (error) {
       console.error('Error selecting market clusters:', error);
       return [];
@@ -582,15 +612,21 @@ export const selectLoadingStatus = createSelector(
 );
 
 // Enhanced cluster coordinate processing
+// in src/selectors/optimizedSelectors.js
+
 export const selectClustersWithCoordinates = createSelector(
   [selectMarketClusters, selectGeometryData],
   (clusters, geometry) => {
     try {
       if (!clusters?.length || !geometry?.points) {
+        console.debug('Missing data for cluster coordinates:', { 
+          hasClusters: Boolean(clusters?.length), 
+          hasGeometry: Boolean(geometry?.points) 
+        });
         return [];
       }
 
-      // Create normalized coordinate mapping
+      // Create coordinate mapping for efficient lookup
       const coordMap = new Map();
       geometry.points.forEach(point => {
         const normalizedName = transformRegionName(
@@ -598,35 +634,129 @@ export const selectClustersWithCoordinates = createSelector(
           point.properties?.region_id || 
           point.properties?.name
         );
-        if (normalizedName && Array.isArray(point.coordinates) && point.coordinates.length === 2) {
+        if (normalizedName && Array.isArray(point.coordinates)) {
           coordMap.set(normalizedName, validateCoordinates(point.coordinates));
         }
       });
 
       return clusters.map(cluster => {
-        const markets = cluster.connected_markets || [];
-        const marketCoords = markets
+        // Process market coordinates
+        const marketCoords = (cluster.connected_markets || [])
           .map(market => {
             const normalizedName = transformRegionName(market);
+            const coordinates = coordMap.get(normalizedName) || 
+                              getRegionCoordinates(normalizedName);
+            
             return {
               name: market,
               normalizedName,
-              coordinates: coordMap.get(normalizedName) || getRegionCoordinates(normalizedName)
+              coordinates,
+              isMainMarket: market === cluster.main_market
             };
           })
           .filter(m => m.coordinates);
 
+        // Calculate center and distances
         const center = calculateCenter(marketCoords.map(m => m.coordinates));
+        const avgDistance = calculateAverageDistance(marketCoords.map(m => m.coordinates));
 
+        // Calculate spatial coverage
+        const spatialCoverage = cluster.connected_markets.length ? 
+          marketCoords.length / cluster.connected_markets.length : 0;
+
+        console.debug(`Processing cluster coordinates for ${cluster.main_market}:`, {
+          marketsWithCoords: marketCoords.length,
+          totalMarkets: cluster.connected_markets.length,
+          hasCenter: Boolean(center),
+          spatialCoverage
+        });
+
+        // Return cluster with all metrics preserved and spatial information added
         return {
           ...cluster,
+          cluster_id: cluster.cluster_id,
+          main_market: cluster.main_market,
+          connected_markets: cluster.connected_markets,
           markets: marketCoords,
           center: center || [0, 0],
-          coverage: markets.length ? marketCoords.length / markets.length : 0,
           metrics: {
-            ...cluster.metrics,
-            spatial_coverage: markets.length ? marketCoords.length / markets.length : 0,
-            avg_distance: calculateAverageDistance(marketCoords.map(m => m.coordinates))
+            // Preserve all original efficiency metrics
+            efficiency: typeof cluster.metrics?.efficiency === 'number' ? 
+              cluster.metrics.efficiency : 0,
+            efficiencyComponents: {
+              connectivity: typeof cluster.metrics?.efficiencyComponents?.connectivity === 'number' ?
+                cluster.metrics.efficiencyComponents.connectivity : 0,
+              priceIntegration: typeof cluster.metrics?.efficiencyComponents?.priceIntegration === 'number' ?
+                cluster.metrics.efficiencyComponents.priceIntegration : 0,
+              stability: typeof cluster.metrics?.efficiencyComponents?.stability === 'number' ?
+                cluster.metrics.efficiencyComponents.stability : 0,
+              conflictResilience: typeof cluster.metrics?.efficiencyComponents?.conflictResilience === 'number' ?
+                cluster.metrics.efficiencyComponents.conflictResilience : 0
+            },
+
+            // Market metrics
+            marketCount: cluster.connected_markets?.length || 0,
+            avgPrice: typeof cluster.metrics?.avgPrice === 'number' ? 
+              cluster.metrics.avgPrice : 0,
+            avgConflict: typeof cluster.metrics?.avgConflict === 'number' ? 
+              cluster.metrics.avgConflict : 0,
+            
+            // Integration metrics
+            internal_connectivity: typeof cluster.metrics?.internal_connectivity === 'number' ? 
+              cluster.metrics.internal_connectivity : 0,
+            market_coverage: typeof cluster.metrics?.market_coverage === 'number' ? 
+              cluster.metrics.market_coverage : 0,
+            price_convergence: typeof cluster.metrics?.price_convergence === 'number' ? 
+              cluster.metrics.price_convergence : 0,
+
+            // Price metrics
+            priceVolatility: typeof cluster.metrics?.priceVolatility === 'number' ?
+              cluster.metrics.priceVolatility : 0,
+            priceRange: typeof cluster.metrics?.priceRange === 'number' ?
+              cluster.metrics.priceRange : 0,
+            minPrice: typeof cluster.metrics?.minPrice === 'number' ?
+              cluster.metrics.minPrice : 0,
+            maxPrice: typeof cluster.metrics?.maxPrice === 'number' ?
+              cluster.metrics.maxPrice : 0,
+
+            // Flow metrics
+            flowDensity: typeof cluster.metrics?.flowDensity === 'number' ?
+              cluster.metrics.flowDensity : 0,
+            avgFlowStrength: typeof cluster.metrics?.avgFlowStrength === 'number' ?
+              cluster.metrics.avgFlowStrength : 0,
+            totalFlows: typeof cluster.metrics?.totalFlows === 'number' ?
+              cluster.metrics.totalFlows : 0,
+
+            // Spatial metrics (enhanced with coordinate information)
+            spatial_coverage: spatialCoverage,
+            avg_distance: avgDistance,
+            spatial_metrics: {
+              centerLat: center ? center[1] : 0,
+              centerLon: center ? center[0] : 0,
+              boundingBox: calculateBoundingBox(marketCoords.map(m => m.coordinates)),
+              marketDensity: marketCoords.length / (avgDistance || 1),
+              spatialDispersion: calculateSpatialDispersion(marketCoords.map(m => m.coordinates))
+            },
+
+            // Time-based metrics
+            timeSeriesCompleteness: typeof cluster.metrics?.timeSeriesCompleteness === 'number' ?
+              cluster.metrics.timeSeriesCompleteness : 0,
+            lastUpdateTimestamp: cluster.metrics?.lastUpdateTimestamp || null,
+
+            // Stability and performance metrics
+            stabilityScore: typeof cluster.metrics?.stabilityScore === 'number' ?
+              cluster.metrics.stabilityScore : 0,
+            integrationScore: typeof cluster.metrics?.integrationScore === 'number' ?
+              cluster.metrics.integrationScore : 0,
+            performanceScore: typeof cluster.metrics?.performanceScore === 'number' ?
+              cluster.metrics.performanceScore : 0,
+
+            // Status indicators
+            active: typeof cluster.metrics?.active === 'boolean' ?
+              cluster.metrics.active : true,
+            lastCalculated: cluster.metrics?.lastCalculated || new Date().toISOString(),
+            dataQualityScore: typeof cluster.metrics?.dataQualityScore === 'number' ?
+              cluster.metrics.dataQualityScore : 1
           }
         };
       });
@@ -636,6 +766,50 @@ export const selectClustersWithCoordinates = createSelector(
     }
   }
 );
+
+// Helper function for spatial dispersion calculation
+function calculateSpatialDispersion(coordinates) {
+  if (!coordinates?.length || coordinates.length < 2) return 0;
+  
+  try {
+    const center = calculateCenter(coordinates);
+    if (!center) return 0;
+
+    const distances = coordinates.map(coord => 
+      calculateDistance(coord, center)
+    );
+
+    return Math.sqrt(
+      distances.reduce((sum, dist) => sum + Math.pow(dist, 2), 0) / 
+      distances.length
+    );
+  } catch (error) {
+    console.error('Error calculating spatial dispersion:', error);
+    return 0;
+  }
+}
+
+// Helper function for bounding box calculation
+function calculateBoundingBox(coordinates) {
+  if (!coordinates?.length) return null;
+
+  try {
+    return coordinates.reduce((bounds, coord) => ({
+      minLon: Math.min(bounds.minLon, coord[0]),
+      maxLon: Math.max(bounds.maxLon, coord[0]),
+      minLat: Math.min(bounds.minLat, coord[1]),
+      maxLat: Math.max(bounds.maxLat, coord[1])
+    }), {
+      minLon: Infinity,
+      maxLon: -Infinity,
+      minLat: Infinity,
+      maxLat: -Infinity
+    });
+  } catch (error) {
+    console.error('Error calculating bounding box:', error);
+    return null;
+  }
+}
 
 // Feature data selector with enhanced validation and processing
 export const selectFeatureDataWithMetrics = createSelector(
