@@ -9,8 +9,8 @@ const YEMEN_BOUNDS = [
   [12.5, 42.5], // Southwest corner
   [19.0, 54.5]  // Northeast corner
 ];
-const YEMEN_CENTER = [15.5527, 48.5164];
-const YEMEN_ZOOM = 6.5;
+const YEMEN_CENTER = [15.3694, 44.191];
+const YEMEN_ZOOM = 6;
 
 const LISAMap = ({
   localStats,
@@ -21,7 +21,7 @@ const LISAMap = ({
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Transform data for mapping
+  // Transform data for mapping with enhanced statistics
   const mapData = useMemo(() => {
     if (!localStats || !geometry || !geometry.features || !Array.isArray(geometry.features)) {
       console.warn('Invalid or missing data for LISA map:', {
@@ -34,7 +34,7 @@ const LISAMap = ({
     }
 
     try {
-      // Merge geometry with statistics
+      // Merge geometry with enhanced statistics
       const features = geometry.features.map(feature => {
         const region = feature.properties?.name || feature.properties?.region_id || '';
         const stats = localStats[region];
@@ -43,11 +43,24 @@ const LISAMap = ({
           console.warn('Feature missing name/region_id:', feature);
         }
 
+        // Calculate additional metrics
+        const clusterStrength = stats ? Math.abs(stats.local_i) * (stats.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? 1 : 0.5) : 0;
+        const significanceLevel = stats ? 
+          stats.p_value <= SIGNIFICANCE_LEVELS.HIGHLY_SIGNIFICANT ? 'Highly Significant' :
+          stats.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? 'Significant' :
+          stats.p_value <= SIGNIFICANCE_LEVELS.MARGINALLY_SIGNIFICANT ? 'Marginally Significant' :
+          'Not Significant' : 'No Data';
+
         return {
           ...feature,
           properties: {
             ...feature.properties,
-            stats: stats || null,
+            stats: stats ? {
+              ...stats,
+              clusterStrength,
+              significanceLevel,
+              standardizedValue: stats.z_score
+            } : null,
             isSelected: region === selectedRegion
           }
         };
@@ -63,7 +76,7 @@ const LISAMap = ({
     }
   }, [localStats, geometry, selectedRegion]);
 
-  // Style functions
+  // Enhanced style functions with improved visual encoding
   const getRegionStyle = (feature) => {
     const stats = feature.properties.stats;
     const isSelected = feature.properties.isSelected;
@@ -78,42 +91,66 @@ const LISAMap = ({
       };
     }
 
+    // Calculate opacity based on significance and cluster strength
+    const baseOpacity = stats.p_value <= SIGNIFICANCE_LEVELS.HIGHLY_SIGNIFICANT ? 0.9 :
+                       stats.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? 0.7 :
+                       stats.p_value <= SIGNIFICANCE_LEVELS.MARGINALLY_SIGNIFICANT ? 0.5 : 0.3;
+    
+    // Adjust opacity based on cluster strength
+    const strengthAdjustment = Math.min(stats.clusterStrength * 0.2, 0.1);
+    const finalOpacity = Math.min(baseOpacity + strengthAdjustment, 1);
+
     return {
       fillColor: CLUSTER_COLORS[stats.cluster_type] || theme.palette.grey[300],
-      weight: isSelected ? 2 : 1,
+      weight: isSelected ? 3 : 1,
       opacity: 1,
       color: isSelected ? theme.palette.primary.main : theme.palette.grey[500],
-      fillOpacity: stats.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? 0.8 : 0.4
+      fillOpacity: finalOpacity,
+      dashArray: stats.p_value > SIGNIFICANCE_LEVELS.SIGNIFICANT ? '3' : null
     };
   };
 
-  // Format values for tooltip
+  // Enhanced value formatting with confidence intervals
   const formatValue = (value, precision = 3) => {
     if (value == null) return 'N/A';
     return typeof value === 'number' ? value.toFixed(precision) : value.toString();
   };
 
-  // Event handlers
+  const formatConfidenceInterval = (value, variance) => {
+    if (!value || !variance) return '';
+    const stdError = Math.sqrt(variance);
+    const ci95 = 1.96 * stdError;
+    return `(${formatValue(value - ci95)} to ${formatValue(value + ci95)})`;
+  };
+
+  // Enhanced event handlers with improved tooltips
   const onEachFeature = (feature, layer) => {
     const stats = feature.properties.stats;
     const region = feature.properties.name || feature.properties.region_id || '';
 
-    // Add tooltip
+    // Enhanced tooltip with additional statistical information
     layer.bindTooltip(() => {
       return `
-        <div style="min-width: ${isSmallScreen ? '150px' : '200px'};">
+        <div style="min-width: ${isSmallScreen ? '180px' : '250px'};">
           <strong>${region}</strong><br/>
           ${stats ? `
-            Local Moran's I: ${formatValue(stats.local_i)}<br/>
-            P-value: ${formatValue(stats.p_value)}<br/>
-            Cluster Type: ${stats.cluster_type.replace('-', ' ')}<br/>
-            Z-score: ${formatValue(stats.z_score)}
+            <strong>Cluster Analysis:</strong><br/>
+            • Type: ${stats.cluster_type.replace('-', ' ')}<br/>
+            • Significance: ${stats.significanceLevel}<br/>
+            • Strength: ${formatValue(stats.clusterStrength)}<br/>
+            <br/>
+            <strong>Statistics:</strong><br/>
+            • Local Moran's I: ${formatValue(stats.local_i)}<br/>
+            • Z-score: ${formatValue(stats.z_score)}<br/>
+            • P-value: ${formatValue(stats.p_value)}<br/>
+            ${stats.variance ? `• 95% CI: ${formatConfidenceInterval(stats.local_i, stats.variance)}` : ''}
           ` : 'No data available'}
         </div>
       `;
     }, {
       sticky: true,
-      direction: 'auto'
+      direction: 'auto',
+      className: 'lisa-map-tooltip'
     });
 
     // Add click handler
@@ -133,7 +170,7 @@ const LISAMap = ({
         p={2}
         gap={2}
       >
-        <Typography color="textSecondary" align="center">
+        <Typography color="textSecondary">
           No map data available
         </Typography>
       </Box>
@@ -142,12 +179,33 @@ const LISAMap = ({
 
   return (
     <Box sx={{ height: '100%', position: 'relative' }}>
+      {/* Instructions Banner */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 10,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          bgcolor: 'background.paper',
+          p: 1,
+          borderRadius: 1,
+          boxShadow: 1,
+          textAlign: 'center',
+          maxWidth: '90%'
+        }}
+      >
+        <Typography variant="body2" color="textSecondary">
+          Click on any region to view detailed market cluster analysis
+        </Typography>
+      </Box>
+
       <MapContainer
         center={YEMEN_CENTER}
         zoom={YEMEN_ZOOM}
         style={{ height: '100%', width: '100%' }}
         maxBounds={YEMEN_BOUNDS}
-        minZoom={YEMEN_ZOOM - 0.5}
+        minZoom={YEMEN_ZOOM - 1}
         maxZoom={YEMEN_ZOOM + 1}
         zoomControl={false}
         dragging={false}
@@ -173,45 +231,50 @@ const LISAMap = ({
         />
       </MapContainer>
 
-      {/* Legend */}
+      {/* Enhanced Legend */}
       <Box
         sx={{
           position: 'absolute',
           bottom: isSmallScreen ? 10 : 20,
           right: isSmallScreen ? 10 : 20,
           bgcolor: 'background.paper',
-          p: isSmallScreen ? 0.5 : 1,
+          p: isSmallScreen ? 1 : 1.5,
           borderRadius: 1,
-          boxShadow: 1,
+          boxShadow: 2,
           zIndex: 1000,
-          maxWidth: isSmallScreen ? '120px' : 'auto'
+          maxWidth: isSmallScreen ? '150px' : '200px'
         }}
       >
         <Typography variant="caption" display="block" gutterBottom>
-          Cluster Types
+          Spatial Clusters
         </Typography>
         {Object.entries(CLUSTER_COLORS).map(([type, color]) => (
           <Box key={type} display="flex" alignItems="center" gap={0.5} mb={0.5}>
             <Box
               sx={{
-                width: isSmallScreen ? 8 : 12,
-                height: isSmallScreen ? 8 : 12,
+                width: isSmallScreen ? 10 : 14,
+                height: isSmallScreen ? 10 : 14,
                 bgcolor: color,
-                opacity: type === 'not_significant' ? 0.4 : 0.8
+                opacity: type === 'not_significant' ? 0.3 : 0.8,
+                border: '1px solid rgba(0,0,0,0.2)',
+                borderRadius: 0.5
               }}
             />
-            <Typography variant="caption" sx={{ fontSize: isSmallScreen ? '0.65rem' : '0.75rem' }}>
-              {type.replace('-', ' ')}
+            <Typography variant="caption" sx={{ fontSize: isSmallScreen ? '0.7rem' : '0.8rem' }}>
+              {type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('-')}
             </Typography>
           </Box>
         ))}
         <Typography 
           variant="caption" 
           display="block" 
-          mt={1} 
-          sx={{ fontSize: isSmallScreen ? '0.65rem' : '0.75rem' }}
+          mt={1}
+          sx={{ 
+            fontSize: isSmallScreen ? '0.65rem' : '0.75rem',
+            color: theme.palette.text.secondary
+          }}
         >
-          Opacity indicates significance
+          Opacity indicates significance level and cluster strength
         </Typography>
       </Box>
     </Box>
