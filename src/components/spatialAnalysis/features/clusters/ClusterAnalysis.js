@@ -1,5 +1,3 @@
-// src/components/spatialAnalysis/features/clusters/ClusterAnalysis.js
-
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Grid,
@@ -8,10 +6,20 @@ import {
   Box,
   Alert,
   useTheme,
-  Fade
+  Fade,
+  Button,
+  Collapse,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Tooltip
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 import MouseIcon from '@mui/icons-material/Mouse';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import ClusterMap from '../../organisms/ClusterMap';
 import MetricCard from '../../atoms/MetricCard';
@@ -20,7 +28,7 @@ import { useClustersWithCoordinates } from '../../../../hooks/useSpatialSelector
 import { selectGeometryData } from '../../../../selectors/optimizedSelectors';
 import { useClusterAnalysis } from '../../hooks/useClusterAnalysis';
 
-// Add this new component for the efficiency explanation
+// Enhanced efficiency explanation with tooltips
 const EfficiencyExplanation = ({ efficiencyComponents }) => {
   const theme = useTheme();
   
@@ -33,62 +41,79 @@ const EfficiencyExplanation = ({ efficiencyComponents }) => {
       mt: 2,
       p: 2,
       bgcolor: theme.palette.grey[50],
-      borderRadius: 1
+      borderRadius: 1,
+      boxShadow: 1
     }}>
-      <Typography variant="subtitle2" gutterBottom>
-        Efficiency Components
+      <Typography variant="subtitle2" gutterBottom color="primary">
+        Market Efficiency Components
       </Typography>
       <Grid container spacing={2}>
         <Grid item xs={12} md={3}>
-          <Typography variant="caption" color="textSecondary">
-            Market Connectivity (40%)
-          </Typography>
-          <Typography variant="body2">
-            {(efficiencyComponents?.connectivity * 100).toFixed(1)}%
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            Measures internal market connections
-          </Typography>
+          <Tooltip title="Measures the strength and density of market connections within the cluster">
+            <Box>
+              <Typography variant="caption" color="textSecondary">
+                Market Connectivity (40%)
+              </Typography>
+              <Typography variant="body2" fontWeight="medium">
+                {(efficiencyComponents?.connectivity * 100).toFixed(1)}%
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Internal market connections
+              </Typography>
+            </Box>
+          </Tooltip>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Typography variant="caption" color="textSecondary">
-            Price Integration (30%)
-          </Typography>
-          <Typography variant="body2">
-            {(efficiencyComponents?.priceIntegration * 100).toFixed(1)}%
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            Price correlation between markets
-          </Typography>
+          <Tooltip title="Evaluates the degree of price correlation between markets in the cluster">
+            <Box>
+              <Typography variant="caption" color="textSecondary">
+                Price Integration (30%)
+              </Typography>
+              <Typography variant="body2" fontWeight="medium">
+                {(efficiencyComponents?.priceIntegration * 100).toFixed(1)}%
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Price correlation between markets
+              </Typography>
+            </Box>
+          </Tooltip>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Typography variant="caption" color="textSecondary">
-            Price Stability (20%)
-          </Typography>
-          <Typography variant="body2">
-            {(efficiencyComponents?.stability * 100).toFixed(1)}%
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            Consistency of prices over time
-          </Typography>
+          <Tooltip title="Measures the consistency and predictability of prices over time">
+            <Box>
+              <Typography variant="caption" color="textSecondary">
+                Price Stability (20%)
+              </Typography>
+              <Typography variant="body2" fontWeight="medium">
+                {(efficiencyComponents?.stability * 100).toFixed(1)}%
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Price consistency over time
+              </Typography>
+            </Box>
+          </Tooltip>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Typography variant="caption" color="textSecondary">
-            Conflict Resilience (10%)
-          </Typography>
-          <Typography variant="body2">
-            {(efficiencyComponents?.conflictResilience * 100).toFixed(1)}%
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            Market function under conflict
-          </Typography>
+          <Tooltip title="Assesses the market's ability to maintain function during conflict">
+            <Box>
+              <Typography variant="caption" color="textSecondary">
+                Conflict Resilience (10%)
+              </Typography>
+              <Typography variant="body2" fontWeight="medium">
+                {(efficiencyComponents?.conflictResilience * 100).toFixed(1)}%
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Market function under conflict
+              </Typography>
+            </Box>
+          </Tooltip>
         </Grid>
       </Grid>
     </Box>
   );
 };
 
-// Update the efficiency metric card in ClusterAnalysis component
+// Enhanced efficiency metric card
 const ClusterEfficiencyMetric = ({ value, showTooltip = false }) => {
   useEffect(() => {
     console.debug('Cluster Efficiency Value:', value);
@@ -102,11 +127,11 @@ const ClusterEfficiencyMetric = ({ value, showTooltip = false }) => {
       description="Market integration efficiency"
       showTarget={false}
       tooltip={showTooltip ? `
-        Cluster efficiency is calculated using:
-        - Market Connectivity (40%): Proportion of active market connections
-        - Price Integration (30%): Price correlation between markets
-        - Price Stability (20%): Consistency of prices over time
-        - Conflict Resilience (10%): Market function under conflict
+        Comprehensive measure of market cluster performance:
+        • Market Connectivity (40%): Network strength
+        • Price Integration (30%): Price correlation
+        • Price Stability (20%): Temporal consistency
+        • Conflict Resilience (10%): Stress resistance
       ` : undefined}
     />
   );
@@ -116,6 +141,7 @@ const ClusterAnalysis = () => {
   const theme = useTheme();
   const [selectedClusterId, setSelectedClusterId] = useState(null);
   const [showHelp, setShowHelp] = useState(true);
+  const [showMethodology, setShowMethodology] = useState(false);
   
   // Use cluster analysis hook
   const { clusters: processedClusters, selectedCluster, metrics: overallMetrics } = useClusterAnalysis(selectedClusterId);
@@ -137,7 +163,7 @@ const ClusterAnalysis = () => {
   if (!processedClusters?.length) {
     return (
       <Alert severity="info" sx={{ m: 2 }}>
-        No market cluster data available for analysis.
+        No market cluster data available for analysis. Please ensure data is properly loaded.
       </Alert>
     );
   }
@@ -146,46 +172,67 @@ const ClusterAnalysis = () => {
     <Grid container spacing={2}>
       {/* Overview Metrics */}
       <Grid item xs={12}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Total Markets"
-              value={overallMetrics?.totalMarkets}
-              format="integer"
-              description="Number of markets in clusters"
-            />
+        <Paper sx={{ p: 2, boxShadow: 2 }}>
+          <Typography variant="h6" gutterBottom color="primary">
+            Market Cluster Overview
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={3}>
+              <Tooltip title="Total number of markets included in identified clusters">
+                <Box>
+                  <MetricCard
+                    title="Total Markets"
+                    value={overallMetrics?.totalMarkets}
+                    format="integer"
+                    description="Markets in clusters"
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Tooltip title="Percentage of total markets that are part of identified clusters">
+                <Box>
+                  <MetricProgress
+                    title="Market Coverage"
+                    value={overallMetrics?.marketCoverage}
+                    format="percentage"
+                    description="Markets in clusters"
+                    showTarget={false}
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Tooltip title="Average commodity price across all clustered markets">
+                <Box>
+                  <MetricCard
+                    title="Average Price"
+                    value={overallMetrics?.avgPrice}
+                    format="currency"
+                    description="Across clusters"
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Tooltip title="Average conflict intensity affecting market clusters">
+                <Box>
+                  <MetricCard
+                    title="Conflict Impact"
+                    value={overallMetrics?.avgConflict}
+                    format="number"
+                    description="Conflict intensity"
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricProgress
-              title="Market Coverage"
-              value={overallMetrics?.marketCoverage}
-              format="percentage"
-              description="Percentage of markets in clusters"
-              showTarget={false}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Average Price"
-              value={overallMetrics?.avgPrice}
-              format="currency"
-              description="Average price across clusters"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Conflict Impact"
-              value={overallMetrics?.avgConflict}
-              format="number"
-              description="Average conflict intensity"
-            />
-          </Grid>
-        </Grid>
+        </Paper>
       </Grid>
 
       {/* Cluster Map */}
       <Grid item xs={12}>
-        <Paper sx={{ height: 600, p: 2, position: 'relative' }}>
+        <Paper sx={{ height: 600, p: 2, position: 'relative', boxShadow: 2 }}>
           <ClusterMap
             clusters={processedClusters}
             selectedClusterId={selectedClusterId}
@@ -200,19 +247,19 @@ const ClusterAnalysis = () => {
                 position: 'absolute',
                 top: 16,
                 right: 16,
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                bgcolor: 'rgba(255, 255, 255, 0.95)',
                 p: 2,
                 borderRadius: 1,
-                boxShadow: 1,
+                boxShadow: 2,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
                 zIndex: 1000
               }}
             >
-              <MouseIcon color="action" />
+              <MouseIcon color="primary" />
               <Typography variant="body2" color="text.secondary">
-                Click on a colored region to view cluster details
+                Click on any colored region to view detailed cluster analysis
               </Typography>
             </Box>
           </Fade>
@@ -222,18 +269,22 @@ const ClusterAnalysis = () => {
       {/* Selected Cluster Details */}
       {selectedCluster && selectedCluster.metrics && (
         <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              {selectedCluster.main_market} Market Cluster
+          <Paper sx={{ p: 2, boxShadow: 2 }}>
+            <Typography variant="h6" gutterBottom color="primary">
+              {selectedCluster.main_market} Market Cluster Analysis
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} md={3}>
-                <MetricCard
-                  title="Markets"
-                  value={selectedCluster.metrics.marketCount}
-                  format="integer"
-                  description="Connected markets"
-                />
+                <Tooltip title="Number of markets connected within this cluster">
+                  <Box>
+                    <MetricCard
+                      title="Connected Markets"
+                      value={selectedCluster.metrics.marketCount}
+                      format="integer"
+                      description="Active connections"
+                    />
+                  </Box>
+                </Tooltip>
               </Grid>
               <Grid item xs={12} md={3}>
                 <ClusterEfficiencyMetric 
@@ -242,20 +293,28 @@ const ClusterAnalysis = () => {
                 />
               </Grid>
               <Grid item xs={12} md={3}>
-                <MetricCard
-                  title="Average Price"
-                  value={selectedCluster.metrics.avgPrice}
-                  format="currency"
-                  description="Average cluster price"
-                />
+                <Tooltip title="Average commodity price within this cluster">
+                  <Box>
+                    <MetricCard
+                      title="Average Price"
+                      value={selectedCluster.metrics.avgPrice}
+                      format="currency"
+                      description="Cluster average"
+                    />
+                  </Box>
+                </Tooltip>
               </Grid>
               <Grid item xs={12} md={3}>
-                <MetricCard
-                  title="Conflict Level"
-                  value={selectedCluster.metrics.avgConflict}
-                  format="number"
-                  description="Average conflict intensity"
-                />
+                <Tooltip title="Average conflict intensity affecting this cluster">
+                  <Box>
+                    <MetricCard
+                      title="Conflict Impact"
+                      value={selectedCluster.metrics.avgConflict}
+                      format="number"
+                      description="Local intensity"
+                    />
+                  </Box>
+                </Tooltip>
               </Grid>
             </Grid>
             
@@ -263,18 +322,99 @@ const ClusterAnalysis = () => {
               efficiencyComponents={selectedCluster.metrics.efficiencyComponents}
             />
 
-            <Box sx={{ mt: 2, p: 2, bgcolor: theme.palette.grey[50], borderRadius: 1 }}>
+            <Box sx={{ mt: 2, p: 2, bgcolor: theme.palette.grey[50], borderRadius: 1, boxShadow: 1 }}>
               <Typography variant="body2" color="textSecondary">
-                {`This cluster contains ${selectedCluster.metrics.marketCount} markets with an efficiency rating of 
+                {`This cluster contains ${selectedCluster.metrics.marketCount} interconnected markets with an efficiency rating of 
                 ${(selectedCluster.metrics.efficiency * 100).toFixed(1)}%. 
                 ${selectedCluster.metrics.avgConflict > 0.5 ? 
-                  'High conflict intensity may affect market integration.' : 
-                  'Market integration remains stable under current conditions.'}`}
+                  'High conflict intensity may be impacting market integration and efficiency.' : 
+                  'Market integration remains robust under current conditions.'}`}
               </Typography>
             </Box>
           </Paper>
         </Grid>
       )}
+
+      {/* Methodology Section */}
+      <Grid item xs={12}>
+        <Paper sx={{ p: 2, boxShadow: 2 }}>
+          <Button
+            fullWidth
+            onClick={() => setShowMethodology(!showMethodology)}
+            endIcon={showMethodology ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            startIcon={<InfoOutlinedIcon />}
+          >
+            Market Cluster Analysis Methodology
+          </Button>
+          <Collapse in={showMethodology}>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" gutterBottom color="primary">
+              Understanding Market Cluster Analysis
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Market clusters are identified and analyzed using a comprehensive approach that combines
+              spatial relationships, price dynamics, and conflict impact assessment:
+            </Typography>
+            <List dense>
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <Typography variant="subtitle2" color="primary">
+                      Cluster Identification
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="body2" color="textSecondary">
+                      Markets are grouped based on spatial proximity, trade relationships,
+                      and price correlation patterns
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <Typography variant="subtitle2" color="primary">
+                      Efficiency Calculation
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="body2" color="textSecondary">
+                      Cluster efficiency is measured through market connectivity (40%),
+                      price integration (30%), stability (20%), and conflict resilience (10%)
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <Typography variant="subtitle2" color="primary">
+                      Impact Assessment
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="body2" color="textSecondary">
+                      Conflict impact is evaluated through market disruption patterns,
+                      price volatility, and trade flow changes
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            </List>
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+              <Typography variant="subtitle2" gutterBottom color="primary">
+                Interpretation Guide:
+              </Typography>
+              <Typography variant="body2" component="div">
+                • High Efficiency (&gt;70%): Strong market integration and resilience<br/>
+                • Medium Efficiency (40-70%): Moderate market function with some constraints<br/>
+                • Low Efficiency (&lt;40%): Significant market fragmentation or disruption
+              </Typography>
+            </Box>
+          </Collapse>
+        </Paper>
+      </Grid>
     </Grid>
   );
 };

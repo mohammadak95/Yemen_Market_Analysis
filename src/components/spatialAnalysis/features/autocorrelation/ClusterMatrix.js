@@ -13,8 +13,18 @@ import {
   useTheme,
   useMediaQuery,
   Tooltip,
-  Chip
+  Chip,
+  Button,
+  Collapse,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { CLUSTER_COLORS, CLUSTER_TYPES, SIGNIFICANCE_LEVELS } from './types';
 
 const ClusterMatrix = ({
@@ -27,6 +37,7 @@ const ClusterMatrix = ({
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const [orderBy, setOrderBy] = useState('local_i');
   const [order, setOrder] = useState('desc');
+  const [showMethodology, setShowMethodology] = useState(false);
 
   // Enhanced data processing with statistical measures
   const processedData = useMemo(() => {
@@ -154,42 +165,44 @@ const ClusterMatrix = ({
       </Paper>
 
       {/* Enhanced Header with Summary Statistics */}
-      <Box sx={{ mb: 2, mt: 4 }}>
-        <Typography variant="h6" align="center" gutterBottom>
-          Spatial Cluster Analysis
-        </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
-            justifyContent: 'center',
-            mb: 2
-          }}
-        >
-          <Tooltip title="Regions with significant spatial association">
-            <Chip
-              label={`${processedData.summary.significantClusters} Significant Clusters`}
-              color="primary"
-              variant="outlined"
-            />
-          </Tooltip>
-          <Tooltip title="Average cluster strength across all regions">
-            <Chip
-              label={`Avg Strength: ${formatValue(processedData.summary.averageStrength)}`}
-              color="secondary"
-              variant="outlined"
-            />
-          </Tooltip>
-          <Tooltip title="Highly significant spatial patterns">
-            <Chip
-              label={`${processedData.summary.significanceLevels.highlySignificant} Highly Significant`}
-              color="success"
-              variant="outlined"
-            />
-          </Tooltip>
-        </Box>
-      </Box>
+      <Card sx={{ mb: 2, mt: 4, boxShadow: 2 }}>
+        <CardContent>
+          <Typography variant="h6" align="center" gutterBottom>
+            Market Cluster Analysis
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2,
+              justifyContent: 'center',
+              mb: 2
+            }}
+          >
+            <Tooltip title="Regions with significant spatial association">
+              <Chip
+                label={`${processedData.summary.significantClusters} Significant Clusters`}
+                color="primary"
+                variant="outlined"
+              />
+            </Tooltip>
+            <Tooltip title="Average cluster strength across all regions">
+              <Chip
+                label={`Avg Strength: ${formatValue(processedData.summary.averageStrength)}`}
+                color="secondary"
+                variant="outlined"
+              />
+            </Tooltip>
+            <Tooltip title="Highly significant spatial patterns">
+              <Chip
+                label={`${processedData.summary.significanceLevels.highlySignificant} Highly Significant`}
+                color="success"
+                variant="outlined"
+              />
+            </Tooltip>
+          </Box>
+        </CardContent>
+      </Card>
 
       <TableContainer 
         component={Paper} 
@@ -197,6 +210,7 @@ const ClusterMatrix = ({
           flexGrow: 1,
           maxHeight: '100%',
           bgcolor: 'background.default',
+          boxShadow: 2,
           '& .MuiTableRow-hover:hover': {
             backgroundColor: theme.palette.action.hover,
             transition: 'background-color 0.2s ease'
@@ -205,7 +219,7 @@ const ClusterMatrix = ({
             backgroundColor: `${theme.palette.primary.main}15 !important`
           }
         }}
-        >
+      >
         <Table stickyHeader size={isSmallScreen ? "small" : "medium"}>
           <TableHead>
             <TableRow>
@@ -215,7 +229,9 @@ const ClusterMatrix = ({
                   direction={orderBy === 'region' ? order : 'asc'}
                   onClick={() => handleSort('region')}
                 >
-                  Region
+                  <Tooltip title="Market region name">
+                    <span>Region</span>
+                  </Tooltip>
                 </TableSortLabel>
               </TableCell>
               <TableCell align="right">
@@ -224,7 +240,9 @@ const ClusterMatrix = ({
                   direction={orderBy === 'local_i' ? order : 'asc'}
                   onClick={() => handleSort('local_i')}
                 >
-                  Local Moran&apos;s I
+                  <Tooltip title="Local spatial autocorrelation measure">
+                    <span>Local Moran&apos;s I</span>
+                  </Tooltip>
                 </TableSortLabel>
               </TableCell>
               <TableCell align="right">
@@ -233,7 +251,9 @@ const ClusterMatrix = ({
                   direction={orderBy === 'p_value' ? order : 'asc'}
                   onClick={() => handleSort('p_value')}
                 >
-                  Significance
+                  <Tooltip title="Statistical significance level">
+                    <span>Significance</span>
+                  </Tooltip>
                 </TableSortLabel>
               </TableCell>
               <TableCell align="right">
@@ -242,10 +262,16 @@ const ClusterMatrix = ({
                   direction={orderBy === 'clusterStrength' ? order : 'asc'}
                   onClick={() => handleSort('clusterStrength')}
                 >
-                  Strength
+                  <Tooltip title="Normalized cluster strength indicator">
+                    <span>Strength</span>
+                  </Tooltip>
                 </TableSortLabel>
               </TableCell>
-              <TableCell>Pattern</TableCell>
+              <TableCell>
+                <Tooltip title="Type of spatial pattern">
+                  <span>Pattern</span>
+                </Tooltip>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -277,17 +303,19 @@ const ClusterMatrix = ({
                 </TableCell>
                 <TableCell align="right">
                   <Tooltip title={`p-value: ${formatValue(row.p_value)}`}>
-                    <Chip
-                      label={row.significanceLevel}
-                      size="small"
-                      color={
-                        row.p_value <= SIGNIFICANCE_LEVELS.HIGHLY_SIGNIFICANT ? "success" :
-                        row.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? "primary" :
-                        row.p_value <= SIGNIFICANCE_LEVELS.MARGINALLY_SIGNIFICANT ? "warning" :
-                        "default"
-                      }
-                      sx={{ fontSize: isSmallScreen ? '0.7rem' : '0.8rem' }}
-                    />
+                    <Box>
+                      <Chip
+                        label={row.significanceLevel}
+                        size="small"
+                        color={
+                          row.p_value <= SIGNIFICANCE_LEVELS.HIGHLY_SIGNIFICANT ? "success" :
+                          row.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? "primary" :
+                          row.p_value <= SIGNIFICANCE_LEVELS.MARGINALLY_SIGNIFICANT ? "warning" :
+                          "default"
+                        }
+                        sx={{ fontSize: isSmallScreen ? '0.7rem' : '0.8rem' }}
+                      />
+                    </Box>
                   </Tooltip>
                 </TableCell>
                 <TableCell align="right">
@@ -309,7 +337,8 @@ const ClusterMatrix = ({
                         height: 12,
                         borderRadius: '50%',
                         bgcolor: CLUSTER_COLORS[row.cluster_type],
-                        opacity: row.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? 0.8 : 0.4
+                        opacity: row.p_value <= SIGNIFICANCE_LEVELS.SIGNIFICANT ? 0.8 : 0.4,
+                        border: '1px solid rgba(0,0,0,0.1)'
                       }}
                     />
                     <Typography variant={isSmallScreen ? "body2" : "body1"}>
@@ -322,15 +351,11 @@ const ClusterMatrix = ({
               </TableRow>
             ))}
           </TableBody>
-        </Table>      </TableContainer>
+        </Table>
+      </TableContainer>
 
       {/* Enhanced Summary */}
-      <Paper 
-        sx={{ 
-          p: 2,
-          bgcolor: 'background.default'
-        }}
-      >
+      <Card sx={{ p: 2, bgcolor: 'background.default', boxShadow: 2 }}>
         <Typography variant="subtitle2" gutterBottom align="center">
           Cluster Distribution
         </Typography>
@@ -377,7 +402,80 @@ const ClusterMatrix = ({
             </Tooltip>
           ))}
         </Box>
-      </Paper>
+      </Card>
+
+      {/* Methodology Section */}
+      <Box sx={{ mt: 2 }}>
+        <Button
+          fullWidth
+          onClick={() => setShowMethodology(!showMethodology)}
+          endIcon={showMethodology ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          startIcon={<InfoOutlinedIcon />}
+          sx={{ mb: 1 }}
+        >
+          Market Cluster Analysis Methodology
+        </Button>
+        <Collapse in={showMethodology}>
+          <Paper sx={{ p: 2, boxShadow: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Understanding Market Cluster Analysis
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Market clusters are identified using Local Indicators of Spatial Association (LISA) 
+              to detect statistically significant spatial patterns in market behavior:
+            </Typography>
+            <List dense>
+              <ListItem>
+                <ListItemText
+                  primary="High-High Clusters (Hot Spots)"
+                  secondary={
+                    <Typography variant="body2" color="textSecondary">
+                      Markets with high values surrounded by other high-value markets, 
+                      indicating concentrated market activity
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary="Low-Low Clusters (Cold Spots)"
+                  secondary={
+                    <Typography variant="body2" color="textSecondary">
+                      Markets with low values surrounded by other low-value markets, 
+                      suggesting potential market barriers
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary="High-Low & Low-High (Outliers)"
+                  secondary={
+                    <Typography variant="body2" color="textSecondary">
+                      Markets that differ significantly from their neighbors, 
+                      indicating potential market anomalies
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary="Cluster Strength"
+                  secondary={
+                    <Typography variant="body2" color="textSecondary">
+                      Measures the intensity of spatial association, weighted by statistical significance
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            </List>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Statistical significance is determined using Monte Carlo simulation with three levels:
+              Highly Significant (p ≤ 0.01), Significant (p ≤ 0.05), and Marginally Significant (p ≤ 0.1)
+            </Typography>
+          </Paper>
+        </Collapse>
+      </Box>
     </Box>
   );
 };

@@ -1,236 +1,36 @@
-// src/components/spatialAnalysis/features/clusters/utils/clusterCalculations.js
+/**
+ * Market Cluster Analysis Calculations
+ */
 
 import { transformRegionName } from '../../../utils/spatialUtils';
+import { SIGNIFICANCE_LEVELS, EFFICIENCY_THRESHOLDS, COMPONENT_WEIGHTS } from '../types';
 
-export const calculateClusterMetrics = (clusters, timeSeriesData, flows) => {
-  if (!clusters?.length || !timeSeriesData?.length || !flows?.length) {
-    console.warn('Missing required data for cluster metrics calculation:', {
-      hasClusters: Boolean(clusters?.length),
-      hasTimeSeries: Boolean(timeSeriesData?.length),
-      hasFlows: Boolean(flows?.length)
-    });
-    return { clusters: [], metrics: null };
-  }
+/**
+ * Helper function for t-distribution probability
+ */
+function tDistribution(t, df) {
+  // Approximation of t-distribution CDF
+  const x = df / (df + t * t);
+  return 1 - 0.5 * incompleteBeta(df/2, 0.5, x);
+}
 
-  // Debug input data
-  console.debug('Calculating cluster metrics with:', {
-    clustersCount: clusters.length,
-    timeSeriesCount: timeSeriesData.length,
-    flowsCount: flows.length,
-    sampleCluster: clusters[0],
-    sampleTimeSeries: timeSeriesData[0],
-    sampleFlow: flows[0]
-  });
+/**
+ * Helper function for incomplete beta function
+ */
+function incompleteBeta(a, b, x) {
+  // Basic approximation for incomplete beta function
+  if (x === 0) return 0;
+  if (x === 1) return 1;
+  return x ** a * (1 - x) ** b;
+}
 
-  // Create time series lookup map for performance
-  const timeSeriesMap = new Map();
-  timeSeriesData.forEach(d => {
-    const key = transformRegionName(d.region);
-    if (!timeSeriesMap.has(key)) {
-      timeSeriesMap.set(key, []);
-    }
-    timeSeriesMap.get(key).push(d);
-  });
-
-  // Create flows lookup map for performance
-  const flowsMap = new Map();
-  flows.forEach(flow => {
-    const source = transformRegionName(flow.source);
-    const target = transformRegionName(flow.target);
-    const key1 = `${source}-${target}`;
-    const key2 = `${target}-${source}`;
-    flowsMap.set(key1, flow);
-    flowsMap.set(key2, flow); // Store both directions
-  });
-
-  // Debug maps
-  console.debug('Data maps created:', {
-    timeSeriesKeys: Array.from(timeSeriesMap.keys()),
-    flowKeys: Array.from(flowsMap.keys()).slice(0, 5) // Show first 5 flow keys
-  });
-
-  // Calculate enhanced cluster metrics
-  const enhancedClusters = clusters.map(cluster => {
-    const connectedMarkets = cluster.connected_markets.map(m => transformRegionName(m));
-    
-    console.debug(`Processing cluster ${cluster.main_market}:`, {
-      marketCount: connectedMarkets.length,
-      markets: connectedMarkets
-    });
-
-    // Market Connectivity (40%)
-    const potentialConnections = (connectedMarkets.length * (connectedMarkets.length - 1)) / 2;
-    let actualConnections = 0;
-    const connections = [];
-
-    for (let i = 0; i < connectedMarkets.length; i++) {
-      for (let j = i + 1; j < connectedMarkets.length; j++) {
-        const key = `${connectedMarkets[i]}-${connectedMarkets[j]}`;
-        const reverseKey = `${connectedMarkets[j]}-${connectedMarkets[i]}`;
-        if (flowsMap.has(key) || flowsMap.has(reverseKey)) {
-          actualConnections++;
-          connections.push([connectedMarkets[i], connectedMarkets[j]]);
-        }
-      }
-    }
-
-    const connectivityScore = potentialConnections > 0 ? 
-      actualConnections / potentialConnections : 0;
-
-    console.debug('Connectivity calculation:', {
-      potentialConnections,
-      actualConnections,
-      connectivityScore,
-      sampleConnections: connections.slice(0, 3)
-    });
-
-    // Price Integration (30%)
-    const marketPrices = {};
-    connectedMarkets.forEach(market => {
-      const marketData = timeSeriesMap.get(market) || [];
-      const prices = marketData
-        .filter(d => d.usdPrice != null && !isNaN(d.usdPrice))
-        .map(d => d.usdPrice);
-      if (prices.length > 0) {
-        marketPrices[market] = prices;
-      }
-    });
-
-    let totalCorrelation = 0;
-    let correlationPairs = 0;
-    const correlations = [];
-
-    Object.entries(marketPrices).forEach(([m1, prices1]) => {
-      Object.entries(marketPrices).forEach(([m2, prices2]) => {
-        if (m1 < m2 && prices1.length > 1 && prices2.length > 1) {
-          const minLength = Math.min(prices1.length, prices2.length);
-          const p1 = prices1.slice(0, minLength);
-          const p2 = prices2.slice(0, minLength);
-          
-          const correlation = calculateCorrelation(p1, p2);
-          if (!isNaN(correlation)) {
-            const normalizedCorr = (correlation + 1) / 2; // Normalize to 0-1
-            totalCorrelation += normalizedCorr;
-            correlationPairs++;
-            correlations.push({ markets: [m1, m2], correlation: normalizedCorr });
-          }
-        }
-      });
-    });
-
-    const priceIntegrationScore = correlationPairs > 0 ? 
-      totalCorrelation / correlationPairs : 0;
-
-    console.debug('Price Integration calculation:', {
-      marketsWithPrices: Object.keys(marketPrices).length,
-      correlationPairs,
-      priceIntegrationScore,
-      sampleCorrelations: correlations.slice(0, 3)
-    });
-
-    // Price Stability (20%)
-    const volatilities = Object.entries(marketPrices)
-      .filter(([_, prices]) => prices.length > 1)
-      .map(([market, prices]) => {
-        const avg = prices.reduce((sum, p) => sum + p, 0) / prices.length;
-        const variance = prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) / prices.length;
-        const volatility = Math.sqrt(variance) / avg;
-        return { market, volatility };
-      });
-
-    const avgVolatility = volatilities.length > 0 ?
-      volatilities.reduce((sum, v) => sum + v.volatility, 0) / volatilities.length : 1;
-    
-    const stabilityScore = Math.max(0, 1 - Math.min(avgVolatility, 1));
-
-    console.debug('Price Stability calculation:', {
-      marketsWithVolatility: volatilities.length,
-      avgVolatility,
-      stabilityScore,
-      sampleVolatilities: volatilities.slice(0, 3)
-    });
-
-    // Conflict Resilience (10%)
-    const marketConflicts = new Map();
-    let totalConflict = 0;
-    let conflictCount = 0;
-
-    connectedMarkets.forEach(market => {
-      const marketData = timeSeriesMap.get(market) || [];
-      const conflicts = marketData
-        .filter(d => d.conflictIntensity != null && !isNaN(d.conflictIntensity))
-        .map(d => d.conflictIntensity);
-      
-      if (conflicts.length > 0) {
-        const avgMarketConflict = conflicts.reduce((sum, c) => sum + c, 0) / conflicts.length;
-        marketConflicts.set(market, avgMarketConflict);
-        totalConflict += avgMarketConflict;
-        conflictCount++;
-      }
-    });
-
-    const avgConflict = conflictCount > 0 ? totalConflict / conflictCount : 10;
-    const conflictResilienceScore = Math.max(0, 1 - (avgConflict / 10));
-
-    console.debug('Conflict Resilience calculation:', {
-      marketsWithConflictData: marketConflicts.size,
-      avgConflict,
-      conflictResilienceScore,
-      sampleConflicts: Array.from(marketConflicts.entries()).slice(0, 3)
-    });
-
-    // Calculate overall efficiency with weights
-    const efficiency = 
-      (connectivityScore * 0.4) +
-      (priceIntegrationScore * 0.3) +
-      (stabilityScore * 0.2) +
-      (conflictResilienceScore * 0.1);
-
-    // Calculate cluster-wide averages
-    const avgPrice = Object.values(marketPrices)
-      .flat()
-      .reduce((sum, price) => sum + price, 0) / 
-      Object.values(marketPrices)
-        .flat()
-        .length || 0;
-
-    const metrics = {
-      efficiency,
-      efficiencyComponents: {
-        connectivity: connectivityScore,
-        priceIntegration: priceIntegrationScore,
-        stability: stabilityScore,
-        conflictResilience: conflictResilienceScore
-      },
-      avgPrice,
-      avgConflict,
-      marketCount: connectedMarkets.length
-    };
-
-    console.debug(`Final metrics for cluster ${cluster.main_market}:`, metrics);
-
-    return {
-      ...cluster,
-      metrics
-    };
-  });
-
-  // Calculate system-wide metrics
-  const overallMetrics = {
-    totalMarkets: enhancedClusters.reduce((sum, c) => sum + c.metrics.marketCount, 0),
-    avgPrice: enhancedClusters.reduce((sum, c) => sum + c.metrics.avgPrice, 0) / enhancedClusters.length,
-    avgConflict: enhancedClusters.reduce((sum, c) => sum + c.metrics.avgConflict, 0) / enhancedClusters.length,
-    avgEfficiency: enhancedClusters.reduce((sum, c) => sum + c.metrics.efficiency, 0) / enhancedClusters.length
-  };
-
-  console.debug('Overall system metrics:', overallMetrics);
-
-  return { clusters: enhancedClusters, metrics: overallMetrics };
-};
-
-// Helper function for correlation calculation
+/**
+ * Calculate correlation between price series with statistical validation
+ */
 function calculateCorrelation(prices1, prices2) {
-  if (prices1.length !== prices2.length || prices1.length < 2) return 0;
+  if (prices1.length !== prices2.length || prices1.length < 3) {
+    return { correlation: 0, significant: false };
+  }
 
   const avg1 = prices1.reduce((a, b) => a + b, 0) / prices1.length;
   const avg2 = prices2.reduce((a, b) => a + b, 0) / prices2.length;
@@ -248,10 +48,429 @@ function calculateCorrelation(prices1, prices2) {
   }
 
   const denominator = Math.sqrt(denom1 * denom2);
-  return denominator === 0 ? 0 : numerator / denominator;
+  const correlation = denominator === 0 ? 0 : numerator / denominator;
+  
+  // Calculate statistical significance
+  const t = correlation * Math.sqrt((prices1.length - 2) / (1 - correlation * correlation));
+  const pValue = 2 * (1 - tDistribution(Math.abs(t), prices1.length - 2));
+
+  return {
+    correlation: (correlation + 1) / 2, // Normalize to 0-1
+    significant: pValue <= SIGNIFICANCE_LEVELS.MEDIUM,
+    details: {
+      rawCorrelation: correlation,
+      tStatistic: t,
+      pValue,
+      sampleSize: prices1.length
+    }
+  };
 }
+
+/**
+ * Create optimized lookup map for time series data
+ */
+function createTimeSeriesMap(timeSeriesData) {
+  const map = new Map();
+  timeSeriesData.forEach(d => {
+    const key = transformRegionName(d.region);
+    if (!map.has(key)) {
+      map.set(key, []);
+    }
+    map.get(key).push(d);
+  });
+  return map;
+}
+
+/**
+ * Create optimized lookup map for flow data
+ */
+function createFlowsMap(flows) {
+  const map = new Map();
+  flows.forEach(flow => {
+    const source = transformRegionName(flow.source);
+    const target = transformRegionName(flow.target);
+    const key1 = `${source}-${target}`;
+    const key2 = `${target}-${source}`;
+    map.set(key1, flow);
+    map.set(key2, flow); // Store both directions
+  });
+  return map;
+}
+
+/**
+ * Calculate market connectivity metrics
+ */
+function calculateConnectivity(markets, flowsMap) {
+  const potentialConnections = (markets.length * (markets.length - 1)) / 2;
+  let actualConnections = 0;
+  const connections = [];
+  let totalFlow = 0;
+
+  for (let i = 0; i < markets.length; i++) {
+    for (let j = i + 1; j < markets.length; j++) {
+      const key = `${markets[i]}-${markets[j]}`;
+      const reverseKey = `${markets[j]}-${markets[i]}`;
+      
+      const flow = flowsMap.get(key) || flowsMap.get(reverseKey);
+      if (flow) {
+        actualConnections++;
+        connections.push({
+          source: markets[i],
+          target: markets[j],
+          flow: flow.total_flow,
+          avgFlow: flow.avg_flow
+        });
+        totalFlow += flow.total_flow;
+      }
+    }
+  }
+
+  const score = potentialConnections > 0 ? actualConnections / potentialConnections : 0;
+  const coverage = actualConnections / markets.length;
+
+  return {
+    score,
+    details: {
+      connections,
+      coverage,
+      density: score,
+      summary: {
+        actualConnections,
+        potentialConnections,
+        totalFlow,
+        averageFlow: actualConnections > 0 ? totalFlow / actualConnections : 0
+      }
+    }
+  };
+}
+
+/**
+ * Calculate market correlations
+ */
+function calculateMarketCorrelations(marketPrices) {
+  const result = {
+    pairs: [],
+    average: 0,
+    significant: 0,
+    total: 0
+  };
+
+  let totalCorrelation = 0;
+  let correlationPairs = 0;
+
+  Object.entries(marketPrices).forEach(([m1, prices1]) => {
+    Object.entries(marketPrices).forEach(([m2, prices2]) => {
+      if (m1 < m2 && prices1.length > 1 && prices2.length > 1) {
+        const minLength = Math.min(prices1.length, prices2.length);
+        const p1 = prices1.slice(0, minLength);
+        const p2 = prices2.slice(0, minLength);
+        
+        const { correlation, significant } = calculateCorrelation(p1, p2);
+        
+        if (!isNaN(correlation)) {
+          result.pairs.push({
+            markets: [m1, m2],
+            correlation,
+            significant
+          });
+
+          totalCorrelation += correlation;
+          correlationPairs++;
+          if (significant) result.significant++;
+        }
+      }
+    });
+  });
+
+  result.average = correlationPairs > 0 ? totalCorrelation / correlationPairs : 0;
+  result.total = correlationPairs;
+
+  return result;
+}
+
+/**
+ * Calculate market volatilities
+ */
+function calculateMarketVolatilities(markets, timeSeriesMap) {
+  const volatilities = {
+    markets: [],
+    average: 0,
+    coverage: 0
+  };
+
+  let totalVolatility = 0;
+  let marketsWithData = 0;
+
+  markets.forEach(market => {
+    const marketData = timeSeriesMap.get(market) || [];
+    const prices = marketData
+      .filter(d => d.usdPrice != null && !isNaN(d.usdPrice))
+      .map(d => d.usdPrice);
+
+    if (prices.length >= 2) {
+      const avg = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+      const variance = prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) / prices.length;
+      const volatility = Math.sqrt(variance) / avg;
+
+      volatilities.markets.push({ market, volatility });
+      totalVolatility += volatility;
+      marketsWithData++;
+    }
+  });
+
+  volatilities.average = marketsWithData > 0 ? totalVolatility / marketsWithData : 1;
+  volatilities.coverage = marketsWithData / markets.length;
+
+  return volatilities;
+}
+
+/**
+ * Calculate conflict impact across markets
+ */
+function calculateConflictResilience(markets, timeSeriesMap) {
+  const result = {
+    markets: [],
+    average: 0,
+    coverage: 0
+  };
+
+  let totalConflict = 0;
+  let marketsWithData = 0;
+
+  markets.forEach(market => {
+    const marketData = timeSeriesMap.get(market) || [];
+    const conflicts = marketData
+      .filter(d => d.conflictIntensity != null && !isNaN(d.conflictIntensity))
+      .map(d => d.conflictIntensity);
+    
+    if (conflicts.length > 0) {
+      const avgMarketConflict = conflicts.reduce((sum, c) => sum + c, 0) / conflicts.length;
+      result.markets.push({ market, conflict: avgMarketConflict });
+      totalConflict += avgMarketConflict;
+      marketsWithData++;
+    }
+  });
+
+  result.average = marketsWithData > 0 ? totalConflict / marketsWithData : 0;
+  result.coverage = marketsWithData / markets.length;
+  result.score = Math.max(0, 1 - (result.average / 10));
+
+  return result;
+}
+
+/**
+ * Calculate price integration metrics
+ */
+function calculatePriceIntegration(markets, timeSeriesMap) {
+  const marketPrices = {};
+  let totalDataPoints = 0;
+
+  markets.forEach(market => {
+    const marketData = timeSeriesMap.get(market) || [];
+    const prices = marketData
+      .filter(d => d.usdPrice != null && !isNaN(d.usdPrice))
+      .map(d => d.usdPrice);
+    
+    if (prices.length >= 3) {
+      marketPrices[market] = prices;
+      totalDataPoints += prices.length;
+    }
+  });
+
+  const correlations = calculateMarketCorrelations(marketPrices);
+  const avgPrice = Object.values(marketPrices)
+    .flat()
+    .reduce((sum, price) => sum + price, 0) / 
+    Object.values(marketPrices)
+      .flat()
+      .length || 0;
+
+  return {
+    score: correlations.average,
+    avgPrice,
+    dataPoints: totalDataPoints,
+    significance: correlations.significant / correlations.total,
+    details: correlations
+  };
+}
+
+/**
+ * Calculate price stability metrics
+ */
+function calculateStability(markets, timeSeriesMap) {
+  const volatilities = calculateMarketVolatilities(markets, timeSeriesMap);
+  const score = Math.max(0, 1 - Math.min(volatilities.average, 1));
+
+  return {
+    score,
+    details: volatilities
+  };
+}
+
+/**
+ * Calculate weighted efficiency score
+ */
+function calculateEfficiencyScore(scores) {
+  return (
+    scores.connectivity * COMPONENT_WEIGHTS.CONNECTIVITY +
+    scores.priceIntegration * COMPONENT_WEIGHTS.PRICE_INTEGRATION +
+    scores.stability * COMPONENT_WEIGHTS.STABILITY +
+    scores.resilience * COMPONENT_WEIGHTS.RESILIENCE
+  );
+}
+
+/**
+ * Calculate reliability score
+ */
+function calculateReliabilityScore({ dataPoints, coverage, significance }) {
+  const dataScore = Math.min(dataPoints / 100, 1);
+  const coverageScore = coverage;
+  const significanceScore = significance;
+
+  return (dataScore + coverageScore + significanceScore) / 3;
+}
+
+/**
+ * Create default metrics object
+ */
+function createDefaultMetrics() {
+  return {
+    efficiency: 0,
+    efficiencyComponents: {
+      connectivity: 0,
+      priceIntegration: 0,
+      stability: 0,
+      conflictResilience: 0
+    },
+    avgPrice: 0,
+    avgConflict: 0,
+    marketCount: 0,
+    reliability: 0,
+    warning: 'Default metrics due to insufficient data'
+  };
+}
+
+/**
+ * Calculate overall system metrics
+ */
+function calculateOverallMetrics(clusters) {
+  return {
+    totalMarkets: clusters.reduce((sum, c) => sum + c.metrics.marketCount, 0),
+    avgPrice: clusters.reduce((sum, c) => sum + c.metrics.avgPrice, 0) / clusters.length,
+    avgConflict: clusters.reduce((sum, c) => sum + c.metrics.avgConflict, 0) / clusters.length,
+    avgEfficiency: clusters.reduce((sum, c) => sum + c.metrics.efficiency, 0) / clusters.length,
+    reliability: clusters.reduce((sum, c) => sum + (c.metrics.reliability || 0), 0) / clusters.length
+  };
+}
+
+/**
+ * Calculate comprehensive metrics for market clusters
+ */
+export const calculateClusterMetrics = (clusters, timeSeriesData, flows) => {
+  // Input validation
+  if (!Array.isArray(clusters) || !clusters.length) {
+    console.error('Invalid or empty clusters array provided');
+    return { clusters: [], metrics: null, error: 'Invalid clusters data' };
+  }
+  if (!Array.isArray(timeSeriesData) || !timeSeriesData.length) {
+    console.error('Invalid or empty time series data provided');
+    return { clusters: [], metrics: null, error: 'Invalid time series data' };
+  }
+  if (!Array.isArray(flows) || !flows.length) {
+    console.error('Invalid or empty flows data provided');
+    return { clusters: [], metrics: null, error: 'Invalid flows data' };
+  }
+
+  try {
+    // Create optimized data lookups
+    const timeSeriesMap = createTimeSeriesMap(timeSeriesData);
+    const flowsMap = createFlowsMap(flows);
+
+    // Calculate enhanced cluster metrics
+    const enhancedClusters = clusters.map(cluster => {
+      const connectedMarkets = cluster.connected_markets.map(m => transformRegionName(m));
+      
+      // Skip clusters with insufficient markets
+      if (connectedMarkets.length < 2) {
+        console.warn(`Cluster ${cluster.main_market} has insufficient markets:`, connectedMarkets.length);
+        return {
+          ...cluster,
+          metrics: createDefaultMetrics(),
+          warning: 'Insufficient markets for reliable analysis'
+        };
+      }
+
+      // Calculate component scores
+      const connectivityMetrics = calculateConnectivity(connectedMarkets, flowsMap);
+      const priceMetrics = calculatePriceIntegration(connectedMarkets, timeSeriesMap);
+      const stabilityMetrics = calculateStability(connectedMarkets, timeSeriesMap);
+      const resilienceMetrics = calculateConflictResilience(connectedMarkets, timeSeriesMap);
+
+      // Calculate weighted efficiency score
+      const efficiency = calculateEfficiencyScore({
+        connectivity: connectivityMetrics.score,
+        priceIntegration: priceMetrics.score,
+        stability: stabilityMetrics.score,
+        resilience: resilienceMetrics.score
+      });
+
+      const metrics = {
+        efficiency,
+        efficiencyComponents: {
+          connectivity: connectivityMetrics.score,
+          priceIntegration: priceMetrics.score,
+          stability: stabilityMetrics.score,
+          conflictResilience: resilienceMetrics.score
+        },
+        details: {
+          connectivity: connectivityMetrics.details,
+          priceIntegration: priceMetrics.details,
+          stability: stabilityMetrics.details,
+          resilience: resilienceMetrics.details
+        },
+        avgPrice: priceMetrics.avgPrice,
+        avgConflict: resilienceMetrics.average,
+        marketCount: connectedMarkets.length,
+        reliability: calculateReliabilityScore({
+          dataPoints: priceMetrics.dataPoints,
+          coverage: connectivityMetrics.details.coverage,
+          significance: priceMetrics.significance
+        })
+      };
+
+      return { ...cluster, metrics };
+    });
+
+    // Calculate system-wide metrics
+    const overallMetrics = calculateOverallMetrics(enhancedClusters);
+
+    return { 
+      clusters: enhancedClusters, 
+      metrics: overallMetrics,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        dataPoints: timeSeriesData.length,
+        flowCount: flows.length,
+        clusterCount: clusters.length
+      }
+    };
+  } catch (error) {
+    console.error('Error calculating cluster metrics:', error);
+    return { 
+      clusters: [], 
+      metrics: null, 
+      error: error.message 
+    };
+  }
+};
 
 export default {
   calculateClusterMetrics,
-  calculateCorrelation
+  calculateCorrelation,
+  calculateConnectivity,
+  calculatePriceIntegration,
+  calculateStability,
+  calculateConflictResilience,
+  createTimeSeriesMap,
+  createFlowsMap
 };
