@@ -1,6 +1,17 @@
+/**
+ * Market Flow Map Component
+ * 
+ * Visualizes market flows using a geographic map with flow lines and market points.
+ * Features include:
+ * - Dynamic flow line styling based on volume
+ * - Interactive tooltips with flow metrics
+ * - Market point visualization
+ * - Comprehensive legend
+ */
+
 import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { GeoJSON, Polyline, CircleMarker } from 'react-leaflet';
 import chroma from 'chroma-js';
@@ -11,114 +22,177 @@ import MapControls from '../../molecules/MapControls';
 import BaseMap from '../../molecules/BaseMap';
 import { safeGeoJSONProcessor } from '../../utils/geoJSONProcessor';
 import { transformRegionName, getRegionCoordinates } from '../../utils/spatialUtils';
+import { 
+  FLOW_COLORS, 
+  VISUALIZATION_PARAMS,
+  FLOW_THRESHOLDS,
+  FLOW_STATUS 
+} from './types';
+
+// Default map view settings if none provided
+const DEFAULT_VIEW = {
+  center: [15.3694, 44.191], // Yemen center
+  zoom: 6
+};
 
 const FlowMap = ({
   flows,
   geometry,
   selectedFlow,
   onFlowSelect,
-  height = '100%'
+  height = '100%',
+  defaultView = DEFAULT_VIEW
 }) => {
   const theme = useTheme();
 
-  // Create color scale for flow strength
-  const colorScale = useMemo(() => 
-    chroma.scale(['#fde0dd', '#c51b8a']).domain([0, 1]),
-    []
-  );
+  // Create color scale for flow strength with error handling
+  const colorScale = useMemo(() => {
+    try {
+      return chroma.scale([FLOW_COLORS.NEUTRAL, FLOW_COLORS.POSITIVE])
+        .domain([0, 1])
+        .mode('lch');
+    } catch (error) {
+      console.error('Error creating color scale:', error);
+      return value => FLOW_COLORS.NEUTRAL;
+    }
+  }, []);
 
-  // Process flow data with coordinates
+  // Process flow data with enhanced error handling and validation
   const processedFlows = useMemo(() => {
-    if (!flows?.length) return [];
+    if (!Array.isArray(flows) || !flows.length) {
+      console.warn('Invalid or empty flows data');
+      return [];
+    }
 
-    const maxFlow = Math.max(...flows.map(f => f.total_flow || 0));
-    
-    return flows.map(flow => {
-      const sourceCoords = getRegionCoordinates(flow.source);
-      const targetCoords = getRegionCoordinates(flow.target);
-
-      if (!sourceCoords || !targetCoords) return null;
-
-      const normalizedFlow = maxFlow > 0 ? (flow.total_flow || 0) / maxFlow : 0;
+    try {
+      const maxFlow = Math.max(...flows.map(f => f.total_flow || 0));
       
-      return {
-        ...flow,
-        sourceCoords,
-        targetCoords,
-        color: colorScale(normalizedFlow).hex(),
-        width: 1 + (normalizedFlow * 4), // Scale line width based on flow strength
-        normalizedFlow
-      };
-    }).filter(Boolean);
+      return flows.map(flow => {
+        // Validate required fields
+        if (!flow.source || !flow.target) {
+          console.warn('Invalid flow data:', flow);
+          return null;
+        }
+
+        const sourceCoords = getRegionCoordinates(flow.source);
+        const targetCoords = getRegionCoordinates(flow.target);
+
+        if (!sourceCoords || !targetCoords) {
+          console.warn(`Missing coordinates for flow: ${flow.source} -> ${flow.target}`);
+          return null;
+        }
+
+        const normalizedFlow = maxFlow > 0 ? (flow.total_flow || 0) / maxFlow : 0;
+        const flowStatus = getFlowStatus(normalizedFlow);
+        
+        return {
+          ...flow,
+          sourceCoords,
+          targetCoords,
+          color: colorScale(normalizedFlow).hex(),
+          width: VISUALIZATION_PARAMS.MIN_FLOW_WIDTH + 
+            (normalizedFlow * (VISUALIZATION_PARAMS.MAX_FLOW_WIDTH - VISUALIZATION_PARAMS.MIN_FLOW_WIDTH)),
+          opacity: VISUALIZATION_PARAMS.MIN_OPACITY + 
+            (normalizedFlow * (VISUALIZATION_PARAMS.MAX_OPACITY - VISUALIZATION_PARAMS.MIN_OPACITY)),
+          normalizedFlow,
+          status: flowStatus
+        };
+      }).filter(Boolean);
+    } catch (error) {
+      console.error('Error processing flows:', error);
+      return [];
+    }
   }, [flows, colorScale]);
 
-  // Process GeoJSON for regions
+  // Process GeoJSON with enhanced validation
   const processedGeoJSON = useMemo(() => {
-    if (!geometry) return null;
+    if (!geometry) {
+      console.warn('Missing geometry data');
+      return null;
+    }
 
-    // Extract features from unified geometry or combine points and polygons
-    const features = geometry.unified?.features || [
-      ...(geometry.polygons || []),
-      ...(geometry.points || [])
-    ];
+    try {
+      const features = geometry.unified?.features || [
+        ...(geometry.polygons || []),
+        ...(geometry.points || [])
+      ];
 
-    // Create a new GeoJSON object with validated features
-    const validatedGeoJSON = {
-      type: 'FeatureCollection',
-      features: features.map(feature => ({
-        type: 'Feature',
-        properties: {
-          ...feature.properties,
-          name: feature.properties?.name || '',
-          normalizedName: feature.properties?.normalizedName || 
-            transformRegionName(feature.properties?.name || ''),
-          region_id: feature.properties?.region_id || feature.properties?.normalizedName
-        },
-        geometry: {
-          type: feature.geometry?.type || 'Polygon',
-          coordinates: feature.geometry?.coordinates || []
+      const validatedGeoJSON = {
+        type: 'FeatureCollection',
+        features: features.map(feature => ({
+          type: 'Feature',
+          properties: {
+            ...feature.properties,
+            name: feature.properties?.name || '',
+            normalizedName: feature.properties?.normalizedName || 
+              transformRegionName(feature.properties?.name || ''),
+            region_id: feature.properties?.region_id || feature.properties?.normalizedName
+          },
+          geometry: validateGeometry(feature.geometry)
+        })),
+        crs: {
+          type: 'name',
+          properties: { name: 'EPSG:4326' }
         }
-      })),
-      crs: {
-        type: 'name',
-        properties: {
-          name: 'EPSG:4326'
-        }
-      }
-    };
+      };
 
-    return safeGeoJSONProcessor(validatedGeoJSON, 'flows');
+      return safeGeoJSONProcessor(validatedGeoJSON, 'flows');
+    } catch (error) {
+      console.error('Error processing GeoJSON:', error);
+      return null;
+    }
   }, [geometry]);
 
-  // Style function for regions
+  // Enhanced region styling with flow status
   const getRegionStyle = useCallback((feature) => {
     if (!feature?.properties?.normalizedName) return {};
 
-    const isEndpoint = processedFlows.some(flow => 
+    const regionFlows = processedFlows.filter(flow => 
       transformRegionName(flow.source) === feature.properties.normalizedName ||
       transformRegionName(flow.target) === feature.properties.normalizedName
     );
-    
+
+    const isActive = regionFlows.length > 0;
+    const avgFlow = isActive ? 
+      regionFlows.reduce((sum, f) => sum + f.normalizedFlow, 0) / regionFlows.length : 
+      0;
+
     return {
-      fillColor: isEndpoint ? theme.palette.primary.light : theme.palette.grey[300],
-      weight: 1,
+      fillColor: isActive ? theme.palette.primary.light : theme.palette.grey[300],
+      weight: isActive ? 1.5 : 1,
       opacity: 1,
       color: 'white',
-      fillOpacity: isEndpoint ? 0.6 : 0.3
+      fillOpacity: isActive ? 0.4 + (avgFlow * 0.4) : 0.3,
+      dashArray: isActive ? null : '3'
     };
   }, [processedFlows, theme]);
 
-  // Create legend items
+  // Enhanced legend with flow status
   const legendItems = useMemo(() => [
-    { color: '#c51b8a', label: 'High Flow' },
-    { color: '#fde0dd', label: 'Low Flow' },
+    { 
+      color: FLOW_COLORS.POSITIVE, 
+      label: 'High Flow',
+      description: `Flow strength > ${FLOW_THRESHOLDS.HIGH * 100}%`
+    },
+    { 
+      color: colorScale(0.5).hex(), 
+      label: 'Medium Flow',
+      description: `Flow strength ${FLOW_THRESHOLDS.MEDIUM * 100}% - ${FLOW_THRESHOLDS.HIGH * 100}%`
+    },
+    { 
+      color: FLOW_COLORS.NEUTRAL, 
+      label: 'Low Flow',
+      description: `Flow strength < ${FLOW_THRESHOLDS.MEDIUM * 100}%`
+    },
     { 
       color: theme.palette.primary.light, 
       label: 'Market Point',
-      style: { borderRadius: '50%' }
+      style: { borderRadius: '50%' },
+      description: 'Active market location'
     }
-  ], [theme]);
+  ], [theme, colorScale]);
 
+  // Error states
   if (!processedGeoJSON) {
     return (
       <Box 
@@ -128,11 +202,12 @@ const FlowMap = ({
           alignItems: 'center', 
           justifyContent: 'center',
           bgcolor: 'background.paper',
-          borderRadius: 1
+          borderRadius: 1,
+          p: 2
         }}
       >
-        <Typography color="text.secondary">
-          Invalid geometry data for visualization
+        <Typography color="error">
+          Error loading geographic data. Please check the data format and try again.
         </Typography>
       </Box>
     );
@@ -147,11 +222,12 @@ const FlowMap = ({
           alignItems: 'center', 
           justifyContent: 'center',
           bgcolor: 'background.paper',
-          borderRadius: 1
+          borderRadius: 1,
+          p: 2
         }}
       >
         <Typography color="text.secondary">
-          No flow data available for visualization
+          No market flow data available for the selected period.
         </Typography>
       </Box>
     );
@@ -159,7 +235,11 @@ const FlowMap = ({
 
   return (
     <Box sx={{ height, position: 'relative' }}>
-      <BaseMap height={height}>
+      <BaseMap 
+        height={height}
+        defaultView={defaultView}
+        defaultBounds={processedGeoJSON?.bbox}
+      >
         {/* Region polygons */}
         <GeoJSON
           data={processedGeoJSON}
@@ -181,23 +261,39 @@ const FlowMap = ({
                   [flow.targetCoords[1], flow.targetCoords[0]]
                 ]}
                 pathOptions={{
-                  color: flow.color,
-                  weight: isSelected ? flow.width * 2 : flow.width,
-                  opacity: isSelected ? 0.8 : 0.5
+                  color: isSelected ? FLOW_COLORS.SELECTED : flow.color,
+                  weight: isSelected ? flow.width * 1.5 : flow.width,
+                  opacity: isSelected ? flow.opacity * 1.2 : flow.opacity,
+                  lineCap: 'round',
+                  lineJoin: 'round'
                 }}
                 eventHandlers={{
-                  click: () => onFlowSelect(flow)
+                  click: () => onFlowSelect(flow),
+                  mouseover: (e) => {
+                    const layer = e.target;
+                    layer.setStyle({
+                      weight: flow.width * 1.2,
+                      opacity: flow.opacity * 1.1
+                    });
+                  },
+                  mouseout: (e) => {
+                    const layer = e.target;
+                    layer.setStyle({
+                      weight: isSelected ? flow.width * 1.5 : flow.width,
+                      opacity: isSelected ? flow.opacity * 1.2 : flow.opacity
+                    });
+                  }
                 }}
               >
                 <Tooltip
-                  title="Market Flow"
+                  title="Market Flow Details"
                   metrics={[
                     {
-                      label: 'Source',
+                      label: 'Source Market',
                       value: flow.source
                     },
                     {
-                      label: 'Target',
+                      label: 'Target Market',
                       value: flow.target
                     },
                     {
@@ -206,9 +302,18 @@ const FlowMap = ({
                       format: 'number'
                     },
                     {
+                      label: 'Flow Strength',
+                      value: flow.normalizedFlow,
+                      format: 'percentage'
+                    },
+                    {
                       label: 'Price Differential',
                       value: flow.price_differential || 0,
                       format: 'percentage'
+                    },
+                    {
+                      label: 'Status',
+                      value: flow.status
                     }
                   ]}
                 />
@@ -222,18 +327,25 @@ const FlowMap = ({
                 <CircleMarker
                   key={`${index}-${idx}`}
                   center={[point.coords[1], point.coords[0]]}
-                  radius={6}
+                  radius={isSelected ? 8 : 6}
                   pathOptions={{
                     fillColor: theme.palette.primary.light,
                     color: 'white',
-                    weight: 1,
-                    opacity: 0.8,
-                    fillOpacity: 0.6
+                    weight: 1.5,
+                    opacity: 0.9,
+                    fillOpacity: 0.7
                   }}
                 >
                   <Tooltip
                     title={point.name}
                     content="Market Location"
+                    metrics={[
+                      {
+                        label: 'Total Flows',
+                        value: getMarketFlowCount(point.name, processedFlows),
+                        format: 'integer'
+                      }
+                    ]}
                   />
                 </CircleMarker>
               ))}
@@ -250,12 +362,39 @@ const FlowMap = ({
       />
 
       <Legend
-        title="Market Flows"
+        title="Market Flow Analysis"
         items={legendItems}
       />
     </Box>
   );
 };
+
+// Helper functions
+function validateGeometry(geometry) {
+  if (!geometry || !geometry.type || !geometry.coordinates) {
+    return {
+      type: 'Polygon',
+      coordinates: []
+    };
+  }
+  return {
+    type: geometry.type,
+    coordinates: geometry.coordinates
+  };
+}
+
+function getFlowStatus(normalizedFlow) {
+  if (normalizedFlow >= FLOW_THRESHOLDS.HIGH) return FLOW_STATUS.ACTIVE;
+  if (normalizedFlow >= FLOW_THRESHOLDS.MEDIUM) return FLOW_STATUS.STABLE;
+  if (normalizedFlow >= FLOW_THRESHOLDS.LOW) return FLOW_STATUS.PARTIAL;
+  return FLOW_STATUS.INACTIVE;
+}
+
+function getMarketFlowCount(marketName, flows) {
+  return flows.filter(flow => 
+    flow.source === marketName || flow.target === marketName
+  ).length;
+}
 
 FlowMap.propTypes = {
   flows: PropTypes.arrayOf(PropTypes.shape({
@@ -276,7 +415,11 @@ FlowMap.propTypes = {
     target: PropTypes.string.isRequired
   }),
   onFlowSelect: PropTypes.func,
-  height: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  height: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  defaultView: PropTypes.shape({
+    center: PropTypes.arrayOf(PropTypes.number),
+    zoom: PropTypes.number
+  })
 };
 
 export default React.memo(FlowMap);

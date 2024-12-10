@@ -1,4 +1,14 @@
-import React, { useMemo } from 'react';
+/**
+ * Market Flow Metrics Panel Component
+ * 
+ * Provides comprehensive analysis of market flow patterns including:
+ * - Network-level metrics
+ * - Individual flow analysis
+ * - Statistical significance testing
+ * - Trend analysis
+ */
+
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Paper,
@@ -6,11 +16,45 @@ import {
   Box,
   Divider,
   Grid,
+  Button,
+  Collapse,
+  List,
+  ListItem,
+  ListItemText,
+  Tooltip,
+  Alert
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import MetricCard from '../../atoms/MetricCard';
 import MetricProgress from '../../molecules/MetricProgress';
+import { 
+  FLOW_THRESHOLDS, 
+  NETWORK_THRESHOLDS,
+  FLOW_STATUS 
+} from './types';
+
+// Helper function to calculate statistical significance
+const calculateSignificance = (value, mean, stdDev) => {
+  if (!stdDev) return { significant: false, zScore: 0 };
+  const zScore = (value - mean) / stdDev;
+  return {
+    significant: Math.abs(zScore) > 1.96, // 95% confidence level
+    zScore,
+    pValue: 2 * (1 - normalCDF(Math.abs(zScore)))
+  };
+};
+
+// Helper function for normal CDF
+const normalCDF = (x) => {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp(-x * x / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return x > 0 ? 1 - p : p;
+};
 
 const FlowMetricsPanel = ({
   flows,
@@ -19,185 +63,209 @@ const FlowMetricsPanel = ({
   timeRange
 }) => {
   const theme = useTheme();
+  const [showMethodology, setShowMethodology] = useState(false);
 
-  // Calculate flow metrics
+  // Calculate comprehensive flow metrics with error handling
   const flowMetrics = useMemo(() => {
-    if (!flows?.length) return null;
+    if (!Array.isArray(flows) || !flows.length) {
+      console.warn('Invalid or empty flows data');
+      return null;
+    }
 
-    const totalFlow = flows.reduce((sum, f) => sum + (f.total_flow || 0), 0);
-    const avgFlow = totalFlow / flows.length;
-    const maxFlow = Math.max(...flows.map(f => f.total_flow || 0));
-    const minFlow = Math.min(...flows.map(f => f.total_flow || 0));
+    try {
+      // Basic flow metrics
+      const flowValues = flows.map(f => f.total_flow || 0);
+      const totalFlow = flowValues.reduce((sum, val) => sum + val, 0);
+      const mean = totalFlow / flowValues.length;
+      const variance = flowValues.reduce((sum, val) => 
+        sum + Math.pow(val - mean, 2), 0
+      ) / flowValues.length;
+      const stdDev = Math.sqrt(variance);
 
-    // Calculate flow distribution
-    const flowValues = flows.map(f => f.total_flow || 0);
-    const mean = flowValues.reduce((sum, val) => sum + val, 0) / flowValues.length;
-    const variance = flowValues.reduce((sum, val) => 
-      sum + Math.pow(val - mean, 2), 0
-    ) / flowValues.length;
-    const stdDev = Math.sqrt(variance);
+      // Advanced metrics
+      const sortedFlows = [...flowValues].sort((a, b) => a - b);
+      const medianFlow = sortedFlows[Math.floor(flowValues.length / 2)];
+      const q1 = sortedFlows[Math.floor(flowValues.length * 0.25)];
+      const q3 = sortedFlows[Math.floor(flowValues.length * 0.75)];
+      const iqr = q3 - q1;
 
-    // Calculate additional metrics
-    const medianFlow = flowValues.sort((a, b) => a - b)[Math.floor(flowValues.length / 2)];
-    const activeFlows = flowValues.filter(f => f > 0).length;
-    const flowDensity = activeFlows / flows.length;
+      // Network metrics
+      const activeFlows = flowValues.filter(f => f > 0).length;
+      const maxPossibleFlows = flows.length * (flows.length - 1) / 2;
+      const flowDensity = activeFlows / maxPossibleFlows;
 
-    return {
-      totalFlow,
-      avgFlow,
-      maxFlow,
-      minFlow,
-      stdDev,
-      flowRange: maxFlow - minFlow,
-      coefficientOfVariation: stdDev / mean,
-      medianFlow,
-      activeFlows,
-      flowDensity
-    };
+      // Distribution metrics
+      const skewness = flowValues.reduce((sum, val) => 
+        sum + Math.pow((val - mean) / stdDev, 3), 0
+      ) / flowValues.length;
+
+      const kurtosis = flowValues.reduce((sum, val) => 
+        sum + Math.pow((val - mean) / stdDev, 4), 0
+      ) / flowValues.length - 3;
+
+      return {
+        totalFlow,
+        avgFlow: mean,
+        maxFlow: Math.max(...flowValues),
+        minFlow: Math.min(...flowValues),
+        medianFlow,
+        stdDev,
+        flowRange: sortedFlows[sortedFlows.length - 1] - sortedFlows[0],
+        coefficientOfVariation: stdDev / mean,
+        activeFlows,
+        flowDensity,
+        distribution: {
+          q1,
+          q3,
+          iqr,
+          skewness,
+          kurtosis
+        },
+        networkMetrics: {
+          density: flowDensity,
+          connectivity: activeFlows / flows.length,
+          centralization: maxPossibleFlows > 0 ? 
+            activeFlows / maxPossibleFlows : 0
+        }
+      };
+    } catch (error) {
+      console.error('Error calculating flow metrics:', error);
+      return null;
+    }
   }, [flows]);
 
-  // Calculate selected flow metrics
+  // Calculate selected flow metrics with enhanced analysis
   const selectedFlowMetrics = useMemo(() => {
-    if (!selectedFlow || !flows?.length) return null;
+    if (!selectedFlow || !flowMetrics) return null;
 
-    const flow = flows.find(f => 
-      f.source === selectedFlow.source && 
-      f.target === selectedFlow.target
-    );
+    try {
+      const flow = flows.find(f => 
+        f.source === selectedFlow.source && 
+        f.target === selectedFlow.target
+      );
 
-    if (!flow) return null;
+      if (!flow) return null;
 
-    // Calculate relative metrics
-    const avgFlow = flowMetrics.avgFlow;
-    const relativeStrength = flow.total_flow / avgFlow;
-    const percentile = flows.filter(f => 
-      (f.total_flow || 0) <= (flow.total_flow || 0)
-    ).length / flows.length * 100;
+      // Calculate relative metrics
+      const relativeStrength = flow.total_flow / flowMetrics.avgFlow;
+      const percentile = flows.filter(f => 
+        (f.total_flow || 0) <= (flow.total_flow || 0)
+      ).length / flows.length * 100;
 
-    return {
-      ...flow,
-      relativeStrength,
-      percentile,
-      significance: flow.total_flow > (avgFlow + flowMetrics.stdDev),
-      normalizedFlow: flow.total_flow / flowMetrics.maxFlow
-    };
+      // Calculate significance
+      const significance = calculateSignificance(
+        flow.total_flow,
+        flowMetrics.avgFlow,
+        flowMetrics.stdDev
+      );
+
+      // Determine flow status
+      const normalizedFlow = flow.total_flow / flowMetrics.maxFlow;
+      const status = normalizedFlow >= FLOW_THRESHOLDS.HIGH ? FLOW_STATUS.ACTIVE :
+                    normalizedFlow >= FLOW_THRESHOLDS.MEDIUM ? FLOW_STATUS.STABLE :
+                    normalizedFlow >= FLOW_THRESHOLDS.LOW ? FLOW_STATUS.PARTIAL :
+                    FLOW_STATUS.INACTIVE;
+
+      return {
+        ...flow,
+        relativeStrength,
+        percentile,
+        normalizedFlow,
+        significance,
+        status,
+        metrics: {
+          zScore: significance.zScore,
+          pValue: significance.pValue,
+          standardizedValue: (flow.total_flow - flowMetrics.avgFlow) / flowMetrics.stdDev
+        }
+      };
+    } catch (error) {
+      console.error('Error calculating selected flow metrics:', error);
+      return null;
+    }
   }, [selectedFlow, flows, flowMetrics]);
 
   if (!flowMetrics) {
     return (
       <Paper sx={{ p: 2, height: '100%' }}>
-        <Typography color="textSecondary" align="center">
-          No flow metrics available
-        </Typography>
+        <Alert severity="warning">
+          No flow metrics available. Please ensure data is properly loaded.
+        </Alert>
       </Paper>
     );
   }
 
-  // Define metrics data
-  const metricsData = [
-    {
-      title: 'Network Flow Strength',
-      value: flowMetrics.totalFlow / (flowMetrics.maxFlow * flows.length),
-      target: 0.7,
-      format: 'percentage',
-      description: 'Overall network flow utilization',
-      tooltip: 'Measures how close the network is to its theoretical maximum capacity',
-      type: 'progress',
-    },
-    {
-      title: 'Flow Density',
-      value: flowMetrics.flowDensity,
-      format: 'percentage',
-      description: 'Proportion of active flows in the network',
-      tooltip: 'Percentage of region pairs with non-zero flows',
-      type: 'card',
-    },
-    {
-      title: 'Total Network Flow',
-      value: flowMetrics.totalFlow,
-      format: 'number',
-      description: 'Sum of all flows in the network',
-      type: 'card',
-    },
-    {
-      title: 'Flow Variability',
-      value: flowMetrics.coefficientOfVariation,
-      format: 'number',
-      description: 'Flow distribution consistency',
-      tooltip: 'Lower values indicate more uniform flow distribution',
-      type: 'card',
-    },
-    {
-      title: 'Median Flow',
-      value: flowMetrics.medianFlow,
-      format: 'number',
-      description: 'Middle value of all flows',
-      type: 'card',
-    }
-  ];
-
-  // Metrics for selected flow
-  const selectedFlowMetricsData = selectedFlowMetrics
-    ? [
-        {
-          title: 'Flow Strength',
-          value: selectedFlowMetrics.normalizedFlow,
-          target: 0.7,
-          format: 'percentage',
-          description: 'Flow strength compared to max flow',
-          tooltip: 'How strong this flow is compared to the strongest flow in the network',
-          type: 'progress',
-        },
-        {
-          title: 'Relative Strength',
-          value: selectedFlowMetrics.relativeStrength,
-          format: 'number',
-          description: 'Compared to average flow',
-          tooltip: 'How many times stronger this flow is compared to the average',
-          type: 'card',
-        },
-        {
-          title: 'Flow Percentile',
-          value: selectedFlowMetrics.percentile / 100,
-          format: 'percentage',
-          description: 'Relative position in flow distribution',
-          tooltip: 'Percentage of flows that are weaker than this one',
-          type: 'card',
-        },
-        {
-          title: 'Price Differential',
-          value: selectedFlowMetrics.price_differential || 0,
-          format: 'percentage',
-          description: 'Price difference between markets',
-          tooltip: 'Percentage difference in prices between source and target markets',
-          type: 'card',
-        }
-      ]
-    : [];
-
   return (
-    <Paper sx={{ p: 2, height: '100%' }}>
-      {/* Overall Flow Metrics */}
-      <Typography variant="h6" gutterBottom>
-        Network Flow Analysis
-      </Typography>
-
-      <Grid container spacing={2}>
-        {metricsData.map((metric, index) => (
-          <Grid 
-            item 
-            xs={12} 
-            md={metric.type === 'progress' ? 12 : 6} 
-            key={index}
-          >
-            {metric.type === 'progress' ? (
-              <MetricProgress {...metric} />
-            ) : (
-              <MetricCard {...metric} />
-            )}
+    <Paper sx={{ p: 2, height: '100%', overflow: 'auto' }}>
+      {/* Network Flow Analysis */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Network Flow Analysis
+        </Typography>
+        
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <MetricProgress
+              title="Network Flow Strength"
+              value={flowMetrics.networkMetrics.density}
+              target={NETWORK_THRESHOLDS.DENSITY.HIGH}
+              format="percentage"
+              description="Overall network utilization"
+              tooltip="Measures how close the network is to its theoretical maximum capacity"
+            />
           </Grid>
-        ))}
-      </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <MetricCard
+              title="Flow Density"
+              value={flowMetrics.flowDensity}
+              format="percentage"
+              description="Active market connections"
+              tooltip="Percentage of potential market connections that are active"
+              thresholds={NETWORK_THRESHOLDS.DENSITY}
+            />
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <MetricCard
+              title="Network Connectivity"
+              value={flowMetrics.networkMetrics.connectivity}
+              format="percentage"
+              description="Market integration level"
+              tooltip="Degree of market integration in the network"
+            />
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 2 }} />
+        
+        {/* Distribution Metrics */}
+        <Typography variant="subtitle1" gutterBottom>
+          Flow Distribution
+        </Typography>
+        
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <MetricCard
+              title="Variability"
+              value={flowMetrics.coefficientOfVariation}
+              format="number"
+              description="Flow consistency"
+              tooltip="Lower values indicate more uniform flow distribution"
+            />
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <MetricCard
+              title="Distribution Shape"
+              value={flowMetrics.distribution.skewness}
+              format="number"
+              description="Flow symmetry"
+              tooltip="Positive values indicate right-skewed distribution"
+            />
+          </Grid>
+        </Grid>
+      </Box>
 
       {/* Selected Flow Analysis */}
       {selectedFlowMetrics && (
@@ -206,6 +274,7 @@ const FlowMetricsPanel = ({
           <Typography variant="h6" gutterBottom>
             Selected Flow Analysis
           </Typography>
+          
           <Typography 
             variant="subtitle2" 
             color="textSecondary" 
@@ -216,37 +285,100 @@ const FlowMetricsPanel = ({
           </Typography>
 
           <Grid container spacing={2}>
-            {selectedFlowMetricsData.map((metric, index) => (
-              <Grid 
-                item 
-                xs={12} 
-                md={metric.type === 'progress' ? 12 : 6} 
-                key={index}
-              >
-                {metric.type === 'progress' ? (
-                  <MetricProgress {...metric} />
-                ) : (
-                  <MetricCard {...metric} />
-                )}
-              </Grid>
-            ))}
+            <Grid item xs={12}>
+              <MetricProgress
+                title="Flow Strength"
+                value={selectedFlowMetrics.normalizedFlow}
+                target={FLOW_THRESHOLDS.HIGH}
+                format="percentage"
+                description="Relative to maximum flow"
+                tooltip="How strong this flow is compared to the strongest flow in the network"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <MetricCard
+                title="Statistical Significance"
+                value={Math.abs(selectedFlowMetrics.metrics.zScore)}
+                format="number"
+                description={`p-value: ${selectedFlowMetrics.metrics.pValue.toFixed(4)}`}
+                tooltip="Z-score indicates deviation from mean in standard deviations"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <MetricCard
+                title="Flow Percentile"
+                value={selectedFlowMetrics.percentile / 100}
+                format="percentage"
+                description="Relative ranking"
+                tooltip="Percentage of flows that are weaker than this one"
+              />
+            </Grid>
           </Grid>
 
-          {selectedFlowMetrics.significance && (
-            <Box sx={{ 
-              mt: 2, 
-              p: 1.5, 
-              bgcolor: theme.palette.info.light,
-              borderRadius: 1
-            }}>
-              <Typography variant="body2" color="info.contrastText">
-                This is a significant flow, exceeding the average by more than one
-                standard deviation.
-              </Typography>
-            </Box>
+          {selectedFlowMetrics.significance.significant && (
+            <Alert 
+              severity="info" 
+              sx={{ mt: 2 }}
+              icon={<InfoOutlinedIcon />}
+            >
+              This is a statistically significant flow (p &lt; 0.05), indicating
+              a strong market connection.
+            </Alert>
           )}
         </>
       )}
+
+      {/* Methodology Section */}
+      <Box sx={{ mt: 3 }}>
+        <Button
+          fullWidth
+          onClick={() => setShowMethodology(!showMethodology)}
+          endIcon={showMethodology ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          startIcon={<InfoOutlinedIcon />}
+        >
+          Flow Analysis Methodology
+        </Button>
+        
+        <Collapse in={showMethodology}>
+          <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Understanding Flow Metrics
+            </Typography>
+            
+            <List dense>
+              <ListItem>
+                <ListItemText
+                  primary="Network Metrics"
+                  secondary="Measures overall market integration and connectivity patterns"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary="Flow Distribution"
+                  secondary="Analyzes the pattern and consistency of market flows"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary="Statistical Significance"
+                  secondary="Uses z-scores and p-values to identify important market connections"
+                />
+              </ListItem>
+            </List>
+
+            <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+              Interpretation Guide:
+            </Typography>
+            <Typography variant="body2" component="div">
+              • Strong Flow (&gt;{FLOW_THRESHOLDS.HIGH * 100}%): Robust market connection<br/>
+              • Medium Flow ({FLOW_THRESHOLDS.MEDIUM * 100}-{FLOW_THRESHOLDS.HIGH * 100}%): Moderate trade<br/>
+              • Weak Flow (&lt;{FLOW_THRESHOLDS.MEDIUM * 100}%): Limited market interaction
+            </Typography>
+          </Box>
+        </Collapse>
+      </Box>
     </Paper>
   );
 };

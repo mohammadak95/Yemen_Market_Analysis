@@ -1,4 +1,11 @@
-import React, { useState, useMemo } from 'react';
+/**
+ * Market Flow Analysis Component
+ * 
+ * Provides analysis of market flow patterns through geographic visualization
+ * and comprehensive metrics.
+ */
+
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Grid,
@@ -6,19 +13,21 @@ import {
   Typography,
   Box,
   Alert,
-  ToggleButtonGroup,
-  ToggleButton,
-  Divider
+  Divider,
+  Collapse,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  Tooltip
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import MapIcon from '@mui/icons-material/Map';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import FlowMap from './FlowMap';
-import FlowLines from './FlowLines';
 import FlowMetricsPanel from './FlowMetricsPanel';
-import NetworkGraph from '../network/NetworkGraph';
 import MetricCard from '../../atoms/MetricCard';
 import TimeControl from '../../molecules/TimeControl';
 import { setSelectedDate } from '../../../../slices/spatialSlice';
@@ -26,14 +35,26 @@ import {
   selectDateFilteredFlows,
   selectDateFilteredMetrics 
 } from '../../../../selectors/dateSpecificSelectors';
+import { 
+  FLOW_THRESHOLDS, 
+  NETWORK_THRESHOLDS
+} from './types';
+
+// Default map settings
+const MAP_SETTINGS = {
+  center: [15.3694, 44.191], // Yemen center
+  zoom: 5.5 // Slightly zoomed out
+};
 
 const FlowNetworkAnalysis = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const [viewMode, setViewMode] = useState('map');
+  
+  // Component state
   const [selectedFlow, setSelectedFlow] = useState(null);
+  const [showMethodology, setShowMethodology] = useState(false);
 
-  // Get data from Redux store
+  // Redux selectors
   const geometryData = useSelector(state => state.spatial.data.geometry);
   const timeSeriesData = useSelector(state => state.spatial.data.timeSeriesData || []);
   const marketIntegration = useSelector(state => state.spatial.data.marketIntegration || {});
@@ -41,9 +62,9 @@ const FlowNetworkAnalysis = () => {
   const error = useSelector(state => state.spatial.status.error);
   const selectedDate = useSelector(state => state.spatial.ui.selectedDate);
 
-  // Use date-specific selectors
-  const flowMaps = useSelector(state => selectDateFilteredFlows(state));
-  const metrics = useSelector(state => selectDateFilteredMetrics(state));
+  // Memoized selectors
+  const flowMaps = useSelector(selectDateFilteredFlows);
+  const metrics = useSelector(selectDateFilteredMetrics);
 
   // Get unique dates for time control
   const dates = useMemo(() => {
@@ -52,23 +73,38 @@ const FlowNetworkAnalysis = () => {
   }, [timeSeriesData]);
 
   // Handle date change
-  const handleDateChange = (newDate) => {
-    dispatch(setSelectedDate(newDate));
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-        <Typography>Loading flow analysis...</Typography>
-      </Box>
-    );
-  }
+  const handleDateChange = useCallback((newDate) => {
+    if (dates.includes(newDate)) {
+      dispatch(setSelectedDate(newDate));
+    }
+  }, [dates, dispatch]);
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ m: 2 }}>
-        {error}
+      <Alert 
+        severity="error" 
+        sx={{ m: 2 }}
+        action={
+          <Button color="inherit" size="small" onClick={() => window.location.reload()}>
+            Reload
+          </Button>
+        }
+      >
+        Error loading flow analysis: {error}
       </Alert>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Loading Flow Analysis
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          Preparing market flow visualization...
+        </Typography>
+      </Box>
     );
   }
 
@@ -76,117 +112,89 @@ const FlowNetworkAnalysis = () => {
     <Grid container spacing={2}>
       {/* Overview Metrics */}
       <Grid item xs={12}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Total Flow Volume"
-              value={metrics?.flows?.total || 0}
-              format="number"
-              description="Sum of all market flows"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Average Flow"
-              value={metrics?.flows?.average || 0}
-              format="number"
-              description="Average flow per connection"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Flow Density"
-              value={marketIntegration?.flow_density || 0}
-              format="percentage"
-              description="Network connection density"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MetricCard
-              title="Active Connections"
-              value={metrics?.flows?.count || 0}
-              format="integer"
-              description="Number of active market flows"
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-
-      {/* Controls Section */}
-      <Grid item xs={12}>
         <Paper sx={{ p: 2 }}>
-          {/* View Mode Controls */}
-          <Box sx={{ mb: dates.length > 0 ? 2 : 0 }}>
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(e, value) => value && setViewMode(value)}
-              size="small"
-            >
-              <ToggleButton value="map">
-                <MapIcon sx={{ mr: 1 }} />
-                Map View
-              </ToggleButton>
-              <ToggleButton value="lines">
-                <TimelineIcon sx={{ mr: 1 }} />
-                Flow Lines
-              </ToggleButton>
-              <ToggleButton value="network">
-                <AccountTreeIcon sx={{ mr: 1 }} />
-                Network View
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          {/* Time Controls */}
-          {dates.length > 0 && (
-            <>
-              <Divider sx={{ my: 2 }} />
-              <Box sx={{ width: '100%' }}>
-                <TimeControl
-                  dates={dates}
-                  currentDate={selectedDate || dates[0]}
-                  onChange={handleDateChange}
-                  position={null}
-                />
-              </Box>
-            </>
-          )}
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={3}>
+              <Tooltip title="Total volume of market flows in the selected period">
+                <Box>
+                  <MetricCard
+                    title="Total Flow Volume"
+                    value={metrics?.flows?.total || 0}
+                    format="number"
+                    description="Sum of all market flows"
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Tooltip title="Average flow volume per market connection">
+                <Box>
+                  <MetricCard
+                    title="Average Flow"
+                    value={metrics?.flows?.average || 0}
+                    format="number"
+                    description="Average flow per connection"
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Tooltip title="Percentage of potential market connections that are active">
+                <Box>
+                  <MetricCard
+                    title="Flow Density"
+                    value={marketIntegration?.flow_density || 0}
+                    format="percentage"
+                    description="Network connection density"
+                    thresholds={NETWORK_THRESHOLDS.DENSITY}
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Tooltip title="Number of active market connections">
+                <Box>
+                  <MetricCard
+                    title="Active Connections"
+                    value={metrics?.flows?.count || 0}
+                    format="integer"
+                    description="Active market flows"
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
+          </Grid>
         </Paper>
       </Grid>
 
-      {/* Main Visualization */}
-      <Grid item xs={12} md={8}>
-        <Paper sx={{ p: 2, height: 600 }}>
-          {viewMode === 'map' && (
-            <FlowMap
-              flows={flowMaps}
-              geometry={geometryData}
-              selectedFlow={selectedFlow}
-              onFlowSelect={setSelectedFlow}
+      {/* Time Controls */}
+      {dates.length > 0 && (
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <TimeControl
+              dates={dates}
+              currentDate={selectedDate || dates[0]}
+              onChange={handleDateChange}
             />
-          )}
-          {viewMode === 'lines' && (
-            <FlowLines
-              flows={flowMaps}
-              timeSeriesData={timeSeriesData}
-              selectedFlow={selectedFlow}
-              onFlowSelect={setSelectedFlow}
-            />
-          )}
-          {viewMode === 'network' && (
-            <NetworkGraph
-              flows={flowMaps}
-              marketIntegration={marketIntegration}
-              selectedNode={selectedFlow}
-              onNodeSelect={setSelectedFlow}
-            />
-          )}
+          </Paper>
+        </Grid>
+      )}
+
+      {/* Map Visualization */}
+      <Grid item xs={12}>
+        <Paper sx={{ p: 2, height: 500 }}>
+          <FlowMap
+            flows={flowMaps}
+            geometry={geometryData}
+            selectedFlow={selectedFlow}
+            onFlowSelect={setSelectedFlow}
+            defaultView={MAP_SETTINGS}
+          />
         </Paper>
       </Grid>
 
       {/* Metrics Panel */}
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12}>
         <FlowMetricsPanel
           flows={flowMaps}
           selectedFlow={selectedFlow}
@@ -198,6 +206,72 @@ const FlowNetworkAnalysis = () => {
           }}
           timeRange={selectedDate}
         />
+      </Grid>
+
+      {/* Methodology */}
+      <Grid item xs={12}>
+        <Paper sx={{ p: 2 }}>
+          <Button
+            fullWidth
+            onClick={() => setShowMethodology(!showMethodology)}
+            endIcon={showMethodology ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            startIcon={<InfoOutlinedIcon />}
+          >
+            Methodology
+          </Button>
+          <Collapse in={showMethodology}>
+            <Box sx={{ mt: 2, p: 2 }}>
+              <Typography variant="body2" paragraph>
+                This analysis examines market flows across Yemen using geographic visualization
+                and statistical metrics to understand trade patterns and market integration.
+                Flow strength is represented through line thickness and color intensity,
+                while market points indicate trading locations.
+              </Typography>
+
+              <List dense>
+                <ListItem>
+                  <ListItemText
+                    primary={
+                      <Typography variant="subtitle2" color="primary">
+                        Flow Analysis
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="textSecondary">
+                        Measures trade volume and consistency between markets, normalized
+                        for regional variations and market size
+                      </Typography>
+                    }
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary={
+                      <Typography variant="subtitle2" color="primary">
+                        Market Integration
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="textSecondary">
+                        Evaluates market connectivity through flow density and price
+                        correlation analysis
+                      </Typography>
+                    }
+                  />
+                </ListItem>
+              </List>
+
+              <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }} color="primary">
+                Flow Classification:
+              </Typography>
+              <Typography variant="body2" component="div">
+                • Strong Flow (&gt;{FLOW_THRESHOLDS.HIGH * 100}%): Robust market connection<br/>
+                • Medium Flow ({FLOW_THRESHOLDS.MEDIUM * 100}-{FLOW_THRESHOLDS.HIGH * 100}%): Moderate trade<br/>
+                • Weak Flow (&lt;{FLOW_THRESHOLDS.MEDIUM * 100}%): Limited market interaction
+              </Typography>
+            </Box>
+          </Collapse>
+        </Paper>
       </Grid>
     </Grid>
   );
