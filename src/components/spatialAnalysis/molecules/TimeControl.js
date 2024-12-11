@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { 
   Box, 
@@ -13,11 +13,11 @@ import PauseIcon from '@mui/icons-material/Pause';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import SpeedIcon from '@mui/icons-material/Speed';
+import { debounce } from 'lodash';
 
 // Helper function to normalize date to YYYY-MM format
 const normalizeDate = (date) => {
   try {
-    // Handle both YYYY-MM and YYYY-MM-DD formats
     return date?.substring(0, 7);
   } catch (error) {
     console.error('Error normalizing date:', error);
@@ -28,7 +28,6 @@ const normalizeDate = (date) => {
 // Helper function to format date for display
 const formatDate = (date) => {
   try {
-    // Add day to ensure valid date
     const fullDate = `${normalizeDate(date)}-01`;
     return new Date(fullDate).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -51,97 +50,98 @@ const TimeControl = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [sliderValue, setSliderValue] = useState(0);
+  const [internalDate, setInternalDate] = useState(currentDate);
 
-  // Normalize all dates
-  const normalizedDates = dates.map(normalizeDate);
-  const normalizedCurrentDate = normalizeDate(currentDate);
+  // Normalize all dates - memoized to prevent unnecessary recalculations
+  const normalizedDates = useMemo(() => dates.map(normalizeDate), [dates]);
+  const normalizedCurrentDate = useMemo(() => normalizeDate(currentDate), [currentDate]);
+
+  // Debounced onChange handler to prevent rapid Redux updates
+  const debouncedOnChange = useMemo(
+    () => debounce((newDate) => {
+      onChange(newDate);
+    }, 150),
+    [onChange]
+  );
 
   // Initialize slider value based on current date
   useEffect(() => {
     const currentIndex = normalizedDates.indexOf(normalizedCurrentDate);
     
-    console.debug('TimeControl date initialization:', {
-      currentDate,
-      normalizedCurrentDate,
-      currentIndex,
-      availableDates: normalizedDates,
-      dates
-    });
-    
     if (currentIndex >= 0) {
       setSliderValue(currentIndex);
-    } else {
-      // If current date is not found, use the first date
-      console.debug('Current date not found in dates array, using first date');
+      setInternalDate(normalizedCurrentDate);
+    } else if (dates.length > 0) {
       setSliderValue(0);
-      // Notify parent of the change
-      if (dates.length > 0) {
-        onChange(normalizeDate(dates[0]));
-      }
+      setInternalDate(normalizeDate(dates[0]));
+      onChange(normalizeDate(dates[0]));
     }
   }, [currentDate, dates, normalizedCurrentDate, normalizedDates, onChange]);
 
-  // Handle auto-play
+  // Handle auto-play with useCallback to prevent recreation
+  const handleAutoPlay = useCallback(() => {
+    if (isPlaying) {
+      setSliderValue(prev => {
+        const next = prev + 1;
+        if (next >= dates.length) {
+          setIsPlaying(false);
+          return 0;
+        }
+        const newDate = normalizeDate(dates[next]);
+        setInternalDate(newDate);
+        debouncedOnChange(newDate);
+        return next;
+      });
+    }
+  }, [isPlaying, dates.length, debouncedOnChange]);
+
+  // Auto-play effect
   useEffect(() => {
     let interval;
     if (isPlaying) {
-      interval = setInterval(() => {
-        setSliderValue(prev => {
-          const next = prev + 1;
-          if (next >= dates.length) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return next;
-        });
-      }, autoPlayInterval / playbackSpeed);
+      interval = setInterval(handleAutoPlay, autoPlayInterval / playbackSpeed);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, dates.length, autoPlayInterval, playbackSpeed]);
+  }, [isPlaying, autoPlayInterval, playbackSpeed, handleAutoPlay]);
 
-  // Handle slider value changes
-  const handleSliderChange = (_, value) => {
+  // Optimized slider change handler
+  const handleSliderChange = useCallback((_, value) => {
     if (value !== sliderValue) {
       const newDate = normalizeDate(dates[value]);
-      console.debug('Slider change:', {
-        value,
-        newDate,
-        currentDate: normalizedCurrentDate
-      });
       setSliderValue(value);
-      onChange(newDate);
+      setInternalDate(newDate);
+      debouncedOnChange(newDate);
     }
-  };
+  }, [dates, sliderValue, debouncedOnChange]);
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
+  // Memoized handlers to prevent unnecessary recreations
+  const handlePlayPause = useCallback(() => {
+    setIsPlaying(prev => !prev);
+  }, []);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     const newValue = Math.max(0, sliderValue - 1);
     handleSliderChange(null, newValue);
-  };
+  }, [sliderValue, handleSliderChange]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const newValue = Math.min(dates.length - 1, sliderValue + 1);
     handleSliderChange(null, newValue);
-  };
+  }, [dates.length, sliderValue, handleSliderChange]);
 
-  const handleSpeedChange = () => {
+  const handleSpeedChange = useCallback(() => {
     setPlaybackSpeed(prev => (prev === 4 ? 1 : prev * 2));
-  };
+  }, []);
 
-  // Debug logging
-  console.debug('TimeControl state:', {
-    currentDate,
-    normalizedCurrentDate,
-    sliderValue,
-    selectedDate: dates[sliderValue],
-    normalizedSelectedDate: normalizeDate(dates[sliderValue]),
-    totalDates: dates.length,
-    isPlaying,
-    playbackSpeed
-  });
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedOnChange.cancel();
+    };
+  }, [debouncedOnChange]);
+
+  // Memoize the rendered date to prevent unnecessary recalculations
+  const formattedDate = useMemo(() => formatDate(dates[sliderValue]), [dates, sliderValue]);
 
   return (
     <Paper
@@ -169,7 +169,7 @@ const TimeControl = ({
             fontWeight: 500
           }}
         >
-          {formatDate(dates[sliderValue])}
+          {formattedDate}
         </Typography>
 
         <Slider
@@ -274,4 +274,12 @@ TimeControl.propTypes = {
   })
 };
 
-export default React.memo(TimeControl);
+export default React.memo(TimeControl, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  return (
+    prevProps.currentDate === nextProps.currentDate &&
+    prevProps.dates.length === nextProps.dates.length &&
+    prevProps.autoPlayInterval === nextProps.autoPlayInterval &&
+    JSON.stringify(prevProps.position) === JSON.stringify(nextProps.position)
+  );
+});

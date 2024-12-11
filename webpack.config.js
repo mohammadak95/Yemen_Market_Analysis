@@ -317,7 +317,7 @@ module.exports = (env, argv) => {
         }
       ],
       compress: true,
-      port: parseInt(process.env.CLIENT_PORT || '3000', 10),
+      port: parseInt(process.env.CLIENT_PORT || '3001', 10), // Changed default port to 3001
       hot: true,
       historyApiFallback: true,
       headers: {

@@ -1,5 +1,4 @@
 // src/selectors/optimizedSelectors.js
-// Based on previous discussions on 'reselect' (Jones 2016) and Redux Toolkit (Redux 2021)
 
 import { createSelector } from '@reduxjs/toolkit';
 import { createSelectorCreator } from 'reselect';

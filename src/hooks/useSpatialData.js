@@ -1,146 +1,139 @@
-// src/hooks/useSpatialData.js
-
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  fetchAllSpatialData,
-  selectSpatialData,
+import { loadSpatialReducer } from '../store';
+import { dataLoader } from '../utils/dataLoader';
+import { 
+  setProgress, 
+  setLoadingStage,
+  updateData,
   selectLoadingStatus,
-  selectVisualizationMode,
-  selectSelectedCommodity,
-  selectSelectedDate,
-  selectTimeWindow,
-  selectError,
-  selectDetailedMetrics,
-  selectActiveRegionDataOptimized,
-  selectFilteredMarketData,
-  selectCommodityInfo,
-  selectGeometryStatus,
-  handleSpatialError
+  selectSpatialData,
+  selectUIState
 } from '../slices/spatialSlice';
 
-import {
-  selectClustersWithCoordinates,
-  selectFlowDataWithCoordinates,
-  selectGeometryPoints,
-} from '../selectors/spatialSelectors';
-
-/**
- * Enhanced hook for managing spatial data with improved performance and error handling
- * @returns {Object} Spatial data and related state
- */
 export function useSpatialData() {
   const dispatch = useDispatch();
-
-  // Core UI State
-  const commodity = useSelector(selectSelectedCommodity);
-  const date = useSelector(selectSelectedDate);
-  const timeWindow = useSelector(selectTimeWindow);
-  const visualizationMode = useSelector(selectVisualizationMode);
-
-  // Status and Error States
-  const isLoading = useSelector(selectLoadingStatus);
-  const error = useSelector(selectError);
-  const geometryStatus = useSelector(selectGeometryStatus);
-
-  // Memoized Data Selectors
+  const loading = useSelector(selectLoadingStatus);
   const spatialData = useSelector(selectSpatialData);
-  const detailedMetrics = useSelector(selectDetailedMetrics);
-  const activeRegionData = useSelector(selectActiveRegionDataOptimized);
-  const filteredMarketData = useSelector(selectFilteredMarketData);
-  const commodityInfo = useSelector(selectCommodityInfo);
+  const uiState = useSelector(selectUIState);
+  const [error, setError] = useState(null);
 
-  // Legacy Support: Keep existing selectors for backward compatibility
-  const clusters = useSelector(selectClustersWithCoordinates);
-  const flows = useSelector(selectFlowDataWithCoordinates);
-  const points = useSelector(selectGeometryPoints);
+  const loadData = useCallback(async (commodity, date, options = {}) => {
+    try {
+      setError(null);
+      dispatch(setProgress(0));
+      dispatch(setLoadingStage('loading'));
 
-  // Memoized error handler
-  const handleError = useCallback(async (error) => {
-    if (error) {
-      console.error('Spatial data error:', error);
-      await dispatch(handleSpatialError(error));
+      // Ensure spatial reducer is loaded
+      await loadSpatialReducer();
+
+      // Load data with progress updates
+      const data = await dataLoader.loadSpatialData(commodity, date, {
+        ...options,
+        onProgress: (progress) => {
+          dispatch(setProgress(progress));
+        }
+      });
+
+      // Update store with loaded data
+      dispatch(updateData(data));
+      dispatch(setProgress(100));
+      dispatch(setLoadingStage('complete'));
+
+      return data;
+    } catch (err) {
+      setError(err);
+      dispatch(setLoadingStage('error'));
+      throw err;
     }
   }, [dispatch]);
 
-  // Enhanced data fetching with error handling
+  // Load initial data if needed
   useEffect(() => {
-    let isMounted = true;
+    if (!spatialData && uiState.selectedCommodity && !loading && !error) {
+      loadData(uiState.selectedCommodity, uiState.selectedDate).catch(console.error);
+    }
+  }, [spatialData, uiState.selectedCommodity, uiState.selectedDate, loading, error, loadData]);
 
-    const fetchData = async () => {
-      if (!commodity || !date) return;
+  const refresh = useCallback(() => {
+    if (uiState.selectedCommodity) {
+      return loadData(uiState.selectedCommodity, uiState.selectedDate, { forceRefresh: true });
+    }
+  }, [loadData, uiState.selectedCommodity, uiState.selectedDate]);
 
-      try {
-        await dispatch(fetchAllSpatialData({ 
-          commodity, 
-          date, 
-          timeWindow,
-          visualizationMode,
-          filters: filteredMarketData?.filters
-        }));
-      } catch (error) {
-        if (isMounted) {
-          handleError(error);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [commodity, date, timeWindow, visualizationMode, dispatch, handleError, filteredMarketData?.filters]);
-
-  // Memoized return value to prevent unnecessary re-renders
-  const returnValue = useMemo(() => ({
-    // Status
-    isLoading,
+  return {
+    loading,
     error,
-    geometryStatus,
+    data: spatialData,
+    loadData,
+    refresh,
+    progress: useSelector(state => state.spatial?.status?.progress || 0)
+  };
+}
 
-    // Core Data
-    spatialData,
-    detailedMetrics,
-    activeRegionData,
-    filteredMarketData,
-    commodityInfo,
+// Hook for regression data
+export function useRegressionData() {
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const selectedCommodity = useSelector(state => state.spatial?.ui?.selectedCommodity);
 
-    // UI State
-    visualizationMode,
-    timeWindow,
-    
-    // Analysis Results
-    metrics: {
-      spatial: detailedMetrics?.spatialDependence,
-      price: detailedMetrics?.priceStats,
-      model: detailedMetrics?.modelFit
-    },
+  const loadRegressionData = useCallback(async (commodity = selectedCommodity) => {
+    if (!commodity) return;
 
-    // Legacy Support
-    clusters: clusters || [],
-    flows: flows || [],
-    points: points || [],
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Helper Methods
-    hasError: Boolean(error),
-    isReady: Boolean(spatialData && !isLoading && !error),
-    hasGeometry: geometryStatus.isComplete,
-  }), [
-    isLoading,
+      const data = await dataLoader.loadRegressionData(commodity);
+      dispatch({ type: 'spatial/updateRegressionData', payload: data });
+
+      return data;
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [dispatch, selectedCommodity]);
+
+  // Load initial data if needed
+  useEffect(() => {
+    if (selectedCommodity && !loading && !error) {
+      loadRegressionData().catch(console.error);
+    }
+  }, [selectedCommodity, loading, error, loadRegressionData]);
+
+  return {
+    loading,
     error,
-    geometryStatus,
-    spatialData,
-    detailedMetrics,
-    activeRegionData,
-    filteredMarketData,
-    commodityInfo,
-    visualizationMode,
-    timeWindow,
-    clusters,
-    flows,
-    points
-  ]);
+    loadRegressionData
+  };
+}
 
-  return returnValue;
+// Hook for managing Web Worker computations
+export function useSpatialComputation() {
+  const [computing, setComputing] = useState(false);
+  const [error, setError] = useState(null);
+
+  const compute = useCallback(async (type, data, options = {}) => {
+    try {
+      setComputing(true);
+      setError(null);
+
+      const result = await dataLoader.computeWithWorker(type, data, options);
+      return result;
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setComputing(false);
+    }
+  }, []);
+
+  return {
+    computing,
+    error,
+    compute
+  };
 }
