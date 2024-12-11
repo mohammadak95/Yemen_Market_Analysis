@@ -1,0 +1,206 @@
+\documentclass{beamer}
+\usetheme{Madrid}
+\usecolortheme{whale}
+
+% Basic packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+% Title information
+\title[Market Unity Amidst Conflict]{Market Unity Amidst Conflict:\\Price Integration Analysis in Yemen}
+\subtitle{An Econometric and Spatial Approach}
+\author{Mohammad al Akkaoui}
+\date{December 2024}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Research Context}
+    \textbf{Study Focus:}
+    \begin{itemize}
+        \item Analysis of market integration between Aden and Sana'a
+        \item Price transmission in staple commodity markets
+        \item Impact of conflict on market dynamics
+    \end{itemize}
+    
+    \textbf{Key Challenges:}
+    \begin{itemize}
+        \item Protracted conflict
+        \item Institutional fragmentation
+        \item Dual exchange rate regime
+        \item Infrastructure limitations
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Long-run Market Integration}
+    \textbf{Long-run Price Relationship:}
+    \begin{equation*}
+    P_{it} = \alpha_0 + \alpha_1 P_{jt} + u_t
+    \end{equation*}
+    
+    \textbf{Interpretation:}
+    \begin{itemize}
+        \item $P_{it}$: Price in Aden at time $t$
+        \item $P_{jt}$: Price in Sana'a at time $t$
+        \item $\alpha_0$: Transaction costs between markets
+        \item $\alpha_1$: Price transmission elasticity
+            \begin{itemize}
+                \item $\alpha_1 = 1$: Perfect market integration
+                \item $0 < \alpha_1 < 1$: Partial integration
+                \item $\alpha_1 = 0$: No integration
+            \end{itemize}
+        \item $u_t$: Deviations from equilibrium
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Error Correction Dynamics}
+    \textbf{Error Correction Model:}
+    \begin{equation*}
+    \Delta X_t = \alpha \beta' X_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta X_{t-i} + \delta Z_t + \varepsilon_t
+    \end{equation*}
+    where:
+    \begin{itemize}
+        \item $\Delta X_t$: Price changes in both markets
+        \item $\alpha$: Speed of adjustment to equilibrium
+        \item $\beta'$: Long-run equilibrium relationship
+        \item $\Gamma_i$: Short-term price responses
+        \item $Z_t$: External factors (conflict, exchange rates)
+        \item $\varepsilon_t$: Random shocks
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Spatial Analysis Framework}
+    \textbf{1. Spatial Weights Matrix:}
+    \begin{equation*}
+    w_{ij} = \begin{cases}
+    1 & \text{if } j \text{ is among } k \text{ nearest neighbors of } i \\
+    0 & \text{otherwise}
+    \end{cases}
+    \end{equation*}
+    where:
+    \begin{itemize}
+        \item $w_{ij}$: Market connectivity measure
+        \item $k$: Number of connected markets
+        \item Captures geographic market networks
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Spatial Price Models}
+    \textbf{Spatial Models:}
+    \begin{align*}
+    \text{SLM: } & y = \rho W y + X \beta + \varepsilon \\
+    \text{SEM: } & y = X \beta + u, \quad u = \lambda W u + \varepsilon
+    \end{align*}
+    where:
+    \begin{itemize}
+        \item $y$: Vector of market prices
+        \item $W$: Market connectivity matrix
+        \item $\rho$: Strength of price spillovers
+        \item $\lambda$: Spatial error correlation
+        \item $X$: Market characteristics
+        \item $\beta$: Impact of characteristics
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Time-Varying Integration}
+    \textbf{Dynamic Integration Index:}
+    \begin{equation*}
+    \begin{aligned}
+    y_t &= \alpha_t + \varepsilon_t, \quad \varepsilon_t \sim N(0, \sigma_\varepsilon^2) \\
+    \alpha_t &= \alpha_{t-1} + \eta_t, \quad \eta_t \sim N(0, \sigma_\eta^2)
+    \end{aligned}
+    \end{equation*}
+    where:
+    \begin{itemize}
+        \item $y_t$: Market price differential
+        \item $\alpha_t$: Time-varying integration level
+        \item $\varepsilon_t, \eta_t$: Market shocks
+        \item Captures evolving integration patterns
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Price Differential Analysis}
+    \textbf{Price Gap Model:}
+    \begin{equation*}
+    \Delta P_{ijt} = \alpha + \beta_1 D_{ij} + \beta_2 C_{ijt} + \beta_3 E_t + \varepsilon_{ijt}
+    \end{equation*}
+    where:
+    \begin{itemize}
+        \item $\Delta P_{ijt}$: Price gap between markets
+        \item $D_{ij}$: Transportation distance
+        \item $C_{ijt}$: Conflict intensity
+        \item $E_t$: Exchange rate differences
+        \item Measures barriers to integration
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Key Findings: Market Integration}
+    \textbf{Cointegration Results:}
+    \begin{itemize}
+        \item Strong long-run equilibrium relationships
+        \item Significant bidirectional price transmission
+        \item Varying adjustment speeds across commodities
+    \end{itemize}
+    
+    \textbf{Price Transmission:}
+    \begin{itemize}
+        \item Robust error correction mechanisms
+        \item Asymmetric adjustment patterns
+        \item Impact of exchange rate volatility
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Commodity-Specific Results}
+    \textbf{Staple Foods:}
+    \begin{itemize}
+        \item Beans: Strong cointegration ($\alpha \approx 0.896$)
+        \item Eggs: Rapid adjustment ($\alpha = 1.224$)
+        \item Wheat: Significant price transmission
+    \end{itemize}
+    
+    \textbf{Imported Goods:}
+    \begin{itemize}
+        \item Fuel: Varying degrees of adjustment
+        \item Rice: Significant ECM coefficients
+        \item Impact of dual exchange rates
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Policy Implications}
+    \textbf{Strategic Recommendations:}
+    \begin{itemize}
+        \item Exchange rate unification efforts
+        \item Infrastructure enhancement
+        \item Market information systems
+    \end{itemize}
+    
+    \textbf{Integration Enhancement:}
+    \begin{itemize}
+        \item Strengthen Aden-Sana'a corridor
+        \item Reduce transaction costs
+        \item Improve market efficiency
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusions}
+    \textbf{Key Contributions:}
+    \begin{itemize}
+        \item Evidence of market resilience
+        \item Quantification of integration patterns
+        \item Framework for policy intervention
+    \end{itemize}
+    
+    \textbf{Future Directions:}
+    \begin{itemize}
+        \item Enhanced market monitoring
+        \item Targeted integration strategies
+        \item Conflict-sensitive approaches
+    \end{itemize}
+\end{frame}
+
+\end{document}

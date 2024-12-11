@@ -293,11 +293,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.0011389521640090845,
-                "Moran_p_value": 0.416
+                "Moran_p_value": 0.418
             },
             "Variable_2": {
                 "Moran_I": -0.0011389521640090868,
-                "Moran_p_value": 0.232
+                "Moran_p_value": 0.231
             }
         }
     },
@@ -595,11 +595,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.0010683760683760717,
-                "Moran_p_value": 0.462
+                "Moran_p_value": 0.473
             },
             "Variable_2": {
                 "Moran_I": -0.0010683760683760765,
-                "Moran_p_value": 0.057
+                "Moran_p_value": 0.045
             }
         }
     },
@@ -897,7 +897,7 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": 0.0017665475818233324,
-                "Moran_p_value": 0.047
+                "Moran_p_value": 0.069
             },
             "Variable_2": {
                 "Moran_I": 0.009698637743566337,
@@ -1199,11 +1199,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.001020408163265293,
-                "Moran_p_value": 0.149
+                "Moran_p_value": 0.171
             },
             "Variable_2": {
                 "Moran_I": -0.0010204081632652897,
-                "Moran_p_value": 0.029
+                "Moran_p_value": 0.024
             }
         }
     },
@@ -1501,11 +1501,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": 0.006258424435170573,
-                "Moran_p_value": 0.005
+                "Moran_p_value": 0.004
             },
             "Variable_2": {
                 "Moran_I": 0.00553139515140932,
-                "Moran_p_value": 0.012
+                "Moran_p_value": 0.006
             }
         }
     },
@@ -1803,11 +1803,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": 0.00421053280948557,
-                "Moran_p_value": 0.014
+                "Moran_p_value": 0.01
             },
             "Variable_2": {
                 "Moran_I": 0.00492076273228203,
-                "Moran_p_value": 0.009
+                "Moran_p_value": 0.011
             }
         }
     },
@@ -2407,7 +2407,7 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.0010695187165775176,
-                "Moran_p_value": 0.102
+                "Moran_p_value": 0.125
             },
             "Variable_2": {
                 "Moran_I": -0.0010695187165775354,
@@ -2709,11 +2709,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.001126126126126109,
-                "Moran_p_value": 0.302
+                "Moran_p_value": 0.322
             },
             "Variable_2": {
                 "Moran_I": -0.001126126126126112,
-                "Moran_p_value": 0.072
+                "Moran_p_value": 0.077
             }
         }
     },
@@ -3011,11 +3011,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.0010172939979653875,
-                "Moran_p_value": 0.332
+                "Moran_p_value": 0.347
             },
             "Variable_2": {
                 "Moran_I": -0.001017293997965388,
-                "Moran_p_value": 0.428
+                "Moran_p_value": 0.421
             }
         }
     },
@@ -3313,11 +3313,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.0009683316789806456,
-                "Moran_p_value": 0.295
+                "Moran_p_value": 0.317
             },
             "Variable_2": {
                 "Moran_I": 0.005378142208453179,
-                "Moran_p_value": 0.011
+                "Moran_p_value": 0.005
             }
         }
     },
@@ -3615,11 +3615,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.000204182565584789,
-                "Moran_p_value": 0.176
+                "Moran_p_value": 0.188
             },
             "Variable_2": {
                 "Moran_I": 0.0037238713134044046,
-                "Moran_p_value": 0.012
+                "Moran_p_value": 0.028
             }
         }
     },
@@ -3917,11 +3917,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": 0.000762170421676666,
-                "Moran_p_value": 0.101
+                "Moran_p_value": 0.105
             },
             "Variable_2": {
                 "Moran_I": 0.0038544239770681487,
-                "Moran_p_value": 0.013
+                "Moran_p_value": 0.03
             }
         }
     },
@@ -4219,11 +4219,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.001411324240731352,
-                "Moran_p_value": 0.483
+                "Moran_p_value": 0.458
             },
             "Variable_2": {
                 "Moran_I": 0.0024072186822155254,
-                "Moran_p_value": 0.076
+                "Moran_p_value": 0.075
             }
         }
     },
@@ -4521,11 +4521,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.0021954209938350607,
-                "Moran_p_value": 0.086
+                "Moran_p_value": 0.095
             },
             "Variable_2": {
                 "Moran_I": -0.001536914729581523,
-                "Moran_p_value": 0.492
+                "Moran_p_value": 0.496
             }
         }
     },
@@ -4823,11 +4823,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.0016104872692542333,
-                "Moran_p_value": 0.445
+                "Moran_p_value": 0.421
             },
             "Variable_2": {
                 "Moran_I": -0.0015795945817055814,
-                "Moran_p_value": 0.483
+                "Moran_p_value": 0.481
             }
         }
     },
@@ -5125,11 +5125,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": 0.0008461138274032298,
-                "Moran_p_value": 0.12
+                "Moran_p_value": 0.102
             },
             "Variable_2": {
                 "Moran_I": -0.001594395039837342,
-                "Moran_p_value": 0.498
+                "Moran_p_value": 0.499
             }
         }
     },
@@ -5427,11 +5427,11 @@
         "spatial_autocorrelation": {
             "Variable_1": {
                 "Moran_I": -0.001017293997965382,
-                "Moran_p_value": 0.009
+                "Moran_p_value": 0.011
             },
             "Variable_2": {
                 "Moran_I": -0.001017293997965398,
-                "Moran_p_value": 0.005
+                "Moran_p_value": 0.007
             }
         }
     }
