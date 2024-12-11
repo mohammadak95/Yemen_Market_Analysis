@@ -20,7 +20,7 @@ tqdm==4.65.0
 loguru==0.7.0
 shapely==2.0.1
 pyproj==3.6.0
-fiona==1.9.4
+fiona==1.10.0
 rtree==1.0.1
 networkx==3.1
 folium==0.14.0
