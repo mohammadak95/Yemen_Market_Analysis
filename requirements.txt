@@ -16,7 +16,7 @@ black==23.7.0
 flake8==6.1.0
 mypy==1.5.1
 python-dotenv==1.0.0
-tqdm==4.65.0
+tqdm==4.66.3
 loguru==0.7.0
 shapely==2.0.1
 pyproj==3.6.0
