@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/flows/types.js
+
 /**
  * Types and constants for market flow analysis
  */

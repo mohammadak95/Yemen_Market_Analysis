@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/flows/FlowMetricsPanel.js
+
 /**
  * Market Flow Metrics Panel Component
  * 

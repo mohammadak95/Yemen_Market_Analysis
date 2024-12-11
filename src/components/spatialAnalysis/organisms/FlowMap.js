@@ -22,13 +22,13 @@ const LISA_COLORS = {
   'not-significant': '#eeeeee', // Grey for not significant
 };
 
-// Yemen's center with expanded bounds and buffer zone
-const DEFAULT_CENTER = [15.3694, 44.191];
-const DEFAULT_ZOOM = 6;
-const BUFFER = 2; // Degrees of buffer around Yemen
+// Further adjusted default map settings for a more zoomed-out view
+const DEFAULT_CENTER = [15.3694, 44.191]; // Yemen's geographical center
+const DEFAULT_ZOOM = 3; // Further reduced zoom level for a more zoomed-out view
+const BUFFER = 4; // Increased buffer around Yemen
 const DEFAULT_BOUNDS = [
-  [12.1110 - BUFFER, 41.8140 - BUFFER], // Southwest corner with buffer
-  [19.0025 + BUFFER, 54.5305 + BUFFER], // Northeast corner with buffer
+  [12.1110 - BUFFER, 41.8140 - BUFFER], // Southwest corner with increased buffer
+  [19.0025 + BUFFER, 54.5305 + BUFFER], // Northeast corner with increased buffer
 ];
 
 // Map reset component
@@ -204,13 +204,13 @@ const FlowMap = ({
         bounds={DEFAULT_BOUNDS}
         style={{ height: '100%', width: '100%' }}
         maxBounds={DEFAULT_BOUNDS}
-        minZoom={DEFAULT_ZOOM - 1}
-        maxZoom={DEFAULT_ZOOM + 2}
+        minZoom={DEFAULT_ZOOM - 1} // Adjusted minZoom for flexibility
+        maxZoom={DEFAULT_ZOOM + 7} // Increased maxZoom for more detail when zoomed in
         zoomControl={true}
         dragging={true}
         touchZoom={true}
         doubleClickZoom={true}
-        scrollWheelZoom={false}
+        scrollWheelZoom={true} // Enabled scroll wheel zoom
         boxZoom={true}
         keyboard={true}
         bounceAtZoomLimits={true}
