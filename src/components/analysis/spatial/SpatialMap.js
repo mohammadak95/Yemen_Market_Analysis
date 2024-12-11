@@ -247,14 +247,14 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
           dragging={true}
           touchZoom={true}
           doubleClickZoom={true}
-          scrollWheelZoom={true}
+          scrollWheelZoom={false}
           boxZoom={true}
           keyboard={true}
           bounceAtZoomLimits={true}
         >
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            attribution='&copy; OpenStreetMap contributors'
           />
           <GeoJSON
             data={styledMapData}

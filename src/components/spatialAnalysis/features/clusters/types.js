@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/clusters/types.js
+
 /**
  * Types and constants for market cluster analysis
  */

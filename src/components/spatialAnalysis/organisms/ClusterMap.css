@@ -1,42 +1,34 @@
+/* src/components/spatialAnalysis/organisms/ClusterMap.css */
+
+/* Ensure the leaflet container fills its parent without any extra spacing */
 .leaflet-container {
-  background: #fff !important;
-  border-radius: 4px;
-  overflow: hidden;
   width: 100% !important;
   height: 100% !important;
+  background: #fff; /* Maintain a white background */
+  border-radius: 4px; /* Rounded corners */
+  overflow: hidden; /* Hide overflow */
+  margin: 0 !important; /* Remove any default margins */
+  padding: 0 !important; /* Remove any default paddings */
 }
 
-/* Base panes */
-.leaflet-pane,
-.leaflet-tile,
-.leaflet-marker-icon,
-.leaflet-marker-shadow,
-.leaflet-tile-container,
-.leaflet-pane > svg,
-.leaflet-pane > canvas,
-.leaflet-zoom-box,
-.leaflet-image-layer,
-.leaflet-layer {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
+/* Remove absolute positioning from Leaflet panes to prevent layout conflicts */
+/* Original styles removed to allow Flexbox to manage layout */
 
-/* Tile container */
+/* Tile container - Allow pointer events for interactivity */
 .leaflet-tile-container {
-  pointer-events: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  pointer-events: auto; /* Enable pointer events */
+  -webkit-user-select: auto; /* Allow user selection on Safari */
+  user-select: auto; /* Allow user selection */
+  will-change: transform;
+  transform-origin: 0 0;
 }
 
-/* Individual tiles */
+/* Optional brightness adjustment on tiles */
 .leaflet-tile {
   filter: brightness(1.05);
 }
 
-/* Layer ordering */
+/* Layer ordering - Maintain proper layering without excessive specificity */
 .leaflet-map-pane { z-index: 2; }
 .leaflet-tile-pane { z-index: 1; }
 .leaflet-objects-pane { z-index: 3; }
@@ -46,14 +38,15 @@
 .leaflet-tooltip-pane { z-index: 7; }
 .leaflet-popup-pane { z-index: 8; }
 
-/* Custom tooltip */
+/* Custom tooltip styling */
 .custom-tooltip {
   background: white;
   border: none;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 13px;
+  pointer-events: none; /* Prevent tooltip from capturing pointer events */
 }
 
 .custom-tooltip::before {
@@ -73,4 +66,16 @@
 .leaflet-tile-container {
   will-change: transform;
   transform-origin: 0 0;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 600px) {
+  .custom-tooltip {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .leaflet-control-attribution {
+    font-size: 9px !important;
+  }
 }

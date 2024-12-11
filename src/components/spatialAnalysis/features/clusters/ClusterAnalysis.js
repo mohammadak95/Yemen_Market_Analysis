@@ -1,3 +1,5 @@
+// src/components/spatialAnalysis/features/clusters/ClusterAnalysis.js
+
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Grid,
@@ -323,7 +325,7 @@ const ClusterAnalysis = () => {
             />
 
             <Box sx={{ mt: 2, p: 2, bgcolor: theme.palette.grey[50], borderRadius: 1, boxShadow: 1 }}>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" color="text.secondary">
                 {`This cluster contains ${selectedCluster.metrics.marketCount} interconnected markets with an efficiency rating of 
                 ${(selectedCluster.metrics.efficiency * 100).toFixed(1)}%. 
                 ${selectedCluster.metrics.avgConflict > 0.5 ? 
