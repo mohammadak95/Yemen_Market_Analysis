@@ -1,4 +1,4 @@
-//src/components/spatialAnalysis/features/flows/FlowMap.js
+// src/components/spatialAnalysis/features/flows/FlowMap.js
 
 /**
  * Market Flow Map Component
@@ -24,8 +24,8 @@ import {
 import { YEMEN_COORDINATES } from '../../../../selectors/optimizedSelectors';
 
 // Adjusted default map settings to be consistent with cluster/autocorrelation maps
-const DEFAULT_CENTER = [15.3694, 44.191]; 
-const DEFAULT_ZOOM = 6;
+const DEFAULT_CENTER = [15.3694, 44.191];
+const DEFAULT_ZOOM = 5; // Changed from 6 to 5 for a slightly zoomed-out view
 
 // Define a buffer and bounds similar to cluster maps
 const BUFFER = 2;
@@ -222,7 +222,7 @@ const FlowMap = ({
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
         maxBounds={YEMEN_BOUNDS}
-        minZoom={5}
+        minZoom={5} // Ensure minZoom is <= DEFAULT_ZOOM
         maxZoom={8}
         scrollWheelZoom={false} // Disabled scroll wheel zoom
         dragging={true}

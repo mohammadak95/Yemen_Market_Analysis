@@ -1,46 +1,162 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# LaTeX files
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.bbl
+*.blg
+*.toc
+*.lof
+*.lot
+*.idx
+*.ilg
+*.ind
+*.brf
+*.run.xml
+*.bcf
+*.nav
+*.snm
+*.vrb
+*.dvi
+*.xdv
+*.fls
+*.pyg
+_minted*
 
-# dependencies
-/.pnp
-.pnp.js
+# Keep only the final PDF
+!methodology.pdf
 
-# testing
-/coverage
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.ipynb_checkpoints
+*.ipynb
+.venv/
+venv/
+ENV/
 
-# production
-/build
+# Data and results
+data/preprocessed_by_commodity/
+data/choropleth_data/
+data/ecm/
+data/network_data/
+data/price_diff_results/
+data/spatial_weights/
+results/
+public/data/
+public/results/
 
-# misc
-# macOS
-.DS_Store
-
-# misc
-.env.test.local
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# IDE-specific files
-.vscode
-
-
-Miniforge3-MacOSX-arm64.sh
-.venv
-/cache
-build_dashboard.txt
-/node_modules
-/genaisrc
-/.genaiscript
-
-/.git
-
-# Environment Variables
-.env.local
+# Development
+.env*
+.idea/
+.vscode/
+*.swp
+*.swo
 .env.local
 .env.development.local
 .env.test.local
-.husky
-.env
-new_venv
-dist
+.env.production.local
 
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+coverage/
+build/
+.next/
+out/
+.nuxt/
+dist/
+
+# Project specific
+*.log
+preprocess.log
+spatial-preprocess.log
+backups/
+logs/
+
+# Config files
+.babelrc
+.eslintrc.js
+.nvmrc
+craco.config.js
+jest.config.js
+postcss.config.js
+webpack.config.js
+config-overrides.js
+
+# Cache directories
+.cache/
+.parcel-cache/
+.npm/
+.yarn/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.history/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+*.bak
+*.swp
+.*.swp
+.~lock.*
+*.backup
+
+# Version control
+.git/
+.gitattributes
+.gitmodules
+
+# Environment
+.python-version
+.ruby-version
+.node-version
+.env
+.env.development
+.env.production
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

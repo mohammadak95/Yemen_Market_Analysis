@@ -1,0 +1,130 @@
+\section{Methodology}
+\small  % Reduce font size for main text
+
+Our methodological framework integrates multiple econometric tools to provide a holistic view of market integration in Yemen. We proceed in stages: stationarity testing, cointegration analysis, VECM estimation, spatial modeling, and time-varying integration assessments.
+
+\subsection{Stationarity and Integration Tests}
+Before conducting cointegration analysis, we test whether individual time series are non-stationary and integrated of the same order. We employ both the Augmented Dickey-Fuller (ADF) test \citep{dickey1979distribution} and the Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test \citep{kwiatkowski1992testing} to assess stationarity.
+
+The ADF test takes the form:
+\vspace{-0.5em}
+\begin{equation}
+\Delta P_t = \alpha + \beta t + \gamma P_{t-1} + \sum_{i=1}^{k} \delta_i \Delta P_{t-i} + \varepsilon_t
+\end{equation}
+\vspace{-0.5em}
+
+where $\Delta P_t = P_t - P_{t-1}$ is the first-difference operator, $\alpha$ is a constant, $\beta t$ is a trend term, and $\gamma$ tests for the presence of a unit root. The optimal lag length $k$ is selected based on information criteria.
+
+\subsection{Cointegration Analysis}
+Upon confirming that series are typically integrated of order one, we employ both Engle-Granger \citep{engle1987cointegration} and Johansen \citep{johansen1988statistical} procedures to identify long-run equilibrium relationships among prices.
+
+\subsubsection{Engle-Granger Two-Step Procedure}
+First, estimate the long-run relationship:
+\vspace{-0.5em}
+\begin{equation}
+P_{it} = \alpha_0 + \alpha_1 P_{jt} + u_t
+\end{equation}
+\vspace{-0.5em}
+
+Then test the residuals for stationarity:
+\vspace{-0.5em}
+\begin{equation}
+\Delta u_t = \theta u_{t-1} + \sum_{i=1}^{k} \phi_i \Delta u_{t-i} + \eta_t
+\end{equation}
+\vspace{-0.5em}
+
+\subsubsection{Johansen Test}
+For a system of prices $\mathbf{P}_t = (P_{1t}, P_{2t}, \ldots, P_{nt})'$, we consider a VAR model \citep{johansen1995}:
+\vspace{-0.5em}
+\begin{equation}
+\mathbf{P}_t = \mu + \Phi_1 \mathbf{P}_{t-1} + \Phi_2 \mathbf{P}_{t-2} + \cdots + \Phi_p \mathbf{P}_{t-p} + \varepsilon_t
+\end{equation}
+\vspace{-0.5em}
+
+This can be re-parameterized into VEC form:
+\vspace{-0.5em}
+\begin{equation}
+\Delta \mathbf{P}_t = \Pi \mathbf{P}_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta \mathbf{P}_{t-i} + \mu + \varepsilon_t
+\end{equation}
+\vspace{-0.5em}
+
+where $\Pi = \alpha \beta'$ contains information about long-run relationships.
+
+\subsection{Vector Error Correction Models}
+Given the presence of cointegration, VECMs capture both short-term price adjustments and the speed of reversion to the long-run equilibrium \citep{lutkepohl2005}:
+\vspace{-0.5em}
+\begin{equation}
+\Delta X_t = \alpha \beta' X_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta X_{t-i} + \delta Z_t + \varepsilon_t
+\end{equation}
+\vspace{-0.5em}
+
+where $\beta'$ defines the cointegrating vectors, and $\alpha$ measures the speed of adjustment.
+
+\subsection{Spatial Econometric Models}
+To incorporate geographic interdependencies, we estimate spatial lag and spatial error models \citep{anselin1988spatial, lesage2009}. We construct spatial weights matrices using K-nearest neighbor criteria:
+\vspace{-0.5em}
+\begin{equation}
+w_{ij} = \begin{cases}
+1 & \text{if } j \text{ is among } k \text{ nearest neighbors of } i \\
+0 & \text{otherwise}
+\end{cases}
+\end{equation}
+\vspace{-0.5em}
+
+\subsubsection{Spatial Lag Model (SLM)}
+\vspace{-0.5em}
+\begin{equation}
+y = \rho W y + X \beta + \varepsilon
+\end{equation}
+\vspace{-0.5em}
+
+\subsubsection{Spatial Error Model (SEM)}
+\vspace{-0.5em}
+\begin{equation}
+y = X \beta + u, \quad u = \lambda W u + \varepsilon
+\end{equation}
+\vspace{-0.5em}
+
+where $W$ is the spatial weights matrix, and $\rho$ and $\lambda$ capture spatial dependencies.
+
+\subsection{Time-Varying Market Integration Index}
+Market integration may be dynamic, reflecting shifting frontlines of conflict, currency crises, or policy interventions. We implement a time-varying MII using a state-space model \citep{hansen2002testing}:
+\vspace{-0.5em}
+\begin{equation}
+\begin{aligned}
+y_t &= \alpha_t + \varepsilon_t, \quad \varepsilon_t \sim N(0, \sigma_\varepsilon^2) \\
+\alpha_t &= \alpha_{t-1} + \eta_t, \quad \eta_t \sim N(0, \sigma_\eta^2)
+\end{aligned}
+\end{equation}
+\vspace{-0.5em}
+
+\subsection{Price Differential Analysis}
+We analyze price differentials between markets:
+\vspace{-0.5em}
+\begin{equation}
+\Delta P_{ijt} = \alpha + \beta_1 D_{ij} + \beta_2 C_{ijt} + \beta_3 E_t + \varepsilon_{ijt}
+\end{equation}
+\vspace{-0.5em}
+
+where $D_{ij}$ measures distance, $C_{ijt}$ captures conflict intensity, and $E_t$ represents exchange rate effects.
+
+\subsection{Diagnostic Tests}
+We implement comprehensive diagnostic testing following \citet{jarque1987test} and \citet{breusch1979simple}:
+
+\subsubsection{Statistical Tests}
+\begin{itemize}
+\setlength{\itemsep}{0pt}  % Reduce spacing between items
+\item Residual normality (Jarque-Bera test)
+\item Heteroskedasticity (Breusch-Pagan test)
+\item Serial correlation (Durbin-Watson test)
+\item Spatial autocorrelation (Moran's I)
+\end{itemize}
+
+\subsubsection{Robustness Checks}
+\begin{itemize}
+\setlength{\itemsep}{0pt}  % Reduce spacing between items
+\item Alternative sample periods
+\item Different lag specifications
+\item Various spatial weight matrices
+\item Multiple threshold specifications
+\end{itemize}

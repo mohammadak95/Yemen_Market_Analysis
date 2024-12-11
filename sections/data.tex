@@ -1,0 +1,42 @@
+\section{Data}
+\small  % Reduce font size for main text
+\setlength{\parskip}{0.3em}  % Reduce paragraph spacing
+
+\subsection{Data Sources}
+Our analysis draws on a comprehensive dataset combining multiple sources to capture the complex dynamics of Yemen's commodity markets:
+
+\begin{itemize}[nosep]
+\item \textbf{Commodity Prices:} Weekly prices of staple commodities (wheat, rice, sugar) collected from multiple markets across Yemen, sourced from the World Food Programme (WFP). This high-frequency data allows us to track price movements and market dynamics with sufficient temporal granularity.
+
+\item \textbf{Exchange Rates:} Official and parallel market exchange rates from the Central Bank of Yemen \citep{worldbank2022yemen}, enabling analysis of how the dual exchange rate system affects price transmission and market integration. The inclusion of both official and parallel rates is crucial for understanding price distortions in different market segments.
+
+\item \textbf{Geographic Data:} Market locations and administrative boundaries from ACAPS Yemen Analysis Hub, providing the spatial framework necessary for our analysis of geographic price transmission patterns and market connectivity \citep{anselin1988spatial}. This data helps identify natural barriers, trade corridors, and areas of political control.
+
+\item \textbf{Conflict Data:} Security incidents and conflict intensity measures from the Armed Conflict Location \& Event Data Project (ACLED), allowing us to assess how security conditions affect market integration and price transmission \citep{mansour2021market}. This data captures both the temporal and spatial variation in conflict intensity.
+\end{itemize}
+
+\subsection{Data Preparation}
+Our data preparation process involves several steps to ensure analytical robustness:
+
+\begin{itemize}[nosep]
+\item \textbf{Time Period:} The analysis covers December 2019 to the latest available data, encompassing a period of significant variation in conflict intensity, exchange rate dynamics, and market conditions.
+
+\item \textbf{Data Cleaning:} Missing values are handled through careful interpolation where appropriate, or exclusion where interpolation would be inappropriate \citep{lutkepohl2005}. We employ multiple imputation techniques for sporadic missing values while excluding periods with systematic data gaps.
+
+\item \textbf{Log Transformation:} Price series are converted to natural logarithms to:
+  \begin{itemize}[nosep]
+  \item Stabilize variance across the sample period
+  \item Allow interpretation of differences as percentage changes
+  \item Facilitate the detection of multiplicative price relationships
+  \end{itemize}
+
+\item \textbf{Market Segmentation:} Markets are segmented based on:
+  \begin{itemize}[nosep]
+  \item Political control (areas controlled by different factions)
+  \item Geographic regions (accounting for natural barriers and trade routes)
+  \item Exchange rate regime exposure (differential access to official vs. parallel market rates)
+  \item Infrastructure quality and accessibility
+  \end{itemize}
+\end{itemize}
+
+This comprehensive dataset, combining price, geographic, conflict, and institutional variables, enables us to analyze how various factors interact to influence market integration and price transmission in Yemen's complex economic environment \citep{fackler2001spatial}.
