@@ -117,10 +117,12 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           y: priceType === 'lcu' ? d.price : d.usdprice,
         })),
         borderColor: color,
-        backgroundColor: color,
+        backgroundColor: alpha(color, 0.2),
         yAxisID: 'y',
-        fill: false,
+        fill: true,
         tension: 0.3,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       });
 
       // Conflict Intensity Dataset
@@ -176,7 +178,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           grid: {
             display: true,
             drawBorder: false,
-            color: alpha(theme.palette.divider, 0.05),
+            color: alpha(theme.palette.divider, 0.2),
             lineWidth: 1,
             drawTicks: false,
           },
@@ -185,7 +187,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           },
           ticks: {
             maxTicksLimit: isMobile ? 5 : 10,
-            color: theme.palette.text.secondary,
+            color: theme.palette.text.primary,
             font: {
               size: 11,
               family: theme.typography.fontFamily,
@@ -195,7 +197,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           title: {
             display: true,
             text: 'Analysis Period',
-            color: theme.palette.text.secondary,
+            color: theme.palette.text.primary,
             font: {
               size: 11,
               family: theme.typography.fontFamily,
@@ -210,7 +212,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           grid: {
             display: true,
             drawBorder: false,
-            color: alpha(theme.palette.divider, 0.05),
+            color: alpha(theme.palette.divider, 0.2),
             lineWidth: 1,
             drawTicks: false,
           },
@@ -218,7 +220,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
             display: false
           },
           ticks: {
-            color: theme.palette.text.secondary,
+            color: theme.palette.text.primary,
             font: {
               size: 11,
               family: theme.typography.fontFamily,
@@ -228,7 +230,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           title: {
             display: true,
             text: priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
-            color: theme.palette.text.secondary,
+            color: theme.palette.text.primary,
             font: {
               size: 11,
               family: theme.typography.fontFamily,
@@ -242,7 +244,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           position: 'right',
           grid: {
             drawOnChartArea: false,
-            color: alpha(theme.palette.divider, 0.05),
+            color: alpha(theme.palette.divider, 0.2),
             lineWidth: 1,
             drawTicks: false,
           },
@@ -250,7 +252,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
             display: false
           },
           ticks: {
-            color: theme.palette.text.secondary,
+            color: theme.palette.text.primary,
             font: {
               size: 11,
               family: theme.typography.fontFamily,
@@ -260,7 +262,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           title: {
             display: true,
             text: 'Conflict Intensity',
-            color: theme.palette.text.secondary,
+            color: theme.palette.text.primary,
             font: {
               size: 11,
               family: theme.typography.fontFamily,
@@ -304,7 +306,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           position: 'bottom',
           align: 'start',
           labels: {
-            color: theme.palette.text.secondary,
+            color: theme.palette.text.primary,
             font: {
               size: 11,
               family: theme.typography.fontFamily,
@@ -431,14 +433,14 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
       <Box
         sx={{
           width: '100%',
-          height: { xs: 200, sm: 250, md: 350 }, // Reduced heights
+          height: { xs: 200, sm: 250, md: 350 },
           position: 'relative',
           bgcolor: theme.palette.background.default,
           borderRadius: 1,
           border: `1px solid ${theme.palette.divider}`,
           overflow: 'hidden',
           mb: 3,
-          p: 1 // Add slight padding
+          p: 1
         }}
       >
         <Line 
@@ -452,12 +454,12 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
                 align: 'start',
                 labels: {
                   ...options.plugins.legend.labels,
-                  padding: 4, // Reduced padding
+                  padding: 4,
                   boxWidth: 8,
                   usePointStyle: true,
                 },
                 display: true,
-                maxHeight: 30 // Reduced height
+                maxHeight: 30
               }
             }
           }} 
@@ -467,8 +469,6 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
     </Box>
   );
 }
-
- 
 
 InteractiveChart.propTypes = {
   data: PropTypes.arrayOf(
@@ -486,4 +486,3 @@ InteractiveChart.propTypes = {
 };
 
 export default InteractiveChart;
-

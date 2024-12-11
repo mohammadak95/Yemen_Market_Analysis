@@ -8,7 +8,8 @@ import {
   useTheme, useMediaQuery, FormControl, InputLabel,
   Select, MenuItem, Checkbox, ListItemText, Typography,
   List, ListItemIcon, ListItem, ListItemButton,
-  FormHelperText
+  FormHelperText,
+  alpha,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import _ from 'lodash';
@@ -23,16 +24,30 @@ const capitalizeWords = (str) => {
     .join(' ');
 };
 
-// Constant for drawer width
 const drawerWidth = 240;
 
-const NavigationItem = ({ onClick = () => {}, selected = false, children }) => (
-  <ListItem disablePadding>
-    <ListItemButton onClick={onClick} selected={selected}>
-      {children}
-    </ListItemButton>
-  </ListItem>
-);
+const NavigationItem = ({ onClick = () => {}, selected = false, children }) => {
+  const theme = useTheme();
+  return (
+    <ListItem disablePadding>
+      <ListItemButton 
+        onClick={onClick} 
+        selected={selected}
+        sx={{
+          '&.Mui-selected': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+            color: theme.palette.primary.main,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.2),
+            },
+          },
+        }}
+      >
+        {children}
+      </ListItemButton>
+    </ListItem>
+  );
+};
 
 NavigationItem.propTypes = {
   onClick: PropTypes.func,
@@ -63,16 +78,6 @@ const useSpatialDataMemo = () => useSelector(
   _.isEqual
 );
 
-/**
- * CommoditySelector Component
- *
- * A selector for choosing a single commodity from a list.
- *
- * Props:
- * - commodities: Array of commodity strings.
- * - selectedCommodity: Currently selected commodity.
- * - onSelectCommodity: Function to handle commodity selection.
- */
 export const CommoditySelector = React.memo(({ 
   commodities = [], 
   selectedCommodity = '', 
@@ -81,8 +86,8 @@ export const CommoditySelector = React.memo(({
   const dispatch = useDispatch();
   const { data, loading, fetchData } = useDashboardData();
   const lastSelectionRef = useRef(selectedCommodity);
+  const theme = useTheme();
 
-  // Handle commodity selection
   const handleCommoditySelect = useCallback(async (event) => {
     const newCommodity = event.target.value;
     
@@ -90,21 +95,16 @@ export const CommoditySelector = React.memo(({
     lastSelectionRef.current = newCommodity;
 
     try {
-      // Update commodity in spatial slice
       dispatch({ 
         type: 'spatial/setSelectedCommodity', 
         payload: newCommodity 
       });
       
-      // Fetch all necessary data
       await Promise.all([
-        // Fetch spatial data
         dispatch(fetchAllSpatialData({ 
           commodity: newCommodity,
           date: "2020-10-01"
         })),
-        
-        // Notify parent component
         onSelectCommodity(newCommodity)
       ]);
     } catch (error) {
@@ -120,7 +120,15 @@ export const CommoditySelector = React.memo(({
       margin="normal"
       disabled={loading}
     >
-      <InputLabel id="commodity-select-label">
+      <InputLabel 
+        id="commodity-select-label"
+        sx={{
+          color: theme.palette.text.primary,
+          '&.Mui-focused': {
+            color: theme.palette.primary.main,
+          },
+        }}
+      >
         Select Commodity {loading ? '(Loading...)' : ''}
       </InputLabel>
       <Select
@@ -129,11 +137,38 @@ export const CommoditySelector = React.memo(({
         value={selectedCommodity}
         onChange={handleCommoditySelect}
         label={`Select Commodity ${loading ? '(Loading...)' : ''}`}
+        sx={{
+          '& .MuiSelect-select': {
+            color: theme.palette.text.primary,
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.divider,
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+          },
+        }}
       >
         {commodities.map(commodity => (
           <MenuItem 
             key={commodity} 
             value={commodity}
+            sx={{
+              color: theme.palette.text.primary,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              },
+              '&.Mui-selected': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.16),
+                },
+              },
+            }}
           >
             {capitalizeWords(commodity)}
           </MenuItem>
@@ -145,23 +180,8 @@ export const CommoditySelector = React.memo(({
 
 CommoditySelector.displayName = 'CommoditySelector';
 
-CommoditySelector.propTypes = {
-  commodities: PropTypes.arrayOf(PropTypes.string).isRequired,
-  selectedCommodity: PropTypes.string.isRequired,
-  onSelectCommodity: PropTypes.func.isRequired,
-};
-
-/**
- * RegimeSelector Component
- *
- * A multi-select component for choosing regimes.
- *
- * Props:
- * - regimes: Array of regime strings.
- * - selectedRegimes: Currently selected regimes.
- * - onSelectRegimes: Function to handle regimes selection.
- */
 const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
+  const theme = useTheme();
   const ITEM_HEIGHT = 48;
   const ITEM_PADDING_TOP = 8;
   const MenuProps = {
@@ -169,13 +189,24 @@ const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
       style: {
         maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
         width: 250,
+        backgroundColor: theme.palette.background.paper,
       },
     },
   };
 
   return (
     <FormControl fullWidth variant="outlined" size="small" margin="normal">
-      <InputLabel id="regime-select-label">Select Regimes</InputLabel>
+      <InputLabel 
+        id="regime-select-label"
+        sx={{
+          color: theme.palette.text.primary,
+          '&.Mui-focused': {
+            color: theme.palette.primary.main,
+          },
+        }}
+      >
+        Select Regimes
+      </InputLabel>
       <Select
         labelId="regime-select-label"
         id="regime-select"
@@ -187,11 +218,56 @@ const RegimeSelector = ({ regimes, selectedRegimes, onSelectRegimes }) => {
         aria-label="Select regimes"
         renderValue={(selected) => selected.map((regime) => capitalizeWords(regime)).join(', ')}
         MenuProps={MenuProps}
+        sx={{
+          '& .MuiSelect-select': {
+            color: theme.palette.text.primary,
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.divider,
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+          },
+        }}
       >
         {regimes.map((regime) => (
-          <MenuItem key={regime} value={regime}>
-            <Checkbox id={`regime-checkbox-${regime}`} checked={selectedRegimes.indexOf(regime) > -1} />
-            <ListItemText primary={capitalizeWords(regime)} />
+          <MenuItem 
+            key={regime} 
+            value={regime}
+            sx={{
+              color: theme.palette.text.primary,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              },
+              '&.Mui-selected': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.16),
+                },
+              },
+            }}
+          >
+            <Checkbox 
+              checked={selectedRegimes.indexOf(regime) > -1}
+              sx={{
+                color: theme.palette.text.secondary,
+                '&.Mui-checked': {
+                  color: theme.palette.primary.main,
+                },
+              }}
+            />
+            <ListItemText 
+              primary={capitalizeWords(regime)}
+              sx={{
+                '& .MuiTypography-root': {
+                  color: theme.palette.text.primary,
+                },
+              }}
+            />
           </MenuItem>
         ))}
       </Select>
@@ -205,26 +281,6 @@ RegimeSelector.propTypes = {
   onSelectRegimes: PropTypes.func.isRequired,
 };
 
-/**
- * Sidebar Component
- *
- * The main navigation sidebar component.
- *
- * Props:
- * - commodities: Array of commodity strings.
- * - regimes: Array of regime strings.
- * - selectedCommodity: Currently selected commodity.
- * - setSelectedCommodity: Function to update selected commodity.
- * - selectedAnalysis: Currently selected analysis type.
- * - setSelectedAnalysis: Function to update selected analysis.
- * - sidebarOpen: Boolean indicating if the sidebar is open.
- * - setSidebarOpen: Function to update sidebar open state.
- * - onMethodologyClick: Function to handle methodology button click.
- * - selectedRegimes: Array of currently selected regimes.
- * - setSelectedRegimes: Function to update selected regimes.
- * - onOpenWelcomeModal: Function to open the welcome modal.
- * - handleDrawerToggle: Function to toggle the drawer state.
- */
 export const Sidebar = ({
   commodities = [],
   regimes = [],
@@ -249,16 +305,13 @@ export const Sidebar = ({
   const handleCommodityChange = useCallback(async (newCommodity) => {
     if (newCommodity && newCommodity !== selectedCommodity) {
       try {
-        // Update commodity in Redux store
         await dispatch(fetchAllSpatialData({ 
           commodity: newCommodity, 
           date: "2020-10-01" 
         }));
         
-        // Update parent component
         setSelectedCommodity(newCommodity);
         
-        // Close sidebar on mobile
         if (!isSmUp) {
           setSidebarOpen(false);
         }
@@ -275,7 +328,6 @@ export const Sidebar = ({
         setSidebarOpen(false);
       }
 
-      // If spatial analysis is selected, fetch data if we have a commodity
       if (analysisType === 'spatial' && selectedCommodity) {
         dispatch(
           fetchSpatialData({
@@ -295,9 +347,38 @@ export const Sidebar = ({
     [setSelectedRegimes]
   );
 
+  const buttonSx = {
+    color: theme.palette.text.primary,
+    borderColor: theme.palette.divider,
+    '&:hover': {
+      borderColor: theme.palette.primary.main,
+      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    },
+    '&.MuiButton-contained': {
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.primary.contrastText,
+      '&:hover': {
+        backgroundColor: theme.palette.primary.dark,
+      },
+    },
+    '&.MuiButton-outlined': {
+      borderColor: theme.palette.divider,
+      '&:hover': {
+        borderColor: theme.palette.primary.main,
+        backgroundColor: alpha(theme.palette.primary.main, 0.08),
+      },
+    },
+  };
+
   const sidebarContent = useMemo(
     () => (
-      <Box sx={{ p: 2 }}>
+      <Box 
+        sx={{ 
+          p: 2,
+          backgroundColor: theme.palette.background.paper,
+          height: '100%',
+        }}
+      >
         <Stack spacing={3}>
           <CommoditySelector
             commodities={commodities}
@@ -312,12 +393,12 @@ export const Sidebar = ({
           />
 
           <Stack spacing={2}>
-            {/* Reordered buttons to include spatial model */}
             <Button
               variant={selectedAnalysis === 'spatial' ? 'contained' : 'outlined'}
               color="primary"
               fullWidth
               onClick={() => handleAnalysisChange('spatial')}
+              sx={buttonSx}
             >
               Spatial Analysis
             </Button>
@@ -326,6 +407,7 @@ export const Sidebar = ({
               color="primary"
               fullWidth
               onClick={() => handleAnalysisChange('ecm')}
+              sx={buttonSx}
             >
               ECM Model
             </Button>
@@ -334,6 +416,7 @@ export const Sidebar = ({
               color="primary"
               fullWidth
               onClick={() => handleAnalysisChange('priceDiff')}
+              sx={buttonSx}
             >
               Price Differential Model
             </Button>
@@ -342,6 +425,7 @@ export const Sidebar = ({
               color="primary"
               fullWidth
               onClick={() => handleAnalysisChange('spatial_model')}
+              sx={buttonSx}
             >
               Spatial Model
             </Button>
@@ -350,6 +434,7 @@ export const Sidebar = ({
               color="primary"
               fullWidth
               onClick={() => handleAnalysisChange('tvmii')}
+              sx={buttonSx}
             >
               TV-MII Index
             </Button>
@@ -357,7 +442,13 @@ export const Sidebar = ({
 
           <Button
             variant="contained"
-            sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }}
+            sx={{ 
+              backgroundColor: theme.palette.error.main,
+              color: '#ffffff',
+              '&:hover': {
+                backgroundColor: theme.palette.error.dark,
+              },
+            }}
             fullWidth
             onClick={onMethodologyClick}
             startIcon={<InfoIcon />}
@@ -367,7 +458,13 @@ export const Sidebar = ({
 
           <Button
             variant="contained"
-            sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#388e3c' } }}
+            sx={{ 
+              backgroundColor: theme.palette.success.main,
+              color: '#ffffff',
+              '&:hover': {
+                backgroundColor: theme.palette.success.dark,
+              },
+            }}
             fullWidth
             onClick={onOpenWelcomeModal}
             startIcon={<InfoIcon />}
@@ -378,9 +475,9 @@ export const Sidebar = ({
       </Box>
     ),
     [
+      theme,
       commodities,
       selectedCommodity,
-      setSelectedCommodity,
       regimes,
       selectedRegimes,
       handleRegimesSelect,
@@ -388,6 +485,7 @@ export const Sidebar = ({
       handleAnalysisChange,
       onMethodologyClick,
       onOpenWelcomeModal,
+      buttonSx,
     ]
   );
 
@@ -397,21 +495,23 @@ export const Sidebar = ({
       open={sidebarOpen}
       onClose={handleDrawerToggle}
       ModalProps={{
-        keepMounted: true, // Better open performance on mobile
+        keepMounted: true,
       }}
       sx={{
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
+          backgroundColor: theme.palette.background.paper,
+          borderRight: `1px solid ${theme.palette.divider}`,
           [theme.breakpoints.down('sm')]: {
-            top: '56px', // Height of mobile AppBar
+            top: '56px',
             height: 'calc(100% - 56px)',
           },
         },
       }}
     >
       <Toolbar />
-      <Divider />
+      <Divider sx={{ borderColor: theme.palette.divider }} />
       {sidebarContent}
     </Drawer>
   );

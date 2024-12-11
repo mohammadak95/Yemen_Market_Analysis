@@ -190,7 +190,10 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <EnhancedErrorBoundary>
-        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+        <Box 
+          sx={{ display: 'flex', minHeight: '100vh' }}
+          className={isDarkMode ? 'mui-dark-mode' : ''}
+        >
           <StyledAppBar position="fixed" open={sidebarOpen && isSmUp}>
             <Toolbar>
               <IconButton

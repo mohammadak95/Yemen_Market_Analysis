@@ -1,6 +1,6 @@
 // src/styles/theme.js
 
-import { createTheme } from '@mui/material/styles';
+import { createTheme, alpha } from '@mui/material/styles';
 
 const baseTheme = {
   breakpoints: {
@@ -101,12 +101,19 @@ const lightTheme = createTheme({
     background: {
       default: '#f8f9fa',
       paper: '#ffffff',
+      sidebar: '#ffffff',
     },
     text: {
       primary: '#1a1a1a',
       secondary: '#4f4f4f',
     },
     divider: 'rgba(0, 0, 0, 0.12)',
+    action: {
+      hover: alpha('#000000', 0.04),
+      selected: alpha(worldBankColors.primary.main, 0.08),
+      selectedOpacity: 0.08,
+      focus: alpha(worldBankColors.primary.main, 0.12),
+    },
   },
 });
 
@@ -119,18 +126,72 @@ const darkTheme = createTheme({
     background: {
       default: '#1a1a1a',
       paper: '#262626',
+      sidebar: '#1e1e1e',
     },
     text: {
       primary: '#ffffff',
       secondary: '#b3b3b3',
     },
     divider: 'rgba(255, 255, 255, 0.12)',
+    action: {
+      hover: alpha('#ffffff', 0.08),
+      selected: alpha(worldBankColors.primary.light, 0.16),
+      selectedOpacity: 0.16,
+      focus: alpha(worldBankColors.primary.light, 0.12),
+    },
   },
 });
 
 // Theme Overrides
 const themeOverrides = {
   components: {
+    MuiCssBaseline: {
+      styleOverrides: (theme) => ({
+        ':root': {
+          '--mui-palette-primary-main': theme.palette.primary.main,
+          '--mui-palette-background-paper': theme.palette.background.paper,
+          '--mui-palette-background-default': theme.palette.background.default,
+          '--mui-palette-text-primary': theme.palette.text.primary,
+          '--mui-palette-text-secondary': theme.palette.text.secondary,
+          '--mui-palette-action-hover': theme.palette.action.hover,
+          '--mui-shadow-1': theme.shadows[1],
+          '--mui-shadow-2': theme.shadows[2],
+        },
+      }),
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: ({ theme }) => ({
+          backgroundColor: theme.palette.background.sidebar,
+          backgroundImage: 'none',
+          '& .MuiDivider-root': {
+            borderColor: theme.palette.divider,
+          },
+        }),
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          '&.Mui-selected': {
+            backgroundColor: theme.palette.action.selected,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity + 0.04),
+            },
+          },
+          '&:hover': {
+            backgroundColor: theme.palette.action.hover,
+          },
+        }),
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        icon: ({ theme }) => ({
+          color: theme.palette.text.secondary,
+        }),
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
@@ -145,6 +206,13 @@ const themeOverrides = {
             boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
           },
         },
+        outlined: ({ theme }) => ({
+          borderColor: theme.palette.divider,
+          '&:hover': {
+            borderColor: theme.palette.primary.main,
+            backgroundColor: alpha(theme.palette.primary.main, 0.04),
+          },
+        }),
       },
     },
     MuiPaper: {
@@ -188,6 +256,27 @@ const themeOverrides = {
             },
           },
         },
+      },
+    },
+    // Chart theme overrides
+    MuiChart: {
+      styleOverrides: {
+        root: (theme) => ({
+          '& .recharts-cartesian-grid-horizontal line, & .recharts-cartesian-grid-vertical line': {
+            stroke: theme.palette.divider,
+          },
+          '& .recharts-text': {
+            fill: theme.palette.text.primary,
+          },
+          '& .recharts-legend-item-text': {
+            color: theme.palette.text.primary,
+          },
+          '& .recharts-tooltip': {
+            backgroundColor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
+            boxShadow: theme.shadows[2],
+          },
+        }),
       },
     },
   },

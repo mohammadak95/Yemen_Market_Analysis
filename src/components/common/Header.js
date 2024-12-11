@@ -9,25 +9,67 @@ import { styled } from '@mui/material/styles';
 
 const TitleTypography = styled(Typography)(({ theme }) => ({
   flexGrow: 1,
+  fontWeight: 600,
+  color: theme.palette.mode === 'dark' 
+    ? theme.palette.primary.contrastText
+    : theme.palette.primary.contrastText,
+  transition: theme.transitions.create(['color'], {
+    duration: theme.transitions.duration.short,
+  }),
   [theme.breakpoints.down('sm')]: {
     fontSize: '1rem',
   },
 }));
 
+const StyledIconButton = styled(IconButton)(({ theme }) => ({
+  color: theme.palette.primary.contrastText,
+  transition: theme.transitions.create(['color', 'background-color'], {
+    duration: theme.transitions.duration.short,
+  }),
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'dark' 
+      ? 'rgba(255, 255, 255, 0.08)'
+      : 'rgba(0, 0, 0, 0.08)',
+  },
+  '& .MuiSvgIcon-root': {
+    transition: theme.transitions.create(['transform'], {
+      duration: theme.transitions.duration.short,
+    }),
+  },
+  '&:hover .MuiSvgIcon-root': {
+    transform: 'rotate(30deg)',
+  },
+}));
+
 const Header = ({ isDarkMode, toggleDarkMode }) => {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        width: '100%',
+        px: 2,
+        transition: (theme) => theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      }}
+    >
       <TitleTypography variant="h6" noWrap component="div">
         Yemen Market Analysis Dashboard
       </TitleTypography>
       
-      <IconButton
+      <StyledIconButton
         onClick={toggleDarkMode}
-        color="inherit"
-        aria-label="toggle dark mode"
+        aria-label={isDarkMode ? 'switch to light mode' : 'switch to dark mode'}
+        size="large"
+        edge="end"
       >
-        {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-      </IconButton>
+        {isDarkMode ? (
+          <Brightness7Icon />
+        ) : (
+          <Brightness4Icon />
+        )}
+      </StyledIconButton>
     </Box>
   );
 };
