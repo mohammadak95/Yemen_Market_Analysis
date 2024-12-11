@@ -8,9 +8,14 @@ import {
   Alert,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Collapse,
+  Button
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import ShockMap from './ShockMap';
 import ShockLegend from './ShockLegend';
@@ -22,11 +27,17 @@ import {
   selectShockMetrics,
   selectShockAnalysisData
 } from '../../../../selectors/dateSpecificSelectors';
+import { 
+  SHOCK_THRESHOLDS,
+  PROPAGATION_THRESHOLDS,
+  shockValidation 
+} from './types';
 
 const ShockPropagationMap = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const [showMethodology, setShowMethodology] = useState(false);
 
   // Get data from Redux store using selectors
   const geometry = useSelector(state => state.spatial.data.geometry);
@@ -125,15 +136,23 @@ const ShockPropagationMap = () => {
 
       {/* Main Map */}
       <Grid item xs={12}>
-        <Paper sx={{ p: 2, height: 600, position: 'relative' }}>
-          <ShockMap
-            shocks={shocks}
-            geometry={geometry}
-            selectedRegion={selectedRegion}
-            onRegionSelect={setSelectedRegion}
-          />
-          
-          <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+        <Paper 
+          sx={{ 
+            p: 2, 
+            height: 600, 
+            position: 'relative',
+            overflow: 'hidden' // Prevent legend from causing scrollbars
+          }}
+        >
+          <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+            <ShockMap
+              shocks={shocks}
+              geometry={geometry}
+              selectedRegion={selectedRegion}
+              onRegionSelect={setSelectedRegion}
+            />
+            
+            {/* Legend positioned relative to map container */}
             <ShockLegend />
           </Box>
         </Paper>
@@ -180,76 +199,93 @@ const ShockPropagationMap = () => {
         </Grid>
       )}
 
-      {/* Analysis Summary */}
+      {/* Methodology */}
       <Grid item xs={12}>
         <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            About Price Shock Analysis
-          </Typography>
-          <Typography>
-            This analysis examines the propagation of price shocks through Yemen's market
-            network. It helps identify shock origins, propagation patterns, and market
-            vulnerabilities.
-          </Typography>
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            <Grid item xs={12} md={4}>
-              <Typography variant="subtitle2" gutterBottom>
-                Shock Detection
+          <Button
+            fullWidth
+            onClick={() => setShowMethodology(!showMethodology)}
+            endIcon={showMethodology ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            startIcon={<InfoOutlinedIcon />}
+          >
+            Methodology
+          </Button>
+          <Collapse in={showMethodology}>
+            <Box sx={{ mt: 2, p: 2 }}>
+              <Typography variant="body2" paragraph>
+                This analysis employs advanced statistical methods to identify and analyze price shocks
+                across Yemen's market network. The methodology combines temporal price analysis with
+                spatial propagation patterns to understand market vulnerabilities and shock transmission
+                mechanisms.
               </Typography>
+
               <List dense>
                 <ListItem>
-                  <ListItemText primary="Significant price changes beyond normal volatility" />
+                  <ListItemText
+                    primary={
+                      <Typography variant="subtitle2" color="primary">
+                        Shock Detection
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="textSecondary">
+                        Identifies significant price changes using statistical thresholds,
+                        accounting for historical volatility and seasonal patterns
+                      </Typography>
+                    }
+                  />
                 </ListItem>
                 <ListItem>
-                  <ListItemText primary="Magnitude calculation based on historical patterns" />
+                  <ListItemText
+                    primary={
+                      <Typography variant="subtitle2" color="primary">
+                        Propagation Analysis
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="textSecondary">
+                        Tracks shock transmission through market networks using spatial
+                        econometric techniques and network analysis
+                      </Typography>
+                    }
+                  />
                 </ListItem>
                 <ListItem>
-                  <ListItemText primary="Classification of shock types and origins" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Temporal and spatial shock patterns" />
+                  <ListItemText
+                    primary={
+                      <Typography variant="subtitle2" color="primary">
+                        Impact Assessment
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="textSecondary">
+                        Evaluates market resilience and vulnerability through shock magnitude,
+                        duration, and geographic spread metrics
+                      </Typography>
+                    }
+                  />
                 </ListItem>
               </List>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="subtitle2" gutterBottom>
-                Propagation Analysis
+
+              <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }} color="primary">
+                Shock Classification:
               </Typography>
-              <List dense>
-                <ListItem>
-                  <ListItemText primary="Shock transmission through market networks" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Speed and direction of propagation" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Market connectivity influence" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Geographic and temporal patterns" />
-                </ListItem>
-              </List>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="subtitle2" gutterBottom>
-                Impact Assessment
+              <Typography variant="body2" component="div">
+                • Severe Shock (&gt;{SHOCK_THRESHOLDS.SEVERE * 100}%): Major market disruption<br/>
+                • Moderate Shock ({SHOCK_THRESHOLDS.MODERATE * 100}-{SHOCK_THRESHOLDS.SEVERE * 100}%): Significant price movement<br/>
+                • Mild Shock ({SHOCK_THRESHOLDS.MILD * 100}-{SHOCK_THRESHOLDS.MODERATE * 100}%): Notable price deviation
               </Typography>
-              <List dense>
-                <ListItem>
-                  <ListItemText primary="Market vulnerability to shocks" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Shock absorption and resilience" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Affected market populations" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Recovery patterns and duration" />
-                </ListItem>
-              </List>
-            </Grid>
-          </Grid>
+
+              <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }} color="primary">
+                Propagation Speed:
+              </Typography>
+              <Typography variant="body2" component="div">
+                • Fast (&lt;{PROPAGATION_THRESHOLDS.TIME.FAST} days): Rapid shock transmission<br/>
+                • Medium ({PROPAGATION_THRESHOLDS.TIME.FAST}-{PROPAGATION_THRESHOLDS.TIME.MEDIUM} days): Gradual spread<br/>
+                • Slow (&gt;{PROPAGATION_THRESHOLDS.TIME.MEDIUM} days): Delayed impact
+              </Typography>
+            </Box>
+          </Collapse>
         </Paper>
       </Grid>
     </Grid>

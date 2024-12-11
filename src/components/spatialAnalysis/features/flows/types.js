@@ -85,6 +85,36 @@ export const ANALYSIS_PARAMS = {
 
 // Helper functions for flow validation
 export const flowValidation = {
+  // Filter data by date - handles multiple data structures (flows, shocks, time series)
+  filterFlowsByDate: (data, selectedDate) => {
+    if (!Array.isArray(data) || !selectedDate) {
+      console.debug('Invalid parameters for filterFlowsByDate:', { 
+        hasData: Boolean(data), 
+        isArray: Array.isArray(data),
+        selectedDate 
+      });
+      return [];
+    }
+
+    // Convert selectedDate to YYYY-MM format if it's in YYYY-MM-DD format
+    const targetDate = selectedDate.substring(0, 7);
+
+    return data.filter(item => {
+      if (!item) return false;
+
+      // Handle different date field names
+      const itemDate = item.date || item.month || null;
+      if (!itemDate) {
+        console.debug('Missing date field in item:', item);
+        return false;
+      }
+
+      // Convert item date to YYYY-MM format for comparison
+      const normalizedDate = itemDate.substring(0, 7);
+      return normalizedDate === targetDate;
+    });
+  },
+
   // Validate coordinates structure
   isValidCoordinates: (coordinates) => {
     const isValid = coordinates &&

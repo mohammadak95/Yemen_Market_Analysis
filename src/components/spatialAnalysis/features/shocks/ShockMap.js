@@ -5,12 +5,17 @@ import { useTheme } from '@mui/material/styles';
 import { GeoJSON, CircleMarker } from 'react-leaflet';
 import chroma from 'chroma-js';
 
-import Legend from '../../atoms/Legend';
 import Tooltip from '../../atoms/Tooltip';
 import MapControls from '../../molecules/MapControls';
 import BaseMap from '../../molecules/BaseMap';
 import { safeGeoJSONProcessor } from '../../utils/geoJSONProcessor';
 import { transformRegionName, getRegionCoordinates } from '../../utils/spatialUtils';
+import { 
+  SHOCK_COLORS, 
+  VISUALIZATION_PARAMS,
+  SHOCK_THRESHOLDS,
+  shockValidation 
+} from './types';
 
 const ShockMap = ({
   shocks,
@@ -23,37 +28,53 @@ const ShockMap = ({
 
   // Create color scales for different shock types
   const colorScales = useMemo(() => ({
-    'price_surge': chroma.scale(['#fee0d2', '#de2d26']),
-    'price_drop': chroma.scale(['#e5f5e0', '#31a354'])
+    'price_surge': chroma.scale([SHOCK_COLORS.INACTIVE, SHOCK_COLORS.PRICE_SURGE]),
+    'price_drop': chroma.scale([SHOCK_COLORS.INACTIVE, SHOCK_COLORS.PRICE_DROP])
   }), []);
 
   // Process shock data with coordinates
   const processedShocks = useMemo(() => {
     if (!shocks?.length) return [];
 
+    // Filter valid shocks
+    const validShocks = shocks.filter(shockValidation.isValidShock);
+
     // Calculate max magnitude for each shock type
-    const maxMagnitudes = shocks.reduce((acc, shock) => {
+    const maxMagnitudes = validShocks.reduce((acc, shock) => {
+      const magnitude = shockValidation.getShockMagnitude(shock);
       if (!acc[shock.shock_type]) {
-        acc[shock.shock_type] = shock.magnitude;
+        acc[shock.shock_type] = magnitude;
       } else {
-        acc[shock.shock_type] = Math.max(acc[shock.shock_type], shock.magnitude);
+        acc[shock.shock_type] = Math.max(acc[shock.shock_type], magnitude);
       }
       return acc;
     }, {});
 
-    return shocks.map(shock => {
+    return validShocks.map(shock => {
       const coords = getRegionCoordinates(shock.region);
       if (!coords) return null;
 
-      const normalizedMagnitude = shock.magnitude / maxMagnitudes[shock.shock_type];
+      const magnitude = shockValidation.getShockMagnitude(shock);
+      const normalizedMagnitude = magnitude / maxMagnitudes[shock.shock_type];
       const colorScale = colorScales[shock.shock_type] || colorScales['price_surge'];
+      const severity = shockValidation.getShockSeverity(magnitude);
+      
+      // Calculate size based on severity and visualization params
+      const size = VISUALIZATION_PARAMS.MIN_SHOCK_SIZE + 
+        (normalizedMagnitude * (VISUALIZATION_PARAMS.MAX_SHOCK_SIZE - VISUALIZATION_PARAMS.MIN_SHOCK_SIZE));
+      
+      // Calculate opacity based on severity
+      const opacity = VISUALIZATION_PARAMS.MIN_OPACITY + 
+        (normalizedMagnitude * (VISUALIZATION_PARAMS.MAX_OPACITY - VISUALIZATION_PARAMS.MIN_OPACITY));
       
       return {
         ...shock,
         coordinates: coords,
         color: colorScale(normalizedMagnitude).hex(),
-        radius: 5 + (normalizedMagnitude * 15),
-        normalizedMagnitude
+        radius: size,
+        opacity,
+        normalizedMagnitude,
+        severity
       };
     }).filter(Boolean);
   }, [shocks, colorScales]);
@@ -106,26 +127,13 @@ const ShockMap = ({
     );
     
     return {
-      fillColor: hasShock ? theme.palette.error.light : theme.palette.grey[300],
+      fillColor: hasShock ? SHOCK_COLORS.PROPAGATION : theme.palette.grey[300],
       weight: isSelected ? 2 : 1,
       opacity: 1,
-      color: isSelected ? theme.palette.secondary.main : 'white',
-      fillOpacity: hasShock ? 0.6 : 0.3
+      color: isSelected ? SHOCK_COLORS.SELECTED : SHOCK_COLORS.INACTIVE,
+      fillOpacity: hasShock ? VISUALIZATION_PARAMS.PROPAGATION_OPACITY : 0.3
     };
   }, [processedShocks, selectedRegion, theme]);
-
-  // Create legend items
-  const legendItems = useMemo(() => [
-    { color: colorScales['price_surge'](1).hex(), label: 'High Price Surge' },
-    { color: colorScales['price_surge'](0).hex(), label: 'Low Price Surge' },
-    { color: colorScales['price_drop'](1).hex(), label: 'High Price Drop' },
-    { color: colorScales['price_drop'](0).hex(), label: 'Low Price Drop' },
-    { 
-      color: theme.palette.error.light, 
-      label: 'Affected Region',
-      style: { opacity: 0.6 }
-    }
-  ], [theme, colorScales]);
 
   if (!processedGeoJSON) {
     return (
@@ -170,8 +178,8 @@ const ShockMap = ({
               fillColor: shock.color,
               color: 'white',
               weight: 1,
-              opacity: 0.8,
-              fillOpacity: 0.6
+              opacity: shock.opacity,
+              fillOpacity: shock.opacity * 0.8
             }}
           >
             <Tooltip
@@ -181,6 +189,10 @@ const ShockMap = ({
                   label: 'Magnitude',
                   value: shock.magnitude,
                   format: 'percentage'
+                },
+                {
+                  label: 'Severity',
+                  value: shock.severity.toUpperCase()
                 },
                 {
                   label: 'Current Price',
@@ -207,11 +219,6 @@ const ShockMap = ({
         onZoomOut={() => {}}
         onReset={() => {}}
         onRefresh={() => {}}
-      />
-
-      <Legend
-        title="Price Shocks"
-        items={legendItems}
       />
     </Box>
   );

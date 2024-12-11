@@ -8,38 +8,34 @@ import {
 import { useTheme } from '@mui/material/styles';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import TimelineIcon from '@mui/icons-material/Timeline';
+
+import { 
+  SHOCK_COLORS, 
+  SHOCK_THRESHOLDS
+} from './types';
 
 const ShockLegend = () => {
   const theme = useTheme();
 
   const shockTypes = [
     {
-      type: 'Positive',
-      icon: <TrendingUpIcon sx={{ color: theme.palette.success.main }} />,
-      description: 'Price increase beyond normal volatility',
-      color: theme.palette.success.light
+      type: 'Price Surge',
+      icon: <TrendingUpIcon sx={{ color: SHOCK_COLORS.PRICE_SURGE }} />,
+      color: SHOCK_COLORS.PRICE_SURGE,
+      levels: [
+        { label: 'Severe', value: `>${(SHOCK_THRESHOLDS.SEVERE * 100).toFixed(0)}%`, opacity: 1 },
+        { label: 'Moderate', value: `>${(SHOCK_THRESHOLDS.MODERATE * 100).toFixed(0)}%`, opacity: 0.7 }
+      ]
     },
     {
-      type: 'Negative',
-      icon: <TrendingDownIcon sx={{ color: theme.palette.error.main }} />,
-      description: 'Price decrease beyond normal volatility',
-      color: theme.palette.error.light
-    },
-    {
-      type: 'Propagation',
-      icon: <TimelineIcon sx={{ color: theme.palette.secondary.main }} />,
-      description: 'Shock transmission between markets',
-      color: theme.palette.secondary.light
+      type: 'Price Drop',
+      icon: <TrendingDownIcon sx={{ color: SHOCK_COLORS.PRICE_DROP }} />,
+      color: SHOCK_COLORS.PRICE_DROP,
+      levels: [
+        { label: 'Severe', value: `>${(SHOCK_THRESHOLDS.SEVERE * 100).toFixed(0)}%`, opacity: 1 },
+        { label: 'Moderate', value: `>${(SHOCK_THRESHOLDS.MODERATE * 100).toFixed(0)}%`, opacity: 0.7 }
+      ]
     }
-  ];
-
-  const magnitudeScale = [
-    { label: 'Severe', color: '#a50f15', value: '> 50%' },
-    { label: 'High', color: '#de2d26', value: '30-50%' },
-    { label: 'Moderate', color: '#fb6a4a', value: '15-30%' },
-    { label: 'Low', color: '#fcae91', value: '5-15%' },
-    { label: 'Minimal', color: '#fee5d9', value: '< 5%' }
   ];
 
   return (
@@ -47,143 +43,70 @@ const ShockLegend = () => {
       elevation={2}
       sx={{
         position: 'absolute',
-        top: 20,
-        right: 20,
-        width: 280,
-        p: 2,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        zIndex: 1000
+        top: theme.spacing(2),
+        right: theme.spacing(2),
+        width: 200,
+        p: 1.5,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        zIndex: 400,
+        border: `1px solid ${theme.palette.divider}`,
+        boxShadow: theme.shadows[2]
       }}
     >
       <Typography variant="subtitle2" gutterBottom>
-        Price Shock Analysis
+        Price Shocks
       </Typography>
 
-      {/* Shock Types */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="caption" color="textSecondary">
-          Shock Types
-        </Typography>
-        {shockTypes.map((shock, index) => (
-          <Box
-            key={index}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              mt: 1
-            }}
-          >
-            {shock.icon}
-            <Box>
-              <Typography variant="body2">
-                {shock.type}
-              </Typography>
-              <Typography variant="caption" color="textSecondary">
-                {shock.description}
-              </Typography>
-            </Box>
-          </Box>
-        ))}
-      </Box>
-
-      <Divider sx={{ my: 1.5 }} />
-
-      {/* Magnitude Scale */}
-      <Box>
-        <Typography variant="caption" color="textSecondary">
-          Magnitude Scale
-        </Typography>
-        {magnitudeScale.map((level, index) => (
-          <Box
-            key={index}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              mt: 1
-            }}
-          >
-            <Box
-              sx={{
-                width: 20,
-                height: 20,
-                backgroundColor: level.color,
-                borderRadius: '2px',
-                border: `1px solid ${theme.palette.divider}`
-              }}
-            />
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2">
-                {level.label}
-              </Typography>
-              <Typography variant="caption" color="textSecondary">
-                {level.value}
-              </Typography>
-            </Box>
-          </Box>
-        ))}
-      </Box>
-
-      <Divider sx={{ my: 1.5 }} />
-
-      {/* Propagation Patterns */}
-      <Box>
-        <Typography variant="caption" color="textSecondary">
-          Propagation Patterns
-        </Typography>
-        <Box sx={{ mt: 1 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              mb: 1
-            }}
-          >
-            <Box
-              sx={{
-                width: 20,
-                height: 2,
-                backgroundColor: theme.palette.secondary.main
-              }}
-            />
+      {shockTypes.map((shockType, index) => (
+        <React.Fragment key={index}>
+          {index > 0 && <Divider sx={{ my: 1 }} />}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            {shockType.icon}
             <Typography variant="body2">
-              Direct Impact
+              {shockType.type}
             </Typography>
           </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
+          {shockType.levels.map((level, levelIndex) => (
             <Box
+              key={levelIndex}
               sx={{
-                width: 20,
-                height: 0,
-                borderTop: `2px dashed ${theme.palette.secondary.main}`
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                ml: 3,
+                mt: 0.5
               }}
-            />
-            <Typography variant="body2">
-              Secondary Impact
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+            >
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  backgroundColor: shockType.color,
+                  borderRadius: '2px',
+                  opacity: level.opacity
+                }}
+              />
+              <Typography variant="caption" color="textSecondary">
+                {level.label} ({level.value})
+              </Typography>
+            </Box>
+          ))}
+        </React.Fragment>
+      ))}
 
-      <Box
-        sx={{
-          mt: 2,
-          p: 1,
-          bgcolor: theme.palette.info.light,
-          borderRadius: 1
-        }}
-      >
-        <Typography variant="caption" sx={{ color: theme.palette.info.contrastText }}>
-          Click on regions to view detailed shock metrics and propagation patterns.
-          Use the time control to explore shock evolution.
+      <Divider sx={{ my: 1 }} />
+      
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box
+          sx={{
+            width: 12,
+            height: 12,
+            backgroundColor: SHOCK_COLORS.PROPAGATION,
+            borderRadius: '2px'
+          }}
+        />
+        <Typography variant="caption" color="textSecondary">
+          Affected Region
         </Typography>
       </Box>
     </Paper>
