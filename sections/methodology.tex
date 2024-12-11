@@ -109,22 +109,32 @@ We analyze price differentials between markets:
 where $D_{ij}$ measures distance, $C_{ijt}$ captures conflict intensity, and $E_t$ represents exchange rate effects.
 
 \subsection{Diagnostic Tests}
-We implement comprehensive diagnostic testing following \citet{jarque1987test} and \citet{breusch1979simple}:
+To ensure the robustness and reliability of our econometric models, we implement comprehensive diagnostic testing following \citet{jarque1987test} and \citet{breusch1979simple}. These diagnostic tests help identify potential issues such as non-normality of residuals, heteroskedasticity, serial correlation, and spatial autocorrelation, which, if unaddressed, could compromise the validity of our model estimates and inferences.
 
 \subsubsection{Statistical Tests}
+We conduct a series of statistical tests to evaluate the underlying assumptions of our models:
+
 \begin{itemize}
 \setlength{\itemsep}{0pt}  % Reduce spacing between items
-\item Residual normality (Jarque-Bera test)
-\item Heteroskedasticity (Breusch-Pagan test)
-\item Serial correlation (Durbin-Watson test)
-\item Spatial autocorrelation (Moran's I)
+\item \textbf{Residual Normality (Jarque-Bera Test)}: The Jarque-Bera test assesses whether the residuals of our model follow a normal distribution. Normality of residuals is crucial for the validity of hypothesis tests and confidence intervals. Deviations from normality may indicate model misspecification, such as omitted variables or incorrect functional forms, and can affect the reliability of our inference.
+
+\item \textbf{Heteroskedasticity (Breusch-Pagan Test)}: The Breusch-Pagan test examines whether the variance of the residuals is constant (homoskedasticity) or varies with the level of an explanatory variable (heteroskedasticity). Heteroskedasticity can lead to inefficient estimates and biased standard errors, which in turn affect the significance tests of our coefficients.
+
+\item \textbf{Serial Correlation (Durbin-Watson Test)}: The Durbin-Watson test detects the presence of autocorrelation in the residuals, which occurs when residuals are correlated across time. Autocorrelation violates the assumption of independent error terms and can result from model misspecification, such as omitted lagged variables. It affects the efficiency of our estimators and the validity of hypothesis tests.
+
+\item \textbf{Spatial Autocorrelation (Moran's I)}: Moran's I test evaluates the presence of spatial autocorrelation in the residuals, indicating whether residuals from nearby observations are correlated. Spatial autocorrelation violates the assumption of independence in spatial econometric models and suggests that spatial dependence needs to be explicitly modeled to obtain unbiased and efficient estimates.
 \end{itemize}
 
 \subsubsection{Robustness Checks}
+To verify the stability and reliability of our findings, we perform a series of robustness checks:
+
 \begin{itemize}
 \setlength{\itemsep}{0pt}  % Reduce spacing between items
-\item Alternative sample periods
-\item Different lag specifications
-\item Various spatial weight matrices
-\item Multiple threshold specifications
+\item \textbf{Alternative Sample Periods}: We test the consistency of our results by analyzing different time frames. This helps ensure that our findings are not driven by specific events or anomalies within a particular period.
+
+\item \textbf{Different Lag Specifications}: We explore various lag lengths in our time-series models to determine whether the choice of lag structure affects our results. Consistent findings across different lag specifications enhance the credibility of our conclusions.
+
+\item \textbf{Various Spatial Weight Matrices}: To account for different notions of spatial relationships, we utilize multiple spatial weight matrices (e.g., contiguity-based, distance-based) and assess whether our spatial econometric estimates remain stable across these specifications.
+
+\item \textbf{Multiple Threshold Specifications}: We experiment with different threshold values in our models to examine whether the identification of key relationships is sensitive to the choice of threshold. Robustness to threshold variations strengthens the generalizability of our results.
 \end{itemize}
