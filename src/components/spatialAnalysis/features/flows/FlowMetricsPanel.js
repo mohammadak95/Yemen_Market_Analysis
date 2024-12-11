@@ -34,7 +34,7 @@ import MetricProgress from '../../molecules/MetricProgress';
 import { 
   FLOW_THRESHOLDS, 
   NETWORK_THRESHOLDS,
-  FLOW_STATUS 
+  FLOW_STATUS
 } from './types';
 
 // Helper function to calculate statistical significance
@@ -57,63 +57,73 @@ const normalCDF = (x) => {
 };
 
 const FlowMetricsPanel = ({
-  flows,
+  flows = [],
   selectedFlow,
-  metrics,
+  metrics = {},
   timeRange
 }) => {
   const theme = useTheme();
   const [showMethodology, setShowMethodology] = useState(false);
 
-  // Calculate comprehensive flow metrics with error handling
+  // Calculate comprehensive flow metrics
   const flowMetrics = useMemo(() => {
     if (!Array.isArray(flows) || !flows.length) {
-      console.warn('Invalid or empty flows data');
+      console.debug('No flows available for metrics calculation');
       return null;
     }
 
     try {
-      // Basic flow metrics
-      const flowValues = flows.map(f => f.total_flow || 0);
+      // Filter valid flows
+      const validFlows = flows.filter(flow => 
+        flow && 
+        typeof flow.total_flow === 'number' && 
+        !isNaN(flow.total_flow)
+      );
+
+      if (!validFlows.length) {
+        console.debug('No valid flows found for metrics calculation');
+        return null;
+      }
+
+      // Calculate basic metrics
+      const flowValues = validFlows.map(f => f.total_flow);
       const totalFlow = flowValues.reduce((sum, val) => sum + val, 0);
-      const mean = totalFlow / flowValues.length;
+      const avgFlow = totalFlow / flowValues.length;
+      const maxFlow = Math.max(...flowValues);
+      const minFlow = Math.min(...flowValues);
+
+      // Calculate standard deviation
       const variance = flowValues.reduce((sum, val) => 
-        sum + Math.pow(val - mean, 2), 0
-      ) / flowValues.length;
+        sum + Math.pow(val - avgFlow, 2), 0) / flowValues.length;
       const stdDev = Math.sqrt(variance);
 
-      // Advanced metrics
+      // Calculate quartiles and IQR
       const sortedFlows = [...flowValues].sort((a, b) => a - b);
-      const medianFlow = sortedFlows[Math.floor(flowValues.length / 2)];
       const q1 = sortedFlows[Math.floor(flowValues.length * 0.25)];
       const q3 = sortedFlows[Math.floor(flowValues.length * 0.75)];
       const iqr = q3 - q1;
 
       // Network metrics
       const activeFlows = flowValues.filter(f => f > 0).length;
-      const maxPossibleFlows = flows.length * (flows.length - 1) / 2;
-      const flowDensity = activeFlows / maxPossibleFlows;
+      const maxPossibleFlows = validFlows.length * (validFlows.length - 1) / 2;
+      const flowDensity = maxPossibleFlows > 0 ? activeFlows / maxPossibleFlows : 0;
 
       // Distribution metrics
-      const skewness = flowValues.reduce((sum, val) => 
-        sum + Math.pow((val - mean) / stdDev, 3), 0
-      ) / flowValues.length;
+      const skewness = stdDev > 0 ? flowValues.reduce((sum, val) => 
+        sum + Math.pow((val - avgFlow) / stdDev, 3), 0) / flowValues.length : 0;
 
-      const kurtosis = flowValues.reduce((sum, val) => 
-        sum + Math.pow((val - mean) / stdDev, 4), 0
-      ) / flowValues.length - 3;
+      const kurtosis = stdDev > 0 ? flowValues.reduce((sum, val) => 
+        sum + Math.pow((val - avgFlow) / stdDev, 4), 0) / flowValues.length - 3 : 0;
 
       return {
-        totalFlow,
-        avgFlow: mean,
-        maxFlow: Math.max(...flowValues),
-        minFlow: Math.min(...flowValues),
-        medianFlow,
-        stdDev,
-        flowRange: sortedFlows[sortedFlows.length - 1] - sortedFlows[0],
-        coefficientOfVariation: stdDev / mean,
-        activeFlows,
-        flowDensity,
+        basic: {
+          totalFlow,
+          avgFlow,
+          maxFlow,
+          minFlow,
+          stdDev,
+          count: validFlows.length
+        },
         distribution: {
           q1,
           q3,
@@ -123,9 +133,8 @@ const FlowMetricsPanel = ({
         },
         networkMetrics: {
           density: flowDensity,
-          connectivity: activeFlows / flows.length,
-          centralization: maxPossibleFlows > 0 ? 
-            activeFlows / maxPossibleFlows : 0
+          connectivity: validFlows.length > 0 ? activeFlows / validFlows.length : 0,
+          centralization: maxPossibleFlows > 0 ? activeFlows / maxPossibleFlows : 0
         }
       };
     } catch (error) {
@@ -134,7 +143,7 @@ const FlowMetricsPanel = ({
     }
   }, [flows]);
 
-  // Calculate selected flow metrics with enhanced analysis
+  // Calculate selected flow metrics
   const selectedFlowMetrics = useMemo(() => {
     if (!selectedFlow || !flowMetrics) return null;
 
@@ -144,27 +153,31 @@ const FlowMetricsPanel = ({
         f.target === selectedFlow.target
       );
 
-      if (!flow) return null;
+      if (!flow || typeof flow.total_flow !== 'number') return null;
 
       // Calculate relative metrics
-      const relativeStrength = flow.total_flow / flowMetrics.avgFlow;
+      const relativeStrength = flowMetrics.basic.avgFlow > 0 ? 
+        flow.total_flow / flowMetrics.basic.avgFlow : 0;
       const percentile = flows.filter(f => 
-        (f.total_flow || 0) <= (flow.total_flow || 0)
+        (f.total_flow || 0) <= flow.total_flow
       ).length / flows.length * 100;
 
       // Calculate significance
       const significance = calculateSignificance(
         flow.total_flow,
-        flowMetrics.avgFlow,
-        flowMetrics.stdDev
+        flowMetrics.basic.avgFlow,
+        flowMetrics.basic.stdDev
       );
 
+      // Calculate normalized flow
+      const normalizedFlow = flowMetrics.basic.maxFlow > 0 ? 
+        flow.total_flow / flowMetrics.basic.maxFlow : 0;
+
       // Determine flow status
-      const normalizedFlow = flow.total_flow / flowMetrics.maxFlow;
-      const status = normalizedFlow >= FLOW_THRESHOLDS.HIGH ? FLOW_STATUS.ACTIVE :
-                    normalizedFlow >= FLOW_THRESHOLDS.MEDIUM ? FLOW_STATUS.STABLE :
-                    normalizedFlow >= FLOW_THRESHOLDS.LOW ? FLOW_STATUS.PARTIAL :
-                    FLOW_STATUS.INACTIVE;
+      let status = FLOW_STATUS.INACTIVE;
+      if (normalizedFlow >= FLOW_THRESHOLDS.HIGH) status = FLOW_STATUS.ACTIVE;
+      else if (normalizedFlow >= FLOW_THRESHOLDS.MEDIUM) status = FLOW_STATUS.STABLE;
+      else if (normalizedFlow >= FLOW_THRESHOLDS.LOW) status = FLOW_STATUS.PARTIAL;
 
       return {
         ...flow,
@@ -176,7 +189,8 @@ const FlowMetricsPanel = ({
         metrics: {
           zScore: significance.zScore,
           pValue: significance.pValue,
-          standardizedValue: (flow.total_flow - flowMetrics.avgFlow) / flowMetrics.stdDev
+          standardizedValue: flowMetrics.basic.stdDev > 0 ? 
+            (flow.total_flow - flowMetrics.basic.avgFlow) / flowMetrics.basic.stdDev : 0
         }
       };
     } catch (error) {
@@ -185,11 +199,19 @@ const FlowMetricsPanel = ({
     }
   }, [selectedFlow, flows, flowMetrics]);
 
+  // Debug logging
+  console.debug('FlowMetricsPanel state:', {
+    totalFlows: flows.length,
+    hasMetrics: Boolean(flowMetrics),
+    selectedFlow: Boolean(selectedFlow),
+    hasSelectedMetrics: Boolean(selectedFlowMetrics)
+  });
+
   if (!flowMetrics) {
     return (
       <Paper sx={{ p: 2, height: '100%' }}>
         <Alert severity="warning">
-          No flow metrics available. Please ensure data is properly loaded.
+          No valid flow metrics available. Please ensure data is properly loaded.
         </Alert>
       </Paper>
     );
@@ -218,7 +240,7 @@ const FlowMetricsPanel = ({
           <Grid item xs={12} md={6}>
             <MetricCard
               title="Flow Density"
-              value={flowMetrics.flowDensity}
+              value={flowMetrics.networkMetrics.density}
               format="percentage"
               description="Active market connections"
               tooltip="Percentage of potential market connections that are active"
@@ -248,7 +270,7 @@ const FlowMetricsPanel = ({
           <Grid item xs={12} md={6}>
             <MetricCard
               title="Variability"
-              value={flowMetrics.coefficientOfVariation}
+              value={flowMetrics.basic.stdDev / flowMetrics.basic.avgFlow}
               format="number"
               description="Flow consistency"
               tooltip="Lower values indicate more uniform flow distribution"
@@ -387,15 +409,19 @@ FlowMetricsPanel.propTypes = {
   flows: PropTypes.arrayOf(PropTypes.shape({
     source: PropTypes.string.isRequired,
     target: PropTypes.string.isRequired,
-    total_flow: PropTypes.number,
-    price_differential: PropTypes.number,
+    total_flow: PropTypes.number.isRequired,
+    coordinates: PropTypes.shape({
+      source: PropTypes.arrayOf(PropTypes.number).isRequired,
+      target: PropTypes.arrayOf(PropTypes.number).isRequired
+    }).isRequired,
+    price_differential: PropTypes.number
   })).isRequired,
   selectedFlow: PropTypes.shape({
     source: PropTypes.string.isRequired,
-    target: PropTypes.string.isRequired,
+    target: PropTypes.string.isRequired
   }),
   metrics: PropTypes.object,
-  timeRange: PropTypes.string,
+  timeRange: PropTypes.string
 };
 
 export default React.memo(FlowMetricsPanel);

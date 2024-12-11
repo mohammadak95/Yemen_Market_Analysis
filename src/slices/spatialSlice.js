@@ -32,15 +32,69 @@ const memoizationConfig = {
   defaultValue: null
 };
 
-// Optimized Selector Creator using the custom selector
-const createOptimizedSelector = (...args) => {
-  const lastArg = args[args.length - 1];
-  const selectorArgs = args.slice(0, -1);
-  const options = {
-    ...memoizationConfig,
-    ...(typeof lastArg === 'object' ? lastArg : {})
+// Helper function for processing flow data
+const processFlowData = (flows) => {
+  if (!Array.isArray(flows)) return {
+    flows: [],
+    byDate: {},
+    metadata: {
+      lastUpdated: new Date().toISOString(),
+      dateRange: { start: null, end: null }
+    }
   };
-  return createDeepEqualSelector(...selectorArgs, options);
+
+  // Group flows by date and validate each flow
+  const byDate = flows.reduce((acc, flow) => {
+    // Ensure flow has required fields
+    if (!flow.source || !flow.target || !flow.flow_weight) return acc;
+    
+    const date = flow.date || flow.month;
+    if (!date) return acc;
+    
+    // Format date to YYYY-MM
+    const formattedDate = date.substring(0, 7);
+    
+    if (!acc[formattedDate]) {
+      acc[formattedDate] = [];
+    }
+    
+    // Add validated flow to the date group
+    acc[formattedDate].push({
+      source: flow.source,
+      target: flow.target,
+      flow_weight: Number(flow.flow_weight) || 0,
+      price_differential: Number(flow.price_differential) || 0,
+      source_price: Number(flow.source_price) || 0,
+      target_price: Number(flow.target_price) || 0,
+      total_flow: Number(flow.total_flow || flow.flow_weight) || 0,
+      avg_flow: Number(flow.avg_flow || flow.total_flow || flow.flow_weight) || 0,
+      flow_count: Number(flow.flow_count) || 1,
+      date: formattedDate
+    });
+    
+    return acc;
+  }, {});
+
+  // Calculate date range
+  const dates = Object.keys(byDate).sort();
+  const dateRange = {
+    start: dates[0] || null,
+    end: dates[dates.length - 1] || null
+  };
+
+  // Flatten flows for the flows array
+  const allFlows = Object.values(byDate).flat();
+
+  return {
+    flows: allFlows,
+    byDate,
+    metadata: {
+      lastUpdated: new Date().toISOString(),
+      dateRange,
+      totalFlows: allFlows.length,
+      uniqueDates: dates.length
+    }
+  };
 };
 
 // Initial State with All Required Properties Initialized
@@ -90,10 +144,17 @@ export const initialState = {
     },
     metadata: null,
     cache: {},
+    // Updated flow data structure
     flowData: {
       flows: [],
-      metadata: null,
-      lastUpdated: null
+      byDate: {},
+      metadata: {
+        lastUpdated: null,
+        dateRange: {
+          start: null,
+          end: null
+        }
+      }
     },
     spatialAnalysis: {
       moranI: null,
@@ -102,6 +163,7 @@ export const initialState = {
     },
     commodities: []
   },
+  // ... rest of initial state remains unchanged
   status: {
     loading: false,
     error: null,
@@ -838,7 +900,12 @@ const spatialSlice = createSlice({
           ])].sort();
         }
 
-        // Always update regression data if it's available, ensuring metadata is set
+        // Process flow data if available
+        if (spatialData?.flowMaps) {
+          state.data.flowData = processFlowData(spatialData.flowMaps);
+        }
+
+        // ... rest of the fulfillment logic remains unchanged
         if (regressionData) {
           const currentCommodity = commodity || state.ui.selectedCommodity;
           state.data.regressionAnalysis = {
@@ -944,12 +1011,7 @@ const spatialSlice = createSlice({
         state.status.error = null;
       })
       .addCase(fetchFlowData.fulfilled, (state, action) => {
-        state.data.flowData = {
-          flows: action.payload,
-          metadata: {
-            lastUpdated: new Date().toISOString()
-          }
-        };
+        state.data.flowData = processFlowData(action.payload);
         state.status.dataFetching = false;
         state.status.error = null;
       })

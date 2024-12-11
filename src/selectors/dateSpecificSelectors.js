@@ -1,12 +1,12 @@
-// src/selectors/dateSpecificSelectors.js
-
 import { createSelector } from '@reduxjs/toolkit';
+import { flowValidation } from '../components/spatialAnalysis/features/flows/types';
 
 // Base selectors
 const selectMarketShocks = state => state.spatial.data.marketShocks || [];
 const selectTimeSeriesData = state => state.spatial.data.timeSeriesData || [];
 const selectSelectedDate = state => state.spatial.ui.selectedDate;
 const selectGeometry = state => state.spatial.data.geometry;
+const selectFlowData = state => state.spatial.data.flowData;
 const selectFlowMaps = state => state.spatial.data.flowMaps || [];
 
 // Date-specific Time Series Selector
@@ -14,14 +14,105 @@ export const selectDateFilteredData = createSelector(
   [selectTimeSeriesData, selectSelectedDate],
   (timeSeriesData, selectedDate) => {
     if (!timeSeriesData?.length || !selectedDate) return [];
-    return timeSeriesData.filter(d => d.month === selectedDate);
+    return flowValidation.filterFlowsByDate(timeSeriesData, selectedDate);
   }
 );
 
-// Flow Selector - Returns all flows since they're pre-filtered
+// Enhanced flow selectors with validation
 export const selectDateFilteredFlows = createSelector(
-  [selectFlowMaps],
-  (flows) => flows || []
+  [selectFlowMaps, selectSelectedDate],
+  (flows, selectedDate) => {
+    // Early return if no flows or date
+    if (!Array.isArray(flows) || !selectedDate) {
+      console.debug('Missing flow data or date:', {
+        hasFlows: Boolean(flows),
+        selectedDate
+      });
+      return [];
+    }
+
+    // Use flowValidation helper to filter and validate flows
+    const validatedFlows = flowValidation.filterFlowsByDate(flows, selectedDate);
+
+    console.debug('Flow filtering results:', {
+      totalFlows: flows.length,
+      validatedFlows: validatedFlows.length,
+      selectedDate
+    });
+
+    return validatedFlows;
+  }
+);
+
+// Calculate flow metrics for selected date
+export const selectDateFilteredMetrics = createSelector(
+  [selectDateFilteredFlows],
+  (flows) => {
+    if (!Array.isArray(flows) || !flows.length) {
+      console.debug('No flows available for metrics calculation');
+      return {
+        flows: {
+          total: 0,
+          average: 0,
+          count: 0,
+          maxFlow: 0,
+          minFlow: 0,
+          stdDev: 0
+        }
+      };
+    }
+
+    const metrics = flowValidation.calculateFlowMetrics(flows);
+    if (!metrics) return null;
+
+    return {
+      flows: {
+        total: metrics.totalFlow,
+        average: metrics.avgFlow,
+        count: metrics.count,
+        maxFlow: metrics.maxFlow,
+        minFlow: metrics.minFlow,
+        stdDev: metrics.stdDev
+      }
+    };
+  }
+);
+
+// Additional helper selector for flow validation
+export const selectFlowDataStatus = createSelector(
+  [selectFlowMaps, selectSelectedDate],
+  (flows, selectedDate) => {
+    if (!Array.isArray(flows)) {
+      console.debug('Invalid flows array');
+      return {
+        hasData: false,
+        dateRange: { start: null, end: null },
+        lastUpdated: new Date().toISOString(),
+        totalFlows: 0,
+        dateFlows: 0,
+        uniqueDates: 0
+      };
+    }
+
+    // Get valid flows using flowValidation helper
+    const validFlows = flows.filter(flowValidation.isValidFlow);
+    const dateFlows = flowValidation.filterFlowsByDate(validFlows, selectedDate);
+
+    // Get unique dates
+    const dates = [...new Set(validFlows.map(f => f.date?.substring(0, 7)))].sort();
+
+    return {
+      hasData: validFlows.length > 0,
+      dateRange: {
+        start: dates[0] || null,
+        end: dates[dates.length - 1] || null
+      },
+      lastUpdated: new Date().toISOString(),
+      totalFlows: validFlows.length,
+      dateFlows: dateFlows.length,
+      uniqueDates: dates.length
+    };
+  }
 );
 
 // Date-specific Shocks Selector
@@ -29,53 +120,7 @@ export const selectDateFilteredShocks = createSelector(
   [selectMarketShocks, selectSelectedDate],
   (shocks, selectedDate) => {
     if (!shocks?.length || !selectedDate) return [];
-    return shocks.filter(shock => {
-      // Convert shock date to YYYY-MM format to match selectedDate
-      const shockMonth = shock.date.substring(0, 7);
-      return shockMonth === selectedDate;
-    });
-  }
-);
-
-// Date-filtered Metrics Selector
-export const selectDateFilteredMetrics = createSelector(
-  [selectDateFilteredData, selectDateFilteredFlows, selectDateFilteredShocks],
-  (timeData, flows, shocks) => {
-    // Price metrics
-    const prices = timeData.map(d => d.usdPrice || 0);
-    const avgPrice = prices.length ? prices.reduce((sum, p) => sum + p, 0) / prices.length : 0;
-    const maxPrice = prices.length ? Math.max(...prices) : 0;
-    const minPrice = prices.length ? Math.min(...prices) : 0;
-
-    // Flow metrics
-    const totalFlow = flows.reduce((sum, f) => sum + (f.total_flow || 0), 0);
-    const avgFlow = flows.length ? totalFlow / flows.length : 0;
-
-    // Shock metrics
-    const priceDrops = shocks.filter(s => s.shock_type === 'price_drop');
-    const priceSurges = shocks.filter(s => s.shock_type === 'price_surge');
-    const avgMagnitude = shocks.length ? 
-      shocks.reduce((sum, s) => sum + s.magnitude, 0) / shocks.length : 0;
-
-    return {
-      prices: {
-        average: avgPrice,
-        maximum: maxPrice,
-        minimum: minPrice,
-        range: maxPrice - minPrice
-      },
-      flows: {
-        total: totalFlow,
-        average: avgFlow,
-        count: flows.length
-      },
-      shocks: {
-        total: shocks.length,
-        priceDrops: priceDrops.length,
-        priceSurges: priceSurges.length,
-        averageMagnitude: avgMagnitude
-      }
-    };
+    return flowValidation.filterFlowsByDate(shocks, selectedDate);
   }
 );
 
@@ -181,5 +226,6 @@ export default {
   selectDateFilteredMetrics,
   selectShockMetrics,
   selectShockAnalysisData,
-  selectTimeSeriesMetrics
+  selectTimeSeriesMetrics,
+  selectFlowDataStatus
 };

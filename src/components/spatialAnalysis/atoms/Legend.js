@@ -1,13 +1,18 @@
+/**
+ * Legend Component
+ * 
+ * Displays a legend for the map visualization
+ */
+
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Paper, Typography, Box } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 const Legend = ({
-  items,
   title,
-  orientation = 'vertical',
-  position = { bottom: 20, right: 20 }
+  items = [],
+  position = { bottom: 32, right: 10 }
 }) => {
   const theme = useTheme();
 
@@ -16,50 +21,73 @@ const Legend = ({
       elevation={2}
       sx={{
         position: 'absolute',
-        padding: 2,
+        ...position,
         zIndex: 1000,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'background.paper',
         borderRadius: 1,
-        ...position
+        p: 1.5,
+        minWidth: 180,
+        maxWidth: 280
       }}
     >
       {title && (
-        <Typography variant="subtitle2" gutterBottom>
+        <Typography 
+          variant="subtitle2" 
+          sx={{ 
+            mb: 1,
+            fontWeight: 500,
+            color: 'text.primary'
+          }}
+        >
           {title}
         </Typography>
       )}
-      
-      <Box 
-        sx={{ 
-          display: 'flex',
-          flexDirection: orientation === 'vertical' ? 'column' : 'row',
-          gap: 1,
-          flexWrap: orientation === 'horizontal' ? 'wrap' : 'nowrap'
-        }}
-      >
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {items.map((item, index) => (
           <Box 
             key={index}
             sx={{ 
               display: 'flex', 
-              alignItems: 'center',
-              gap: 1,
-              minWidth: orientation === 'horizontal' ? '120px' : 'auto'
+              alignItems: 'center', 
+              gap: 1.5 
             }}
           >
             <Box
               sx={{
-                width: 20,
-                height: 20,
+                width: 16,
+                height: 16,
                 backgroundColor: item.color,
-                borderRadius: '2px',
-                border: `1px solid ${theme.palette.grey[300]}`,
-                ...(item.style || {})
+                flexShrink: 0,
+                ...item.style,
+                border: item.style?.border || 'none'
               }}
             />
-            <Typography variant="caption">
-              {item.label}
-            </Typography>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography 
+                variant="body2"
+                sx={{ 
+                  fontWeight: 500,
+                  color: 'text.primary',
+                  lineHeight: 1.2
+                }}
+              >
+                {item.label}
+              </Typography>
+              {item.description && (
+                <Typography 
+                  variant="caption"
+                  sx={{ 
+                    display: 'block',
+                    color: 'text.secondary',
+                    mt: 0.25,
+                    lineHeight: 1.2
+                  }}
+                >
+                  {item.description}
+                </Typography>
+              )}
+            </Box>
           </Box>
         ))}
       </Box>
@@ -68,13 +96,13 @@ const Legend = ({
 };
 
 Legend.propTypes = {
+  title: PropTypes.string,
   items: PropTypes.arrayOf(PropTypes.shape({
     color: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
+    description: PropTypes.string,
     style: PropTypes.object
   })).isRequired,
-  title: PropTypes.string,
-  orientation: PropTypes.oneOf(['vertical', 'horizontal']),
   position: PropTypes.shape({
     top: PropTypes.number,
     right: PropTypes.number,

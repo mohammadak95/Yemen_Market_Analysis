@@ -4,8 +4,8 @@ import {
   Box, 
   IconButton, 
   Slider, 
-  Typography, 
-  Tooltip
+  Typography,
+  Paper
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -14,23 +14,74 @@ import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import SpeedIcon from '@mui/icons-material/Speed';
 
+// Helper function to normalize date to YYYY-MM format
+const normalizeDate = (date) => {
+  try {
+    // Handle both YYYY-MM and YYYY-MM-DD formats
+    return date?.substring(0, 7);
+  } catch (error) {
+    console.error('Error normalizing date:', error);
+    return date;
+  }
+};
+
+// Helper function to format date for display
+const formatDate = (date) => {
+  try {
+    // Add day to ensure valid date
+    const fullDate = `${normalizeDate(date)}-01`;
+    return new Date(fullDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return date;
+  }
+};
+
 const TimeControl = ({
   dates,
   currentDate,
   onChange,
   autoPlayInterval = 1000,
-  position = null // Make position optional
+  position = null
 }) => {
   const theme = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [sliderValue, setSliderValue] = useState(0);
 
-  useEffect(() => {
-    const currentIndex = dates.indexOf(currentDate);
-    setSliderValue(currentIndex);
-  }, [currentDate, dates]);
+  // Normalize all dates
+  const normalizedDates = dates.map(normalizeDate);
+  const normalizedCurrentDate = normalizeDate(currentDate);
 
+  // Initialize slider value based on current date
+  useEffect(() => {
+    const currentIndex = normalizedDates.indexOf(normalizedCurrentDate);
+    
+    console.debug('TimeControl date initialization:', {
+      currentDate,
+      normalizedCurrentDate,
+      currentIndex,
+      availableDates: normalizedDates,
+      dates
+    });
+    
+    if (currentIndex >= 0) {
+      setSliderValue(currentIndex);
+    } else {
+      // If current date is not found, use the first date
+      console.debug('Current date not found in dates array, using first date');
+      setSliderValue(0);
+      // Notify parent of the change
+      if (dates.length > 0) {
+        onChange(normalizeDate(dates[0]));
+      }
+    }
+  }, [currentDate, dates, normalizedCurrentDate, normalizedDates, onChange]);
+
+  // Handle auto-play
   useEffect(() => {
     let interval;
     if (isPlaying) {
@@ -48,52 +99,75 @@ const TimeControl = ({
     return () => clearInterval(interval);
   }, [isPlaying, dates.length, autoPlayInterval, playbackSpeed]);
 
-  useEffect(() => {
-    onChange(dates[sliderValue]);
-  }, [sliderValue, dates, onChange]);
+  // Handle slider value changes
+  const handleSliderChange = (_, value) => {
+    if (value !== sliderValue) {
+      const newDate = normalizeDate(dates[value]);
+      console.debug('Slider change:', {
+        value,
+        newDate,
+        currentDate: normalizedCurrentDate
+      });
+      setSliderValue(value);
+      onChange(newDate);
+    }
+  };
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
 
   const handlePrevious = () => {
-    setSliderValue(prev => Math.max(0, prev - 1));
+    const newValue = Math.max(0, sliderValue - 1);
+    handleSliderChange(null, newValue);
   };
 
   const handleNext = () => {
-    setSliderValue(prev => Math.min(dates.length - 1, prev + 1));
+    const newValue = Math.min(dates.length - 1, sliderValue + 1);
+    handleSliderChange(null, newValue);
   };
 
   const handleSpeedChange = () => {
     setPlaybackSpeed(prev => (prev === 4 ? 1 : prev * 2));
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short'
-    });
-  };
-
-  // Base styles for the container
-  const containerStyles = {
-    width: '100%',
-    backgroundColor: theme.palette.background.paper,
-    borderRadius: 1,
-    ...(position && {
-      position: 'absolute',
-      zIndex: 1000,
-      ...position
-    })
-  };
+  // Debug logging
+  console.debug('TimeControl state:', {
+    currentDate,
+    normalizedCurrentDate,
+    sliderValue,
+    selectedDate: dates[sliderValue],
+    normalizedSelectedDate: normalizeDate(dates[sliderValue]),
+    totalDates: dates.length,
+    isPlaying,
+    playbackSpeed
+  });
 
   return (
-    <Box sx={containerStyles}>
-      <Box sx={{ width: '100%', px: 2 }}>
+    <Paper
+      elevation={2}
+      sx={{
+        width: '100%',
+        backgroundColor: theme.palette.background.paper,
+        borderRadius: 1,
+        p: 2,
+        ...(position && {
+          position: 'absolute',
+          zIndex: 1000,
+          ...position
+        })
+      }}
+    >
+      <Box sx={{ width: '100%' }}>
         <Typography 
-          variant="caption" 
-          color="textSecondary"
-          sx={{ display: 'block', mb: 1, textAlign: 'center' }}
+          variant="subtitle2" 
+          color="textPrimary"
+          sx={{ 
+            display: 'block', 
+            mb: 1, 
+            textAlign: 'center',
+            fontWeight: 500
+          }}
         >
           {formatDate(dates[sliderValue])}
         </Typography>
@@ -102,61 +176,87 @@ const TimeControl = ({
           value={sliderValue}
           min={0}
           max={dates.length - 1}
-          onChange={(_, value) => setSliderValue(value)}
-          sx={{ mb: 2 }}
+          onChange={handleSliderChange}
+          sx={{ 
+            mb: 2,
+            '& .MuiSlider-thumb': {
+              width: 12,
+              height: 12
+            }
+          }}
         />
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-          <Tooltip title="Previous">
-            <IconButton 
-              size="small" 
-              onClick={handlePrevious}
-              disabled={sliderValue === 0}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          gap: 1,
+          '& .MuiIconButton-root': {
+            padding: 1,
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.04)'
+            }
+          }
+        }}>
+          <IconButton 
+            size="small" 
+            onClick={handlePrevious}
+            disabled={sliderValue === 0}
+            title="Previous"
+          >
+            <SkipPreviousIcon fontSize="small" />
+          </IconButton>
+
+          <IconButton 
+            size="small" 
+            onClick={handlePlayPause}
+            title={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? (
+              <PauseIcon fontSize="small" />
+            ) : (
+              <PlayArrowIcon fontSize="small" />
+            )}
+          </IconButton>
+
+          <IconButton 
+            size="small" 
+            onClick={handleNext}
+            disabled={sliderValue === dates.length - 1}
+            title="Next"
+          >
+            <SkipNextIcon fontSize="small" />
+          </IconButton>
+
+          <IconButton 
+            size="small" 
+            onClick={handleSpeedChange}
+            title={`Playback Speed: ${playbackSpeed}x`}
+            sx={{ position: 'relative' }}
+          >
+            <SpeedIcon fontSize="small" />
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                position: 'absolute',
+                bottom: 2,
+                right: 2,
+                fontSize: '0.6rem',
+                fontWeight: 'bold',
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: '50%',
+                width: 12,
+                height: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
             >
-              <SkipPreviousIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title={isPlaying ? 'Pause' : 'Play'}>
-            <IconButton size="small" onClick={handlePlayPause}>
-              {isPlaying ? (
-                <PauseIcon fontSize="small" />
-              ) : (
-                <PlayArrowIcon fontSize="small" />
-              )}
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Next">
-            <IconButton 
-              size="small" 
-              onClick={handleNext}
-              disabled={sliderValue === dates.length - 1}
-            >
-              <SkipNextIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title={`Playback Speed: ${playbackSpeed}x`}>
-            <IconButton size="small" onClick={handleSpeedChange}>
-              <SpeedIcon fontSize="small" />
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  position: 'absolute',
-                  bottom: 2,
-                  right: 2,
-                  fontSize: '0.6rem',
-                  fontWeight: 'bold'
-                }}
-              >
-                {playbackSpeed}x
-              </Typography>
-            </IconButton>
-          </Tooltip>
+              {playbackSpeed}x
+            </Typography>
+          </IconButton>
         </Box>
       </Box>
-    </Box>
+    </Paper>
   );
 };
 

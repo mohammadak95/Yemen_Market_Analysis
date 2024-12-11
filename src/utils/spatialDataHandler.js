@@ -888,43 +888,6 @@ class SpatialDataHandler {
     }).filter(Boolean);
   };
 
-  processFlowData = (data) => {
-    if (!Array.isArray(data)) {
-      throw new Error('Invalid flow data structure: expected array');
-    }
-    
-    return data.map(row => {
-      const source = this.normalizeRegionName(row.source);
-      const target = this.normalizeRegionName(row.target);
-      
-      // Get coordinates from cache
-      const sourceCoords = this.coordinateCache.get(source);
-      const targetCoords = this.coordinateCache.get(target);
-      
-      if (!sourceCoords || !targetCoords) {
-        console.warn(`Missing coordinates for flow: ${source} -> ${target}`);
-      }
-      
-      return {
-        source,
-        target,
-        source_lat: sourceCoords?.lat || null,
-        source_lng: sourceCoords?.lng || null,
-        target_lat: targetCoords?.lat || null,
-        target_lng: targetCoords?.lng || null,
-        flow_weight: Number(row.flow_weight) || 0,
-        // Keep other fields as needed
-      };
-    }).filter(flow => 
-      flow.source_lat != null && 
-      flow.source_lng != null && 
-      flow.target_lat != null && 
-      flow.target_lng != null &&
-      !this.excludedRegions.has(flow.source) &&
-      !this.excludedRegions.has(flow.target)
-    );
-  };
-
   processFlowRow = (row) => {
     if (!row || typeof row !== 'object') return null;
     
@@ -950,20 +913,143 @@ class SpatialDataHandler {
   processFlowAnalysis = (flows) => {
     if (!Array.isArray(flows)) {
       console.warn('[SpatialHandler] Invalid flow data structure');
-      return [];
+      return { flows: [], byDate: {}, metadata: {} };
     }
     
-    return flows.map(flow => ({
-      source: this.normalizeRegionName(flow.source),
-      target: this.normalizeRegionName(flow.target),
-      total_flow: this.sanitizeNumericValue(flow.total_flow),
-      avg_flow: this.sanitizeNumericValue(flow.avg_flow),
-      flow_count: flow.flow_count || 0,
-      avg_price_differential: this.sanitizeNumericValue(flow.avg_price_differential)
-    })).filter(flow => 
-      flow.source && 
-      flow.target && 
-      !this.excludedRegions.has(flow.source) && 
+    try {
+      // Process basic flow data
+      const validatedFlows = flows.map(flow => {
+        const source = this.normalizeRegionName(flow.source);
+        const target = this.normalizeRegionName(flow.target);
+        
+        // Skip invalid flows
+        if (!source || !target || 
+            this.excludedRegions.has(source) || 
+            this.excludedRegions.has(target)) {
+          return null;
+        }
+  
+        // Get coordinates for visualization
+        const sourceCoords = this.coordinateCache.get(source);
+        const targetCoords = this.coordinateCache.get(target);
+        
+        if (!sourceCoords || !targetCoords) {
+          console.warn(`Missing coordinates for flow: ${source} -> ${target}`);
+          return null;
+        }
+  
+        // Handle missing date by assigning to default time period
+        let flowDate = '2020-10'; // Default to October 2020 if no date provided
+        if (flow.date || flow.month) {
+          flowDate = (flow.date || flow.month).substring(0, 7);
+          if (!flowDate.match(/^\d{4}-\d{2}$/)) {
+            console.debug('Invalid date format, using default:', flow);
+            flowDate = '2020-10';
+          }
+        }
+  
+        return {
+          source,
+          target,
+          date: flowDate,
+          total_flow: this.sanitizeNumericValue(flow.total_flow || flow.flow_weight),
+          avg_flow: this.sanitizeNumericValue(flow.avg_flow || flow.total_flow || flow.flow_weight),
+          flow_count: flow.flow_count || 1,
+          price_differential: this.sanitizeNumericValue(flow.price_differential),
+          source_price: this.sanitizeNumericValue(flow.source_price),
+          target_price: this.sanitizeNumericValue(flow.target_price),
+          coordinates: {
+            source: sourceCoords,
+            target: targetCoords
+          }
+        };
+      }).filter(Boolean);
+  
+      // Group flows by date
+      const flowsByDate = validatedFlows.reduce((acc, flow) => {
+        if (!acc[flow.date]) {
+          acc[flow.date] = [];
+        }
+        acc[flow.date].push(flow);
+        return acc;
+      }, {});
+  
+      // Calculate normalized values for each date group
+      Object.keys(flowsByDate).forEach(date => {
+        const dateFlows = flowsByDate[date];
+        const maxFlow = Math.max(...dateFlows.map(f => f.total_flow || 0));
+        const maxPriceDiff = Math.max(...dateFlows.map(f => Math.abs(f.price_differential || 0)));
+  
+        // Add normalized values
+        dateFlows.forEach(flow => {
+          flow.normalized = {
+            flow: maxFlow > 0 ? (flow.total_flow || 0) / maxFlow : 0,
+            priceDiff: maxPriceDiff > 0 ? Math.abs(flow.price_differential || 0) / maxPriceDiff : 0
+          };
+        });
+      });
+  
+      const datesSorted = Object.keys(flowsByDate).sort();
+      
+      return {
+        flows: validatedFlows,
+        byDate: flowsByDate,
+        metadata: {
+          totalFlows: validatedFlows.length,
+          dateRange: {
+            start: datesSorted[0],
+            end: datesSorted[datesSorted.length - 1]
+          },
+          uniqueDates: datesSorted.length,
+          lastUpdated: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      console.error('[SpatialHandler] Error processing flows:', error);
+      return { flows: [], byDate: {}, metadata: {} };
+    }
+  };
+  
+  
+  processFlowData = (data, date) => {
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid flow data structure: expected array');
+    }
+  
+    // Filter by date if provided
+    const filteredData = date ? 
+      data.filter(row => row.date?.startsWith(date) || row.month?.startsWith(date)) : 
+      data;
+    
+    return filteredData.map(row => {
+      const source = this.normalizeRegionName(row.source);
+      const target = this.normalizeRegionName(row.target);
+      
+      // Get coordinates from cache
+      const sourceCoords = this.coordinateCache.get(source);
+      const targetCoords = this.coordinateCache.get(target);
+      
+      if (!sourceCoords || !targetCoords) {
+        console.warn(`Missing coordinates for flow: ${source} -> ${target}`);
+        return null;
+      }
+      
+      return {
+        source,
+        target,
+        date: row.date || row.month,
+        source_lat: sourceCoords[1],
+        source_lng: sourceCoords[0],
+        target_lat: targetCoords[1],
+        target_lng: targetCoords[0],
+        flow_weight: Number(row.flow_weight) || 0,
+        price_differential: Number(row.price_differential) || 0,
+        source_price: Number(row.source_price) || 0,
+        target_price: Number(row.target_price) || 0
+      };
+    }).filter(flow => 
+      flow && 
+      !this.excludedRegions.has(flow.source) &&
       !this.excludedRegions.has(flow.target)
     );
   };
@@ -1576,28 +1662,22 @@ class SpatialDataHandler {
     });
   }
 
-  filterByDate(data, targetDate) {
+  filterByDate = (data, targetDate) => {
     if (!targetDate || !Array.isArray(data)) return data;
     
-    const parsedTargetDate = new Date(targetDate);
-    if (isNaN(parsedTargetDate)) {
-      console.warn('[SpatialHandler] Invalid target date:', targetDate);
-      return data;
+    try {
+      // Normalize target date to YYYY-MM format 
+      const normalizedTarget = targetDate.substring(0, 7);
+  
+      return data.filter(item => {
+        const itemDate = (item.date || item.month || '').substring(0, 7);
+        return itemDate === normalizedTarget;
+      });
+    } catch (error) {
+      console.error('[SpatialHandler] Error filtering by date:', error);
+      return [];
     }
-    
-    return data.filter((item) => {
-      const itemDateStr = item.date || item.month || item.date_observed;
-      if (!itemDateStr) return false;
-      
-      const itemDate = new Date(itemDateStr);
-      if (isNaN(itemDate)) return false;
-      
-      return (
-        itemDate.getFullYear() === parsedTargetDate.getFullYear() &&
-        itemDate.getMonth() === parsedTargetDate.getMonth()
-      );
-    });
-  }
+  };
 
   // ===========================
   // Data Processing Pipeline
@@ -1832,7 +1912,7 @@ class SpatialDataHandler {
   async getSpatialData(selectedCommodity, date) {
     const commodity = selectedCommodity?.toLowerCase().trim() || 'beans (kidney red)';
     const cacheKey = `spatial_${commodity}_${date || 'all'}`;
-
+  
     return this.deduplicateRequest(cacheKey, async () => {
       try {
         console.debug('Loading spatial data:', { commodity, date, cacheKey });
@@ -1917,37 +1997,89 @@ class SpatialDataHandler {
         // Load preprocessed data for other analyses
         const preprocessed = await this.loadPreprocessedData(commodity);
 
+        // Process flows with date handling
+        const processedFlows = preprocessed.flow_analysis
+          ? this.processFlowAnalysis(preprocessed.flow_analysis)
+          : { flows: [], byDate: {}, metadata: {} };
+  
+        // Get date-specific flows or fall back to all flows
+        const relevantFlows = date && processedFlows.byDate[date]
+          ? processedFlows.byDate[date]
+          : processedFlows.flows;
+  
         const result = {
-          flowMaps: preprocessed.flow_analysis
-            ? this.processFlowAnalysis(preprocessed.flow_analysis)
-            : [],
+          flowMaps: relevantFlows,
           timeSeriesData, // Use time series data from enhanced data
           marketClusters: preprocessed.market_clusters || [],
           marketShocks: preprocessed.market_shocks || [],
           spatialAutocorrelation: preprocessed.spatial_autocorrelation || {},
-          commodities, // Include the extracted commodities
+          commodities,
           metadata: {
             commodity,
             date: date || 'all',
             timestamp: new Date().toISOString(),
-          },
+            flows: {
+              total: processedFlows.metadata.totalFlows,
+              filtered: relevantFlows.length,
+              dateRange: processedFlows.metadata.dateRange
+            }
+          }
         };
-
-        // Final verification of result
-        console.debug('Spatial data result:', {
-          timeSeriesCount: result.timeSeriesData.length,
-          flowMapsCount: result.flowMaps.length,
-          marketClustersCount: result.marketClusters.length,
-          marketShocksCount: result.marketShocks.length,
+  
+        // Debug logging
+        console.debug('Processed flow data:', {
+          totalFlows: processedFlows.flows.length,
+          dateSpecificFlows: relevantFlows.length,
+          availableDates: Object.keys(processedFlows.byDate).length,
+          selectedDate: date
         });
-
+  
         return result;
+  
       } catch (error) {
         console.error('[SpatialHandler] Failed to get spatial data:', error);
         throw error;
       }
     });
   }
+
+  validateFlow = (flow) => {
+    return Boolean(
+      flow &&
+      flow.source &&
+      flow.target &&
+      typeof flow.total_flow === 'number' &&
+      !isNaN(flow.total_flow) &&
+      (flow.date || flow.month)
+    );
+  };
+  
+  // Add helper method to process a single flow
+  processFlow = (flow) => {
+    const source = this.normalizeRegionName(flow.source);
+    const target = this.normalizeRegionName(flow.target);
+    
+    if (!this.validateFlow(flow) || !source || !target) {
+      return null;
+    }
+  
+    const sourceCoords = this.coordinateCache.get(source);
+    const targetCoords = this.coordinateCache.get(target);
+    
+    if (!sourceCoords || !targetCoords) {
+      return null;
+    }
+  
+    return {
+      source,
+      target,
+      date: (flow.date || flow.month).substring(0, 7),
+      total_flow: this.sanitizeNumericValue(flow.total_flow || flow.flow_weight),
+      avg_flow: this.sanitizeNumericValue(flow.avg_flow),
+      price_differential: this.sanitizeNumericValue(flow.price_differential),
+      coordinates: { source: sourceCoords, target: targetCoords }
+    };
+  };
 
   extractCommodities(data) {
     const commoditiesSet = new Set();
