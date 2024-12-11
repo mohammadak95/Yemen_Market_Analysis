@@ -1,73 +1,75 @@
+# Yemen Market Analysis Configuration
+
+# Directory paths
 directories:
-  data_dir: "project/data/"
-  processed_data_dir: "project/data/processed/"
-  results_dir: "results/"
-  logs_dir: "results/logs/"
-  external_data_dir: "external_data/"
+  data_dir: 'project/data/'
+  processed_data_dir: 'project/data/processed/'
+  results_dir: 'results/'
+  logs_dir: 'results/logs/'
+  external_data_dir: 'external_data/'
 
+# File paths
 files:
-  spatial_geojson: "project/data/processed/unified_data.geojson"
-  enhanced_geojson: "project/data/processed/enhanced_unified_data_with_residuals.geojson"
-  spatial_analysis_results: "results/spatial_analysis_results.json"
-  ecm_results: "results/ecm/ecm_analysis_results.json"
-  spatial_weights_json: "results/spatial_weights/spatial_weights.json"
-  naturalearth_lowres: "external_data/naturalearth_lowres/ne_110m_admin_0_countries.shp"
+  spatial_geojson: 'project/data/processed/unified_data.geojson'
+  enhanced_geojson: 'project/data/processed/enhanced_unified_data_with_residuals.geojson'
+  spatial_analysis_results: 'results/spatial_analysis_results.json'
+  ecm_results: 'results/ecm/ecm_analysis_results.json'
+  spatial_weights_json: 'results/spatial_weights/spatial_weights.json'
+  naturalearth_lowres: 'external_data/naturalearth_lowres/ne_110m_admin_0_countries.shp'
 
+# Analysis parameters
 parameters:
-  initial_k: 5  # Increased starting number of neighbors for KNN
-  max_k: 10      # Increased maximum number of neighbors for KNN
+  # Time series parameters
   min_common_dates: 20
-  lag_periods: 2  # Adjusted key from 'ecm_lags' to 'lag_periods'
-  cointegration_max_lags: 12
-  frequency: 'ME'
+  lag_periods: 2
   granger_max_lags: 4
-  distance_threshold: 200  # Example value
-  regimes_to_unify:
-    - "north"
-    - "south"
-  new_regime_name: "unified"
-  exchange_rate_regime_column: "exchange_rate_regime"
-  region_identifier: "admin1"
-  time_column: "date"
-  lag_variable: "usdprice"
-  commodities:
-    - "beans (kidney red)"
-    - "beans (white)"
-    - "eggs"
-    - "exchange rate (unofficial)"
-    - "fuel (diesel)"
-    - "fuel (gas)"
-    - "fuel (petrol-gasoline)"
-    - "lentils"
-    - "milling cost (wheat)"
-    - "oil (vegetable)"
-    - "onions"
-    # - "peas (yellow, split)"
-    - "potatoes"
-    - "rice (imported)"
-    - "salt"
-    - "sugar"
-    - "tomatoes"
-    # - "wage (non-qualified labour)"
-    # - "wage (qualified labour)"
-    - "wheat"
-    - "wheat flour"
-  exchange_rate_regimes:
-    - "north"
-    - "south"
-    - "unified"
+  
+  # Spatial parameters
+  distance_threshold: 200
+  min_neighbors: 2
+  
+  # Statistical thresholds
   stationarity_significance_level: 0.05
   cointegration_significance_level: 0.05
-  ridge_alpha: 1.0               # New parameter for Ridge Regression
-  max_epochs: 1000               
-  learning_rate: 0.01            
-  min_regions: 5             
-  spatial_weights:
-    threshold_multiplier: 1      # Multiplier for average distance in spatial weights creation
-  min_neighbors: 2
-  parallel_processes: 8          # **Adjusted to utilize 16 cores**
-  memory_per_process_gb: 4        # **New parameter to monitor memory usage per process**
+  
+  # Model parameters
+  ridge_alpha: 1.0
+  max_epochs: 1000
+  learning_rate: 0.01
+  min_regions: 5
 
-logging:
-  level: "DEBUG"
-  format: "%(asctime)s - %(levelname)s - %(message)s"
+  # Commodities to analyze (case-insensitive)
+  commodities:
+    - 'wheat flour'
+    - 'rice'
+    - 'vegetable oil'
+    - 'sugar'
+    - 'diesel'
+    - 'petrol'
+
+  # Exchange rate regimes
+  exchange_rate_regimes:
+    - 'north'
+    - 'south'
+    - 'unified'
+  
+  # Exchange rate regime unification
+  regimes_to_unify:
+    - 'north'
+    - 'south'
+  new_regime_name: 'unified'
+
+  # Column names
+  exchange_rate_regime_column: 'exchange_rate_regime'
+  region_identifier: 'admin1'
+  time_column: 'date'
+  lag_variable: 'usdprice'
+
+  # Spatial weights parameters
+  spatial_weights:
+    threshold_multiplier: 1
+
+  # Logging configuration
+  logging:
+    level: 'DEBUG'
+    format: '%(asctime)s - %(levelname)s - %(message)s'
