@@ -1,6 +1,18 @@
-# Yemen Market Analysis Reproduction Package
+# Market Unity Amidst Conflict: Yemen Market Analysis
 
-This repository contains the reproduction package for the paper "Market Unity Amidst Conflict: Price Integration Analysis in Yemen".
+This repository contains the analysis of market integration and price transmission across Yemen's commodity markets, focusing on the impact of conflict, institutional fragmentation, and dual exchange rate regimes.
+
+## Reproduction Package
+
+A complete reproduction package for this research is available at:
+https://github.com/mohammadak95/Yemen_Market_Analysis_Reproduction
+
+The reproduction package includes:
+- All analysis code and scripts
+- Detailed methodology documentation
+- Data processing pipelines
+- Presentation materials
+- Step-by-step reproduction instructions
 
 ## Repository Structure
 
@@ -23,36 +35,12 @@ This repository contains the reproduction package for the paper "Market Unity Am
 
 ## Requirements
 
-- R (>= 4.0.0)
 - Python (>= 3.8)
-- Required R packages:
-  - tidyverse
-  - spatialreg
-  - spdep
-  - vars
 - Required Python packages:
   - pandas
   - numpy
   - statsmodels
   - geopandas
-
-## Reproduction Steps
-
-1. Clone this repository
-2. Install required dependencies
-3. Run data cleaning scripts:
-   ```bash
-   Rscript code/cleaning/clean_data.R
-   ```
-4. Run analysis scripts:
-   ```bash
-   Rscript code/analysis/market_integration.R
-   Rscript code/analysis/spatial_analysis.R
-   ```
-5. Generate figures:
-   ```bash
-   Rscript code/figures/generate_figures.R
-   ```
 
 ## Data Sources
 
