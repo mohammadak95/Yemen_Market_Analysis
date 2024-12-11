@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/autocorrelation/index.js
+
 import SpatialAutocorrelationAnalysis from './SpatialAutocorrelationAnalysis';
 import LISAMap from './LISAMap';
 import MoranScatterPlot from './MoranScatterPlot';

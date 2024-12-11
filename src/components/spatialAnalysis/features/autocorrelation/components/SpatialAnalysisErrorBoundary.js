@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/autocorrelation/components/SpatialAnalysisErrorBoundary.js
+
 import React from 'react';
 import {
   Box,

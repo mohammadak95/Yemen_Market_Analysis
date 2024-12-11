@@ -1,3 +1,5 @@
+// src/components/spatialAnalysis/features/autocorrelation/SpatialAutocorrelationAnalysis.js
+
 import React, { useState, Suspense } from 'react';
 import {
   Grid,
@@ -17,8 +19,6 @@ import TableChartIcon from '@mui/icons-material/TableChart';
 
 import LISAMap from './LISAMap';
 import MoranScatterPlot from './MoranScatterPlot';
-import MetricCard from '../../atoms/MetricCard';
-import MetricProgress from '../../molecules/MetricProgress';
 import SpatialAnalysisPanel from './SpatialAnalysisPanel';
 import ClusterMatrix from './ClusterMatrix';
 import SpatialAnalysisErrorBoundary from './components/SpatialAnalysisErrorBoundary';
@@ -98,63 +98,22 @@ const SpatialAutocorrelationAnalysis = () => {
     return <ErrorFallback />;
   }
 
-  // Get selected region metrics
   const selectedRegionMetrics = selectedRegion ? getRegionMetrics(selectedRegion) : null;
 
-  // Format values safely
+  // Safely format values
   const formatValue = (value) => {
     if (value == null) return 'N/A';
     return typeof value === 'number' ? value.toFixed(3) : value.toString();
   };
 
-  // Format percentage safely
   const formatPercentage = (value) => {
     if (value == null || isNaN(value)) return '0%';
-    const formatted = Math.min(Math.max(value, 0), 100); // Clamp between 0 and 100
+    const formatted = Math.min(Math.max(value, 0), 100);
     return `${formatted.toFixed(1)}%`;
   };
 
   const renderContent = () => (
     <Grid container spacing={2}>
-      {/* Overview Metrics */}
-      <Grid item xs={12}>
-        <Paper sx={{ p: 2 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={3}>
-              <MetricProgress
-                title="Spatial Association"
-                value={spatialMetrics?.spatialAssociation || 0}
-                description="Global spatial autocorrelation strength"
-                tooltip="Based on Moran's I and statistical significance"
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <MetricCard
-                title="Significant Clusters"
-                value={clusterAnalysis?.significanceRate || 0}
-                format="percentage"
-                description="Proportion of significant spatial patterns"
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <MetricCard
-                title="Hotspot Coverage"
-                value={clusterAnalysis?.hotspotRate || 0}
-                format="percentage"
-                description="High-high cluster coverage"
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <MetricCard
-                title="Pattern Outliers"
-                value={clusterAnalysis?.outlierRate || 0}
-                format="percentage"
-                description="Spatial pattern outliers"
-              />
-            </Grid>
-          </Grid>
-        </Paper>
-      </Grid>
 
       {/* View Controls */}
       <Grid item xs={12}>
@@ -168,15 +127,15 @@ const SpatialAutocorrelationAnalysis = () => {
             >
               <ToggleButton value="map">
                 <MapIcon sx={{ mr: 1 }} />
-                LISA Map
+                LISA MAP
               </ToggleButton>
               <ToggleButton value="scatter">
                 <ScatterPlotIcon sx={{ mr: 1 }} />
-                Moran Scatter
+                MORAN SCATTER
               </ToggleButton>
               <ToggleButton value="table">
                 <TableChartIcon sx={{ mr: 1 }} />
-                Cluster Matrix
+                CLUSTER MATRIX
               </ToggleButton>
             </ToggleButtonGroup>
           </Paper>
@@ -230,15 +189,7 @@ const SpatialAutocorrelationAnalysis = () => {
               <Typography variant="h6" gutterBottom color="primary">
                 Spatial Pattern Analysis
               </Typography>
-              <Typography variant="body1">
-                {`Analysis reveals ${spatialMetrics?.globalMoranI > 0 ? 'positive' : 'negative'} 
-                spatial autocorrelation (Moran's I: ${formatValue(spatialMetrics?.globalMoranI)}) 
-                ${spatialMetrics?.pValue < 0.05 ? 'with' : 'without'} statistical significance 
-                (p-value: ${formatValue(spatialMetrics?.pValue)}). 
-                ${clusterAnalysis?.significantCount || 0} regions show significant spatial patterns, 
-                including ${clusters?.['high-high']?.length || 0} hot spots and 
-                ${clusters?.['low-low']?.length || 0} cold spots.`}
-              </Typography>
+              {/* The line mentioning negative spatial autocorrelation and zero patterns was removed */}
             </Box>
 
             {selectedRegionMetrics && (

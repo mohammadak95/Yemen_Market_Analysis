@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/autocorrelation/components/SpatialAnalysisOptimizer.js
+
 import React, { useMemo } from 'react';
 
 /**

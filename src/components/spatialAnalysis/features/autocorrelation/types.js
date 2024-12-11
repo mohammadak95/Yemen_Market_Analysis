@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/autocorrelation/types.js
+
 /**
  * Constants and types for spatial autocorrelation analysis
  */

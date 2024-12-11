@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/autocorrelation/SpatialAnalysisPanel.js
+
 import React, { useState, useMemo } from 'react';
 import {
   Paper,

@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/autocorrelation/MoranScatterPlot.js
+
 import React, { useMemo } from 'react';
 import { Box, Typography, useTheme, useMediaQuery, Paper } from '@mui/material';
 import { scaleLinear } from 'd3-scale';

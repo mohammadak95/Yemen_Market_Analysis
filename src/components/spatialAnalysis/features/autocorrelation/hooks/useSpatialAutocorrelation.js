@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/autocorrelation/hooks/useSpatialAutocorrelation.js
+
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import {

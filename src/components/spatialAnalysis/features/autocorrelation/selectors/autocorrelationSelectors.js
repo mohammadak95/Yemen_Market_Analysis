@@ -1,3 +1,5 @@
+//src/components/spatialAnalysis/features/autocorrelation/selectors/autocorrelationSelectors.js
+
 import { createSelector } from '@reduxjs/toolkit';
 
 // Base selector for autocorrelation state
