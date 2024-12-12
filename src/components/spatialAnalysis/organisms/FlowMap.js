@@ -2,7 +2,7 @@
 
 import React, { useMemo, useCallback, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { MapContainer, TileLayer, GeoJSON, Polyline, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Polyline, CircleMarker, useMap } from 'react-leaflet';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import chroma from 'chroma-js';
@@ -12,6 +12,7 @@ import Legend from '../atoms/Legend';
 import TooltipComponent from '../atoms/Tooltip';
 import MapControls from '../molecules/MapControls';
 import { transformRegionName } from '../utils/spatialUtils';
+import { flowValidation } from '../features/flows/types';
 
 // LISA cluster color mapping (Assuming similar color mapping needed)
 const LISA_COLORS = {
@@ -86,9 +87,11 @@ const FlowMap = ({
   const processedFlows = useMemo(() => {
     if (!flows?.length || !geometry?.features) return [];
 
-    const maxFlow = Math.max(...flows.map((f) => f.total_flow || 0));
+    // Filter valid flows and get max flow
+    const validFlows = flows.filter(flow => flowValidation.isValidFlow(flow));
+    const maxFlow = Math.max(...validFlows.map(f => f.flow_weight || 0));
 
-    return flows
+    return validFlows
       .map((flow) => {
         const sourceFeature = geometry.features.find(
           (f) =>
@@ -108,7 +111,8 @@ const FlowMap = ({
           return null;
         }
 
-        const normalizedFlow = flow.total_flow / maxFlow;
+        const normalizedFlow = flowValidation.normalizeFlow(flow, maxFlow);
+        const status = flowValidation.getFlowStatus(normalizedFlow);
 
         return {
           ...flow,
@@ -117,6 +121,7 @@ const FlowMap = ({
           color: colorScale(normalizedFlow).hex(),
           width: 1 + normalizedFlow * 4, // Scale line width based on flow strength
           normalizedFlow,
+          status
         };
       })
       .filter(Boolean);
@@ -204,13 +209,13 @@ const FlowMap = ({
         bounds={DEFAULT_BOUNDS}
         style={{ height: '100%', width: '100%' }}
         maxBounds={DEFAULT_BOUNDS}
-        minZoom={DEFAULT_ZOOM - 1} // Adjusted minZoom for flexibility
-        maxZoom={DEFAULT_ZOOM + 7} // Increased maxZoom for more detail when zoomed in
+        minZoom={DEFAULT_ZOOM - 1}
+        maxZoom={DEFAULT_ZOOM + 7}
         zoomControl={true}
         dragging={true}
         touchZoom={true}
         doubleClickZoom={true}
-        scrollWheelZoom={true} // Enabled scroll wheel zoom
+        scrollWheelZoom={true}
         boxZoom={true}
         keyboard={true}
         bounceAtZoomLimits={true}
@@ -260,8 +265,17 @@ const FlowMap = ({
                     },
                     {
                       label: 'Flow Volume',
-                      value: flow.total_flow,
+                      value: flow.flow_weight,
                       format: 'number',
+                    },
+                    {
+                      label: 'Flow Strength',
+                      value: flow.normalizedFlow,
+                      format: 'percentage',
+                    },
+                    {
+                      label: 'Status',
+                      value: flow.status,
                     },
                     {
                       label: 'Price Differential',
@@ -317,8 +331,12 @@ FlowMap.propTypes = {
     PropTypes.shape({
       source: PropTypes.string.isRequired,
       target: PropTypes.string.isRequired,
-      total_flow: PropTypes.number,
+      flow_weight: PropTypes.number.isRequired,
       price_differential: PropTypes.number,
+      metadata: PropTypes.shape({
+        valid: PropTypes.bool.isRequired,
+        processed_at: PropTypes.string.isRequired
+      }).isRequired
     })
   ),
   geometry: PropTypes.shape({

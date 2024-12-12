@@ -1,0 +1,17 @@
+/* src/components/spatialAnalysis/features/flows/FlowMapTransitions.css */
+
+/* Fade transitions for polylines */
+.flow-enter {
+    opacity: 0;
+  }
+  .flow-enter.flow-enter-active {
+    opacity: 1;
+    transition: opacity 300ms ease-in;
+  }
+  .flow-exit {
+    opacity: 1;
+  }
+  .flow-exit.flow-exit-active {
+    opacity: 0;
+    transition: opacity 300ms ease-out;
+  }

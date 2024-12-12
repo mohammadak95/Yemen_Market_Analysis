@@ -1,5 +1,3 @@
-//src/components/spatialAnalysis/features/flows/FlowNetworkAnalysis.js
-
 /**
  * Flow Network Analysis Component
  */
@@ -18,7 +16,6 @@ import {
   ListItem,
   ListItemText
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -28,6 +25,8 @@ import FlowMetricsPanel from './FlowMetricsPanel';
 import MetricCard from '../../atoms/MetricCard';
 import TimeControl from '../../molecules/TimeControl';
 import { setSelectedDate } from '../../../../slices/spatialSlice';
+import { useFlowDataManager } from '../../../../hooks/useFlowDataManager';
+import { selectFlowMetrics } from '../../../../slices/flowSlice';
 import { 
   FLOW_THRESHOLDS, 
   NETWORK_THRESHOLDS,
@@ -41,114 +40,40 @@ const MAP_SETTINGS = {
   zoom: 6.5
 };
 
-// Helper function to normalize date to YYYY-MM format
-const normalizeDate = (date) => {
-  try {
-    return date?.substring(0, 7);
-  } catch (error) {
-    console.error('Error normalizing date:', error);
-    return date;
-  }
-};
-
 const FlowNetworkAnalysis = () => {
-  const theme = useTheme();
   const dispatch = useDispatch();
   
   // Component state
   const [selectedFlow, setSelectedFlow] = useState(null);
   const [showMethodology, setShowMethodology] = useState(false);
 
-  // Redux selectors
-  const timeSeriesData = useSelector(state => state.spatial.data.timeSeriesData || []);
-  const marketIntegration = useSelector(state => state.spatial.data.marketIntegration || {});
-  const loading = useSelector(state => state.spatial.status.loading);
-  const error = useSelector(state => state.spatial.status.error);
-  const selectedDate = useSelector(state => state.spatial.ui.selectedDate);
-  const flowMaps = useSelector(state => state.spatial.data.flowMaps || []);
+  // Get data from Redux
+  const selectedDate = useSelector(state => state.spatial.ui.selectedDate || '2020-10-01');
+  const selectedCommodity = useSelector(state => state.ecm.ui.selectedCommodity);
+  const flowMetrics = useSelector(selectFlowMetrics);
+  const availableDates = useSelector(state => state.spatial.data.uniqueMonths || []);
 
-  // Get unique dates for time control
-  const dates = useMemo(() => {
-    if (!timeSeriesData?.length) return [];
-    return [...new Set(timeSeriesData.map(d => normalizeDate(d.month)))].sort();
-  }, [timeSeriesData]);
+  // Use the flow data manager hook
+  const {
+    byDate,
+    metadata: { totalFlows, uniqueMarkets },
+    loading,
+    error
+  } = useFlowDataManager();
 
-  // Filter flows by selected date
+  // Get flows for selected date
   const dateFilteredFlows = useMemo(() => {
-    if (!selectedDate || !Array.isArray(flowMaps)) {
-      console.debug('Missing date or flows:', { selectedDate, flowCount: flowMaps?.length });
+    if (!selectedDate || !byDate) {
       return [];
     }
-
-    const targetMonth = normalizeDate(selectedDate);
-
-    console.debug('Filtering flows:', {
-      targetMonth,
-      totalFlows: flowMaps.length,
-      sampleFlow: flowMaps[0],
-      selectedDate,
-      normalizedSelectedDate: targetMonth
-    });
-
-    // Filter flows by date and validate
-    const filtered = flowMaps.filter(flow => {
-      const flowMonth = normalizeDate(flow?.date);
-      const matches = flowMonth === targetMonth;
-
-      if (!matches || !flowValidation.isValidFlow(flow)) {
-        console.debug('Flow filtered out:', {
-          flowMonth,
-          targetMonth,
-          matches,
-          isValid: flowValidation.isValidFlow(flow),
-          flow
-        });
-      }
-
-      return matches && flowValidation.isValidFlow(flow);
-    });
-
-    console.debug('Filtered flows:', {
-      inputCount: flowMaps.length,
-      outputCount: filtered.length,
-      targetMonth
-    });
-
-    return filtered;
-  }, [flowMaps, selectedDate]);
-
-  // Calculate flow metrics
-  const metrics = useMemo(() => {
-    if (!dateFilteredFlows.length) {
-      console.debug('No filtered flows available for metrics calculation');
-      return {
-        flows: {
-          total: 0,
-          average: 0,
-          count: 0,
-          maxFlow: 0,
-          minFlow: 0
-        }
-      };
-    }
-
-    const metrics = flowValidation.calculateFlowMetrics(dateFilteredFlows);
-    return {
-      flows: {
-        total: metrics.totalFlow,
-        average: metrics.avgFlow,
-        count: metrics.count,
-        maxFlow: metrics.maxFlow,
-        minFlow: metrics.minFlow
-      }
-    };
-  }, [dateFilteredFlows]);
+    return byDate[selectedDate] || [];
+  }, [byDate, selectedDate]);
 
   // Process flows with additional metrics
   const processedFlows = useMemo(() => {
     if (!dateFilteredFlows.length) return [];
 
-    const maxFlow = Math.max(...dateFilteredFlows.map(f => f.total_flow));
+    const maxFlow = Math.max(...dateFilteredFlows.map(f => f.flow_weight));
 
     return dateFilteredFlows.map(flow => {
       const normalizedFlow = flowValidation.normalizeFlow(flow, maxFlow);
@@ -165,25 +90,18 @@ const FlowNetworkAnalysis = () => {
 
   // Handle date change
   const handleDateChange = useCallback((newDate) => {
-    const normalizedNew = normalizeDate(newDate);
-    const normalizedCurrent = normalizeDate(selectedDate);
-
-    console.debug('Date change requested:', {
-      newDate,
-      normalizedNew,
-      currentDate: selectedDate,
-      normalizedCurrent,
-      availableDates: dates
-    });
-
-    if (normalizedNew !== normalizedCurrent) {
-      dispatch(setSelectedDate(normalizedNew));
+    if (newDate !== selectedDate) {
+      dispatch(setSelectedDate(newDate));
       setSelectedFlow(null);
     }
-  }, [dates, dispatch, selectedDate]);
+  }, [dispatch, selectedDate]);
 
-  // Handle flow selection
-  const handleFlowSelect = useCallback((flow) => {
+  // Handle flow selection with event prevention
+  const handleFlowSelect = useCallback((event, flow) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     setSelectedFlow(flow);
   }, []);
 
@@ -203,30 +121,27 @@ const FlowNetworkAnalysis = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Loading Flow Analysis
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Preparing market flow visualization...
-        </Typography>
-      </Box>
-    );
-  }
-
   return (
     <Grid container spacing={2}>
       {/* Overview Metrics */}
       <Grid item xs={12}>
         <Paper sx={{ p: 2 }}>
           <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>
+                {selectedCommodity} Market Flows
+                {selectedDate && (
+                  <Typography variant="caption" display="block" color="textSecondary">
+                    Period: {selectedDate}
+                  </Typography>
+                )}
+              </Typography>
+            </Grid>
             <Grid item xs={12} md={3}>
               <Box>
                 <MetricCard
                   title="Total Flow Volume"
-                  value={metrics?.flows?.total || 0}
+                  value={flowMetrics?.totalFlows || 0}
                   format="number"
                   description="Sum of all market flows"
                 />
@@ -236,7 +151,7 @@ const FlowNetworkAnalysis = () => {
               <Box>
                 <MetricCard
                   title="Average Flow"
-                  value={metrics?.flows?.average || 0}
+                  value={flowMetrics?.averageFlowWeight || 0}
                   format="number"
                   description="Average flow per connection"
                 />
@@ -245,8 +160,8 @@ const FlowNetworkAnalysis = () => {
             <Grid item xs={12} md={3}>
               <Box>
                 <MetricCard
-                  title="Flow Density"
-                  value={marketIntegration?.flow_density || 0}
+                  title="Market Connectivity"
+                  value={flowMetrics?.marketConnectivity || 0}
                   format="percentage"
                   description="Network connection density"
                   thresholds={NETWORK_THRESHOLDS.DENSITY}
@@ -256,10 +171,10 @@ const FlowNetworkAnalysis = () => {
             <Grid item xs={12} md={3}>
               <Box>
                 <MetricCard
-                  title="Active Connections"
-                  value={metrics?.flows?.count || 0}
+                  title="Active Markets"
+                  value={uniqueMarkets || 0}
                   format="integer"
-                  description="Active market flows"
+                  description="Unique market locations"
                 />
               </Box>
             </Grid>
@@ -268,15 +183,24 @@ const FlowNetworkAnalysis = () => {
       </Grid>
 
       {/* Time Controls */}
-      {dates.length > 0 && (
+      {availableDates.length > 0 && (
         <Grid item xs={12}>
           <Paper sx={{ p: 2 }}>
             <TimeControl
-              dates={dates}
-              currentDate={normalizeDate(selectedDate) || dates[0]}
+              dates={availableDates}
+              currentDate={selectedDate || availableDates[0]}
               onChange={handleDateChange}
             />
           </Paper>
+        </Grid>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <Grid item xs={12}>
+          <Alert severity="info">
+            Loading flow data for {selectedCommodity}...
+          </Alert>
         </Grid>
       )}
 
@@ -297,12 +221,6 @@ const FlowNetworkAnalysis = () => {
         <FlowMetricsPanel
           flows={processedFlows}
           selectedFlow={selectedFlow}
-          metrics={{
-            totalFlows: metrics?.flows?.total || 0,
-            averageFlow: metrics?.flows?.average || 0,
-            flowDensity: marketIntegration?.flow_density || 0,
-            activeConnections: metrics?.flows?.count || 0
-          }}
           timeRange={selectedDate}
         />
       </Grid>

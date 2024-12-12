@@ -1,5 +1,3 @@
-// src/components/spatialAnalysis/features/flows/FlowMetricsPanel.js
-
 /**
  * Market Flow Metrics Panel Component
  * 
@@ -12,6 +10,7 @@
 
 import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useSelector } from 'react-redux';
 import {
   Paper,
   Typography,
@@ -23,10 +22,9 @@ import {
   List,
   ListItem,
   ListItemText,
-  Tooltip,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -36,8 +34,14 @@ import MetricProgress from '../../molecules/MetricProgress';
 import { 
   FLOW_THRESHOLDS, 
   NETWORK_THRESHOLDS,
-  FLOW_STATUS
+  FLOW_STATUS,
+  flowValidation
 } from './types';
+import { 
+  selectFlowMetrics,
+  selectFlowMetadata,
+  selectFlowStatus
+} from '../../../../slices/flowSlice';
 
 // Helper function to calculate statistical significance
 const calculateSignificance = (value, mean, stdDev) => {
@@ -61,14 +65,15 @@ const normalCDF = (x) => {
 const FlowMetricsPanel = ({
   flows = [],
   selectedFlow,
-  metrics = {},
   timeRange
 }) => {
-  const theme = useTheme();
   const [showMethodology, setShowMethodology] = useState(false);
+  const flowMetrics = useSelector(selectFlowMetrics);
+  const { commodity } = useSelector(selectFlowMetadata);
+  const { loading, error } = useSelector(selectFlowStatus);
 
   // Calculate comprehensive flow metrics with safe defaults
-  const flowMetrics = useMemo(() => {
+  const metrics = useMemo(() => {
     const defaultMetrics = {
       basic: {
         totalFlow: 0,
@@ -98,13 +103,8 @@ const FlowMetricsPanel = ({
     }
 
     try {
-      // Filter valid flows
-      const validFlows = flows.filter(flow => 
-        flow && 
-        typeof flow.total_flow === 'number' && 
-        !isNaN(flow.total_flow) &&
-        isFinite(flow.total_flow)
-      );
+      // Filter valid flows using flowValidation helper
+      const validFlows = flows.filter(flow => flowValidation.isValidFlow(flow));
 
       if (!validFlows.length) {
         console.debug('No valid flows found for metrics calculation');
@@ -112,7 +112,7 @@ const FlowMetricsPanel = ({
       }
 
       // Calculate basic metrics with safety checks
-      const flowValues = validFlows.map(f => Math.max(0, f.total_flow));
+      const flowValues = validFlows.map(f => flowValidation.getFlowValue(f));
       const totalFlow = flowValues.reduce((sum, val) => sum + val, 0);
       const avgFlow = flowValues.length > 0 ? totalFlow / flowValues.length : 0;
       const maxFlow = Math.max(...flowValues, 0);
@@ -191,43 +191,43 @@ const FlowMetricsPanel = ({
       }
     };
 
-    if (!selectedFlow || !flowMetrics || !Array.isArray(flows)) return defaultSelectedMetrics;
+    if (!selectedFlow || !metrics || !Array.isArray(flows)) return defaultSelectedMetrics;
 
     try {
       const flow = flows.find(f => 
         f.source === selectedFlow.source && 
-        f.target === selectedFlow.target
+        f.target === selectedFlow.target &&
+        f.metadata?.valid
       );
 
-      if (!flow || typeof flow.total_flow !== 'number' || !isFinite(flow.total_flow)) {
+      if (!flow || !flowValidation.isValidFlow(flow)) {
         return defaultSelectedMetrics;
       }
 
+      const flowValue = flowValidation.getFlowValue(flow);
+
       // Calculate relative metrics with safety checks
-      const relativeStrength = flowMetrics.basic.avgFlow > 0 ? 
-        Math.min(1, Math.max(0, flow.total_flow / flowMetrics.basic.avgFlow)) : 0;
+      const relativeStrength = metrics.basic.avgFlow > 0 ? 
+        Math.min(1, Math.max(0, flowValue / metrics.basic.avgFlow)) : 0;
       
       const percentile = flows.length > 0 ? 
         Math.min(100, Math.max(0, 
-          flows.filter(f => (f.total_flow || 0) <= flow.total_flow).length / flows.length * 100
+          flows.filter(f => flowValidation.getFlowValue(f) <= flowValue).length / flows.length * 100
         )) : 0;
 
       // Calculate significance with safety checks
       const significance = calculateSignificance(
-        flow.total_flow,
-        flowMetrics.basic.avgFlow,
-        flowMetrics.basic.stdDev
+        flowValue,
+        metrics.basic.avgFlow,
+        metrics.basic.stdDev
       );
 
       // Calculate normalized flow with safety checks
-      const normalizedFlow = flowMetrics.basic.maxFlow > 0 ? 
-        Math.min(1, Math.max(0, flow.total_flow / flowMetrics.basic.maxFlow)) : 0;
+      const normalizedFlow = metrics.basic.maxFlow > 0 ? 
+        Math.min(1, Math.max(0, flowValue / metrics.basic.maxFlow)) : 0;
 
       // Determine flow status
-      let status = FLOW_STATUS.INACTIVE;
-      if (normalizedFlow >= FLOW_THRESHOLDS.HIGH) status = FLOW_STATUS.ACTIVE;
-      else if (normalizedFlow >= FLOW_THRESHOLDS.MEDIUM) status = FLOW_STATUS.STABLE;
-      else if (normalizedFlow >= FLOW_THRESHOLDS.LOW) status = FLOW_STATUS.PARTIAL;
+      const status = flowValidation.getFlowStatus(normalizedFlow);
 
       return {
         ...flow,
@@ -239,22 +239,22 @@ const FlowMetricsPanel = ({
         metrics: {
           zScore: Math.max(-10, Math.min(10, significance.zScore)), // Bound z-score
           pValue: Math.min(1, Math.max(0, significance.pValue)),
-          standardizedValue: flowMetrics.basic.stdDev > 0 ? 
-            Math.max(-10, Math.min(10, (flow.total_flow - flowMetrics.basic.avgFlow) / flowMetrics.basic.stdDev)) : 0
+          standardizedValue: metrics.basic.stdDev > 0 ? 
+            Math.max(-10, Math.min(10, (flowValue - metrics.basic.avgFlow) / metrics.basic.stdDev)) : 0
         }
       };
     } catch (error) {
       console.error('Error calculating selected flow metrics:', error);
       return defaultSelectedMetrics;
     }
-  }, [selectedFlow, flows, flowMetrics]);
+  }, [selectedFlow, flows, metrics]);
 
   // Ensure we have valid values for display
   const safeMetrics = {
     network: {
-      density: flowMetrics?.networkMetrics?.density || 0,
-      connectivity: flowMetrics?.networkMetrics?.connectivity || 0,
-      centralization: flowMetrics?.networkMetrics?.centralization || 0
+      density: metrics?.networkMetrics?.density || 0,
+      connectivity: metrics?.networkMetrics?.connectivity || 0,
+      centralization: metrics?.networkMetrics?.centralization || 0
     },
     selected: {
       normalizedFlow: selectedFlowMetrics?.normalizedFlow || 0,
@@ -262,11 +262,34 @@ const FlowMetricsPanel = ({
     }
   };
 
-  if (!flowMetrics || !flowMetrics.basic.count) {
+  if (loading) {
+    return (
+      <Paper sx={{ p: 2, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={40} sx={{ mb: 2 }} />
+          <Typography>
+            Loading flow metrics for {commodity}...
+          </Typography>
+        </Box>
+      </Paper>
+    );
+  }
+
+  if (error) {
+    return (
+      <Paper sx={{ p: 2, height: '100%' }}>
+        <Alert severity="error">
+          Error loading flow metrics: {error}
+        </Alert>
+      </Paper>
+    );
+  }
+
+  if (!metrics || !metrics.basic.count) {
     return (
       <Paper sx={{ p: 2, height: '100%' }}>
         <Alert severity="warning">
-          No valid flow metrics available. Please ensure data is properly loaded.
+          No valid flow metrics available for {commodity} in {timeRange}.
         </Alert>
       </Paper>
     );
@@ -278,6 +301,11 @@ const FlowMetricsPanel = ({
       <Box sx={{ mb: 3 }}>
         <Typography variant="h6" gutterBottom>
           Network Flow Analysis
+          {timeRange && (
+            <Typography variant="caption" display="block" color="textSecondary">
+              {commodity} - Period: {timeRange}
+            </Typography>
+          )}
         </Typography>
         
         <Grid container spacing={2}>
@@ -295,7 +323,7 @@ const FlowMetricsPanel = ({
           <Grid item xs={12} md={6}>
             <MetricCard
               title="Flow Density"
-              value={flowMetrics.networkMetrics.density}
+              value={metrics.networkMetrics.density}
               format="percentage"
               description="Active market connections"
               tooltip="Percentage of potential market connections that are active"
@@ -306,7 +334,7 @@ const FlowMetricsPanel = ({
           <Grid item xs={12} md={6}>
             <MetricCard
               title="Network Connectivity"
-              value={flowMetrics.networkMetrics.connectivity}
+              value={metrics.networkMetrics.connectivity}
               format="percentage"
               description="Market integration level"
               tooltip="Degree of market integration in the network"
@@ -325,7 +353,7 @@ const FlowMetricsPanel = ({
           <Grid item xs={12} md={6}>
             <MetricCard
               title="Variability"
-              value={flowMetrics.basic.stdDev / flowMetrics.basic.avgFlow}
+              value={metrics.basic.stdDev / metrics.basic.avgFlow}
               format="number"
               description="Flow consistency"
               tooltip="Lower values indicate more uniform flow distribution"
@@ -335,7 +363,7 @@ const FlowMetricsPanel = ({
           <Grid item xs={12} md={6}>
             <MetricCard
               title="Distribution Shape"
-              value={flowMetrics.distribution.skewness}
+              value={metrics.distribution.skewness}
               format="number"
               description="Flow symmetry"
               tooltip="Positive values indicate right-skewed distribution"
@@ -464,18 +492,17 @@ FlowMetricsPanel.propTypes = {
   flows: PropTypes.arrayOf(PropTypes.shape({
     source: PropTypes.string.isRequired,
     target: PropTypes.string.isRequired,
-    total_flow: PropTypes.number.isRequired,
-    coordinates: PropTypes.shape({
-      source: PropTypes.arrayOf(PropTypes.number).isRequired,
-      target: PropTypes.arrayOf(PropTypes.number).isRequired
-    }).isRequired,
-    price_differential: PropTypes.number
+    flow_weight: PropTypes.number.isRequired,
+    price_differential: PropTypes.number,
+    metadata: PropTypes.shape({
+      valid: PropTypes.bool.isRequired,
+      processed_at: PropTypes.string.isRequired
+    }).isRequired
   })).isRequired,
   selectedFlow: PropTypes.shape({
     source: PropTypes.string.isRequired,
     target: PropTypes.string.isRequired
   }),
-  metrics: PropTypes.object,
   timeRange: PropTypes.string
 };
 

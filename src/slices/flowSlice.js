@@ -1,7 +1,5 @@
 // src/slices/flowSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { createSelector } from 'reselect';
 import Papa from 'papaparse';
 import _ from 'lodash';
@@ -31,17 +29,32 @@ const initialState = {
   status: {
     loading: false,
     error: null,
-    lastFetch: null
+    lastFetch: null,
+    loadedData: {} // Track what data has been loaded
   }
+};
+
+// Helper function to check if data is already loaded
+const isDataLoaded = (state, commodity, date) => {
+  const key = `${commodity}-${date}`;
+  return state.status.loadedData[key] && state.byDate[date];
 };
 
 // Async thunk for loading flow data
 export const fetchFlowData = createAsyncThunk(
   'flow/fetchData',
-  async ({ commodity, date }, { rejectWithValue }) => {
+  async ({ commodity, date }, { getState, rejectWithValue }) => {
     const metric = backgroundMonitor.startMetric('flow-data-fetch');
     
     try {
+      // Check if we already have this data
+      const state = getState().flow;
+      if (isDataLoaded(state, commodity, date)) {
+        console.debug('Data already loaded:', { commodity, date });
+        metric.finish({ status: 'cached', commodity, date });
+        return null; // Return null to skip processing
+      }
+
       // Get the proper path for flow data
       const flowDataPath = getNetworkDataPath('time_varying_flows.csv');
 
@@ -88,6 +101,13 @@ export const fetchFlowData = createAsyncThunk(
         date
       });
       return rejectWithValue(error.message);
+    }
+  },
+  {
+    condition: ({ commodity, date }, { getState }) => {
+      const state = getState().flow;
+      // Only fetch if not already loading and not already loaded
+      return !state.status.loading && !isDataLoaded(state, commodity, date);
     }
   }
 );
@@ -165,16 +185,20 @@ const flowSlice = createSlice({
   initialState,
   reducers: {
     clearFlowData: (state) => {
-      state.flows = [];
-      state.byDate = {};
-      state.byRegion = {};
-      state.metadata = { ...initialState.metadata };
+      // Only clear if we're actually switching features
+      if (state.metadata.commodity) {
+        return initialState;
+      }
+      return state;
     },
     updateFlowMetrics: (state, action) => {
       state.metadata = {
         ...state.metadata,
         ...action.payload
       };
+    },
+    resetFlowError: (state) => {
+      state.status.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -184,18 +208,53 @@ const flowSlice = createSlice({
         state.status.error = null;
       })
       .addCase(fetchFlowData.fulfilled, (state, action) => {
-        state.flows = action.payload.flows;
-        state.byDate = action.payload.byDate;
-        state.byRegion = action.payload.byRegion;
-        state.metadata = action.payload.metadata;
+        // If null returned, data was already loaded
+        if (!action.payload) {
+          state.status.loading = false;
+          return;
+        }
+
+        // Merge new flows with existing ones
+        const newFlows = action.payload.flows.filter(flow => 
+          !state.flows.some(existing => existing.id === flow.id)
+        );
+
+        state.flows = [...state.flows, ...newFlows];
+        
+        // Merge byDate data
+        state.byDate = {
+          ...state.byDate,
+          ...action.payload.byDate
+        };
+
+        // Merge byRegion data
+        state.byRegion = {
+          ...state.byRegion,
+          ...action.payload.byRegion
+        };
+
+        // Update metadata
+        state.metadata = {
+          ...state.metadata,
+          ...action.payload.metadata,
+          lastUpdated: new Date().toISOString()
+        };
+
+        // Mark data as loaded
+        const key = `${action.payload.metadata.commodity}-${action.payload.metadata.dateRange.start}`;
         state.status = {
           loading: false,
           error: null,
-          lastFetch: new Date().toISOString()
+          lastFetch: new Date().toISOString(),
+          loadedData: {
+            ...state.status.loadedData,
+            [key]: true
+          }
         };
       })
       .addCase(fetchFlowData.rejected, (state, action) => {
         state.status = {
+          ...state.status,
           loading: false,
           error: action.payload,
           lastFetch: new Date().toISOString()
@@ -205,7 +264,7 @@ const flowSlice = createSlice({
 });
 
 // Export actions and reducer
-export const { clearFlowData, updateFlowMetrics } = flowSlice.actions;
+export const { clearFlowData, updateFlowMetrics, resetFlowError } = flowSlice.actions;
 export default flowSlice.reducer;
 
 // Base selectors
@@ -257,29 +316,3 @@ export const selectFlowMetrics = createSelector(
     };
   }
 );
-
-// Hook for flow data management
-export const useFlowData = (commodity, date) => {
-  const dispatch = useDispatch();
-  const flowState = useSelector(selectFlowState);
-  const { loading, error } = useSelector(selectFlowStatus);
-
-  useEffect(() => {
-    if (!commodity || !date) return;
-
-    const loadData = async () => {
-      await dispatch(fetchFlowData({ commodity, date }));
-    };
-
-    loadData();
-  }, [commodity, date, dispatch]);
-
-  return {
-    flows: flowState.flows,
-    byDate: flowState.byDate,
-    byRegion: flowState.byRegion,
-    metadata: flowState.metadata,
-    loading,
-    error
-  };
-};

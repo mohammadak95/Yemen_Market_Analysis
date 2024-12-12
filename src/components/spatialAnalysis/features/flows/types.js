@@ -1,5 +1,3 @@
-//src/components/spatialAnalysis/features/flows/types.js
-
 /**
  * Types and constants for market flow analysis
  */
@@ -119,26 +117,23 @@ export const flowValidation = {
 
   // Validate coordinates structure
   isValidCoordinates: (coordinates) => {
-    const isValid = coordinates &&
-      Array.isArray(coordinates.source) &&
+    if (!coordinates) return false;
+    
+    // Check for separate source and target coordinates
+    if (Array.isArray(coordinates.source_coordinates) && Array.isArray(coordinates.target_coordinates)) {
+      return coordinates.source_coordinates.length === 2 &&
+        coordinates.target_coordinates.length === 2 &&
+        coordinates.source_coordinates.every(coord => typeof coord === 'number' && !isNaN(coord)) &&
+        coordinates.target_coordinates.every(coord => typeof coord === 'number' && !isNaN(coord));
+    }
+
+    // Fallback to legacy format
+    return Array.isArray(coordinates.source) &&
       Array.isArray(coordinates.target) &&
       coordinates.source.length === 2 &&
       coordinates.target.length === 2 &&
       coordinates.source.every(coord => typeof coord === 'number' && !isNaN(coord)) &&
       coordinates.target.every(coord => typeof coord === 'number' && !isNaN(coord));
-
-    if (!isValid && coordinates) {
-      console.debug('Invalid coordinates:', {
-        hasSource: Boolean(coordinates.source),
-        hasTarget: Boolean(coordinates.target),
-        sourceValid: Array.isArray(coordinates.source) && coordinates.source.length === 2,
-        targetValid: Array.isArray(coordinates.target) && coordinates.target.length === 2,
-        sourceCoords: coordinates.source,
-        targetCoords: coordinates.target
-      });
-    }
-
-    return isValid;
   },
 
   // Validate basic flow structure
@@ -147,29 +142,31 @@ export const flowValidation = {
       typeof flow === 'object' &&
       typeof flow.source === 'string' &&
       typeof flow.target === 'string' &&
-      typeof flow.total_flow === 'number' &&
-      !isNaN(flow.total_flow);
+      typeof flow.flow_weight === 'number' &&
+      !isNaN(flow.flow_weight) &&
+      flow.metadata?.valid;
 
     if (!isValid && flow) {
       console.debug('Invalid flow:', {
         hasSource: typeof flow.source === 'string',
         hasTarget: typeof flow.target === 'string',
-        hasTotalFlow: typeof flow.total_flow === 'number',
+        hasFlowWeight: typeof flow.flow_weight === 'number',
+        isValidFlow: flow.metadata?.valid,
         source: flow.source,
         target: flow.target,
-        total_flow: flow.total_flow
+        flow_weight: flow.flow_weight
       });
     }
 
     return isValid;
   },
 
-  // Get flow value (total_flow)
+  // Get flow value (flow_weight)
   getFlowValue: (flow) => {
-    if (!flow || typeof flow.total_flow !== 'number' || isNaN(flow.total_flow)) {
+    if (!flow || typeof flow.flow_weight !== 'number' || isNaN(flow.flow_weight)) {
       return 0;
     }
-    return flow.total_flow;
+    return flow.flow_weight;
   },
 
   // Normalize flow value against a maximum

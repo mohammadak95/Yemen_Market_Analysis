@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   Box,
   Paper,
@@ -25,6 +25,7 @@ import { ShockPropagationMap } from './features/shocks';
 import { ConflictImpactDashboard } from './features/conflict';
 import { SeasonalPriceMap } from './features/seasonal';
 import { MarketHealthMetrics } from './features/health';
+import { clearFlowData } from '../../slices/flowSlice';
 
 import ErrorBoundary from '../common/ErrorBoundary';
 import LoadingIndicator from '../common/LoadingIndicator';
@@ -91,6 +92,7 @@ const FEATURES = [
 
 const SpatialAnalysis = () => {
   const theme = useTheme();
+  const dispatch = useDispatch();
   const [activeFeature, setActiveFeature] = useState('clusters');
   const [error, setError] = useState(null);
 
@@ -101,8 +103,19 @@ const SpatialAnalysis = () => {
   const loadingStatus = useSelector(selectLoadingStatus);
   const status = useSelector(selectStatus);
 
-  // Handle feature change
+  // Handle feature change with event prevention
   const handleFeatureChange = (event, newValue) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (newValue === activeFeature) return; // Prevent unnecessary re-renders
+    
+    // Only clear flow data when switching away from flows feature
+    if (activeFeature === 'flows') {
+      dispatch(clearFlowData());
+    }
+    
     setActiveFeature(newValue);
     setError(null); // Reset error state on feature change
   };
@@ -162,6 +175,11 @@ const SpatialAnalysis = () => {
           variant="scrollable"
           scrollButtons="auto"
           sx={{ px: 2 }}
+          TabIndicatorProps={{
+            style: {
+              transition: 'none' // Prevent animation that might cause refresh
+            }
+          }}
         >
           {FEATURES.map(feature => (
             <Tab
@@ -170,6 +188,7 @@ const SpatialAnalysis = () => {
               label={feature.label}
               icon={feature.icon}
               iconPosition="start"
+              onClick={(e) => e.stopPropagation()} // Prevent event bubbling
             />
           ))}
         </Tabs>
