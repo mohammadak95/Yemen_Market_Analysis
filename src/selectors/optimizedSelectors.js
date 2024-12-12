@@ -390,9 +390,15 @@ export const selectRegressionAnalysis = createSelector(
       if (!data || !data.regressionAnalysis) return null;
       const regression = data.regressionAnalysis;
       const metadata = regression.metadata || {};
-      if (metadata.commodity !== selectedCommodity) {
+      
+      // If selectedCommodity is empty but we have regression data, use the data's commodity
+      const effectiveCommodity = selectedCommodity || metadata.commodity || 'beans (kidney red)';
+      
+      // Only return null if we have a non-empty selectedCommodity that doesn't match
+      if (selectedCommodity && metadata.commodity !== selectedCommodity) {
         return null;
       }
+
       return {
         model: regression.model || {},
         spatial: {
@@ -410,7 +416,7 @@ export const selectRegressionAnalysis = createSelector(
         },
         metadata: {
           ...metadata,
-          commodity: selectedCommodity,
+          commodity: effectiveCommodity,
           timestamp: metadata.timestamp || new Date().toISOString(),
           version: metadata.version || "1.0"
         }
@@ -421,7 +427,7 @@ export const selectRegressionAnalysis = createSelector(
         spatial: { moran_i: { I: 0, 'p-value': 1 }, vif: [] },
         residuals: { raw: [], byRegion: {}, stats: { mean: 0, variance: 0, maxAbsolute: 0 } },
         metadata: {
-          commodity: '',
+          commodity: selectedCommodity || 'beans (kidney red)',
           timestamp: new Date().toISOString(),
           version: "1.0"
         }

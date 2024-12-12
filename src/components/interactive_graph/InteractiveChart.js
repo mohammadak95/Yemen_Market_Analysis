@@ -1,5 +1,4 @@
 // src/components/interactive_graph/InteractiveChart.js
-
 import React, { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -29,7 +28,7 @@ import {
   applySeasonalAdjustment,
   applySmoothing,
 } from '../../utils/appUtils';
-import useMediaQuery from '@mui/material/useMediaQuery';
+import { useWindowWidth } from '../../hooks/useWindowWidth'; // Import the hook
 
 const capitalizeWords = (str) => {
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -49,7 +48,10 @@ ChartJS.register(
 
 const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const windowWidth = useWindowWidth(); // Get current window width
+
+  // Determine if the device is mobile based on window width
+  const isMobile = windowWidth < 600; // Adjust the breakpoint as needed
 
   const [showConflictIntensity, setShowConflictIntensity] = useState(true);
   const [priceType, setPriceType] = useState('lcu');
@@ -173,7 +175,7 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
         x: {
           type: 'time',
           time: {
-            unit: 'month',
+            unit: isMobile ? 'month' : 'quarter', // Adjust time unit based on screen size
           },
           grid: {
             display: true,
@@ -183,27 +185,27 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
             drawTicks: false,
           },
           border: {
-            display: false
+            display: false,
           },
           ticks: {
             maxTicksLimit: isMobile ? 5 : 10,
             color: theme.palette.text.primary,
             font: {
-              size: 11,
+              size: isMobile ? 10 : 11, // Adjust font size
               family: theme.typography.fontFamily,
             },
-            padding: 8
+            padding: 8,
           },
           title: {
             display: true,
             text: 'Analysis Period',
             color: theme.palette.text.primary,
             font: {
-              size: 11,
+              size: isMobile ? 10 : 11, // Adjust font size
               family: theme.typography.fontFamily,
             },
-            padding: { top: 5 }
-          }
+            padding: { top: 5 },
+          },
         },
         y: {
           type: 'linear',
@@ -217,26 +219,26 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
             drawTicks: false,
           },
           border: {
-            display: false
+            display: false,
           },
           ticks: {
             color: theme.palette.text.primary,
             font: {
-              size: 11,
+              size: isMobile ? 10 : 11, // Adjust font size
               family: theme.typography.fontFamily,
             },
-            padding: 8
+            padding: 8,
           },
           title: {
             display: true,
             text: priceType === 'lcu' ? 'Price (LCU)' : 'Price (US$)',
             color: theme.palette.text.primary,
             font: {
-              size: 11,
+              size: isMobile ? 10 : 11, // Adjust font size
               family: theme.typography.fontFamily,
             },
-            padding: { bottom: 5 }
-          }
+            padding: { bottom: 5 },
+          },
         },
         y1: {
           type: 'linear',
@@ -249,26 +251,26 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
             drawTicks: false,
           },
           border: {
-            display: false
+            display: false,
           },
           ticks: {
             color: theme.palette.text.primary,
             font: {
-              size: 11,
+              size: isMobile ? 10 : 11, // Adjust font size
               family: theme.typography.fontFamily,
             },
-            padding: 8
+            padding: 8,
           },
           title: {
             display: true,
             text: 'Conflict Intensity',
             color: theme.palette.text.primary,
             font: {
-              size: 11,
+              size: isMobile ? 10 : 11, // Adjust font size
               family: theme.typography.fontFamily,
             },
-            padding: { bottom: 5 }
-          }
+            padding: { bottom: 5 },
+          },
         },
       },
       plugins: {
@@ -282,13 +284,13 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           borderWidth: 1,
           padding: 8,
           bodyFont: {
-            size: 11,
+            size: isMobile ? 10 : 11, // Adjust font size
             family: theme.typography.fontFamily,
           },
           titleFont: {
-            size: 11,
+            size: isMobile ? 10 : 11, // Adjust font size
             family: theme.typography.fontFamily,
-            weight: 'bold'
+            weight: 'bold',
           },
           callbacks: {
             title: (context) => {
@@ -303,12 +305,12 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
           },
         },
         legend: {
-          position: 'bottom',
+          position: isMobile ? 'top' : 'bottom', // Change legend position
           align: 'start',
           labels: {
             color: theme.palette.text.primary,
             font: {
-              size: 11,
+              size: isMobile ? 10 : 11, // Adjust font size
               family: theme.typography.fontFamily,
             },
             padding: 8,
@@ -316,21 +318,23 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
             usePointStyle: true,
           },
           display: true,
-          maxHeight: 40
+          maxHeight: 40,
         },
       },
     }),
     [showConflictIntensity, priceType, theme, isMobile]
   );
-  
+
+  // Updated toggleButtonSx with responsive adjustments
   const toggleButtonSx = {
     minWidth: 'auto',
     backgroundColor: theme.palette.background.default,
     borderRadius: 1,
     '& .MuiToggleButton-root': {
       fontWeight: 600,
-      fontSize: isMobile ? '0.8rem' : '0.9rem',
-      padding: isMobile ? '4px 8px' : '6px 12px',
+      fontSize: isMobile ? '0.7rem' : '0.9rem', // Reduced font size on mobile
+      padding: isMobile ? '4px 6px' : '6px 12px', // Reduced padding on mobile
+      margin: isMobile ? '2px' : '4px', // Added margin to prevent overlap
       border: `1px solid ${theme.palette.divider}`,
       color: theme.palette.text.primary,
       '&.Mui-selected': {
@@ -341,6 +345,8 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
         },
       },
     },
+    // Enable wrapping on mobile to prevent overflow
+    flexWrap: isMobile ? 'wrap' : 'nowrap',
   };
 
   if (!chartData) {
@@ -358,7 +364,8 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
       {/* Controls */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
+          {/* Price Type ToggleButtonGroup */}
+          <Grid item xs={12} sm={6} md={3}>
             <ToggleButtonGroup
               value={priceType}
               exclusive
@@ -379,7 +386,8 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
             </ToggleButtonGroup>
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          {/* Seasonal Adjustment ToggleButtonGroup */}
+          <Grid item xs={12} sm={6} md={3}>
             <ToggleButtonGroup
               value={applySeasonalAdj}
               exclusive
@@ -390,12 +398,13 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
               sx={toggleButtonSx}
             >
               <ToggleButton value={true} selected={applySeasonalAdj}>
-                Seasonal Adjustment
+                Seasonal Adj
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          {/* Smoothing ToggleButtonGroup */}
+          <Grid item xs={12} sm={6} md={3}>
             <ToggleButtonGroup
               value={applySmooth}
               exclusive
@@ -411,7 +420,8 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
             </ToggleButtonGroup>
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          {/* Conflict Intensity ToggleButtonGroup */}
+          <Grid item xs={12} sm={6} md={3}>
             <ToggleButtonGroup
               value={showConflictIntensity}
               exclusive
@@ -433,42 +443,21 @@ const InteractiveChart = ({ data, selectedCommodity, selectedRegimes }) => {
       <Box
         sx={{
           width: '100%',
-          height: { xs: 200, sm: 250, md: 350 },
+          height: windowWidth < 600 ? 200 : windowWidth < 960 ? 250 : 350, // Dynamic height
           position: 'relative',
           bgcolor: theme.palette.background.default,
           borderRadius: 1,
           border: `1px solid ${theme.palette.divider}`,
           overflow: 'hidden',
           mb: 3,
-          p: 1
+          p: 1,
         }}
       >
-        <Line 
-          options={{
-            ...options,
-            plugins: {
-              ...options.plugins,
-              legend: {
-                ...options.plugins.legend,
-                position: 'bottom',
-                align: 'start',
-                labels: {
-                  ...options.plugins.legend.labels,
-                  padding: 4,
-                  boxWidth: 8,
-                  usePointStyle: true,
-                },
-                display: true,
-                maxHeight: 30
-              }
-            }
-          }} 
-          data={chartData} 
-        />
+        <Line options={options} data={chartData} />
       </Box>
     </Box>
   );
-}
+};
 
 InteractiveChart.propTypes = {
   data: PropTypes.arrayOf(

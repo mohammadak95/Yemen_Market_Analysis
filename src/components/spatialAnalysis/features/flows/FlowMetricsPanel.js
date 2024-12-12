@@ -1,4 +1,4 @@
-//src/components/spatialAnalysis/features/flows/FlowMetricsPanel.js
+// src/components/spatialAnalysis/features/flows/FlowMetricsPanel.js
 
 /**
  * Market Flow Metrics Panel Component
@@ -67,11 +67,34 @@ const FlowMetricsPanel = ({
   const theme = useTheme();
   const [showMethodology, setShowMethodology] = useState(false);
 
-  // Calculate comprehensive flow metrics
+  // Calculate comprehensive flow metrics with safe defaults
   const flowMetrics = useMemo(() => {
+    const defaultMetrics = {
+      basic: {
+        totalFlow: 0,
+        avgFlow: 0,
+        maxFlow: 0,
+        minFlow: 0,
+        stdDev: 0,
+        count: 0
+      },
+      distribution: {
+        q1: 0,
+        q3: 0,
+        iqr: 0,
+        skewness: 0,
+        kurtosis: 0
+      },
+      networkMetrics: {
+        density: 0,
+        connectivity: 0,
+        centralization: 0
+      }
+    };
+
     if (!Array.isArray(flows) || !flows.length) {
       console.debug('No flows available for metrics calculation');
-      return null;
+      return defaultMetrics;
     }
 
     try {
@@ -79,75 +102,96 @@ const FlowMetricsPanel = ({
       const validFlows = flows.filter(flow => 
         flow && 
         typeof flow.total_flow === 'number' && 
-        !isNaN(flow.total_flow)
+        !isNaN(flow.total_flow) &&
+        isFinite(flow.total_flow)
       );
 
       if (!validFlows.length) {
         console.debug('No valid flows found for metrics calculation');
-        return null;
+        return defaultMetrics;
       }
 
-      // Calculate basic metrics
-      const flowValues = validFlows.map(f => f.total_flow);
+      // Calculate basic metrics with safety checks
+      const flowValues = validFlows.map(f => Math.max(0, f.total_flow));
       const totalFlow = flowValues.reduce((sum, val) => sum + val, 0);
-      const avgFlow = totalFlow / flowValues.length;
-      const maxFlow = Math.max(...flowValues);
+      const avgFlow = flowValues.length > 0 ? totalFlow / flowValues.length : 0;
+      const maxFlow = Math.max(...flowValues, 0);
       const minFlow = Math.min(...flowValues);
 
-      // Calculate standard deviation
-      const variance = flowValues.reduce((sum, val) => 
-        sum + Math.pow(val - avgFlow, 2), 0) / flowValues.length;
+      // Calculate standard deviation with safety checks
+      const variance = flowValues.length > 0 ?
+        flowValues.reduce((sum, val) => sum + Math.pow(val - avgFlow, 2), 0) / flowValues.length : 0;
       const stdDev = Math.sqrt(variance);
 
-      // Calculate quartiles and IQR
+      // Calculate quartiles and IQR with safety checks
       const sortedFlows = [...flowValues].sort((a, b) => a - b);
-      const q1 = sortedFlows[Math.floor(flowValues.length * 0.25)];
-      const q3 = sortedFlows[Math.floor(flowValues.length * 0.75)];
+      const q1 = sortedFlows[Math.floor(flowValues.length * 0.25)] || 0;
+      const q3 = sortedFlows[Math.floor(flowValues.length * 0.75)] || 0;
       const iqr = q3 - q1;
 
-      // Network metrics
+      // Network metrics with safety checks
       const activeFlows = flowValues.filter(f => f > 0).length;
       const maxPossibleFlows = validFlows.length * (validFlows.length - 1) / 2;
-      const flowDensity = maxPossibleFlows > 0 ? activeFlows / maxPossibleFlows : 0;
+      const flowDensity = maxPossibleFlows > 0 ? 
+        Math.min(1, Math.max(0, activeFlows / maxPossibleFlows)) : 0;
 
-      // Distribution metrics
-      const skewness = stdDev > 0 ? flowValues.reduce((sum, val) => 
-        sum + Math.pow((val - avgFlow) / stdDev, 3), 0) / flowValues.length : 0;
+      // Distribution metrics with safety checks
+      const skewness = stdDev > 0 ? 
+        flowValues.reduce((sum, val) => sum + Math.pow((val - avgFlow) / stdDev, 3), 0) / 
+        (flowValues.length || 1) : 0;
 
-      const kurtosis = stdDev > 0 ? flowValues.reduce((sum, val) => 
-        sum + Math.pow((val - avgFlow) / stdDev, 4), 0) / flowValues.length - 3 : 0;
+      const kurtosis = stdDev > 0 ? 
+        (flowValues.reduce((sum, val) => sum + Math.pow((val - avgFlow) / stdDev, 4), 0) / 
+        (flowValues.length || 1)) - 3 : 0;
 
       return {
         basic: {
-          totalFlow,
-          avgFlow,
-          maxFlow,
-          minFlow,
-          stdDev,
+          totalFlow: Math.max(0, totalFlow),
+          avgFlow: Math.max(0, avgFlow),
+          maxFlow: Math.max(0, maxFlow),
+          minFlow: Math.max(0, minFlow),
+          stdDev: Math.max(0, stdDev),
           count: validFlows.length
         },
         distribution: {
-          q1,
-          q3,
-          iqr,
-          skewness,
-          kurtosis
+          q1: Math.max(0, q1),
+          q3: Math.max(0, q3),
+          iqr: Math.max(0, iqr),
+          skewness: Math.max(-3, Math.min(3, skewness)), // Bound skewness
+          kurtosis: Math.max(-3, Math.min(3, kurtosis))  // Bound kurtosis
         },
         networkMetrics: {
-          density: flowDensity,
-          connectivity: validFlows.length > 0 ? activeFlows / validFlows.length : 0,
-          centralization: maxPossibleFlows > 0 ? activeFlows / maxPossibleFlows : 0
+          density: Math.min(1, Math.max(0, flowDensity)),
+          connectivity: Math.min(1, Math.max(0, validFlows.length > 0 ? activeFlows / validFlows.length : 0)),
+          centralization: Math.min(1, Math.max(0, maxPossibleFlows > 0 ? activeFlows / maxPossibleFlows : 0))
         }
       };
     } catch (error) {
       console.error('Error calculating flow metrics:', error);
-      return null;
+      return defaultMetrics;
     }
   }, [flows]);
 
-  // Calculate selected flow metrics
+  // Calculate selected flow metrics with safe defaults
   const selectedFlowMetrics = useMemo(() => {
-    if (!selectedFlow || !flowMetrics) return null;
+    const defaultSelectedMetrics = {
+      normalizedFlow: 0,
+      relativeStrength: 0,
+      percentile: 0,
+      significance: {
+        significant: false,
+        zScore: 0,
+        pValue: 1
+      },
+      status: FLOW_STATUS.INACTIVE,
+      metrics: {
+        zScore: 0,
+        pValue: 1,
+        standardizedValue: 0
+      }
+    };
+
+    if (!selectedFlow || !flowMetrics || !Array.isArray(flows)) return defaultSelectedMetrics;
 
     try {
       const flow = flows.find(f => 
@@ -155,25 +199,29 @@ const FlowMetricsPanel = ({
         f.target === selectedFlow.target
       );
 
-      if (!flow || typeof flow.total_flow !== 'number') return null;
+      if (!flow || typeof flow.total_flow !== 'number' || !isFinite(flow.total_flow)) {
+        return defaultSelectedMetrics;
+      }
 
-      // Calculate relative metrics
+      // Calculate relative metrics with safety checks
       const relativeStrength = flowMetrics.basic.avgFlow > 0 ? 
-        flow.total_flow / flowMetrics.basic.avgFlow : 0;
-      const percentile = flows.filter(f => 
-        (f.total_flow || 0) <= flow.total_flow
-      ).length / flows.length * 100;
+        Math.min(1, Math.max(0, flow.total_flow / flowMetrics.basic.avgFlow)) : 0;
+      
+      const percentile = flows.length > 0 ? 
+        Math.min(100, Math.max(0, 
+          flows.filter(f => (f.total_flow || 0) <= flow.total_flow).length / flows.length * 100
+        )) : 0;
 
-      // Calculate significance
+      // Calculate significance with safety checks
       const significance = calculateSignificance(
         flow.total_flow,
         flowMetrics.basic.avgFlow,
         flowMetrics.basic.stdDev
       );
 
-      // Calculate normalized flow
+      // Calculate normalized flow with safety checks
       const normalizedFlow = flowMetrics.basic.maxFlow > 0 ? 
-        flow.total_flow / flowMetrics.basic.maxFlow : 0;
+        Math.min(1, Math.max(0, flow.total_flow / flowMetrics.basic.maxFlow)) : 0;
 
       // Determine flow status
       let status = FLOW_STATUS.INACTIVE;
@@ -189,27 +237,32 @@ const FlowMetricsPanel = ({
         significance,
         status,
         metrics: {
-          zScore: significance.zScore,
-          pValue: significance.pValue,
+          zScore: Math.max(-10, Math.min(10, significance.zScore)), // Bound z-score
+          pValue: Math.min(1, Math.max(0, significance.pValue)),
           standardizedValue: flowMetrics.basic.stdDev > 0 ? 
-            (flow.total_flow - flowMetrics.basic.avgFlow) / flowMetrics.basic.stdDev : 0
+            Math.max(-10, Math.min(10, (flow.total_flow - flowMetrics.basic.avgFlow) / flowMetrics.basic.stdDev)) : 0
         }
       };
     } catch (error) {
       console.error('Error calculating selected flow metrics:', error);
-      return null;
+      return defaultSelectedMetrics;
     }
   }, [selectedFlow, flows, flowMetrics]);
 
-  // Debug logging
-  console.debug('FlowMetricsPanel state:', {
-    totalFlows: flows.length,
-    hasMetrics: Boolean(flowMetrics),
-    selectedFlow: Boolean(selectedFlow),
-    hasSelectedMetrics: Boolean(selectedFlowMetrics)
-  });
+  // Ensure we have valid values for display
+  const safeMetrics = {
+    network: {
+      density: flowMetrics?.networkMetrics?.density || 0,
+      connectivity: flowMetrics?.networkMetrics?.connectivity || 0,
+      centralization: flowMetrics?.networkMetrics?.centralization || 0
+    },
+    selected: {
+      normalizedFlow: selectedFlowMetrics?.normalizedFlow || 0,
+      significance: selectedFlowMetrics?.significance || { significant: false, zScore: 0, pValue: 1 }
+    }
+  };
 
-  if (!flowMetrics) {
+  if (!flowMetrics || !flowMetrics.basic.count) {
     return (
       <Paper sx={{ p: 2, height: '100%' }}>
         <Alert severity="warning">
@@ -231,7 +284,7 @@ const FlowMetricsPanel = ({
           <Grid item xs={12}>
             <MetricProgress
               title="Network Flow Strength"
-              value={flowMetrics.networkMetrics.density}
+              value={safeMetrics.network.density}
               target={NETWORK_THRESHOLDS.DENSITY.HIGH}
               format="percentage"
               description="Overall network utilization"
@@ -312,7 +365,7 @@ const FlowMetricsPanel = ({
             <Grid item xs={12}>
               <MetricProgress
                 title="Flow Strength"
-                value={selectedFlowMetrics.normalizedFlow}
+                value={safeMetrics.selected.normalizedFlow}
                 target={FLOW_THRESHOLDS.HIGH}
                 format="percentage"
                 description="Relative to maximum flow"

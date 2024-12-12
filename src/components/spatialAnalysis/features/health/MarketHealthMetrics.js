@@ -22,9 +22,17 @@ const MarketHealthMetrics = ({
 }) => {
   const theme = useTheme();
 
-  // Calculate overall market health metrics
+  // Calculate overall market health metrics with safe defaults
   const healthMetrics = useMemo(() => {
-    if (!timeSeriesData?.length) return null;
+    if (!timeSeriesData?.length) {
+      return {
+        overall: 0,
+        integration: { score: 0, factors: {}, trend: 0 },
+        stability: { score: 0, factors: {}, trend: 0 },
+        resilience: { score: 0, factors: {}, trend: 0 },
+        accessibility: { score: 0, factors: {}, trend: 0 }
+      };
+    }
 
     // Calculate integration health
     const integration = calculateIntegrationHealth(marketIntegration);
@@ -41,13 +49,13 @@ const MarketHealthMetrics = ({
     // Calculate accessibility health
     const accessibility = calculateAccessibilityHealth(marketIntegration);
 
-    // Calculate overall health
-    const overall = (
-      integration.score +
-      stability.score +
-      resilience.score +
-      accessibility.score
-    ) / 4;
+    // Calculate overall health with safety checks
+    const overall = Math.max(0, Math.min(1,
+      (integration.score +
+       stability.score +
+       resilience.score +
+       accessibility.score) / 4
+    ));
 
     return {
       overall,
@@ -58,19 +66,35 @@ const MarketHealthMetrics = ({
     };
   }, [timeSeriesData, marketIntegration, networkMetrics, spatialAutocorrelation]);
 
-  // Calculate regional health metrics
+  // Calculate regional health metrics with safe defaults
   const regionalMetrics = useMemo(() => {
     if (!selectedRegion || !timeSeriesData?.length) return null;
 
-    return calculateRegionalHealth(
+    const metrics = calculateRegionalHealth(
       selectedRegion,
       timeSeriesData,
       marketIntegration,
       networkMetrics
     );
+
+    return metrics || {
+      overall: 0,
+      marketRole: 'Unknown',
+      riskLevel: 'Unknown',
+      metrics: {}
+    };
   }, [selectedRegion, timeSeriesData, marketIntegration, networkMetrics]);
 
-  if (!healthMetrics) {
+  // Ensure we have valid values for display
+  const safeMetrics = {
+    overall: healthMetrics?.overall || 0,
+    integration: healthMetrics?.integration || { score: 0, factors: {}, trend: 0 },
+    stability: healthMetrics?.stability || { score: 0, factors: {}, trend: 0 },
+    resilience: healthMetrics?.resilience || { score: 0, factors: {}, trend: 0 },
+    accessibility: healthMetrics?.accessibility || { score: 0, factors: {}, trend: 0 }
+  };
+
+  if (!timeSeriesData?.length) {
     return (
       <Alert severity="warning" sx={{ m: 2 }}>
         No market health data available for analysis
@@ -88,7 +112,7 @@ const MarketHealthMetrics = ({
           </Typography>
           <MetricProgress
             title="Overall Health Score"
-            value={healthMetrics.overall}
+            value={safeMetrics.overall}
             target={0.7}
             format="percentage"
             description="Composite market health indicator"
@@ -106,37 +130,37 @@ const MarketHealthMetrics = ({
             <Grid item xs={12} md={3}>
               <MetricCard
                 title="Market Integration"
-                value={healthMetrics.integration.score}
+                value={safeMetrics.integration.score}
                 format="percentage"
                 description="Price correlation and trade flow strength"
-                trend={healthMetrics.integration.trend}
+                trend={safeMetrics.integration.trend}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <MetricCard
                 title="Market Stability"
-                value={healthMetrics.stability.score}
+                value={safeMetrics.stability.score}
                 format="percentage"
                 description="Price and supply consistency"
-                trend={healthMetrics.stability.trend}
+                trend={safeMetrics.stability.trend}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <MetricCard
                 title="Market Resilience"
-                value={healthMetrics.resilience.score}
+                value={safeMetrics.resilience.score}
                 format="percentage"
                 description="Shock absorption capacity"
-                trend={healthMetrics.resilience.trend}
+                trend={safeMetrics.resilience.trend}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <MetricCard
                 title="Market Accessibility"
-                value={healthMetrics.accessibility.score}
+                value={safeMetrics.accessibility.score}
                 format="percentage"
                 description="Physical and economic access"
-                trend={healthMetrics.accessibility.trend}
+                trend={safeMetrics.accessibility.trend}
               />
             </Grid>
           </Grid>

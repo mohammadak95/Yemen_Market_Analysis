@@ -6,6 +6,7 @@ import _ from 'lodash';
 import { spatialHandler } from '../utils/spatialDataHandler';
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { workerManager } from '../workers/enhancedWorkerSystem';
 import {
   calculatePriceTrend,
   detectSeasonality,
@@ -144,7 +145,6 @@ export const initialState = {
     },
     metadata: null,
     cache: {},
-    // Updated flow data structure
     flowData: {
       flows: [],
       byDate: {},
@@ -163,7 +163,6 @@ export const initialState = {
     },
     commodities: []
   },
-  // ... rest of initial state remains unchanged
   status: {
     loading: false,
     error: null,
@@ -224,7 +223,8 @@ export const fetchAllSpatialData = createAsyncThunk(
     skipGeometry = false,
     regressionOnly = false,
     visualizationOnly = false,
-    forceRefresh = false
+    forceRefresh = false,
+    signal // Add signal parameter
   }, { getState, rejectWithValue }) => {
     const metric = backgroundMonitor.startMetric('spatial-data-fetch');
     const state = getState();
@@ -246,9 +246,12 @@ export const fetchAllSpatialData = createAsyncThunk(
       // Handle regression-only request
       if (regressionOnly) {
         try {
-          const regressionData = await spatialHandler.loadRegressionAnalysis(commodity);
+          const regressionData = await spatialHandler.loadRegressionAnalysis(commodity, signal);
           result.regressionData = regressionData;
         } catch (error) {
+          if (error.name === 'AbortError') {
+            throw error;
+          }
           console.warn('Regression analysis fetch failed:', error);
           result.regressionData = DEFAULT_REGRESSION_DATA;
         }
@@ -260,7 +263,7 @@ export const fetchAllSpatialData = createAsyncThunk(
       if (visualizationOnly && visualizationMode) {
         try {
           const visualizationData = await spatialHandler.processVisualizationData(
-            state.spatial.data,
+            state.spatial?.data,
             visualizationMode,
             filters
           );
@@ -269,6 +272,9 @@ export const fetchAllSpatialData = createAsyncThunk(
             data: visualizationData
           };
         } catch (error) {
+          if (error.name === 'AbortError') {
+            throw error;
+          }
           console.warn('Visualization processing failed:', error);
         }
         metric.finish({ status: 'success' });
@@ -278,19 +284,19 @@ export const fetchAllSpatialData = createAsyncThunk(
       // Standard full data load
       if (!skipGeometry) {
         await Promise.all([
-          spatialHandler.initializeGeometry(),
-          spatialHandler.initializePoints()
+          spatialHandler.initializeGeometry(signal),
+          spatialHandler.initializePoints(signal)
         ]);
 
         result.geometry = {
           polygons: Array.from(spatialHandler.geometryCache.values()),
           points: Array.from(spatialHandler.pointCache.values()),
-          unified: await spatialHandler.createUnifiedGeoJSON([])
+          unified: await spatialHandler.createUnifiedGeoJSON([], signal)
         };
       }
 
       // Get spatial data using the enhanced method
-      const spatialData = await spatialHandler.getSpatialData(commodity, date);
+      const spatialData = await spatialHandler.getSpatialData(commodity, date, signal);
       
       result.spatialData = {
         timeSeriesData: spatialData.timeSeriesData || [],
@@ -301,7 +307,7 @@ export const fetchAllSpatialData = createAsyncThunk(
         seasonalAnalysis: spatialData.seasonalAnalysis || {},
         marketIntegration: spatialData.marketIntegration || {},
         uniqueMonths: [...new Set(spatialData.timeSeriesData?.map(d => d.month) || [])].sort(),
-        commodities: spatialData.commodities || [] // Add this line
+        commodities: spatialData.commodities || []
       };
 
       // Update cache
@@ -315,11 +321,17 @@ export const fetchAllSpatialData = createAsyncThunk(
       return updatedResult;
 
     } catch (error) {
+      // Don't log AbortError as it's an expected case
+      if (error.name === 'AbortError') {
+        metric.finish({ status: 'aborted' });
+        throw error;
+      }
+
       const enhancedError = {
         message: error.message,
         details: {
           params: { commodity, date },
-          state: getState().spatial.status,
+          state: getState().spatial?.status,
           timestamp: Date.now()
         }
       };
@@ -351,28 +363,66 @@ export const fetchVisualizationData = ({ mode, filters }) => {
   });
 };
 
+// Base Selectors with Safe Fallbacks
+const selectSpatialState = (state) => {
+  if (!state.spatial) {
+    console.warn('Spatial state is undefined, using initial state');
+    return initialState;
+  }
+  return state.spatial;
+};
+
+const selectData = createSelector(
+  [selectSpatialState],
+  (spatial) => spatial.data || initialState.data
+);
+
+const selectStatus = createSelector(
+  [selectSpatialState],
+  (spatial) => spatial.status || initialState.status
+);
+
+const selectUI = createSelector(
+  [selectSpatialState],
+  (spatial) => spatial.ui || initialState.ui
+);
+
+// Safe selector creator with error handling
+const createSafeSelector = (selectors, combiner) => 
+  createDeepEqualSelector(selectors, (...args) => {
+    try {
+      return combiner(...args);
+    } catch (error) {
+      console.warn('Selector error:', error);
+      return null;
+    }
+  });
+
+// Update handleSpatialError to use safe state access
 export const handleSpatialError = createAsyncThunk(
   'spatial/handleError',
   async (error, { dispatch, getState, rejectWithValue }) => {
     const state = getState();
+    const spatialState = selectSpatialState(state);
+    
     const enhancedError = {
       originalError: error,
       state: {
-        status: state.spatial.status,
-        ui: state.spatial.ui
+        status: spatialState.status,
+        ui: spatialState.ui
       },
       timestamp: Date.now()
     };
 
     backgroundMonitor.logError('spatial-error', enhancedError);
 
-    // Attempt recovery with retry logic
-    if (state.spatial.status.retryCount < 3) {
-      dispatch(setRetryCount(state.spatial.status.retryCount + 1));
+    const retryCount = spatialState.status.retryCount || 0;
+    if (retryCount < 3) {
+      dispatch(setRetryCount(retryCount + 1));
       return dispatch(
         fetchAllSpatialData({
-          commodity: state.spatial.ui.selectedCommodity,
-          date: state.spatial.ui.selectedDate,
+          commodity: spatialState.ui.selectedCommodity,
+          date: spatialState.ui.selectedDate,
           forceRefresh: true
         })
       );
@@ -382,6 +432,7 @@ export const handleSpatialError = createAsyncThunk(
   }
 );
 
+// Batch Update Thunk remains unchanged
 export const batchUpdateSpatialState = createAsyncThunk(
   'spatial/batchUpdate',
   async (updates, { dispatch }) => {
@@ -404,26 +455,20 @@ export const batchUpdateSpatialState = createAsyncThunk(
 );
 
 // Base Selectors
-const selectSpatialState = state => state.spatial || {};
-const selectData = state => state.spatial?.data || {};
-const selectStatus = state => state.spatial?.status || {};
-const selectUI = state => state.spatial?.ui || {};
-
 export const selectLoadingStatus = createSelector(
   [selectStatus],
-  status => Boolean(status.loading)
+  (status) => Boolean(status.loading)
 );
 
 export const selectUniqueMonths = createSelector(
   [selectData],
-  data => data.uniqueMonths || []
+  (data) => data.uniqueMonths || []
 );
 
 // Optimized Selectors
-export const selectSpatialData = createDeepEqualSelector(
+export const selectSpatialData = createSafeSelector(
   [selectData],
   (data) => {
-    // Create stable references for all arrays and objects
     return {
       geometry: data.geometry || {},
       flowMaps: data.flowMaps || [],
@@ -457,9 +502,9 @@ export const selectUIState = createDeepEqualSelector(
 
 export const selectTimeSeriesData = createDeepEqualSelector(
   [
-    state => state.spatial?.data?.timeSeriesData || [],
-    state => state.spatial?.ui?.selectedRegimes || ['unified'],
-    state => state.spatial?.ui?.selectedDate || ''
+    (state) => selectSpatialState(state)?.data?.timeSeriesData || [],
+    (state) => selectSpatialState(state)?.ui?.selectedRegimes || ['unified'],
+    (state) => selectSpatialState(state)?.ui?.selectedDate || ''
   ],
   (timeSeriesData, selectedRegimes, selectedDate) => 
     timeSeriesData.filter(d => 
@@ -468,11 +513,10 @@ export const selectTimeSeriesData = createDeepEqualSelector(
     )
 );
 
-// Market clusters with filtering
 export const selectFilteredClusters = createDeepEqualSelector(
   [
-    state => state.spatial?.data?.marketClusters || [],
-    state => state.spatial?.ui?.selectedRegion
+    (state) => selectSpatialState(state)?.data?.marketClusters || [],
+    (state) => selectSpatialState(state)?.ui?.selectedRegion
   ],
   (clusters, selectedRegion) => {
     if (!selectedRegion) return clusters;
@@ -483,11 +527,10 @@ export const selectFilteredClusters = createDeepEqualSelector(
   }
 );
 
-// Detailed metrics with proper memoization
 export const selectDetailedMetrics = createDeepEqualSelector(
   [
     selectTimeSeriesData,
-    state => state.spatial.data.regressionAnalysis || DEFAULT_REGRESSION_DATA,
+    (state) => selectSpatialState(state)?.data?.regressionAnalysis || DEFAULT_REGRESSION_DATA,
     selectUIState
   ],
   (timeData, regressionData, ui) => {
@@ -501,7 +544,7 @@ export const selectDetailedMetrics = createDeepEqualSelector(
       },
       spatialDependence: {
         moranI: _.get(regressionData, 'spatial.moran_i.I', 0),
-        pValue: _.get(regressionData, 'spatial.moran_i.p-value', 1),
+        pValue: _.get(regressionData, 'spatial.moran_i["p-value"]', 1),
         spatialLag: _.get(regressionData, 'model.coefficients.spatial_lag_price', 0)
       },
       modelFit: {
@@ -515,27 +558,26 @@ export const selectDetailedMetrics = createDeepEqualSelector(
 );
 
 // Additional Selectors
-export const selectMarketClusters = (state) => state.spatial.data.marketClusters;
-export const selectSpatialAutocorrelation = (state) => state.spatial.data.spatialAutocorrelation;
-export const selectMarketIntegration = (state) => state.spatial.data.marketIntegration;
-export const selectSeasonalAnalysis = (state) => state.spatial.data.seasonalAnalysis;
-export const selectMarketShocks = (state) => state.spatial.data.marketShocks;
-export const selectGeoJSON = (state) => state.spatial.data.geometry.unified;
-export const selectMetadata = (state) => state.spatial.data.metadata;
-export const selectFlowMaps = (state) => state.spatial.data.flowMaps;
-export const selectResiduals = (state) => state.spatial.data.regressionAnalysis?.residuals;
-export const selectRegressionAnalysis = (state) => state.spatial.data.regressionAnalysis;
-export const selectModelStats = (state) => state.spatial.data.regressionAnalysis?.model;
-export const selectSpatialStats = (state) => state.spatial.data.regressionAnalysis?.spatial;
-export const selectActiveLayers = (state) => state.spatial.ui.activeLayers;
-export const selectAnalysisFilters = (state) => state.spatial.ui.analysisFilters;
-export const selectGeometryData = (state) => state.spatial.data.geometry;
-export const selectError = (state) => state.spatial.status.error;
-export const selectSelectedCommodity = (state) => state.spatial.ui.selectedCommodity;
-export const selectSelectedDate = (state) => state.spatial.ui.selectedDate;
-export const selectVisualizationMode = (state) => state.spatial.ui.visualizationMode;
+export const selectMarketClusters = (state) => selectSpatialState(state)?.data?.marketClusters;
+export const selectSpatialAutocorrelation = (state) => selectSpatialState(state)?.data?.spatialAutocorrelation;
+export const selectMarketIntegration = (state) => selectSpatialState(state)?.data?.marketIntegration;
+export const selectSeasonalAnalysis = (state) => selectSpatialState(state)?.data?.seasonalAnalysis;
+export const selectMarketShocks = (state) => selectSpatialState(state)?.data?.marketShocks;
+export const selectGeoJSON = (state) => selectSpatialState(state)?.data?.geometry?.unified;
+export const selectMetadata = (state) => selectSpatialState(state)?.data?.metadata;
+export const selectFlowMaps = (state) => selectSpatialState(state)?.data?.flowMaps;
+export const selectResiduals = (state) => selectSpatialState(state)?.data?.regressionAnalysis?.residuals;
+export const selectRegressionAnalysis = (state) => selectSpatialState(state)?.data?.regressionAnalysis;
+export const selectModelStats = (state) => selectSpatialState(state)?.data?.regressionAnalysis?.model;
+export const selectSpatialStats = (state) => selectSpatialState(state)?.data?.regressionAnalysis?.spatial;
+export const selectActiveLayers = (state) => selectSpatialState(state)?.ui?.activeLayers;
+export const selectAnalysisFilters = (state) => selectSpatialState(state)?.ui?.analysisFilters;
+export const selectGeometryData = (state) => selectSpatialState(state)?.data?.geometry;
+export const selectError = (state) => selectSpatialState(state)?.status?.error;
+export const selectSelectedCommodity = (state) => selectSpatialState(state)?.ui?.selectedCommodity;
+export const selectSelectedDate = (state) => selectSpatialState(state)?.ui?.selectedDate;
+export const selectVisualizationMode = (state) => selectSpatialState(state)?.ui?.visualizationMode;
 
-// Selector Optimization: Memoization for Heavy Selectors
 export const selectGeometryWithCache = createDeepEqualSelector(
   [selectGeometryData, (_, options) => options],
   (geometry, options = {}) => {
@@ -544,22 +586,21 @@ export const selectGeometryWithCache = createDeepEqualSelector(
   }
 );
 
-// Composite Selectors for Analysis
 export const selectRegionIntegration = createDeepEqualSelector(
   [selectMarketIntegration, selectUIState],
-  (integration, ui) => integration.price_correlation[ui.selectedRegion] || {}
+  (integration, ui) => integration?.price_correlation?.[ui.selectedRegion] || {}
 );
 
 export const selectRegionShocks = createDeepEqualSelector(
   [selectMarketShocks, selectUIState],
-  (shocks, ui) => shocks.filter(shock => shock.region === ui.selectedRegion)
+  (shocks, ui) => (shocks || []).filter(shock => shock.region === ui.selectedRegion)
 );
 
 export const selectTimeSeriesWithFilters = createDeepEqualSelector(
   [
     selectTimeSeriesData,
-    state => state.spatial.ui.selectedRegimes,
-    state => state.spatial.ui.selectedDate
+    (state) => selectSpatialState(state)?.ui?.selectedRegimes,
+    (state) => selectSpatialState(state)?.ui?.selectedDate
   ],
   (timeSeriesData, selectedRegimes, selectedDate) => {
     if (!timeSeriesData) return [];
@@ -632,14 +673,14 @@ export const selectFilteredMarketData = createDeepEqualSelector(
     if (!data) return null;
     
     return {
-      marketClusters: data.marketClusters.filter(
-        cluster => cluster.market_count >= filters.minMarketCount
+      marketClusters: (data.marketClusters || []).filter(
+        cluster => cluster.market_count >= (filters.minMarketCount || 0)
       ),
-      flowMaps: data.flowMaps.filter(
-        flow => flow.flow_weight >= filters.minFlowWeight
+      flowMaps: (data.flowMaps || []).filter(
+        flow => flow.flow_weight >= (filters.minFlowWeight || 0)
       ),
-      marketShocks: data.marketShocks.filter(
-        shock => Math.abs(shock.magnitude) >= filters.shockThreshold
+      marketShocks: (data.marketShocks || []).filter(
+        shock => Math.abs(shock.magnitude) >= (filters.shockThreshold || 0)
       )
     };
   }
@@ -797,8 +838,8 @@ export const selectFlowsByRegion = createDeepEqualSelector(
 
 export const selectCommodityInfo = createDeepEqualSelector(
   [
-    state => state.spatial?.data?.commodities || [],
-    state => state.spatial?.ui?.selectedCommodity || '',
+    (state) => selectSpatialState(state)?.data?.commodities || [],
+    (state) => selectSpatialState(state)?.ui?.selectedCommodity || '',
     selectLoadingStatus,
     selectUniqueMonths
   ],
@@ -905,7 +946,7 @@ const spatialSlice = createSlice({
           state.data.flowData = processFlowData(spatialData.flowMaps);
         }
 
-        // ... rest of the fulfillment logic remains unchanged
+        // Update regression data if available
         if (regressionData) {
           const currentCommodity = commodity || state.ui.selectedCommodity;
           state.data.regressionAnalysis = {
@@ -921,12 +962,14 @@ const spatialSlice = createSlice({
           };
         }
 
+        // Handle regression-only fulfillment
         if (regressionOnly) {
           state.status.regressionLoading = false;
           state.status.dataFetching = false;
           return;
         }
 
+        // Handle visualization-only fulfillment
         if (visualizationOnly) {
           if (visualizationData) {
             state.data.visualizationData[visualizationData.mode] = visualizationData.data;
@@ -936,10 +979,12 @@ const spatialSlice = createSlice({
           return;
         }
 
+        // Update geometry if available
         if (geometry) {
           state.data.geometry = geometry;
         }
 
+        // Update spatial data
         if (spatialData) {
           state.data = {
             ...state.data,
@@ -957,12 +1002,14 @@ const spatialSlice = createSlice({
           };
         }
 
+        // Update metadata
         if (metadata) {
           state.data.metadata = metadata;
           state.ui.selectedCommodity = metadata.commodity;
           state.ui.selectedDate = metadata.date;
         }
 
+        // Update cache if cacheKey is present
         if (cacheKey) {
           state.data.cache[cacheKey] = {
             geometry: state.data.geometry,
@@ -984,6 +1031,7 @@ const spatialSlice = createSlice({
           state.status.lastUpdated = cacheTimestamp;
         }
 
+        // Update status
         state.status = {
           ...state.status,
           loading: false,

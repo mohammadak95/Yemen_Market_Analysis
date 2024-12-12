@@ -1,12 +1,15 @@
+// src/Dashboard.js
+
 import React, { Suspense, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Grid } from '@mui/material';
+import { Box, Grid, useTheme, useMediaQuery } from '@mui/material';
 import { useUnifiedData } from './hooks/useUnifiedData';
 import InteractiveChart from './components/interactive_graph/InteractiveChart';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorMessage from './components/common/ErrorMessage';
 import AnalysisWrapper from './components/common/AnalysisWrapper';
 import { SpatialAnalysis } from './components/spatialAnalysis';
+import { backgroundMonitor, MetricTypes } from './utils/backgroundMonitor';
 import _ from 'lodash';
 
 import {
@@ -34,119 +37,225 @@ ChartJS.register(
   Filler
 );
 
-// Lazy load analysis components
-const ECMAnalysisLazy = React.lazy(() =>
-  import('./components/analysis/ecm/ECMAnalysis').then((module) => {
-    if (!module.default) throw new Error('ECMAnalysis component not found');
+// Lazy load analysis components with error handling
+const loadComponent = async (importFn, componentName) => {
+  const metric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.PERFORMANCE, {
+    action: 'load-component',
+    component: componentName
+  });
+
+  try {
+    const module = await importFn();
+    if (!module.default) {
+      throw new Error(`${componentName} component not found`);
+    }
+    metric?.finish({ status: 'success' });
     return module;
-  })
+  } catch (error) {
+    metric?.finish({ 
+      status: 'error',
+      error: error.message 
+    });
+    backgroundMonitor.logError(MetricTypes.SYSTEM.ERROR, {
+      component: componentName,
+      error: error.message,
+      stack: error.stack
+    });
+    throw error;
+  }
+};
+
+const ECMAnalysisLazy = React.lazy(() =>
+  loadComponent(
+    () => import('./components/analysis/ecm/ECMAnalysis'),
+    'ECMAnalysis'
+  )
 );
 
 const PriceDifferentialAnalysisLazy = React.lazy(() =>
-  import('./components/analysis/price-differential/PriceDifferentialAnalysis').then(
-    (module) => {
-      if (!module.default) throw new Error('PriceDifferentialAnalysis component not found');
-      return module;
-    }
+  loadComponent(
+    () => import('./components/analysis/price-differential/PriceDifferentialAnalysis'),
+    'PriceDifferentialAnalysis'
   )
 );
 
 const TVMIIAnalysisLazy = React.lazy(() =>
-  import('./components/analysis/tvmii/TVMIIAnalysis').then((module) => {
-    if (!module.default) throw new Error('TVMIIAnalysis component not found');
-    return module;
-  })
+  loadComponent(
+    () => import('./components/analysis/tvmii/TVMIIAnalysis'),
+    'TVMIIAnalysis'
+  )
 );
 
-// Import existing spatial analysis for spatial model
 const SpatialModelAnalysis = React.lazy(() =>
-  import('./components/analysis/spatial/SpatialAnalysis').then((module) => {
-    if (!module.default) throw new Error('SpatialAnalysis component not found');
-    return module;
-  })
+  loadComponent(
+    () => import('./components/analysis/spatial/SpatialAnalysis'),
+    'SpatialAnalysis'
+  )
 );
 
 const Dashboard = React.memo(({
-  selectedAnalysis = 'spatial', // Set spatial as default analysis
+  selectedAnalysis = 'spatial',
   selectedCommodity,
   selectedRegimes,
   windowWidth,
   spatialViewConfig,
   onSpatialViewChange,
 }) => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm')); // MUI's breakpoint for small screens
+
   const { data, loading, error, getFilteredData } = useUnifiedData();
+  
   const chartData = useMemo(() => {
-    return getFilteredData(selectedCommodity, selectedRegimes);
+    const metric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.PERFORMANCE, {
+      action: 'filter-data',
+      commodity: selectedCommodity
+    });
+
+    try {
+      const filtered = getFilteredData(selectedCommodity, selectedRegimes);
+      metric?.finish({ 
+        status: 'success',
+        dataPoints: filtered?.length || 0
+      });
+      return filtered;
+    } catch (err) {
+      metric?.finish({ 
+        status: 'error',
+        error: err.message 
+      });
+      backgroundMonitor.logError(MetricTypes.SYSTEM.ERROR, {
+        component: 'dashboard-filter',
+        error: err.message,
+        stack: err.stack
+      });
+      return [];
+    }
   }, [getFilteredData, selectedCommodity, selectedRegimes]);
 
-  // Reordered analysis components with spatial first
+  // Analysis components registry
   const analysisComponents = useMemo(() => ({
     spatial: SpatialAnalysis,
     ecm: ECMAnalysisLazy,
     priceDiff: PriceDifferentialAnalysisLazy,
-    spatial_model: SpatialModelAnalysis, // Use existing spatial analysis
+    spatial_model: SpatialModelAnalysis,
     tvmii: TVMIIAnalysisLazy
   }), []);
 
-  // Get analysis component
+  // Get analysis component with monitoring
   const getAnalysisComponent = useCallback((type) => {
-    return analysisComponents[type] || null;
+    try {
+      const component = analysisComponents[type];
+      if (!component) {
+        backgroundMonitor.logError(MetricTypes.SYSTEM.ERROR, {
+          component: 'analysis-loader',
+          error: `Unknown analysis type: ${type}`
+        });
+      }
+      return component;
+    } catch (error) {
+      backgroundMonitor.logError(MetricTypes.SYSTEM.ERROR, {
+        component: 'analysis-loader',
+        error: error.message,
+        stack: error.stack
+      });
+      return null;
+    }
   }, [analysisComponents]);
 
-  // Render interactive chart
+  // Render interactive chart with monitoring
   const renderInteractiveChart = useCallback(() => {
-    if (!selectedCommodity || !selectedRegimes?.length) {
+    const metric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.PERFORMANCE, {
+      action: 'render-chart',
+      commodity: selectedCommodity
+    });
+
+    try {
+      if (!selectedCommodity || !selectedRegimes?.length) {
+        metric?.finish({ status: 'skipped', reason: 'missing-selection' });
+        return (
+          <ErrorMessage 
+            message="Please select at least one regime and a commodity from the sidebar." 
+          />
+        );
+      }
+
+      if (!chartData?.length) {
+        metric?.finish({ status: 'skipped', reason: 'no-data' });
+        return <ErrorMessage message="No data available for the selected criteria." />;
+      }
+
+      metric?.finish({ 
+        status: 'success',
+        dataPoints: chartData.length
+      });
+
       return (
-        <ErrorMessage 
-          message="Please select at least one regime and a commodity from the sidebar." 
+        <InteractiveChart
+          data={chartData}
+          selectedCommodity={selectedCommodity}
+          selectedRegimes={selectedRegimes}
         />
       );
+    } catch (error) {
+      metric?.finish({ 
+        status: 'error',
+        error: error.message 
+      });
+      return <ErrorMessage message={error.message} />;
     }
-
-    if (!chartData?.length) {
-      return <ErrorMessage message="No data available for the selected criteria." />;
-    }
-
-    return (
-      <InteractiveChart
-        data={chartData}
-        selectedCommodity={selectedCommodity}
-        selectedRegimes={selectedRegimes}
-      />
-    );
   }, [chartData, selectedCommodity, selectedRegimes]);
 
-  // Render analysis component
+  // Render analysis component with monitoring
   const renderAnalysisComponent = useCallback(() => {
-    if (!selectedAnalysis) return null;
+    const metric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.PERFORMANCE, {
+      action: 'render-analysis',
+      type: selectedAnalysis
+    });
 
-    const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
-    if (!AnalysisComponent) {
-      return <ErrorMessage message="Selected analysis type is not available." />;
+    try {
+      if (!selectedAnalysis) {
+        metric?.finish({ status: 'skipped', reason: 'no-selection' });
+        return null;
+      }
+
+      const AnalysisComponent = getAnalysisComponent(selectedAnalysis);
+      if (!AnalysisComponent) {
+        metric?.finish({ status: 'error', reason: 'component-not-found' });
+        return <ErrorMessage message="Selected analysis type is not available." />;
+      }
+
+      const analysisProps = (selectedAnalysis === 'spatial' || selectedAnalysis === 'spatial_model') 
+        ? {
+            timeSeriesData: data,
+            selectedCommodity,
+            windowWidth,
+            spatialViewConfig,
+            onSpatialViewChange,
+            mode: selectedAnalysis === 'spatial_model' ? 'model' : 'analysis'
+          } 
+        : {
+            data,
+            selectedCommodity,
+            windowWidth
+          };
+
+      metric?.finish({ status: 'success' });
+
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <AnalysisWrapper>
+            <AnalysisComponent {...analysisProps} />
+          </AnalysisWrapper>
+        </Suspense>
+      );
+    } catch (error) {
+      metric?.finish({ 
+        status: 'error',
+        error: error.message 
+      });
+      return <ErrorMessage message={error.message} />;
     }
-
-    // Special props for spatial analysis and spatial model
-    const analysisProps = (selectedAnalysis === 'spatial' || selectedAnalysis === 'spatial_model') ? {
-      timeSeriesData: data,
-      selectedCommodity,
-      windowWidth,
-      spatialViewConfig,
-      onSpatialViewChange,
-      // Add mode prop to differentiate between spatial analysis and spatial model
-      mode: selectedAnalysis === 'spatial_model' ? 'model' : 'analysis'
-    } : {
-      data,
-      selectedCommodity,
-      windowWidth
-    };
-
-    return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <AnalysisWrapper>
-          <AnalysisComponent {...analysisProps} />
-        </AnalysisWrapper>
-      </Suspense>
-    );
   }, [
     selectedAnalysis,
     data,
@@ -183,14 +292,16 @@ const Dashboard = React.memo(({
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
+        p: isSmallScreen ? 1 : 2, // Adjust padding based on screen size
       }}
     >
       <Grid container spacing={2} sx={{ flexGrow: 1, overflow: 'auto' }}>
-        <Grid item xs={12}>
+        {/* Interactive Chart Section */}
+        <Grid item xs={12} md={selectedAnalysis ? 12 : 12}>
           <Box
             sx={{
               width: '100%',
-              height: { xs: '300px', sm: '400px', md: '400px' },
+              height: isSmallScreen ? '250px' : { xs: '300px', sm: '400px', md: '400px' }, // Dynamic height
               position: 'relative',
               mb: 2,
             }}
@@ -199,6 +310,7 @@ const Dashboard = React.memo(({
           </Box>
         </Grid>
 
+        {/* Analysis Component Section */}
         {selectedAnalysis && (
           <Grid item xs={12}>
             {renderAnalysisComponent()}

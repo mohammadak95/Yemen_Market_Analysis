@@ -24,81 +24,127 @@ const ConflictMetricsPanel = ({
 }) => {
   const theme = useTheme();
 
-  // Calculate metrics for selected region
+  // Calculate metrics for selected region with safe defaults
   const regionMetrics = useMemo(() => {
-    if (!selectedRegion || !timeSeriesData?.length) return null;
+    if (!selectedRegion || !timeSeriesData?.length) {
+      return {
+        currentIntensity: 0,
+        intensityTrend: 0,
+        currentPrice: 0,
+        priceTrend: 0,
+        accessibility: 0,
+        resilience: 0,
+        riskLevel: 0
+      };
+    }
 
     // Get data for selected region
     const regionData = timeSeriesData.filter(d => 
       d.region === selectedRegion
     ).sort((a, b) => new Date(a.month) - new Date(b.month));
 
-    if (!regionData.length) return null;
+    if (!regionData.length) {
+      return {
+        currentIntensity: 0,
+        intensityTrend: 0,
+        currentPrice: 0,
+        priceTrend: 0,
+        accessibility: 0,
+        resilience: 0,
+        riskLevel: 0
+      };
+    }
 
     // Get current and previous period data
-    const currentData = regionData.find(d => d.month === timeWindow);
+    const currentData = regionData.find(d => d.month === timeWindow) || regionData[regionData.length - 1];
     const previousData = regionData[regionData.length - 2];
 
-    if (!currentData) return null;
+    // Ensure we have valid numbers for all metrics
+    const currentIntensity = currentData?.conflictIntensity || 0;
+    const previousIntensity = previousData?.conflictIntensity || 0;
+    const currentPrice = currentData?.usdPrice || 0;
+    const previousPrice = previousData?.usdPrice || 0;
+    const accessibility = marketIntegration?.accessibility?.[selectedRegion] || 0;
 
-    // Calculate trends
-    const intensityTrend = previousData ? 
-      ((currentData.conflictIntensity - previousData.conflictIntensity) / 
-        previousData.conflictIntensity) * 100 : 0;
+    // Calculate trends with safety checks
+    const intensityTrend = previousIntensity ? 
+      ((currentIntensity - previousIntensity) / previousIntensity) * 100 : 0;
 
-    const priceTrend = previousData && previousData.usdPrice ? 
-      ((currentData.usdPrice - previousData.usdPrice) / 
-        previousData.usdPrice) * 100 : 0;
+    const priceTrend = previousPrice ? 
+      ((currentPrice - previousPrice) / previousPrice) * 100 : 0;
 
     // Calculate market resilience
-    const accessibility = marketIntegration?.accessibility?.[selectedRegion] || 0;
     const resilience = calculateResilience(
-      currentData.conflictIntensity,
+      currentIntensity,
       accessibility,
       priceTrend
     );
 
+    // Ensure all values are within valid ranges
     return {
-      currentIntensity: currentData.conflictIntensity,
-      intensityTrend,
-      currentPrice: currentData.usdPrice,
-      priceTrend,
-      accessibility,
-      resilience,
-      riskLevel: calculateRiskLevel(currentData.conflictIntensity, accessibility)
+      currentIntensity: Math.max(0, Math.min(1, currentIntensity)),
+      intensityTrend: Math.max(-100, Math.min(100, intensityTrend)),
+      currentPrice: Math.max(0, currentPrice),
+      priceTrend: Math.max(-100, Math.min(100, priceTrend)),
+      accessibility: Math.max(0, Math.min(1, accessibility)),
+      resilience: Math.max(0, Math.min(1, resilience)),
+      riskLevel: calculateRiskLevel(currentIntensity, accessibility)
     };
   }, [selectedRegion, timeSeriesData, timeWindow, marketIntegration]);
 
-  // Calculate temporal patterns
+  // Calculate temporal patterns with safe defaults
   const temporalPatterns = useMemo(() => {
-    if (!selectedRegion || !timeSeriesData?.length) return null;
+    if (!selectedRegion || !timeSeriesData?.length) {
+      return {
+        volatility: 0,
+        trend: 0,
+        duration: 0,
+        peakIntensity: 0
+      };
+    }
 
     const regionData = timeSeriesData.filter(d => 
       d.region === selectedRegion
     ).sort((a, b) => new Date(a.month) - new Date(b.month));
 
-    if (regionData.length < 2) return null;
+    if (regionData.length < 2) {
+      return {
+        volatility: 0,
+        trend: 0,
+        duration: regionData.length,
+        peakIntensity: regionData[0]?.conflictIntensity || 0
+      };
+    }
 
-    // Calculate volatility
+    // Calculate volatility with safety checks
     const intensityValues = regionData.map(d => d.conflictIntensity || 0);
     const meanIntensity = intensityValues.reduce((sum, val) => sum + val, 0) / 
-      intensityValues.length;
+      intensityValues.length || 1; // Avoid division by zero
     const variance = intensityValues.reduce((sum, val) => 
       sum + Math.pow(val - meanIntensity, 2), 0
     ) / intensityValues.length;
-    const volatility = Math.sqrt(variance) / meanIntensity;
+    const volatility = meanIntensity ? Math.sqrt(variance) / meanIntensity : 0;
 
-    // Detect trends
+    // Detect trends with safety checks
     const recentData = regionData.slice(-6); // Last 6 months
     const trend = calculateTrend(recentData);
 
     return {
-      volatility,
-      trend,
+      volatility: Math.max(0, Math.min(1, volatility)),
+      trend: Math.max(-100, Math.min(100, trend)),
       duration: regionData.length,
-      peakIntensity: Math.max(...intensityValues)
+      peakIntensity: Math.max(0, Math.min(1, Math.max(...intensityValues)))
     };
   }, [selectedRegion, timeSeriesData]);
+
+  // Ensure we have valid values for display
+  const safeMetrics = {
+    currentIntensity: regionMetrics?.currentIntensity || 0,
+    intensityTrend: regionMetrics?.intensityTrend || 0,
+    accessibility: regionMetrics?.accessibility || 0,
+    resilience: regionMetrics?.resilience || 0,
+    riskLevel: regionMetrics?.riskLevel || 0
+  };
 
   if (!selectedRegion) {
     return (
@@ -132,18 +178,18 @@ const ConflictMetricsPanel = ({
         <Grid item xs={12}>
           <MetricProgress
             title="Conflict Impact"
-            value={regionMetrics.currentIntensity}
+            value={safeMetrics.currentIntensity}
             target={0.5}
             format="percentage"
             description="Current conflict intensity level"
-            trend={regionMetrics.intensityTrend}
+            trend={safeMetrics.intensityTrend}
           />
         </Grid>
 
         <Grid item xs={12} md={6}>
           <MetricCard
             title="Market Accessibility"
-            value={regionMetrics.accessibility}
+            value={safeMetrics.accessibility}
             format="percentage"
             description="Current market access level"
           />
@@ -152,7 +198,7 @@ const ConflictMetricsPanel = ({
         <Grid item xs={12} md={6}>
           <MetricCard
             title="Market Resilience"
-            value={regionMetrics.resilience}
+            value={safeMetrics.resilience}
             format="percentage"
             description="Market adaptation capacity"
           />

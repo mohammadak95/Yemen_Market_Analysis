@@ -29,21 +29,19 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
   React.useEffect(() => {
-    if (selectedCommodity) {
-      dispatch(fetchRegressionAnalysis({ selectedCommodity }));
-    }
+    // Always fetch regression analysis, even if selectedCommodity is empty
+    // The selector will handle using the default commodity
+    dispatch(fetchRegressionAnalysis({ selectedCommodity }));
   }, [selectedCommodity, dispatch]);
 
   const spatialResults = React.useMemo(() => {
     const regressionData = spatialData?.regressionAnalysis;
     
-    if (!regressionData || 
-        !selectedCommodity || 
-        regressionData.metadata?.commodity !== selectedCommodity ||
-        !regressionData.residuals?.raw?.length) {
+    if (!regressionData || !regressionData.residuals?.raw?.length) {
       return null;
     }
 
+    // Don't check selectedCommodity here since the selector handles it
     return {
       coefficients: regressionData.model.coefficients || {},
       intercept: regressionData.model.intercept || 0,
@@ -57,7 +55,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
       regime: regressionData.metadata?.regime || 'unified',
       timestamp: regressionData.metadata?.timestamp
     };
-  }, [spatialData, selectedCommodity]);
+  }, [spatialData]);
 
   const handleDownloadData = useCallback(() => {
     if (!spatialResults) return;
@@ -66,7 +64,7 @@ const SpatialAnalysis = ({ selectedCommodity, windowWidth }) => {
         [JSON.stringify(spatialResults, null, 2)], 
         { type: 'application/json' }
       );
-      saveAs(blob, `spatial_analysis_${selectedCommodity}.json`);
+      saveAs(blob, `spatial_analysis_${selectedCommodity || 'beans_kidney_red'}.json`);
       setSnackbar({
         open: true,
         message: 'Data downloaded successfully',

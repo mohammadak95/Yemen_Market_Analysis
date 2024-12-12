@@ -1,14 +1,17 @@
+// src/index.js
+
 import React, { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
-import store from './store/configureStore';
+import store, { initializeStore } from './store';
 import App from './App';
 import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 import { setupReduxDebugger } from './utils/debugUtils';
-import { backgroundMonitor } from './utils/backgroundMonitor';
+import { backgroundMonitor, MetricTypes } from './utils/backgroundMonitor';
 import { spatialHandler } from './utils/spatialDataHandler';
 import { fetchAllSpatialData } from './slices/spatialSlice';
+import { fetchFlowData } from './slices/flowSlice';
 import './utils/leafletSetup';
 import 'leaflet/dist/leaflet.css';
 import './styles/leaflet-overrides.css';
@@ -30,42 +33,59 @@ const DataLoader = React.memo(({ selectedCommodity, selectedDate }) => {
 
     let metric;
     try {
-      metric = backgroundMonitor.startMetric('initial-data-load');
+      metric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.INIT, {
+        component: 'data-loader',
+        commodity: selectedCommodity,
+        date: selectedDate
+      });
     } catch (e) {
-      console.error('Error starting metric:', e);
-      return;
+      console.warn('Error starting metric:', e);
     }
 
-    const finishMetric = (args) => {
+    const loadData = async () => {
       try {
-        metric.finish(args);
-      } catch (e) {
-        console.error('Error finishing metric:', e);
+        // Load spatial and flow data in parallel
+        await Promise.all([
+          dispatch(fetchAllSpatialData({ 
+            commodity: selectedCommodity, 
+            date: selectedDate 
+          })),
+          dispatch(fetchFlowData({ 
+            commodity: selectedCommodity, 
+            date: selectedDate 
+          }))
+        ]);
+
+        setHasLoaded(true);
+        metric?.finish?.({
+          status: 'success',
+          commodity: selectedCommodity,
+          date: selectedDate,
+          timestamp: Date.now()
+        });
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        metric?.finish?.({
+          status: 'error',
+          error: error.message,
+          commodity: selectedCommodity,
+          date: selectedDate
+        });
+        
+        try {
+          backgroundMonitor.logError?.('data-load-failed', {
+            error: error.message,
+            stack: error.stack,
+            commodity: selectedCommodity,
+            date: selectedDate
+          });
+        } catch (e) {
+          console.warn('Error logging to background monitor:', e);
+        }
       }
     };
 
-    dispatch(fetchAllSpatialData({ 
-      commodity: selectedCommodity, 
-      date: selectedDate 
-    }))
-    .then(() => {
-      setHasLoaded(true);
-      finishMetric({
-        status: 'success',
-        commodity: selectedCommodity,
-        date: selectedDate,
-        timestamp: Date.now(),
-      });
-    })
-    .catch((error) => {
-      console.error('Error loading initial data:', error);
-      finishMetric({
-        status: 'error',
-        error: error.message,
-        commodity: selectedCommodity,
-        date: selectedDate,
-      });
-    });
+    loadData();
   }, [selectedCommodity, selectedDate, hasLoaded, dispatch]);
 
   return null;
@@ -100,38 +120,59 @@ AppWithProviders.displayName = 'AppWithProviders';
 
 // Initialize the application
 const initializeApp = async () => {
+  const startTime = performance.now();
+  let initMetric;
+
   try {
-    const startTime = performance.now();
+    // Initialize background monitor first
+    try {
+      await backgroundMonitor.init();
+      initMetric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.INIT, {
+        component: 'app',
+        startTime
+      });
+    } catch (e) {
+      console.warn('Background monitor initialization failed:', e);
+    }
+
+    // Initialize store with required reducers
+    await initializeStore();
 
     // Initialize services in development
     if (process.env.NODE_ENV === 'development') {
-      await backgroundMonitor.init();
       setupReduxDebugger(store);
 
-      backgroundMonitor.logMetric('app-init', {
-        timestamp: Date.now(),
-        environment: process.env.NODE_ENV,
-        config: {
-          precomputedData: true,
-          reduxDebugger: true,
-        },
-      });
-
-      // Setup load time monitoring
-      window.addEventListener('load', () => {
-        const loadTime = performance.now() - startTime;
-        console.debug(`[App] Initial load completed in ${loadTime.toFixed(2)}ms`);
-
-        backgroundMonitor.logMetric('app-load-complete', {
-          duration: loadTime,
+      try {
+        backgroundMonitor.logMetric(MetricTypes.SYSTEM.INIT, {
           timestamp: Date.now(),
-          metrics: {
-            loadTime,
-            cacheInitialized: Boolean(spatialHandler.geometryCache),
-            reduxStoreSize: JSON.stringify(store.getState()).length,
-          },
+          environment: process.env.NODE_ENV,
+          config: {
+            precomputedData: true,
+            reduxDebugger: true,
+            flowManagement: true
+          }
         });
-      });
+
+        // Setup load time monitoring
+        window.addEventListener('load', () => {
+          const loadTime = performance.now() - startTime;
+          console.debug(`[App] Initial load completed in ${loadTime.toFixed(2)}ms`);
+
+          backgroundMonitor.logMetric(MetricTypes.SYSTEM.PERFORMANCE, {
+            event: 'load-complete',
+            duration: loadTime,
+            timestamp: Date.now(),
+            metrics: {
+              loadTime,
+              cacheInitialized: Boolean(spatialHandler.geometryCache),
+              reduxStoreSize: JSON.stringify(store.getState()).length,
+              reducersLoaded: Object.keys(store.reducerManager.getReducerMap()).length
+            }
+          });
+        });
+      } catch (e) {
+        console.warn('Error setting up monitoring:', e);
+      }
 
       console.debug(`
         🚀 Yemen Market Analysis Dashboard
@@ -140,6 +181,7 @@ const initializeApp = async () => {
         Version: ${process.env.REACT_APP_VERSION || '1.0.0'}
         Redux Debugger: Enabled
         Precomputed Data: Initialized
+        Flow Management: Enabled
         
         Debug tools available:
         - Redux DevTools
@@ -158,12 +200,34 @@ const initializeApp = async () => {
         <AppWithProviders />
       </React.StrictMode>
     );
+
+    initMetric?.finish?.({ 
+      status: 'success',
+      initTime: performance.now() - startTime,
+      environment: process.env.NODE_ENV,
+      timestamp: Date.now()
+    });
+
   } catch (error) {
     console.error('Failed to initialize application:', error);
-    backgroundMonitor.logError('app-init-failed', {
+    
+    initMetric?.finish?.({ 
+      status: 'error',
       error: error.message,
       stack: error.stack,
+      initTime: performance.now() - startTime
     });
+
+    try {
+      backgroundMonitor.logError(MetricTypes.SYSTEM.ERROR, {
+        component: 'app-init',
+        error: error.message,
+        stack: error.stack,
+        initTime: performance.now() - startTime
+      });
+    } catch (e) {
+      console.warn('Error logging to background monitor:', e);
+    }
 
     // Render error state if initialization fails
     const root = createRoot(document.getElementById('root'));

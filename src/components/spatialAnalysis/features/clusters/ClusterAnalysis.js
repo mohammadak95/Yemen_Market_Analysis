@@ -149,6 +149,14 @@ const ClusterAnalysis = () => {
   const { clusters: processedClusters, selectedCluster, metrics: overallMetrics } = useClusterAnalysis(selectedClusterId);
   const geometry = useSelector(selectGeometryData);
 
+  // Ensure we have valid values for metrics
+  const safeMetrics = {
+    totalMarkets: overallMetrics?.totalMarkets || 0,
+    marketCoverage: overallMetrics?.marketCoverage || 0,
+    avgPrice: overallMetrics?.avgPrice || 0,
+    avgConflict: overallMetrics?.avgConflict || 0
+  };
+
   // Hide help text when a cluster is selected
   useEffect(() => {
     if (selectedClusterId) {
@@ -184,7 +192,7 @@ const ClusterAnalysis = () => {
                 <Box>
                   <MetricCard
                     title="Total Markets"
-                    value={overallMetrics?.totalMarkets}
+                    value={safeMetrics.totalMarkets}
                     format="integer"
                     description="Markets in clusters"
                   />
@@ -196,7 +204,7 @@ const ClusterAnalysis = () => {
                 <Box>
                   <MetricProgress
                     title="Market Coverage"
-                    value={overallMetrics?.marketCoverage}
+                    value={safeMetrics.marketCoverage}
                     format="percentage"
                     description="Markets in clusters"
                     showTarget={false}
@@ -209,7 +217,7 @@ const ClusterAnalysis = () => {
                 <Box>
                   <MetricCard
                     title="Average Price"
-                    value={overallMetrics?.avgPrice}
+                    value={safeMetrics.avgPrice}
                     format="currency"
                     description="Across clusters"
                   />
@@ -221,7 +229,7 @@ const ClusterAnalysis = () => {
                 <Box>
                   <MetricCard
                     title="Conflict Impact"
-                    value={overallMetrics?.avgConflict}
+                    value={safeMetrics.avgConflict}
                     format="number"
                     description="Conflict intensity"
                   />

@@ -1,41 +1,26 @@
-// src/App.js
-
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { ThemeProvider } from '@mui/material/styles';
-import {
-  CssBaseline,
-  Toolbar,
-  IconButton,
-  Box,
-  useMediaQuery,
-} from '@mui/material';
-import { useSelector, useDispatch } from 'react-redux';
+import { CssBaseline, Toolbar, IconButton, Box, useMediaQuery } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import { toggleDarkMode } from './slices/themeSlice';
+import { fetchFlowData } from './slices/flowSlice';
 import Header from './components/common/Header';
 import { Sidebar } from './components/common/Navigation';
 import Dashboard from './Dashboard';
-import { useDashboardData } from './hooks/useDashboardData';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorDisplay from './components/common/ErrorDisplay';
 import EnhancedErrorBoundary from './components/common/EnhancedErrorBoundary';
 import MethodologyModal from './components/methodology/MethodologyModal';
 import { WelcomeModal } from './components/common/WelcomeModal';
 import StateExporter from './components/utils/StateExporter';
-import { selectHasSeenWelcome, setHasSeenWelcome } from './store/welcomeModalSlice';
+import { setHasSeenWelcome } from './store/welcomeModalSlice';
 import { useWindowSize } from './hooks';
-import {
-  lightThemeWithOverrides,
-  darkThemeWithOverrides,
-} from './styles/theme';
-import {
-  fetchAllSpatialData,
-  selectCommodityInfo,
-  selectError,
-} from './slices/spatialSlice';
+import { backgroundMonitor, MetricTypes } from './utils/backgroundMonitor';
+import { fetchAllSpatialData } from './slices/spatialSlice';
+import { useAppState } from './hooks/useAppState';
 
 const DRAWER_WIDTH = 240;
 const DEFAULT_DATE = '2020-10-01';
@@ -54,34 +39,7 @@ const StyledAppBar = styled(AppBar, {
   },
 }));
 
-const useAppState = () => {
-  const dispatch = useDispatch();
-  const { data, loading } = useDashboardData();
-  const error = useSelector(selectError);
-  const hasSeenWelcome = useSelector(selectHasSeenWelcome);
-  const isDarkMode = useSelector((state) => state.theme?.isDarkMode ?? false);
-  const { commodities } = useSelector(selectCommodityInfo);
-
-  // Theme setup
-  const theme = useMemo(
-    () => (isDarkMode ? darkThemeWithOverrides : lightThemeWithOverrides),
-    [isDarkMode]
-  );
-
-  return {
-    dispatch,
-    data,
-    loading,
-    error,
-    hasSeenWelcome,
-    isDarkMode,
-    commodities,
-    theme,
-  };
-};
-
 const App = () => {
-  // Initialize hook-based state
   const {
     dispatch,
     data,
@@ -93,11 +51,12 @@ const App = () => {
     theme,
   } = useAppState();
 
-  // Media query hooks
+  const appInitialized = useRef(false);
+  const abortController = useRef(null);
+
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const windowSize = useWindowSize();
 
-  // Local state initialization
   const [sidebarOpen, setSidebarOpen] = useState(isSmUp);
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedDate, setSelectedDate] = useState(DEFAULT_DATE);
@@ -111,49 +70,128 @@ const App = () => {
     methodology: false,
   });
 
-  // Initial data loading
   useEffect(() => {
-    if (!commodities.length && !loading) {
-      dispatch(
-        fetchAllSpatialData({
-          commodity: '',
+    const initializeApp = async () => {
+      if (appInitialized.current) return;
+
+      try {
+        // Create new abort controller if needed
+        if (!abortController.current) {
+          abortController.current = new AbortController();
+        }
+
+        // Initial data load
+        await dispatch(fetchAllSpatialData({ 
+          commodity: '', 
           date: DEFAULT_DATE,
-        })
-      );
-    }
-  }, [dispatch, commodities.length, loading]);
+          signal: abortController.current?.signal
+        }));
 
-  // Default commodity selection
-  useEffect(() => {
-    if (commodities.length && !selectedCommodity) {
-      const defaultCommodity = commodities[0]?.toLowerCase();
-      if (defaultCommodity) {
-        setSelectedCommodity(defaultCommodity);
-        dispatch(
-          fetchAllSpatialData({
-            commodity: defaultCommodity,
-            date: DEFAULT_DATE,
-          })
-        );
+        // Set initial commodity after data load
+        if (commodities.length > 0) {
+          const initialCommodity = commodities[0]?.toLowerCase();
+          if (initialCommodity && !selectedCommodity) {
+            setSelectedCommodity(initialCommodity);
+            await dispatch(fetchAllSpatialData({ 
+              commodity: initialCommodity, 
+              date: DEFAULT_DATE,
+              signal: abortController.current?.signal
+            }));
+          }
+        }
+
+        appInitialized.current = true;
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Error initializing app:', err);
+        }
+      }
+    };
+
+    // Initialize if we're not loading
+    if (!loading) {
+      initializeApp();
+    }
+
+    // Cleanup function
+    return () => {
+      if (abortController.current) {
+        abortController.current.abort();
+        abortController.current = null;
+      }
+    };
+  }, [loading, dispatch, commodities, selectedCommodity]);
+
+  const handleCommodityChange = useCallback((newCommodity) => {
+    if (!newCommodity || newCommodity === selectedCommodity || loading) return;
+
+    // Cancel any existing request
+    if (abortController.current) {
+      abortController.current.abort();
+    }
+
+    setSelectedCommodity(newCommodity);
+    
+    // Create new abort controller
+    abortController.current = new AbortController();
+    
+    const metric = backgroundMonitor.startMetric('commodity-change');
+    
+    Promise.all([
+      dispatch(fetchAllSpatialData({ 
+        commodity: newCommodity, 
+        date: selectedDate,
+        signal: abortController.current?.signal
+      })),
+      dispatch(fetchFlowData({ 
+        commodity: newCommodity, 
+        date: selectedDate,
+        signal: abortController.current?.signal
+      }))
+    ]).then(() => {
+      metric.finish({ status: 'success' });
+    }).catch((error) => {
+      if (error.name !== 'AbortError') {
+        metric.finish({ status: 'error', error: error.message });
+        console.error('Error loading commodity data:', error);
+      }
+    });
+  }, [selectedCommodity, selectedDate, loading, dispatch]);
+
+  const handleDateChange = useCallback((newDate) => {
+    if (newDate && newDate !== selectedDate) {
+      setSelectedDate(newDate);
+      if (selectedCommodity) {
+        const metric = backgroundMonitor.startMetric('date-change');
+        
+        // Create new abort controller for date change
+        if (abortController.current) {
+          abortController.current.abort();
+        }
+        abortController.current = new AbortController();
+
+        Promise.all([
+          dispatch(fetchAllSpatialData({ 
+            commodity: selectedCommodity, 
+            date: newDate,
+            signal: abortController.current?.signal
+          })),
+          dispatch(fetchFlowData({ 
+            commodity: selectedCommodity, 
+            date: newDate,
+            signal: abortController.current?.signal
+          }))
+        ]).then(() => {
+          metric.finish({ status: 'success' });
+        }).catch((error) => {
+          if (error.name !== 'AbortError') {
+            metric.finish({ status: 'error', error: error.message });
+            console.error('Error loading date data:', error);
+          }
+        });
       }
     }
-  }, [commodities, selectedCommodity, dispatch]);
-
-  // Callback handlers
-  const handleCommodityChange = useCallback(
-    (newCommodity) => {
-      if (newCommodity && newCommodity !== selectedCommodity) {
-        setSelectedCommodity(newCommodity);
-        dispatch(
-          fetchAllSpatialData({
-            commodity: newCommodity,
-            date: selectedDate || DEFAULT_DATE,
-          })
-        );
-      }
-    },
-    [dispatch, selectedCommodity, selectedDate]
-  );
+  }, [selectedCommodity, selectedDate, dispatch]);
 
   const handleToggleDarkMode = useCallback(() => {
     dispatch(toggleDarkMode());
@@ -168,19 +206,16 @@ const App = () => {
     setModalStates((prev) => ({ ...prev, [modalName]: isOpen }));
   }, []);
 
-  const handleWelcomeModalClose = useCallback(
-    (dontShowAgain) => {
-      dispatch(setHasSeenWelcome(dontShowAgain));
-    },
-    [dispatch]
-  );
+  const handleWelcomeModalClose = useCallback((dontShowAgain) => {
+    dispatch(setHasSeenWelcome(dontShowAgain));
+  }, [dispatch]);
 
   if (error) {
     return (
       <ErrorDisplay
         error={error}
         title="Application Error"
-        showDetails={process.env.NODE_ENV !== 'production'}
+        showDetails={process.env.NODE_ENV === 'development'}
         onRetry={() => window.location.reload()}
       />
     );
@@ -218,7 +253,7 @@ const App = () => {
             selectedCommodity={selectedCommodity.toLowerCase()}
             setSelectedCommodity={handleCommodityChange}
             selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
+            setSelectedDate={handleDateChange}
             selectedAnalysis={selectedAnalysis}
             setSelectedAnalysis={setSelectedAnalysis}
             sidebarOpen={sidebarOpen}
@@ -241,16 +276,27 @@ const App = () => {
             }}
           >
             <Toolbar />
-            <Dashboard
-              spatialData={data}
-              selectedCommodity={selectedCommodity}
-              selectedDate={selectedDate}
-              selectedRegimes={selectedGraphRegimes}
-              selectedAnalysis={selectedAnalysis}
-              windowWidth={windowSize.width}
-              spatialViewConfig={spatialViewConfig}
-              onSpatialViewChange={setSpatialViewConfig}
-            />
+            {loading ? (
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%' 
+              }}>
+                <LoadingSpinner />
+              </Box>
+            ) : (
+              <Dashboard
+                spatialData={data}
+                selectedCommodity={selectedCommodity}
+                selectedDate={selectedDate}
+                selectedRegimes={selectedGraphRegimes}
+                selectedAnalysis={selectedAnalysis}
+                windowWidth={windowSize.width}
+                spatialViewConfig={spatialViewConfig}
+                onSpatialViewChange={setSpatialViewConfig}
+              />
+            )}
           </Box>
 
           <StateExporter />
