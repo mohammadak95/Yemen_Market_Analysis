@@ -8,51 +8,100 @@ import { useDashboardData } from './useDashboardData';
 import { selectHasSeenWelcome } from '../store/welcomeModalSlice';
 import { lightThemeWithOverrides, darkThemeWithOverrides } from '../styles/theme';
 
+const safeSelector = (selector, defaultValue) => (state) => {
+  try {
+    return selector(state) ?? defaultValue;
+  } catch (error) {
+    console.warn(`Selector error: ${error.message}`);
+    return defaultValue;
+  }
+};
+
 export const useAppState = () => {
   const dispatch = useDispatch();
   
-  // Use explicit selectors with default values from initial state
-  const error = useSelector(state => 
-    state.spatial?.status?.error ?? spatialInitialState.status.error, 
+  // Use safe selectors with explicit default values
+  const error = useSelector(
+    safeSelector(
+      state => state.spatial?.status?.error,
+      spatialInitialState.status.error
+    ),
     _.isEqual
   );
 
-  const hasSeenWelcome = useSelector(state => 
-    state.welcomeModal?.hasSeenWelcome ?? false, 
+  const hasSeenWelcome = useSelector(
+    safeSelector(
+      state => state.welcomeModal?.hasSeenWelcome,
+      false
+    ),
     _.isEqual
   );
 
-  const isDarkMode = useSelector(state => 
-    state.theme?.isDarkMode ?? false, 
+  const isDarkMode = useSelector(
+    safeSelector(
+      state => state.theme?.isDarkMode,
+      false
+    ),
     _.isEqual
   );
 
-  const commodityInfo = useSelector(selectCommodityInfo, _.isEqual) || {
-    commodities: [],
-    selectedCommodity: '',
-    loading: false,
-    uniqueMonths: []
-  };
-
-  const spatialData = useSelector(state => 
-    state.spatial?.data ?? spatialInitialState.data, 
+  // Use safe version of selectCommodityInfo
+  const commodityInfo = useSelector(
+    safeSelector(
+      selectCommodityInfo,
+      {
+        commodities: [],
+        selectedCommodity: '',
+        loading: false,
+        uniqueMonths: []
+      }
+    ),
     _.isEqual
   );
 
-  const spatialLoading = useSelector(state => 
-    state.spatial?.status?.loading ?? spatialInitialState.status.loading, 
+  const spatialData = useSelector(
+    safeSelector(
+      state => state.spatial?.data,
+      spatialInitialState.data
+    ),
     _.isEqual
   );
 
-  const flowLoading = useSelector(state => 
-    state.flow?.status?.loading ?? false, 
+  const spatialLoading = useSelector(
+    safeSelector(
+      state => state.spatial?.status?.loading,
+      spatialInitialState.status.loading
+    ),
+    _.isEqual
+  );
+
+  const flowLoading = useSelector(
+    safeSelector(
+      state => state.flow?.status?.loading,
+      false
+    ),
+    _.isEqual
+  );
+
+  const storeInitialized = useSelector(
+    safeSelector(
+      state => {
+        // Check if essential slices are present
+        return Boolean(
+          state.spatial &&
+          state.theme &&
+          state.welcomeModal
+        );
+      },
+      false
+    ),
     _.isEqual
   );
 
   // Memoize loading state
   const isLoading = useMemo(() => 
-    spatialLoading || flowLoading, 
-    [spatialLoading, flowLoading]
+    !storeInitialized || spatialLoading || flowLoading, 
+    [storeInitialized, spatialLoading, flowLoading]
   );
 
   // Memoize theme
@@ -82,5 +131,6 @@ export const useAppState = () => {
     isDarkMode,
     commodities,
     theme,
+    storeInitialized
   };
 };

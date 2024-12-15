@@ -8,7 +8,7 @@
  * - Trend analysis
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
 import {
@@ -43,23 +43,51 @@ import {
   selectFlowStatus
 } from '../../../../slices/flowSlice';
 
+// Performance monitoring wrapper
+const withPerformanceMonitoring = (fn, label) => (...args) => {
+  const start = performance.now();
+  try {
+    const result = fn(...args);
+    const duration = performance.now() - start;
+    if (duration > 100) { // Log if calculation takes more than 100ms
+      console.debug(`Performance: ${label} took ${duration.toFixed(2)}ms`);
+    }
+    return result;
+  } catch (error) {
+    console.error(`Error in ${label}:`, error);
+    throw error;
+  }
+};
+
 // Helper function to calculate statistical significance
-const calculateSignificance = (value, mean, stdDev) => {
-  if (!stdDev) return { significant: false, zScore: 0 };
+const calculateSignificance = withPerformanceMonitoring((value, mean, stdDev) => {
+  if (!stdDev || typeof value !== 'number' || typeof mean !== 'number') {
+    return { significant: false, zScore: 0, pValue: 1 };
+  }
   const zScore = (value - mean) / stdDev;
   return {
     significant: Math.abs(zScore) > 1.96, // 95% confidence level
     zScore,
     pValue: 2 * (1 - normalCDF(Math.abs(zScore)))
   };
-};
+}, 'calculateSignificance');
 
-// Helper function for normal CDF
+// Helper function for normal CDF with type checking
 const normalCDF = (x) => {
+  if (typeof x !== 'number') return 0;
   const t = 1 / (1 + 0.2316419 * Math.abs(x));
   const d = 0.3989423 * Math.exp(-x * x / 2);
   const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
   return x > 0 ? 1 - p : p;
+};
+
+// Type validation helper
+const isValidFlow = (flow) => {
+  return flow && 
+    typeof flow.source === 'string' && 
+    typeof flow.target === 'string' && 
+    typeof flow.flow_weight === 'number' &&
+    flow.metadata?.valid === true;
 };
 
 const FlowMetricsPanel = ({
@@ -72,8 +100,13 @@ const FlowMetricsPanel = ({
   const { commodity } = useSelector(selectFlowMetadata);
   const { loading, error } = useSelector(selectFlowStatus);
 
+  // Memoized flow validation
+  const validFlows = useMemo(() => {
+    return Array.isArray(flows) ? flows.filter(isValidFlow) : [];
+  }, [flows]);
+
   // Calculate comprehensive flow metrics with safe defaults
-  const metrics = useMemo(() => {
+  const metrics = useMemo(() => withPerformanceMonitoring(() => {
     const defaultMetrics = {
       basic: {
         totalFlow: 0,
@@ -97,20 +130,11 @@ const FlowMetricsPanel = ({
       }
     };
 
-    if (!Array.isArray(flows) || !flows.length) {
-      console.debug('No flows available for metrics calculation');
+    if (!validFlows.length) {
       return defaultMetrics;
     }
 
     try {
-      // Filter valid flows using flowValidation helper
-      const validFlows = flows.filter(flow => flowValidation.isValidFlow(flow));
-
-      if (!validFlows.length) {
-        console.debug('No valid flows found for metrics calculation');
-        return defaultMetrics;
-      }
-
       // Calculate basic metrics with safety checks
       const flowValues = validFlows.map(f => flowValidation.getFlowValue(f));
       const totalFlow = flowValues.reduce((sum, val) => sum + val, 0);
@@ -157,8 +181,8 @@ const FlowMetricsPanel = ({
           q1: Math.max(0, q1),
           q3: Math.max(0, q3),
           iqr: Math.max(0, iqr),
-          skewness: Math.max(-3, Math.min(3, skewness)), // Bound skewness
-          kurtosis: Math.max(-3, Math.min(3, kurtosis))  // Bound kurtosis
+          skewness: Math.max(-3, Math.min(3, skewness)),
+          kurtosis: Math.max(-3, Math.min(3, kurtosis))
         },
         networkMetrics: {
           density: Math.min(1, Math.max(0, flowDensity)),
@@ -170,10 +194,10 @@ const FlowMetricsPanel = ({
       console.error('Error calculating flow metrics:', error);
       return defaultMetrics;
     }
-  }, [flows]);
+  }, 'calculateMetrics')(), [validFlows]);
 
   // Calculate selected flow metrics with safe defaults
-  const selectedFlowMetrics = useMemo(() => {
+  const selectedFlowMetrics = useMemo(() => withPerformanceMonitoring(() => {
     const defaultSelectedMetrics = {
       normalizedFlow: 0,
       relativeStrength: 0,
@@ -191,18 +215,15 @@ const FlowMetricsPanel = ({
       }
     };
 
-    if (!selectedFlow || !metrics || !Array.isArray(flows)) return defaultSelectedMetrics;
+    if (!selectedFlow || !metrics || !validFlows.length) return defaultSelectedMetrics;
 
     try {
-      const flow = flows.find(f => 
+      const flow = validFlows.find(f => 
         f.source === selectedFlow.source && 
-        f.target === selectedFlow.target &&
-        f.metadata?.valid
+        f.target === selectedFlow.target
       );
 
-      if (!flow || !flowValidation.isValidFlow(flow)) {
-        return defaultSelectedMetrics;
-      }
+      if (!flow) return defaultSelectedMetrics;
 
       const flowValue = flowValidation.getFlowValue(flow);
 
@@ -210,9 +231,9 @@ const FlowMetricsPanel = ({
       const relativeStrength = metrics.basic.avgFlow > 0 ? 
         Math.min(1, Math.max(0, flowValue / metrics.basic.avgFlow)) : 0;
       
-      const percentile = flows.length > 0 ? 
+      const percentile = validFlows.length > 0 ? 
         Math.min(100, Math.max(0, 
-          flows.filter(f => flowValidation.getFlowValue(f) <= flowValue).length / flows.length * 100
+          validFlows.filter(f => flowValidation.getFlowValue(f) <= flowValue).length / validFlows.length * 100
         )) : 0;
 
       // Calculate significance with safety checks
@@ -237,7 +258,7 @@ const FlowMetricsPanel = ({
         significance,
         status,
         metrics: {
-          zScore: Math.max(-10, Math.min(10, significance.zScore)), // Bound z-score
+          zScore: Math.max(-10, Math.min(10, significance.zScore)),
           pValue: Math.min(1, Math.max(0, significance.pValue)),
           standardizedValue: metrics.basic.stdDev > 0 ? 
             Math.max(-10, Math.min(10, (flowValue - metrics.basic.avgFlow) / metrics.basic.stdDev)) : 0
@@ -247,10 +268,19 @@ const FlowMetricsPanel = ({
       console.error('Error calculating selected flow metrics:', error);
       return defaultSelectedMetrics;
     }
-  }, [selectedFlow, flows, metrics]);
+  }, 'calculateSelectedFlowMetrics')(), [selectedFlow, validFlows, metrics]);
+
+  // Handle methodology toggle with event prevention
+  const handleMethodologyToggle = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setShowMethodology(prev => !prev);
+  }, []);
 
   // Ensure we have valid values for display
-  const safeMetrics = {
+  const safeMetrics = useMemo(() => ({
     network: {
       density: metrics?.networkMetrics?.density || 0,
       connectivity: metrics?.networkMetrics?.connectivity || 0,
@@ -260,7 +290,7 @@ const FlowMetricsPanel = ({
       normalizedFlow: selectedFlowMetrics?.normalizedFlow || 0,
       significance: selectedFlowMetrics?.significance || { significant: false, zScore: 0, pValue: 1 }
     }
-  };
+  }), [metrics, selectedFlowMetrics]);
 
   if (loading) {
     return (
@@ -439,7 +469,8 @@ const FlowMetricsPanel = ({
       <Box sx={{ mt: 3 }}>
         <Button
           fullWidth
-          onClick={() => setShowMethodology(!showMethodology)}
+          onClick={handleMethodologyToggle}
+          onMouseDown={(e) => e.preventDefault()}
           endIcon={showMethodology ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           startIcon={<InfoOutlinedIcon />}
         >

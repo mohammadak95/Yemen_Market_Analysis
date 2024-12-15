@@ -21,6 +21,7 @@ import { useWindowSize } from './hooks';
 import { backgroundMonitor, MetricTypes } from './utils/backgroundMonitor';
 import { fetchAllSpatialData } from './slices/spatialSlice';
 import { useAppState } from './hooks/useAppState';
+import { initializeStore } from './store';
 
 const DRAWER_WIDTH = 240;
 const DEFAULT_DATE = '2020-10-01';
@@ -52,6 +53,7 @@ const App = () => {
   } = useAppState();
 
   const appInitialized = useRef(false);
+  const storeInitialized = useRef(false);
   const abortController = useRef(null);
 
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
@@ -70,9 +72,29 @@ const App = () => {
     methodology: false,
   });
 
+  // Initialize store first
+  useEffect(() => {
+    const initStore = async () => {
+      if (storeInitialized.current) return;
+      try {
+        await initializeStore();
+        storeInitialized.current = true;
+      } catch (error) {
+        console.error('Failed to initialize store:', error);
+      }
+    };
+    initStore();
+  }, []);
+
+  // Then initialize app data after store is ready
   useEffect(() => {
     const initializeApp = async () => {
-      if (appInitialized.current) return;
+      if (!storeInitialized.current || appInitialized.current || loading) return;
+
+      const initMetric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.INIT, {
+        component: 'app',
+        startTime: performance.now()
+      });
 
       try {
         // Create new abort controller if needed
@@ -101,17 +123,22 @@ const App = () => {
         }
 
         appInitialized.current = true;
+        initMetric.finish({ 
+          status: 'success',
+          initTime: performance.now() - initMetric.startTime
+        });
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Error initializing app:', err);
+          initMetric.finish({ 
+            status: 'error',
+            error: err.message
+          });
         }
       }
     };
 
-    // Initialize if we're not loading
-    if (!loading) {
-      initializeApp();
-    }
+    initializeApp();
 
     // Cleanup function
     return () => {
@@ -120,7 +147,7 @@ const App = () => {
         abortController.current = null;
       }
     };
-  }, [loading, dispatch, commodities, selectedCommodity]);
+  }, [loading, dispatch, commodities, selectedCommodity, storeInitialized]);
 
   const handleCommodityChange = useCallback((newCommodity) => {
     if (!newCommodity || newCommodity === selectedCommodity || loading) return;
@@ -135,7 +162,10 @@ const App = () => {
     // Create new abort controller
     abortController.current = new AbortController();
     
-    const metric = backgroundMonitor.startMetric('commodity-change');
+    const metric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.PERFORMANCE, {
+      action: 'commodity-change',
+      commodity: newCommodity
+    });
     
     Promise.all([
       dispatch(fetchAllSpatialData({ 
@@ -162,7 +192,10 @@ const App = () => {
     if (newDate && newDate !== selectedDate) {
       setSelectedDate(newDate);
       if (selectedCommodity) {
-        const metric = backgroundMonitor.startMetric('date-change');
+        const metric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.PERFORMANCE, {
+          action: 'date-change',
+          date: newDate
+        });
         
         // Create new abort controller for date change
         if (abortController.current) {
@@ -218,6 +251,19 @@ const App = () => {
         showDetails={process.env.NODE_ENV === 'development'}
         onRetry={() => window.location.reload()}
       />
+    );
+  }
+
+  if (!storeInitialized.current) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <LoadingSpinner message="Initializing application..." />
+      </Box>
     );
   }
 

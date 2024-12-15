@@ -171,13 +171,12 @@ const SpatialAnalysis = () => {
       >
         <Tabs
           value={activeFeature}
-          onChange={handleFeatureChange}
           variant="scrollable"
           scrollButtons="auto"
           sx={{ px: 2 }}
           TabIndicatorProps={{
             style: {
-              transition: 'none' // Prevent animation that might cause refresh
+              transition: 'none'
             }
           }}
         >
@@ -188,7 +187,24 @@ const SpatialAnalysis = () => {
               label={feature.label}
               icon={feature.icon}
               iconPosition="start"
-              onClick={(e) => e.stopPropagation()} // Prevent event bubbling
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleFeatureChange(e, feature.id);
+                return false;
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              component="div"
+              sx={{
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
+                '&:focus': {
+                  outline: 'none'
+                }
+              }}
             />
           ))}
         </Tabs>

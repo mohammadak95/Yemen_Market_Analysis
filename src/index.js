@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
-import store, { initializeStore } from './store';
+import { configureAppStore, getStore } from './store/configureStore';
 import App from './App';
 import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 import { setupReduxDebugger } from './utils/debugUtils';
@@ -99,7 +99,7 @@ DataLoader.propTypes = {
 DataLoader.displayName = 'DataLoader';
 
 // App Wrapper Component
-const AppWithProviders = React.memo(() => {
+const AppWithProviders = React.memo(({ store }) => {
   const selectedCommodity = useMemo(() => DEFAULT_COMMODITY, []);
   const selectedDate = useMemo(() => DEFAULT_DATE, []);
 
@@ -116,12 +116,17 @@ const AppWithProviders = React.memo(() => {
   );
 });
 
+AppWithProviders.propTypes = {
+  store: PropTypes.object.isRequired,
+};
+
 AppWithProviders.displayName = 'AppWithProviders';
 
 // Initialize the application
 const initializeApp = async () => {
   const startTime = performance.now();
   let initMetric;
+  let store;
 
   try {
     // Initialize background monitor first
@@ -136,7 +141,7 @@ const initializeApp = async () => {
     }
 
     // Initialize store with required reducers
-    await initializeStore();
+    store = await configureAppStore();
 
     // Initialize services in development
     if (process.env.NODE_ENV === 'development') {
@@ -166,7 +171,7 @@ const initializeApp = async () => {
               loadTime,
               cacheInitialized: Boolean(spatialHandler.geometryCache),
               reduxStoreSize: JSON.stringify(store.getState()).length,
-              reducersLoaded: Object.keys(store.reducerManager.getReducerMap()).length
+              reducersLoaded: Object.keys(store.getState()).length
             }
           });
         });
@@ -197,7 +202,7 @@ const initializeApp = async () => {
     const root = createRoot(document.getElementById('root'));
     root.render(
       <React.StrictMode>
-        <AppWithProviders />
+        <AppWithProviders store={store} />
       </React.StrictMode>
     );
 

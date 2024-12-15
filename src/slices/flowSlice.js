@@ -11,6 +11,25 @@ import {
   retryWithBackoff 
 } from '../utils/dataUtils';
 
+// Date format utilities
+const dateUtils = {
+  // Convert YYYY-MM to YYYY-MM-DD
+  toFlowDate: (date) => {
+    if (!date) return null;
+    return date.length === 7 ? `${date}-01` : date;
+  },
+  // Convert YYYY-MM-DD to YYYY-MM
+  toSpatialDate: (date) => {
+    if (!date) return null;
+    return date.substring(0, 7);
+  },
+  // Check if dates match (ignoring day)
+  datesMatch: (date1, date2) => {
+    if (!date1 || !date2) return false;
+    return date1.substring(0, 7) === date2.substring(0, 7);
+  }
+};
+
 // Initial state
 const initialState = {
   flows: [],
@@ -24,76 +43,162 @@ const initialState = {
     },
     commodity: null,
     totalFlows: 0,
-    uniqueMarkets: 0
+    uniqueMarkets: 0,
+    dataQuality: {
+      validFlows: 0,
+      invalidFlows: 0,
+      processingErrors: []
+    }
   },
   status: {
     loading: false,
     error: null,
     lastFetch: null,
-    loadedData: {} // Track what data has been loaded
+    loadedData: {},
+    processingProgress: 0
   }
 };
 
-// Helper function to check if data is already loaded
-const isDataLoaded = (state, commodity, date) => {
-  const key = `${commodity}-${date}`;
-  return state.status.loadedData[key] && state.byDate[date];
+// Validation utilities
+const flowValidation = {
+  isValidFlow: (flow) => {
+    return flow &&
+      typeof flow.source === 'string' &&
+      typeof flow.target === 'string' &&
+      typeof flow.flow_weight === 'number' &&
+      !isNaN(flow.flow_weight) &&
+      flow.flow_weight >= 0;
+  },
+  isValidDate: (date) => {
+    if (!date) return false;
+    const parsed = new Date(date);
+    return parsed instanceof Date && !isNaN(parsed);
+  }
 };
 
 // Async thunk for loading flow data
 export const fetchFlowData = createAsyncThunk(
   'flow/fetchData',
-  async ({ commodity, date }, { getState, rejectWithValue }) => {
+  async ({ commodity, date }, { getState, rejectWithValue, dispatch }) => {
     const metric = backgroundMonitor.startMetric('flow-data-fetch');
+    const errors = [];
     
     try {
-      // Check if we already have this data
-      const state = getState().flow;
-      if (isDataLoaded(state, commodity, date)) {
-        console.debug('Data already loaded:', { commodity, date });
-        metric.finish({ status: 'cached', commodity, date });
-        return null; // Return null to skip processing
+      // Ensure date is in YYYY-MM-DD format for flow data
+      const flowDate = dateUtils.toFlowDate(date);
+      
+      if (!commodity || !flowDate) {
+        throw new Error('Invalid parameters', { commodity, date });
       }
 
-      // Get the proper path for flow data
+      console.debug('Fetching flow data for:', { commodity, date: flowDate });
+
       const flowDataPath = getNetworkDataPath('time_varying_flows.csv');
 
-      // Fetch the data with retry capability
       const response = await retryWithBackoff(async () => {
         const res = await fetch(flowDataPath);
-        if (!res.ok) throw new Error(`Failed to fetch flow data: ${res.statusText}`);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         return res.text();
-      }, {
-        onRetry: (attempt, delay, error) => {
-          console.warn(`Retry ${attempt + 1} for flow data fetch after ${delay}ms:`, error);
-        }
       });
 
-      // Parse CSV data
-      const parsedData = await new Promise((resolve, reject) => {
+      const data = await new Promise((resolve, reject) => {
         Papa.parse(response, {
           header: true,
           dynamicTyping: true,
           skipEmptyLines: true,
-          delimitersToGuess: [',', '\t', '|', ';'],
           complete: (results) => resolve(results),
           error: (error) => reject(error)
         });
       });
 
-      // Process the flows
-      const processedData = processFlowData(parsedData.data, commodity, date);
-      
-      metric.finish({ 
-        status: 'success',
-        flowCount: processedData.flows.length,
-        commodity,
-        date
+      // Filter for matching commodity and date
+      const filteredData = data.data.filter(flow => {
+        const commodityMatch = flow.commodity?.toLowerCase() === commodity?.toLowerCase();
+        const dateMatch = dateUtils.datesMatch(flow.date, flowDate);
+        return commodityMatch && dateMatch;
       });
 
-      return processedData;
+      console.debug('Filtered data:', {
+        total: data.data.length,
+        filtered: filteredData.length,
+        commodity,
+        date: flowDate
+      });
+
+      // Process flows
+      const processedFlows = filteredData
+        .map(flow => {
+          try {
+            if (!flowValidation.isValidFlow(flow)) return null;
+
+            const sourceCoords = convertUTMtoLatLng(flow.source_lng, flow.source_lat);
+            const targetCoords = convertUTMtoLatLng(flow.target_lng, flow.target_lat);
+
+            return {
+              id: `${flow.source}-${flow.target}-${flow.date}`,
+              date: flow.date,
+              source: flow.source,
+              target: flow.target,
+              source_coordinates: sourceCoords,
+              target_coordinates: targetCoords,
+              price_differential: Number(flow.price_differential) || 0,
+              source_price: Number(flow.source_price) || 0,
+              target_price: Number(flow.target_price) || 0,
+              flow_weight: Number(flow.flow_weight) || 0,
+              metadata: {
+                processed_at: new Date().toISOString(),
+                valid: true
+              }
+            };
+          } catch (error) {
+            errors.push({ flow, error: error.message });
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      // Group flows
+      const byDate = _.groupBy(processedFlows, flow => dateUtils.toSpatialDate(flow.date));
+      const byRegion = _.groupBy(processedFlows, 'source');
+
+      // Calculate metadata
+      const uniqueMarkets = new Set([
+        ...processedFlows.map(f => f.source),
+        ...processedFlows.map(f => f.target)
+      ]);
+
+      const result = {
+        flows: processedFlows,
+        byDate,
+        byRegion,
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+          dateRange: {
+            start: dateUtils.toSpatialDate(flowDate),
+            end: dateUtils.toSpatialDate(flowDate)
+          },
+          commodity,
+          totalFlows: processedFlows.length,
+          uniqueMarkets: uniqueMarkets.size,
+          dataQuality: {
+            validFlows: processedFlows.length,
+            invalidFlows: filteredData.length - processedFlows.length,
+            processingErrors: errors
+          }
+        }
+      };
+
+      metric.finish({ 
+        status: 'success',
+        flowCount: processedFlows.length,
+        commodity,
+        date: flowDate
+      });
+
+      return result;
 
     } catch (error) {
+      console.error('Error fetching flow data:', error);
       metric.finish({ 
         status: 'error',
         error: error.message,
@@ -102,95 +207,15 @@ export const fetchFlowData = createAsyncThunk(
       });
       return rejectWithValue(error.message);
     }
-  },
-  {
-    condition: ({ commodity, date }, { getState }) => {
-      const state = getState().flow;
-      // Only fetch if not already loading and not already loaded
-      return !state.status.loading && !isDataLoaded(state, commodity, date);
-    }
   }
 );
 
-// Helper function to process flow data
-const processFlowData = (data, commodity, date) => {
-  // Filter for commodity and date
-  const filteredData = data.filter(flow => 
-    flow.commodity?.toLowerCase() === commodity?.toLowerCase() &&
-    flow.date?.startsWith(date?.substring(0, 7))
-  );
-
-  // Process each flow
-  const processedFlows = filteredData.map(flow => {
-    try {
-      // Convert UTM coordinates
-      const sourceCoords = convertUTMtoLatLng(flow.source_lng, flow.source_lat);
-      const targetCoords = convertUTMtoLatLng(flow.target_lng, flow.target_lat);
-
-      return {
-        id: `${flow.source}-${flow.target}-${flow.date}`,
-        date: flow.date,
-        source: flow.source,
-        target: flow.target,
-        source_coordinates: sourceCoords,
-        target_coordinates: targetCoords,
-        price_differential: Number(flow.price_differential) || 0,
-        source_price: Number(flow.source_price) || 0,
-        target_price: Number(flow.target_price) || 0,
-        flow_weight: Number(flow.flow_weight) || 0,
-        metadata: {
-          processed_at: new Date().toISOString(),
-          valid: true
-        }
-      };
-    } catch (error) {
-      console.warn('Error processing flow:', error);
-      return null;
-    }
-  }).filter(Boolean);
-
-  // Group flows by date and region
-  const byDate = _.groupBy(processedFlows, 'date');
-  const byRegion = _.groupBy(processedFlows, 'source');
-
-  // Calculate metadata
-  const uniqueMarkets = new Set([
-    ...processedFlows.map(f => f.source),
-    ...processedFlows.map(f => f.target)
-  ]);
-
-  const dates = Object.keys(byDate).sort();
-
-  return {
-    flows: processedFlows,
-    byDate,
-    byRegion,
-    metadata: {
-      lastUpdated: new Date().toISOString(),
-      dateRange: {
-        start: dates[0] || null,
-        end: dates[dates.length - 1] || null
-      },
-      commodity,
-      totalFlows: processedFlows.length,
-      uniqueMarkets: uniqueMarkets.size,
-      dateCount: dates.length
-    }
-  };
-};
-
-// Create the slice
+// Slice
 const flowSlice = createSlice({
   name: 'flow',
   initialState,
   reducers: {
-    clearFlowData: (state) => {
-      // Only clear if we're actually switching features
-      if (state.metadata.commodity) {
-        return initialState;
-      }
-      return state;
-    },
+    clearFlowData: () => initialState,
     updateFlowMetrics: (state, action) => {
       state.metadata = {
         ...state.metadata,
@@ -199,6 +224,9 @@ const flowSlice = createSlice({
     },
     resetFlowError: (state) => {
       state.status.error = null;
+    },
+    updateProgress: (state, action) => {
+      state.status.processingProgress = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -206,50 +234,26 @@ const flowSlice = createSlice({
       .addCase(fetchFlowData.pending, (state) => {
         state.status.loading = true;
         state.status.error = null;
+        state.status.processingProgress = 0;
       })
       .addCase(fetchFlowData.fulfilled, (state, action) => {
-        // If null returned, data was already loaded
-        if (!action.payload) {
-          state.status.loading = false;
-          return;
-        }
-
-        // Merge new flows with existing ones
-        const newFlows = action.payload.flows.filter(flow => 
-          !state.flows.some(existing => existing.id === flow.id)
-        );
-
-        state.flows = [...state.flows, ...newFlows];
-        
-        // Merge byDate data
-        state.byDate = {
-          ...state.byDate,
-          ...action.payload.byDate
-        };
-
-        // Merge byRegion data
-        state.byRegion = {
-          ...state.byRegion,
-          ...action.payload.byRegion
-        };
-
-        // Update metadata
+        const { flows, byDate, byRegion, metadata } = action.payload;
+        state.flows = flows;
+        state.byDate = byDate;
+        state.byRegion = byRegion;
         state.metadata = {
-          ...state.metadata,
-          ...action.payload.metadata,
+          ...metadata,
           lastUpdated: new Date().toISOString()
         };
-
-        // Mark data as loaded
-        const key = `${action.payload.metadata.commodity}-${action.payload.metadata.dateRange.start}`;
         state.status = {
           loading: false,
           error: null,
           lastFetch: new Date().toISOString(),
           loadedData: {
             ...state.status.loadedData,
-            [key]: true
-          }
+            [`${metadata.commodity}-${metadata.dateRange.start}`]: true
+          },
+          processingProgress: 1
         };
       })
       .addCase(fetchFlowData.rejected, (state, action) => {
@@ -257,62 +261,91 @@ const flowSlice = createSlice({
           ...state.status,
           loading: false,
           error: action.payload,
-          lastFetch: new Date().toISOString()
+          lastFetch: new Date().toISOString(),
+          processingProgress: 0
         };
       });
   }
 });
 
-// Export actions and reducer
-export const { clearFlowData, updateFlowMetrics, resetFlowError } = flowSlice.actions;
-export default flowSlice.reducer;
+// Optimized selectors
+const selectFlowDomain = state => state.flow || initialState;
+const selectFlowsArray = state => selectFlowDomain(state).flows;
+const selectFlowsByDateMap = state => selectFlowDomain(state).byDate;
+const selectFlowsByRegionMap = state => selectFlowDomain(state).byRegion;
+const selectFlowMetadataState = state => selectFlowDomain(state).metadata;
+const selectFlowStatusState = state => selectFlowDomain(state).status;
 
-// Base selectors
-const getFlowState = state => state.flow || initialState;
-const getFlows = state => getFlowState(state).flows;
-const getFlowsByDate = state => getFlowState(state).byDate;
-const getFlowsByRegion = state => getFlowState(state).byRegion;
-const getFlowMetadata = state => getFlowState(state).metadata;
-const getFlowStatus = state => getFlowState(state).status;
-
-// Memoized selectors
 export const selectFlowState = createSelector(
-  [getFlowState],
-  flowState => flowState
+  [selectFlowDomain],
+  flowState => ({
+    ...flowState,
+    metadata: {
+      ...flowState.metadata,
+      lastChecked: new Date().toISOString()
+    }
+  })
 );
 
 export const selectFlowStatus = createSelector(
-  [getFlowStatus],
-  status => status
+  [selectFlowStatusState],
+  status => ({
+    loading: status.loading,
+    error: status.error,
+    progress: status.processingProgress
+  })
 );
 
 export const selectFlowMetadata = createSelector(
-  [getFlowMetadata],
-  metadata => metadata
+  [selectFlowMetadataState],
+  metadata => ({
+    ...metadata,
+    lastChecked: new Date().toISOString()
+  })
 );
 
 export const selectFlowsByDate = createSelector(
-  [getFlowsByDate, (_, date) => date],
-  (byDate, date) => byDate[date] || []
+  [selectFlowsByDateMap, (_, date) => date],
+  (byDate, date) => {
+    if (!date) return [];
+    // Convert input date to spatial format for lookup
+    const spatialDate = dateUtils.toSpatialDate(date);
+    return byDate[spatialDate] || [];
+  }
 );
 
 export const selectFlowsByRegion = createSelector(
-  [getFlowsByRegion, (_, region) => region],
+  [selectFlowsByRegionMap, (_, region) => region],
   (byRegion, region) => byRegion[region] || []
 );
 
 export const selectFlowMetrics = createSelector(
-  [getFlows, getFlowMetadata],
+  [selectFlowsArray, selectFlowMetadataState],
   (flows, metadata) => {
     if (!flows.length) return null;
 
+    const validFlows = flows.filter(flow => flow.flow_weight > 0);
+    const totalWeight = validFlows.reduce((sum, flow) => sum + flow.flow_weight, 0);
+    const avgWeight = validFlows.length > 0 ? totalWeight / validFlows.length : 0;
+
     return {
-      totalFlows: flows.length,
-      averageFlowWeight: _.meanBy(flows, 'flow_weight'),
-      maxPriceDifferential: _.maxBy(flows, 'price_differential')?.price_differential,
-      averagePriceDifferential: _.meanBy(flows, 'price_differential'),
-      marketConnectivity: metadata.uniqueMarkets / 
-        (flows.length / metadata.dateCount)
+      totalFlows: validFlows.length,
+      averageFlowWeight: avgWeight,
+      maxPriceDifferential: Math.max(...validFlows.map(f => f.price_differential || 0)),
+      averagePriceDifferential: validFlows.reduce((sum, f) => sum + (f.price_differential || 0), 0) / validFlows.length,
+      marketConnectivity: metadata.uniqueMarkets > 0
+        ? validFlows.length / metadata.uniqueMarkets
+        : 0,
+      dataQuality: metadata.dataQuality
     };
   }
 );
+
+export const { 
+  clearFlowData, 
+  updateFlowMetrics, 
+  resetFlowError,
+  updateProgress 
+} = flowSlice.actions;
+
+export default flowSlice.reducer;

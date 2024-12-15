@@ -10,6 +10,7 @@ import flowReducer from '../slices/flowSlice';
 import priceDiffReducer from '../slices/priceDiffSlice';
 import { spatialHandler } from '../utils/spatialDataHandler';
 import { backgroundMonitor, MetricTypes } from '../utils/backgroundMonitor';
+import { requestMiddleware, batchMiddleware } from '../middleware/requestMiddleware';
 
 // Initial reducers with essential features including welcomeModal
 const staticReducers = {
@@ -88,6 +89,7 @@ export function configureAppStore(preloadedState = {}) {
     const reducerManager = createReducerManager(staticReducers);
     const isDevelopment = process.env.NODE_ENV === 'development';
 
+    // Enhanced ignored paths configuration
     const ignoredPaths = {
       spatial: [
         'spatial.data.geoData',
@@ -95,7 +97,11 @@ export function configureAppStore(preloadedState = {}) {
         'spatial.data.flows',
         'spatial.data.analysis',
         'spatial.data.flowMaps',
-        'spatial.data.marketClusters'
+        'spatial.data.marketClusters',
+        'spatial.data.cache',
+        'spatial.data.geometry.polygons',
+        'spatial.data.geometry.points',
+        'spatial.data.timeSeriesData'
       ],
       ecm: [
         'ecm.data.unified.results',
@@ -106,7 +112,8 @@ export function configureAppStore(preloadedState = {}) {
         'flow.flows',
         'flow.byDate',
         'flow.byRegion',
-        'flow.metadata'
+        'flow.metadata',
+        'flow.data.cache'
       ],
       priceDiff: [
         'priceDiff.data.results',
@@ -126,15 +133,15 @@ export function configureAppStore(preloadedState = {}) {
         },
         serializableCheck: {
           ignoredPaths: [
-            ...ignoredPaths.spatial,
-            ...ignoredPaths.ecm,
-            ...ignoredPaths.flow,
-            ...ignoredPaths.priceDiff
+            ...Object.values(ignoredPaths).flat(),
+            'payload.geometry',
+            'payload.data.geometry',
+            'meta.arg.signal'
           ],
-          warnAfter: 2000,
+          warnAfter: 5000, // Increased threshold
         },
         immutableCheck: {
-          warnAfter: 1000,
+          warnAfter: 2000, // Increased threshold
           ignoredPaths: [
             'spatial.data',
             'spatial.status',
@@ -149,10 +156,15 @@ export function configureAppStore(preloadedState = {}) {
         },
       });
 
-      const middlewareList = [...customMiddleware];
+      // Add custom middleware
+      const middlewareList = [
+        requestMiddleware, // Add request deduplication and caching
+        batchMiddleware,   // Add request batching
+        ...customMiddleware
+      ];
 
       if (isDevelopment) {
-        middlewareList.push(createLogger({
+        const logger = createLogger({
           collapsed: true,
           duration: true,
           timestamp: true,
@@ -164,6 +176,7 @@ export function configureAppStore(preloadedState = {}) {
             error: () => '#F20404',
           },
           predicate: (getState, action) => {
+            // Enhanced action filtering
             const skipActions = [
               'spatial/setProgress',
               'spatial/setLoadingStage',
@@ -172,7 +185,11 @@ export function configureAppStore(preloadedState = {}) {
               'ecm/setProgress',
               'ecm/updateCache',
               'flow/updateFlowMetrics',
-              'priceDiff/updateCache'
+              'priceDiff/updateCache',
+              // Add more actions to skip
+              'spatial/fetchAllSpatialData/pending',
+              'flow/fetchData/pending',
+              'ecm/fetchECMData/pending'
             ];
             return !skipActions.includes(action.type);
           },
@@ -209,7 +226,8 @@ export function configureAppStore(preloadedState = {}) {
               ? { ...action, payload: transformers[action.type](action.payload) }
               : action;
           }
-        }));
+        });
+        middlewareList.push(logger);
       }
 
       return middlewareList;
@@ -239,6 +257,7 @@ export function configureAppStore(preloadedState = {}) {
 
     store.reducerManager = reducerManager;
 
+    // Enhanced reducer injection with error handling and metrics
     store.injectReducer = async (key, asyncReducer) => {
       const injectMetric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.INIT, {
         action: 'inject-reducer',

@@ -658,7 +658,7 @@ class SpatialDataHandler {
   
   loadFlowData = async (commodity) => {
     try {
-      // Get preprocessed data path
+      // Get precomputed data path
       const preprocessedPath = getPrecomputedDataPath(commodity);
       
       // Use the cache if available
@@ -1407,7 +1407,7 @@ class SpatialDataHandler {
       const pointData = this.pointCache.get(regionName);
       const timeSeriesForRegion = timeSeriesData.find(d => 
         this.normalizeRegionName(d.region || d.admin1) === regionName
-      );
+      ) || {};
       
       features.push({
         type: 'Feature',

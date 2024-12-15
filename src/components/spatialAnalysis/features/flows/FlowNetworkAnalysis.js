@@ -22,8 +22,8 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import FlowMap from './FlowMap';
 import FlowMetricsPanel from './FlowMetricsPanel';
+import FlowDateControl from './FlowDateControl';
 import MetricCard from '../../atoms/MetricCard';
-import TimeControl from '../../molecules/TimeControl';
 import { setSelectedDate } from '../../../../slices/spatialSlice';
 import { useFlowDataManager } from '../../../../hooks/useFlowDataManager';
 import { selectFlowMetrics } from '../../../../slices/flowSlice';
@@ -40,6 +40,15 @@ const MAP_SETTINGS = {
   zoom: 6.5
 };
 
+// Helper function to prevent default events
+const preventEvent = (e) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  return false;
+};
+
 const FlowNetworkAnalysis = () => {
   const dispatch = useDispatch();
   
@@ -48,34 +57,36 @@ const FlowNetworkAnalysis = () => {
   const [showMethodology, setShowMethodology] = useState(false);
 
   // Get data from Redux
-  const selectedDate = useSelector(state => state.spatial.ui.selectedDate || '2020-10-01');
-  const selectedCommodity = useSelector(state => state.ecm.ui.selectedCommodity);
+  const selectedDate = useSelector(state => state.spatial.ui.selectedDate);
+  const selectedCommodity = useSelector(state => state.spatial.ui.selectedCommodity);
   const flowMetrics = useSelector(selectFlowMetrics);
   const availableDates = useSelector(state => state.spatial.data.uniqueMonths || []);
 
   // Use the flow data manager hook
   const {
-    byDate,
+    flows: currentFlows,
     metadata: { totalFlows, uniqueMarkets },
     loading,
-    error
+    error,
+    refreshData
   } = useFlowDataManager();
-
-  // Get flows for selected date
-  const dateFilteredFlows = useMemo(() => {
-    if (!selectedDate || !byDate) {
-      return [];
-    }
-    return byDate[selectedDate] || [];
-  }, [byDate, selectedDate]);
 
   // Process flows with additional metrics
   const processedFlows = useMemo(() => {
-    if (!dateFilteredFlows.length) return [];
+    if (!currentFlows?.length) {
+      console.debug('No flows available for processing:', { date: selectedDate, commodity: selectedCommodity });
+      return [];
+    }
 
-    const maxFlow = Math.max(...dateFilteredFlows.map(f => f.flow_weight));
+    console.debug('Processing flows:', { 
+      count: currentFlows.length, 
+      date: selectedDate, 
+      commodity: selectedCommodity 
+    });
 
-    return dateFilteredFlows.map(flow => {
+    const maxFlow = Math.max(...currentFlows.map(f => f.flow_weight));
+
+    return currentFlows.map(flow => {
       const normalizedFlow = flowValidation.normalizeFlow(flow, maxFlow);
       const status = flowValidation.getFlowStatus(normalizedFlow);
 
@@ -86,24 +97,45 @@ const FlowNetworkAnalysis = () => {
         status
       };
     });
-  }, [dateFilteredFlows]);
+  }, [currentFlows, selectedDate, selectedCommodity]);
 
-  // Handle date change
-  const handleDateChange = useCallback((newDate) => {
+  // Handle date change with event prevention
+  const handleDateChange = useCallback((e, newDate) => {
+    preventEvent(e);
     if (newDate !== selectedDate) {
-      dispatch(setSelectedDate(newDate));
+      console.debug('Date changed:', { from: selectedDate, to: newDate, commodity: selectedCommodity });
+      // Reset selected flow when date changes
       setSelectedFlow(null);
+      // Update the selected date in the spatial slice
+      dispatch(setSelectedDate(newDate));
     }
-  }, [dispatch, selectedDate]);
+  }, [dispatch, selectedDate, selectedCommodity]);
 
   // Handle flow selection with event prevention
   const handleFlowSelect = useCallback((event, flow) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+    preventEvent(event);
     setSelectedFlow(flow);
   }, []);
+
+  // Handle methodology toggle with event prevention
+  const handleMethodologyToggle = useCallback((e) => {
+    preventEvent(e);
+    setShowMethodology(prev => !prev);
+  }, []);
+
+  // Handle reload with event prevention
+  const handleReload = useCallback((e) => {
+    preventEvent(e);
+    refreshData();
+  }, [refreshData]);
+
+  if (!selectedCommodity) {
+    return (
+      <Alert severity="warning" sx={{ m: 2 }}>
+        Please select a commodity from the sidebar to view market flows.
+      </Alert>
+    );
+  }
 
   if (error) {
     return (
@@ -111,7 +143,12 @@ const FlowNetworkAnalysis = () => {
         severity="error" 
         sx={{ m: 2 }}
         action={
-          <Button color="inherit" size="small" onClick={() => window.location.reload()}>
+          <Button 
+            color="inherit" 
+            size="small" 
+            onClick={handleReload}
+            onMouseDown={preventEvent}
+          >
             Reload
           </Button>
         }
@@ -182,16 +219,15 @@ const FlowNetworkAnalysis = () => {
         </Paper>
       </Grid>
 
-      {/* Time Controls */}
+      {/* Date Control */}
       {availableDates.length > 0 && (
         <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <TimeControl
-              dates={availableDates}
-              currentDate={selectedDate || availableDates[0]}
-              onChange={handleDateChange}
-            />
-          </Paper>
+          <FlowDateControl
+            dates={availableDates}
+            currentDate={selectedDate || availableDates[0]}
+            onChange={handleDateChange}
+            loading={loading}
+          />
         </Grid>
       )}
 
@@ -199,38 +235,52 @@ const FlowNetworkAnalysis = () => {
       {loading && (
         <Grid item xs={12}>
           <Alert severity="info">
-            Loading flow data for {selectedCommodity}...
+            Loading flow data for {selectedCommodity} ({selectedDate})...
+          </Alert>
+        </Grid>
+      )}
+
+      {/* No Data State */}
+      {!loading && !error && (!currentFlows || currentFlows.length === 0) && (
+        <Grid item xs={12}>
+          <Alert severity="warning">
+            No flow data available for {selectedCommodity} in {selectedDate}
           </Alert>
         </Grid>
       )}
 
       {/* Map Visualization */}
-      <Grid item xs={12}>
-        <Paper sx={{ p: 2, height: 500 }}>
-          <FlowMap
-            flows={processedFlows}
-            selectedFlow={selectedFlow}
-            onFlowSelect={handleFlowSelect}
-            defaultView={MAP_SETTINGS}
-          />
-        </Paper>
-      </Grid>
+      {processedFlows.length > 0 && (
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2, height: 500 }}>
+            <FlowMap
+              flows={processedFlows}
+              selectedFlow={selectedFlow}
+              onFlowSelect={handleFlowSelect}
+              defaultView={MAP_SETTINGS}
+            />
+          </Paper>
+        </Grid>
+      )}
 
       {/* Metrics Panel */}
-      <Grid item xs={12}>
-        <FlowMetricsPanel
-          flows={processedFlows}
-          selectedFlow={selectedFlow}
-          timeRange={selectedDate}
-        />
-      </Grid>
+      {processedFlows.length > 0 && (
+        <Grid item xs={12}>
+          <FlowMetricsPanel
+            flows={processedFlows}
+            selectedFlow={selectedFlow}
+            timeRange={selectedDate}
+          />
+        </Grid>
+      )}
 
       {/* Methodology */}
       <Grid item xs={12}>
         <Paper sx={{ p: 2 }}>
           <Button
             fullWidth
-            onClick={() => setShowMethodology(!showMethodology)}
+            onClick={handleMethodologyToggle}
+            onMouseDown={preventEvent}
             endIcon={showMethodology ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             startIcon={<InfoOutlinedIcon />}
           >
