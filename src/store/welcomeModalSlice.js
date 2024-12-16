@@ -3,7 +3,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  hasSeenWelcome: localStorage.getItem('hasSeenWelcome') === 'true',
+  hasSeenWelcome: localStorage.getItem('hasSeenWelcome') === 'true'
 };
 
 const welcomeModalSlice = createSlice({
@@ -15,8 +15,8 @@ const welcomeModalSlice = createSlice({
       if (action.payload) {
         localStorage.setItem('hasSeenWelcome', 'true');
       }
-    },
-  },
+    }
+  }
 });
 
 export const { setHasSeenWelcome } = welcomeModalSlice.actions;

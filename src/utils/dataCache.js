@@ -17,8 +17,9 @@ class DataCache {
     this.cleanupInterval = setInterval(() => this.cleanup(), 300000); // 5 minutes
   }
 
-  get(key, options = {}) {
+  get(commodity, date) {
     const metric = backgroundMonitor.startMetric('cache-get');
+    const key = this._getKey(commodity, date);
     
     try {
       const cached = this.cache.get(key);
@@ -39,20 +40,20 @@ class DataCache {
       
       metric.finish({ status: 'hit' });
       return cached.data;
-      
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
       return null;
     }
   }
 
-  set(key, data, priority = 'MEDIUM') {
+  set(commodity, date, data) {
     const metric = backgroundMonitor.startMetric('cache-set');
+    const key = this._getKey(commodity, date);
     
     try {
       // Implement LRU if cache is full
       if (this.cache.size >= this.maxSize) {
-        this.evictLRU(priority);
+        this.evictLRU();
       }
 
       this.cache.set(key, {
@@ -60,12 +61,10 @@ class DataCache {
         timestamp: Date.now(),
         lastAccessed: Date.now(),
         accessCount: 0,
-        priority,
         size: this._estimateSize(data)
       });
 
       metric.finish({ status: 'success' });
-      
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
     }
@@ -96,6 +95,10 @@ class DataCache {
     });
   }
 
+  _getKey(commodity, date) {
+    return `${commodity}_${date}`;
+  }
+
   _estimateSize(data) {
     try {
       return new Blob([JSON.stringify(data)]).size;
@@ -104,32 +107,22 @@ class DataCache {
     }
   }
 
-  evictLRU(newPriority) {
-    // Sort entries by priority and last access time
-    const entries = Array.from(this.cache.entries())
-      .map(([key, value]) => ({
-        key,
-        priority: value.priority,
-        lastAccessed: value.lastAccessed
-      }))
-      .sort((a, b) => {
-        // First compare priority levels
-        const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
-        const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-        if (priorityDiff !== 0) return priorityDiff;
-        
-        // Then compare last access times
-        return a.lastAccessed - b.lastAccessed;
-      });
+  evictLRU() {
+    let oldestAccess = Date.now();
+    let keyToRemove = null;
 
-    // Remove the least recently used item with lowest priority
-    if (entries.length > 0) {
-      const toRemove = entries[0];
-      this.cache.delete(toRemove.key);
+    for (const [key, value] of this.cache.entries()) {
+      if (value.lastAccessed < oldestAccess) {
+        oldestAccess = value.lastAccessed;
+        keyToRemove = key;
+      }
+    }
+
+    if (keyToRemove) {
+      this.cache.delete(keyToRemove);
       backgroundMonitor.logMetric('cache-eviction', {
-        key: toRemove.key,
-        reason: 'LRU',
-        priority: toRemove.priority
+        key: keyToRemove,
+        reason: 'LRU'
       });
     }
   }
@@ -145,8 +138,7 @@ class DataCache {
         key,
         accessCount: value.accessCount,
         age: Date.now() - value.timestamp,
-        size: value.size || 0,
-        priority: value.priority
+        size: value.size || 0
       }))
     };
   }

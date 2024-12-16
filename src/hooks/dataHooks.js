@@ -25,6 +25,7 @@ import {
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 import { getDataPath, enhancedFetchJson } from '../utils/dataUtils';
+import { dataCache } from '../utils/dataCache';
 
 export const useSpatialData = () => {
   const dispatch = useDispatch();
@@ -49,21 +50,84 @@ export const useSpatialData = () => {
  
   return { data, flowData, loading, error, fetchData };
 };
- 
-export const usePrecomputedData = (commodity, date) => {
+
+export const usePrecomputedData = (commodity, date, options = {}) => {
   const dispatch = useDispatch();
-  const data = useSelector(selectSpatialData);
-  const loading = useSelector(selectSpatialLoadingStatus);
-  const error = useSelector(selectSpatialError);
-  
-  useEffect(() => {
-    if (commodity) {
-      dispatch(fetchAllSpatialData({ commodity, date }));
+  const abortControllerRef = useRef(null);
+  const loadingMetricRef = useRef(null);
+
+  const loadData = useCallback(async () => {
+    if (!commodity || !date) return;
+
+    // Cancel any ongoing requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+
+    // Start loading metric
+    loadingMetricRef.current = backgroundMonitor.startMetric('data-load', {
+      commodity,
+      date
+    });
+
+    try {
+      // Check cache first
+      const cachedData = dataCache.get(commodity, date);
+      if (cachedData) {
+        dispatch({ type: 'data/loaded', payload: cachedData });
+        loadingMetricRef.current?.finish({ status: 'cache-hit' });
+        return;
+      }
+
+      // Load essential data first
+      const essentialData = await loadEssentialData(commodity, date, 
+        abortControllerRef.current.signal);
+      dispatch({ type: 'data/essentialLoaded', payload: essentialData });
+
+      // Load visualization and analysis data in parallel
+      const [visualData, analysisData] = await Promise.all([
+        loadVisualizationData(commodity, date, abortControllerRef.current.signal),
+        loadAnalysisData(commodity, date, abortControllerRef.current.signal)
+      ]);
+
+      dispatch({ 
+        type: 'data/loaded', 
+        payload: { ...essentialData, ...visualData, ...analysisData }
+      });
+
+      // Cache the complete data
+      dataCache.set(commodity, date, {
+        ...essentialData,
+        ...visualData,
+        ...analysisData
+      });
+
+      loadingMetricRef.current?.finish({ status: 'success' });
+
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Data loading failed:', error);
+        loadingMetricRef.current?.finish({ 
+          status: 'error',
+          error: error.message 
+        });
+      }
     }
   }, [commodity, date, dispatch]);
- 
-  return { data, loading, error };
+
+  useEffect(() => {
+    loadData();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [loadData]);
 };
+
 
 export const useTVMIIData = () => {
   const [tvmiiData, setTvmiiData] = useState(null);
