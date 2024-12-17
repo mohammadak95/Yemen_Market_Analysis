@@ -1,5 +1,3 @@
-// src/components/analysis/spatial/SpatialMap.js
-
 import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { 
@@ -15,7 +13,7 @@ import {
 } from '@mui/material';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { useSelector } from 'react-redux';
-import { selectGeometryData } from '../../../selectors/optimizedSelectors';
+import { selectSpatialDataOptimized } from '../../../selectors/optimizedSelectors';
 import { 
   getColorScale, 
   getResidualStats, 
@@ -33,7 +31,7 @@ const SpatialMap = ({ results, windowWidth, mode = 'analysis' }) => {
   const [visualizationType, setVisualizationType] = useState('residuals');
   const [selectedRegion, setSelectedRegion] = useState(null);
   
-  const geometryData = useSelector(selectGeometryData);
+  const geometryData = useSelector(selectSpatialDataOptimized);
 
   // Process map data
   const mapData = useMemo(() => {

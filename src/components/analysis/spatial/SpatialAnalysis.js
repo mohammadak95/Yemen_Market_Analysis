@@ -1,5 +1,3 @@
-// src/components/analysis/spatial/SpatialAnalysis.js
-
 import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {

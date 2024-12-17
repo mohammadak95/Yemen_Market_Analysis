@@ -1,11 +1,8 @@
-// Merged dataHooks.js
-
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
   fetchAllSpatialData, 
   fetchFlowData,
-  selectSpatialData,
   selectFlowData,
   selectLoadingStatus as selectSpatialLoadingStatus,
   selectError as selectSpatialError,
@@ -26,10 +23,11 @@ import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 import { getDataPath, enhancedFetchJson } from '../utils/dataUtils';
 import { dataCache } from '../utils/dataCache';
+import { selectSpatialDataOptimized } from '../selectors/optimizedSelectors';
 
 export const useSpatialData = () => {
   const dispatch = useDispatch();
-  const data = useSelector(selectSpatialData);
+  const data = useSelector(selectSpatialDataOptimized);
   const flowData = useSelector(selectFlowData);
   const loading = useSelector(selectSpatialLoadingStatus);
   const error = useSelector(selectSpatialError);

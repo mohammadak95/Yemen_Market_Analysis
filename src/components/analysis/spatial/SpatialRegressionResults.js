@@ -1,5 +1,3 @@
-// src/components/analysis/spatial/SpatialRegressionResults.js
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -9,10 +7,13 @@ import {
   useTheme,
   Paper
 } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { selectSpatialDataOptimized } from '../../../selectors/optimizedSelectors';
 import ResidualsChart from './components/ResidualsChart';
 
 const SpatialRegressionResults = ({ results, windowWidth }) => {
   const theme = useTheme();
+  const spatialData = useSelector(selectSpatialDataOptimized);
 
   const getParameterInterpretation = (param, value) => {
     switch(param) {

@@ -1,5 +1,3 @@
-// src/selectors/optimizedSelectors.js
-
 import { createSelector } from '@reduxjs/toolkit';
 import { createSelectorCreator } from 'reselect';
 import isEqual from 'lodash/isEqual';

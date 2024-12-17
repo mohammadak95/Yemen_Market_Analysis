@@ -1,5 +1,3 @@
-// src/components/analysis/spatial/SpatialFramework.js
-
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -15,10 +13,13 @@ import {
 import { ExpandMore } from '@mui/icons-material';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
+import { useSelector } from 'react-redux';
+import { selectSpatialDataOptimized } from '../../../selectors/optimizedSelectors';
 
 const SpatialFramework = ({ selectedData }) => {
   const [frameworkExpanded, setFrameworkExpanded] = useState(false);
   const theme = useTheme();
+  const spatialData = useSelector(selectSpatialDataOptimized);
 
   const renderMethodBox = (title, content, mathContent = null) => (
     <Box sx={{ 
