@@ -1,7 +1,7 @@
 // src/selectors/optimizedSelectors.js
 
-import { createSelector } from '@reduxjs/toolkit';
-import { createSelectorCreator } from 'reselect';
+import { createSelector } from '@reduxjs/toolkit'; // Correct import for createSelector
+import { createSelectorCreator } from 'reselect'; // Correct import for createSelectorCreator
 import isEqual from 'lodash/isEqual';
 import _ from 'lodash';
 import { 
@@ -28,7 +28,8 @@ function defaultMemoize(func, equalityCheck = isEqual) {
   };
 }
 
-const YEMEN_COORDINATES = {
+// Predefined coordinates for Yemen regions
+export const YEMEN_COORDINATES = {
   'abyan': [45.83, 13.58],
   'aden': [45.03, 12.77],
   'al bayda': [45.57, 14.17],
@@ -52,14 +53,36 @@ const YEMEN_COORDINATES = {
   'socotra': [53.87, 12.47]
 };
 
+// Create a custom selector creator that uses deep equality check
 const createDeepEqualSelector = createSelectorCreator(
   defaultMemoize,
   isEqual
 );
 
-const selectData = state => state.spatial?.data;
-const selectUI = state => state.spatial?.ui;
-export const selectStatus = state => state.spatial?.status;
+// Base selector to select the spatial slice from the state
+const selectSpatialRoot = (state) => state.spatial ?? { data: {}, status: {}, ui: {} };
+
+// Selectors for specific parts of the spatial state
+const selectSpatialData = createSelector(
+  [selectSpatialRoot],
+  (spatial) => spatial.data ?? {}
+);
+
+const selectSpatialStatus = createSelector(
+  [selectSpatialRoot],
+  (spatial) => spatial.status ?? {}
+);
+
+const selectSpatialUI = createSelector(
+  [selectSpatialRoot],
+  (spatial) => spatial.ui ?? {}
+);
+
+// Exported selectors
+export const selectStatus = createSelector(
+  [selectSpatialStatus],
+  (status) => status
+);
 
 export const selectLoadingStatus = createSelector(
   [selectStatus],
@@ -69,10 +92,6 @@ export const selectLoadingStatus = createSelector(
     progress: status?.progress || 0
   })
 );
-
-const selectSpatialData = state => state.spatial?.data;
-const selectSpatialStatus = state => state.spatial?.status;
-const selectSpatialUI = state => state.spatial?.ui;
 
 const selectSpatialState = createSelector(
   [selectSpatialData, selectSpatialStatus, selectSpatialUI],
@@ -85,27 +104,27 @@ export const selectStage = createSelector(
 );
 
 export const selectTimeSeriesData = createDeepEqualSelector(
-  [selectData],
+  [selectSpatialData],
   (data) => data?.timeSeriesData || []
 );
 
 export const selectGeometryData = createDeepEqualSelector(
-  [selectData],
+  [selectSpatialData],
   (data) => data?.geometry || {}
 );
 
 export const selectMarketIntegration = createDeepEqualSelector(
-  [selectData],
+  [selectSpatialData],
   (data) => data?.marketIntegration || {}
 );
 
 export const selectFlowMaps = createDeepEqualSelector(
-  [selectData],
+  [selectSpatialData],
   (data) => data?.flowMaps || []
 );
 
 export const selectSelectedDate = createSelector(
-  [selectUI],
+  [selectSpatialUI],
   (ui) => ui?.selectedDate || ''
 );
 
@@ -144,6 +163,7 @@ export const selectMarketMetrics = createDeepEqualSelector(
   }
 );
 
+// Conversion utility functions
 export const convertUTMtoLatLng = (easting, northing) => {
   const k0 = 0.9996;
   const a = 6378137;
@@ -252,11 +272,7 @@ const calculateAverageDistance = (coordinates) => {
   }
 };
 
-const selectUiState = createSelector(
-  [selectSpatialState],
-  (spatial) => spatial?.ui || {}
-);
-
+// Additional UI selectors
 export const selectVisualizationMode = createSelector(
   [selectSpatialUI],
   (ui) => ui?.visualizationMode || 'prices'
@@ -267,6 +283,7 @@ export const selectSelectedCommodity = createSelector(
   (ui) => ui?.selectedCommodity || ''
 );
 
+// Unified Geometry Selector
 export const selectUnifiedGeometry = createSelector(
   [selectGeometryData],
   (geometry) => {
@@ -286,6 +303,7 @@ export const selectUnifiedGeometry = createSelector(
   }
 );
 
+// Market Clusters Selector
 export const selectMarketClusters = createSelector(
   [selectSpatialData],
   (data) => {
@@ -314,7 +332,21 @@ export const selectMarketClusters = createSelector(
             },
             internal_connectivity: typeof metrics.internal_connectivity === 'number' ? metrics.internal_connectivity : 0,
             market_coverage: typeof metrics.market_coverage === 'number' ? metrics.market_coverage : 0,
-            price_convergence: typeof metrics.price_convergence === 'number' ? metrics.price_convergence : 0
+            price_convergence: typeof metrics.price_convergence === 'number' ? metrics.price_convergence : 0,
+            priceVolatility: typeof metrics.priceVolatility === 'number' ?
+              metrics.priceVolatility : 0,
+            priceRange: typeof metrics.priceRange === 'number' ?
+              metrics.priceRange : 0,
+            minPrice: typeof metrics.minPrice === 'number' ?
+              metrics.minPrice : 0,
+            maxPrice: typeof metrics.maxPrice === 'number' ?
+              metrics.maxPrice : 0,
+            flowDensity: typeof metrics.flowDensity === 'number' ?
+              metrics.flowDensity : 0,
+            avgFlowStrength: typeof metrics.avgFlowStrength === 'number' ?
+              metrics.avgFlowStrength : 0,
+            totalFlows: typeof metrics.totalFlows === 'number' ?
+              metrics.totalFlows : 0
           }
         };
       });
@@ -324,6 +356,7 @@ export const selectMarketClusters = createSelector(
   }
 );
 
+// Market Flows Selector
 export const selectMarketFlows = createSelector(
   [selectSpatialData],
   (data) => {
@@ -346,6 +379,7 @@ export const selectMarketFlows = createSelector(
   }
 );
 
+// Spatial Autocorrelation Selector
 export const selectSpatialAutocorrelation = createSelector(
   [selectSpatialData],
   (data) => {
@@ -383,6 +417,7 @@ export const selectSpatialAutocorrelation = createSelector(
   }
 );
 
+// Regression Analysis Selector
 export const selectRegressionAnalysis = createSelector(
   [selectSpatialData, selectSelectedCommodity],
   (data, selectedCommodity) => {
@@ -391,10 +426,8 @@ export const selectRegressionAnalysis = createSelector(
       const regression = data.regressionAnalysis;
       const metadata = regression.metadata || {};
       
-      // If selectedCommodity is empty but we have regression data, use the data's commodity
       const effectiveCommodity = selectedCommodity || metadata.commodity || 'beans (kidney red)';
       
-      // Only return null if we have a non-empty selectedCommodity that doesn't match
       if (selectedCommodity && metadata.commodity !== selectedCommodity) {
         return null;
       }
@@ -436,6 +469,7 @@ export const selectRegressionAnalysis = createSelector(
   }
 );
 
+// Seasonal Analysis Selector
 export const selectSeasonalAnalysis = createSelector(
   [selectSpatialData],
   (data) => {
@@ -469,6 +503,7 @@ export const selectSeasonalAnalysis = createSelector(
   }
 );
 
+// Market Shocks Selector
 export const selectMarketShocks = createSelector(
   [selectSpatialData],
   (data) => {
@@ -491,6 +526,7 @@ export const selectMarketShocks = createSelector(
   }
 );
 
+// Spatial Dispersion Calculation
 function calculateSpatialDispersion(coordinates) {
   if (!coordinates?.length || coordinates.length < 2) return 0;
   try {
@@ -505,6 +541,7 @@ function calculateSpatialDispersion(coordinates) {
   }
 }
 
+// Bounding Box Calculation
 function calculateBoundingBox(coordinates) {
   if (!coordinates?.length) return null;
   try {
@@ -524,6 +561,7 @@ function calculateBoundingBox(coordinates) {
   }
 }
 
+// Clusters with Coordinates Selector
 export const selectClustersWithCoordinates = createSelector(
   [selectMarketClusters, selectGeometryData],
   (clusters, geometry) => {
@@ -572,6 +610,7 @@ export const selectClustersWithCoordinates = createSelector(
           markets: marketCoords,
           center: center || [0, 0],
           metrics: {
+            ...cluster.metrics,
             efficiency: typeof cluster.metrics?.efficiency === 'number' ? cluster.metrics.efficiency : 0,
             efficiencyComponents: {
               connectivity: typeof cluster.metrics?.efficiencyComponents?.connectivity === 'number' ?
@@ -583,17 +622,9 @@ export const selectClustersWithCoordinates = createSelector(
               conflictResilience: typeof cluster.metrics?.efficiencyComponents?.conflictResilience === 'number' ?
                 cluster.metrics.efficiencyComponents.conflictResilience : 0
             },
-            marketCount: cluster.connected_markets?.length || 0,
-            avgPrice: typeof cluster.metrics?.avgPrice === 'number' ? 
-              cluster.metrics.avgPrice : 0,
-            avgConflict: typeof cluster.metrics?.avgConflict === 'number' ? 
-              cluster.metrics.avgConflict : 0,
-            internal_connectivity: typeof cluster.metrics?.internal_connectivity === 'number' ? 
-              cluster.metrics.internal_connectivity : 0,
-            market_coverage: typeof cluster.metrics?.market_coverage === 'number' ? 
-              cluster.metrics.market_coverage : 0,
-            price_convergence: typeof cluster.metrics?.price_convergence === 'number' ? 
-              cluster.metrics.price_convergence : 0,
+            internal_connectivity: typeof cluster.metrics?.internal_connectivity === 'number' ? cluster.metrics.internal_connectivity : 0,
+            market_coverage: typeof cluster.metrics?.market_coverage === 'number' ? cluster.metrics.market_coverage : 0,
+            price_convergence: typeof cluster.metrics?.price_convergence === 'number' ? cluster.metrics.price_convergence : 0,
             priceVolatility: typeof cluster.metrics?.priceVolatility === 'number' ?
               cluster.metrics.priceVolatility : 0,
             priceRange: typeof cluster.metrics?.priceRange === 'number' ?
@@ -640,6 +671,7 @@ export const selectClustersWithCoordinates = createSelector(
   }
 );
 
+// Feature Data with Metrics Selector
 export const selectFeatureDataWithMetrics = createSelector(
   [selectGeometryData, selectTimeSeriesData],
   (geometry, timeSeriesData) => {
@@ -699,6 +731,7 @@ export const selectFeatureDataWithMetrics = createSelector(
   }
 );
 
+// Autocorrelation Metrics Selector
 export const selectAutocorrelationMetrics = createSelector(
   [selectSpatialAutocorrelation],
   (autocorrelation) => {
@@ -731,6 +764,7 @@ export const selectAutocorrelationMetrics = createSelector(
   }
 );
 
+// Enhanced Metrics Calculation
 const calculateEnhancedMetrics = (clusters, flows, integration, autocorrelation) => {
   try {
     const clusterMetrics = clusters?.map(c => c.metrics) || [];
@@ -765,6 +799,7 @@ const calculateEnhancedMetrics = (clusters, flows, integration, autocorrelation)
   }
 };
 
+// Default Metrics Structure
 const getDefaultMetrics = () => ({
   marketEfficiency: { average: 0, max: 0, min: 0 },
   connectivity: { flowDensity: 0, averageConnectivity: 0 },
@@ -772,6 +807,7 @@ const getDefaultMetrics = () => ({
   coverage: { totalMarkets: 0, averageCoverage: 0 }
 });
 
+// Visualization Data Selector
 export const selectVisualizationData = createSelector(
   [selectFeatureDataWithMetrics, selectMarketFlows, selectMarketClusters],
   (featureData, flows, clusters) => {
@@ -820,6 +856,7 @@ export const selectVisualizationData = createSelector(
   }
 );
 
+// Optimized Spatial Data Selector
 export const selectSpatialDataOptimized = createSelector(
   [
     selectUnifiedGeometry,
@@ -902,6 +939,7 @@ export const selectSpatialDataOptimized = createSelector(
   }
 );
 
+// Flows with Coordinates Selector
 export const selectFlowsWithCoordinates = createSelector(
   [selectMarketFlows, selectGeometryData],
   (flows, geometry) => {
@@ -951,6 +989,7 @@ export const selectFlowsWithCoordinates = createSelector(
   }
 );
 
+// Utility Functions Export
 export const utils = {
   calculateDistance,
   validateCoordinates,
@@ -960,8 +999,7 @@ export const utils = {
   getDefaultMetrics
 };
 
-export { YEMEN_COORDINATES };
-
+// Default Export of Selectors
 export default {
   selectLoadingStatus,
   selectStage,
@@ -971,5 +1009,20 @@ export default {
   selectFlowMaps,
   selectSelectedDate,
   selectFilteredFlowData,
-  selectMarketMetrics
+  selectMarketMetrics,
+  selectVisualizationMode,
+  selectSelectedCommodity,
+  selectUnifiedGeometry,
+  selectMarketClusters,
+  selectMarketFlows,
+  selectSpatialAutocorrelation,
+  selectRegressionAnalysis,
+  selectSeasonalAnalysis,
+  selectMarketShocks,
+  selectClustersWithCoordinates,
+  selectFeatureDataWithMetrics,
+  selectAutocorrelationMetrics,
+  selectVisualizationData,
+  selectSpatialDataOptimized,
+  selectFlowsWithCoordinates
 };

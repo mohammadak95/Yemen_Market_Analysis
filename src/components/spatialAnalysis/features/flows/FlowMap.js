@@ -29,43 +29,11 @@ const YEMEN_BOUNDS = [
   [19.0025 + 2, 54.5305 + 2]
 ];
 
-// Enhanced event prevention utility
-const preventEvent = (e) => {
-  if (e.originalEvent) {
-    e.originalEvent.preventDefault();
-    e.originalEvent.stopPropagation();
-  } else if (e.preventDefault) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  return false;
-};
-
-// Custom hook to handle map events
-const useMapEvents = (map) => {
-  React.useEffect(() => {
-    if (!map) return;
-
-    const events = ['click', 'dblclick', 'dragstart', 'mousedown'];
-    events.forEach(event => {
-      map.on(event, preventEvent);
-    });
-
-    return () => {
-      events.forEach(event => {
-        map.off(event, preventEvent);
-      });
-    };
-  }, [map]);
-};
-
-// Map Controls Component with enhanced event prevention
+// Map Controls Component
 const MapControlHandlers = ({ mapRef, defaultView }) => {
   const map = useMap();
-  useMapEvents(map);
 
-  const createHandler = useCallback((action) => (e) => {
-    preventEvent(e);
+  const handleMapAction = useCallback((action) => {
     if (!mapRef.current) return;
     
     switch(action) {
@@ -86,10 +54,10 @@ const MapControlHandlers = ({ mapRef, defaultView }) => {
 
   return (
     <MapControls
-      onZoomIn={createHandler('zoomIn')}
-      onZoomOut={createHandler('zoomOut')}
-      onReset={createHandler('reset')}
-      onRefresh={createHandler('refresh')}
+      onZoomIn={() => handleMapAction('zoomIn')}
+      onZoomOut={() => handleMapAction('zoomOut')}
+      onReset={() => handleMapAction('reset')}
+      onRefresh={() => handleMapAction('refresh')}
     />
   );
 };
@@ -196,11 +164,10 @@ const FlowMap = ({
     }
   ], [colorScale]);
 
-  // Enhanced flow selection handler with comprehensive event prevention
-  const handleFlowSelect = useCallback((e, flow) => {
-    preventEvent(e);
+  // Flow selection handler
+  const handleFlowSelect = useCallback((flow) => {
     if (onFlowSelect) {
-      onFlowSelect(e, flow);
+      onFlowSelect(flow);
     }
   }, [onFlowSelect]);
 
@@ -287,9 +254,6 @@ const FlowMap = ({
         worldCopyJump={false}
         preferCanvas
         ref={mapRef}
-        onClick={preventEvent}
-        onDblClick={preventEvent}
-        onMouseDown={preventEvent}
       >
         <TileLayer
           url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png"
@@ -322,13 +286,11 @@ const FlowMap = ({
                     interactive: true
                   }}
                   eventHandlers={{
-                    click: (e) => handleFlowSelect(e, flow),
+                    click: () => handleFlowSelect(flow),
                     mouseover: (e) => {
-                      preventEvent(e);
                       e.target.setStyle({ weight: flow.width * 1.5 });
                     },
                     mouseout: (e) => {
-                      preventEvent(e);
                       if (!isSelected) {
                         e.target.setStyle({ weight: flow.width });
                       }
@@ -373,11 +335,6 @@ const FlowMap = ({
                 weight: VISUALIZATION_PARAMS.NODE_BORDER_WIDTH,
                 opacity: VISUALIZATION_PARAMS.NODE_BORDER_OPACITY,
                 fillOpacity: VISUALIZATION_PARAMS.NODE_OPACITY
-              }}
-              eventHandlers={{
-                click: preventEvent,
-                mouseover: preventEvent,
-                mouseout: preventEvent
               }}
             >
               <Popup>

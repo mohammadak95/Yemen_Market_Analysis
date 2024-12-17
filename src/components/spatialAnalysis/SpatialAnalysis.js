@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import {
   Box,
   Paper,
@@ -25,7 +25,6 @@ import { ShockPropagationMap } from './features/shocks';
 import { ConflictImpactDashboard } from './features/conflict';
 import { SeasonalPriceMap } from './features/seasonal';
 import { MarketHealthMetrics } from './features/health';
-import { clearFlowData } from '../../slices/flowSlice';
 
 import ErrorBoundary from '../common/ErrorBoundary';
 import LoadingIndicator from '../common/LoadingIndicator';
@@ -92,7 +91,6 @@ const FEATURES = [
 
 const SpatialAnalysis = () => {
   const theme = useTheme();
-  const dispatch = useDispatch();
   const [activeFeature, setActiveFeature] = useState('clusters');
   const [error, setError] = useState(null);
 
@@ -103,21 +101,11 @@ const SpatialAnalysis = () => {
   const loadingStatus = useSelector(selectLoadingStatus);
   const status = useSelector(selectStatus);
 
-  // Handle feature change with event prevention
-  const handleFeatureChange = (event, newValue) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    if (newValue === activeFeature) return; // Prevent unnecessary re-renders
-    
-    // Only clear flow data when switching away from flows feature
-    if (activeFeature === 'flows') {
-      dispatch(clearFlowData());
-    }
-    
+  // Handle feature change
+  const handleFeatureChange = (_, newValue) => {
+    if (newValue === activeFeature) return;
     setActiveFeature(newValue);
-    setError(null); // Reset error state on feature change
+    setError(null);
   };
 
   // Handle component errors
@@ -171,6 +159,7 @@ const SpatialAnalysis = () => {
       >
         <Tabs
           value={activeFeature}
+          onChange={handleFeatureChange}
           variant="scrollable"
           scrollButtons="auto"
           sx={{ px: 2 }}
@@ -187,17 +176,6 @@ const SpatialAnalysis = () => {
               label={feature.label}
               icon={feature.icon}
               iconPosition="start"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleFeatureChange(e, feature.id);
-                return false;
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              component="div"
               sx={{
                 cursor: 'pointer',
                 WebkitTapHighlightColor: 'transparent',
@@ -205,6 +183,7 @@ const SpatialAnalysis = () => {
                   outline: 'none'
                 }
               }}
+              component="div"
             />
           ))}
         </Tabs>

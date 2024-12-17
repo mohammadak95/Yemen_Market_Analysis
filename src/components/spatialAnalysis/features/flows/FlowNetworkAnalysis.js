@@ -1,7 +1,3 @@
-/**
- * Flow Network Analysis Component
- */
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -40,15 +36,6 @@ const MAP_SETTINGS = {
   zoom: 6.5
 };
 
-// Helper function to prevent default events
-const preventEvent = (e) => {
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  return false;
-};
-
 const FlowNetworkAnalysis = () => {
   const dispatch = useDispatch();
   
@@ -62,7 +49,7 @@ const FlowNetworkAnalysis = () => {
   const flowMetrics = useSelector(selectFlowMetrics);
   const availableDates = useSelector(state => state.spatial.data.uniqueMonths || []);
 
-  // Use the flow data manager hook
+  // Use the flow data manager hook with lazy initialization
   const {
     flows: currentFlows,
     metadata: { totalFlows, uniqueMarkets },
@@ -99,33 +86,27 @@ const FlowNetworkAnalysis = () => {
     });
   }, [currentFlows, selectedDate, selectedCommodity]);
 
-  // Handle date change with event prevention
-  const handleDateChange = useCallback((e, newDate) => {
-    preventEvent(e);
+  // Handle date change
+  const handleDateChange = useCallback((newDate) => {
     if (newDate !== selectedDate) {
       console.debug('Date changed:', { from: selectedDate, to: newDate, commodity: selectedCommodity });
-      // Reset selected flow when date changes
       setSelectedFlow(null);
-      // Update the selected date in the spatial slice
       dispatch(setSelectedDate(newDate));
     }
   }, [dispatch, selectedDate, selectedCommodity]);
 
-  // Handle flow selection with event prevention
-  const handleFlowSelect = useCallback((event, flow) => {
-    preventEvent(event);
+  // Handle flow selection
+  const handleFlowSelect = useCallback((flow) => {
     setSelectedFlow(flow);
   }, []);
 
-  // Handle methodology toggle with event prevention
-  const handleMethodologyToggle = useCallback((e) => {
-    preventEvent(e);
+  // Handle methodology toggle
+  const handleMethodologyToggle = useCallback(() => {
     setShowMethodology(prev => !prev);
   }, []);
 
-  // Handle reload with event prevention
-  const handleReload = useCallback((e) => {
-    preventEvent(e);
+  // Handle reload
+  const handleReload = useCallback(() => {
     refreshData();
   }, [refreshData]);
 
@@ -147,7 +128,6 @@ const FlowNetworkAnalysis = () => {
             color="inherit" 
             size="small" 
             onClick={handleReload}
-            onMouseDown={preventEvent}
           >
             Reload
           </Button>
@@ -280,7 +260,6 @@ const FlowNetworkAnalysis = () => {
           <Button
             fullWidth
             onClick={handleMethodologyToggle}
-            onMouseDown={preventEvent}
             endIcon={showMethodology ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             startIcon={<InfoOutlinedIcon />}
           >

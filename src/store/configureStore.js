@@ -155,44 +155,6 @@ export const configureAppStore = async () => {
                 'ecm/updateCache'
               ];
               return !skippedActions.includes(action.type);
-            },
-            actionTransformer: (action) => {
-              if (!action || typeof action !== 'object') {
-                return action;
-              }
-
-              const transformers = {
-                'spatial/fetchAllSpatialData/fulfilled': (payload) => ({
-                  type: 'SPATIAL_DATA',
-                  geometry: {
-                    pointCount: payload?.geometry?.points?.length,
-                    polygonCount: payload?.geometry?.polygons?.length,
-                    hasUnified: !!payload?.geometry?.unified
-                  }
-                }),
-                'flow/fetchData/fulfilled': (payload) => ({
-                  type: 'FLOW_DATA',
-                  flowCount: payload?.flows?.length || 0,
-                  dateRange: payload?.metadata?.dateRange,
-                  uniqueMarkets: payload?.metadata?.uniqueMarkets
-                }),
-                'ecm/fetchECMData/fulfilled': (payload) => ({
-                  type: 'ECM_DATA',
-                  unifiedCount: payload?.unified?.length || 0,
-                  directionalCount: {
-                    northToSouth: payload?.directional?.northToSouth?.length || 0,
-                    southToNorth: payload?.directional?.southToNorth?.length || 0
-                  }
-                })
-              };
-
-              if (action.type && transformers[action.type]) {
-                return {
-                  ...action,
-                  payload: transformers[action.type](action.payload)
-                };
-              }
-              return action;
             }
           });
           middleware.push(logger);
@@ -283,6 +245,16 @@ export const configureAppStore = async () => {
       reducerCount: Object.keys(store.getState()).length,
       middlewareCount: store.middleware?.length || 0
     });
+
+    // Handle hot module replacement
+    if (process.env.NODE_ENV === 'development' && module.hot) {
+      module.hot.accept('../slices/spatialSlice', () => {
+        store.replaceReducer({
+          ...store.getState(),
+          spatial: require('../slices/spatialSlice').default
+        });
+      });
+    }
 
     return store;
   } catch (error) {

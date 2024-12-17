@@ -18,31 +18,18 @@ import SkipNextIcon from '@mui/icons-material/SkipNext';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { debounce } from 'lodash';
 
-// Helper function to prevent default events
-const preventEvent = (e) => {
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  return false;
-};
-
 // Date format utilities
 const dateUtils = {
-  // Convert YYYY-MM to YYYY-MM-DD
   toFlowDate: (date) => {
     if (!date) return null;
     return date.length === 7 ? `${date}-01` : date;
   },
-  // Convert YYYY-MM-DD to YYYY-MM
   toSpatialDate: (date) => {
     if (!date) return null;
     return date.substring(0, 7);
   },
-  // Format date for display
   formatDate: (date) => {
     try {
-      // Always use YYYY-MM format for display
       const spatialDate = dateUtils.toSpatialDate(date);
       return new Date(`${spatialDate}-01`).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -67,12 +54,11 @@ const FlowDateControl = ({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [sliderValue, setSliderValue] = useState(0);
   const [internalDate, setInternalDate] = useState(currentDate);
+  const isInitialMount = useRef(true);
 
-  // Refs for cleanup and state tracking
   const intervalRef = useRef(null);
   const lastChangeRef = useRef(null);
 
-  // Normalize all dates to YYYY-MM format for spatial slice
   const normalizedDates = useMemo(() => 
     dates.map(dateUtils.toSpatialDate),
     [dates]
@@ -82,43 +68,38 @@ const FlowDateControl = ({
     [currentDate]
   );
 
-  // Create stable onChange handler
-  const handleChange = useCallback((e, newDate) => {
-    preventEvent(e);
-    
+  const handleChange = useCallback((newDate) => {
     const now = Date.now();
-    // Prevent rapid consecutive updates
     if (lastChangeRef.current && now - lastChangeRef.current < 200) {
       return;
     }
     lastChangeRef.current = now;
 
-    // Always pass YYYY-MM format to spatial slice
     const spatialDate = dateUtils.toSpatialDate(newDate);
-    onChange(null, spatialDate);
+    onChange(spatialDate);
   }, [onChange]);
 
-  // Debounced onChange handler with cleanup
   const debouncedOnChange = useMemo(
     () => debounce(handleChange, 200, { leading: true, trailing: true }),
     [handleChange]
   );
 
-  // Initialize slider value based on current date
+  // Modified initialization effect to prevent unnecessary date changes
   useEffect(() => {
     const currentIndex = normalizedDates.indexOf(normalizedCurrentDate);
     if (currentIndex >= 0) {
       setSliderValue(currentIndex);
       setInternalDate(normalizedCurrentDate);
-    } else if (dates.length > 0) {
+    } else if (dates.length > 0 && !isInitialMount.current) {
+      // Only update date if it's not the initial mount
       setSliderValue(0);
       const firstDate = dateUtils.toSpatialDate(dates[0]);
       setInternalDate(firstDate);
-      handleChange(null, firstDate);
+      handleChange(firstDate);
     }
+    isInitialMount.current = false;
   }, [currentDate, dates, normalizedCurrentDate, normalizedDates, handleChange]);
 
-  // Handle auto-play with cleanup
   const handleAutoPlay = useCallback(() => {
     if (isPlaying) {
       setSliderValue(prev => {
@@ -129,13 +110,12 @@ const FlowDateControl = ({
         }
         const newDate = dateUtils.toSpatialDate(dates[next]);
         setInternalDate(newDate);
-        debouncedOnChange(null, newDate);
+        debouncedOnChange(newDate);
         return next;
       });
     }
   }, [isPlaying, dates, debouncedOnChange]);
 
-  // Auto-play effect with proper cleanup
   useEffect(() => {
     if (isPlaying && !loading) {
       intervalRef.current = setInterval(handleAutoPlay, autoPlayInterval / playbackSpeed);
@@ -148,47 +128,39 @@ const FlowDateControl = ({
     };
   }, [isPlaying, autoPlayInterval, playbackSpeed, handleAutoPlay, loading]);
 
-  // Button handlers with event prevention
-  const handlePlayPause = useCallback((e) => {
-    preventEvent(e);
+  const handlePlayPause = useCallback(() => {
     setIsPlaying(prev => !prev);
   }, []);
 
-  const handlePrevious = useCallback((e) => {
-    preventEvent(e);
+  const handlePrevious = useCallback(() => {
     const newValue = Math.max(0, sliderValue - 1);
     const newDate = dateUtils.toSpatialDate(dates[newValue]);
     setSliderValue(newValue);
     setInternalDate(newDate);
-    debouncedOnChange(null, newDate);
+    debouncedOnChange(newDate);
   }, [sliderValue, dates, debouncedOnChange]);
 
-  const handleNext = useCallback((e) => {
-    preventEvent(e);
+  const handleNext = useCallback(() => {
     const newValue = Math.min(dates.length - 1, sliderValue + 1);
     const newDate = dateUtils.toSpatialDate(dates[newValue]);
     setSliderValue(newValue);
     setInternalDate(newDate);
-    debouncedOnChange(null, newDate);
+    debouncedOnChange(newDate);
   }, [dates.length, sliderValue, dates, debouncedOnChange]);
 
-  const handleSpeedChange = useCallback((e) => {
-    preventEvent(e);
+  const handleSpeedChange = useCallback(() => {
     setPlaybackSpeed(prev => (prev === 4 ? 1 : prev * 2));
   }, []);
 
-  // Slider change handler with event prevention
-  const handleSliderChange = useCallback((e, value) => {
-    preventEvent(e);
+  const handleSliderChange = useCallback((_, value) => {
     if (value !== sliderValue) {
       const newDate = dateUtils.toSpatialDate(dates[value]);
       setSliderValue(value);
       setInternalDate(newDate);
-      debouncedOnChange(null, newDate);
+      debouncedOnChange(newDate);
     }
   }, [dates, sliderValue, debouncedOnChange]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (intervalRef.current) {
@@ -208,10 +180,7 @@ const FlowDateControl = ({
         p: 2,
         position: 'relative'
       }}
-      onMouseDown={preventEvent}
-      onClick={preventEvent}
     >
-      {/* Loading Indicator Overlay */}
       {loading && (
         <Box
           sx={{
@@ -243,7 +212,6 @@ const FlowDateControl = ({
           min={0}
           max={dates.length - 1}
           onChange={handleSliderChange}
-          onMouseDown={preventEvent}
           disabled={loading}
           sx={{ mb: 2, '& .MuiSlider-thumb': { width: 12, height: 12 } }}
         />
@@ -262,7 +230,6 @@ const FlowDateControl = ({
           <IconButton 
             size="small" 
             onClick={handlePrevious}
-            onMouseDown={preventEvent}
             disabled={sliderValue === 0 || loading}
             title="Previous"
           >
@@ -272,7 +239,6 @@ const FlowDateControl = ({
           <IconButton 
             size="small" 
             onClick={handlePlayPause}
-            onMouseDown={preventEvent}
             disabled={loading}
             title={isPlaying ? 'Pause' : 'Play'}
           >
@@ -286,7 +252,6 @@ const FlowDateControl = ({
           <IconButton 
             size="small" 
             onClick={handleNext}
-            onMouseDown={preventEvent}
             disabled={sliderValue === dates.length - 1 || loading}
             title="Next"
           >
@@ -296,7 +261,6 @@ const FlowDateControl = ({
           <IconButton 
             size="small" 
             onClick={handleSpeedChange}
-            onMouseDown={preventEvent}
             disabled={loading}
             title={`Playback Speed: ${playbackSpeed}x`}
             sx={{ position: 'relative' }}
