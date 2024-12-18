@@ -1,4 +1,5 @@
 // src/slices/flowSlice.js
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
 import Papa from 'papaparse';
@@ -11,26 +12,24 @@ import {
   retryWithBackoff 
 } from '../utils/dataUtils';
 
-// Date format utilities
+// Date utilities for consistent handling
 const dateUtils = {
-  // Convert YYYY-MM to YYYY-MM-DD
   toFlowDate: (date) => {
     if (!date) return null;
     return date.length === 7 ? `${date}-01` : date;
   },
-  // Convert YYYY-MM-DD to YYYY-MM
+  
   toSpatialDate: (date) => {
     if (!date) return null;
     return date.substring(0, 7);
   },
-  // Check if dates match (ignoring day)
+  
   datesMatch: (date1, date2) => {
     if (!date1 || !date2) return false;
     return date1.substring(0, 7) === date2.substring(0, 7);
   }
 };
 
-// Initial state
 const initialState = {
   flows: [],
   byDate: {},
@@ -69,14 +68,23 @@ const flowValidation = {
       !isNaN(flow.flow_weight) &&
       flow.flow_weight >= 0;
   },
+  
   isValidDate: (date) => {
     if (!date) return false;
     const parsed = new Date(date);
     return parsed instanceof Date && !isNaN(parsed);
+  },
+  
+  hasValidCoordinates: (flow) => {
+    return flow &&
+      typeof flow.source_lng === 'number' &&
+      typeof flow.source_lat === 'number' &&
+      typeof flow.target_lng === 'number' &&
+      typeof flow.target_lat === 'number';
   }
 };
 
-// Async thunk for loading flow data
+// Async thunk for fetching flow data
 export const fetchFlowData = createAsyncThunk(
   'flow/fetchData',
   async ({ commodity, date }, { getState, rejectWithValue, dispatch }) => {
@@ -84,17 +92,18 @@ export const fetchFlowData = createAsyncThunk(
     const errors = [];
     
     try {
-      // Ensure date is in YYYY-MM-DD format for flow data
+      // Ensure date is in YYYY-MM-DD format
       const flowDate = dateUtils.toFlowDate(date);
       
       if (!commodity || !flowDate) {
         throw new Error('Invalid parameters', { commodity, date });
       }
 
-      console.debug('Fetching flow data for:', { commodity, date: flowDate });
+      console.debug('Fetching flow data:', { commodity, date: flowDate });
 
       const flowDataPath = getNetworkDataPath('time_varying_flows.csv');
 
+      // Fetch and parse CSV data with retries
       const response = await retryWithBackoff(async () => {
         const res = await fetch(flowDataPath);
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
@@ -125,7 +134,7 @@ export const fetchFlowData = createAsyncThunk(
         date: flowDate
       });
 
-      // Process flows
+      // Process flows with validation and error handling
       const processedFlows = filteredData
         .map(flow => {
           try {
@@ -157,8 +166,11 @@ export const fetchFlowData = createAsyncThunk(
         })
         .filter(Boolean);
 
-      // Group flows
-      const byDate = _.groupBy(processedFlows, flow => dateUtils.toSpatialDate(flow.date));
+      // Group flows by date and region
+      const byDate = _.groupBy(processedFlows, flow => 
+        dateUtils.toSpatialDate(flow.date)
+      );
+      
       const byRegion = _.groupBy(processedFlows, 'source');
 
       // Calculate metadata
@@ -210,7 +222,7 @@ export const fetchFlowData = createAsyncThunk(
   }
 );
 
-// Slice
+// Create the slice
 const flowSlice = createSlice({
   name: 'flow',
   initialState,
@@ -308,7 +320,6 @@ export const selectFlowsByDate = createSelector(
   [selectFlowsByDateMap, (_, date) => date],
   (byDate, date) => {
     if (!date) return [];
-    // Convert input date to spatial format for lookup
     const spatialDate = dateUtils.toSpatialDate(date);
     return byDate[spatialDate] || [];
   }
@@ -332,7 +343,8 @@ export const selectFlowMetrics = createSelector(
       totalFlows: validFlows.length,
       averageFlowWeight: avgWeight,
       maxPriceDifferential: Math.max(...validFlows.map(f => f.price_differential || 0)),
-      averagePriceDifferential: validFlows.reduce((sum, f) => sum + (f.price_differential || 0), 0) / validFlows.length,
+      averagePriceDifferential: validFlows.reduce((sum, f) => 
+        sum + (f.price_differential || 0), 0) / validFlows.length,
       marketConnectivity: metadata.uniqueMarkets > 0
         ? validFlows.length / metadata.uniqueMarkets
         : 0,

@@ -1,148 +1,368 @@
-# Yemen Market Analysis Platform
+# Yemen Market Analysis Dashboard
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+A comprehensive data visualization platform for analyzing Yemen's economic resilience and market connectivity under conflict conditions. The dashboard provides interactive visualizations of commodity prices, conflict intensity, and regional economic dynamics through spatial analysis and time-series visualization.
 
-## Description
+## 🌟 Features
 
-The Yemen Market Analysis Platform is an interactive web application for analyzing market integration patterns and price transmission across Yemen's commodity markets. It combines advanced econometric analysis with spatial visualization to provide insights into market dynamics in conflict-affected regions.
+- **Interactive Maps**: Visualize commodity prices and conflict intensity across Yemen's regions using Leaflet
+- **Time-Series Analysis**: Track commodity price trends under different exchange regimes
+- **Spatial Analysis**: Examine direct and indirect effects on regional prices through spatial regression
+- **Conflict Analysis**: Study socio-economic impacts by overlaying conflict intensity data
+- **Advanced Visualization**: Utilizes Recharts, D3.js, and Leaflet for rich data representation
+- **Progressive Web App**: Offline capabilities and optimized performance
 
-## Features
+## 📋 Table of Contents
 
-- 📊 Interactive time series visualization of commodity prices
-- 🗺️ Spatial analysis of market relationships
-- 📈 Advanced econometric modeling (ECM, Price Differential, TVMII)
-- 🌐 Multi-regime market comparison
-- 📱 Responsive design for all devices
+- [🌟 Features](#-features)
+- [🛠 Tech Stack](#-tech-stack)
+- [📋 Prerequisites](#-prerequisites)
+- [🚀 Installation](#-installation)
+- [📁 Project Structure](#-project-structure)
+- [💻 Development](#-development)
+- [🏗 Building for Production](#-building-for-production)
+- [📊 Data Processing](#-data-processing)
+- [🧪 Testing](#-testing)
+- [🔧 Development Tools](#-development-tools)
+- [🚀 Deployment](#-deployment)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🙏 Acknowledgments](#-acknowledgments)
+- [📚 Component Documentation](#-component-documentation)
+- [⚙️ Configuration](#-configuration)
+- [🔄 CI/CD Pipeline](#-cicd-pipeline)
+- [🛠️ Testing and Debugging](#-testing-and-debugging)
 
-## Live Demo
+## 🛠 Tech Stack
 
-Visit the live application at: https://mohammadak95.github.io/Yemen_Market_Analysis
+- **Frontend**: React, Redux Toolkit, Material-UI
+- **Data Visualization**: Recharts, Leaflet, D3.js
+- **State Management**: Redux with middleware for action logging
+- **Build Tools**: Webpack with optimization for production
+- **Backend**: Express server for data processing
+- **Data Processing**: Python scripts for data transformation
+- **Testing**: Jest and React Testing Library
+- **CI/CD**: GitHub Actions for automated deployment
 
-## Prerequisites
+## 📋 Prerequisites
 
-- Node.js (>=14.0.0)
-- npm (>=6.0.0)
+- **Node.js** (v20 or later)
+- **npm** (v8 or later)
+- **Python** (3.8 or later)
+- **Git LFS** (for large data file management)
 
-## Installation
+## 🚀 Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/mohammadak95/Yemen_Market_Analysis2.git
-cd Yemen_Market_Analysis2
+1. **Clone the repository and set up Git LFS:**
+
+    ```bash
+    git lfs install
+    git clone https://github.com/mohammadak95/Yemen_Market_Analysis.git
+    cd Yemen_Market_Analysis
+    ```
+
+2. **Install dependencies:**
+
+    ```bash
+    npm install
+    pip install -r requirements.txt
+    ```
+
+3. **Configure environment:**
+
+    ```bash
+    cp .env.example .env.development
+    # Edit .env.development with your configuration
+    ```
+
+## 📁 Project Structure
+
 ```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-The application will be available at `http://localhost:3000`
-
-## Building for Production
-
-```bash
-npm run build
-```
-
-## Deployment
-
-Deploy to GitHub Pages:
-```bash
-npm run deploy
-```
-
-## Project Structure
-
-```
+Yemen_Market_Analysis/
+├── public/                 # Static assets
 ├── src/
 │   ├── components/        # React components
+│   │   ├── analysis/     # Analysis components
+│   │   ├── documentation/# Technical documentation
+│   │   ├── discovery/    # User learning tools
+│   │   ├── common/       # Shared UI components
+│   │   └── methodology/  # Methodology descriptions
 │   ├── hooks/            # Custom React hooks
+│   ├── slices/           # Redux state management
+│   ├── context/          # React contexts
 │   ├── utils/            # Utility functions
-│   ├── store/            # Redux store configuration
-│   ├── slices/           # Redux slices
 │   └── workers/          # Web Workers
-├── public/               # Static assets
-├── data/                 # Data files
-└── project/              # Analysis scripts
+├── server/               # Express server
+├── scripts/              # Build and data scripts
+├── results/              # Analysis outputs
+└── webpack.config.js     # Webpack configuration
 ```
 
-## Key Technologies
+## 💻 Development
 
-- **Frontend**: React 18, Material-UI
-- **State Management**: Redux Toolkit
-- **Data Visualization**: Chart.js, Leaflet, D3.js
-- **Analysis**: Custom econometric models
-- **Performance**: Web Workers, Code Splitting
+1. **Start development servers:**
 
-## Available Scripts
+    ```bash
+    # Terminal 1: Start Express server
+    npm run start:server
+    
+    # Terminal 2: Start React development server
+    npm run start:fast
+    ```
 
-- `npm start` - Start development server
-- `npm run build` - Build for production
-- `npm run deploy` - Deploy to GitHub Pages
-- `npm test` - Run tests
-- `npm run dev` - Run development server with hot reload
+2. **Alternative development commands:**
 
-## Analysis Capabilities
+    ```bash
+    npm run dev           # Run frontend and backend concurrently
+    npm run dev:debug     # Run with debug logging
+    npm run lint:fix      # Fix linting issues
+    npm run format        # Format code with Prettier
+    npm run clear-cache   # Clear development cache
+    ```
 
-1. **Error Correction Models (ECM)**
-   - Long-run equilibrium analysis
-   - Short-term price adjustments
+## 🏗 Building for Production
 
-2. **Price Differential Analysis**
-   - Market price gap examination
-   - Transaction cost analysis
+1. **Create optimized production build:**
 
-3. **Spatial Analysis**
-   - Geographic price dependencies
-   - Market connectivity patterns
+    ```bash
+    npm run build
+    ```
 
-4. **Time-Varying Market Integration Index**
-   - Dynamic integration assessment
-   - Regime-specific analysis
+2. **Analyze bundle size:**
 
-## Data Sources
+    ```bash
+    npm run build:analyze
+    ```
 
-The platform utilizes data from:
-- World Food Programme (WFP)
-- Central Bank of Yemen
-- ACAPS Yemen Analysis Hub
-- Armed Conflict Location & Event Data Project (ACLED)
+## 📊 Data Processing
 
-## Contributing
+1. **Prepare and optimize data:**
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+    ```bash
+    npm run prepare-data               # Process spatial data
+    npm run transform-spatial-weights  # Transform weights matrix
+    npm run optimize:assets            # Optimize assets
+    npm run process-clusters           # Process market clusters
+    npm run calculate-metrics          # Calculate cluster metrics
+    ```
 
-## License
+## 🧪 Testing
+
+```bash
+npm test                    # Run all tests
+npm run test:coverage       # Run tests with coverage
+npm run test:watch          # Watch mode for development
+npm run test:integration    # Run integration tests
+npm run test:e2e            # Run end-to-end tests
+```
+
+## 🔧 Development Tools
+
+### Bundle Analysis
+
+```bash
+npm run build:profile      # Generate bundle stats
+npm run analyze-bundle     # View bundle analysis
+npm run analyze-deps       # Analyze dependencies
+```
+
+### Debug Tools
+
+- **Redux DevTools** enabled in development
+- **Performance monitoring** via `window.__REDUX_PERF__`
+- **Service Worker** debugging through DevTools
+- **React Profiler** for performance profiling
+- **Logger Middleware** for Redux action logging
+
+## 🚀 Deployment
+
+1. **Deploy to GitHub Pages:**
+
+    ```bash
+    npm run deploy
+    ```
+
+2. **Test production build locally:**
+
+    ```bash
+    npm run build
+    npm run serve-dist
+    ```
+
+3. **Deploy to custom server:**
+
+    ```bash
+    npm run deploy:custom
+    ```
+
+## 🤝 Contributing
+
+1. **Fork the repository**
+2. **Create your feature branch**
+
+    ```bash
+    git checkout -b feature/AmazingFeature
+    ```
+
+3. **Commit your changes**
+
+    ```bash
+    git commit -m 'Add some AmazingFeature'
+    ```
+
+4. **Push to the branch**
+
+    ```bash
+    git push origin feature/AmazingFeature
+    ```
+
+5. **Open a Pull Request**
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contact
+## 🙏 Acknowledgments
 
-Mohammad al Akkaoui - [GitHub](https://github.com/mohammadak95)
+- **Data sources**: Yemen Market Data Repository
+- **Geographic data**: Natural Earth Data
+- **Libraries**: React, Redux, Recharts, Leaflet, Material-UI
 
-## Acknowledgments
+## 📚 Component Documentation
 
-- World Food Programme for data provision
-- ACAPS Yemen Analysis Hub for geographic data
-- Academic advisors and research partners
+### Analysis Components
 
-## Citation
+- **TVMII Analysis**: Components for Two-Variable Market Integration Index
+- **Spatial Analysis**: Map-based visualizations and spatial regression tools
+- **ECM Analysis**: Error Correction Model implementation
+- **Price Differential**: Tools for analyzing price differences across regions
 
-If you use this platform in your research, please cite:
+### Discovery Tools
 
-```bibtex
-@software{yemen_market_analysis,
-  author = {al Akkaoui, Mohammad},
-  title = {Yemen Market Analysis Platform},
-  year = {2024},
-  url = {https://github.com/mohammadak95/Yemen_Market_Analysis2}
-}
+- Interactive tutorials
+- Guided exercises
+- Demo modules
+- Learning resources
+
+### Documentation Components
+
+- Technical reference materials
+- Methodology explanations
+- Model interpretation guides
+
+## ⚙️ Configuration
+
+The project uses Webpack for bundling and optimization, with different configurations for development and production environments. Key features include:
+
+- Code splitting and lazy loading
+- Asset optimization and compression
+- CSS extraction and minification
+- Source maps for development
+- Hot module replacement
+- Progressive Web App support
+
+## 🔄 CI/CD Pipeline
+
+GitHub Actions automates:
+
+- Building and testing
+- Data preparation and optimization
+- Deployment to GitHub Pages
+- Asset optimization and bundling
+
+For the latest deployment status, check the Actions tab in the GitHub repository.
+
+## 🛠️ Testing and Debugging
+
+### 1. Jest and React Testing Library
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Watch mode for development
+npm run test:watch
+```
+
+### 2. Testing Best Practices
+
+- Unit tests for components and hooks
+- Integration tests for API and data processing
+- Snapshot testing for UI components
+- Mocking external dependencies
+- Coverage thresholds for CI/CD
+
+```javascript
+// Example test suite
+describe('TVMIIAnalysis', () => {
+  it('renders TVMII analysis correctly', () => {
+    const { getByText } = render(<TVMIIAnalysis />);
+    expect(getByText('Market Integration Index')).toBeInTheDocument();
+  });
+
+  it('calculates TVMII correctly', () => {
+    const data = prepareData();
+    const result = calculateTVMII(data);
+    expect(result).toBeGreaterThan(0.5);
+  });
+});
+```
+
+### 3. Debugging Tools
+
+- **Redux DevTools** for state management debugging
+- **Performance monitoring** via `window.__REDUX_PERF__`
+- **Service Worker** debugging through DevTools
+
+## 🚀 Deployment and CI/CD
+
+### 1. GitHub Actions
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+      
+      - name: Install Dependencies
+        run: |
+          npm ci
+        
+      - name: Prepare Data
+        run: |
+          npm run prepare-data
+          npm run optimize-data
+        
+      - name: Build
+        run: npm run build
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+```
+
+Feel free to explore the project, contribute, and reach out with any questions or suggestions!
+
+---

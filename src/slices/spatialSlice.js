@@ -46,34 +46,44 @@ const processFlowData = (flows) => {
 
   // Group flows by date and validate each flow
   const byDate = flows.reduce((acc, flow) => {
-    // Ensure flow has required fields
-    if (!flow.source || !flow.target || !flow.flow_weight) return acc;
-    
-    const date = flow.date || flow.month;
-    if (!date) return acc;
-    
-    // Format date to YYYY-MM
-    const formattedDate = date.substring(0, 7);
-    
-    if (!acc[formattedDate]) {
-      acc[formattedDate] = [];
+    try {
+      // Skip invalid flows
+      if (!flow || typeof flow !== 'object') return acc;
+      
+      // Ensure flow has required fields
+      if (!flow.source || !flow.target || !flow.flow_weight) return acc;
+      
+      const date = flow.date || flow.month;
+      if (!date || typeof date !== 'string') return acc;
+      
+      // Format date to YYYY-MM, ensuring we have enough characters
+      if (date.length < 7) return acc;
+      const formattedDate = date.substring(0, 7);
+      
+      // Initialize array for this date if it doesn't exist
+      if (!acc[formattedDate]) {
+        acc[formattedDate] = [];
+      }
+      
+      // Add validated flow to the date group with safe number conversions
+      acc[formattedDate].push({
+        source: String(flow.source),
+        target: String(flow.target),
+        flow_weight: Number(flow.flow_weight) || 0,
+        price_differential: Number(flow.price_differential) || 0,
+        source_price: Number(flow.source_price) || 0,
+        target_price: Number(flow.target_price) || 0,
+        total_flow: Number(flow.total_flow || flow.flow_weight) || 0,
+        avg_flow: Number(flow.avg_flow || flow.total_flow || flow.flow_weight) || 0,
+        flow_count: Number(flow.flow_count) || 1,
+        date: formattedDate
+      });
+      
+      return acc;
+    } catch (error) {
+      console.warn('Error processing flow:', error);
+      return acc;
     }
-    
-    // Add validated flow to the date group
-    acc[formattedDate].push({
-      source: flow.source,
-      target: flow.target,
-      flow_weight: Number(flow.flow_weight) || 0,
-      price_differential: Number(flow.price_differential) || 0,
-      source_price: Number(flow.source_price) || 0,
-      target_price: Number(flow.target_price) || 0,
-      total_flow: Number(flow.total_flow || flow.flow_weight) || 0,
-      avg_flow: Number(flow.avg_flow || flow.total_flow || flow.flow_weight) || 0,
-      flow_count: Number(flow.flow_count) || 1,
-      date: formattedDate
-    });
-    
-    return acc;
   }, {});
 
   // Calculate date range

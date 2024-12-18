@@ -9,6 +9,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const dotenv = require('dotenv');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 
 module.exports = (env, argv) => {
   const isDevelopment = argv.mode === 'development';
@@ -48,6 +49,7 @@ module.exports = (env, argv) => {
       alias: {
         '@': path.resolve(__dirname, 'src'),
         'leaflet': path.resolve(__dirname, 'node_modules/leaflet'),
+        'selectors': path.resolve(__dirname, 'src/selectors'),
       },
       fallback: {
         'path': require.resolve('path-browserify'),
@@ -72,14 +74,7 @@ module.exports = (env, argv) => {
           },
           extractComments: false,
         }),
-        ...(isDevelopment ? [] : [new CssMinimizerPlugin({
-          minimizerOptions: {
-            preset: ['default', {
-              discardComments: { removeAll: true },
-              minifyFontValues: { removeQuotes: false }
-            }]
-          }
-        })]),
+        new CssMinimizerPlugin(),
       ],
       splitChunks: isDevelopment ? false : {
         chunks: 'all',
@@ -122,21 +117,13 @@ module.exports = (env, argv) => {
           exclude: /node_modules/,
           use: [
             {
-              loader: 'thread-loader',
-              options: {
-                workers: require('os').cpus().length - 1,
-                poolTimeout: isDevelopment ? Infinity : 2000,
-              },
-            },
-            {
               loader: 'babel-loader',
               options: {
                 cacheDirectory: true,
                 cacheCompression: false,
                 plugins: [
-                  '@babel/plugin-syntax-dynamic-import',
-                  ['@babel/plugin-transform-runtime', { regenerator: true }]
-                ]
+                  isDevelopment && require.resolve('react-refresh/babel')
+                ].filter(Boolean)
               },
             },
           ],
@@ -149,33 +136,28 @@ module.exports = (env, argv) => {
               loader: 'css-loader',
               options: {
                 sourceMap: isDevelopment,
-                importLoaders: 1,
-                modules: {
-                  auto: true,
-                  localIdentName: isDevelopment ? '[name]__[local]' : '[hash:base64:5]'
-                }
+                importLoaders: 1
               },
             },
-            'postcss-loader'
+            {
+              loader: 'postcss-loader',
+              options: {
+                sourceMap: isDevelopment,
+                postcssOptions: {
+                  plugins: [
+                    require('autoprefixer'),
+                  ],
+                },
+              },
+            },
           ],
         },
         {
           test: /\.(png|jpg|jpeg|gif)$/i,
-          use: [
-            {
-              loader: 'responsive-loader',
-              options: {
-                adapter: require('responsive-loader/sharp'),
-                sizes: [320, 640, 960, 1200, 1800, 2400],
-                placeholder: true,
-                placeholderSize: 20,
-                quality: 85,
-                format: 'webp',
-                name: 'static/media/[name]-[width]w.[ext]'
-              },
-            },
-          ],
-          type: 'javascript/auto'
+          type: 'asset/resource',
+          generator: {
+            filename: 'static/media/[name].[hash:8][ext]'
+          }
         },
         {
           test: /\.svg$/,
@@ -208,6 +190,9 @@ module.exports = (env, argv) => {
     },
     plugins: [
       new CleanWebpackPlugin(),
+      isDevelopment && new ReactRefreshWebpackPlugin({
+        overlay: false
+      }),
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'public/index.html'),
         inject: true,
@@ -290,6 +275,10 @@ module.exports = (env, argv) => {
           entrypoints: entrypoints.main || [],
         }),
       }),
+      new MiniCssExtractPlugin({
+        filename: isDevelopment ? '[name].css' : 'static/css/[name].[contenthash:8].css',
+        chunkFilename: isDevelopment ? '[id].css' : 'static/css/[id].[contenthash:8].chunk.css',
+      }),
       ...(!isDevelopment ? [
         new CompressionPlugin({
           test: /\.(js|css|html|svg)$/,
@@ -298,10 +287,6 @@ module.exports = (env, argv) => {
           algorithm: 'gzip',
           compressionOptions: { level: 9 },
           deleteOriginalAssets: false,
-        }),
-        new MiniCssExtractPlugin({
-          filename: 'static/css/[name].[contenthash:8].css',
-          chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
         }),
       ] : []),
     ].filter(Boolean),
@@ -317,7 +302,7 @@ module.exports = (env, argv) => {
         }
       ],
       compress: true,
-      port: parseInt(process.env.CLIENT_PORT || '3001', 10), // Changed default port to 3001
+      port: parseInt(process.env.CLIENT_PORT || '3001', 10),
       hot: true,
       historyApiFallback: true,
       headers: {

@@ -1,34 +1,23 @@
 // src/selectors/optimizedSelectors.js
 
-import { createSelector } from '@reduxjs/toolkit'; // Correct import for createSelector
-import { createSelectorCreator } from 'reselect'; // Correct import for createSelectorCreator
-import isEqual from 'lodash/isEqual';
+import { createSelector } from '@reduxjs/toolkit';
+import { createSelectorCreator, lruMemoize } from 'reselect';
 import _ from 'lodash';
 import { 
   transformRegionName, 
   getRegionCoordinates, 
   calculateCenter 
 } from '../components/spatialAnalysis/utils/spatialUtils';
+import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { flowValidation } from '../components/spatialAnalysis/features/flows/types';
+import { 
+  calculateAutocorrelationMetrics, 
+  processFeatureData, 
+  processClustersWithCoordinates, 
+  processFlowsWithCoordinates 
+} from '../utils/dataProcessingUtils';
 
-// Custom defaultMemoize function to replicate behavior in older reselect versions
-function defaultMemoize(func, equalityCheck = isEqual) {
-  let lastArgs = null;
-  let lastResult = null;
-  return (...args) => {
-    if (
-      lastArgs !== null &&
-      args.length === lastArgs.length &&
-      args.every((value, index) => equalityCheck(value, lastArgs[index]))
-    ) {
-      return lastResult;
-    }
-    lastArgs = args;
-    lastResult = func(...args);
-    return lastResult;
-  };
-}
-
-// Predefined coordinates for Yemen regions
+// Yemen market coordinates mapping - verified and normalized
 export const YEMEN_COORDINATES = {
   'abyan': [45.83, 13.58],
   'aden': [45.03, 12.77],
@@ -53,184 +42,7 @@ export const YEMEN_COORDINATES = {
   'socotra': [53.87, 12.47]
 };
 
-// Create a custom selector creator that uses deep equality check
-const createDeepEqualSelector = createSelectorCreator(
-  defaultMemoize,
-  isEqual
-);
-
-// Base selector to select the spatial slice from the state
-const selectSpatialRoot = (state) => state.spatial ?? { data: {}, status: {}, ui: {} };
-
-// Selectors for specific parts of the spatial state
-const selectSpatialData = createSelector(
-  [selectSpatialRoot],
-  (spatial) => spatial.data ?? {}
-);
-
-const selectSpatialStatus = createSelector(
-  [selectSpatialRoot],
-  (spatial) => spatial.status ?? {}
-);
-
-const selectSpatialUI = createSelector(
-  [selectSpatialRoot],
-  (spatial) => spatial.ui ?? {}
-);
-
-// Exported selectors
-export const selectStatus = createSelector(
-  [selectSpatialStatus],
-  (status) => status
-);
-
-export const selectLoadingStatus = createSelector(
-  [selectStatus],
-  (status) => ({
-    loading: status?.loading || false,
-    stage: status?.stage || '',
-    progress: status?.progress || 0
-  })
-);
-
-const selectSpatialState = createSelector(
-  [selectSpatialData, selectSpatialStatus, selectSpatialUI],
-  (data, status, ui) => ({ data, status, ui })
-);
-
-export const selectStage = createSelector(
-  [selectSpatialState],
-  (spatial) => spatial?.status?.stage || 'idle'
-);
-
-export const selectTimeSeriesData = createDeepEqualSelector(
-  [selectSpatialData],
-  (data) => data?.timeSeriesData || []
-);
-
-export const selectGeometryData = createDeepEqualSelector(
-  [selectSpatialData],
-  (data) => data?.geometry || {}
-);
-
-export const selectMarketIntegration = createDeepEqualSelector(
-  [selectSpatialData],
-  (data) => data?.marketIntegration || {}
-);
-
-export const selectFlowMaps = createDeepEqualSelector(
-  [selectSpatialData],
-  (data) => data?.flowMaps || []
-);
-
-export const selectSelectedDate = createSelector(
-  [selectSpatialUI],
-  (ui) => ui?.selectedDate || ''
-);
-
-export const selectFilteredFlowData = createDeepEqualSelector(
-  [selectFlowMaps, selectSelectedDate],
-  (flowMaps, selectedDate) => {
-    if (!Array.isArray(flowMaps) || !selectedDate) return [];
-    const targetMonth = selectedDate.substring(0, 7);
-    return flowMaps.filter(flow => flow?.date?.substring(0, 7) === targetMonth);
-  }
-);
-
-export const selectMarketMetrics = createDeepEqualSelector(
-  [selectFilteredFlowData],
-  (flows) => {
-    if (!flows.length) return {
-      totalFlows: 0,
-      averageFlow: 0,
-      maxFlow: 0,
-      activeMarkets: 0
-    };
-
-    const flowValues = flows.map(f => f.total_flow || 0);
-    const markets = new Set();
-    flows.forEach(f => {
-      markets.add(f.source);
-      markets.add(f.target);
-    });
-
-    return {
-      totalFlows: flowValues.reduce((sum, val) => sum + val, 0),
-      averageFlow: flowValues.reduce((sum, val) => sum + val, 0) / flowValues.length,
-      maxFlow: Math.max(...flowValues),
-      activeMarkets: markets.size
-    };
-  }
-);
-
-// Conversion utility functions
-export const convertUTMtoLatLng = (easting, northing) => {
-  const k0 = 0.9996;
-  const a = 6378137;
-  const e = 0.081819191;
-  const e1sq = 0.006739497;
-  const falseEasting = 500000;
-  const zone = 38;
-
-  const x = easting - falseEasting;
-  const y = northing;
-
-  const M = y / k0;
-  const mu = M / (a * (1 - e * e / 4 - 3 * e * e * e * e / 64));
-
-  const phi1 = mu + (3 * e1sq / 2 - 27 * Math.pow(e1sq, 3) / 32) * Math.sin(2 * mu);
-  const phi2 = phi1 + (21 * Math.pow(e1sq, 2) / 16 - 55 * Math.pow(e1sq, 4) / 32) * Math.sin(4 * mu);
-  const phi = phi2 + (151 * Math.pow(e1sq, 3) / 96) * Math.sin(6 * mu);
-
-  const N1 = a / Math.sqrt(1 - e * e * Math.sin(phi) * Math.sin(phi));
-  const T1 = Math.tan(phi) * Math.tan(phi);
-  const C1 = (e * e * Math.cos(phi) * Math.cos(phi)) / (1 - e * e);
-  const R1 = (a * (1 - e * e)) / Math.pow(1 - e * e * Math.sin(phi) * Math.sin(phi), 1.5);
-  const D = x / (N1 * k0);
-
-  const lat = phi - (N1 * Math.tan(phi) / R1) * (
-    (D * D) / 2 -
-    (5 + 3 * T1 + 10 * C1 - 4 * Math.pow(C1, 2) - 9 * e * e) * Math.pow(D, 4) / 24 +
-    (61 + 90 * T1 + 298 * C1 + 45 * Math.pow(T1, 2) - 252 * e * e - 3 * Math.pow(C1, 2)) * Math.pow(D, 6) / 720
-  );
-  const lon = ((zone * 6 - 183) + (D - (1 + 2 * T1 + C1) * Math.pow(D, 3) / 6 +
-    (5 - 2 * C1 + 28 * T1 - 3 * Math.pow(C1, 2) + 8 * e * e + 24 * Math.pow(T1, 2)) * Math.pow(D, 5) / 120)
-  ) / Math.cos(phi) * (180 / Math.PI);
-
-  return [lon, lat];
-};
-
-const validateCoordinates = (coords) => {
-  if (!Array.isArray(coords) || coords.length !== 2) {
-    return null;
-  }
-  
-  const [lon, lat] = coords;
-  if (typeof lon !== 'number' || typeof lat !== 'number' ||
-      isNaN(lon) || isNaN(lat) ||
-      Math.abs(lat) > 90 || Math.abs(lon) > 180) {
-    return null;
-  }
-  return [lon, lat];
-};
-
-const calculateVolatility = (values) => {
-  if (values.length < 2) return 0;
-  try {
-    const returns = [];
-    for (let i = 1; i < values.length; i++) {
-      if (values[i-1] > 0) {
-        returns.push(Math.log(values[i] / values[i-1]));
-      }
-    }
-    if (!returns.length) return 0;
-    const meanReturn = _.mean(returns);
-    const variance = _.meanBy(returns, r => Math.pow(r - meanReturn, 2));
-    return Math.sqrt(variance);
-  } catch {
-    return 0;
-  }
-};
+// Utility Functions
 
 const calculateDistance = (coord1, coord2) => {
   if (!coord1 || !coord2) return 0;
@@ -238,7 +50,7 @@ const calculateDistance = (coord1, coord2) => {
   const [lon1, lat1] = coord1;
   const [lon2, lat2] = coord2;
   
-  const R = 6371;
+  const R = 6371; // Earth's radius in kilometers
   const toRad = (deg) => deg * Math.PI / 180;
   
   const dLat = toRad(lat2 - lat1);
@@ -254,517 +66,164 @@ const calculateDistance = (coord1, coord2) => {
 
 const calculateAverageDistance = (coordinates) => {
   if (coordinates.length < 2) return 0;
-  try {
-    let totalDistance = 0;
-    let count = 0;
-    for (let i = 0; i < coordinates.length; i++) {
-      for (let j = i + 1; j < coordinates.length; j++) {
-        const dist = calculateDistance(coordinates[i], coordinates[j]);
-        if (typeof dist === 'number' && !isNaN(dist)) {
-          totalDistance += dist;
-          count++;
-        }
+  let totalDistance = 0;
+  let count = 0;
+
+  for (let i = 0; i < coordinates.length; i++) {
+    for (let j = i + 1; j < coordinates.length; j++) {
+      const distance = calculateDistance(coordinates[i], coordinates[j]);
+      if (!isNaN(distance)) {
+        totalDistance += distance;
+        count++;
       }
     }
-    return count > 0 ? totalDistance / count : 0;
+  }
+
+  return count > 0 ? totalDistance / count : 0;
+};
+
+const calculateMaxTheoreticalDistance = (coordinates) => {
+  if (coordinates.length < 2) return 0;
+  let maxDistance = 0;
+  for (let i = 0; i < coordinates.length; i++) {
+    for (let j = i + 1; j < coordinates.length; j++) {
+      const distance = calculateDistance(coordinates[i], coordinates[j]);
+      maxDistance = Math.max(maxDistance, distance);
+    }
+  }
+  return maxDistance;
+};
+
+const validateNumber = (value) => {
+  return typeof value === 'number' && !isNaN(value) ? value : 0;
+};
+
+const calculateVolatility = (prices) => {
+  if (!Array.isArray(prices) || prices.length < 2) return 0;
+
+  try {
+    const returns = [];
+    for (let i = 1; i < prices.length; i++) {
+      if (prices[i-1] > 0) {
+        returns.push(Math.log(prices[i] / prices[i-1]));
+      }
+    }
+
+    if (!returns.length) return 0;
+    
+    const meanReturn = _.mean(returns);
+    const variance = _.meanBy(returns, r => Math.pow(r - meanReturn, 2));
+    return Math.sqrt(variance);
   } catch {
     return 0;
   }
 };
 
-// Additional UI selectors
-export const selectVisualizationMode = createSelector(
-  [selectSpatialUI],
-  (ui) => ui?.visualizationMode || 'prices'
-);
+const calculateTrend = (prices) => {
+  if (!Array.isArray(prices) || prices.length < 2) return 0;
 
-export const selectSelectedCommodity = createSelector(
-  [selectSpatialUI],
-  (ui) => ui?.selectedCommodity || ''
-);
-
-// Unified Geometry Selector
-export const selectUnifiedGeometry = createSelector(
-  [selectGeometryData],
-  (geometry) => {
-    try {
-      if (!geometry?.unified) return null;
-      return {
-        type: 'FeatureCollection',
-        features: Array.isArray(geometry.unified) ? geometry.unified : [],
-        properties: {
-          type: 'unified',
-          timestamp: Date.now()
-        }
-      };
-    } catch {
-      return null;
-    }
-  }
-);
-
-// Market Clusters Selector
-export const selectMarketClusters = createSelector(
-  [selectSpatialData],
-  (data) => {
-    try {
-      if (!data || !Array.isArray(data.marketClusters)) {
-        return [];
-      }
-      return data.marketClusters.map(cluster => {
-        const metrics = cluster.metrics || {};
-        return {
-          ...cluster,
-          metrics: {
-            marketCount: cluster.connected_markets?.length || 0,
-            avgPrice: typeof metrics.avgPrice === 'number' ? metrics.avgPrice : 0,
-            avgConflict: typeof metrics.avgConflict === 'number' ? metrics.avgConflict : 0,
-            efficiency: typeof metrics.efficiency === 'number' ? metrics.efficiency : 0,
-            efficiencyComponents: {
-              connectivity: typeof metrics.efficiencyComponents?.connectivity === 'number' ?
-                metrics.efficiencyComponents.connectivity : 0,
-              priceIntegration: typeof metrics.efficiencyComponents?.priceIntegration === 'number' ?
-                metrics.efficiencyComponents.priceIntegration : 0,
-              stability: typeof metrics.efficiencyComponents?.stability === 'number' ?
-                metrics.efficiencyComponents.stability : 0,
-              conflictResilience: typeof metrics.efficiencyComponents?.conflictResilience === 'number' ?
-                metrics.efficiencyComponents.conflictResilience : 0
-            },
-            internal_connectivity: typeof metrics.internal_connectivity === 'number' ? metrics.internal_connectivity : 0,
-            market_coverage: typeof metrics.market_coverage === 'number' ? metrics.market_coverage : 0,
-            price_convergence: typeof metrics.price_convergence === 'number' ? metrics.price_convergence : 0,
-            priceVolatility: typeof metrics.priceVolatility === 'number' ?
-              metrics.priceVolatility : 0,
-            priceRange: typeof metrics.priceRange === 'number' ?
-              metrics.priceRange : 0,
-            minPrice: typeof metrics.minPrice === 'number' ?
-              metrics.minPrice : 0,
-            maxPrice: typeof metrics.maxPrice === 'number' ?
-              metrics.maxPrice : 0,
-            flowDensity: typeof metrics.flowDensity === 'number' ?
-              metrics.flowDensity : 0,
-            avgFlowStrength: typeof metrics.avgFlowStrength === 'number' ?
-              metrics.avgFlowStrength : 0,
-            totalFlows: typeof metrics.totalFlows === 'number' ?
-              metrics.totalFlows : 0
-          }
-        };
-      });
-    } catch {
-      return [];
-    }
-  }
-);
-
-// Market Flows Selector
-export const selectMarketFlows = createSelector(
-  [selectSpatialData],
-  (data) => {
-    try {
-      if (!data || !Array.isArray(data.flowMaps)) {
-        return [];
-      }
-      return data.flowMaps.map(flow => ({
-        ...flow,
-        source: flow.source || '',
-        target: flow.target || '',
-        total_flow: typeof flow.total_flow === 'number' ? flow.total_flow : 0,
-        avg_flow: typeof flow.avg_flow === 'number' ? flow.avg_flow : 0,
-        flow_count: typeof flow.flow_count === 'number' ? flow.flow_count : 0,
-        avg_price_differential: typeof flow.avg_price_differential === 'number' ? flow.avg_price_differential : 0
-      }));
-    } catch {
-      return [];
-    }
-  }
-);
-
-// Spatial Autocorrelation Selector
-export const selectSpatialAutocorrelation = createSelector(
-  [selectSpatialData],
-  (data) => {
-    try {
-      if (!data || !data.spatialAutocorrelation) {
-        return {
-          global: { moran_i: 0, p_value: 1, z_score: null, significance: false },
-          local: {}
-        };
-      }
-      const autocorr = data.spatialAutocorrelation;
-      return {
-        global: {
-          moran_i: typeof autocorr.global?.moran_i === 'number' ? autocorr.global.moran_i : 0,
-          p_value: typeof autocorr.global?.p_value === 'number' ? autocorr.global.p_value : 1,
-          z_score: autocorr.global?.z_score || null,
-          significance: Boolean(autocorr.global?.significance)
-        },
-        local: Object.entries(autocorr.local || {}).reduce((acc, [key, value]) => {
-          acc[key] = {
-            local_i: typeof value.local_i === 'number' ? value.local_i : 0,
-            p_value: typeof value.p_value === 'number' ? value.p_value : 1,
-            cluster_type: value.cluster_type || 'not-significant',
-            z_score: typeof value.z_score === 'number' ? value.z_score : 0
-          };
-          return acc;
-        }, {})
-      };
-    } catch {
-      return {
-        global: { moran_i: 0, p_value: 1, z_score: null, significance: false },
-        local: {}
-      };
-    }
-  }
-);
-
-// Regression Analysis Selector
-export const selectRegressionAnalysis = createSelector(
-  [selectSpatialData, selectSelectedCommodity],
-  (data, selectedCommodity) => {
-    try {
-      if (!data || !data.regressionAnalysis) return null;
-      const regression = data.regressionAnalysis;
-      const metadata = regression.metadata || {};
-      
-      const effectiveCommodity = selectedCommodity || metadata.commodity || 'beans (kidney red)';
-      
-      if (selectedCommodity && metadata.commodity !== selectedCommodity) {
-        return null;
-      }
-
-      return {
-        model: regression.model || {},
-        spatial: {
-          moran_i: regression.spatial?.moran_i || { I: 0, 'p-value': 1 },
-          vif: Array.isArray(regression.spatial?.vif) ? regression.spatial.vif : []
-        },
-        residuals: {
-          raw: Array.isArray(regression.residuals?.raw) ? regression.residuals.raw : [],
-          byRegion: regression.residuals?.byRegion || {},
-          stats: {
-            mean: typeof regression.residuals?.stats?.mean === 'number' ? regression.residuals.stats.mean : 0,
-            variance: typeof regression.residuals?.stats?.variance === 'number' ? regression.residuals.stats.variance : 0,
-            maxAbsolute: typeof regression.residuals?.stats?.maxAbsolute === 'number' ? regression.residuals.stats.maxAbsolute : 0
-          }
-        },
-        metadata: {
-          ...metadata,
-          commodity: effectiveCommodity,
-          timestamp: metadata.timestamp || new Date().toISOString(),
-          version: metadata.version || "1.0"
-        }
-      };
-    } catch {
-      return {
-        model: {},
-        spatial: { moran_i: { I: 0, 'p-value': 1 }, vif: [] },
-        residuals: { raw: [], byRegion: {}, stats: { mean: 0, variance: 0, maxAbsolute: 0 } },
-        metadata: {
-          commodity: selectedCommodity || 'beans (kidney red)',
-          timestamp: new Date().toISOString(),
-          version: "1.0"
-        }
-      };
-    }
-  }
-);
-
-// Seasonal Analysis Selector
-export const selectSeasonalAnalysis = createSelector(
-  [selectSpatialData],
-  (data) => {
-    try {
-      if (!data || !data.seasonalAnalysis) {
-        return {
-          seasonal_strength: 0,
-          trend_strength: 0,
-          peak_month: 0,
-          trough_month: 0,
-          seasonal_pattern: []
-        };
-      }
-      const seasonal = data.seasonalAnalysis;
-      return {
-        seasonal_strength: typeof seasonal.seasonal_strength === 'number' ? seasonal.seasonal_strength : 0,
-        trend_strength: typeof seasonal.trend_strength === 'number' ? seasonal.trend_strength : 0,
-        peak_month: seasonal.peak_month || 0,
-        trough_month: seasonal.trough_month || 0,
-        seasonal_pattern: Array.isArray(seasonal.seasonal_pattern) ? seasonal.seasonal_pattern : []
-      };
-    } catch {
-      return {
-        seasonal_strength: 0,
-        trend_strength: 0,
-        peak_month: 0,
-        trough_month: 0,
-        seasonal_pattern: []
-      };
-    }
-  }
-);
-
-// Market Shocks Selector
-export const selectMarketShocks = createSelector(
-  [selectSpatialData],
-  (data) => {
-    try {
-      if (!data || !Array.isArray(data.marketShocks)) {
-        return [];
-      }
-      return data.marketShocks.map(shock => ({
-        ...shock,
-        region: shock.region || '',
-        date: shock.date || '',
-        shock_type: shock.shock_type || '',
-        magnitude: typeof shock.magnitude === 'number' ? shock.magnitude : 0,
-        current_price: typeof shock.current_price === 'number' ? shock.current_price : 0,
-        previous_price: typeof shock.previous_price === 'number' ? shock.previous_price : 0
-      }));
-    } catch {
-      return [];
-    }
-  }
-);
-
-// Spatial Dispersion Calculation
-function calculateSpatialDispersion(coordinates) {
-  if (!coordinates?.length || coordinates.length < 2) return 0;
   try {
-    const center = calculateCenter(coordinates);
-    if (!center) return 0;
-    const distances = coordinates.map(coord => calculateDistance(coord, center));
-    return Math.sqrt(
-      distances.reduce((sum, dist) => sum + Math.pow(dist, 2), 0) / distances.length
-    );
+    const xValues = Array.from({ length: prices.length }, (_, i) => i);
+    const xMean = _.mean(xValues);
+    const yMean = _.mean(prices);
+
+    let numerator = 0;
+    let denominator = 0;
+    
+    for (let i = 0; i < prices.length; i++) {
+      const xDiff = xValues[i] - xMean;
+      numerator += xDiff * (prices[i] - yMean);
+      denominator += xDiff * xDiff;
+    }
+
+    return denominator !== 0 ? numerator / denominator : 0;
   } catch {
     return 0;
   }
-}
+};
 
-// Bounding Box Calculation
-function calculateBoundingBox(coordinates) {
-  if (!coordinates?.length) return null;
+const detectSeasonality = (prices) => {
+  if (!Array.isArray(prices) || prices.length < 12) return 0;
+
   try {
-    return coordinates.reduce((bounds, coord) => ({
-      minLon: Math.min(bounds.minLon, coord[0]),
-      maxLon: Math.max(bounds.maxLon, coord[0]),
-      minLat: Math.min(bounds.minLat, coord[1]),
-      maxLat: Math.max(bounds.maxLat, coord[1])
-    }), {
-      minLon: Infinity,
-      maxLon: -Infinity,
-      minLat: Infinity,
-      maxLat: -Infinity
-    });
+    // Calculate autocorrelation at lag 12 (annual seasonality)
+    const n = prices.length;
+    const mean = _.mean(prices);
+    let numerator = 0;
+    let denominator = 0;
+
+    for (let i = 0; i < n - 12; i++) {
+      numerator += (prices[i] - mean) * (prices[i + 12] - mean);
+    }
+
+    for (let i = 0; i < n; i++) {
+      denominator += Math.pow(prices[i] - mean, 2);
+    }
+
+    return denominator !== 0 ? numerator / denominator : 0;
   } catch {
-    return null;
+    return 0;
   }
-}
+};
 
-// Clusters with Coordinates Selector
-export const selectClustersWithCoordinates = createSelector(
-  [selectMarketClusters, selectGeometryData],
-  (clusters, geometry) => {
-    try {
-      if (!clusters?.length || !geometry?.points) {
-        return [];
-      }
+const calculateClusterEfficiency = (cluster, flows, marketCoordinates) => {
+  if (!flows.length || !marketCoordinates.length) return 0;
 
-      const coordMap = new Map();
-      geometry.points.forEach(point => {
-        const normalizedName = transformRegionName(
-          point.properties?.normalizedName || 
-          point.properties?.region_id || 
-          point.properties?.name
-        );
-        if (normalizedName && Array.isArray(point.coordinates)) {
-          coordMap.set(normalizedName, validateCoordinates(point.coordinates));
-        }
-      });
+  const flowWeights = flows.map(f => f.flow_weight);
+  const maxFlow = Math.max(...flowWeights);
+  const avgFlow = _.mean(flowWeights);
 
-      return clusters.map(cluster => {
-        const marketCoords = (cluster.connected_markets || [])
-          .map(market => {
-            const normalizedName = transformRegionName(market);
-            const coordinates = coordMap.get(normalizedName) || 
-                                getRegionCoordinates(normalizedName);
-            return {
-              name: market,
-              normalizedName,
-              coordinates,
-              isMainMarket: market === cluster.main_market
-            };
-          })
-          .filter(m => m.coordinates);
+  // Calculate network density
+  const possibleConnections = (marketCoordinates.length * (marketCoordinates.length - 1)) / 2;
+  const actualConnections = flows.length;
+  const networkDensity = possibleConnections > 0 ? actualConnections / possibleConnections : 0;
 
-        const center = calculateCenter(marketCoords.map(m => m.coordinates));
-        const avgDistance = calculateAverageDistance(marketCoords.map(m => m.coordinates));
-        const spatialCoverage = cluster.connected_markets.length ? 
-          marketCoords.length / cluster.connected_markets.length : 0;
+  // Calculate spatial coverage
+  const avgDistance = calculateAverageDistance(marketCoordinates.map(m => m.coordinates));
+  const maxTheoretical = calculateMaxTheoreticalDistance(marketCoordinates.map(m => m.coordinates));
+  const spatialCoverage = maxTheoretical > 0 ? avgDistance / maxTheoretical : 0;
 
-        return {
-          ...cluster,
-          cluster_id: cluster.cluster_id,
-          main_market: cluster.main_market,
-          connected_markets: cluster.connected_markets,
-          markets: marketCoords,
-          center: center || [0, 0],
-          metrics: {
-            ...cluster.metrics,
-            efficiency: typeof cluster.metrics?.efficiency === 'number' ? cluster.metrics.efficiency : 0,
-            efficiencyComponents: {
-              connectivity: typeof cluster.metrics?.efficiencyComponents?.connectivity === 'number' ?
-                cluster.metrics.efficiencyComponents.connectivity : 0,
-              priceIntegration: typeof cluster.metrics?.efficiencyComponents?.priceIntegration === 'number' ?
-                cluster.metrics.efficiencyComponents.priceIntegration : 0,
-              stability: typeof cluster.metrics?.efficiencyComponents?.stability === 'number' ?
-                cluster.metrics.efficiencyComponents.stability : 0,
-              conflictResilience: typeof cluster.metrics?.efficiencyComponents?.conflictResilience === 'number' ?
-                cluster.metrics.efficiencyComponents.conflictResilience : 0
-            },
-            internal_connectivity: typeof cluster.metrics?.internal_connectivity === 'number' ? cluster.metrics.internal_connectivity : 0,
-            market_coverage: typeof cluster.metrics?.market_coverage === 'number' ? cluster.metrics.market_coverage : 0,
-            price_convergence: typeof cluster.metrics?.price_convergence === 'number' ? cluster.metrics.price_convergence : 0,
-            priceVolatility: typeof cluster.metrics?.priceVolatility === 'number' ?
-              cluster.metrics.priceVolatility : 0,
-            priceRange: typeof cluster.metrics?.priceRange === 'number' ?
-              cluster.metrics.priceRange : 0,
-            minPrice: typeof cluster.metrics?.minPrice === 'number' ?
-              cluster.metrics.minPrice : 0,
-            maxPrice: typeof cluster.metrics?.maxPrice === 'number' ?
-              cluster.metrics.maxPrice : 0,
-            flowDensity: typeof cluster.metrics?.flowDensity === 'number' ?
-              cluster.metrics.flowDensity : 0,
-            avgFlowStrength: typeof cluster.metrics?.avgFlowStrength === 'number' ?
-              cluster.metrics.avgFlowStrength : 0,
-            totalFlows: typeof cluster.metrics?.totalFlows === 'number' ?
-              cluster.metrics.totalFlows : 0,
-            spatial_coverage: spatialCoverage,
-            avg_distance: avgDistance,
-            spatial_metrics: {
-              centerLat: center ? center[1] : 0,
-              centerLon: center ? center[0] : 0,
-              boundingBox: calculateBoundingBox(marketCoords.map(m => m.coordinates)),
-              marketDensity: marketCoords.length / (avgDistance || 1),
-              spatialDispersion: calculateSpatialDispersion(marketCoords.map(m => m.coordinates))
-            },
-            timeSeriesCompleteness: typeof cluster.metrics?.timeSeriesCompleteness === 'number' ?
-              cluster.metrics.timeSeriesCompleteness : 0,
-            lastUpdateTimestamp: cluster.metrics?.lastUpdateTimestamp || null,
-            stabilityScore: typeof cluster.metrics?.stabilityScore === 'number' ?
-              cluster.metrics.stabilityScore : 0,
-            integrationScore: typeof cluster.metrics?.integrationScore === 'number' ?
-              cluster.metrics.integrationScore : 0,
-            performanceScore: typeof cluster.metrics?.performanceScore === 'number' ?
-              cluster.metrics.performanceScore : 0,
-            active: typeof cluster.metrics?.active === 'boolean' ?
-              cluster.metrics.active : true,
-            lastCalculated: cluster.metrics?.lastCalculated || new Date().toISOString(),
-            dataQualityScore: typeof cluster.metrics?.dataQualityScore === 'number' ?
-              cluster.metrics.dataQualityScore : 1
-          }
-        };
-      });
-    } catch {
-      return [];
-    }
-  }
+  // Combined efficiency score
+  return (
+    (0.4 * networkDensity) +
+    (0.3 * (avgFlow / maxFlow)) +
+    (0.3 * spatialCoverage)
+  );
+};
+
+const calculateDataSize = (obj) => {
+  const str = JSON.stringify(obj);
+  return str ? str.length : 0;
+};
+
+// Corrected Selector Creator with Deep Equality
+const createDeepEqualSelector = createSelectorCreator(
+  lruMemoize,
+  _.isEqual
 );
 
-// Feature Data with Metrics Selector
-export const selectFeatureDataWithMetrics = createSelector(
-  [selectGeometryData, selectTimeSeriesData],
-  (geometry, timeSeriesData) => {
-    if (!geometry?.points || !Array.isArray(timeSeriesData)) {
-      return null;
-    }
-    try {
-      const timeSeriesByRegion = _.groupBy(timeSeriesData, 'region');
-      const regionalMetrics = Object.entries(timeSeriesByRegion).reduce((acc, [region, data]) => {
-        const prices = data.map(d => d.usdPrice).filter(p => typeof p === 'number');
-        const conflicts = data.map(d => d.conflictIntensity).filter(c => typeof c === 'number');
-        acc[region] = {
-          averagePrice: prices.length ? _.mean(prices) : 0,
-          priceVolatility: prices.length > 1 ? calculateVolatility(prices) : 0,
-          conflictIntensity: conflicts.length ? _.mean(conflicts) : 0,
-          dataPoints: data.length,
-          lastUpdate: data.reduce((latest, point) => {
-            const date = point.additionalProperties?.date;
-            return date && (!latest || new Date(date) > new Date(latest)) ? date : latest;
-          }, null)
-        };
-        return acc;
-      }, {});
+const getDefaultMetrics = () => ({
+  marketEfficiency: { average: 0, max: 0, min: 0 },
+  connectivity: { flowDensity: 0, averageConnectivity: 0 },
+  spatial: { globalMoransI: 0, clusterCount: 0, significantClusters: 0 },
+  coverage: { totalMarkets: 0, averageCoverage: 0 }
+});
 
-      const processedPoints = geometry.points.map(point => {
-        const regionId = transformRegionName(
-          point.properties?.normalizedName || 
-          point.properties?.region_id || 
-          point.properties?.name
-        );
+const getDefaultSpatialData = () => ({
+  geometry: null,
+  marketClusters: [],
+  flowMaps: [],
+  timeSeriesData: [],
+  marketShocks: [],
+  marketIntegration: { price_correlation: {}, flow_density: 0 },
+  spatialAutocorrelation: { global: { moran_i: 0 }, local: {} },
+  regressionAnalysis: { model: {}, residuals: [], spatial_analysis_results: [] },
+  seasonalAnalysis: { seasonal_pattern: [] },
+  uniqueMonths: [],
+  metrics: getDefaultMetrics(),
+  timestamp: Date.now()
+});
 
-        return {
-          ...point,
-          properties: {
-            ...point.properties,
-            metrics: regionalMetrics[regionId] || {
-              averagePrice: 0,
-              priceVolatility: 0,
-              conflictIntensity: 0,
-              dataPoints: 0,
-              lastUpdate: null
-            },
-            region_id: regionId,
-            coordinates: validateCoordinates(point.coordinates)
-          }
-        };
-      });
-
-      return {
-        points: processedPoints,
-        metrics: regionalMetrics,
-        timestamp: Date.now()
-      };
-    } catch {
-      return null;
-    }
-  }
-);
-
-// Autocorrelation Metrics Selector
-export const selectAutocorrelationMetrics = createSelector(
-  [selectSpatialAutocorrelation],
-  (autocorrelation) => {
-    if (!autocorrelation?.local) return null;
-    try {
-      const clusters = Object.values(autocorrelation.local);
-      const clusterTypes = clusters.map(c => c.cluster_type);
-      return {
-        highHigh: clusterTypes.filter(t => t === 'high-high').length,
-        lowLow: clusterTypes.filter(t => t === 'low-low').length,
-        highLow: clusterTypes.filter(t => t === 'high-low').length,
-        lowHigh: clusterTypes.filter(t => t === 'low-high').length,
-        notSignificant: clusterTypes.filter(t => t === 'not-significant').length,
-        totalClusters: clusters.length,
-        globalIndex: autocorrelation.global?.moran_i || 0,
-        significance: autocorrelation.global?.p_value < 0.05
-      };
-    } catch {
-      return {
-        highHigh: 0,
-        lowLow: 0,
-        highLow: 0,
-        lowHigh: 0,
-        notSignificant: 0,
-        totalClusters: 0,
-        globalIndex: 0,
-        significance: false
-      };
-    }
-  }
-);
-
-// Enhanced Metrics Calculation
 const calculateEnhancedMetrics = (clusters, flows, integration, autocorrelation) => {
   try {
     const clusterMetrics = clusters?.map(c => c.metrics) || [];
@@ -781,56 +240,532 @@ const calculateEnhancedMetrics = (clusters, flows, integration, autocorrelation)
       spatial: {
         globalMoransI: autocorrelation?.global?.moran_i || 0,
         clusterCount: clusters?.length || 0,
-        significantClusters: Object.values(autocorrelation?.local || {})
-          .filter(c => c.p_value < 0.05).length
+        significantClusters: countSignificantClusters(autocorrelation)
       },
       coverage: {
         totalMarkets: _.sumBy(clusters, c => c.connected_markets?.length || 0),
         averageCoverage: _.meanBy(clusterMetrics, 'market_coverage') || 0
       }
     };
-  } catch {
-    return {
-      marketEfficiency: { average: 0, max: 0, min: 0 },
-      connectivity: { flowDensity: 0, averageConnectivity: 0 },
-      spatial: { globalMoransI: 0, clusterCount: 0, significantClusters: 0 },
-      coverage: { totalMarkets: 0, averageCoverage: 0 }
-    };
+  } catch (error) {
+    console.error('Enhanced metrics calculation error:', error);
+    return getDefaultMetrics();
   }
 };
 
-// Default Metrics Structure
-const getDefaultMetrics = () => ({
-  marketEfficiency: { average: 0, max: 0, min: 0 },
-  connectivity: { flowDensity: 0, averageConnectivity: 0 },
-  spatial: { globalMoransI: 0, clusterCount: 0, significantClusters: 0 },
-  coverage: { totalMarkets: 0, averageCoverage: 0 }
-});
+const countSignificantClusters = (autocorrelation) => {
+  if (!autocorrelation?.local) return 0;
+  return Object.values(autocorrelation.local)
+    .filter(c => c.p_value < 0.05)
+    .length;
+};
 
-// Visualization Data Selector
-export const selectVisualizationData = createSelector(
+const processRegressionResults = (regression) => {
+  if (!regression?.spatial_analysis_results) return [];
+  return regression.spatial_analysis_results.map(result => ({
+    ...result,
+    residual: Array.isArray(result.residual) ? result.residual : [],
+    coefficients: result.coefficients || {},
+    moran_i: result.moran_i || { I: null, 'p-value': null }
+  }));
+};
+
+const extractUniqueMonths = (timeSeriesData) => {
+  if (!Array.isArray(timeSeriesData)) return [];
+  return _.uniq(timeSeriesData.map(d => d.month))
+    .filter(Boolean)
+    .sort((a, b) => new Date(a) - new Date(b));
+};
+
+// Core state selectors with performance monitoring
+const selectSpatialRoot = (state) => {
+  const metric = backgroundMonitor.startMetric('spatial-root-selector');
+  try {
+    const result = state.spatial ?? { data: {}, status: {}, ui: {} };
+    metric.finish({ status: 'success' });
+    return result;
+  } catch (error) {
+    metric.finish({ status: 'error', error: error.message });
+    return { data: {}, status: {}, ui: {} };
+  }
+};
+
+const selectSpatialData = createSelector(
+  [selectSpatialRoot],
+  (spatial) => spatial.data ?? {}
+);
+
+const selectSpatialStatus = createSelector(
+  [selectSpatialRoot],
+  (spatial) => spatial.status ?? {}
+);
+
+const selectSpatialUI = createSelector(
+  [selectSpatialRoot],
+  (spatial) => spatial.ui ?? {}
+);
+
+export const selectLoadingStatus = createSelector(
+  [selectSpatialStatus],
+  (status) => ({
+    loading: status?.loading || false,
+    stage: status?.stage || '',
+    progress: status?.progress || 0
+  })
+);
+
+export const selectStatus = createSelector(
+  [selectSpatialStatus],
+  (status) => status
+);
+
+export const selectGeometryData = createSelector(
+  [selectSpatialData],
+  (data) => data?.geometry || {}
+);
+
+export const selectMarketFlows = createSelector(
+  [selectSpatialData],
+  (data) => data?.flowMaps || []
+);
+
+export const selectMarketIntegration = createSelector(
+  [selectSpatialData],
+  (data) => data?.marketIntegration || {}
+);
+
+export const selectVisualizationMode = createSelector(
+  [selectSpatialUI],
+  (ui) => ui?.visualizationMode || 'prices'
+);
+
+export const selectSelectedDate = createSelector(
+  [selectSpatialUI],
+  (ui) => ui?.selectedDate || ''
+);
+
+export const selectSelectedCommodity = createSelector(
+  [selectSpatialUI],
+  (ui) => ui?.selectedCommodity || ''
+);
+
+export const selectMarketShocks = createSelector(
+  [selectSpatialData],
+  (data) => data?.marketShocks || []
+);
+
+export const selectSeasonalAnalysis = createSelector(
+  [selectSpatialData],
+  (data) => data?.seasonalAnalysis || {}
+);
+
+export const selectSpatialAutocorrelation = createSelector(
+  [selectSpatialData],
+  (data) => data?.spatialAutocorrelation || {
+    global: { moran_i: 0, p_value: 1 },
+    local: {}
+  }
+);
+
+export const selectAutocorrelationMetrics = createSelector(
+  [selectSpatialAutocorrelation],
+  (autocorrelation) => calculateAutocorrelationMetrics(autocorrelation)
+);
+
+export const selectTimeSeriesData = createDeepEqualSelector(
+  [
+    selectSpatialData,
+    state => state.spatial.ui.selectedRegimes,
+    state => state.spatial.ui.selectedDate
+  ],
+  (spatialData, selectedRegimes, selectedDate) => {
+    const metric = backgroundMonitor.startMetric('time-series-analysis');
+
+    try {
+      const timeSeriesData = spatialData.timeSeriesData;
+      if (!Array.isArray(timeSeriesData)) {
+        metric.finish({ status: 'success', seriesCount: 0, date: selectedDate });
+        return [];
+      }
+
+      const filteredData = timeSeriesData.filter(d => {
+        const dateMatch = !selectedDate || d.month === selectedDate;
+        const regimeMatch = !selectedRegimes.length || selectedRegimes.includes(d.regime);
+        return dateMatch && regimeMatch;
+      });
+
+      const processedData = filteredData.map(series => {
+        const priceValues = series.prices?.filter(p => typeof p === 'number') || [];
+        const volatility = calculateVolatility(priceValues);
+        const trend = calculateTrend(priceValues);
+
+        return {
+          ...series,
+          metrics: {
+            volatility,
+            trend,
+            average: priceValues.length ? _.mean(priceValues) : 0,
+            seasonality: detectSeasonality(priceValues)
+          }
+        };
+      });
+
+      metric.finish({ 
+        status: 'success',
+        seriesCount: processedData.length,
+        date: selectedDate
+      });
+
+      return processedData;
+
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      console.error('Time series analysis error:', error);
+      return [];
+    }
+  }
+);
+
+export const selectFeatureDataWithMetrics = createSelector(
+  [selectGeometryData, selectTimeSeriesData],
+  (geometry, timeSeriesData) => processFeatureData(geometry, timeSeriesData)
+);
+
+export const selectMarketClusters = createDeepEqualSelector(
+  [selectSpatialData, state => state.flow?.flows || []],
+  (spatialData, flows) => {
+    const metric = backgroundMonitor.startMetric('market-cluster-analysis');
+
+    try {
+      if (!spatialData.marketClusters?.length) {
+        metric.finish({ status: 'success', clusterCount: 0 });
+        return [];
+      }
+
+      const processedClusters = spatialData.marketClusters.map(cluster => {
+        const clusterFlows = flows.filter(flow => 
+          cluster.connected_markets.includes(flow.source) || 
+          cluster.connected_markets.includes(flow.target)
+        );
+
+        const marketCoordinates = cluster.connected_markets.map(market => {
+          const coords = getRegionCoordinates(market);
+          return coords ? { market, coordinates: coords } : null;
+        }).filter(Boolean);
+
+        const totalFlow = clusterFlows.reduce((sum, flow) => sum + flow.flow_weight, 0);
+        const internalFlows = clusterFlows.filter(flow => 
+          cluster.connected_markets.includes(flow.source) && 
+          cluster.connected_markets.includes(flow.target)
+        );
+
+        return {
+          ...cluster,
+          metrics: {
+            marketCount: cluster.connected_markets.length,
+            totalFlow,
+            internalFlowRatio: internalFlows.length / Math.max(clusterFlows.length, 1),
+            spatialCoverage: marketCoordinates.length / cluster.connected_markets.length,
+            avgDistance: calculateAverageDistance(marketCoordinates.map(m => m.coordinates)),
+            efficiency: calculateClusterEfficiency(cluster, clusterFlows, marketCoordinates)
+          }
+        };
+      });
+
+      metric.finish({ 
+        status: 'success', 
+        clusterCount: processedClusters.length 
+      });
+
+      return processedClusters;
+
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      console.error('Market cluster analysis error:', error);
+      return [];
+    }
+  }
+);
+
+export const selectFlowData = createDeepEqualSelector(
+  [
+    state => state.flow?.flows || [],
+    state => state.spatial.ui.selectedDate,
+    state => state.spatial.ui.selectedCommodity
+  ],
+  (flows, selectedDate, selectedCommodity) => {
+    const metric = backgroundMonitor.startMetric('flow-data-selection');
+    
+    try {
+      if (!flows.length || !selectedDate || !selectedCommodity) {
+        metric.finish({ status: 'success', flowCount: 0, date: selectedDate, commodity: selectedCommodity });
+        return [];
+      }
+
+      const filteredFlows = flows.filter(flow => {
+        if (!flowValidation.isValidFlow(flow)) {
+          return false;
+        }
+        const flowDate = flow.date?.substring(0, 7);
+        return flowDate === selectedDate;
+      });
+
+      metric.finish({ 
+        status: 'success',
+        flowCount: filteredFlows.length,
+        date: selectedDate,
+        commodity: selectedCommodity
+      });
+
+      return filteredFlows;
+    } catch (error) {
+      metric.finish({ 
+        status: 'error', 
+        error: error.message 
+      });
+      console.error('Flow data selection error:', error);
+      return [];
+    }
+  }
+);
+
+export const selectMarketMetrics = createDeepEqualSelector(
+  [selectFlowData],
+  (flows) => {
+    const metric = backgroundMonitor.startMetric('market-metrics-calculation');
+    
+    try {
+      if (!flows.length) {
+        metric.finish({ status: 'success', marketCount: 0, flowCount: 0 });
+        return {
+          totalFlows: 0,
+          averageFlow: 0,
+          maxFlow: 0,
+          activeMarkets: 0,
+          flowDensity: 0
+        };
+      }
+
+      const validFlows = flows.filter(flow => flow.flow_weight > 0);
+      const markets = new Set();
+      
+      validFlows.forEach(flow => {
+        if (flow.source) markets.add(flow.source);
+        if (flow.target) markets.add(flow.target);
+      });
+
+      const flowValues = validFlows.map(f => f.flow_weight);
+      const totalFlow = _.sum(flowValues);
+      const avgFlow = totalFlow / flowValues.length;
+
+      const result = {
+        totalFlows: validFlows.length,
+        averageFlow: avgFlow,
+        maxFlow: Math.max(...flowValues),
+        activeMarkets: markets.size,
+        flowDensity: markets.size > 1 ? 
+          validFlows.length / (markets.size * (markets.size - 1) / 2) : 0
+      };
+
+      metric.finish({ 
+        status: 'success',
+        marketCount: markets.size,
+        flowCount: validFlows.length
+      });
+
+      return result;
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      console.error('Market metrics calculation error:', error);
+      return {
+        totalFlows: 0,
+        averageFlow: 0,
+        maxFlow: 0,
+        activeMarkets: 0,
+        flowDensity: 0
+      };
+    }
+  }
+);
+
+export const selectSpatialNetwork = createDeepEqualSelector(
+  [selectFlowData, selectSpatialData],
+  (flows, spatialData) => {
+    const metric = backgroundMonitor.startMetric('spatial-network-analysis');
+
+    try {
+      if (!flows.length || !spatialData.geometry) {
+        metric.finish({ status: 'success', marketCount: 0, connectionCount: 0 });
+        return null;
+      }
+
+      const markets = new Map();
+      const connections = [];
+
+      flows.forEach(flow => {
+        const sourceCoords = getRegionCoordinates(flow.source);
+        const targetCoords = getRegionCoordinates(flow.target);
+
+        if (!sourceCoords || !targetCoords) return;
+
+        if (!markets.has(flow.source)) {
+          markets.set(flow.source, {
+            id: flow.source,
+            coordinates: sourceCoords,
+            totalFlow: 0,
+            incomingFlows: 0,
+            outgoingFlows: 0
+          });
+        }
+
+        const sourceMarket = markets.get(flow.source);
+        const targetMarket = markets.get(flow.target) || {
+          id: flow.target,
+          coordinates: targetCoords,
+          totalFlow: 0,
+          incomingFlows: 0,
+          outgoingFlows: 0
+        };
+
+        sourceMarket.totalFlow += flow.flow_weight;
+        sourceMarket.outgoingFlows++;
+        targetMarket.totalFlow += flow.flow_weight;
+        targetMarket.incomingFlows++;
+
+        if (!markets.has(flow.target)) {
+          markets.set(flow.target, targetMarket);
+        }
+
+        connections.push({
+          source: flow.source,
+          target: flow.target,
+          weight: flow.flow_weight,
+          coordinates: {
+            source: sourceCoords,
+            target: targetCoords
+          }
+        });
+      });
+
+      const result = {
+        markets: Array.from(markets.values()),
+        connections,
+        metrics: {
+          totalMarkets: markets.size,
+          totalConnections: connections.length,
+          networkDensity: markets.size > 1 ? 
+            connections.length / (markets.size * (markets.size - 1) / 2) : 0,
+          averageConnections: markets.size > 0 ? 
+            connections.length / markets.size : 0
+        }
+      };
+
+      metric.finish({ status: 'success', marketCount: markets.size, connectionCount: connections.length });
+      return result;
+
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      console.error('Spatial network analysis error:', error);
+      return null;
+    }
+  }
+);
+
+export const selectRegressionAnalysis = createDeepEqualSelector(
+  [selectSpatialData, selectSelectedCommodity],
+  (spatialData, selectedCommodity) => {
+    const metric = backgroundMonitor.startMetric('regression-analysis');
+
+    try {
+      const regression = spatialData.regressionAnalysis;
+      if (!regression || !selectedCommodity) {
+        metric.finish({ status: 'success', commodity: selectedCommodity });
+        return null;
+      }
+
+      const metadata = regression.metadata || {};
+      
+      // Only process if commodity matches
+      if (selectedCommodity && metadata.commodity !== selectedCommodity) {
+        metric.finish({ status: 'success', commodity: selectedCommodity });
+        return null;
+      }
+
+      const result = {
+        model: regression.model || {},
+        spatial: {
+          moran_i: regression.spatial?.moran_i || { I: 0, 'p-value': 1 },
+          vif: Array.isArray(regression.spatial?.vif) ? regression.spatial.vif : []
+        },
+        residuals: {
+          raw: Array.isArray(regression.residuals?.raw) ? regression.residuals.raw : [],
+          byRegion: regression.residuals?.byRegion || {},
+          stats: {
+            mean: validateNumber(regression.residuals?.stats?.mean),
+            variance: validateNumber(regression.residuals?.stats?.variance),
+            maxAbsolute: validateNumber(regression.residuals?.stats?.maxAbsolute)
+          }
+        },
+        metadata: {
+          commodity: selectedCommodity,
+          timestamp: metadata.timestamp || new Date().toISOString(),
+          version: metadata.version || "1.0"
+        }
+      };
+
+      metric.finish({ status: 'success', commodity: selectedCommodity });
+      return result;
+
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      console.error('Regression analysis error:', error);
+      return null;
+    }
+  }
+);
+
+export const selectClustersWithCoordinates = createSelector(
+  [selectMarketClusters, selectGeometryData],
+  (clusters, geometry) => processClustersWithCoordinates(clusters, geometry)
+);
+
+export const selectFlowsWithCoordinates = createSelector(
+  [selectMarketFlows, selectGeometryData],
+  (flows, geometry) => processFlowsWithCoordinates(flows, geometry)
+);
+
+export const selectVisualizationData = createDeepEqualSelector(
   [selectFeatureDataWithMetrics, selectMarketFlows, selectMarketClusters],
   (featureData, flows, clusters) => {
+    const metric = backgroundMonitor.startMetric('visualization-data-processing');
+
     try {
-      const processedFlows = (flows || []).map(flow => ({
-        ...flow,
-        coordinates: {
-          source: getRegionCoordinates(flow.source),
-          target: getRegionCoordinates(flow.target)
-        },
-        normalized: {
-          source: transformRegionName(flow.source),
-          target: transformRegionName(flow.target)
-        }
-      }));
+      const processedFlows = (flows || []).map(flow => {
+        const sourceCoords = getRegionCoordinates(flow.source);
+        const targetCoords = getRegionCoordinates(flow.target);
+
+        if (!sourceCoords || !targetCoords) return null;
+
+        return {
+          ...flow,
+          coordinates: {
+            source: sourceCoords,
+            target: targetCoords
+          },
+          normalized: {
+            source: transformRegionName(flow.source),
+            target: transformRegionName(flow.target)
+          }
+        };
+      }).filter(Boolean);
 
       const processedClusters = (clusters || []).map(cluster => {
         const marketCoords = (cluster.connected_markets || [])
-          .map(market => ({
-            name: market,
-            coordinates: getRegionCoordinates(market)
-          }))
-          .filter(m => m.coordinates);
+          .map(market => {
+            const coords = getRegionCoordinates(market);
+            return coords ? { name: market, coordinates: coords } : null;
+          })
+          .filter(Boolean);
 
         return {
           ...cluster,
@@ -839,13 +774,24 @@ export const selectVisualizationData = createSelector(
         };
       });
 
-      return {
+      const result = {
         features: featureData?.points || [],
         flows: processedFlows,
         clusters: processedClusters,
         timestamp: Date.now()
       };
-    } catch {
+
+      metric.finish({ 
+        status: 'success',
+        flowCount: processedFlows.length,
+        clusterCount: processedClusters.length
+      });
+
+      return result;
+
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      console.error('Visualization data processing error:', error);
       return {
         features: [],
         flows: [],
@@ -856,10 +802,9 @@ export const selectVisualizationData = createSelector(
   }
 );
 
-// Optimized Spatial Data Selector
-export const selectSpatialDataOptimized = createSelector(
+export const selectSpatialDataOptimized = createDeepEqualSelector(
   [
-    selectUnifiedGeometry,
+    selectGeometryData,
     selectMarketClusters,
     selectMarketFlows,
     selectTimeSeriesData,
@@ -867,7 +812,7 @@ export const selectSpatialDataOptimized = createSelector(
     selectMarketIntegration,
     selectSpatialAutocorrelation,
     selectRegressionAnalysis,
-    selectSeasonalAnalysis,
+    selectSeasonalAnalysis
   ],
   (
     geometry,
@@ -880,22 +825,11 @@ export const selectSpatialDataOptimized = createSelector(
     regression,
     seasonal
   ) => {
+    const metric = backgroundMonitor.startMetric('spatial-data-optimization');
+
     try {
-      const spatial_analysis_results = Array.isArray(regression?.spatial_analysis_results)
-        ? regression.spatial_analysis_results.map(result => ({
-            ...result,
-            residual: Array.isArray(result.residual) ? result.residual : [],
-            coefficients: result.coefficients || {},
-            moran_i: result.moran_i || { I: null, 'p-value': null },
-          }))
-        : [];
-
-      const uniqueMonths = timeSeriesData
-        ? _.uniq(timeSeriesData.map(d => d.month))
-            .filter(Boolean)
-            .sort((a, b) => new Date(a) - new Date(b))
-        : [];
-
+      const spatial_analysis_results = processRegressionResults(regression);
+      const uniqueMonths = extractUniqueMonths(timeSeriesData);
       const metrics = calculateEnhancedMetrics(
         clusters,
         flows,
@@ -903,7 +837,7 @@ export const selectSpatialDataOptimized = createSelector(
         autocorrelation
       );
 
-      return {
+      const result = {
         geometry,
         marketClusters: clusters,
         flowMaps: flows,
@@ -920,109 +854,26 @@ export const selectSpatialDataOptimized = createSelector(
         metrics,
         timestamp: Date.now()
       };
-    } catch {
-      return {
-        geometry: null,
-        marketClusters: [],
-        flowMaps: [],
-        timeSeriesData: [],
-        marketShocks: [],
-        marketIntegration: { price_correlation: {}, flow_density: 0 },
-        spatialAutocorrelation: { global: { moran_i: 0 }, local: {} },
-        regressionAnalysis: { model: {}, residuals: [], spatial_analysis_results: [] },
-        seasonalAnalysis: { seasonal_pattern: [] },
-        uniqueMonths: [],
-        metrics: getDefaultMetrics(),
-        timestamp: Date.now()
-      };
+
+      metric.finish({ 
+        status: 'success',
+        dataSize: calculateDataSize(result)
+      });
+
+      return result;
+
+    } catch (error) {
+      metric.finish({ status: 'error', error: error.message });
+      console.error('Spatial data optimization error:', error);
+      return getDefaultSpatialData();
     }
   }
 );
 
-// Flows with Coordinates Selector
-export const selectFlowsWithCoordinates = createSelector(
-  [selectMarketFlows, selectGeometryData],
-  (flows, geometry) => {
-    try {
-      if (!flows || !geometry?.points) {
-        return [];
-      }
 
-      const pointsMap = new Map();
-      geometry.points.forEach(point => {
-        const names = [
-          point.properties?.name,
-          point.properties?.normalizedName,
-          point.properties?.region_id
-        ].filter(Boolean).map(name => transformRegionName(name));
-        const coords = Array.isArray(point.coordinates) && point.coordinates.length === 2
-          ? point.coordinates
-          : getRegionCoordinates(names[0]);
-        names.forEach(name => {
-          if (name && !pointsMap.has(name)) {
-            pointsMap.set(name, coords ? validateCoordinates(coords) : null);
-          }
-        });
-      });
-
-      return flows.map(flow => {
-        const sourceNormalized = transformRegionName(flow.source);
-        const targetNormalized = transformRegionName(flow.target);
-
-        const sourceCoords = pointsMap.get(sourceNormalized) || getRegionCoordinates(flow.source);
-        const targetCoords = pointsMap.get(targetNormalized) || getRegionCoordinates(flow.target);
-
-        return {
-          ...flow,
-          source_normalized: sourceNormalized,
-          target_normalized: targetNormalized,
-          sourceCoordinates: sourceCoords || [0, 0],
-          targetCoordinates: targetCoords || [0, 0],
-          flow_strength: typeof flow.total_flow === 'number' ? flow.total_flow : 0,
-          price_differential: typeof flow.avg_price_differential === 'number' ? 
-            flow.avg_price_differential : 0
-        };
-      });
-    } catch {
-      return [];
-    }
-  }
-);
-
-// Utility Functions Export
-export const utils = {
-  calculateDistance,
-  validateCoordinates,
-  calculateVolatility,
-  calculateAverageDistance,
-  calculateEnhancedMetrics,
-  getDefaultMetrics
-};
-
-// Default Export of Selectors
-export default {
-  selectLoadingStatus,
-  selectStage,
-  selectTimeSeriesData,
-  selectGeometryData,
-  selectMarketIntegration,
-  selectFlowMaps,
-  selectSelectedDate,
-  selectFilteredFlowData,
-  selectMarketMetrics,
-  selectVisualizationMode,
-  selectSelectedCommodity,
-  selectUnifiedGeometry,
-  selectMarketClusters,
-  selectMarketFlows,
-  selectSpatialAutocorrelation,
-  selectRegressionAnalysis,
-  selectSeasonalAnalysis,
-  selectMarketShocks,
-  selectClustersWithCoordinates,
-  selectFeatureDataWithMetrics,
-  selectAutocorrelationMetrics,
-  selectVisualizationData,
-  selectSpatialDataOptimized,
-  selectFlowsWithCoordinates
+// Make sure all these selectors are properly exported individually
+export {
+  selectSpatialData,
+  selectSpatialStatus,
+  selectSpatialUI,
 };

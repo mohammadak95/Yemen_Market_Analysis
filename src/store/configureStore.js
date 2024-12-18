@@ -6,6 +6,7 @@ import themeReducer from '../slices/themeSlice';
 import welcomeModalReducer from './welcomeModalSlice';
 import ecmReducer from '../slices/ecmSlice';
 import flowReducer from '../slices/flowSlice';
+import priceDiffReducer from '../slices/priceDiffSlice';
 import { createBatchMiddleware } from '../middleware/batchMiddleware';
 import { createSpatialMiddleware } from '../middleware/spatialMiddleware';
 import { spatialHandler } from '../utils/spatialDataHandler';
@@ -18,7 +19,6 @@ export const configureAppStore = async () => {
     return store;
   }
 
-  // Start store configuration metric
   const configMetric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.INIT, {
     component: 'store',
     timestamp: Date.now()
@@ -87,14 +87,23 @@ export const configureAppStore = async () => {
         theme: themeReducer,
         welcomeModal: welcomeModalReducer,
         ecm: ecmReducer,
-        flow: flowReducer
+        flow: flowReducer,
+        priceDiff: priceDiffReducer
       },
       middleware: (getDefaultMiddleware) => {
         const defaultMiddleware = getDefaultMiddleware({
           serializableCheck: {
             warnAfter: 5000,
-            ignoredPaths: [...ignoredPaths.spatial, ...ignoredPaths.flow, ...ignoredPaths.ecm],
-            ignoredActions: [...ignoredActions.spatial, ...ignoredActions.flow, ...ignoredActions.ecm]
+            ignoredPaths: [
+              ...ignoredPaths.spatial,
+              ...ignoredPaths.flow,
+              ...ignoredPaths.ecm
+            ],
+            ignoredActions: [
+              ...ignoredActions.spatial,
+              ...ignoredActions.flow,
+              ...ignoredActions.ecm
+            ]
           },
           immutableCheck: {
             warnAfter: 1000,
@@ -128,7 +137,6 @@ export const configureAppStore = async () => {
           spatialMiddleware
         ];
 
-        // Add development tools
         if (process.env.NODE_ENV === 'development') {
           const { createLogger } = require('redux-logger');
           const logger = createLogger({
@@ -175,7 +183,6 @@ export const configureAppStore = async () => {
       }
     });
 
-    // Add development tools
     if (process.env.NODE_ENV === 'development') {
       const monitorHealth = backgroundMonitor.checkHealth();
       
@@ -234,7 +241,6 @@ export const configureAppStore = async () => {
       };
     }
 
-    // Verify store initialization
     const initialState = store.getState();
     if (!initialState.spatial || !initialState.theme || !initialState.welcomeModal) {
       throw new Error('Store initialization failed: missing required reducers');
@@ -246,7 +252,6 @@ export const configureAppStore = async () => {
       middlewareCount: store.middleware?.length || 0
     });
 
-    // Handle hot module replacement
     if (process.env.NODE_ENV === 'development' && module.hot) {
       module.hot.accept('../slices/spatialSlice', () => {
         store.replaceReducer({
@@ -266,7 +271,6 @@ export const configureAppStore = async () => {
   }
 };
 
-// Export a function to get the store instance
 export const getStore = () => {
   if (!store) {
     throw new Error('Store has not been initialized. Call configureAppStore() first.');

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Grid,
@@ -58,32 +58,55 @@ const FlowNetworkAnalysis = () => {
     refreshData
   } = useFlowDataManager();
 
-  // Process flows with additional metrics
+  // Process flows with additional metrics and validation
   const processedFlows = useMemo(() => {
-    if (!currentFlows?.length) {
+    if (!Array.isArray(currentFlows) || !currentFlows.length) {
       console.debug('No flows available for processing:', { date: selectedDate, commodity: selectedCommodity });
       return [];
     }
 
-    console.debug('Processing flows:', { 
-      count: currentFlows.length, 
-      date: selectedDate, 
-      commodity: selectedCommodity 
-    });
+    try {
+      console.debug('Processing flows:', {
+        count: currentFlows.length,
+        date: selectedDate,
+        commodity: selectedCommodity
+      });
 
-    const maxFlow = Math.max(...currentFlows.map(f => f.flow_weight));
+      // Filter out invalid flows before processing
+      const validFlows = currentFlows.filter(flow => (
+        flow &&
+        typeof flow === 'object' &&
+        typeof flow.flow_weight === 'number' &&
+        !isNaN(flow.flow_weight)
+      ));
 
-    return currentFlows.map(flow => {
-      const normalizedFlow = flowValidation.normalizeFlow(flow, maxFlow);
-      const status = flowValidation.getFlowStatus(normalizedFlow);
+      if (validFlows.length === 0) {
+        console.debug('No valid flows found after filtering');
+        return [];
+      }
 
-      return {
-        ...flow,
-        normalizedFlow,
-        normalizedPriceDiff: maxFlow > 0 ? Math.abs(flow.price_differential || 0) / maxFlow : 0,
-        status
-      };
-    });
+      const maxFlow = Math.max(...validFlows.map(f => f.flow_weight));
+
+      return validFlows.map(flow => {
+        try {
+          const normalizedFlow = flowValidation.normalizeFlow(flow, maxFlow);
+          const status = flowValidation.getFlowStatus(normalizedFlow);
+
+          return {
+            ...flow,
+            normalizedFlow,
+            normalizedPriceDiff: maxFlow > 0 ? Math.abs(flow.price_differential || 0) / maxFlow : 0,
+            status
+          };
+        } catch (error) {
+          console.warn('Error processing individual flow:', error, flow);
+          return null;
+        }
+      }).filter(Boolean); // Remove any null entries from failed processing
+    } catch (error) {
+      console.error('Error processing flows:', error);
+      return [];
+    }
   }, [currentFlows, selectedDate, selectedCommodity]);
 
   // Handle date change
@@ -109,6 +132,18 @@ const FlowNetworkAnalysis = () => {
   const handleReload = useCallback(() => {
     refreshData();
   }, [refreshData]);
+
+  useEffect(() => {
+    console.debug('FlowNetworkAnalysis mounted', {
+      selectedCommodity,
+      selectedDate,
+      flowsCount: currentFlows?.length
+    });
+    
+    return () => {
+      console.debug('FlowNetworkAnalysis unmounted');
+    };
+  }, [selectedCommodity, selectedDate, currentFlows]);
 
   if (!selectedCommodity) {
     return (

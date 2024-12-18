@@ -1,0 +1,320 @@
+{
+  "name": "src",
+  "children": [
+    { "name": "App.js" },
+    { "name": "App.test.js" },
+    { "name": "Dashboard.css" },
+    { "name": "Dashboard.js" },
+    { "name": "index.js" },
+    { "name": "setupPolyfills.js" },
+    { "name": "setupTests.js" },
+    {
+      "name": "components",
+      "children": [
+        { "name": ".DS_Store" },
+        {
+          "name": "analysis",
+          "children": [
+            { "name": ".DS_Store" },
+            {
+              "name": "ecm",
+              "children": [
+                { "name": "ACFPlot.js" },
+                { "name": "ECMAnalysis.js" },
+                { "name": "ECMResultsEnhanced.js" },
+                { "name": "InterpretationSection.js" },
+                { "name": "IRFChart.js" },
+                { "name": "PACFPlot.js" },
+                { "name": "QQPlot.js" }
+              ]
+            },
+            {
+              "name": "price-differential",
+              "children": [
+                { "name": "CointegrationAnalysis.js" },
+                { "name": "InterpretationSection.js" },
+                { "name": "MarketPairInfo.js" },
+                { "name": "PriceDifferentialAnalysis.js" },
+                { "name": "PriceDifferentialChart.js" },
+                { "name": "PriceDifferentialFramework.js" },
+                { "name": "StationarityTest.js" }
+              ]
+            },
+            {
+              "name": "spatial",
+              "children": [
+                { "name": ".DS_Store" },
+                { "name": "SpatialAnalysis.js" },
+                { "name": "SpatialFramework.js" },
+                { "name": "SpatialMap.js" },
+                { "name": "SpatialRegressionResults.js" },
+                { "name": "components" },
+                { "name": "utils" }
+              ]
+            },
+            {
+              "name": "tvmii",
+              "children": [
+                { "name": "TVMIIAnalysis.js" },
+                { "name": "TVMIIChart.js" },
+                { "name": "TVMIIFramework.js" },
+                { "name": "TVMIIInterpretation.js" },
+                 { "name": "TVMIIMarketPairsChart.js" }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "common",
+          "children": [
+            { "name": "AnalysisContainer.js" },
+            { "name": "AnalysisWrapper.js" },
+            { "name": "ChartContainer.js" },
+             { "name": "EnhancedErrorBoundary.js" },
+            { "name": "EquationWithHelp.js" },
+            { "name": "ErrorBoundary.js" },
+            { "name": "ErrorDisplay.js" },
+            { "name": "ErrorMessage.js" },
+            { "name": "Header.js" },
+            { "name": "LoadingIndicator.js" },
+            { "name": "LoadingSpinner.js" },
+            { "name": "MethodologyLink.js" },
+            { "name": "Navigation.js" },
+            { "name": "WelcomeModal.js" }
+          ]
+        },
+        { "name": "debug" },
+        {
+          "name": "documentation",
+          "children": [
+            { "name": "TechnicalReference.js" }
+          ]
+        },
+        {
+          "name": "interactive_graph",
+          "children": [
+            { "name": "InteractiveChart.js" }
+          ]
+        },
+        {
+          "name": "methodology",
+          "children": [
+            { "name": "CodeBlock.js" },
+            { "name": "MethodologyContentWrapper.js" },
+            { "name": "MethodologyModal.js" },
+            { "name": "MethodologySection.js" }
+          ]
+        },
+         {
+          "name": "spatialAnalysis",
+          "children": [
+            { "name": ".DS_Store" },
+            { "name": "index.js" },
+            { "name": "SpatialAnalysis.js" },
+             {
+              "name": "atoms",
+              "children": [
+                { "name": "Legend.js" },
+                { "name": "MetricCard.js" },
+                { "name": "Tooltip.js" }
+              ]
+            },
+            {
+              "name": "features",
+              "children": [
+                { "name": ".DS_Store" },
+                { "name": "autocorrelation" },
+                { "name": "clusters" },
+                 { "name": "conflict" },
+                { "name": "flows" },
+                { "name": "health" },
+                { "name": "network" },
+                { "name": "seasonal" },
+                { "name": "shocks" }
+              ]
+            },
+            { "name": "hooks" },
+            { "name": "molecules" },
+            { "name": "organisms" },
+            { "name": "styles" },
+            { "name": "types" },
+            { "name": "utils" }
+          ]
+        },
+        {
+          "name": "utils",
+          "children": [
+            { "name": "StateExporter.js" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "config",
+      "children": [
+        { "name": "appConfig.js" }
+      ]
+    },
+    {
+      "name": "constants",
+      "children": [
+        { "name": "index.js" }
+      ]
+    },
+    {
+      "name": "context",
+      "children": [
+        { "name": "DataContext.js" },
+        { "name": "SpatialDataContext.js" },
+         { "name": "WorkerContext.js" }
+      ]
+    },
+    {
+      "name": "hooks",
+      "children": [
+        { "name": ".DS_Store" },
+        { "name": "dataHooks.js" },
+        { "name": "index.js" },
+        { "name": "uiHooks.js" },
+        { "name": "useAppState.js" },
+        { "name": "useClusterEfficiency.js" },
+        { "name": "useDashboardData.js" },
+        { "name": "useFlowDataManager.js" },
+        { "name": "useMarketAnalysis.js" },
+        { "name": "usePrecomputedData.js" },
+        { "name": "useSpatialAutocorrelation.js" },
+        { "name": "useSpatialData.js" },
+        { "name": "useSpatialSelectors.js" },
+        { "name": "useUnifiedData.js" },
+        { "name": "useWindowWidth.js" },
+        {
+          "name": "domains",
+          "children": [
+            { "name": ".DS_Store" },
+            { "name": "analysis" },
+            { "name": "data" },
+            { "name": "spatial" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "middleware",
+      "children": [
+        { "name": ".DS_Store" },
+        { "name": "batchMiddleware.js" },
+        { "name": "optimizedMiddleware.js" },
+        { "name": "requestMiddleware.js" },
+        { "name": "spatialMiddleware.js" }
+      ]
+    },
+    {
+      "name": "routes",
+      "children": [
+        { "name": "AnalysisRoutes.js" }
+      ]
+    },
+    {
+      "name": "selectors",
+      "children": [
+        { "name": "dateSpecificSelectors.js" },
+        { "name": "optimizedSelectors.js" },
+        { "name": "spatialAnalysisSelectors.js" }
+      ]
+    },
+    {
+      "name": "slices",
+      "children": [
+        { "name": "ecmSlice.js" },
+        { "name": "flowSlice.js" },
+        { "name": "index.js" },
+        { "name": "priceDiffSlice.js" },
+        { "name": "spatialSlice.js" },
+        { "name": "themeSlice.js" }
+      ]
+    },
+    {
+      "name": "store",
+      "children": [
+        { "name": ".DS_Store" },
+        { "name": "configureStore.js" },
+        { "name": "createStore.js" },
+        { "name": "index.js" },
+        { "name": "welcomeModalSlice.js" }
+      ]
+    },
+    {
+      "name": "styles",
+      "children": [
+        { "name": "analysisStyles.js" },
+        { "name": "LayoutStyles.js" },
+        { "name": "leaflet-overrides.css" },
+        { "name": "leaflet.css" },
+        { "name": "theme.js" }
+      ]
+    },
+    {
+      "name": "types",
+      "children": [
+        { "name": "dataTypes.js" }
+      ]
+    },
+    {
+      "name": "utils",
+      "children": [
+        { "name": ".DS_Store" },
+        { "name": "appUtils.js" },
+        { "name": "backgroundMonitor.js" },
+        { "name": "colorScales.js" },
+        { "name": "colorUtils.js" },
+        { "name": "coordinateUtils.js" },
+        { "name": "dataCache.js" },
+        { "name": "dataLoader.js" },
+        { "name": "dataProcessingUtils.js" },
+        { "name": "dataProcessor.js" },
+        { "name": "dataTransformations.js" },
+        { "name": "dataUtils.js" },
+        { "name": "debugUtils.js" },
+        { "name": "dynamicImports.js" },
+        { "name": "geoJSONProcessor.js" },
+        { "name": "geometryValidation.js" },
+        { "name": "index.js" },
+        { "name": "leafletSetup.js" },
+        { "name": "marketAnalysisUtils.js" },
+        { "name": "methodologyContent.js" },
+        { "name": "networkDebug.js" },
+        { "name": "numberValidation.js" },
+         { "name": "optimizedSelectors.js" },
+        { "name": "pathResolver.js" },
+        { "name": "pathValidator.js" },
+        { "name": "polygonNormalizer.js" },
+        { "name": "PrecomputedDataManager.js" },
+        { "name": "README.md" },
+        { "name": "ReduxDebugWrapper.js" },
+        { "name": "regionMappingValidator.js" },
+        { "name": "regressionDataProcessor.js" },
+        { "name": "shockAnalysisDebug.js" },
+        { "name": "spatialAnalysisUtils.js" },
+        { "name": "spatialDataHandler.js" },
+        { "name": "spatialDataOptimizer.js" },
+        { "name": "spatialUtils.js" },
+        { "name": "workerManager.js" },
+        { "name": "workerPool.js" }
+      ]
+    },
+    {
+      "name": "utils_backup",
+       "children": [
+        { "name": ".DS_Store" }
+       ]
+    },
+    {
+      "name": "workers",
+      "children": [
+        { "name": "enhancedWorkerSystem.js" },
+        { "name": "processTimeSeriesData.js" },
+        { "name": "spatialWorker.js" }
+      ]
+    }
+  ]
+}
