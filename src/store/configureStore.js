@@ -1,5 +1,3 @@
-// src/store/configureStore.js
-
 import { configureStore } from '@reduxjs/toolkit';
 import spatialReducer from '../slices/spatialSlice';
 import themeReducer from '../slices/themeSlice';
@@ -7,10 +5,10 @@ import welcomeModalReducer from './welcomeModalSlice';
 import ecmReducer from '../slices/ecmSlice';
 import flowReducer from '../slices/flowSlice';
 import priceDiffReducer from '../slices/priceDiffSlice';
-import { createBatchMiddleware } from '../middleware/batchMiddleware';
+import { createBatchMiddleware, withPerformanceMonitoring } from '../middleware/batchMiddleware';
 import { createSpatialMiddleware } from '../middleware/spatialMiddleware';
 import { spatialHandler } from '../utils/spatialDataHandler';
-import { backgroundMonitor, MetricTypes } from '../utils/backgroundMonitor';
+import { backgroundMonitor } from '../utils/backgroundMonitor';
 
 let store = null;
 
@@ -19,65 +17,47 @@ export const configureAppStore = async () => {
     return store;
   }
 
-  const configMetric = backgroundMonitor.startMetric(MetricTypes.SYSTEM.INIT, {
-    component: 'store',
-    timestamp: Date.now()
-  });
+  const configMetric = backgroundMonitor.startMetric('store-configuration');
 
   try {
-    // Initialize middleware
+    // Initialize middleware with performance monitoring
+    const batchMiddleware = withPerformanceMonitoring(
+      createBatchMiddleware({
+        maxBatchSize: 20,
+        batchTimeout: 50
+      })
+    );
+    
     const spatialMiddleware = createSpatialMiddleware();
-    const batchMiddleware = createBatchMiddleware();
 
+    // Configure serialization checks for normalized state
     const ignoredPaths = {
       spatial: [
-        'spatial.data.flowData',
-        'spatial.data.spatialAnalysis',
-        'spatial.data.cache',
-        'spatial.data.geometry',
-        'spatial.data.visualizationData',
-        'spatial.data.regressionAnalysis',
-        'spatial.data.marketClusters',
-        'spatial.data.flowMaps',
-        'spatial.data.marketShocks',
-        'spatial.data.timeSeriesData',
-        'spatial.data.spatialAutocorrelation',
-        'spatial.data.seasonalAnalysis',
-        'spatial.data.marketIntegration',
-        'spatial.data.uniqueMonths'
+        'spatial.geometry.unified',
+        'spatial.geometry.polygons',
+        'spatial.geometry.points',
+        'spatial.cache'
       ],
       flow: [
         'flow.flows',
-        'flow.byDate',
-        'flow.byRegion',
-        'flow.metadata'
+        'flow.byDate'
       ],
       ecm: [
         'ecm.data.unified',
-        'ecm.data.directional',
-        'ecm.data.residuals',
-        'ecm.data.cache'
+        'ecm.data.directional'
       ]
     };
 
     const ignoredActions = {
       spatial: [
-        'spatial/fetchAllSpatialData/fulfilled',
-        'spatial/fetchFlowData/fulfilled',
-        'spatial/batchUpdate',
-        'spatial/updateGeometry',
-        'spatial/updateData',
-        'spatial/updateUI'
+        'spatial/fetchData/fulfilled',
+        'spatial/BATCH_ACTIONS'
       ],
       flow: [
-        'flow/fetchData/fulfilled',
-        'flow/fetchData/pending',
-        'flow/updateFlowMetrics'
+        'flow/fetchData/fulfilled'
       ],
       ecm: [
-        'ecm/fetchECMData/fulfilled',
-        'ecm/fetchECMData/pending',
-        'ecm/setSelectedCommodity'
+        'ecm/fetchData/fulfilled'
       ]
     };
 
@@ -93,6 +73,7 @@ export const configureAppStore = async () => {
       middleware: (getDefaultMiddleware) => {
         const defaultMiddleware = getDefaultMiddleware({
           serializableCheck: {
+            // Increase tolerance for complex data structures
             warnAfter: 5000,
             ignoredPaths: [
               ...ignoredPaths.spatial,
@@ -106,28 +87,20 @@ export const configureAppStore = async () => {
             ]
           },
           immutableCheck: {
-            warnAfter: 1000,
+            // Increase tolerance for normalized updates
+            warnAfter: 2000,
             ignoredPaths: [
-              'spatial.data',
-              'spatial.status',
-              'spatial.ui.view',
-              'spatial.data.cache',
-              'spatial.data.geometry',
+              'spatial.entities',
+              'spatial.geometry',
               'flow.flows',
-              'flow.byDate',
-              'flow.byRegion',
-              'ecm.data',
-              'ecm.status',
-              'ecm.data.cache'
+              'ecm.data'
             ]
           },
           thunk: {
             extraArgument: {
               spatialHandler,
-              backgroundMonitor,
-              MetricTypes
-            },
-            timeout: 30000
+              backgroundMonitor
+            }
           }
         });
 
@@ -137,6 +110,7 @@ export const configureAppStore = async () => {
           spatialMiddleware
         ];
 
+        // Add logger in development
         if (process.env.NODE_ENV === 'development') {
           const { createLogger } = require('redux-logger');
           const logger = createLogger({
@@ -151,16 +125,11 @@ export const configureAppStore = async () => {
               error: () => '#F20404'
             },
             predicate: (getState, action) => {
-              if (!action || typeof action !== 'object' || !action.type) {
-                return false;
-              }
+              // Skip frequent/noisy actions
               const skippedActions = [
                 'spatial/setProgress',
-                'spatial/setLoadingStage',
-                'spatial/updateCache',
-                'spatial/updateProgress',
-                'flow/updateFlowMetrics',
-                'ecm/updateCache'
+                'spatial/BATCH_ACTIONS',
+                'spatial/updateCache'
               ];
               return !skippedActions.includes(action.type);
             }
@@ -176,74 +145,34 @@ export const configureAppStore = async () => {
         traceLimit: 25,
         actionsBlacklist: [
           'spatial/setProgress',
-          'spatial/setLoadingStage',
-          'flow/updateFlowMetrics',
-          'ecm/updateCache'
+          'spatial/BATCH_ACTIONS',
+          'spatial/updateCache'
         ]
       }
     });
 
+    // Add development utilities
     if (process.env.NODE_ENV === 'development') {
-      const monitorHealth = backgroundMonitor.checkHealth();
-      
       window.__REDUX_STORE__ = store;
       window.__REDUX_DEBUGGER__ = {
         getState: () => store.getState(),
         dispatch: store.dispatch,
-        spatialData: {
-          getGeometry: () => store.getState().spatial.data.geometry,
-          validateGeometry: () => {
-            const geometry = store.getState().spatial.data.geometry;
-            return {
-              hasPoints: Array.isArray(geometry?.points),
-              hasPolygons: Array.isArray(geometry?.polygons),
-              hasUnified: Boolean(geometry?.unified),
-              pointCount: geometry?.points?.length || 0,
-              polygonCount: geometry?.polygons?.length || 0
-            };
-          }
-        },
-        flowData: {
-          getState: () => store.getState().flow,
-          validateData: () => {
-            const flowState = store.getState().flow;
-            return {
-              hasFlows: Array.isArray(flowState?.flows),
-              flowCount: flowState?.flows?.length || 0,
-              uniqueMarkets: flowState?.metadata?.uniqueMarkets || 0,
-              dateRange: flowState?.metadata?.dateRange,
-              loadingStatus: flowState?.status?.loading,
-              error: flowState?.status?.error
-            };
-          }
-        },
-        ecmData: {
-          getState: () => store.getState().ecm,
-          validateData: () => {
-            const ecmState = store.getState().ecm;
-            return {
-              hasUnifiedData: Array.isArray(ecmState?.data?.unified),
-              hasDirectionalData: Boolean(ecmState?.data?.directional),
-              commodityCount: ecmState?.data?.commodities?.length || 0,
-              loadingStatus: ecmState?.status?.loading,
-              error: ecmState?.status?.error
-            };
-          }
-        },
         monitor: {
-          health: monitorHealth,
-          getActionLog: () => backgroundMonitor.getMetrics(MetricTypes.SYSTEM.PERFORMANCE),
-          getFlowMetrics: () => backgroundMonitor.getMetrics(MetricTypes.FLOW.DATA_LOAD),
-          getSpatialMetrics: () => backgroundMonitor.getMetrics(MetricTypes.SPATIAL.DATA_LOAD),
-          getErrors: () => backgroundMonitor.getErrors(),
+          getMetrics: () => backgroundMonitor.getMetrics(),
           clearMetrics: () => backgroundMonitor.clearMetrics()
+        },
+        spatialData: {
+          getEntityCounts: () => {
+            const state = store.getState().spatial;
+            return {
+              markets: Object.keys(state.entities.markets.entities).length,
+              flows: Object.keys(state.entities.flows.entities).length,
+              timeSeries: Object.keys(state.entities.timeSeries.entities).length
+            };
+          },
+          getCacheSize: () => Object.keys(store.getState().spatial.cache).length
         }
       };
-    }
-
-    const initialState = store.getState();
-    if (!initialState.spatial || !initialState.theme || !initialState.welcomeModal) {
-      throw new Error('Store initialization failed: missing required reducers');
     }
 
     configMetric.finish({
@@ -251,15 +180,6 @@ export const configureAppStore = async () => {
       reducerCount: Object.keys(store.getState()).length,
       middlewareCount: store.middleware?.length || 0
     });
-
-    if (process.env.NODE_ENV === 'development' && module.hot) {
-      module.hot.accept('../slices/spatialSlice', () => {
-        store.replaceReducer({
-          ...store.getState(),
-          spatial: require('../slices/spatialSlice').default
-        });
-      });
-    }
 
     return store;
   } catch (error) {
