@@ -29,7 +29,7 @@ self.onmessage = async (event) => {
       case 'processMarketMetrics':
         result = calculateMarketMetrics(data, options);
         break;
-        
+
       default:
         throw new Error(`Unknown computation type: ${type}`);
     }

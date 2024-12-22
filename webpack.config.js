@@ -39,13 +39,10 @@ module.exports = (env, argv) => {
     entry: './src/index.js',
     output: {
       path: path.resolve(__dirname, 'build'),
-      filename: isDevelopment ? '[name].js' : '[name].[contenthash:8].js',
-      chunkFilename: isDevelopment ? '[name].chunk.js' : '[name].[contenthash:8].chunk.js',
-      publicPath,
-      clean: true,
+      filename: 'main.js',
     },
     resolve: {
-      extensions: ['.js', '.jsx', '.json'],
+      extensions: ['.js', '.jsx'],
       alias: {
         '@': path.resolve(__dirname, 'src'),
         'leaflet': path.resolve(__dirname, 'node_modules/leaflet'),
@@ -179,12 +176,7 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.worker\.js$/,
-          use: {
-            loader: 'worker-loader',
-            options: {
-              filename: isDevelopment ? '[name].worker.js' : '[name].[contenthash:8].worker.js'
-            }
-          }
+          use: { loader: 'worker-loader' },
         }
       ],
     },

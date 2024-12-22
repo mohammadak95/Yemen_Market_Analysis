@@ -39,55 +39,23 @@ class WorkerManager {
     });
   }
 
-  async processData(type, data, options = {}) {
+  async processData(type, data, options) {
     const { worker, id } = await this.getWorker();
-
     return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        this.taskQueue.delete(id);
-        reject(new Error(`Worker task timed out: ${type}`));
-      }, 30000); // 30 second timeout
-
-      const messageHandler = (event) => {
+      const handleMessage = (event) => {
         if (event.data.type === 'success') {
-          cleanup();
           resolve(event.data.result);
-        } else if (event.data.type === 'error') {
-          cleanup();
+        } else {
           reject(new Error(event.data.error));
         }
-      };
-
-      const errorHandler = (error) => {
-        cleanup();
-        reject(error);
-      };
-
-      const cleanup = () => {
-        clearTimeout(timeoutId);
+        worker.removeEventListener('message', handleMessage);
         this.taskQueue.delete(id);
-        worker.removeEventListener('message', messageHandler);
-        worker.removeEventListener('error', errorHandler);
       };
 
-      worker.addEventListener('message', messageHandler);
-      worker.addEventListener('error', errorHandler);
-
-      this.taskQueue.set(id, { type, startTime: Date.now() });
+      worker.addEventListener('message', handleMessage);
+      this.taskQueue.set(id, { type, data, options });
       worker.postMessage({ type, data, options });
     });
-  }
-
-  async processFlowData(data) {
-    return this.processData('processFlowData', data);
-  }
-
-  async processTimeSeriesData(data) {
-    return this.processData('processTimeSeriesData', data);
-  }
-
-  async processMarketClusters(data, options) {
-    return this.processData('processMarketClusters', data, options);
   }
 
   terminateAll() {

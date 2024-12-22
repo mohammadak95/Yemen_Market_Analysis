@@ -5,7 +5,7 @@ import _ from 'lodash';
 import { spatialHandler } from '../utils/spatialDataHandler';
 import { DEFAULT_REGRESSION_DATA } from '../types/dataTypes';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
-import { workerManager } from '../workers/enhancedWorkerSystem';
+import { workerManager } from '../utils/workerManager';
 import {
   calculatePriceTrend,
   detectSeasonality,
