@@ -1,14 +1,19 @@
-//src/components/spatialAnalysis/features/autocorrelation/selectors/autocorrelationSelectors.js
+// src/components/spatialAnalysis/features/autocorrelation/selectors/autocorrelationSelectors.js
 
-import { createSelector } from '@reduxjs/toolkit';
-
-// Base selector for autocorrelation state
-const selectAutocorrelationState = state => state.spatialAnalysis?.spatialAutocorrelation || {};
+import { createDeepEqualSelector } from '../../../../selectors/selectorUtils';
+import { backgroundMonitor } from '../../../../utils/backgroundMonitor';
 
 /**
- * Selects global Moran's I statistics and significance
+ * Base selector to retrieve the autocorrelation state from the Redux store.
+ * Provides a default empty object if the state is undefined.
  */
-export const selectGlobalAutocorrelation = createSelector(
+const selectAutocorrelationState = (state) => 
+  state.spatialAnalysis?.spatialAutocorrelation || {};
+
+/**
+ * Selector to retrieve global Moran's I statistics and significance.
+ */
+export const selectGlobalAutocorrelation = createDeepEqualSelector(
   [selectAutocorrelationState],
   (autocorrelation) => {
     if (!autocorrelation?.global) {
@@ -30,9 +35,9 @@ export const selectGlobalAutocorrelation = createSelector(
 );
 
 /**
- * Selects local Moran's I statistics for all regions
+ * Selector to retrieve local Moran's I statistics for all regions.
  */
-export const selectLocalAutocorrelation = createSelector(
+export const selectLocalAutocorrelation = createDeepEqualSelector(
   [selectAutocorrelationState],
   (autocorrelation) => {
     if (!autocorrelation?.local) {
@@ -54,9 +59,9 @@ export const selectLocalAutocorrelation = createSelector(
 );
 
 /**
- * Selects significant spatial clusters categorized by type
+ * Selector to categorize significant spatial clusters by type.
  */
-export const selectSignificantClusters = createSelector(
+export const selectSignificantClusters = createDeepEqualSelector(
   [selectLocalAutocorrelation],
   (localStats) => {
     const clusters = {
@@ -80,9 +85,9 @@ export const selectSignificantClusters = createSelector(
 );
 
 /**
- * Selects summary statistics for spatial autocorrelation analysis
+ * Selector to summarize statistics for spatial autocorrelation analysis.
  */
-export const selectAutocorrelationSummary = createSelector(
+export const selectAutocorrelationSummary = createDeepEqualSelector(
   [selectGlobalAutocorrelation, selectLocalAutocorrelation],
   (global, local) => {
     const localCount = Object.keys(local).length;
@@ -113,9 +118,13 @@ export const selectAutocorrelationSummary = createSelector(
 );
 
 /**
- * Selects autocorrelation statistics for a specific region
+ * Selector to retrieve autocorrelation statistics for a specific region.
+ *
+ * @param {Object} state - The Redux state.
+ * @param {string} regionId - The ID of the region.
+ * @returns {Object|null} - Autocorrelation data for the specified region or null if not found.
  */
-export const selectAutocorrelationByRegion = createSelector(
+export const selectAutocorrelationByRegion = createDeepEqualSelector(
   [selectLocalAutocorrelation, (_, regionId) => regionId],
   (localStats, regionId) => {
     if (!localStats[regionId]) return null;
@@ -130,9 +139,9 @@ export const selectAutocorrelationByRegion = createSelector(
 );
 
 /**
- * Selects spatial lag statistics for visualization
+ * Selector to retrieve spatial lag statistics for visualization purposes.
  */
-export const selectSpatialLagData = createSelector(
+export const selectSpatialLagData = createDeepEqualSelector(
   [selectLocalAutocorrelation],
   (localStats) => {
     return Object.entries(localStats).map(([region, stats]) => ({
@@ -145,8 +154,10 @@ export const selectSpatialLagData = createSelector(
   }
 );
 
-// Export all selectors
-export default {
+/**
+ * Selector to aggregate all autocorrelation selectors into a single export.
+ */
+const autocorrelationSelectors = {
   selectGlobalAutocorrelation,
   selectLocalAutocorrelation,
   selectSignificantClusters,
@@ -154,3 +165,5 @@ export default {
   selectAutocorrelationByRegion,
   selectSpatialLagData
 };
+
+export default autocorrelationSelectors;

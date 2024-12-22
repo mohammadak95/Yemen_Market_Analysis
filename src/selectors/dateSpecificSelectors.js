@@ -1,25 +1,32 @@
-import { createSelector } from '@reduxjs/toolkit';
+// src/selectors/dateSpecificSelectors.js
+
+import { createDeepEqualSelector } from './selectorUtils';
+import _ from 'lodash';
 import { flowValidation } from '../components/spatialAnalysis/features/flows/types';
 
 // Base selectors
-const selectMarketShocks = state => state.spatial.data.marketShocks || [];
-const selectTimeSeriesData = state => state.spatial.data.timeSeriesData || [];
-const selectSelectedDate = state => state.spatial.ui.selectedDate;
-const selectGeometry = state => state.spatial.data.geometry;
-const selectFlowData = state => state.spatial.data.flowData;
-const selectFlowMaps = state => state.spatial.data.flowMaps || [];
+const selectMarketShocks = (state) => state.spatial?.data?.marketShocks || [];
+const selectTimeSeriesData = (state) => state.spatial?.data?.timeSeriesData || [];
+const selectSelectedDate = (state) => state.spatial?.ui?.selectedDate;
+const selectGeometry = (state) => state.spatial?.data?.geometry;
+const selectFlowData = (state) => state.spatial?.data?.flowData;
+const selectFlowMaps = (state) => state.spatial?.data?.flowMaps || [];
 
-// Date-specific Time Series Selector
-export const selectDateFilteredData = createSelector(
+/**
+ * Selector to filter time series data based on the selected date.
+ */
+export const selectDateFilteredData = createDeepEqualSelector(
   [selectTimeSeriesData, selectSelectedDate],
   (timeSeriesData, selectedDate) => {
-    if (!timeSeriesData?.length || !selectedDate) return [];
+    if (!timeSeriesData.length || !selectedDate) return [];
     return flowValidation.filterFlowsByDate(timeSeriesData, selectedDate);
   }
 );
 
-// Enhanced flow selectors with validation
-export const selectDateFilteredFlows = createSelector(
+/**
+ * Selector to filter and validate flows based on the selected date.
+ */
+export const selectDateFilteredFlows = createDeepEqualSelector(
   [selectFlowMaps, selectSelectedDate],
   (flows, selectedDate) => {
     // Early return if no flows or date
@@ -44,8 +51,10 @@ export const selectDateFilteredFlows = createSelector(
   }
 );
 
-// Calculate flow metrics for selected date
-export const selectDateFilteredMetrics = createSelector(
+/**
+ * Selector to calculate flow metrics for the selected date.
+ */
+export const selectDateFilteredMetrics = createDeepEqualSelector(
   [selectDateFilteredFlows],
   (flows) => {
     if (!Array.isArray(flows) || !flows.length) {
@@ -78,8 +87,10 @@ export const selectDateFilteredMetrics = createSelector(
   }
 );
 
-// Additional helper selector for flow validation
-export const selectFlowDataStatus = createSelector(
+/**
+ * Selector to determine the status of flow data based on flows and selected date.
+ */
+export const selectFlowDataStatus = createDeepEqualSelector(
   [selectFlowMaps, selectSelectedDate],
   (flows, selectedDate) => {
     if (!Array.isArray(flows)) {
@@ -99,7 +110,7 @@ export const selectFlowDataStatus = createSelector(
     const dateFlows = flowValidation.filterFlowsByDate(validFlows, selectedDate);
 
     // Get unique dates
-    const dates = [...new Set(validFlows.map(f => f.date?.substring(0, 7)))].sort();
+    const dates = [...new Set(validFlows.map((f) => f.date?.substring(0, 7)))].sort();
 
     return {
       hasData: validFlows.length > 0,
@@ -115,33 +126,40 @@ export const selectFlowDataStatus = createSelector(
   }
 );
 
-// Date-specific Shocks Selector
-export const selectDateFilteredShocks = createSelector(
+/**
+ * Selector to filter market shocks based on the selected date.
+ */
+export const selectDateFilteredShocks = createDeepEqualSelector(
   [selectMarketShocks, selectSelectedDate],
   (shocks, selectedDate) => {
-    if (!shocks?.length || !selectedDate) return [];
+    if (!shocks.length || !selectedDate) return [];
     return flowValidation.filterFlowsByDate(shocks, selectedDate);
   }
 );
 
-// Shock Metrics Selector
-export const selectShockMetrics = createSelector(
+/**
+ * Selector to calculate metrics related to market shocks.
+ */
+export const selectShockMetrics = createDeepEqualSelector(
   [selectDateFilteredShocks],
   (shocks) => {
-    if (!shocks?.length) return {
-      totalShocks: 0,
-      priceDrops: 0,
-      priceSurges: 0,
-      avgMagnitude: 0,
-      maxMagnitude: 0,
-      affectedRegions: new Set()
-    };
+    if (!shocks.length) {
+      return {
+        totalShocks: 0,
+        priceDrops: 0,
+        priceSurges: 0,
+        avgMagnitude: 0,
+        maxMagnitude: 0,
+        affectedRegions: []
+      };
+    }
 
-    const priceDrops = shocks.filter(s => s.shock_type === 'price_drop');
-    const priceSurges = shocks.filter(s => s.shock_type === 'price_surge');
-    const avgMagnitude = shocks.reduce((sum, s) => sum + s.magnitude, 0) / shocks.length;
-    const maxMagnitude = Math.max(...shocks.map(s => s.magnitude));
-    const affectedRegions = new Set(shocks.map(s => s.region));
+    const priceDrops = shocks.filter((s) => s.shock_type === 'price_drop');
+    const priceSurges = shocks.filter((s) => s.shock_type === 'price_surge');
+    const totalMagnitude = shocks.reduce((sum, s) => sum + s.magnitude, 0);
+    const avgMagnitude = totalMagnitude / shocks.length;
+    const maxMagnitude = Math.max(...shocks.map((s) => s.magnitude));
+    const affectedRegions = _.uniq(shocks.map((s) => s.region));
 
     return {
       totalShocks: shocks.length,
@@ -154,11 +172,13 @@ export const selectShockMetrics = createSelector(
   }
 );
 
-// Shock Analysis Data Selector
-export const selectShockAnalysisData = createSelector(
+/**
+ * Selector to aggregate shock analysis data, including regional breakdowns.
+ */
+export const selectShockAnalysisData = createDeepEqualSelector(
   [selectDateFilteredShocks, selectGeometry, selectShockMetrics],
   (shocks, geometry, metrics) => {
-    if (!shocks?.length || !geometry) return null;
+    if (!shocks.length || !geometry) return null;
 
     // Group shocks by region
     const shocksByRegion = shocks.reduce((acc, shock) => {
@@ -168,19 +188,25 @@ export const selectShockAnalysisData = createSelector(
     }, {});
 
     // Calculate regional metrics
-    const regionalMetrics = Object.entries(shocksByRegion).map(([region, regionShocks]) => {
-      const avgMagnitude = regionShocks.reduce((sum, s) => sum + s.magnitude, 0) / regionShocks.length;
-      const maxMagnitude = Math.max(...regionShocks.map(s => s.magnitude));
-      
-      return {
-        region,
-        shockCount: regionShocks.length,
-        avgMagnitude,
-        maxMagnitude,
-        priceDrops: regionShocks.filter(s => s.shock_type === 'price_drop').length,
-        priceSurges: regionShocks.filter(s => s.shock_type === 'price_surge').length
-      };
-    });
+    const regionalMetrics = Object.entries(shocksByRegion).map(
+      ([region, regionShocks]) => {
+        const totalShocks = regionShocks.length;
+        const totalMagnitude = regionShocks.reduce((sum, s) => sum + s.magnitude, 0);
+        const avgMagnitude = totalMagnitude / totalShocks;
+        const maxMagnitude = Math.max(...regionShocks.map((s) => s.magnitude));
+        const priceDrops = regionShocks.filter((s) => s.shock_type === 'price_drop').length;
+        const priceSurges = regionShocks.filter((s) => s.shock_type === 'price_surge').length;
+
+        return {
+          region,
+          shockCount: totalShocks,
+          avgMagnitude,
+          maxMagnitude,
+          priceDrops,
+          priceSurges
+        };
+      }
+    );
 
     return {
       shocks,
@@ -192,40 +218,89 @@ export const selectShockAnalysisData = createSelector(
   }
 );
 
-// Time Series Metrics Selector
-export const selectTimeSeriesMetrics = createSelector(
+/**
+ * Selector to calculate metrics from date-filtered time series data.
+ */
+export const selectTimeSeriesMetrics = createDeepEqualSelector(
   [selectDateFilteredData],
   (timeData) => {
-    if (!timeData?.length) return {
-      avgPrice: 0,
-      maxPrice: 0,
-      minPrice: 0,
-      priceRange: 0,
-      avgConflict: 0,
-      maxConflict: 0
-    };
+    if (!timeData.length) {
+      return {
+        avgPrice: 0,
+        maxPrice: 0,
+        minPrice: 0,
+        priceRange: 0,
+        avgConflict: 0,
+        maxConflict: 0
+      };
+    }
 
-    const prices = timeData.map(d => d.usdPrice || 0);
-    const conflicts = timeData.map(d => d.conflictIntensity || 0);
+    const prices = timeData.map((d) => d.usdPrice || 0);
+    const conflicts = timeData.map((d) => d.conflictIntensity || 0);
+
+    const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+    const maxPrice = Math.max(...prices);
+    const minPrice = Math.min(...prices);
+    const priceRange = maxPrice - minPrice;
+    const avgConflict = conflicts.reduce((sum, c) => sum + c, 0) / conflicts.length;
+    const maxConflict = Math.max(...conflicts);
 
     return {
-      avgPrice: prices.reduce((sum, p) => sum + p, 0) / prices.length,
-      maxPrice: Math.max(...prices),
-      minPrice: Math.min(...prices),
-      priceRange: Math.max(...prices) - Math.min(...prices),
-      avgConflict: conflicts.reduce((sum, c) => sum + c, 0) / conflicts.length,
-      maxConflict: Math.max(...conflicts)
+      avgPrice,
+      maxPrice,
+      minPrice,
+      priceRange,
+      avgConflict,
+      maxConflict
     };
   }
 );
 
-export default {
-  selectDateFilteredData,
-  selectDateFilteredFlows,
-  selectDateFilteredShocks,
-  selectDateFilteredMetrics,
-  selectShockMetrics,
-  selectShockAnalysisData,
-  selectTimeSeriesMetrics,
-  selectFlowDataStatus
-};
+/**
+ * Selector to perform comprehensive shock analysis, including regional and summary data.
+ */
+export const selectComprehensiveShockAnalysis = createDeepEqualSelector(
+  [selectShockAnalysisData, selectGeometry],
+  (shockAnalysis, geometry) => {
+    if (!shockAnalysis || !geometry) return null;
+
+    // Additional processing can be done here if needed
+
+    return {
+      ...shockAnalysis,
+      geometry
+    };
+  }
+);
+
+/**
+ * Selector to summarize all date-specific selectors into a single object.
+ */
+export const selectDateSpecificSummary = createDeepEqualSelector(
+  [
+    selectDateFilteredData,
+    selectDateFilteredFlows,
+    selectDateFilteredMetrics,
+    selectFlowDataStatus,
+    selectShockAnalysisData,
+    selectTimeSeriesMetrics,
+    selectComprehensiveShockAnalysis
+  ],
+  (
+    dateFilteredData,
+    dateFilteredFlows,
+    dateFilteredMetrics,
+    flowDataStatus,
+    shockAnalysisData,
+    timeSeriesMetrics,
+    comprehensiveShockAnalysis
+  ) => ({
+    dateFilteredData,
+    dateFilteredFlows,
+    dateFilteredMetrics,
+    flowDataStatus,
+    shockAnalysisData,
+    timeSeriesMetrics,
+    comprehensiveShockAnalysis
+  })
+);

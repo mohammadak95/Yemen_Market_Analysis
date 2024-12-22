@@ -1,14 +1,14 @@
-import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
-import { createSelectorCreator, lruMemoize } from 'reselect';
+// src/slices/ecmSlice.js
+
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createDeepEqualSelector } from '../selectors/selectorUtils'; // <-- Import your custom deepMemo selector
 import _ from 'lodash';
 import { getDataPath } from '../utils/dataUtils';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 
-const createDeepEqualSelector = createSelectorCreator(
-  lruMemoize,
-  _.isEqual
-);
-
+/**
+ * The initial state for the ECM slice, preserving its structure.
+ */
 export const initialState = {
   data: {
     unified: [],
@@ -33,6 +33,12 @@ export const initialState = {
   }
 };
 
+/**
+ * Thunk to fetch ECM data from multiple JSON files concurrently.
+ *
+ * @param {Object} params - The parameter object with commodity info.
+ * @returns {Object} - Data for unified, northToSouth, and southToNorth flows.
+ */
 export const fetchECMData = createAsyncThunk(
   'ecm/fetchData',
   async ({ commodity }, { rejectWithValue }) => {
@@ -45,9 +51,9 @@ export const fetchECMData = createAsyncThunk(
       };
 
       const [unifiedData, northToSouthData, southToNorthData] = await Promise.all([
-        fetch(paths.unified).then(r => r.json()),
-        fetch(paths.northToSouth).then(r => r.json()),
-        fetch(paths.southToNorth).then(r => r.json())
+        fetch(paths.unified).then((r) => r.json()),
+        fetch(paths.northToSouth).then((r) => r.json()),
+        fetch(paths.southToNorth).then((r) => r.json())
       ]);
 
       metric.finish({ status: 'success' });
@@ -66,6 +72,9 @@ export const fetchECMData = createAsyncThunk(
   }
 );
 
+/**
+ * The ECM slice definition, retaining the original structure and action creators.
+ */
 const ecmSlice = createSlice({
   name: 'ecm',
   initialState,
@@ -90,9 +99,12 @@ const ecmSlice = createSlice({
         state.status.error = null;
       })
       .addCase(fetchECMData.fulfilled, (state, action) => {
+        // Keep the logic that updates unified and directional data
         state.data.unified = action.payload.unified;
         state.data.directional.northToSouth = action.payload.directional.northToSouth;
         state.data.directional.southToNorth = action.payload.directional.southToNorth;
+
+        // Update loading status and timestamps
         state.status.loading = false;
         state.status.error = null;
         state.status.lastUpdated = new Date().toISOString();
@@ -104,52 +116,90 @@ const ecmSlice = createSlice({
   }
 });
 
-const selectECMState = state => state?.ecm || initialState;
-const selectECMData = state => state?.ecm?.data || initialState.data;
-const selectECMStatus = state => state?.ecm?.status || initialState.status;
-const selectECMUI = state => state?.ecm?.ui || initialState.ui;
+// =============== Base Selectors ===============
+/**
+ * Returns the ECM slice from state or the initialState if undefined.
+ */
+const selectECMState = (state) => state?.ecm || initialState;
 
-export const selectLoadingStatus = createSelector(
+/**
+ * Returns the data portion of the ECM slice.
+ */
+const selectECMData = (state) => selectECMState(state).data;
+
+/**
+ * Returns the status portion of the ECM slice.
+ */
+const selectECMStatus = (state) => selectECMState(state).status;
+
+/**
+ * Returns the UI portion of the ECM slice.
+ */
+const selectECMUI = (state) => selectECMState(state).ui;
+
+// =============== Memoized Selectors ===============
+
+/**
+ * Selects the loading status with deep equality for consistency.
+ */
+export const selectLoadingStatus = createDeepEqualSelector(
   [selectECMStatus],
-  status => status.loading
+  (status) => status.loading
 );
 
-export const selectError = createSelector(
+/**
+ * Selects any error messages with deep equality.
+ */
+export const selectError = createDeepEqualSelector(
   [selectECMStatus],
-  status => status.error
+  (status) => status.error
 );
 
+/**
+ * Selects unified ECM data array, defaulting to an empty array.
+ */
 export const selectUnifiedData = createDeepEqualSelector(
   [selectECMData],
-  data => data.unified || []
+  (data) => data.unified || []
 );
 
+/**
+ * Selects directional ECM data arrays, defaulting to empty arrays.
+ */
 export const selectDirectionalData = createDeepEqualSelector(
   [selectECMData],
-  data => ({
-    northToSouth: data.directional.northToSouth || [],
-    southToNorth: data.directional.southToNorth || []
+  (data) => ({
+    northToSouth: data.directional?.northToSouth || [],
+    southToNorth: data.directional?.southToNorth || []
   })
 );
 
+/**
+ * Selects ECM metrics based on user-selected regime and direction,
+ * ensuring backward-compatible structure.
+ */
 export const selectECMMetrics = createDeepEqualSelector(
   [selectUnifiedData, selectDirectionalData, selectECMUI],
   (unifiedData, directionalData, ui) => {
-    let data;
+    // If the user selected the unified regime, use unified data; otherwise, pick a direction.
+    let dataArray;
     if (ui.selectedRegime === 'unified') {
-      data = unifiedData;
+      dataArray = unifiedData;
     } else {
-      data = directionalData[ui.selectedDirection];
+      dataArray = directionalData[ui.selectedDirection];
     }
 
-    if (!data?.length || !ui.selectedCommodity) return null;
+    // If no data or no commodity is selected, return null
+    if (!dataArray?.length || !ui.selectedCommodity) return null;
 
-    const selectedData = data.find(item => 
-      item.commodity?.toLowerCase() === ui.selectedCommodity?.toLowerCase()
+    // Attempt to match the selected commodity by name
+    const selectedData = dataArray.find(
+      (item) => item.commodity?.toLowerCase() === ui.selectedCommodity?.toLowerCase()
     );
-    
+
     if (!selectedData) return null;
 
+    // Preserve original structure and keys (backward compatibility)
     return {
       alpha: selectedData.alpha,
       beta: selectedData.beta,
@@ -163,6 +213,28 @@ export const selectECMMetrics = createDeepEqualSelector(
   }
 );
 
+// =============== Aggregated Selectors ===============
+
+/**
+ * Aggregated ECM selectors object for easy imports (optional).
+ * 
+ * If you prefer named imports, you can export each selector individually above.
+ * This object is just a convenience, fully backward-compatible with any 
+ * existing references to these selectors.
+ */
+export const ecmSelectors = {
+  selectLoadingStatus,
+  selectError,
+  selectUnifiedData,
+  selectDirectionalData,
+  selectECMMetrics
+};
+
+// =============== Slice Exports ===============
+
+/**
+ * Slice action creators.
+ */
 export const {
   setSelectedCommodity,
   setSelectedRegime,
@@ -170,4 +242,7 @@ export const {
   clearCache
 } = ecmSlice.actions;
 
+/**
+ * Slice reducer export for store integration.
+ */
 export default ecmSlice.reducer;

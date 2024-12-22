@@ -1,7 +1,6 @@
 // src/selectors/optimizedSelectors.js
 
-import { createSelector } from '@reduxjs/toolkit';
-import { createSelectorCreator, lruMemoize } from 'reselect';
+import { createDeepEqualSelector } from './selectorUtils';
 import _ from 'lodash';
 import { 
   transformRegionName, 
@@ -16,6 +15,7 @@ import {
   processClustersWithCoordinates, 
   processFlowsWithCoordinates 
 } from '../utils/dataProcessingUtils';
+import { DEFAULT_METRICS, DEFAULT_OVERALL_METRICS } from '../components/spatialAnalysis/types';
 
 // Yemen market coordinates mapping - verified and normalized
 export const YEMEN_COORDINATES = {
@@ -44,6 +44,13 @@ export const YEMEN_COORDINATES = {
 
 // Utility Functions
 
+/**
+ * Calculates the Haversine distance between two coordinate pairs.
+ *
+ * @param {Array<number>} coord1 - [longitude, latitude] of the first location.
+ * @param {Array<number>} coord2 - [longitude, latitude] of the second location.
+ * @returns {number} - Distance in kilometers.
+ */
 const calculateDistance = (coord1, coord2) => {
   if (!coord1 || !coord2) return 0;
   
@@ -64,6 +71,12 @@ const calculateDistance = (coord1, coord2) => {
   return R * c;
 };
 
+/**
+ * Calculates the average distance between all pairs of coordinates.
+ *
+ * @param {Array<Array<number>>} coordinates - Array of [longitude, latitude] pairs.
+ * @returns {number} - Average distance in kilometers.
+ */
 const calculateAverageDistance = (coordinates) => {
   if (coordinates.length < 2) return 0;
   let totalDistance = 0;
@@ -82,6 +95,12 @@ const calculateAverageDistance = (coordinates) => {
   return count > 0 ? totalDistance / count : 0;
 };
 
+/**
+ * Calculates the maximum possible distance between any two coordinates.
+ *
+ * @param {Array<Array<number>>} coordinates - Array of [longitude, latitude] pairs.
+ * @returns {number} - Maximum distance in kilometers.
+ */
 const calculateMaxTheoreticalDistance = (coordinates) => {
   if (coordinates.length < 2) return 0;
   let maxDistance = 0;
@@ -94,10 +113,22 @@ const calculateMaxTheoreticalDistance = (coordinates) => {
   return maxDistance;
 };
 
+/**
+ * Validates and sanitizes numerical values.
+ *
+ * @param {*} value - The value to validate.
+ * @returns {number} - Validated number or 0 if invalid.
+ */
 const validateNumber = (value) => {
   return typeof value === 'number' && !isNaN(value) ? value : 0;
 };
 
+/**
+ * Calculates the volatility of a price series.
+ *
+ * @param {Array<number>} prices - Array of price values.
+ * @returns {number} - Volatility measure.
+ */
 const calculateVolatility = (prices) => {
   if (!Array.isArray(prices) || prices.length < 2) return 0;
 
@@ -119,6 +150,12 @@ const calculateVolatility = (prices) => {
   }
 };
 
+/**
+ * Calculates the trend (slope) of a price series.
+ *
+ * @param {Array<number>} prices - Array of price values.
+ * @returns {number} - Trend slope.
+ */
 const calculateTrend = (prices) => {
   if (!Array.isArray(prices) || prices.length < 2) return 0;
 
@@ -142,6 +179,12 @@ const calculateTrend = (prices) => {
   }
 };
 
+/**
+ * Detects seasonality in a price series using autocorrelation.
+ *
+ * @param {Array<number>} prices - Array of price values.
+ * @returns {number} - Seasonality measure.
+ */
 const detectSeasonality = (prices) => {
   if (!Array.isArray(prices) || prices.length < 12) return 0;
 
@@ -166,42 +209,57 @@ const detectSeasonality = (prices) => {
   }
 };
 
+/**
+ * Calculates the efficiency of a market cluster.
+ *
+ * @param {Object} cluster - Cluster data.
+ * @param {Array<Object>} flows - Array of flow objects.
+ * @param {Array<Object>} marketCoordinates - Array of market coordinate objects.
+ * @returns {number} - Efficiency score.
+ */
 const calculateClusterEfficiency = (cluster, flows, marketCoordinates) => {
   if (!flows.length || !marketCoordinates.length) return 0;
 
-  const flowWeights = flows.map(f => f.flow_weight);
+  const flowWeights = flows.map((f) => f.flow_weight);
   const maxFlow = Math.max(...flowWeights);
   const avgFlow = _.mean(flowWeights);
 
   // Calculate network density
-  const possibleConnections = (marketCoordinates.length * (marketCoordinates.length - 1)) / 2;
+  const possibleConnections =
+    (marketCoordinates.length * (marketCoordinates.length - 1)) / 2;
   const actualConnections = flows.length;
-  const networkDensity = possibleConnections > 0 ? actualConnections / possibleConnections : 0;
+  const networkDensity =
+    possibleConnections > 0 ? actualConnections / possibleConnections : 0;
 
   // Calculate spatial coverage
-  const avgDistance = calculateAverageDistance(marketCoordinates.map(m => m.coordinates));
-  const maxTheoretical = calculateMaxTheoreticalDistance(marketCoordinates.map(m => m.coordinates));
+  const avgDistance = calculateAverageDistance(
+    marketCoordinates.map((m) => m.coordinates)
+  );
+  const maxTheoretical = calculateMaxTheoreticalDistance(
+    marketCoordinates.map((m) => m.coordinates)
+  );
   const spatialCoverage = maxTheoretical > 0 ? avgDistance / maxTheoretical : 0;
 
   // Combined efficiency score
   return (
-    (0.4 * networkDensity) +
-    (0.3 * (avgFlow / maxFlow)) +
-    (0.3 * spatialCoverage)
+    0.4 * networkDensity +
+    0.3 * (avgFlow / maxFlow) +
+    0.3 * spatialCoverage
   );
 };
 
+/**
+ * Calculates the size of a data object in characters.
+ *
+ * @param {Object} obj - The data object.
+ * @returns {number} - Size in characters.
+ */
 const calculateDataSize = (obj) => {
   const str = JSON.stringify(obj);
   return str ? str.length : 0;
 };
 
-// Corrected Selector Creator with Deep Equality
-const createDeepEqualSelector = createSelectorCreator(
-  lruMemoize,
-  _.isEqual
-);
-
+// Define default metrics
 const getDefaultMetrics = () => ({
   marketEfficiency: { average: 0, max: 0, min: 0 },
   connectivity: { flowDensity: 0, averageConnectivity: 0 },
@@ -209,6 +267,11 @@ const getDefaultMetrics = () => ({
   coverage: { totalMarkets: 0, averageCoverage: 0 }
 });
 
+/**
+ * Provides default spatial data structure.
+ *
+ * @returns {Object} - Default spatial data.
+ */
 const getDefaultSpatialData = () => ({
   geometry: null,
   marketClusters: [],
@@ -224,9 +287,18 @@ const getDefaultSpatialData = () => ({
   timestamp: Date.now()
 });
 
+/**
+ * Calculates enhanced metrics for market clusters.
+ *
+ * @param {Array<Object>} clusters - Array of cluster objects.
+ * @param {Array<Object>} flows - Array of flow objects.
+ * @param {Object} integration - Market integration data.
+ * @param {Object} autocorrelation - Spatial autocorrelation data.
+ * @returns {Object} - Enhanced metrics.
+ */
 const calculateEnhancedMetrics = (clusters, flows, integration, autocorrelation) => {
   try {
-    const clusterMetrics = clusters?.map(c => c.metrics) || [];
+    const clusterMetrics = clusters?.map((c) => c.metrics) || [];
     return {
       marketEfficiency: {
         average: _.meanBy(clusterMetrics, 'efficiency') || 0,
@@ -243,7 +315,7 @@ const calculateEnhancedMetrics = (clusters, flows, integration, autocorrelation)
         significantClusters: countSignificantClusters(autocorrelation)
       },
       coverage: {
-        totalMarkets: _.sumBy(clusters, c => c.connected_markets?.length || 0),
+        totalMarkets: _.sumBy(clusters, (c) => c.connected_markets?.length || 0),
         averageCoverage: _.meanBy(clusterMetrics, 'market_coverage') || 0
       }
     };
@@ -253,16 +325,27 @@ const calculateEnhancedMetrics = (clusters, flows, integration, autocorrelation)
   }
 };
 
+/**
+ * Counts the number of significant clusters based on p-value.
+ *
+ * @param {Object} autocorrelation - Spatial autocorrelation data.
+ * @returns {number} - Count of significant clusters.
+ */
 const countSignificantClusters = (autocorrelation) => {
   if (!autocorrelation?.local) return 0;
-  return Object.values(autocorrelation.local)
-    .filter(c => c.p_value < 0.05)
+  return Object.values(autocorrelation.local).filter((c) => c.p_value < 0.05)
     .length;
 };
 
+/**
+ * Processes regression analysis results.
+ *
+ * @param {Object} regression - Regression analysis data.
+ * @returns {Array<Object>} - Processed regression results.
+ */
 const processRegressionResults = (regression) => {
   if (!regression?.spatial_analysis_results) return [];
-  return regression.spatial_analysis_results.map(result => ({
+  return regression.spatial_analysis_results.map((result) => ({
     ...result,
     residual: Array.isArray(result.residual) ? result.residual : [],
     coefficients: result.coefficients || {},
@@ -270,42 +353,53 @@ const processRegressionResults = (regression) => {
   }));
 };
 
+/**
+ * Extracts unique months from time series data.
+ *
+ * @param {Array<Object>} timeSeriesData - Array of time series data objects.
+ * @returns {Array<string>} - Sorted array of unique months.
+ */
 const extractUniqueMonths = (timeSeriesData) => {
   if (!Array.isArray(timeSeriesData)) return [];
-  return _.uniq(timeSeriesData.map(d => d.month))
+  return _.uniq(timeSeriesData.map((d) => d.month))
     .filter(Boolean)
     .sort((a, b) => new Date(a) - new Date(b));
 };
 
 // Core state selectors with performance monitoring
-const selectSpatialRoot = (state) => {
-  const metric = backgroundMonitor.startMetric('spatial-root-selector');
-  try {
-    const result = state.spatial ?? { data: {}, status: {}, ui: {} };
-    metric.finish({ status: 'success' });
-    return result;
-  } catch (error) {
-    metric.finish({ status: 'error', error: error.message });
-    return { data: {}, status: {}, ui: {} };
-  }
-};
-
-const selectSpatialData = createSelector(
-  [selectSpatialRoot],
-  (spatial) => spatial.data ?? {}
+const selectSpatialRoot = createDeepEqualSelector(
+  (state) => state.spatialAnalysis,
+  (spatialAnalysis) => spatialAnalysis ?? { data: {}, status: {}, ui: {} }
 );
 
-const selectSpatialStatus = createSelector(
+/**
+ * Selects the spatial data slice from the state.
+ */
+export const selectSpatialData = createDeepEqualSelector(
   [selectSpatialRoot],
-  (spatial) => spatial.status ?? {}
+  (spatial) => spatial?.data || {}
 );
 
-const selectSpatialUI = createSelector(
+/**
+ * Selects the spatial status slice from the state.
+ */
+export const selectSpatialStatus = createDeepEqualSelector(
   [selectSpatialRoot],
-  (spatial) => spatial.ui ?? {}
+  (spatial) => spatial?.status || {}
 );
 
-export const selectLoadingStatus = createSelector(
+/**
+ * Selects the spatial UI slice from the state.
+ */
+export const selectSpatialUI = createDeepEqualSelector(
+  [selectSpatialRoot],
+  (spatial) => spatial?.ui || {}
+);
+
+/**
+ * Selects the loading status from the spatial status.
+ */
+export const selectLoadingStatus = createDeepEqualSelector(
   [selectSpatialStatus],
   (status) => ({
     loading: status?.loading || false,
@@ -314,69 +408,106 @@ export const selectLoadingStatus = createSelector(
   })
 );
 
-export const selectStatus = createSelector(
+/**
+ * Selects the complete status object.
+ */
+export const selectStatus = createDeepEqualSelector(
   [selectSpatialStatus],
   (status) => status
 );
 
-export const selectGeometryData = createSelector(
+/**
+ * Selects geometry data.
+ */
+export const selectGeometryData = createDeepEqualSelector(
   [selectSpatialData],
   (data) => data?.geometry || {}
 );
 
-export const selectMarketFlows = createSelector(
+/**
+ * Selects market flows.
+ */
+export const selectMarketFlows = createDeepEqualSelector(
   [selectSpatialData],
   (data) => data?.flowMaps || []
 );
 
-export const selectMarketIntegration = createSelector(
+/**
+ * Selects market integration data.
+ */
+export const selectMarketIntegration = createDeepEqualSelector(
   [selectSpatialData],
   (data) => data?.marketIntegration || {}
 );
 
-export const selectVisualizationMode = createSelector(
+/**
+ * Selects the current visualization mode from the UI.
+ */
+export const selectVisualizationMode = createDeepEqualSelector(
   [selectSpatialUI],
   (ui) => ui?.visualizationMode || 'prices'
 );
 
-export const selectSelectedDate = createSelector(
+/**
+ * Selects the currently selected date from the UI.
+ */
+export const selectSelectedDate = createDeepEqualSelector(
   [selectSpatialUI],
   (ui) => ui?.selectedDate || ''
 );
 
-export const selectSelectedCommodity = createSelector(
+/**
+ * Selects the currently selected commodity from the UI.
+ */
+export const selectSelectedCommodity = createDeepEqualSelector(
   [selectSpatialUI],
   (ui) => ui?.selectedCommodity || ''
 );
 
-export const selectMarketShocks = createSelector(
+/**
+ * Selects market shocks data.
+ */
+export const selectMarketShocks = createDeepEqualSelector(
   [selectSpatialData],
   (data) => data?.marketShocks || []
 );
 
-export const selectSeasonalAnalysis = createSelector(
+/**
+ * Selects seasonal analysis data.
+ */
+export const selectSeasonalAnalysis = createDeepEqualSelector(
   [selectSpatialData],
   (data) => data?.seasonalAnalysis || {}
 );
 
-export const selectSpatialAutocorrelation = createSelector(
+/**
+ * Selects spatial autocorrelation data.
+ */
+export const selectSpatialAutocorrelation = createDeepEqualSelector(
   [selectSpatialData],
-  (data) => data?.spatialAutocorrelation || {
-    global: { moran_i: 0, p_value: 1 },
-    local: {}
-  }
+  (data) =>
+    data?.spatialAutocorrelation || {
+      global: { moran_i: 0, p_value: 1 },
+      local: {}
+    }
 );
 
-export const selectAutocorrelationMetrics = createSelector(
+/**
+ * Calculates autocorrelation metrics.
+ */
+export const selectAutocorrelationMetrics = createDeepEqualSelector(
   [selectSpatialAutocorrelation],
   (autocorrelation) => calculateAutocorrelationMetrics(autocorrelation)
 );
 
+/**
+ * Selects time series data with metrics.
+ */
 export const selectTimeSeriesData = createDeepEqualSelector(
   [
     selectSpatialData,
-    state => state.spatial.ui.selectedRegimes,
-    state => state.spatial.ui.selectedDate
+    (state) => state.spatial.ui.selectedRegimes,
+    (state) => state.spatial.ui.selectedDate
   ],
   (spatialData, selectedRegimes, selectedDate) => {
     const metric = backgroundMonitor.startMetric('time-series-analysis');
@@ -388,14 +519,14 @@ export const selectTimeSeriesData = createDeepEqualSelector(
         return [];
       }
 
-      const filteredData = timeSeriesData.filter(d => {
+      const filteredData = timeSeriesData.filter((d) => {
         const dateMatch = !selectedDate || d.month === selectedDate;
         const regimeMatch = !selectedRegimes.length || selectedRegimes.includes(d.regime);
         return dateMatch && regimeMatch;
       });
 
-      const processedData = filteredData.map(series => {
-        const priceValues = series.prices?.filter(p => typeof p === 'number') || [];
+      const processedData = filteredData.map((series) => {
+        const priceValues = series.prices?.filter((p) => typeof p === 'number') || [];
         const volatility = calculateVolatility(priceValues);
         const trend = calculateTrend(priceValues);
 
@@ -410,14 +541,13 @@ export const selectTimeSeriesData = createDeepEqualSelector(
         };
       });
 
-      metric.finish({ 
+      metric.finish({
         status: 'success',
         seriesCount: processedData.length,
         date: selectedDate
       });
 
       return processedData;
-
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
       console.error('Time series analysis error:', error);
@@ -426,13 +556,19 @@ export const selectTimeSeriesData = createDeepEqualSelector(
   }
 );
 
-export const selectFeatureDataWithMetrics = createSelector(
+/**
+ * Selects feature data with metrics.
+ */
+export const selectFeatureDataWithMetrics = createDeepEqualSelector(
   [selectGeometryData, selectTimeSeriesData],
   (geometry, timeSeriesData) => processFeatureData(geometry, timeSeriesData)
 );
 
+/**
+ * Selects market clusters with coordinates and metrics.
+ */
 export const selectMarketClusters = createDeepEqualSelector(
-  [selectSpatialData, state => state.flow?.flows || []],
+  [selectSpatialData, (state) => state.flow?.flows || []],
   (spatialData, flows) => {
     const metric = backgroundMonitor.startMetric('market-cluster-analysis');
 
@@ -442,21 +578,25 @@ export const selectMarketClusters = createDeepEqualSelector(
         return [];
       }
 
-      const processedClusters = spatialData.marketClusters.map(cluster => {
-        const clusterFlows = flows.filter(flow => 
-          cluster.connected_markets.includes(flow.source) || 
-          cluster.connected_markets.includes(flow.target)
+      const processedClusters = spatialData.marketClusters.map((cluster) => {
+        const clusterFlows = flows.filter(
+          (flow) =>
+            cluster.connected_markets.includes(flow.source) ||
+            cluster.connected_markets.includes(flow.target)
         );
 
-        const marketCoordinates = cluster.connected_markets.map(market => {
-          const coords = getRegionCoordinates(market);
-          return coords ? { market, coordinates: coords } : null;
-        }).filter(Boolean);
+        const marketCoordinates = cluster.connected_markets
+          .map((market) => {
+            const coords = getRegionCoordinates(market);
+            return coords ? { market, coordinates: coords } : null;
+          })
+          .filter(Boolean);
 
         const totalFlow = clusterFlows.reduce((sum, flow) => sum + flow.flow_weight, 0);
-        const internalFlows = clusterFlows.filter(flow => 
-          cluster.connected_markets.includes(flow.source) && 
-          cluster.connected_markets.includes(flow.target)
+        const internalFlows = clusterFlows.filter(
+          (flow) =>
+            cluster.connected_markets.includes(flow.source) &&
+            cluster.connected_markets.includes(flow.target)
         );
 
         return {
@@ -466,19 +606,18 @@ export const selectMarketClusters = createDeepEqualSelector(
             totalFlow,
             internalFlowRatio: internalFlows.length / Math.max(clusterFlows.length, 1),
             spatialCoverage: marketCoordinates.length / cluster.connected_markets.length,
-            avgDistance: calculateAverageDistance(marketCoordinates.map(m => m.coordinates)),
+            avgDistance: calculateAverageDistance(marketCoordinates.map((m) => m.coordinates)),
             efficiency: calculateClusterEfficiency(cluster, clusterFlows, marketCoordinates)
           }
         };
       });
 
-      metric.finish({ 
-        status: 'success', 
-        clusterCount: processedClusters.length 
+      metric.finish({
+        status: 'success',
+        clusterCount: processedClusters.length
       });
 
       return processedClusters;
-
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
       console.error('Market cluster analysis error:', error);
@@ -487,22 +626,30 @@ export const selectMarketClusters = createDeepEqualSelector(
   }
 );
 
+/**
+ * Selects flow data based on selected date and commodity.
+ */
 export const selectFlowData = createDeepEqualSelector(
   [
-    state => state.flow?.flows || [],
-    state => state.spatial.ui.selectedDate,
-    state => state.spatial.ui.selectedCommodity
+    (state) => state.flow?.flows || [],
+    (state) => state.spatial.ui.selectedDate,
+    (state) => state.spatial.ui.selectedCommodity
   ],
   (flows, selectedDate, selectedCommodity) => {
     const metric = backgroundMonitor.startMetric('flow-data-selection');
-    
+
     try {
       if (!flows.length || !selectedDate || !selectedCommodity) {
-        metric.finish({ status: 'success', flowCount: 0, date: selectedDate, commodity: selectedCommodity });
+        metric.finish({
+          status: 'success',
+          flowCount: 0,
+          date: selectedDate,
+          commodity: selectedCommodity
+        });
         return [];
       }
 
-      const filteredFlows = flows.filter(flow => {
+      const filteredFlows = flows.filter((flow) => {
         if (!flowValidation.isValidFlow(flow)) {
           return false;
         }
@@ -510,7 +657,7 @@ export const selectFlowData = createDeepEqualSelector(
         return flowDate === selectedDate;
       });
 
-      metric.finish({ 
+      metric.finish({
         status: 'success',
         flowCount: filteredFlows.length,
         date: selectedDate,
@@ -519,9 +666,9 @@ export const selectFlowData = createDeepEqualSelector(
 
       return filteredFlows;
     } catch (error) {
-      metric.finish({ 
-        status: 'error', 
-        error: error.message 
+      metric.finish({
+        status: 'error',
+        error: error.message
       });
       console.error('Flow data selection error:', error);
       return [];
@@ -529,11 +676,14 @@ export const selectFlowData = createDeepEqualSelector(
   }
 );
 
+/**
+ * Selects market metrics based on flow data.
+ */
 export const selectMarketMetrics = createDeepEqualSelector(
   [selectFlowData],
   (flows) => {
     const metric = backgroundMonitor.startMetric('market-metrics-calculation');
-    
+
     try {
       if (!flows.length) {
         metric.finish({ status: 'success', marketCount: 0, flowCount: 0 });
@@ -546,15 +696,15 @@ export const selectMarketMetrics = createDeepEqualSelector(
         };
       }
 
-      const validFlows = flows.filter(flow => flow.flow_weight > 0);
+      const validFlows = flows.filter((flow) => flow.flow_weight > 0);
       const markets = new Set();
-      
-      validFlows.forEach(flow => {
+
+      validFlows.forEach((flow) => {
         if (flow.source) markets.add(flow.source);
         if (flow.target) markets.add(flow.target);
       });
 
-      const flowValues = validFlows.map(f => f.flow_weight);
+      const flowValues = validFlows.map((f) => f.flow_weight);
       const totalFlow = _.sum(flowValues);
       const avgFlow = totalFlow / flowValues.length;
 
@@ -563,11 +713,13 @@ export const selectMarketMetrics = createDeepEqualSelector(
         averageFlow: avgFlow,
         maxFlow: Math.max(...flowValues),
         activeMarkets: markets.size,
-        flowDensity: markets.size > 1 ? 
-          validFlows.length / (markets.size * (markets.size - 1) / 2) : 0
+        flowDensity:
+          markets.size > 1
+            ? validFlows.length / (markets.size * (markets.size - 1) / 2)
+            : 0
       };
 
-      metric.finish({ 
+      metric.finish({
         status: 'success',
         marketCount: markets.size,
         flowCount: validFlows.length
@@ -588,13 +740,16 @@ export const selectMarketMetrics = createDeepEqualSelector(
   }
 );
 
+/**
+ * Selects spatial network analysis data.
+ */
 export const selectSpatialNetwork = createDeepEqualSelector(
   [selectFlowData, selectSpatialData],
   (flows, spatialData) => {
     const metric = backgroundMonitor.startMetric('spatial-network-analysis');
 
     try {
-      if (!flows.length || !spatialData.geometry) {
+      if (!flows?.length || !spatialData.geometry) {
         metric.finish({ status: 'success', marketCount: 0, connectionCount: 0 });
         return null;
       }
@@ -602,7 +757,7 @@ export const selectSpatialNetwork = createDeepEqualSelector(
       const markets = new Map();
       const connections = [];
 
-      flows.forEach(flow => {
+      flows.forEach((flow) => {
         const sourceCoords = getRegionCoordinates(flow.source);
         const targetCoords = getRegionCoordinates(flow.target);
 
@@ -619,13 +774,15 @@ export const selectSpatialNetwork = createDeepEqualSelector(
         }
 
         const sourceMarket = markets.get(flow.source);
-        const targetMarket = markets.get(flow.target) || {
-          id: flow.target,
-          coordinates: targetCoords,
-          totalFlow: 0,
-          incomingFlows: 0,
-          outgoingFlows: 0
-        };
+        const targetMarket =
+          markets.get(flow.target) ||
+          ({
+            id: flow.target,
+            coordinates: targetCoords,
+            totalFlow: 0,
+            incomingFlows: 0,
+            outgoingFlows: 0
+          });
 
         sourceMarket.totalFlow += flow.flow_weight;
         sourceMarket.outgoingFlows++;
@@ -653,16 +810,22 @@ export const selectSpatialNetwork = createDeepEqualSelector(
         metrics: {
           totalMarkets: markets.size,
           totalConnections: connections.length,
-          networkDensity: markets.size > 1 ? 
-            connections.length / (markets.size * (markets.size - 1) / 2) : 0,
-          averageConnections: markets.size > 0 ? 
-            connections.length / markets.size : 0
+          networkDensity:
+            markets.size > 1
+              ? connections.length /
+                (markets.size * (markets.size - 1) / 2)
+              : 0,
+          averageConnections:
+            markets.size > 0 ? connections.length / markets.size : 0
         }
       };
 
-      metric.finish({ status: 'success', marketCount: markets.size, connectionCount: connections.length });
+      metric.finish({
+        status: 'success',
+        marketCount: markets.size,
+        connectionCount: connections.length
+      });
       return result;
-
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
       console.error('Spatial network analysis error:', error);
@@ -671,6 +834,9 @@ export const selectSpatialNetwork = createDeepEqualSelector(
   }
 );
 
+/**
+ * Selects regression analysis data based on the selected commodity.
+ */
 export const selectRegressionAnalysis = createDeepEqualSelector(
   [selectSpatialData, selectSelectedCommodity],
   (spatialData, selectedCommodity) => {
@@ -684,7 +850,7 @@ export const selectRegressionAnalysis = createDeepEqualSelector(
       }
 
       const metadata = regression.metadata || {};
-      
+
       // Only process if commodity matches
       if (selectedCommodity && metadata.commodity !== selectedCommodity) {
         metric.finish({ status: 'success', commodity: selectedCommodity });
@@ -694,7 +860,7 @@ export const selectRegressionAnalysis = createDeepEqualSelector(
       const result = {
         model: regression.model || {},
         spatial: {
-          moran_i: regression.spatial?.moran_i || { I: 0, 'p-value': 1 },
+          moran_i: regression.spatial?.moran_i || { I: 0, 'p-value': null },
           vif: Array.isArray(regression.spatial?.vif) ? regression.spatial.vif : []
         },
         residuals: {
@@ -709,13 +875,12 @@ export const selectRegressionAnalysis = createDeepEqualSelector(
         metadata: {
           commodity: selectedCommodity,
           timestamp: metadata.timestamp || new Date().toISOString(),
-          version: metadata.version || "1.0"
+          version: metadata.version || '1.0'
         }
       };
 
       metric.finish({ status: 'success', commodity: selectedCommodity });
       return result;
-
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
       console.error('Regression analysis error:', error);
@@ -724,44 +889,55 @@ export const selectRegressionAnalysis = createDeepEqualSelector(
   }
 );
 
-export const selectClustersWithCoordinates = createSelector(
+/**
+ * Selects clusters with their corresponding coordinates.
+ */
+export const selectClustersWithCoordinates = createDeepEqualSelector(
   [selectMarketClusters, selectGeometryData],
   (clusters, geometry) => processClustersWithCoordinates(clusters, geometry)
 );
 
-export const selectFlowsWithCoordinates = createSelector(
+/**
+ * Selects flows with their corresponding coordinates.
+ */
+export const selectFlowsWithCoordinates = createDeepEqualSelector(
   [selectMarketFlows, selectGeometryData],
   (flows, geometry) => processFlowsWithCoordinates(flows, geometry)
 );
 
+/**
+ * Selects visualization data by processing feature data, flows, and clusters.
+ */
 export const selectVisualizationData = createDeepEqualSelector(
   [selectFeatureDataWithMetrics, selectMarketFlows, selectMarketClusters],
   (featureData, flows, clusters) => {
     const metric = backgroundMonitor.startMetric('visualization-data-processing');
 
     try {
-      const processedFlows = (flows || []).map(flow => {
-        const sourceCoords = getRegionCoordinates(flow.source);
-        const targetCoords = getRegionCoordinates(flow.target);
+      const processedFlows = (flows || [])
+        .map((flow) => {
+          const sourceCoords = getRegionCoordinates(flow.source);
+          const targetCoords = getRegionCoordinates(flow.target);
 
-        if (!sourceCoords || !targetCoords) return null;
+          if (!sourceCoords || !targetCoords) return null;
 
-        return {
-          ...flow,
-          coordinates: {
-            source: sourceCoords,
-            target: targetCoords
-          },
-          normalized: {
-            source: transformRegionName(flow.source),
-            target: transformRegionName(flow.target)
-          }
-        };
-      }).filter(Boolean);
+          return {
+            ...flow,
+            coordinates: {
+              source: sourceCoords,
+              target: targetCoords
+            },
+            normalized: {
+              source: transformRegionName(flow.source),
+              target: transformRegionName(flow.target)
+            }
+          };
+        })
+        .filter(Boolean);
 
-      const processedClusters = (clusters || []).map(cluster => {
+      const processedClusters = (clusters || []).map((cluster) => {
         const marketCoords = (cluster.connected_markets || [])
-          .map(market => {
+          .map((market) => {
             const coords = getRegionCoordinates(market);
             return coords ? { name: market, coordinates: coords } : null;
           })
@@ -770,7 +946,7 @@ export const selectVisualizationData = createDeepEqualSelector(
         return {
           ...cluster,
           markets: marketCoords,
-          center: calculateCenter(marketCoords.map(m => m.coordinates)) || [0, 0]
+          center: calculateCenter(marketCoords.map((m) => m.coordinates)) || [0, 0]
         };
       });
 
@@ -781,14 +957,13 @@ export const selectVisualizationData = createDeepEqualSelector(
         timestamp: Date.now()
       };
 
-      metric.finish({ 
+      metric.finish({
         status: 'success',
         flowCount: processedFlows.length,
         clusterCount: processedClusters.length
       });
 
       return result;
-
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
       console.error('Visualization data processing error:', error);
@@ -802,6 +977,9 @@ export const selectVisualizationData = createDeepEqualSelector(
   }
 );
 
+/**
+ * Selects optimized spatial data with enhanced metrics.
+ */
 export const selectSpatialDataOptimized = createDeepEqualSelector(
   [
     selectGeometryData,
@@ -855,13 +1033,12 @@ export const selectSpatialDataOptimized = createDeepEqualSelector(
         timestamp: Date.now()
       };
 
-      metric.finish({ 
+      metric.finish({
         status: 'success',
         dataSize: calculateDataSize(result)
       });
 
       return result;
-
     } catch (error) {
       metric.finish({ status: 'error', error: error.message });
       console.error('Spatial data optimization error:', error);
@@ -869,11 +1046,3 @@ export const selectSpatialDataOptimized = createDeepEqualSelector(
     }
   }
 );
-
-
-// Make sure all these selectors are properly exported individually
-export {
-  selectSpatialData,
-  selectSpatialStatus,
-  selectSpatialUI,
-};
