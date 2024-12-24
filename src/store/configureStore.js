@@ -1,4 +1,33 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { persistReducer, persistStore } from 'redux-persist';
+
+// Create a simple storage implementation using localStorage
+const storage = {
+  getItem: key => {
+    try {
+      return Promise.resolve(localStorage.getItem(key));
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  },
+  setItem: (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  },
+  removeItem: key => {
+    try {
+      localStorage.removeItem(key);
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+};
+
 import spatialReducer, { selectSpatialData, selectSpatialLoading, selectSpatialError } from '../slices/spatialSlice';
 import themeReducer from '../slices/themeSlice';
 import welcomeModalReducer from './welcomeModalSlice';
@@ -11,6 +40,15 @@ import { spatialHandler } from '../utils/spatialDataHandler';
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 
 let store = null;
+
+const persistConfig = {
+  key: 'spatial',
+  storage,
+  whitelist: ['geometry', 'cache'],
+  blacklist: ['status', 'ui']
+};
+
+const persistedReducer = persistReducer(persistConfig, spatialReducer);
 
 export const configureAppStore = async () => {
   if (store) {
@@ -63,7 +101,7 @@ export const configureAppStore = async () => {
 
     store = configureStore({
       reducer: {
-        spatial: spatialReducer,
+        spatial: persistedReducer,
         theme: themeReducer,
         welcomeModal: welcomeModalReducer,
         ecm: ecmReducer,

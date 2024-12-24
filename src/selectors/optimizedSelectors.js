@@ -806,68 +806,13 @@ export const selectSpatialDataOptimized = createDeepEqualSelector(
   [
     selectGeometryData,
     selectMarketClusters,
-    selectMarketFlows,
-    selectTimeSeriesData,
-    selectMarketShocks,
-    selectMarketIntegration,
-    selectSpatialAutocorrelation,
-    selectRegressionAnalysis,
-    selectSeasonalAnalysis
+    selectMarketFlows
   ],
-  (
+  (geometry, clusters, flows) => ({
     geometry,
     clusters,
-    flows,
-    timeSeriesData,
-    shocks,
-    integration,
-    autocorrelation,
-    regression,
-    seasonal
-  ) => {
-    const metric = backgroundMonitor.startMetric('spatial-data-optimization');
-
-    try {
-      const spatial_analysis_results = processRegressionResults(regression);
-      const uniqueMonths = extractUniqueMonths(timeSeriesData);
-      const metrics = calculateEnhancedMetrics(
-        clusters,
-        flows,
-        integration,
-        autocorrelation
-      );
-
-      const result = {
-        geometry,
-        marketClusters: clusters,
-        flowMaps: flows,
-        timeSeriesData,
-        marketShocks: shocks,
-        marketIntegration: integration,
-        spatialAutocorrelation: autocorrelation,
-        regressionAnalysis: {
-          ...regression,
-          spatial_analysis_results
-        },
-        seasonalAnalysis: seasonal,
-        uniqueMonths,
-        metrics,
-        timestamp: Date.now()
-      };
-
-      metric.finish({ 
-        status: 'success',
-        dataSize: calculateDataSize(result)
-      });
-
-      return result;
-
-    } catch (error) {
-      metric.finish({ status: 'error', error: error.message });
-      console.error('Spatial data optimization error:', error);
-      return getDefaultSpatialData();
-    }
-  }
+    flows
+  })
 );
 
 

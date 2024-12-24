@@ -7,38 +7,36 @@ import _ from 'lodash';
  * Creates batch processing middleware
  */
 export const createBatchMiddleware = () => {
-  const pendingActions = new Map();
-  const BATCH_TIMEOUT = 100; // milliseconds
+  return store => next => {
+    const pendingActions = new Map()
+    const BATCH_TIMEOUT = 100
 
-  return store => next => action => {
-    // Skip batching for certain critical actions
-    if (action.meta?.immediate) {
-      return next(action);
-    }
+    return action => {
+      if (action.meta?.immediate) {
+        return next(action)
+      }
 
-    const actionType = action.type;
-    if (!pendingActions.has(actionType)) {
-      pendingActions.set(actionType, []);
-      
-      // Schedule batch processing
-      setTimeout(() => {
-        const actions = pendingActions.get(actionType);
-        pendingActions.delete(actionType);
-        
-        if (actions.length === 1) {
-          // If only one action, process normally
-          next(actions[0]);
-        } else {
-          // Combine similar actions
-          const batchedAction = combineSimilarActions(actions);
-          next(batchedAction);
-        }
-      }, BATCH_TIMEOUT);
+      const actionType = action.type
+      if (!pendingActions.has(actionType)) {
+        pendingActions.set(actionType, [])
+        setTimeout(() => {
+          const actions = pendingActions.get(actionType)
+          pendingActions.delete(actionType)
+          
+          if (actions.length === 1) {
+            next(actions[0]) 
+          } else {
+            next({
+              type: `${actionType}_BATCH`,
+              payload: actions.map(a => a.payload)
+            })
+          }
+        }, BATCH_TIMEOUT)
+      }
+      pendingActions.get(actionType).push(action)
     }
-    
-    pendingActions.get(actionType).push(action);
-  };
-};
+  }
+}
 
 /**
  * Creates selective update middleware

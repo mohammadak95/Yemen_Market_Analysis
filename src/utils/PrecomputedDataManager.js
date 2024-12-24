@@ -13,6 +13,7 @@ class PrecomputedDataManager {
     this.pendingRequests = new Map();
     this.retryAttempts = 3;
     this.retryDelay = 1000;
+    this.dataCache = new Map();
   }
 
   async loadData(commodity, date, options = {}) {

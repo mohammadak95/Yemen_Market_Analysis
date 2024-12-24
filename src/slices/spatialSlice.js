@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit';
 import { createSelectorCreator } from 'reselect';
 import isEqual from 'lodash/isEqual';
 import _ from 'lodash';
@@ -206,6 +206,14 @@ export const initialState = {
   }
 };
 
+// Create entity adapters for normalized state
+const marketsAdapter = createEntityAdapter({
+  selectId: market => market.id,
+  sortComparer: (a, b) => a.name.localeCompare(b.name)
+})
+
+const flowsAdapter = createEntityAdapter()
+
 // Async Thunks
 export const fetchFlowData = createAsyncThunk(
   'spatial/fetchFlowData',
@@ -342,6 +350,21 @@ export const fetchAllSpatialData = createAsyncThunk(
     }
   }
 );
+
+// Progressive loading
+export const progressiveLoadData = createAsyncThunk(
+  'spatial/progressiveLoad',
+  async (params, { dispatch }) => {
+    // First load essential data
+    await dispatch(fetchCriticalData())
+    
+    // Then load geometry in background
+    dispatch(fetchGeometryData())
+    
+    // Finally load supplementary data
+    dispatch(fetchSupplementaryData())
+  }
+)
 
 // Backward compatibility exports
 export const fetchSpatialData = ({ commodity, date }) => {
