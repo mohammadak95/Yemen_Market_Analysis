@@ -425,21 +425,9 @@ export const selectUniqueMonths = createDeepEqualSelector(
   (data) => data.uniqueMonths || []
 );
 
-export const selectSpatialData = createSafeSelector(
-  [selectData],
-  (data) => ({
-    geometry: data.geometry || {},
-    flowMaps: data.flowMaps || [],
-    timeSeriesData: data.timeSeriesData || [],
-    marketClusters: data.marketClusters || [],
-    marketShocks: data.marketShocks || [],
-    commodities: data.commodities || [],
-    spatialAutocorrelation: data.spatialAutocorrelation || {},
-    regressionAnalysis: data.regressionAnalysis || null,
-    uniqueMonths: data.uniqueMonths || [],
-    visualizationData: data.visualizationData || {}
-  })
-);
+export const selectSpatialData = state => state.spatial.data;
+export const selectSpatialLoading = state => state.spatial.loading;
+export const selectSpatialError = state => state.spatial.error;
 
 export const selectUIState = createDeepEqualSelector(
   [selectUI],

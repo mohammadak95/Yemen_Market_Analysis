@@ -877,3 +877,14 @@ export {
   selectSpatialStatus,
   selectSpatialUI,
 };
+
+export const selectSpatialGeometry = state => state.spatial?.data?.geometry;
+export const selectSpatialFlows = state => state.spatial?.data?.flowMaps;
+
+export const selectGeometry = state => state.spatial?.data?.geometry || {};
+export const selectFlowMaps = state => state.spatial?.data?.flowMaps || [];
+export const selectSpatialAnalysis = state => state.spatial?.data?.spatialAnalysis || {};
+export const selectUniqueMonths = state => state.spatial?.data?.uniqueMonths || [];
+
+export const selectSpatialLoading = state => state.spatial?.status?.loading || false;
+export const selectSpatialError = state => state.spatial?.status?.error || null;

@@ -16,6 +16,14 @@ import _ from 'lodash';
 import { fetchSpatialData, selectSpatialData } from '../../slices/spatialSlice';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { fetchAllSpatialData } from '../../slices/spatialSlice';
+import { 
+  selectGeometry,
+  selectFlowMaps,
+  selectSpatialAnalysis,
+  selectUniqueMonths,
+  selectSpatialLoading,
+  selectSpatialError
+} from '../../selectors/optimizedSelectors';
 
 const capitalizeWords = (str) => {
   return str
@@ -65,18 +73,19 @@ const useUniqueMonths = () => useSelector(
   _.isEqual
 );
 
-const useSpatialDataMemo = () => useSelector(
-  state => {
-    const data = state.spatial?.data || {};
-    return {
-      geoData: data.geometry || {},
-      flows: data.flowMaps || [],
-      analysis: data.spatialAnalysis || {},
-      uniqueMonths: data.uniqueMonths || []
-    };
-  },
-  _.isEqual
-);
+const useSpatialDataMemo = () => {
+  const geoData = useSelector(selectGeometry, _.isEqual);
+  const flows = useSelector(selectFlowMaps, _.isEqual);
+  const analysis = useSelector(selectSpatialAnalysis, _.isEqual);
+  const uniqueMonths = useSelector(selectUniqueMonths, _.isEqual);
+
+  return useMemo(() => ({
+    geoData,
+    flows,
+    analysis,
+    uniqueMonths
+  }), [geoData, flows, analysis, uniqueMonths]);
+};
 
 export const CommoditySelector = React.memo(({ 
   commodities = [], 
@@ -301,6 +310,9 @@ export const Sidebar = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useDispatch();
   const { geoData, flows, analysis, uniqueMonths } = useSelector(selectSpatialData);
+  const spatialData = useSelector(selectSpatialData);
+  const isLoading = useSelector(selectSpatialLoading);
+  const error = useSelector(selectSpatialError);
 
   const handleCommodityChange = useCallback(async (newCommodity) => {
     if (newCommodity && newCommodity !== selectedCommodity) {

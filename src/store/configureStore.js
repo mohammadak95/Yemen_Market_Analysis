@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import spatialReducer from '../slices/spatialSlice';
+import spatialReducer, { selectSpatialData, selectSpatialLoading, selectSpatialError } from '../slices/spatialSlice';
 import themeReducer from '../slices/themeSlice';
 import welcomeModalReducer from './welcomeModalSlice';
 import ecmReducer from '../slices/ecmSlice';
