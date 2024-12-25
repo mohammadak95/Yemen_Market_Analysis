@@ -236,6 +236,24 @@ export const getStore = () => {
   return store;
 };
 
+export const createStore = () => {
+  return configureStore({
+    reducer: {
+      spatial: persistedReducer,
+      theme: themeReducer,
+      welcomeModal: welcomeModalReducer,
+      ecm: ecmReducer,
+      flow: flowReducer,
+      priceDiff: priceDiffReducer
+    },
+    middleware: (getDefaultMiddleware) => 
+      getDefaultMiddleware({
+        serializableCheck: false
+      }),
+    devTools: process.env.NODE_ENV !== 'production'
+  });
+};
+
 export default {
   configureAppStore,
   getStore

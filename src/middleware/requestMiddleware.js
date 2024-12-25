@@ -1,6 +1,7 @@
 // src/middleware/requestMiddleware.js
 
 import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { getCache, setCache } from '../utils/cacheHelper';
 
 // Track in-flight requests
 const pendingRequests = new Map();
@@ -58,7 +59,7 @@ export const requestMiddleware = store => next => action => {
   }
 
   // Check cache for valid response
-  const cachedResponse = requestCache.get(cacheKey);
+  const cachedResponse = getCache(cacheKey);
   if (cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_TTL) {
     const metric = backgroundMonitor.startMetric('request-cache');
     metric.finish({ status: 'cache-hit', action: baseType });
@@ -68,7 +69,7 @@ export const requestMiddleware = store => next => action => {
   // Create promise for new request
   const promise = next(action).then(response => {
     // Cache successful response
-    requestCache.set(cacheKey, {
+    setCache(cacheKey, {
       data: response,
       timestamp: Date.now()
     });
@@ -203,7 +204,7 @@ export const batchMiddleware = store => next => action => {
 };
 
 // Helper to filter batched results for specific action
-function filterResultForAction(batchedResult, originalAction) {
+export const filterResultForAction = (batchedResult, originalAction) => {
   // Implementation depends on your data structure
   // This is a simplified example
   const { commodity, date } = originalAction.meta?.arg || {};
@@ -222,4 +223,4 @@ function filterResultForAction(batchedResult, originalAction) {
   }
   
   return batchedResult;
-}
+};

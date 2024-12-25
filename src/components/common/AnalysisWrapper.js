@@ -38,42 +38,11 @@ const LoadingFallback = () => {
 };
 
 // Enhanced Analysis Wrapper component
-const AnalysisWrapper = ({ children }) => {
-  const theme = useTheme();
-
-  return (
-    <Box 
-      sx={{ 
-        width: '100%', 
-        height: '100%',
-        backgroundColor: theme.palette.background.default,
-        borderRadius: 1,
-        transition: theme.transitions.create(
-          ['background-color', 'box-shadow'],
-          {
-            duration: theme.transitions.duration.standard,
-          }
-        ),
-        '& > *': {
-          transition: theme.transitions.create(
-            ['background-color', 'color'],
-            {
-              duration: theme.transitions.duration.standard,
-            }
-          ),
-        },
-        p: 2,
-        boxShadow: theme.palette.mode === 'dark'
-          ? '0 2px 8px rgba(0,0,0,0.5)'
-          : '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
-      }}
-    >
-      <Suspense fallback={<LoadingFallback />}>
-        {children}
-      </Suspense>
-    </Box>
-  );
-};
+const AnalysisWrapper = ({ children }) => (
+  <div className="analysis-wrapper">
+    {children || <div>Loading...</div>}
+  </div>
+);
 
 AnalysisWrapper.propTypes = {
   children: PropTypes.node.isRequired,

@@ -1,5 +1,6 @@
 // src/middleware/spatialMiddleware.js
 import { backgroundMonitor } from '../utils/backgroundMonitor';
+const { logValidation } = require('../utils/monitoringHelper');
 
 export const createSpatialMiddleware = () => {
   return store => next => action => {
@@ -33,6 +34,9 @@ export const createSpatialMiddleware = () => {
           if (!validation.hasPoints || !validation.hasPolygons) {
             console.warn('Spatial data missing required geometry properties', validation);
           }
+
+          // Integrate validation logging into a standard monitoring module
+          logValidation(validation);
         }
       }
 

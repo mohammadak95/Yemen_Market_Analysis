@@ -2,6 +2,7 @@
 
 import { backgroundMonitor } from '../utils/backgroundMonitor';
 import _ from 'lodash';
+const { getCache, setCache } = require('../utils/cacheHelper');
 
 /**
  * Creates batch processing middleware
@@ -350,3 +351,16 @@ const setCacheResult = (key, result) => {
     console.warn('Cache storage failed:', error);
   }
 };
+
+const optimizedMiddleware = (req, res, next) => {
+    const cacheKey = `${req.method}-${req.url}`;
+    const cachedResult = getCache(cacheKey);
+    if (cachedResult) {
+        return res.json(cachedResult);
+    }
+    // ...existing code...
+    setCache(cacheKey, optimizedResult);
+    res.json(optimizedResult);
+};
+
+module.exports = optimizedMiddleware;

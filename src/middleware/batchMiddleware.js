@@ -1,4 +1,5 @@
 import { backgroundMonitor } from '../utils/backgroundMonitor';
+import { getCache, setCache } from '../utils/cacheHelper';
 
 const BATCH_ACTION = 'spatial/BATCH_ACTIONS';
 const DEFAULT_BATCH_CONFIG = {
@@ -124,3 +125,16 @@ export const withPerformanceMonitoring = (middleware) => {
     return result;
   };
 };
+
+const batchMiddleware = (req, res, next) => {
+  const cacheKey = `${req.method}-${req.url}`;
+  const cachedResult = getCache(cacheKey);
+  if (cachedResult) {
+    return res.json(cachedResult);
+  }
+  // ...existing code...
+  setCache(cacheKey, batchedResult);
+  res.json(batchedResult);
+};
+
+export default createBatchMiddleware;

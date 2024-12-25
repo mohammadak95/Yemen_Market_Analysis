@@ -10,6 +10,7 @@ const PriceDifferentialAnalysis = lazy(() =>
 );
 const SpatialAnalysis = lazy(() => import('./components/analysis/spatial/SpatialAnalysis'));
 const TVMIIAnalysis = lazy(() => import('./components/analysis/tvmii/TVMIIAnalysis'));
+const LargeComponent = lazy(() => import('../components/LargeComponent'));
 
 // Route configuration with prefetching
 const AnalysisComponent = ({ type, ...props }) => {
@@ -18,6 +19,7 @@ const AnalysisComponent = ({ type, ...props }) => {
     priceDiff: PriceDifferentialAnalysis,
     spatial: SpatialAnalysis,
     tvmii: TVMIIAnalysis,
+    large: LargeComponent,
   };
 
   const Component = components[type];

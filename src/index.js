@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
-import { configureAppStore, getStore } from './store/configureStore';
+import { configureAppStore, getStore, createStore } from './store/configureStore';
 import App from './App';
 import ReduxDebugWrapper from './utils/ReduxDebugWrapper';
 import { setupReduxDebugger } from './utils/debugUtils';
@@ -126,7 +126,6 @@ AppWithProviders.displayName = 'AppWithProviders';
 const initializeApp = async () => {
   const startTime = performance.now();
   let initMetric;
-  let store;
 
   try {
     // Initialize background monitor first
@@ -140,8 +139,8 @@ const initializeApp = async () => {
       console.warn('Background monitor initialization failed:', e);
     }
 
-    // Initialize store with required reducers
-    store = await configureAppStore();
+    // Initialize store first, before any code tries to use it
+    const store = createStore();
 
     // Initialize services in development
     if (process.env.NODE_ENV === 'development') {
@@ -163,6 +162,7 @@ const initializeApp = async () => {
           const loadTime = performance.now() - startTime;
           console.debug(`[App] Initial load completed in ${loadTime.toFixed(2)}ms`);
 
+          // Use the local store reference instead of getStore()
           backgroundMonitor.logMetric(MetricTypes.SYSTEM.PERFORMANCE, {
             event: 'load-complete',
             duration: loadTime,

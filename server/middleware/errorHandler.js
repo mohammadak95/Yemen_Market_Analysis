@@ -1,5 +1,7 @@
-// server/middleware/errorHandler.js
+const { logError } = require('../../src/utils/backgroundMonitor');
+
 const errorHandler = (err, req, res, next) => {
+    logError(err);
     if (res.headersSent) {
       return next(err);
     }

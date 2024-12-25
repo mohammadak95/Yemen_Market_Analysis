@@ -39,7 +39,8 @@ module.exports = (env, argv) => {
     entry: './src/index.js',
     output: {
       path: path.resolve(__dirname, 'build'),
-      filename: 'main.js',
+      filename: '[name].js',
+      chunkFilename: '[name].[contenthash].js'
     },
     resolve: {
       extensions: ['.js', '.jsx'],
@@ -55,12 +56,16 @@ module.exports = (env, argv) => {
       }
     },
     optimization: {
+      splitChunks: {
+        chunks: 'all',
+      },
+      minimize: true,
       minimizer: [
         new TerserPlugin({
           parallel: true,
           terserOptions: {
             compress: {
-              drop_console: !isDevelopment,
+              drop_console: true,
               drop_debugger: true,
               pure_funcs: ['console.log', 'console.info', 'console.debug'],
             },
@@ -73,38 +78,6 @@ module.exports = (env, argv) => {
         }),
         new CssMinimizerPlugin(),
       ],
-      splitChunks: isDevelopment ? false : {
-        chunks: 'all',
-        maxInitialRequests: 25,
-        minSize: 15000,
-        maxSize: 244000,
-        cacheGroups: {
-          reactVendor: {
-            test: /[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/,
-            name: 'reactVendor',
-            priority: 40,
-            enforce: true,
-          },
-          mui: {
-            test: /[\\/]node_modules[\\/]@mui[\\/]/,
-            name: 'mui',
-            priority: 30,
-            enforce: true,
-          },
-          vendors: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            priority: 20,
-            enforce: true,
-          },
-          common: {
-            minChunks: 2,
-            priority: 10,
-            reuseExistingChunk: true,
-          }
-        }
-      },
-      minimize: !isDevelopment,
       runtimeChunk: isDevelopment ? false : 'single',
     },
     module: {

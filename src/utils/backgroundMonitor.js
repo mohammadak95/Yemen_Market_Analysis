@@ -273,7 +273,7 @@ class BackgroundMonitor {
 }
 
 // Create and export the singleton instance
-export const backgroundMonitor = new BackgroundMonitor();
+const backgroundMonitor = new BackgroundMonitor();
 
 // Initialize in development mode
 if (process.env.NODE_ENV === 'development') {
@@ -283,4 +283,14 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Export metric types for external use
-export const MetricTypes = METRIC_TYPES;
+const MetricTypes = METRIC_TYPES;
+
+const logError = (error) => {
+    console.error(error); // You can replace this with any logging mechanism you prefer
+};
+
+module.exports = {
+    backgroundMonitor,
+    MetricTypes,
+    logError
+};
