@@ -363,6 +363,34 @@ jobs:
           publish_dir: ./build
 ```
 
+## Python Script Output Mapping
+
+### Core Analysis Scripts
+
+| Script Path | Purpose | Outputs |
+|-------------|---------|---------|
+| `project/ecm_analysis/ecm_v2.5_directional.py` | Error Correction Model analysis | - `data/ecm/coefficients.json` (model parameters)<br>- `data/ecm/residuals.parquet` (model residuals) |
+| `project/ecm_analysis/v2.5_unified.py` | Unified ECM implementation | - `data/ecm/unified_results.geojson` (geospatial results) |
+| `project/market_integration_index/compute_tv_mii.py` | Time-Varying Market Integration Index | - `data/tv_mii_results.json` (daily indices)<br>- `data/tv_mii_market_results.parquet` (market-level indices) |
+| `project/price_diffrential_analysis/price_differential_model_v2.py` | Regional price differential analysis | - `data/price_diff_results/daily_differentials.parquet`<br>- `data/price_diff_results/regional_stats.json` |
+
+### Spatial Analysis Scripts
+
+| Script Path | Outputs |
+|-------------|---------|
+| `project/spatial_analysis/data_prepration_for_spatial_chart_v2.py` | - `data/spatial_analysis_results.geojson` (preprocessed spatial data)<br>- `public/data/spatial_base_layer.json` (visualization-ready data) |
+| `project/spatial_analysis/spatial_model_v2.py` | - `data/spatial_weights/global_weights_matrix.pkl`<br>- `data/spatial_analysis_results.json` (model diagnostics) |
+| `project/spatial_analysis/time_varying_flows.py` | - `data/network_data/time_series_flows.parquet`<br>- `public/data/flow_network.json` (D3-compatible format) |
+
+### Utility Scripts
+
+| Script Path | Output Location | Output Description |
+|-------------|-----------------|--------------------|
+| `project/utils/data_utils.py` | `data/processed/` | Cleaned/transformed versions of raw data files |
+| `project/utils/common_utils.py` | N/A | Shared helper functions (no direct output) |
+
+All outputs use standardized formats: GeoJSON for spatial data, Parquet for tabular data, and JSON for configuration/lightweight data.
+
 Feel free to explore the project, contribute, and reach out with any questions or suggestions!
 
 ---
